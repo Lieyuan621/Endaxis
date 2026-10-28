@@ -14,45 +14,6 @@ const delegate = {
 };
 
 describe('ActionBlackboardOperationExecutor', () => {
-  it('evaluates distance curves from current variables and preserves near-equal outputs', () => {
-    const executor = new ActionBlackboardOperationExecutor(delegate);
-    const context = {
-      blackboard: new ActionBlackboard({ distance: 2, speed: Math.fround(4.000005) }),
-    };
-    const step = {
-      kind: 'evaluateCurve' as const,
-      parameters: {
-        key: 'speed',
-        input: numberInput({ kind: 'blackboard', key: 'distance' }),
-        curve: [
-          {
-            time: 0,
-            value: 0,
-            inTangent: 2,
-            outTangent: 2,
-            weightedMode: 0 as const,
-            inWeight: 1 / 3,
-            outWeight: 1 / 3,
-          },
-          {
-            time: 10,
-            value: 20,
-            inTangent: 2,
-            outTangent: 2,
-            weightedMode: 0 as const,
-            inWeight: 1 / 3,
-            outWeight: 1 / 3,
-          },
-        ],
-      },
-    };
-    executor.execute(step, context);
-    expect(context.blackboard.getNumber('speed')).toBe(Math.fround(4.000005));
-    context.blackboard.assignDynamic('distance', 3);
-    executor.execute(step, context);
-    expect(context.blackboard.getNumber('speed')).toBeCloseTo(6, 5);
-  });
-
   it('restores raw override ownership with its branch and releases every repeated execution handle', () => {
     const attributes = new CombatAttributeSet<string>();
     attributes.define('PhysicalResistance', 10, {});
@@ -112,42 +73,6 @@ describe('ActionBlackboardOperationExecutor', () => {
     expect(attributes.get('PhysicalResistance')).toBe(30);
     executor.end(step, context);
     expect(attributes.get('PhysicalResistance')).toBe(10);
-  });
-  it('浮点随机读取当前变量，支持反向范围，等值范围仍消耗样本', () => {
-    const samples = [0, 1, 0.25, 0.5];
-    const nextRangeSample = vi.fn(() => samples.shift()!);
-    const executor = new ActionBlackboardOperationExecutor(
-      delegate,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      { nextRangeSample },
-    );
-    const blackboard = new ActionBlackboard({ min: -10, max: 10 });
-    const step = {
-      kind: 'storeRandomFloat',
-      parameters: {
-        key: 'angle',
-        minimum: numberInput({ kind: 'blackboard', key: 'min' }),
-        maximum: numberInput({ kind: 'blackboard', key: 'max' }),
-      },
-    } as const;
-    executor.execute(step, { blackboard });
-    expect(blackboard.getNumber('angle')).toBe(-10);
-    executor.execute(step, { blackboard });
-    expect(blackboard.getNumber('angle')).toBe(10);
-    blackboard.assign({ min: 2, max: 2 });
-    executor.execute(step, { blackboard });
-    expect(blackboard.getNumber('angle')).toBe(2);
-    blackboard.assign({ min: 10, max: -10 });
-    executor.execute(step, { blackboard });
-    expect(blackboard.getNumber('angle')).toBe(0);
-    expect(nextRangeSample).toHaveBeenCalledTimes(4);
   });
   it('随机整数在执行时读取上下界，保留原生容差、右开边界及等值区间的取样顺序', () => {
     const executor = new ActionBlackboardOperationExecutor(

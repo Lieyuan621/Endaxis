@@ -1,4 +1,3 @@
-import { stationaryProjectileFlight } from '../../../src/core/test/projectileFlight';
 import { expect, it } from 'vitest';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
 import {
@@ -98,7 +97,7 @@ it.each(['single', 'context', 'points', 'unclassifiedContext'] as const)(
             kind: 'launchProjectile',
             parameters: {
               projectileId: 'fixture_projectile',
-              flight: stationaryProjectileFlight(1),
+              schedule: { endFrame: 30, callbacks: [] },
               inheritActionBlackboard: false,
 
               recycleDelaySeconds: 0,

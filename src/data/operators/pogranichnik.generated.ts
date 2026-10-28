@@ -2527,7 +2527,9 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'soldiers',
-            abilityEntityIds: ['abilityentity_chr_0029_pograni_ultimate_skill'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0029_pgrani/Soldier'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -3900,7 +3902,9 @@ const pogranichnikBuff11ActionGraph = {
             ignoredAbilityEntityTargets: [
               {
                 kind: 'ownerSpawned',
-                abilityEntityIds: ['abilityentity_chr_0029_pograni_ultimate_skill'],
+                tagFilters: [
+                  { queryType: 'hasAny', tags: ['Skill/Character/chr_0029_pgrani/Soldier'] },
+                ],
               },
             ],
           },

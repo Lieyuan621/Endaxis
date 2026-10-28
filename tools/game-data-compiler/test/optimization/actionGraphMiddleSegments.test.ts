@@ -1,4 +1,3 @@
-import { stationaryProjectileFlight } from '../../../../src/core/test/projectileFlight';
 import { describe, expect, it } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -175,7 +174,7 @@ describe('同步直线中间段宏提取', () => {
       kind: 'launchProjectile',
       parameters: {
         projectileId: 'fixture_projectile',
-        flight: stationaryProjectileFlight(1),
+        schedule: { endFrame: 30, callbacks: [] },
         inheritActionBlackboard: true,
 
         recycleDelaySeconds: 2,

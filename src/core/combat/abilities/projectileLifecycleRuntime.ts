@@ -3,7 +3,8 @@
  * 数据只保存投射物、回调程序和 reset 订阅的稳定身份；恢复装配按这些身份重新连接宿主行为。
  */
 import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
-import type { ProjectileRangeSample } from './projectileMovementExecution';
+import { advanceProjectileSchedule } from './projectileScheduleExecution';
+
 import type {
   AbilityEntityTargetRef,
   RuntimeTargetRef,
@@ -27,17 +28,15 @@ import {
 /** 引用一个具体投射物，来源技能结束后它仍可独立存活。 */
 export type ProjectileLifetimeReference = AbilityResetReference & {
   readonly target: AbilityEntityTargetRef;
+  readonly startSchedule: () => void;
 };
 
 export interface ProjectileHostPorts {
-  readonly sampleRange?: ProjectileRangeSample;
+  readonly invokeScheduledCallback?: (callbackIndex: number) => void;
+
   /** reset 引用通知完成后解除 RootComponent 持有的外部关系。 */
   readonly released?: () => void;
   readonly resolveTickDeltaSeconds: () => number | null;
-  readonly reach?: () => void;
-  readonly block?: () => void;
-  readonly hit?: () => number;
-  readonly finish: () => void;
   readonly beforeReset: () => void;
   readonly abilityRuntime?: FrameRuntime;
 }
@@ -125,10 +124,9 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
       try {
         const ports = options.resolveHost(id);
         if (ports === undefined) throw new Error(`missing projectile host ${id}`);
-        if (instance.hitState?.pending && ports.hit === undefined)
-          throw new Error(`projectile ${id} hit policy requires a hit port`);
-        if (instance.movement.definition.landingAtTarget && ports.block === undefined)
-          throw new Error(`projectile ${id} landing flight requires a block port`);
+        if (instance.schedule.definition.callbacks.length && !ports.invokeScheduledCallback)
+          throw new Error(`projectile ${id} schedule requires a callback port`);
+
         const resetRegistrations = new Set(instance.resetListeners.values());
         for (const handlerId of resetRegistrations) {
           if (resetHandlers.has(handlerId)) {
@@ -246,20 +244,18 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
 
   launch(
     request: ProjectileLaunchData & {
+      readonly invokeScheduledCallback?: (callbackIndex: number) => void;
       readonly callbackPrograms?: readonly CompiledAbilityEntityChildSkillProgram[];
       readonly resolveTickDeltaSeconds: () => number | null;
-      readonly reach?: () => void;
-      readonly block?: () => void;
-      readonly hit?: () => number;
-      readonly finish: () => void;
       readonly beforeReset: () => void;
       readonly released?: () => void;
       readonly abilityRuntime?: FrameRuntime;
     },
   ): ProjectileLifetimeReference {
     this.#requireRelations();
-    if (request.hitPolicy !== undefined && request.hit === undefined)
-      throw new Error('projectile hit policy requires a hit port');
+    if (request.schedule.callbacks.length && !request.invokeScheduledCallback)
+      throw new Error('projectile schedule requires a callback port');
+
     const callbacks = request.callbacks ?? [];
     if (callbacks.length !== (request.callbackPrograms?.length ?? 0))
       throw new Error('projectile callbacks require matching fixed programs');
@@ -272,12 +268,13 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
     const instanceId = this.#allocateInstanceId();
     launchProjectile(this.#state, instanceId, request);
     const binding: ProjectileHostBinding = {
-      ...(request.sampleRange === undefined ? {} : { sampleRange: request.sampleRange }),
+      ...(request.invokeScheduledCallback === undefined
+        ? {}
+        : {
+            invokeScheduledCallback: request.invokeScheduledCallback,
+          }),
+
       resolveTickDeltaSeconds: request.resolveTickDeltaSeconds,
-      ...(request.reach === undefined ? {} : { reach: request.reach }),
-      ...(request.block === undefined ? {} : { block: request.block }),
-      ...(request.hit === undefined ? {} : { hit: request.hit }),
-      finish: request.finish,
       beforeReset: request.beforeReset,
       ...(request.released === undefined ? {} : { released: request.released }),
       ...(request.abilityRuntime === undefined ? {} : { abilityRuntime: request.abilityRuntime }),
@@ -286,6 +283,23 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
     this.#bindings.set(instanceId, binding);
     return {
       instanceId,
+      startSchedule: () => {
+        const instance = this.#state.instances.get(instanceId);
+        if (!instance) throw new Error('scheduled projectile no longer exists');
+        const invoke = binding.invokeScheduledCallback;
+        if (!invoke && instance.schedule.definition.callbacks.length)
+          throw new Error('scheduled projectile has no callback binding');
+        advanceProjectileSchedule(
+          instance.schedule,
+          0,
+          () => instance.phase === 'active',
+          index => invoke?.(index),
+        );
+        if (instance.phase === 'active' && instance.schedule.definition.endFrame === 0) {
+          instance.phase = 'finished';
+          instance.remainingSeconds = instance.recycleDelaySeconds;
+        }
+      },
       target: { kind: 'abilityEntity', instanceId },
       onReset: callback => {
         if (this.#bindings.get(instanceId) !== binding)
@@ -310,20 +324,12 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
   advanceFrame(): void {
     this.#requireRelations();
     advanceProjectileLifetimes(this.#state, {
-      sampleRange: (id, minimum, maximum) => {
-        const sample = this.#bindings.get(id)!.sampleRange;
-        if (!sample) throw new Error(`projectile ${id} requires a range sample source`);
-        return sample(minimum, maximum);
-      },
       resolveTickDeltaSeconds: id => this.#bindings.get(id)!.resolveTickDeltaSeconds(),
-      reach: id => this.#bindings.get(id)!.reach?.(),
-      block: id => this.#bindings.get(id)!.block?.(),
-      hit: id => {
-        const hit = this.#bindings.get(id)!.hit;
-        if (hit === undefined) throw new Error('projectile hit policy requires a hit port');
-        return hit();
+      invokeScheduledCallback: (id, index) => {
+        const invoke = this.#bindings.get(id)!.invokeScheduledCallback;
+        if (!invoke) throw new Error(`projectile ${id} has no scheduled callback binding`);
+        invoke(index);
       },
-      finish: id => this.#bindings.get(id)!.finish(),
       beforeReset: id => {
         this.#bindings.get(id)!.beforeReset();
       },

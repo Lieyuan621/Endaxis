@@ -14,6 +14,7 @@ it('领域生成与全量格式化保持相同格式，长等级数组不拆行�
       levels: Array.from({ length: 12 }, (_, i) => i + 1),
       values: Array.from({ length: 12 }, (_, i) => `${100 + i}.123%`),
       description: '包含逗号、引号 " 和换行\n的文本',
+      talent: { name: '天赋', description: '简短说明' },
     };
     const files = ['zh/operators.json', 'en/operators.json'];
     const generated = await Promise.all(

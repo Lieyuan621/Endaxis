@@ -1,14 +1,7 @@
 import {
-  applyProjectileResourcePatch,
-  projectileResourcePatch,
-  type ProjectilePatchRecord,
-} from '../src/patches/projectiles.ts';
-import {
   parseProjectileRuntimeSource,
   type ProjectileRuntimeSource,
 } from '../src/source/projectileRuntime.ts';
-import { isDeepStrictEqual } from 'node:util';
-import type { ProjectileDefinition } from '../../../packages/game-data-contract/src/projectiles.ts';
 import { readdirSync, readFileSync } from 'node:fs';
 import { collectExternalBuffBlackboardReads } from '../src/compiler/references/externalBlackboardUsage.ts';
 /**
@@ -40,7 +33,6 @@ import {
 
 export class OperatorPlanningSources {
   private readonly projectileSources = new Map<string, ProjectileRuntimeSource>();
-  readonly resourcePatches = new Map<string, ProjectilePatchRecord>();
 
   projectileRuntime(sourceRoot: string, id: string): ProjectileRuntimeSource {
     const file = path.resolve(sourceRoot, 'ProjectileData', `${id}.json`);
@@ -49,34 +41,11 @@ export class OperatorPlanningSources {
       const native = parseProjectileRuntimeSource(this.readJson(file), `ProjectileData.${id}`);
       if (native.projectileId !== id)
         throw new Error(`ProjectileData.${id}: resource identity mismatch`);
-      source = applyProjectileResourcePatch(native);
+      source = native;
       this.projectileSources.set(file, source);
-      const patch = projectileResourcePatch(id);
-      if (patch)
-        this.resourcePatches.set(id, { resourceId: id, reason: patch.reason, changes: patch });
     }
     return source;
   }
-
-  readonly projectileDefinitions = new Map<string, ProjectileDefinition>();
-  readonly registerProjectile = (id: string, definition: ProjectileDefinition): void => {
-    const existing = this.projectileDefinitions.get(id);
-    if (
-      existing &&
-      (!isDeepStrictEqual(existing.flight, definition.flight) ||
-        !isDeepStrictEqual(existing.hit, definition.hit))
-    )
-      throw new Error(`conflicting ProjectileData definition '${id}'`);
-    for (const [key, value] of Object.entries(definition.blackboard)) {
-      if (existing && key in existing.blackboard && existing.blackboard[key] !== value)
-        throw new Error(`conflicting ProjectileData blackboard '${id}.${key}'`);
-    }
-    // 各发射路线只保留实际读取的键；资源收集所有路线的需求，不复制发射动作。
-    this.projectileDefinitions.set(id, {
-      ...definition,
-      blackboard: { ...existing?.blackboard, ...definition.blackboard },
-    });
-  };
 
   private readonly buffReads = new Map<string, ReadonlySet<string>>();
   private readonly shared: SourceFileCache;
@@ -143,17 +112,13 @@ export class OperatorPlanningSources {
 
   /** 完成一名干员的规划后释放原始资源；已收集的定义不依赖此缓存继续存活。 */
   releaseOperator(): void {
-    this.projectileDefinitions.clear();
     this.projectileSources.clear();
-    this.resourcePatches.clear();
     this.currentOperator.clear();
   }
 
   /** 全部来源编译完成后释放原文与解析目录，避免它们与后续优化、渲染同时驻留。 */
   clear(): void {
-    this.projectileDefinitions.clear();
     this.projectileSources.clear();
-    this.resourcePatches.clear();
     this.shared.clear();
     this.currentOperator.clear();
     this.entities.clear();

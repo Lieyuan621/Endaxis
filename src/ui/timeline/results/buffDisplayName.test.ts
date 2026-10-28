@@ -6,7 +6,7 @@ import {
   resolveBuffEffectSummary,
 } from './buffDisplayName';
 import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
-import zh from '../../../i18n/locales/zh-CN.json';
+import zh from '../../../i18n/locales/zh-CN/common.json';
 
 const messages: Readonly<Record<string, string>> = {
   'effects.name.susceptibility:physical': '物理脆弱',

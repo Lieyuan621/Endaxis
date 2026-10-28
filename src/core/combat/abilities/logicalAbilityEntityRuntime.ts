@@ -41,7 +41,6 @@ import {
 } from './logicalAbilityEntityExecution';
 
 export interface LogicalAbilityEntitySpawnRequest {
-  readonly position?: LogicalAbilityEntityState['position'];
   /** 已按原生 OnStart 初始化的生命属性；目录不猜测 HP 默认值或再次求值黑板。 */
   readonly soul?: {
     readonly canBeDirectlyBuffed: boolean;
@@ -318,7 +317,6 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       ...(soulVitals === undefined ? {} : { soulVitals }),
       identity: Object.freeze({ instanceId, abilityEntityId: request.abilityEntityId }),
       state: {
-        ...(request.position === undefined ? {} : { position: [...request.position] as const }),
         ...(request.soul === undefined
           ? {}
           : {
@@ -478,12 +476,6 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     for (const instance of this.#instances.values()) {
       // children 属于直接来源；ownerId 只标识负责属性和资源结算的干员。
       if (runtimeTargetEntityId(instance.state.source) !== query.ownerId) continue;
-      if (
-        query.abilityEntityIds !== undefined &&
-        !query.abilityEntityIds.includes(instance.state.abilityEntityId)
-      ) {
-        continue;
-      }
       if (
         query.sourceSkillCastId !== undefined &&
         instance.state.sourceSkillCastId !== query.sourceSkillCastId

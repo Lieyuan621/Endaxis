@@ -1357,16 +1357,6 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
             saveToContextKey: 'mainpos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 8 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: 'mergeContextTargets_5',

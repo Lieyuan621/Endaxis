@@ -124,7 +124,7 @@ export async function generateGameLocaleCandidate(input: GameLocaleCandidateInpu
       tableName === 'EN'
         ? tables.I18nTextTable_EN
         : await readRecord(path.join(input.tableRoot, 'I18nTextTable_CN.json'));
-    const ui = await readRecord(path.join(input.uiLocaleRoot, `${uiFile}.json`));
+    const ui = await readRecord(path.join(input.uiLocaleRoot, uiFile, 'common.json'));
     const documents = compileGameLocales(
       tables,
       texts,

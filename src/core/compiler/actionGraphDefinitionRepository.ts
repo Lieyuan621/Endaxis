@@ -27,10 +27,7 @@ export class ActionGraphDefinitionRepository {
   >();
   readonly #entityDefinitions = new WeakMap<
     OperatorAbilityEntityDefinitions,
-    WeakMap<
-      ActionGraphImports,
-      WeakMap<ActionGraphImports['projectiles'], Map<number, ActionGraphImports>>
-    >
+    WeakMap<ActionGraphImports, Map<number, ActionGraphImports>>
   >();
   readonly #mergedImports = new WeakMap<
     ActionGraphImports,
@@ -54,29 +51,17 @@ export class ActionGraphDefinitionRepository {
     definitions: OperatorAbilityEntityDefinitions = EMPTY_ENTITIES,
     level: number,
     external: ActionGraphImports = EMPTY_GRAPH_IMPORTS,
-    projectiles: ActionGraphImports['projectiles'] = external.projectiles,
   ): ActionGraphImports {
     if (!Number.isSafeInteger(level) || level < 0) throw new Error('invalid entity skill level');
     this.#publish(definitions);
-    this.#publish(external.projectiles);
-    this.#publish(projectiles);
     Object.freeze(external);
     let contexts = this.#entityDefinitions.get(definitions);
     if (!contexts) this.#entityDefinitions.set(definitions, (contexts = new WeakMap()));
-    let projectileContexts = contexts.get(external);
-    if (!projectileContexts) contexts.set(external, (projectileContexts = new WeakMap()));
-    let levels = projectileContexts.get(projectiles);
-    if (!levels) projectileContexts.set(projectiles, (levels = new Map()));
+    let levels = contexts.get(external);
+    if (!levels) contexts.set(external, (levels = new Map()));
     let compiled = levels.get(level);
     if (!compiled) {
-      const imports =
-        projectiles === external.projectiles
-          ? external
-          : {
-              abilityEntities: external.abilityEntities,
-              projectiles: Object.freeze({ ...external.projectiles, ...projectiles }),
-            };
-      compiled = compileIndependentAbilityEntityDefinitions(definitions, level, this, imports);
+      compiled = compileIndependentAbilityEntityDefinitions(definitions, level, this, external);
       levels.set(level, compiled);
     }
     return compiled;
@@ -95,7 +80,6 @@ export class ActionGraphDefinitionRepository {
     if (!merged) {
       merged = Object.freeze({
         abilityEntities: Object.freeze({ ...external.abilityEntities, ...local.abilityEntities }),
-        projectiles: Object.freeze({ ...external.projectiles, ...local.projectiles }),
       });
       locals.set(local, merged);
     }
@@ -134,7 +118,6 @@ export class ActionGraphDefinitionRepository {
   ): ActionGraphCompilation {
     this.#publish(graph);
     this.#publish(entities);
-    this.#publish(imports.projectiles);
     let contexts = this.#graphs.get(graph);
     if (!contexts) {
       contexts = new WeakMap();

@@ -1,5 +1,4 @@
-import { sampleRandomPointPositions } from './randomPointPositions';
-import { offsetSpatialPoint, spatialPointDirection } from './spatialPointPosition';
+import type { GameplayTag, GameplayTagQueryType } from '../tags/gameplayTags';
 import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import type { BuffLookupQuery } from '../../../../packages/game-data-contract/src/conditions';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
@@ -71,11 +70,9 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     readonly targetQueries?: {
       matchesTags?(
         target: RuntimeTargetRef,
-        query: Extract<CompiledTargetQuery, { kind: 'tagFilter' }>,
+        query: Pick<Extract<CompiledTargetQuery, { kind: 'tagFilter' }>, 'tags' | 'tagQueryType'>,
       ): boolean | undefined;
-      sampleRange?(minimum: number, maximum: number, castId?: string): number;
-      position?(target: RuntimeTargetRef): readonly [number, number, number] | undefined;
-      /** 固定地面模型中实体当前的离地高度；没有坐标的句柄返回 undefined。 */
+      /** 实体当前的离地高度；无法提供高度的目标返回 undefined。 */
       height?(target: RuntimeTargetRef): number | undefined;
       mainBody?(target: RuntimeTargetRef): RuntimeTargetRef;
       exclusionTarget?(target: RuntimeTargetRef): RuntimeTargetRef;
@@ -96,14 +93,6 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
   ) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
-    if (step.kind === 'saveTargetDistance') {
-      if (!context) throw new Error('saveTargetDistance requires an action context');
-      const source = this.queryTargets(step.parameters.source, context)[0];
-      const target = this.queryTargets(step.parameters.target, context)[0];
-      if (!source || !target) return true;
-      context.blackboard.assignDynamic(step.parameters.outputKey, this.#distance(source, target));
-      return true;
-    }
     if (step.kind === 'pickContextTarget') {
       if (context?.targetContext === undefined) {
         throw new Error('Context target selection requires a combat target context');
@@ -126,8 +115,7 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
         height === undefined ? undefined : height + step.parameters.startHeightOffset;
       const hit =
         distance !== undefined && distance >= 0 && distance <= step.parameters.maxDistance;
-      const position = source && this.targetQueries.position?.(source);
-      // 命中位置拥有空间点身份，不能放入 enemy 身份作为代替。
+      // 命中点拥有独立身份，不能用 enemy 身份代替。
       context.targetContext.set(
         step.parameters.saveToContextKey,
         hit
@@ -135,8 +123,6 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
               {
                 kind: 'spatialPoint',
                 pointId: this.runtimeState.nextSpatialPointId++,
-                // 垂直地面探测沿用固定地面高度，保留来源的水平位置。
-                ...(position ? { position: [position[0], 0, position[2]] as const } : {}),
               },
             ]
           : [],
@@ -235,12 +221,8 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
         throw new Error('createSpatialPointTargets requires a combat target context');
       }
       const count = resolveActionValueOperand(step.parameters.count, context.blackboard);
-      if (
-        step.parameters.randomDistribution === undefined &&
-        (!Number.isInteger(count) || count < 0)
-      ) {
-        throw new RangeError('spatial point count must be a non-negative integer');
-      }
+      if (!Number.isFinite(count) || !Number.isSafeInteger(Math.ceil(count)))
+        throw new RangeError('spatial point count must be finite and safely representable');
       const origins =
         step.parameters.origin === undefined
           ? undefined
@@ -248,65 +230,15 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       if (origins !== undefined && origins.length > 1)
         throw new Error('spatial point origin must resolve to at most one target');
       const origin = origins?.[0];
-      let position = origin === undefined ? undefined : this.targetQueries?.position?.(origin);
-      if (position && step.parameters.offset) {
-        const offset = step.parameters.offset;
-        position = offsetSpatialPoint(
-          position,
-          offset.local.map(value => resolveActionValueOperand(value, context.blackboard)),
-          offset,
-          spatialPointDirection(offset.facing, query => {
-            const target = this.queryTargets(query, context)[0];
-            const value = target && this.targetQueries?.position?.(target);
-            if (!value) throw new Error('spatial point direction requires a known position');
-            return value;
-          }),
-        );
-      }
-      const distribution = step.parameters.randomDistribution;
-      if (distribution !== undefined) {
-        if (origins !== undefined && origin === undefined) {
-          context.targetContext.set(step.parameters.saveToContextKey, []);
-          return true;
-        }
-        if (!position) throw new Error('random projectile point requires a known center position');
-        const sample = this.targetQueries?.sampleRange;
-        if (!sample) throw new Error('random projectile point requires a range sample source');
-        const value = (input: typeof distribution.radius) =>
-          resolveActionValueOperand(input, context.blackboard);
-        const points = sampleRandomPointPositions(
-          count,
-          [position[0], distribution.centerOnGround ? 0 : position[1], position[2]],
-          distribution.shape,
-          value(distribution.minimumRadius),
-          value(distribution.radius),
-          value(distribution.angleDegrees),
-          [
-            value(distribution.localPlaneRotation[0]),
-            value(distribution.localPlaneRotation[1]),
-            value(distribution.localPlaneRotation[2]),
-          ],
-          (minimum, maximum) => sample(minimum, maximum, context.skillCastInfo?.originCastId),
-        );
-        context.targetContext.set(
-          step.parameters.saveToContextKey,
-          points.map(position => ({
-            kind: 'spatialPoint',
-            pointId: this.runtimeState.nextSpatialPointId++,
-            position,
-          })),
-        );
-        return true;
-      }
       context.targetContext.set(
         step.parameters.saveToContextKey,
-        Array.from({ length: origins !== undefined && origin === undefined ? 0 : count }, () => ({
-          kind: 'spatialPoint' as const,
-          pointId: this.runtimeState.nextSpatialPointId++,
-          ...(position === undefined
-            ? {}
-            : { position: [...position] as [number, number, number] }),
-        })),
+        Array.from(
+          { length: origins !== undefined && origin === undefined ? 0 : Math.ceil(count) },
+          () => ({
+            kind: 'spatialPoint' as const,
+            pointId: this.runtimeState.nextSpatialPointId++,
+          }),
+        ),
       );
       return true;
     }
@@ -327,14 +259,6 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     }
     context.targetContext.set(step.parameters.saveToContextKey, targets);
     return true;
-  }
-
-  #distance(source: RuntimeTargetRef, target: RuntimeTargetRef): number {
-    if (!this.targetQueries?.position) throw new Error('target distance requires position queries');
-    const from = this.targetQueries.position(source);
-    const to = this.targetQueries.position(target);
-    if (!from || !to) throw new Error('target distance requires known endpoint positions');
-    return Math.fround(Math.hypot(from[0] - to[0], from[1] - to[1], from[2] - to[2]));
   }
 
   #excludeTargets(
@@ -483,6 +407,26 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     return children.every(child => parents.some(parent => sameTarget(parent, child)));
   }
 
+  filterTargetsByTags(
+    targets: readonly RuntimeTargetRef[],
+    filters: readonly {
+      tags: readonly GameplayTag[];
+      queryType: GameplayTagQueryType;
+    }[],
+  ): readonly RuntimeTargetRef[] {
+    if (!this.targetQueries?.matchesTags) throw new Error('TagValidator requires entity tags');
+    return targets.filter(target =>
+      filters.every(
+        filter =>
+          target.kind === 'spatialPoint' ||
+          this.targetQueries!.matchesTags!(target, {
+            tags: filter.tags,
+            tagQueryType: filter.queryType,
+          }) !== false,
+      ),
+    );
+  }
+
   queryTargets(
     query: CompiledTargetQuery,
     context: CombatOperationContext,
@@ -498,13 +442,11 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       return compareCombatNumbers(0, Math.fround(threshold), query.operator) ? targets : [];
     }
     if (query.kind === 'tagFilter') {
-      if (!this.targetQueries?.matchesTags) throw new Error('TagValidator requires entity tags');
-      return this.queryTargets(query.targets, context).filter(
-        target =>
-          target.kind === 'spatialPoint' ||
-          this.targetQueries!.matchesTags!(target, query) !== false,
-      );
+      return this.filterTargetsByTags(this.queryTargets(query.targets, context), [
+        { tags: query.tags, queryType: query.tagQueryType },
+      ]);
     }
+
     if (query.kind === 'buffFilter') {
       if (!this.targetQueries?.hasMatchingBuff)
         throw new Error('BuffValidator requires a target Buff query');
@@ -601,7 +543,6 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
         throw new Error('same-cast target query requires SkillCastInfo');
       const entities = this.targetQueries.ownerSpawned({
         ownerId,
-        abilityEntityIds: query.abilityEntityIds,
         ...(sourceSkillCastId === undefined ? {} : { sourceSkillCastId }),
       });
       if (query.objectType === 'abilityEntity') return entities;

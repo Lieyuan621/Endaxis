@@ -141,28 +141,33 @@ function graphExtractor(
         throw new Error(
           `${location} node ${id}: direction angle still affects combat and cannot be published (${node.action.parameters.outputKey})`,
         );
+      if (
+        node.action.kind === 'saveTargetDistance' ||
+        node.action.kind === 'evaluateCurve' ||
+        node.action.kind === 'storeRandomFloat'
+      )
+        throw new Error(
+          `${location} node ${id}: ${node.action.kind} still affects combat and cannot be published`,
+        );
       let action: unknown = node.action;
-      if (node.action.kind === 'launchProjectile' && 'flight' in node.action.parameters) {
-        const {
-          flight,
-          entityInitialValues: _templateInitialValues,
-          hit,
-          ...parameters
-        } = node.action.parameters;
+      if (
+        node.action.kind === 'launchProjectile' &&
+        'entityInitialValues' in node.action.parameters
+      ) {
+        const { entityInitialValues, hit, ...parameters } = node.action.parameters;
         action = {
           ...node.action,
           parameters: {
             ...parameters,
-            ...(hit?.target === 'controlledOperator' || hit?.target === 'currentTarget'
-              ? { hitTarget: hit.target }
-              : {}),
-            launch: {
-              start: flight.start,
-              segmentTargets: flight.segments.map(segment => segment.target),
-              ...(flight.landingAtTarget === undefined
-                ? {}
-                : { landingAtTarget: flight.landingAtTarget }),
-            },
+            entityInitialValues,
+            ...(hit === undefined
+              ? {}
+              : {
+                  hit: {
+                    ...(hit.target === undefined ? {} : { target: hit.target }),
+                    ...(hit.hitTagFilter === undefined ? {} : { hitTagFilter: hit.hitTagFilter }),
+                  },
+                }),
           },
         };
       }

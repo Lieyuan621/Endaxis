@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createI18n } from 'vue-i18n';
-import zh from '../../i18n/locales/zh-CN.json';
-import en from '../../i18n/locales/en.json';
+import zh from '../../i18n/locales/zh-CN/common.json';
+import en from '../../i18n/locales/en/common.json';
 import { formatSkillBlockWarnings, indexSkillResourceWarnings } from './skillBlockWarnings';
 import type { TimelineSkillDiagnosticReason } from './useScenarioSimulation';
 

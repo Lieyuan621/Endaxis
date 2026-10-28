@@ -1,4 +1,3 @@
-import { stationaryProjectileDefinition, pointProjectileLaunch } from '../../test/projectileFlight';
 import { expect, it, vi } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -25,8 +24,6 @@ import { CombatRuntimeAssembly, type CombatOperatorProgram } from './combatRunti
 import { CombatRuntimeSession } from './combatRuntimeSession';
 import { StandardPlayerDamageEnvironment } from './standardPlayerDamageEnvironment';
 
-const projectileDefinitions = { stationary: stationaryProjectileDefinition(0.1) };
-
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
@@ -38,7 +35,7 @@ const compileGraphEntry = (
     1,
     revision,
     {},
-    { abilityEntities: {}, projectiles: projectileDefinitions },
+    { abilityEntities: {} },
   ).compileAll(),
   entry,
   callSite: revision,
@@ -355,7 +352,7 @@ it.each([0, 4, 6])('投射物在第 %i 帧分支恢复后保留伤害的技能�
             kind: 'launchProjectile',
             parameters: {
               projectileId: 'stationary',
-              launch: pointProjectileLaunch,
+
               inheritActionBlackboard: true,
 
               recycleDelaySeconds: 0.5,

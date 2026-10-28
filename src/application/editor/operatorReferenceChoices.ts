@@ -92,7 +92,5 @@ export function operatorReferenceChoices(
       }
     }
   }
-  for (const id of Object.keys(operator.projectileDefinitions ?? {}))
-    add('projectile', id, ['projectileDefinitions', id]);
   return catalogs;
 }

@@ -1,4 +1,3 @@
-import type { ProjectileDefinition } from './projectiles.ts';
 /**
  * 定义一名干员的基础资料、属性成长、技能组、天赋、潜能和常驻战斗能力。
  *
@@ -543,8 +542,6 @@ export interface OperatorDefinition {
   buffDefinitions?: OperatorBuffDefinitions;
   /** 干员级能力实体蓝图；子技能按引用它的技能等级编译。 */
   abilityEntityDefinitions?: OperatorAbilityEntityDefinitions;
-  /** 按原生 ProjectileData 身份组织的独立资源。 */
-  projectileDefinitions?: Readonly<Record<string, ProjectileDefinition>>;
   /** 原生角色常驻连携条件；多段连携的后续窗口仍由技能序列中的步骤开启。 */
   comboSkillConditions?: readonly ComboSkillConditionDefinition[];
   /** SkillDataBundle.comboSkillPriorityType；单敌人运行时不评分，但转换不得丢失。 */

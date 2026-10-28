@@ -281,7 +281,6 @@
     "action/castSkillDuringAction/parameters/skillId",
     "action/createTimedMarker/parameters/markerId",
     "action/findCharacterTeamTargets/parameters/selection",
-    "action/findOwnerSpawnedAbilityEntities/parameters/abilityEntityIds",
     "action/findOwnerSpawnedAbilityEntities/parameters/circularOrder",
     "action/finishBuffsById/parameters/buffIds",
     "action/finishBuffsByTag/parameters/buffTags",
@@ -313,7 +312,6 @@
     "data/boolean:eventDamageGameplayTagsMatch/tags",
     "data/boolean:eventHealTagsMatch/tags",
     "data/boolean:eventSkillIdIn/skillIds",
-    "data/boolean:ownerSpawnedAbilityEntityPresent/abilityEntityIds",
     "data/boolean:targetObjectTypeMatch/objectTypes",
     "data/boolean:timedMarkerPresent/markerId",
     "action/finishGlobalBuffsById/parameters/globalBuffIds"

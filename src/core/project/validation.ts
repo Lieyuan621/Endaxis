@@ -370,6 +370,19 @@ function validateSkillCast(
           });
         }
       }
+      if (value.simulationInputs.initialBlackboard !== undefined) {
+        const values = value.simulationInputs.initialBlackboard;
+        if (
+          !isObject(values) ||
+          Object.entries(values).some(
+            ([key, value]) => !key || typeof value !== 'number' || !Number.isFinite(value),
+          )
+        )
+          issues.push({
+            path: `${inputPath}.initialBlackboard`,
+            message: 'expected named finite initial values',
+          });
+      }
     }
   }
 

@@ -1,8 +1,4 @@
 import { expect, it } from 'vitest';
-import {
-  stationaryProjectileDefinition,
-  pointProjectileLaunch,
-} from '../../../test/projectileFlight';
 import { AbilityEntityChildSkillPrograms } from '../../abilities/abilityEntityChildSkillPrograms';
 import { LogicalAbilityEntityRuntime } from '../../abilities/logicalAbilityEntityRuntime';
 import { ProjectileCallbackPrograms } from '../../abilities/projectileCallbackPrograms';
@@ -158,8 +154,9 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
       buffs: saved.enemyBuffs,
     },
     instances: {
-      abilityEntities: { instances: new Map(), deadSources: [], soulParts: new Map() },
       projectiles: createProjectileLifecycleState(),
+      abilityEntities: { instances: new Map(), deadSources: [], soulParts: new Map() },
+
       globalBuffs: createGlobalBuffState(),
     },
   };
@@ -328,7 +325,11 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
         kind: 'launchProjectile' as const,
         parameters: {
           projectileId: 'restoration',
-          launch: pointProjectileLaunch,
+          schedule: {
+            endFrame: 3,
+            callbacks: [{ event: 'finish' as const, triggerFrames: [3] }],
+          },
+
           inheritActionBlackboard: true,
 
           recycleDelaySeconds: 0.05,
@@ -419,7 +420,6 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
           {},
           {
             abilityEntities: {},
-            projectiles: { restoration: stationaryProjectileDefinition(0.05) },
           },
         ),
       },

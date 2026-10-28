@@ -1,4 +1,4 @@
-import type { ProjectileHitDefinition } from '../../../../packages/game-data-contract/src/projectiles';
+import type { ProjectileHitParameters } from '../../../../packages/game-data-contract/src/actions';
 /**
  * 战斗中动态创建的实例数据。
  *
@@ -10,7 +10,8 @@ import type {
   BuffStackingType,
 } from '../../../../packages/game-data-contract/src/buffs';
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
-import type { ProjectileMovementState } from './projectileMovementState';
+
+import type { ProjectileScheduleState } from './projectileScheduleState';
 import type {
   AbilityEntityTargetRef,
   LogicalAbilityEntityDefinition,
@@ -140,7 +141,7 @@ export interface AbilityEntitySoulState {
 /** 能力实体的身份、寿命、标记、子技能与黑板数据。 */
 export interface LogicalAbilityEntityState {
   /** 出生时的位置快照，不随来源移动或回收而改变。 */
-  readonly position?: readonly [number, number, number];
+
   /** 创建时实际使用的固定定义槽位；与是否继承伤害施法来源无关。 */
   readonly definitionProgramId?: number;
   buffContainerCreated: boolean;
@@ -194,16 +195,15 @@ export interface ProjectileCallbackState {
 }
 
 export interface ProjectileHitTargets {
-  /** 实体 ID 对应上次命中时间；不允许重复时仅用于记录已命中目标。 */
-  hitTimes?: Map<string, number>;
   readonly targets: readonly RuntimeTargetRef[];
-  readonly hitTagFilter?: ProjectileHitDefinition['hitTagFilter'];
+  readonly hitTagFilter?: ProjectileHitParameters['hitTagFilter'];
 }
 
 export interface ProjectileLifetimeState {
-  /** 轨迹随机取样沿用发射动作的施法身份，不依赖是否配置回调技能。 */
+  readonly schedule: ProjectileScheduleState;
+  /** 回调和时延覆盖沿用发射动作的施法身份。 */
   readonly originCastId?: string;
-  readonly movement: ProjectileMovementState;
+
   readonly entityBlackboard: ActionBlackboardState;
   buffs: BuffContainerState | null;
   readonly callbacks: readonly ProjectileCallbackState[];
@@ -212,17 +212,7 @@ export interface ProjectileLifetimeState {
   source?: RuntimeTargetRef;
   phase: 'active' | 'finished' | 'marked' | 'reset';
   remainingSeconds: number;
-  readonly finishOnReach: boolean;
-  /** 碰撞检测状态；各目标的重复命中准入由 hitTargets 单独记录。 */
-  hitState: {
-    readonly maxHitCount?: number;
-    hitCount?: number;
-    readonly repeatIntervalSeconds?: number;
-    readonly onReach?: boolean;
-    pending: boolean;
-    readonly finishOnHit: boolean;
-    readonly retryRejectedHit?: boolean;
-  } | null;
+
   readonly recycleDelaySeconds: number;
   readonly resetListeners: Map<number, number>;
 }

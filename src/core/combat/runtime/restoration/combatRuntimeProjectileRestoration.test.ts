@@ -1,5 +1,3 @@
-import { stationaryProjectileFlight, pointProjectileFlight } from '../../../test/projectileFlight';
-
 import { expect, it, vi } from 'vitest';
 import type { CompiledAbilityEntityChildSkillProgram } from '../../../compiler/combatProgram';
 import { ActionBlackboard } from '../../actions/actionBlackboard';
@@ -17,10 +15,10 @@ import { TimeDilationRuntime } from '../../time/timeDilationRuntime';
 it('恢复后的投射物寿命读取自己的局部停顿，并随停顿解除恢复速度', () => {
   const original = new ProjectileLifecycleRuntime(() => 4);
   original.launch({
-    flight: stationaryProjectileFlight(1),
+    schedule: { endFrame: 30, callbacks: [] },
     recycleDelaySeconds: 0,
     resolveTickDeltaSeconds: () => 1 / 30,
-    finish: () => {},
+
     beforeReset: () => {},
   });
   const timeDilation = new TimeDilationRuntime({});
@@ -41,9 +39,6 @@ it('恢复后的投射物寿命读取自己的局部停顿，并随停顿解除�
     state: structuredClone(original.runtimeState),
   });
   bindRestoredCombatProjectileRelations({
-    sampleRange: () => () => {
-      throw new Error('unexpected trajectory sample');
-    },
     projectiles: restored,
     foundation: { shared: { timeDilation } } as never,
     entities: { targets: new Map() } as never,
@@ -52,12 +47,12 @@ it('恢复后的投射物寿命读取自己的局部停顿，并随停顿解除�
     },
   });
   restored.advanceFrame();
-  const remaining = restored.runtimeState.instances.get(4)!.remainingSeconds;
-  expect(1 - remaining).toBeCloseTo((1 / 30) * 0.5 * 0.25, 6);
+  const elapsed = restored.runtimeState.instances.get(4)!.schedule.elapsedFrames;
+  expect(elapsed).toBeCloseTo(0.5 * 0.25, 6);
   timeDilation.stop(stop);
   restored.advanceFrame();
-  expect(remaining - restored.runtimeState.instances.get(4)!.remainingSeconds).toBeCloseTo(
-    (1 / 30) * 0.5,
+  expect(restored.runtimeState.instances.get(4)!.schedule.elapsedFrames - elapsed).toBeCloseTo(
+    0.5,
     6,
   );
 });
@@ -70,9 +65,6 @@ it('空投射物目录的关系阶段保持无操作', () => {
 
   expect(() =>
     bindRestoredCombatProjectileRelations({
-      sampleRange: () => () => {
-        throw new Error('unexpected trajectory sample');
-      },
       projectiles,
       foundation: {} as never,
       entities: { targets: new Map() } as never,
@@ -126,22 +118,16 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
       },
       callbacks: [callback],
       callbackPrograms: [program],
-      flight: stationaryProjectileFlight(10, true),
-      ...(mode === 'filteredHit' || mode === 'emptyHitTargets'
-        ? {}
-        : { flight: pointProjectileFlight }),
-      ...(event === 'hit'
-        ? {
-            hitPolicy: {
-              finishOnHit: mode === 'emptyHitTargets',
-              retryRejectedHit: mode === 'filteredHit',
-            },
-            hit: () => 1,
-          }
-        : {}),
+      schedule: {
+        endFrame: 3,
+        callbacks: [{ event, triggerFrames: mode === 'filteredHit' ? [1, 2] : [1] }],
+      },
+      invokeScheduledCallback: () => {
+        throw new Error('original is saved before advancing');
+      },
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 1 / 30,
-      finish: () => {},
+
       beforeReset: () => {},
     });
     const saved = structuredClone(original.runtimeState);
@@ -192,9 +178,6 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
     const matchesHitTags = vi.fn(() => acceptsHit);
     bindRestoredCombatProjectileRelations({
       matchesHitTags,
-      sampleRange: () => () => {
-        throw new Error('unexpected trajectory sample');
-      },
       projectiles: restored,
       foundation,
       entities: { targets: new Map() } as never,
@@ -214,7 +197,7 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
     expect(requestedOwners).toEqual(['definition-owner']);
     expect(createHost).not.toHaveBeenCalled();
     if (mode === 'filteredHit') {
-      restored.advanceFrame();
+      for (let i = 0; i < 4; i++) restored.advanceFrame();
       expect(createHost).not.toHaveBeenCalled();
       expect(restored.getUnfinishedTargets()).toEqual([{ kind: 'abilityEntity', instanceId: 4 }]);
       expect(matchesHitTags).toHaveBeenCalledWith(
@@ -226,7 +209,7 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
       );
       acceptsHit = true;
     }
-    restored.advanceFrame();
+    for (let i = 0; i < 4; i++) restored.advanceFrame();
     if (mode === 'emptyHitTargets') {
       expect(createHost).not.toHaveBeenCalled();
       expect(restored.getUnfinishedTargets()).toEqual([{ kind: 'abilityEntity', instanceId: 4 }]);
@@ -234,16 +217,13 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
       return;
     }
     expect(createHost).toHaveBeenCalledOnce();
-    expect(observedCandidates).toEqual([
-      event !== 'finish' ? [{ kind: 'abilityEntity', instanceId: 4 }] : [],
-    ]);
+    expect(observedCandidates).toEqual([[{ kind: 'abilityEntity', instanceId: 4 }]]);
     expect(saved.instances.get(4)!.callbacks[0]!.host).not.toBeNull();
     const execution = saved.instances.get(4)!.callbacks[0]!.host!.skill.execution;
     if (mode === 'reach')
       expect(execution.inputTarget).toEqual({
         kind: 'spatialPoint',
         pointId: 9,
-        position: [0, 0, 0],
       });
     const before = execution.passedFrames;
     clock.advanceFrame();

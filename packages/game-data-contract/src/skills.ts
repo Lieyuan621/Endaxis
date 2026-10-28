@@ -1,3 +1,4 @@
+import type { GameplayTagQueryDefinition } from './gameplayTags.ts';
 /**
  * 定义技能、技能组、玩家操作路由和技能创建的能力实体。
  *
@@ -20,7 +21,7 @@ import type {
   SkillType,
 } from './primitives.ts';
 
-/** 生成期已从原生 born-tag 证据解析出的可执行能力实体查询。 */
+/** 能力实体查询；标签条件按运行时实例求值。 */
 export type AbilityEntityTargetQuery =
   /** 使用当前动作所属的能力实体。 */
   | {
@@ -30,8 +31,8 @@ export type AbilityEntityTargetQuery =
   | {
       /** 查找当前所有者此前生成且仍可访问的能力实体。 */
       readonly kind: 'ownerSpawned';
-      /** 只接受这些能力实体 ID；省略时不按 ID 筛选。 */
-      readonly abilityEntityIds?: readonly string[];
+      /** 按实例执行标签筛选，按声明顺序取交集。 */
+      tagFilters?: readonly GameplayTagQueryDefinition[];
     }
   /** 从动作环境中的指定键读取能力实体。 */
   | {

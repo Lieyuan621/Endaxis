@@ -1,12 +1,6 @@
-import type {
-  ProjectileDefinition,
-  ProjectileHitDefinition,
-} from '../../../../../packages/game-data-contract/src/projectiles.ts';
-import { omitsProjectileEnemyCollision } from './projectileSimulationScope.ts';
-import {
-  projectProjectileFlightSource,
-  projectProjectileFlightTemplateSource,
-} from './projectileFlightProjection.ts';
+import type { ProjectileHitParameters } from '../../../../../packages/game-data-contract/src/actions.ts';
+import type { ProjectileLaunchSchedule } from '../../../../../packages/game-data-contract/src/projectileSchedule.ts';
+
 import {
   isSupportedSingleEnemyOrGoodCharacterTargetFilter,
   isFixedGoodCharacterTargetFilter,
@@ -18,7 +12,7 @@ import type { KnownNativeActionLeafSource } from '../../source/actionLeaf.ts';
 import type { DeclaredBlackboardValueSource } from '../../source/blackboard.ts';
 import { collectNativeActionNodes } from '../../source/controlFlow.ts';
 import type { ProjectileRuntimeSource } from '../../source/projectileRuntime.ts';
-import { projectileMovementBlackboardReads } from './projectileMovementDependencies.ts';
+
 import type { ProjectileLaunchActionSource } from '../../source/referenceActions.ts';
 import type { SkillActionGraphSource } from '../../source/skillActionGraph.ts';
 import {
@@ -46,7 +40,7 @@ import {
   omitDeadSingleEnemyBounceBookkeeping,
 } from './projectileBlackboard.ts';
 
-/** A callback skill before any zero-distance/immediate execution optimization. */
+/** 回调技能的动作图、变量和自身时间线；发射时间表独立决定回调触发时刻。 */
 export interface ProjectileCallbackSkillSource {
   readonly program: ActionGraphBuilder<CompiledBuffStepSource>;
   readonly skillId: string;
@@ -96,22 +90,28 @@ export interface ProjectileProjectionCatalogSource {
   readonly callbackCastResources?: ReadonlyMap<string, SkillCastResourceDefinition>;
 }
 
-type ProjectileLaunchHitParameters = Omit<ProjectileHitDefinition, 'target'> & {
+type ProjectileLaunchHitParameters = Omit<ProjectileHitParameters, 'target'> & {
   target?: 'controlledOperator' | 'allOperators' | 'currentTarget';
 };
 
 /**
  * 把版本化 ProjectileData、实体模板与回调 SkillData 目录接成公共动作扩展。
- * 移动参数与回调共用同一发射定义；未知端点和形状在来源路径上报错。
+ * 回调时间表与子技能共用同一发射定义；命中目标仍保留原生筛选条件。
  */
 export function createProjectileProjectionExtensionSource(input: {
+  readonly shouldOmitLaunch?: (launch: ProjectileLaunchActionSource) => boolean;
+  readonly resolveSchedule?: (
+    launch: ProjectileLaunchActionSource,
+    sourcePath: string,
+    events: readonly ProjectileLaunchSchedule['callbacks'][number]['event'][],
+  ) => ProjectileLaunchSchedule | undefined;
   readonly catalog: ProjectileProjectionCatalogSource;
-  readonly registerProjectile?: (id: string, definition: ProjectileDefinition) => void;
   readonly callbackContext: Omit<CombatActionProjectionContextSource, 'graph'>;
   readonly visualOnlyIds?: ReadonlySet<string>;
   readonly callbackExtensions?: CombatActionProjectionExtensionsSource;
 }): NonNullable<CombatActionProjectionExtensionsSource['compileProjectileLaunch']> {
   return (launch, sourcePath, projectionContext) => {
+    if (input.shouldOmitLaunch?.(launch)) return [];
     let callbackContext: CombatActionProjectionContextSource = {
       ...input.callbackContext,
       graph: projectionContext.graph,
@@ -173,62 +173,38 @@ export function createProjectileProjectionExtensionSource(input: {
     );
     if (!['Source', 'Owner'].includes(launch.projectileSource.targetSource))
       throw new Error(`${sourcePath}: projectile source must resolve to Source or Owner`);
-    if (!hasNoModeledBlockingSurfaces(runtime))
-      throw new Error(`${sourcePath}: projectile environment blocking is not modeled`);
-    // 独立落地路线在落点触发 Block，超时仍保留 Finish 兜底。
-    const landsAtTarget =
-      enabled.some(route => route.event === 'block') &&
-      enabled.every(
-        route => route.event === 'launch' || route.event === 'block' || route.event === 'finish',
-      );
-
-    const collisionCanHit = !isEmptyProjectileCollisionPopulation(runtime.targetFilter);
-    const routes = enabled.flatMap(route =>
-      (route.event === 'block' && !landsAtTarget) ||
-      (route.event === 'hit' && !runtime.hitOnReach && !collisionCanHit)
-        ? []
-        : [{ event: route.event, skillId: route.skillId }],
+    const routes = enabled.filter(
+      route =>
+        !(
+          route.event === 'hit' &&
+          !runtime.hitOnReach &&
+          isEmptyProjectileCollisionPopulation(runtime.targetFilter)
+        ),
     );
-    const hasHit = routes.some(route => route.event === 'hit');
-    const tracksHits =
-      hasHit ||
-      (runtime.maxHitCount > 0 &&
-        (runtime.hitOnReach ||
-          (collisionCanHit &&
-            runtime.colliderShape !== null &&
-            runtime.colliderShape.shapeType !== 0)));
-    if (runtime.hitAndBlockDetectDelayTime !== 0)
-      throw new Error(`${sourcePath}: projectile collision delay requires lifecycle projection`);
-    if (landsAtTarget && !runtime.finishOnBlock)
-      throw new Error(
-        `${sourcePath}: non-finishing projectile landing requires lifecycle projection`,
-      );
+    const schedule = input.resolveSchedule?.(
+      launch,
+      sourcePath,
+      routes.map(route => route.event),
+    ) ?? {
+      // 未配置时，启用的回调在发射当刻执行。
+      endFrame: 0,
+      callbacks: routes.map(route => ({ event: route.event, triggerFrames: [0] })),
+    };
+    const tracksHits = routes.some(route => route.event === 'hit');
     const hitsParty =
       tracksHits && !runtime.hitOnReach && isFixedGoodCharacterTargetFilter(runtime.targetFilter);
-    if (hitsParty && runtime.allowHitSameTarget)
-      throw new Error(`${sourcePath}: repeated party hits require per-member interval state`);
     if (hitsParty)
       callbackContext = {
         ...callbackContext,
         actionTargetTarget: 'actionInputTarget',
         actionInputIsOperator: true,
       };
-    if (runtime.collisionDetectTiming !== 0 || runtime.canTraceTargetAfterReach)
-      throw new Error(
-        `${sourcePath}: projectile collision timing or post-reach tracing requires projection`,
-      );
     if (
       tracksHits &&
       !runtime.hitOnReach &&
       !isSupportedSingleEnemyOrGoodCharacterTargetFilter(runtime.targetFilter)
     )
       throw new Error(`${sourcePath}: unsupported projectile collision population`);
-    if (!Number.isFinite(runtime.finishDuration) || runtime.finishDuration <= 0)
-      throw new Error(`${sourcePath}: projectile duration must be positive and finite`);
-    const flight = {
-      ...projectProjectileFlightSource(runtime, launch, projectionContext, sourcePath),
-      ...(landsAtTarget ? { landingAtTarget: true } : {}),
-    };
     const hitTagFilter = !runtime.hitOnReach
       ? projectProjectileHitTagFilter(runtime, callbackContext, sourcePath)
       : undefined;
@@ -269,7 +245,6 @@ export function createProjectileProjectionExtensionSource(input: {
         },
       };
     });
-    const movementBlackboardReads = projectileMovementBlackboardReads(runtime);
     // 裁剪必须作用于真正发射的程序，依赖收集随后读取同一份程序。
     callbacks.forEach((callback, callbackIndex) => {
       const timelines = callback.skill.scheduledSequences;
@@ -291,39 +266,22 @@ export function createProjectileProjectionExtensionSource(input: {
               .flatMap(item => callback.compiled.program.reachableActions(item.sequence)),
             ...otherCallbacks,
           ],
-          movementBlackboardReads,
         ),
       }));
     });
-    const nativeHit: ProjectileHitDefinition | undefined = omitsProjectileEnemyCollision(
-      launch.projectileId,
-      runtime,
-    )
-      ? undefined
-      : {
+    const hit: ProjectileLaunchHitParameters | undefined = tracksHits
+      ? {
           ...(!runtime.hitOnReach && isFixedGoodCharacterTargetFilter(runtime.targetFilter)
             ? { target: 'allOperators' as const }
             : {}),
-          ...(runtime.hitOnReach ? { onReach: true } : {}),
-          finishOnHit: runtime.maxHitCount === 1,
-          maxHitCount: runtime.maxHitCount,
-          ...(runtime.allowHitSameTarget && !runtime.hitOnReach
-            ? { repeatIntervalSeconds: runtime.hitIntervalPerTarget }
+          ...(hitTagFilter === undefined ? {} : { hitTagFilter }),
+          ...(runtime.hitOnReach && launch.target.targetSource === 'MainCharacter'
+            ? { target: 'controlledOperator' as const }
             : {}),
-          ...(hitTagFilter === undefined ? {} : { hitTagFilter, retryRejectedHit: true }),
-        };
-    const hit: ProjectileLaunchHitParameters | undefined =
-      tracksHits && nativeHit
-        ? {
-            ...nativeHit,
-            ...(runtime.hitOnReach && launch.target.targetSource === 'MainCharacter'
-              ? { target: 'controlledOperator' as const }
-              : {}),
-            ...(reachesCurrentOperator ? { target: 'currentTarget' as const } : {}),
-          }
-        : undefined;
+          ...(reachesCurrentOperator ? { target: 'currentTarget' as const } : {}),
+        }
+      : undefined;
     const blackboard = compileProjectileBlackboardSource({
-      movementBlackboardReads,
       sourcePath,
       launch,
       template,
@@ -337,20 +295,21 @@ export function createProjectileProjectionExtensionSource(input: {
         ),
       })),
       allowMissingEntityBlackboardEvidence: true,
-      blockEndsFlight: landsAtTarget,
     });
-    input.registerProjectile?.(launch.projectileId, {
-      flight: projectProjectileFlightTemplateSource(runtime, sourcePath),
-      blackboard: blackboard.entityInitialValues,
-      ...(nativeHit === undefined ? {} : { hit: nativeHit }),
-    });
+    const callbackEvents = new Set(callbacks.map(callback => callback.route.event));
+    if (
+      schedule.callbacks.length !== callbacks.length ||
+      schedule.callbacks.some(callback => !callbackEvents.has(callback.event))
+    )
+      throw new Error(`${sourcePath}: projectile schedule does not match compiled callbacks`);
     return [
       {
         kind: 'launchProjectile',
         parameters: {
+          schedule,
           ...blackboard,
           projectileId: launch.projectileId,
-          flight,
+
           ...(enumeratedEntityPoints
             ? {
                 emitters: {
@@ -372,13 +331,15 @@ export function createProjectileProjectionExtensionSource(input: {
           ),
           ...(hit === undefined ? {} : { hit }),
         },
-        callbacks: callbacks.map(({ route, skill, compiled }) => ({
-          event: route.event,
-          skill: {
-            actionGraph: { main: compiled.program.finish(), macros: {} },
-            ...skill,
-          },
-        })),
+        callbacks: schedule.callbacks
+          .map(entry => callbacks.find(callback => callback.route.event === entry.event)!)
+          .map(({ route, skill, compiled }) => ({
+            event: route.event,
+            skill: {
+              actionGraph: { main: compiled.program.finish(), macros: {} },
+              ...skill,
+            },
+          })),
       },
     ];
   };
@@ -482,7 +443,7 @@ export function compileProjectileCallbackSkillSource(input: {
 }
 
 /**
- * 新增目标控制会改变命中资格或发射数量，不能由“零距离”自动推出无影响。
+ * 目标控制会改变命中资格或发射数量，不能因使用回调时间表而省略。
  * OnlyHit 是白名单：仅当过滤集合静态包含唯一敌人时可消去。
  * 即使没有战斗回调，发射仍须通过此守卫并保留对象寿命。
  */
@@ -533,17 +494,5 @@ function targetReferenceSelectsUniqueEnemy(
     target.targetSource === 'Context' &&
     target.targetGroupKey !== '' &&
     context.staticEnemyTargetGroupKeys?.has(target.targetGroupKey) === true
-  );
-}
-
-function hasNoModeledBlockingSurfaces(runtime: ProjectileRuntimeSource): boolean {
-  if (runtime.blockLayerDef?.value === 0 || runtime.blockLayerDef?.value === 1) return true;
-  // 当前游戏 TagManager：Default=0、Walkable=6、Climbable=7、Terrain=20。
-  // 角色、敌人等其他层不属于场景表面，不能一并忽略。
-  const sceneSurfaceMask = (1 << 0) | (1 << 6) | (1 << 7) | (1 << 20);
-  return (
-    runtime.blockLayerDef?.value === -1 &&
-    runtime.blockLayerMask !== undefined &&
-    (runtime.blockLayerMask & ~sceneSurfaceMask) === 0
   );
 }

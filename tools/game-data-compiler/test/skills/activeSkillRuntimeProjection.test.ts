@@ -1937,7 +1937,7 @@ describe('主动技能正式时间轴投影', () => {
       { direction, dynamic: true },
     ]),
   )(
-    '固定落点以敌人为 Owner 计算 %s，不误用干员朝向',
+    '固定点保留目标来源，方向配置不影响逻辑身份 %s',
     ({ direction: selectorDirection, dynamic }) => {
       const point = {
         ...fixedPoint('launchPos'),
@@ -1967,24 +1967,6 @@ describe('主动技能正式时间轴投影', () => {
           saveToContextKey: 'launchPos',
           count: { kind: 'constant', value: 1 },
           origin: { kind: 'inputTarget' },
-          offset: {
-            local: [
-              { kind: 'constant', value: 0 },
-              { kind: 'constant', value: 0 },
-              { kind: 'constant', value: 6 },
-            ],
-            facing: dynamic
-              ? {
-                  source: { kind: 'inputTarget' },
-                  target: { kind: 'source' },
-                  invert: selectorDirection === 'TargetToSource',
-                }
-              : selectorDirection === 'SourceToTarget'
-                ? 'enemyToOperator'
-                : 'operatorToEnemy',
-            rotation: [0, 0, 0, 1],
-            centerOnGround: false,
-          },
         },
       });
     },
@@ -2068,14 +2050,6 @@ describe('主动技能正式时间轴投影', () => {
           saveToContextKey: 'random-points',
           count: { kind: 'constant', value: 2 },
           origin: { kind: 'context', key: 'anchor' },
-          randomDistribution: {
-            shape: 'sector',
-            radius: { kind: 'constant', value: 1.6 },
-            minimumRadius: { kind: 'constant', value: 0.4 },
-            angleDegrees: { kind: 'constant', value: 180 },
-            localPlaneRotation: [-90, 0, 0].map(value => ({ kind: 'constant', value })),
-            centerOnGround: false,
-          },
         },
       });
     },
@@ -2164,15 +2138,6 @@ describe('主动技能正式时间轴投影', () => {
         saveToContextKey: 'point',
         count: { kind: 'constant', value: 1 },
         origin: { kind: 'mainCharacter' },
-        offset: {
-          local: [
-            { kind: 'constant', value: 0 },
-            { kind: 'constant', value: 0 },
-            { kind: 'constant', value: 2.2 },
-          ],
-          facing: 'operatorToEnemy',
-          centerOnGround: false,
-        },
       },
     });
     expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual(
@@ -2629,7 +2594,7 @@ describe('主动技能正式时间轴投影', () => {
     ]);
   });
 
-  it('按静态 born tag 目录筛选自有能力实体的全局时间倍率忽略目标', () => {
+  it('保留运行时标签筛选的自有能力实体时间倍率忽略目标', () => {
     const tagId = gameplayTagIdFromPath('Test/Tag123');
     const catalog = compileAbilityEntityTemplateCatalogSource({
       abilityentity_matching: {
@@ -2682,7 +2647,7 @@ describe('主动技能正式时间轴投影', () => {
         kind: 'setIgnoreGlobalTimeScale',
         parameters: {
           abilityEntityTargets: [
-            { kind: 'ownerSpawned', abilityEntityIds: ['abilityentity_matching'] },
+            { kind: 'ownerSpawned', tagFilters: [{ queryType: 'hasAny', tags: ['Test/Tag123'] }] },
           ],
           ignore: true,
           revertOnEnd: true,
@@ -2926,7 +2891,6 @@ describe('主动技能正式时间轴投影', () => {
                 kind: 'ownerSpawned',
                 objectType: 'abilityEntity',
                 owner: { kind: selectorOwner === 'ActionOwner' ? 'owner' : 'source' },
-                abilityEntityIds: ['abilityentity_matching', 'abilityentity_other'],
                 sameSourceSkillCast: false,
               },
             },

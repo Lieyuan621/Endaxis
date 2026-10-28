@@ -109,36 +109,6 @@ function compile(input: {
 }
 
 describe('projectile blackboard', () => {
-  it('retains movement-only values and assignments without retaining unused entity values', () => {
-    const result = compileProjectileBlackboardSource({
-      sourcePath: 'skill.LaunchProjectile',
-      launch: {
-        ...launch,
-        assignments: [
-          {
-            targetKey: 'EntityBB_speed',
-            valueType: 'Numeric',
-            numericValue: 12,
-            stringValue: '',
-            useDirectValue: true,
-            inputValueKey: '',
-          },
-        ],
-      },
-      template: {
-        projectileId: launch.projectileId,
-        entityBlackboard: [
-          { key: 'EntityBB_speed', value: 10, isDynamic: false },
-          { key: 'EntityBB_unused', value: 99, isDynamic: false },
-        ],
-      },
-      invocations: [],
-      movementBlackboardReads: new Set(['EntityBB_speed']),
-    });
-    expect(result.entityInitialValues).toEqual({ EntityBB_speed: 10 });
-    expect(result.entityAssignments).toEqual({ EntityBB_speed: { kind: 'constant', value: 12 } });
-  });
-
   it('accepts an enabled but empty entity assignment list with an evidenced empty template board', () => {
     const { result } = compile({ invocations: [emptyInvocation()] });
 

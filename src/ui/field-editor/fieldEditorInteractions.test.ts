@@ -563,37 +563,6 @@ it('typed collections apply through real history once, preserving siblings and d
     f.stop();
   }
 });
-it('cannot use an enclosing entity catalog when the query owner comes from another context', async () => {
-  const attempts: unknown[] = [];
-  const fields = actionNodeSchemas.findOwnerSpawnedAbilityEntities.fields;
-  const ids = fields.find(f => f.path.at(-1) === 'abilityEntityIds')!;
-  const f = await mountSetup(NodeInspectorFields, {
-    kind: 'findOwnerSpawnedAbilityEntities',
-    value: {
-      kind: 'findOwnerSpawnedAbilityEntities',
-      parameters: { owner: { kind: 'source' }, saveToContextKey: 'targets' },
-    },
-    fields,
-    referenceChoices: { abilityEntity: referenceCatalog('abilityEntity') },
-    applyValue: (value: unknown) => {
-      attempts.push(value);
-      return true;
-    },
-  });
-  try {
-    await f.update({
-      value: {
-        kind: 'findOwnerSpawnedAbilityEntities',
-        parameters: { owner: { kind: 'context', key: 'other' }, saveToContextKey: 'targets' },
-      },
-    });
-    expect(f.state.collectionChoices(ids)).toBeUndefined();
-    f.state.changeStructured(ids, ['known']);
-    expect(attempts).toEqual([]);
-  } finally {
-    f.stop();
-  }
-});
 it('tag creation checks semantic syntax and updated reference collections before emitting', async () => {
   const { definitionSchemas } = await import('../definition-editor/definitionSchemas.generated');
   const created: unknown[] = [];
@@ -755,61 +724,6 @@ it('stages native timing sibling switches as one validated node transaction with
     await f.update({ readonly: true });
     expect(f.state.typedDrafts.value).toEqual({});
     expect(f.state.pending.value).toBe(false);
-  } finally {
-    f.stop();
-  }
-});
-
-it('acknowledges existing list controls coherently during a staged structural transaction and clears canceled proposals', async () => {
-  const fields = actionNodeSchemas.findOwnerSpawnedAbilityEntities.fields;
-  const circular = fields.find(field => field.path.at(-1) === 'circularOrder')!;
-  const ids = fields.find(field => field.path.at(-1) === 'abilityEntityIds')!;
-  const changes: unknown[] = [];
-  const f = await mountSetup(NodeInspectorFields, {
-    kind: 'findOwnerSpawnedAbilityEntities',
-    value: {
-      kind: 'findOwnerSpawnedAbilityEntities',
-      parameters: {
-        owner: { kind: 'source' },
-        saveToContextKey: 'targets',
-        abilityEntityIds: ['known'],
-      },
-    },
-    fields,
-    referenceChoices: { abilityEntity: referenceCatalog('abilityEntity', ['known', 'new']) },
-    applyValue: (next: unknown) => {
-      changes.push(next);
-      return true;
-    },
-  });
-  try {
-    f.state.stageStructured(circular, {
-      indexBlackboardKey: 'index',
-      desiredCount: 1,
-      reverseFlag: -1,
-    });
-    f.state.changeStructured(ids, ['new', 'known']);
-    expect(changes).toEqual([]);
-    await f.update({ fields: [...fields] });
-    expect(f.state.pending.value).toBe(true);
-    expect(f.state.displayedValue(ids)).toEqual(['new', 'known']);
-    expect(f.state.displayedValue(circular)).toHaveProperty('indexBlackboardKey', 'index');
-    f.state.discardStructured(ids);
-    expect(f.state.displayedValue(ids)).toEqual(['known']);
-    expect(f.state.pending.value).toBe(true);
-    f.state.changeStructured(ids, ['new']);
-    await f.update({ referenceChoices: { abilityEntity: referenceCatalog('abilityEntity') } });
-    expect(f.state.apply()).toBe(false);
-    expect(changes).toEqual([]);
-    expect(f.state.displayedValue(ids)).toEqual(['new']);
-    await f.update({
-      value: {
-        kind: 'findOwnerSpawnedAbilityEntities',
-        parameters: { owner: { kind: 'source' }, saveToContextKey: 'different-node' },
-      },
-    });
-    expect(f.state.pending.value).toBe(false);
-    expect(f.state.typedDrafts.value).toEqual({});
   } finally {
     f.stop();
   }

@@ -48,6 +48,7 @@ import {
   type TimelineActionProcessor,
 } from '../timeline/timelineActionProcessor';
 import { ActionBlackboard, resolveActionValueOperand } from './actionBlackboard';
+import { resolveProjectileSchedule } from '../abilities/resolveProjectileSchedule';
 import type { CombatActionExecution } from './actionGraphExecution';
 import { ActionGraphExecution, type ActionGraphExecutionHost } from './actionGraphExecution';
 import { CombatStep, type CombatExecutionContext } from './combatStep';
@@ -310,15 +311,9 @@ class ProjectileLaunchStep extends StatelessCombatStep {
             { ...parent, currentTarget: target, actionInputTarget: target },
             prepared.forkEntityScope(),
             onlyHitTargets,
-            emitterTargets?.[emitterIndex],
           );
       } else {
-        this.launchSingle(
-          parent,
-          prepared.forkEntityScope(),
-          onlyHitTargets,
-          emitterTargets?.[emitterIndex],
-        );
+        this.launchSingle(parent, prepared.forkEntityScope(), onlyHitTargets);
       }
     }
     return true;
@@ -328,7 +323,6 @@ class ProjectileLaunchStep extends StatelessCombatStep {
     parent: CombatOperationContext,
     blackboard: ActionBlackboard,
     onlyHitTargets?: readonly RuntimeTargetRef[],
-    emitter?: RuntimeTargetRef,
   ): void {
     const launch = parent.launchProjectile!;
     const sourceId =
@@ -379,32 +373,14 @@ class ProjectileLaunchStep extends StatelessCombatStep {
         }),
       };
     });
-    entity = launch({
-      resolveFlightValue: value => resolveActionValueOperand(value, parent.blackboard),
-      resolveFlightTargets: (query, role) => {
-        // 一次发射绑定遍历中的单个端点；两组查询可以使用同一个 Context 键。
-        if (query.kind === 'context') {
-          if (
-            role === 'start' &&
-            query.key === this.step.parameters.emitters?.contextKey &&
-            emitter
-          )
-            return [emitter];
-          if (
-            role === 'target' &&
-            query.key === this.step.parameters.targets?.contextKey &&
-            parent.currentTarget
-          )
-            return [parent.currentTarget];
-        }
-        if (!this.runtime.operations.queryTargets)
-          throw new Error('projectile endpoint requires target queries');
-        return this.runtime.operations.queryTargets(query, parent);
-      },
+    const launched = launch({
+      schedule: resolveProjectileSchedule(this.step.parameters.schedule, input =>
+        typeof input === 'number' ? input : resolveActionValueOperand(input, parent.blackboard),
+      ),
       entityBlackboard: blackboard.runtimeState.entity!,
       onlyHitTargets,
       syncTimeScale: this.step.parameters.syncTimeScale,
-      flight: this.step.parameters.flight,
+
       recycleDelaySeconds: this.step.parameters.recycleDelaySeconds ?? 0,
       callbacks,
       skillCastInfo: parent.skillCastInfo,
@@ -413,11 +389,14 @@ class ProjectileLaunchStep extends StatelessCombatStep {
       hit: this.step.parameters.hit,
       hitTarget:
         this.step.parameters.hit?.target === 'currentTarget' ? parent.currentTarget : undefined,
-    }).target;
+    });
+    entity = launched.target;
     // 原生在发射初始化末尾施放，目标为投射物自身。必须等 launch 返回后再执行：
     // 此时实例、来源、回收绑定均已就绪；恢复切面不会重新执行发射动作。
     for (const callback of callbacks)
-      if (callback.runtime.runtimeState.event === 'launch') callback.runtime.start(entity);
+      if (callback.runtime.runtimeState.event === 'launch')
+        callback.runtime.runtimeState.inputTarget = entity;
+    launched.startSchedule();
   }
 }
 

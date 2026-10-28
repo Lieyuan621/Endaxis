@@ -9,6 +9,23 @@ import {
 import { PROJECT_SCHEMA_VERSION, type TrackDocument } from './schema';
 import { validateProjectDocument } from './validation';
 
+it('旧方案统一距离不再参与加载和保存，且不修改导入对象', () => {
+  const project = createEmptyProject({ createdWith: 'test' });
+  const scenario = project.scenarios[0]!;
+  const input = {
+    ...project,
+    scenarios: [{ ...scenario, battle: { ...scenario.battle, operatorEnemyDistanceMeters: 100 } }],
+  };
+  const result = parseProjectDocument(input);
+  expect(result.ok).toBe(true);
+  if (!result.ok) throw new Error('expected valid project');
+  expect(result.value.scenarios[0]!.battle).not.toHaveProperty('operatorEnemyDistanceMeters');
+  expect(JSON.parse(serializeProjectDocument(input)).scenarios[0].battle).not.toHaveProperty(
+    'operatorEnemyDistanceMeters',
+  );
+  expect(input.scenarios[0]!.battle.operatorEnemyDistanceMeters).toBe(100);
+});
+
 it('旧存档的敌人 edited 字段不参与校验，新存档不再生成该字段', () => {
   const project = createEmptyProject({ createdWith: 'test' });
   expect(project.scenarios[0]!.enemy).not.toHaveProperty('edited');

@@ -500,19 +500,13 @@ function numberedPlacementIds(prefix: string) {
 }
 
 describe('registered generated operators', () => {
-  it.each([
-    ['battleSkill', 0],
-    ...[0, 2, 10, 30].flatMap(distance =>
-      ['comboSkill', 'ultimate'].map(group => [group, distance] as const),
-    ),
-  ] as const)(
-    '噗切娜 %s 在 %s 米的专属行为可经页面模拟入口执行',
-    async (skillGroupKey, distance) => {
+  it.each(['battleSkill', 'comboSkill', 'ultimate'] as const)(
+    '噗切娜 %s 的专属行为可经页面模拟入口执行',
+    async skillGroupKey => {
       const operator = gameDataRepository.getOperator('purrchena');
       if (!operator) throw new Error('purrchena is not registered');
       const scenario = createEmptyScenario('scenario:purrchena', '新干员正式入口');
       scenario.battle.durationFrames = 600;
-      scenario.battle.operatorEnemyDistanceMeters = distance;
       scenario.tracks[0] = {
         id: 'track:purrchena',
         operator: createDefaultOperatorInstance(operator),
@@ -1948,7 +1942,6 @@ describe('registered generated operators', () => {
 
   it('runs all four Fluorite ultimate projectile hits with the native per-target marker', () => {
     const scenario = createEmptyScenario('scenario:fluorite:ultimate', '萤石终结技完整回归');
-    scenario.battle.operatorEnemyDistanceMeters = 0;
     scenario.battle.durationFrames = 120;
     scenario.enemy.editable.hp = 10_000_000;
     scenario.tracks[0] = {
@@ -2011,8 +2004,8 @@ describe('registered generated operators', () => {
         entry.data?.castId === 'skillCast:fluorite:ultimate',
     );
     expect(launches.map(entry => entry.frame)).toEqual([60, 64, 68, 73]);
-    // Battle 阶段发射后，下帧 Default 阶段才执行投射物首次碰撞。
-    expect(hits.map(entry => entry.frame)).toEqual(launches.map(entry => entry.frame + 1));
+    // 每枚弹体使用3米标定的2帧时延，保留四次命中及原生限次。
+    expect(hits.map(entry => entry.frame)).toEqual(launches.map(entry => entry.frame + 2));
     expect(hits.every(entry => Number(entry.data?.value) > 0)).toBe(true);
     expect(fluorite.conversionSupport).toEqual({
       completeness: 'complete',
@@ -3651,7 +3644,7 @@ describe('registered generated operators', () => {
       },
     });
 
-    // 落地与超时是替代路径：首 Tick 生成，三秒后不能再生成第二份。
+    // 第28帧发射，按原生顶点轨迹与速度倍率计算18帧落地；结束路线不能再生成第二份。
     expect(
       result.receiptEntries
         .filter(
@@ -3660,7 +3653,7 @@ describe('registered generated operators', () => {
             entry.data?.abilityEntityId === 'abilityentity_chr_0027_tangtang_comboskill_water',
         )
         .map(entry => entry.frame),
-    ).toEqual([28]);
+    ).toEqual([46]);
 
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({

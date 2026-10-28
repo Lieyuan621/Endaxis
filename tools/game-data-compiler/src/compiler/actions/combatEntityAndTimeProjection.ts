@@ -953,12 +953,16 @@ export function compileBuffLeafNode(
         ownerSpawnedQuery.objectFilter === 'abilityEntity' &&
         ownerSpawnedQuery.owner.kind === 'actionOwner' &&
         ownerSpawnedQuery.postProcessors.length === 0 &&
-        ownerSpawnedQuery.validators.every(validator => validator.kind === 'tag') &&
-        ownerSpawnedQuery.candidateTemplateIds.length > 0
+        ownerSpawnedQuery.validators.every(validator => validator.kind === 'tag')
           ? ([
               {
                 kind: 'ownerSpawned' as const,
-                abilityEntityIds: ownerSpawnedQuery.candidateTemplateIds,
+                tagFilters: ownerSpawnedQuery.validators
+                  .filter(v => v.kind === 'tag')
+                  .map(v => ({
+                    queryType: v.query.queryType,
+                    tags: projectGameplayTags(v.query.tagIds, context, node.sourcePath),
+                  })),
               },
             ] as const)
           : null;
@@ -1191,8 +1195,7 @@ export function compileBuffLeafNode(
       taggedOwnerSpawnedQuery.objectFilter === 'abilityEntity' &&
       taggedOwnerSpawnedQuery.owner.kind === 'actionSource' &&
       taggedOwnerSpawnedQuery.postProcessors.length === 0 &&
-      taggedOwnerSpawnedQuery.validators.every(validator => validator.kind === 'tag') &&
-      taggedOwnerSpawnedQuery.candidateTemplateIds.length > 0;
+      taggedOwnerSpawnedQuery.validators.every(validator => validator.kind === 'tag');
     if (taggedOwnerSpawnedQuery !== null && !namedTaggedOwnerSpawnedOnlyGlobal) {
       throw new Error(`${node.sourcePath}: unsupported tagged AbilityEntity ignore query`);
     }
@@ -1227,7 +1230,18 @@ export function compileBuffLeafNode(
                           ? ('current' as const)
                           : ('ownerSpawned' as const),
                         ...(namedTaggedOwnerSpawnedOnlyGlobal
-                          ? { abilityEntityIds: taggedOwnerSpawnedQuery!.candidateTemplateIds }
+                          ? {
+                              tagFilters: taggedOwnerSpawnedQuery!.validators
+                                .filter(v => v.kind === 'tag')
+                                .map(v => ({
+                                  queryType: v.query.queryType,
+                                  tags: projectGameplayTags(
+                                    v.query.tagIds,
+                                    context,
+                                    node.sourcePath,
+                                  ),
+                                })),
+                            }
                           : {}),
                       },
                     ],
@@ -1977,7 +1991,13 @@ export function compileBuffLeafNode(
             kind: 'findOwnerSpawnedAbilityEntities',
             parameters: {
               saveToContextKey: write.targetGroupKey,
-              abilityEntityIds: query.candidateTemplateIds,
+              ...(query.objectFilter === 'none' ? { objectType: 'none' as const } : {}),
+              tagFilters: query.validators
+                .filter(v => v.kind === 'tag')
+                .map(v => ({
+                  queryType: v.query.queryType,
+                  tags: projectGameplayTags(v.query.tagIds, context, node.sourcePath),
+                })),
               owner:
                 ownerContextKey !== undefined
                   ? { kind: 'context', key: ownerContextKey }
@@ -2174,73 +2194,8 @@ export function compileBuffLeafNode(
     ) {
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'spatialPoint');
-      const fixed = write.finderFixedPoint;
-      const directionOwnerIsEnemy =
-        ['CurrentTarget', 'InputTarget'].includes(write.selectorOwner ?? '') &&
-        context.actionTargetTarget === 'enemy';
-      const directionTargetsOperator =
-        write.directionTarget === 'ActionSource' && context.actionSourceTarget === 'caster';
-      const reverseFixedDirection = directionOwnerIsEnemy && directionTargetsOperator;
-      const directionTargetsEnemy =
-        (write.directionTarget === 'ContextTarget' &&
-          (context.staticEnemyTargetGroupKeys?.has(write.directionContextKey) === true ||
-            partyTargetGroups.get(write.directionContextKey) === 'enemy')) ||
-        (['InputTarget', 'CurrentTarget'].includes(write.directionTarget ?? '') &&
-          context.actionTargetTarget === 'enemy');
-      const advanced = write.advancedDirection;
-      const directionTarget =
-        write.directionTarget === 'ActionOwner'
-          ? { kind: 'owner' as const }
-          : write.directionTarget === 'ActionSource'
-            ? { kind: 'source' as const }
-            : write.directionTarget === 'ContextTarget' && write.directionContextKey
-              ? { kind: 'context' as const, key: write.directionContextKey }
-              : ['CurrentTarget', 'InputTarget'].includes(write.directionTarget ?? '')
-                ? { kind: 'inputTarget' as const }
-                : undefined;
-      const facing =
-        write.enableAdvancedDirection &&
-        advanced?.customSourceAndTarget &&
-        advanced.clampToXZ &&
-        advanced.source &&
-        advanced.target &&
-        ['SourceToTarget', 'TargetToSource'].includes(advanced.directionType)
-          ? {
-              source: projectActionTargetQuery(
-                advanced.source,
-                context,
-                `${node.sourcePath}.direction.source`,
-              ),
-              target: projectActionTargetQuery(
-                advanced.target,
-                context,
-                `${node.sourcePath}.direction.target`,
-              ),
-              invert: advanced.invertDirection !== (advanced.directionType === 'TargetToSource'),
-            }
-          : !write.enableAdvancedDirection &&
-              directionTarget !== undefined &&
-              ['SourceToTarget', 'TargetToSource'].includes(write.selectorDirection ?? '') &&
-              !reverseFixedDirection
-            ? {
-                source: projectSelectorOwner(write, node.sourcePath),
-                target: directionTarget,
-                invert: write.selectorDirection === 'TargetToSource',
-              }
-            : undefined;
-      const knownOffset =
-        fixed !== undefined &&
-        // 固定端点模型不还原导航网格修正，但仍保留中心与显式偏移。
-        (facing !== undefined ||
-          fixed.positionOffset.every(value => value === 0) ||
-          (!write.enableAdvancedDirection &&
-            context.actionSourceTarget === 'caster' &&
-            (['SourceForward', 'CameraForward'].includes(write.selectorDirection ?? '') ||
-              ((directionTargetsEnemy || reverseFixedDirection) &&
-                ['SourceToTarget', 'TargetToSource'].includes(write.selectorDirection ?? '')))));
-      const centerOrigin = !knownOffset
-        ? undefined
-        : write.center === 'ActionOwner'
+      const centerOrigin =
+        write.center === 'ActionOwner'
           ? { kind: 'owner' as const }
           : write.center === 'ActionSource'
             ? { kind: 'source' as const }
@@ -2265,25 +2220,6 @@ export function compileBuffLeafNode(
                       : centerOrigin === undefined
                         ? {}
                         : { origin: centerOrigin }),
-                    ...(centerOrigin !== undefined && fixed !== undefined
-                      ? {
-                          offset: {
-                            local: [
-                              { kind: 'constant' as const, value: fixed.positionOffset[0] },
-                              { kind: 'constant' as const, value: fixed.positionOffset[1] },
-                              { kind: 'constant' as const, value: fixed.positionOffset[2] },
-                            ] as const,
-                            facing:
-                              facing ??
-                              ((write.selectorDirection === 'TargetToSource') !==
-                              reverseFixedDirection
-                                ? ('enemyToOperator' as const)
-                                : ('operatorToEnemy' as const)),
-                            rotation: fixed.rotationOffset,
-                            centerOnGround: write.centerToGround ?? false,
-                          },
-                        }
-                      : {}),
                   },
                 },
               ]
@@ -2314,45 +2250,10 @@ export function compileBuffLeafNode(
       write.selectorOwner === 'ActionOwner' &&
       write.selectorOwnerContextKey === ''
     ) {
-      const random = write.finderRandomPoint;
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'spatialPoint');
       if (context.materializedTargetGroupKeys?.has(write.targetGroupKey) !== true)
         return { steps: [], state: nextGroups };
-      const zeroRadius = [random.radius, random.minimumRadius].every(
-        value => value.blackboardKey === null && value.value === 0,
-      );
-      // 零半径圆形的旋转不改变位置；保留采样次数，但无需建立目标朝向模型。
-      const directionIndependent =
-        zeroRadius &&
-        random.shape === 'Circle' &&
-        random.localPlaneRotation.every(
-          value => value.blackboardKey === null && Number.isFinite(value.value),
-        );
-      // 固定距离模型将投射物路径使用的镜头朝向近似为朝向敌人。
-      const operatorToEnemy =
-        context.actionSourceTarget === 'caster' &&
-        context.actionTargetTarget === 'enemy' &&
-        ['InputTarget', 'CurrentTarget'].includes(write.directionTarget ?? '');
-      if (
-        write.enableAdvancedDirection ||
-        (!['SourceForward', 'CameraForward'].includes(write.selectorDirection ?? '') &&
-          !(
-            (directionIndependent || operatorToEnemy) &&
-            write.selectorDirection === 'SourceToTarget'
-          ))
-      )
-        throw new Error(
-          `${node.sourcePath}: random projectile points require a supported fixed direction`,
-        );
-      if (random.shape !== 'Circle' && random.shape !== 'Sector')
-        throw new Error(
-          `${node.sourcePath}: unsupported random projectile point shape ${random.shape}`,
-        );
-      const operand = (value: typeof random.count) =>
-        value.blackboardKey === null
-          ? { kind: 'constant' as const, value: value.value }
-          : { kind: 'blackboard' as const, key: value.blackboardKey };
       const origin =
         write.center === 'ContextTarget'
           ? { kind: 'context' as const, key: write.centerContextKey }
@@ -2361,7 +2262,7 @@ export function compileBuffLeafNode(
             : write.center === 'ActionSource'
               ? { kind: 'source' as const }
               : { kind: 'owner' as const };
-      // 场景没有地形；导航吸附保留生成位置，不能改变点数或把位置归零。
+      // 逻辑点保留数量与来源是否存在；方向、半径和地形不参与模拟。
 
       const sourceCount =
         write.finderRandomPoint.count.blackboardKey === null
@@ -2378,18 +2279,6 @@ export function compileBuffLeafNode(
               saveToContextKey: write.targetGroupKey,
               count: sourceCount,
               origin,
-              randomDistribution: {
-                shape: random.shape === 'Circle' ? 'circle' : 'sector',
-                radius: operand(random.radius),
-                minimumRadius: operand(random.minimumRadius),
-                angleDegrees: operand(random.angle),
-                localPlaneRotation: [
-                  operand(random.localPlaneRotation[0]),
-                  operand(random.localPlaneRotation[1]),
-                  operand(random.localPlaneRotation[2]),
-                ],
-                centerOnGround: write.centerToGround ?? false,
-              },
             },
           },
         ],
@@ -2429,21 +2318,6 @@ export function compileBuffLeafNode(
       // FindTargetAction 高级方向空目标回退见 0741163B..07411676；中心自身仍必须可解析。
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'spatialPoint');
-      const pointOffset = write.finderPointOffset;
-      const knownDirection =
-        !write.enableAdvancedDirection &&
-        context.actionSourceTarget === 'caster' &&
-        (['SourceForward', 'CameraForward'].includes(write.selectorDirection ?? '') ||
-          (['SourceToTarget', 'TargetToSource'].includes(write.selectorDirection ?? '') &&
-            ((write.directionTarget === 'ContextTarget' &&
-              (context.staticEnemyTargetGroupKeys?.has(write.directionContextKey) === true ||
-                partyTargetGroups.get(write.directionContextKey) === 'enemy')) ||
-              (['InputTarget', 'CurrentTarget'].includes(write.directionTarget ?? '') &&
-                context.actionTargetTarget === 'enemy'))));
-      const positionKnown =
-        knownDirection &&
-        pointOffset !== undefined &&
-        pointOffset.rotation.every(value => value.blackboardKey === null && value.value === 0);
       const origin =
         write.center === 'MainCharacter'
           ? { kind: 'mainCharacter' as const }
@@ -2461,23 +2335,7 @@ export function compileBuffLeafNode(
                   parameters: {
                     saveToContextKey: write.targetGroupKey,
                     count: { kind: 'constant', value: 1 },
-                    ...(positionKnown
-                      ? {
-                          origin,
-                          offset: {
-                            local: [
-                              actionValueOperand(pointOffset.position[0]),
-                              actionValueOperand(pointOffset.position[1]),
-                              actionValueOperand(pointOffset.position[2]),
-                            ] as const,
-                            facing:
-                              write.selectorDirection === 'TargetToSource'
-                                ? ('enemyToOperator' as const)
-                                : ('operatorToEnemy' as const),
-                            centerOnGround: write.centerToGround ?? false,
-                          },
-                        }
-                      : {}),
+                    origin,
                   },
                 },
               ]
@@ -2912,11 +2770,12 @@ function isPlainContextTarget(target: TargetReferenceSource): boolean {
 }
 
 function withProjectileTargets(
-  steps: readonly [Extract<CompiledBuffStepSource, { kind: 'launchProjectile' }>],
+  steps: readonly [] | readonly [Extract<CompiledBuffStepSource, { kind: 'launchProjectile' }>],
   targets: NonNullable<
     Extract<CompiledBuffStepSource, { kind: 'launchProjectile' }>['parameters']['targets']
   >,
 ): CompiledBuffStepSource[] {
+  if (steps.length === 0) return [];
   const [step] = steps;
   return [{ ...step, parameters: { ...step.parameters, targets } }];
 }

@@ -347,7 +347,6 @@ function inspectSequence(
       case 'storeCurrentTimelineFrame':
       case 'storeEventSpGainAmount':
       case 'modifyActionValue':
-      case 'storeRandomFloat':
       case 'storeRandomInteger':
       case 'calculateActionValue':
       case 'createTimedMarker':
@@ -522,9 +521,6 @@ function inspectSequence(
         return;
       case 'pickContextTarget':
         // 只在已编译的命名目标组中取一个运行时引用；本身不改变伤害计算协议。
-        return;
-      case 'saveTargetDistance':
-        // 标准环境已提供干员、敌人和投射物路径点的位置查询。
         return;
       default:
         report(collect, 'unsupported-step', stepPath, `step '${step.kind}'`);

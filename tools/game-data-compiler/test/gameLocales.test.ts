@@ -185,7 +185,7 @@ it('统一候选生成读取本轮身份与精确文本 ID，不读取旧本地�
     );
     await write('sets/a.generated.ts', "const definition = {slug:'suit_test'} as const;");
     for (const locale of ['zh-CN', 'en'])
-      await write(`ui/${locale}.json`, { enumTerms: { slotType: { armor: 'Armor' } } });
+      await write(`ui/${locale}/common.json`, { enumTerms: { slotType: { armor: 'Armor' } } });
     const input = {
       tableRoot: path.join(root, 'tables'),
       operatorManifest: path.join(root, 'operators.json'),

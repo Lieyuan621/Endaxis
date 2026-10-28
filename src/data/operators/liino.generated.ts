@@ -761,6 +761,43 @@ export const liinoChr_0035_liino_attack2: SkillDefinition = {
   nativeSkillType: 'attack',
 };
 
+const liinoChr_0035_liino_attack3ActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        dealDamage_1: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'electric',
+              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+              tags: ['normalAttack'],
+            },
+          },
+          next: null,
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0035_liino_attack3_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { atk_scale_2: 0.1 },
+  scheduledSequences: [{ startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_1' } }],
+} as const;
+
 export const liinoChr_0035_liino_attack3ActionGraph = {
   main: {
     nodes: {
@@ -788,74 +825,33 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 5, callbacks: [{ event: 'hit', triggerFrames: [5] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_attack3_l_02',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      dealDamage_1: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            attacker: 'actionSource',
-                            target: { kind: 'inputTarget' },
-                            damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalAttack'],
-                          },
-                        },
-                        next: null,
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_2' },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-                skillId: 'chr_0035_liino_attack3_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale_2: 0.1 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_1' } },
-                ],
-              },
-            },
-          ],
+          callbacks: [{ event: 'hit', skill: liinoChr_0035_liino_attack3ActionGraphCallback1 }],
         },
         next: null,
       },
-      launchProjectile_15: {
+      launchProjectile_13: {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            inheritActionBlackboard: false,
-            projectileId: 'projectile_chr_0035_liino_attack3_r_02',
-            recycleDelaySeconds: 0,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            schedule: { endFrame: 6, callbacks: [{ event: 'hit', triggerFrames: [6] }] },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0035_liino_attack3_l_02',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
           },
-          callbacks: [],
+          callbacks: [{ event: 'hit', skill: liinoChr_0035_liino_attack3ActionGraphCallback1 }],
         },
         next: null,
       },
-      applyBuff_22: {
+      applyBuff_17: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -875,7 +871,7 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_21: {
+      inheritBuffById_16: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -894,17 +890,17 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      ifElse_23: {
+      ifElse_18: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'inheritBuffById_21' },
-          whenFalse: { $sequence: 'applyBuff_22' },
+          whenTrue: { $sequence: 'inheritBuffById_16' },
+          whenFalse: { $sequence: 'applyBuff_17' },
         },
         next: null,
       },
-      applyBuff_26: {
+      applyBuff_21: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -922,7 +918,7 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_25: {
+      inheritBuffById_20: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -939,17 +935,17 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      ifElse_27: {
+      ifElse_22: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'inheritBuffById_25' },
-          whenFalse: { $sequence: 'applyBuff_26' },
+          whenTrue: { $sequence: 'inheritBuffById_20' },
+          whenFalse: { $sequence: 'applyBuff_21' },
         },
         next: null,
       },
-      applyBuff_30: {
+      applyBuff_25: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -970,7 +966,7 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_29: {
+      inheritBuffById_24: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -990,17 +986,17 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      ifElse_31: {
+      ifElse_26: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'inheritBuffById_29' },
-          whenFalse: { $sequence: 'applyBuff_30' },
+          whenTrue: { $sequence: 'inheritBuffById_24' },
+          whenFalse: { $sequence: 'applyBuff_25' },
         },
         next: null,
       },
-      applyBuff_34: {
+      applyBuff_29: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1018,7 +1014,7 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_33: {
+      inheritBuffById_28: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -1035,24 +1031,24 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      ifElse_35: {
+      ifElse_30: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'inheritBuffById_33' },
-          whenFalse: { $sequence: 'applyBuff_34' },
+          whenTrue: { $sequence: 'inheritBuffById_28' },
+          whenFalse: { $sequence: 'applyBuff_29' },
         },
         next: null,
       },
-      overrideBasicAttackMapping_36: {
+      overrideBasicAttackMapping_31: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0035_liino_attack4'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_37: {
+      reachSkillOperableBoundary_32: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0035_liino_attack4'] },
@@ -1137,19 +1133,14 @@ export const liinoChr_0035_liino_attack3: SkillDefinition = {
     { startFrame: 12, endFrame: 12, sequence: { $sequence: 'launchProjectile_10' } },
     { startFrame: 14, endFrame: 14, sequence: { $sequence: 'launchProjectile_10' } },
     { startFrame: 16, endFrame: 16, sequence: { $sequence: 'launchProjectile_10' } },
-    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_10' } },
+    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_13' } },
     { startFrame: 20, endFrame: 20, sequence: { $sequence: 'launchProjectile_10' } },
-    { startFrame: 12, endFrame: 12, sequence: { $sequence: 'launchProjectile_15' } },
-    { startFrame: 14, endFrame: 14, sequence: { $sequence: 'launchProjectile_15' } },
-    { startFrame: 16, endFrame: 16, sequence: { $sequence: 'launchProjectile_15' } },
-    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_15' } },
-    { startFrame: 20, endFrame: 20, sequence: { $sequence: 'launchProjectile_15' } },
-    { startFrame: 0, endFrame: 34, sequence: { $sequence: 'ifElse_23' } },
-    { startFrame: 2, endFrame: 33, sequence: { $sequence: 'ifElse_27' } },
-    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'ifElse_31' } },
-    { startFrame: 2, endFrame: 32, sequence: { $sequence: 'ifElse_35' } },
-    { startFrame: 0, endFrame: 44, sequence: { $sequence: 'overrideBasicAttackMapping_36' } },
-    { startFrame: 24, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_37' } },
+    { startFrame: 0, endFrame: 34, sequence: { $sequence: 'ifElse_18' } },
+    { startFrame: 2, endFrame: 33, sequence: { $sequence: 'ifElse_22' } },
+    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'ifElse_26' } },
+    { startFrame: 2, endFrame: 32, sequence: { $sequence: 'ifElse_30' } },
+    { startFrame: 0, endFrame: 44, sequence: { $sequence: 'overrideBasicAttackMapping_31' } },
+    { startFrame: 24, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_32' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -1201,10 +1192,12 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_attack4_l',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [{ event: 'hit', skill: liinoChr_0035_liino_attack4ActionGraphCallback1 }],
         },
@@ -1214,42 +1207,18 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_attack4_r',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [{ event: 'hit', skill: liinoChr_0035_liino_attack4ActionGraphCallback1 }],
         },
         next: null,
       },
-      launchProjectile_11: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: false,
-            projectileId: 'projectile_chr_0035_liino_attack4_l_02',
-            recycleDelaySeconds: 0,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
-          },
-          callbacks: [],
-        },
-        next: null,
-      },
-      launchProjectile_16: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: false,
-            projectileId: 'projectile_chr_0035_liino_attack4_r_02',
-            recycleDelaySeconds: 0,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
-          },
-          callbacks: [],
-        },
-        next: null,
-      },
-      applyBuff_23: {
+      applyBuff_13: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1268,7 +1237,7 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_22: {
+      inheritBuffById_12: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -1286,17 +1255,17 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      ifElse_24: {
+      ifElse_14: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'inheritBuffById_22' },
-          whenFalse: { $sequence: 'applyBuff_23' },
+          whenTrue: { $sequence: 'inheritBuffById_12' },
+          whenFalse: { $sequence: 'applyBuff_13' },
         },
         next: null,
       },
-      applyBuff_27: {
+      applyBuff_17: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1314,7 +1283,7 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_26: {
+      inheritBuffById_16: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -1331,17 +1300,17 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      ifElse_28: {
+      ifElse_18: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'inheritBuffById_26' },
-          whenFalse: { $sequence: 'applyBuff_27' },
+          whenTrue: { $sequence: 'inheritBuffById_16' },
+          whenFalse: { $sequence: 'applyBuff_17' },
         },
         next: null,
       },
-      applyBuff_31: {
+      applyBuff_21: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1362,7 +1331,7 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_30: {
+      inheritBuffById_20: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -1382,17 +1351,17 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      ifElse_32: {
+      ifElse_22: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'inheritBuffById_30' },
-          whenFalse: { $sequence: 'applyBuff_31' },
+          whenTrue: { $sequence: 'inheritBuffById_20' },
+          whenFalse: { $sequence: 'applyBuff_21' },
         },
         next: null,
       },
-      applyBuff_35: {
+      applyBuff_25: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1410,7 +1379,7 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_34: {
+      inheritBuffById_24: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -1427,24 +1396,24 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      ifElse_36: {
+      ifElse_26: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'inheritBuffById_34' },
-          whenFalse: { $sequence: 'applyBuff_35' },
+          whenTrue: { $sequence: 'inheritBuffById_24' },
+          whenFalse: { $sequence: 'applyBuff_25' },
         },
         next: null,
       },
-      overrideBasicAttackMapping_37: {
+      overrideBasicAttackMapping_27: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0035_liino_attack5'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_38: {
+      reachSkillOperableBoundary_28: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0035_liino_attack5'] },
@@ -1525,22 +1494,12 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = {
     { startFrame: 10, endFrame: 10, sequence: { $sequence: 'launchProjectile_6' } },
     { startFrame: 13, endFrame: 13, sequence: { $sequence: 'launchProjectile_6' } },
     { startFrame: 16, endFrame: 16, sequence: { $sequence: 'launchProjectile_6' } },
-    { startFrame: 5, endFrame: 5, sequence: { $sequence: 'launchProjectile_11' } },
-    { startFrame: 7, endFrame: 7, sequence: { $sequence: 'launchProjectile_11' } },
-    { startFrame: 10, endFrame: 10, sequence: { $sequence: 'launchProjectile_11' } },
-    { startFrame: 13, endFrame: 13, sequence: { $sequence: 'launchProjectile_11' } },
-    { startFrame: 16, endFrame: 16, sequence: { $sequence: 'launchProjectile_11' } },
-    { startFrame: 5, endFrame: 5, sequence: { $sequence: 'launchProjectile_16' } },
-    { startFrame: 7, endFrame: 7, sequence: { $sequence: 'launchProjectile_16' } },
-    { startFrame: 10, endFrame: 10, sequence: { $sequence: 'launchProjectile_16' } },
-    { startFrame: 13, endFrame: 13, sequence: { $sequence: 'launchProjectile_16' } },
-    { startFrame: 16, endFrame: 16, sequence: { $sequence: 'launchProjectile_16' } },
-    { startFrame: 0, endFrame: 71, sequence: { $sequence: 'ifElse_24' } },
-    { startFrame: 0, endFrame: 70, sequence: { $sequence: 'ifElse_28' } },
-    { startFrame: 0, endFrame: 64, sequence: { $sequence: 'ifElse_32' } },
-    { startFrame: 0, endFrame: 63, sequence: { $sequence: 'ifElse_36' } },
-    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'overrideBasicAttackMapping_37' } },
-    { startFrame: 18, endFrame: 33, sequence: { $sequence: 'reachSkillOperableBoundary_38' } },
+    { startFrame: 0, endFrame: 71, sequence: { $sequence: 'ifElse_14' } },
+    { startFrame: 0, endFrame: 70, sequence: { $sequence: 'ifElse_18' } },
+    { startFrame: 0, endFrame: 64, sequence: { $sequence: 'ifElse_22' } },
+    { startFrame: 0, endFrame: 63, sequence: { $sequence: 'ifElse_26' } },
+    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'overrideBasicAttackMapping_27' } },
+    { startFrame: 18, endFrame: 33, sequence: { $sequence: 'reachSkillOperableBoundary_28' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -2395,10 +2354,11 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 7, callbacks: [{ event: 'reach', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_plunging_attack',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
+            entityInitialValues: {},
           },
           callbacks: [
             {
@@ -2422,20 +2382,7 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
         },
         next: null,
       },
-      launchProjectile_7: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            projectileId: 'projectile_chr_0035_liino_plunging_attack',
-            recycleDelaySeconds: 0,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
-          },
-          callbacks: [],
-        },
-        next: null,
-      },
-      applyBuff_14: {
+      applyBuff_9: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2454,7 +2401,7 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_13: {
+      inheritBuffById_8: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -2472,17 +2419,17 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
         },
         next: null,
       },
-      ifElse_15: {
+      ifElse_10: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'inheritBuffById_13' },
-          whenFalse: { $sequence: 'applyBuff_14' },
+          whenTrue: { $sequence: 'inheritBuffById_8' },
+          whenFalse: { $sequence: 'applyBuff_9' },
         },
         next: null,
       },
-      applyBuff_16: {
+      applyBuff_11: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2500,7 +2447,7 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
         },
         next: null,
       },
-      applyBuff_19: {
+      applyBuff_14: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2521,7 +2468,7 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_18: {
+      inheritBuffById_13: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -2541,17 +2488,17 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
         },
         next: null,
       },
-      ifElse_20: {
+      ifElse_15: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'inheritBuffById_18' },
-          whenFalse: { $sequence: 'applyBuff_19' },
+          whenTrue: { $sequence: 'inheritBuffById_13' },
+          whenFalse: { $sequence: 'applyBuff_14' },
         },
         next: null,
       },
-      applyBuff_21: {
+      applyBuff_16: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2619,15 +2566,10 @@ export const liinoChr_0035_liino_plunging_attack_end: SkillDefinition = {
     { startFrame: 8, endFrame: 9, sequence: { $sequence: 'repeatEachTick_4' } },
     { startFrame: 11, endFrame: 20, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
     { startFrame: 2, endFrame: 2, sequence: { $sequence: 'launchProjectile_6' } },
-    { startFrame: 5, endFrame: 5, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 8, endFrame: 8, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 3, endFrame: 3, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 6, endFrame: 6, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 9, endFrame: 9, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 0, endFrame: 19, sequence: { $sequence: 'ifElse_15' } },
-    { startFrame: 0, endFrame: 19, sequence: { $sequence: 'applyBuff_16' } },
-    { startFrame: 0, endFrame: 17, sequence: { $sequence: 'ifElse_20' } },
-    { startFrame: 0, endFrame: 17, sequence: { $sequence: 'applyBuff_21' } },
+    { startFrame: 0, endFrame: 19, sequence: { $sequence: 'ifElse_10' } },
+    { startFrame: 0, endFrame: 19, sequence: { $sequence: 'applyBuff_11' } },
+    { startFrame: 0, endFrame: 17, sequence: { $sequence: 'ifElse_15' } },
+    { startFrame: 0, endFrame: 17, sequence: { $sequence: 'applyBuff_16' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
@@ -2643,40 +2585,11 @@ const liinoChr_0035_liino_normal_skillActionGraphCallback1 = {
           action: {
             kind: 'launchProjectile',
             parameters: {
+              schedule: { endFrame: 5, callbacks: [{ event: 'block', triggerFrames: [5] }] },
               inheritActionBlackboard: true,
               projectileId: 'projectile_chr_0035_liino_normal_attack_vfx',
               recycleDelaySeconds: 0.133333340287209,
-              launch: {
-                start: {
-                  target: { kind: 'source' },
-                  offset: {
-                    local: [
-                      { kind: 'constant', value: 0 },
-                      { kind: 'constant', value: 0 },
-                      { kind: 'constant', value: 6 },
-                    ],
-                    facing: 'operatorToEnemy',
-                    rotation: [0, 0, 0, 1],
-                    centerOnGround: true,
-                  },
-                },
-                segmentTargets: [
-                  {
-                    target: { kind: 'source' },
-                    offset: {
-                      local: [
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 6 },
-                      ],
-                      facing: 'operatorToEnemy',
-                      rotation: [0, 0, 0, 1],
-                      centerOnGround: true,
-                    },
-                  },
-                ],
-                landingAtTarget: true,
-              },
+              entityInitialValues: {},
             },
             callbacks: [
               {
@@ -2763,15 +2676,12 @@ const liinoChr_0035_liino_normal_skillActionGraphCallback1 = {
           action: {
             kind: 'launchProjectile',
             parameters: {
+              schedule: { endFrame: 5, callbacks: [{ event: 'block', triggerFrames: [5] }] },
               inheritActionBlackboard: true,
               projectileId: 'projectile_chr_0035_liino_normal_attack_vfx',
               recycleDelaySeconds: 0.133333340287209,
               targets: { kind: 'context', contextKey: 'smart_target' },
-              launch: {
-                start: { side: 'enemy' },
-                segmentTargets: [{ side: 'enemy' }],
-                landingAtTarget: true,
-              },
+              entityInitialValues: {},
             },
             callbacks: [
               {
@@ -2948,27 +2858,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 18, callbacks: [{ event: 'reach', triggerFrames: [18] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_03',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [
-                {
-                  target: { kind: 'source' },
-                  offset: {
-                    local: [
-                      { kind: 'constant', value: -3 },
-                      { kind: 'constant', value: 7 },
-                      { kind: 'constant', value: 1.5 },
-                    ],
-                    facing: 'operatorToEnemy',
-                    rotation: [0, 0, 0, 1],
-                    centerOnGround: false,
-                  },
-                },
-              ],
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             { event: 'reach', skill: liinoChr_0035_liino_normal_skillActionGraphCallback1 },
@@ -2980,27 +2874,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 18, callbacks: [{ event: 'reach', triggerFrames: [18] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_03',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [
-                {
-                  target: { kind: 'source' },
-                  offset: {
-                    local: [
-                      { kind: 'constant', value: 3 },
-                      { kind: 'constant', value: 7 },
-                      { kind: 'constant', value: 1.5 },
-                    ],
-                    facing: 'operatorToEnemy',
-                    rotation: [0, 0, 0, 1],
-                    centerOnGround: false,
-                  },
-                },
-              ],
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             {
@@ -3013,40 +2891,14 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         action: {
                           kind: 'launchProjectile',
                           parameters: {
+                            schedule: {
+                              endFrame: 5,
+                              callbacks: [{ event: 'block', triggerFrames: [5] }],
+                            },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack',
                             recycleDelaySeconds: 0.133333340287209,
-                            launch: {
-                              start: {
-                                target: { kind: 'source' },
-                                offset: {
-                                  local: [
-                                    { kind: 'constant', value: 0 },
-                                    { kind: 'constant', value: 0 },
-                                    { kind: 'constant', value: 6 },
-                                  ],
-                                  facing: 'operatorToEnemy',
-                                  rotation: [0, 0, 0, 1],
-                                  centerOnGround: true,
-                                },
-                              },
-                              segmentTargets: [
-                                {
-                                  target: { kind: 'source' },
-                                  offset: {
-                                    local: [
-                                      { kind: 'constant', value: 0 },
-                                      { kind: 'constant', value: 0 },
-                                      { kind: 'constant', value: 6 },
-                                    ],
-                                    facing: 'operatorToEnemy',
-                                    rotation: [0, 0, 0, 1],
-                                    centerOnGround: true,
-                                  },
-                                },
-                              ],
-                              landingAtTarget: true,
-                            },
+                            entityInitialValues: {},
                           },
                           callbacks: [
                             {
@@ -3140,15 +2992,15 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         action: {
                           kind: 'launchProjectile',
                           parameters: {
+                            schedule: {
+                              endFrame: 5,
+                              callbacks: [{ event: 'block', triggerFrames: [5] }],
+                            },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack',
                             recycleDelaySeconds: 0.133333340287209,
                             targets: { kind: 'context', contextKey: 'smart_target' },
-                            launch: {
-                              start: { side: 'enemy' },
-                              segmentTargets: [{ side: 'enemy' }],
-                              landingAtTarget: true,
-                            },
+                            entityInitialValues: {},
                           },
                           callbacks: [
                             {
@@ -3299,27 +3151,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 14, callbacks: [{ event: 'reach', triggerFrames: [14] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_02',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [
-                {
-                  target: { kind: 'source' },
-                  offset: {
-                    local: [
-                      { kind: 'constant', value: -1 },
-                      { kind: 'constant', value: 7 },
-                      { kind: 'constant', value: -0.5 },
-                    ],
-                    facing: 'operatorToEnemy',
-                    rotation: [0, 0, 0, 1],
-                    centerOnGround: false,
-                  },
-                },
-              ],
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             {
@@ -3332,40 +3168,14 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         action: {
                           kind: 'launchProjectile',
                           parameters: {
+                            schedule: {
+                              endFrame: 4,
+                              callbacks: [{ event: 'block', triggerFrames: [4] }],
+                            },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx_04',
                             recycleDelaySeconds: 0.133333340287209,
-                            launch: {
-                              start: {
-                                target: { kind: 'source' },
-                                offset: {
-                                  local: [
-                                    { kind: 'constant', value: 0 },
-                                    { kind: 'constant', value: 0 },
-                                    { kind: 'constant', value: 6 },
-                                  ],
-                                  facing: 'operatorToEnemy',
-                                  rotation: [0, 0, 0, 1],
-                                  centerOnGround: true,
-                                },
-                              },
-                              segmentTargets: [
-                                {
-                                  target: { kind: 'source' },
-                                  offset: {
-                                    local: [
-                                      { kind: 'constant', value: 0 },
-                                      { kind: 'constant', value: 0 },
-                                      { kind: 'constant', value: 6 },
-                                    ],
-                                    facing: 'operatorToEnemy',
-                                    rotation: [0, 0, 0, 1],
-                                    centerOnGround: true,
-                                  },
-                                },
-                              ],
-                              landingAtTarget: true,
-                            },
+                            entityInitialValues: {},
                           },
                           callbacks: [
                             {
@@ -3458,15 +3268,15 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         action: {
                           kind: 'launchProjectile',
                           parameters: {
+                            schedule: {
+                              endFrame: 4,
+                              callbacks: [{ event: 'block', triggerFrames: [4] }],
+                            },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx_04',
                             recycleDelaySeconds: 0.133333340287209,
                             targets: { kind: 'context', contextKey: 'smart_target' },
-                            launch: {
-                              start: { side: 'enemy' },
-                              segmentTargets: [{ side: 'enemy' }],
-                              landingAtTarget: true,
-                            },
+                            entityInitialValues: {},
                           },
                           callbacks: [
                             {
@@ -3616,27 +3426,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 14, callbacks: [{ event: 'reach', triggerFrames: [14] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_02',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [
-                {
-                  target: { kind: 'source' },
-                  offset: {
-                    local: [
-                      { kind: 'constant', value: 1 },
-                      { kind: 'constant', value: 7 },
-                      { kind: 'constant', value: 0.5 },
-                    ],
-                    facing: 'operatorToEnemy',
-                    rotation: [0, 0, 0, 1],
-                    centerOnGround: false,
-                  },
-                },
-              ],
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             {
@@ -3649,40 +3443,14 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         action: {
                           kind: 'launchProjectile',
                           parameters: {
+                            schedule: {
+                              endFrame: 5,
+                              callbacks: [{ event: 'block', triggerFrames: [5] }],
+                            },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx_03',
                             recycleDelaySeconds: 0.133333340287209,
-                            launch: {
-                              start: {
-                                target: { kind: 'source' },
-                                offset: {
-                                  local: [
-                                    { kind: 'constant', value: 0 },
-                                    { kind: 'constant', value: 0 },
-                                    { kind: 'constant', value: 6 },
-                                  ],
-                                  facing: 'operatorToEnemy',
-                                  rotation: [0, 0, 0, 1],
-                                  centerOnGround: true,
-                                },
-                              },
-                              segmentTargets: [
-                                {
-                                  target: { kind: 'source' },
-                                  offset: {
-                                    local: [
-                                      { kind: 'constant', value: 0 },
-                                      { kind: 'constant', value: 0 },
-                                      { kind: 'constant', value: 6 },
-                                    ],
-                                    facing: 'operatorToEnemy',
-                                    rotation: [0, 0, 0, 1],
-                                    centerOnGround: true,
-                                  },
-                                },
-                              ],
-                              landingAtTarget: true,
-                            },
+                            entityInitialValues: {},
                           },
                           callbacks: [
                             {
@@ -3775,15 +3543,15 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         action: {
                           kind: 'launchProjectile',
                           parameters: {
+                            schedule: {
+                              endFrame: 5,
+                              callbacks: [{ event: 'block', triggerFrames: [5] }],
+                            },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx_03',
                             recycleDelaySeconds: 0.133333340287209,
                             targets: { kind: 'context', contextKey: 'smart_target' },
-                            launch: {
-                              start: { side: 'enemy' },
-                              segmentTargets: [{ side: 'enemy' }],
-                              landingAtTarget: true,
-                            },
+                            entityInitialValues: {},
                           },
                           callbacks: [
                             {
@@ -3933,27 +3701,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 15, callbacks: [{ event: 'reach', triggerFrames: [15] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_02',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [
-                {
-                  target: { kind: 'source' },
-                  offset: {
-                    local: [
-                      { kind: 'constant', value: -2 },
-                      { kind: 'constant', value: 7 },
-                      { kind: 'constant', value: -1.5 },
-                    ],
-                    facing: 'operatorToEnemy',
-                    rotation: [0, 0, 0, 1],
-                    centerOnGround: false,
-                  },
-                },
-              ],
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             { event: 'reach', skill: liinoChr_0035_liino_normal_skillActionGraphCallback1 },
@@ -3965,27 +3717,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 14, callbacks: [{ event: 'reach', triggerFrames: [14] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_02',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [
-                {
-                  target: { kind: 'source' },
-                  offset: {
-                    local: [
-                      { kind: 'constant', value: 2 },
-                      { kind: 'constant', value: 7 },
-                      { kind: 'constant', value: -1.5 },
-                    ],
-                    facing: 'operatorToEnemy',
-                    rotation: [0, 0, 0, 1],
-                    centerOnGround: false,
-                  },
-                },
-              ],
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             {
@@ -3998,40 +3734,14 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         action: {
                           kind: 'launchProjectile',
                           parameters: {
+                            schedule: {
+                              endFrame: 5,
+                              callbacks: [{ event: 'block', triggerFrames: [5] }],
+                            },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx',
                             recycleDelaySeconds: 0.133333340287209,
-                            launch: {
-                              start: {
-                                target: { kind: 'source' },
-                                offset: {
-                                  local: [
-                                    { kind: 'constant', value: 0 },
-                                    { kind: 'constant', value: 0 },
-                                    { kind: 'constant', value: 6 },
-                                  ],
-                                  facing: 'operatorToEnemy',
-                                  rotation: [0, 0, 0, 1],
-                                  centerOnGround: true,
-                                },
-                              },
-                              segmentTargets: [
-                                {
-                                  target: { kind: 'source' },
-                                  offset: {
-                                    local: [
-                                      { kind: 'constant', value: 0 },
-                                      { kind: 'constant', value: 0 },
-                                      { kind: 'constant', value: 6 },
-                                    ],
-                                    facing: 'operatorToEnemy',
-                                    rotation: [0, 0, 0, 1],
-                                    centerOnGround: true,
-                                  },
-                                },
-                              ],
-                              landingAtTarget: true,
-                            },
+                            entityInitialValues: {},
                           },
                           callbacks: [
                             {
@@ -4124,15 +3834,15 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         action: {
                           kind: 'launchProjectile',
                           parameters: {
+                            schedule: {
+                              endFrame: 5,
+                              callbacks: [{ event: 'block', triggerFrames: [5] }],
+                            },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx',
                             recycleDelaySeconds: 0.133333340287209,
                             targets: { kind: 'context', contextKey: 'smart_target' },
-                            launch: {
-                              start: { side: 'enemy' },
-                              segmentTargets: [{ side: 'enemy' }],
-                              landingAtTarget: true,
-                            },
+                            entityInitialValues: {},
                           },
                           callbacks: [
                             {
@@ -5569,10 +5279,12 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 12, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_ultskill_soundwave_02',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -6939,15 +6651,12 @@ const liinoBuff8ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_l',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ side: 'enemy' }],
-              landingAtTarget: true,
-            },
+            entityInitialValues: {},
           },
           callbacks: [{ event: 'block', skill: liinoBuff8ActionGraphCallback1 }],
         },
@@ -6967,15 +6676,12 @@ const liinoBuff8ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_l_vfx02',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ side: 'enemy' }],
-              landingAtTarget: true,
-            },
+            entityInitialValues: {},
           },
           callbacks: [{ event: 'block', skill: liinoBuff8ActionGraphCallback1 }],
         },
@@ -6995,15 +6701,12 @@ const liinoBuff8ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_r',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ side: 'enemy' }],
-              landingAtTarget: true,
-            },
+            entityInitialValues: {},
           },
           callbacks: [{ event: 'block', skill: liinoBuff8ActionGraphCallback1 }],
         },
@@ -7023,15 +6726,12 @@ const liinoBuff8ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_r_vfx02',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ side: 'enemy' }],
-              landingAtTarget: true,
-            },
+            entityInitialValues: {},
           },
           callbacks: [{ event: 'block', skill: liinoBuff8ActionGraphCallback1 }],
         },
@@ -7051,15 +6751,12 @@ const liinoBuff8ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 6, callbacks: [{ event: 'block', triggerFrames: [6] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_l_vfx01',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ side: 'enemy' }],
-              landingAtTarget: true,
-            },
+            entityInitialValues: {},
           },
           callbacks: [{ event: 'block', skill: liinoBuff8ActionGraphCallback1 }],
         },
@@ -7079,15 +6776,12 @@ const liinoBuff8ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_r_vfx01',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ side: 'enemy' }],
-              landingAtTarget: true,
-            },
+            entityInitialValues: {},
           },
           callbacks: [{ event: 'block', skill: liinoBuff8ActionGraphCallback1 }],
         },
@@ -7193,15 +6887,12 @@ const liinoBuff9ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_l',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ side: 'enemy' }],
-              landingAtTarget: true,
-            },
+            entityInitialValues: {},
           },
           callbacks: [{ event: 'block', skill: liinoBuff9ActionGraphCallback1 }],
         },
@@ -7221,15 +6912,12 @@ const liinoBuff9ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_r',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ side: 'enemy' }],
-              landingAtTarget: true,
-            },
+            entityInitialValues: {},
           },
           callbacks: [{ event: 'block', skill: liinoBuff9ActionGraphCallback1 }],
         },
@@ -7423,10 +7111,12 @@ const liinoBuff12ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 14, callbacks: [{ event: 'hit', triggerFrames: [5] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_soundwave',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
+            entityInitialValues: {},
+            hit: { target: 'allOperators' },
           },
           callbacks: [{ event: 'hit', skill: liinoBuff12ActionGraphCallback1 }],
         },
@@ -7443,10 +7133,12 @@ const liinoBuff12ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 14, callbacks: [{ event: 'hit', triggerFrames: [5] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_soundwave_chrdung',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [{ event: 'hit', skill: liinoBuff12ActionGraphCallback1 }],
         },
@@ -8697,13 +8389,12 @@ const liinoBuff33ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 12, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_ultskill_soundwave_heal',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ target: { kind: 'inputTarget' } }],
-            },
+            entityInitialValues: {},
+            hit: { target: 'allOperators' },
           },
           callbacks: [{ event: 'hit', skill: liinoBuff33ActionGraphCallback1 }],
         },
@@ -8713,13 +8404,12 @@ const liinoBuff33ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 12, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_ultskill_soundwave',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ target: { kind: 'inputTarget' } }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [{ event: 'hit', skill: liinoBuff33ActionGraphCallback1 }],
         },
@@ -9506,16 +9196,6 @@ export const liino: OperatorDefinition = {
                     saveToContextKey: 'bullet_target',
                     count: { kind: 'constant', value: 1 },
                     origin: { kind: 'source' },
-                    offset: {
-                      local: [
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 6 },
-                      ],
-                      facing: 'operatorToEnemy',
-                      rotation: [0, 0, 0, 1],
-                      centerOnGround: true,
-                    },
                   },
                 },
                 next: null,
@@ -9524,13 +9204,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 16,
+                      callbacks: [{ event: 'reach', triggerFrames: [16] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -9602,13 +9283,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 16,
+                      callbacks: [{ event: 'reach', triggerFrames: [16] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -9680,14 +9362,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 20,
+                      callbacks: [{ event: 'reach', triggerFrames: [20] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -9759,14 +9442,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 20,
+                      callbacks: [{ event: 'reach', triggerFrames: [20] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -9848,13 +9532,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 17,
+                      callbacks: [{ event: 'reach', triggerFrames: [17] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -9926,13 +9611,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 17,
+                      callbacks: [{ event: 'reach', triggerFrames: [17] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10004,14 +9690,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 20,
+                      callbacks: [{ event: 'reach', triggerFrames: [20] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10083,14 +9770,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 20,
+                      callbacks: [{ event: 'reach', triggerFrames: [20] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10172,13 +9860,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 17,
+                      callbacks: [{ event: 'reach', triggerFrames: [17] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10250,13 +9939,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 17,
+                      callbacks: [{ event: 'reach', triggerFrames: [17] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10328,14 +10018,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 21,
+                      callbacks: [{ event: 'reach', triggerFrames: [21] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10407,14 +10098,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 21,
+                      callbacks: [{ event: 'reach', triggerFrames: [21] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10496,13 +10188,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 17,
+                      callbacks: [{ event: 'reach', triggerFrames: [17] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10574,13 +10267,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 17,
+                      callbacks: [{ event: 'reach', triggerFrames: [17] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10652,14 +10346,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 21,
+                      callbacks: [{ event: 'reach', triggerFrames: [21] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10731,14 +10426,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 21,
+                      callbacks: [{ event: 'reach', triggerFrames: [21] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10820,13 +10516,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 18,
+                      callbacks: [{ event: 'reach', triggerFrames: [18] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10898,13 +10595,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 18,
+                      callbacks: [{ event: 'reach', triggerFrames: [18] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -10976,14 +10674,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 22,
+                      callbacks: [{ event: 'reach', triggerFrames: [22] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -11055,14 +10754,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 22,
+                      callbacks: [{ event: 'reach', triggerFrames: [22] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -11144,13 +10844,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 15,
+                      callbacks: [{ event: 'reach', triggerFrames: [15] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -11222,13 +10923,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 15,
+                      callbacks: [{ event: 'reach', triggerFrames: [15] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -11300,14 +11002,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 19,
+                      callbacks: [{ event: 'reach', triggerFrames: [19] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -11379,14 +11082,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 19,
+                      callbacks: [{ event: 'reach', triggerFrames: [19] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -11468,13 +11172,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 14,
+                      callbacks: [{ event: 'reach', triggerFrames: [14] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -11546,13 +11251,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 14,
+                      callbacks: [{ event: 'reach', triggerFrames: [14] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -11624,14 +11330,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 17,
+                      callbacks: [{ event: 'reach', triggerFrames: [17] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -11703,14 +11410,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 17,
+                      callbacks: [{ event: 'reach', triggerFrames: [17] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -11792,13 +11500,11 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: { endFrame: 7, callbacks: [{ event: 'reach', triggerFrames: [7] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_bomb',
                     recycleDelaySeconds: 0.133333340287209,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -11913,14 +11619,12 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: { endFrame: 8, callbacks: [{ event: 'reach', triggerFrames: [8] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_bomb',
                     recycleDelaySeconds: 0.133333340287209,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12045,13 +11749,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 10,
+                      callbacks: [{ event: 'reach', triggerFrames: [10] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_01',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12123,13 +11828,14 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 10,
+                      callbacks: [{ event: 'reach', triggerFrames: [10] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_01',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12201,14 +11907,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 15,
+                      callbacks: [{ event: 'reach', triggerFrames: [15] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_01',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12280,14 +11987,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 15,
+                      callbacks: [{ event: 'reach', triggerFrames: [15] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_01',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12369,13 +12077,11 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: { endFrame: 8, callbacks: [{ event: 'reach', triggerFrames: [8] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12447,13 +12153,11 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: { endFrame: 8, callbacks: [{ event: 'reach', triggerFrames: [8] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12525,14 +12229,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 12,
+                      callbacks: [{ event: 'reach', triggerFrames: [12] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12604,14 +12309,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 12,
+                      callbacks: [{ event: 'reach', triggerFrames: [12] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12693,13 +12399,11 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: { endFrame: 8, callbacks: [{ event: 'reach', triggerFrames: [8] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12771,13 +12475,11 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: { endFrame: 8, callbacks: [{ event: 'reach', triggerFrames: [8] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
                     recycleDelaySeconds: 0.100000001490116,
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'inputTarget' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12849,14 +12551,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 12,
+                      callbacks: [{ event: 'reach', triggerFrames: [12] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -12928,14 +12631,15 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
+                    schedule: {
+                      endFrame: 12,
+                      callbacks: [{ event: 'reach', triggerFrames: [12] }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
-                    launch: {
-                      start: { target: { kind: 'owner' } },
-                      segmentTargets: [{ target: { kind: 'context', key: 'bullet_target' } }],
-                    },
+                    entityInitialValues: {},
                   },
                   callbacks: [
                     {
@@ -13165,3102 +12869,6 @@ export const liino: OperatorDefinition = {
           { startFrame: 28, endFrame: 28, sequence: { $sequence: 'ifElse_65' } },
         ],
       },
-    },
-  },
-  projectileDefinitions: {
-    projectile_chr_0035_liino_attack3_l_02: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 20 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.6,
-                  inTangent: 0.02109366,
-                  outTangent: 0.02109366,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 1,
-                },
-                {
-                  time: 0.16193484,
-                  value: 0.7592568,
-                  inTangent: 2.174711,
-                  outTangent: 2.1241086,
-                  weightedMode: 0,
-                  inWeight: 0.5380193,
-                  outWeight: 0.20902042,
-                },
-                {
-                  time: 0.25,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 100,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.05 },
-                      { kind: 'constant', value: -0.05 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 300 },
-                      { kind: 'constant', value: 300 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.45 },
-                      { kind: 'constant', value: 0.45 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 280 },
-                      { kind: 'constant', value: 280 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 0.3 },
-        finishDistanceMeters: { kind: 'constant', value: 35 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_attack3_r_02: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 20 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.9,
-                  inTangent: 0.14046417,
-                  outTangent: 0.14046417,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.49366102,
-                },
-                {
-                  time: 0.12457524,
-                  value: 0.93984157,
-                  inTangent: 0.6778289,
-                  outTangent: 0.97152007,
-                  weightedMode: 0,
-                  inWeight: 0.45941508,
-                  outWeight: 0.37325454,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.05 },
-                      { kind: 'constant', value: -0.05 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 240 },
-                      { kind: 'constant', value: 240 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.55 },
-                      { kind: 'constant', value: 0.55 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 100 },
-                      { kind: 'constant', value: 100 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 0.3 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_attack4_l: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 45 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.1446312,
-                  value: 0.71687555,
-                  inTangent: 2.6108968,
-                  outTangent: 2.4248688,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.45778695,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 100,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.1 },
-                      { kind: 'constant', value: -0.1 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 45 },
-                      { kind: 'constant', value: 45 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.63 },
-                      { kind: 'constant', value: 0.66 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 10 },
-                      { kind: 'constant', value: 15 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 35 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_attack4_l_02: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.6,
-                  inTangent: 0.02109366,
-                  outTangent: 0.02109366,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 1,
-                },
-                {
-                  time: 0.16193484,
-                  value: 0.7592568,
-                  inTangent: 2.174711,
-                  outTangent: 2.1241086,
-                  weightedMode: 0,
-                  inWeight: 0.5380193,
-                  outWeight: 0.20902042,
-                },
-                {
-                  time: 0.25,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 100,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.05 },
-                      { kind: 'constant', value: -0.05 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 300 },
-                      { kind: 'constant', value: 300 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.45 },
-                      { kind: 'constant', value: 0.45 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 280 },
-                      { kind: 'constant', value: 280 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'ring',
-          target: { side: 'enemy' },
-          innerRadiusMeters: { kind: 'constant', value: 0 },
-          outerRadiusMeters: { kind: 'constant', value: 0 },
-          innerRadiusSpeed: { kind: 'constant', value: 0 },
-          outerRadiusSpeed: { kind: 'constant', value: 0 },
-          heightMeters: { kind: 'constant', value: 0 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 35 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_attack4_r: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 45 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.14935903,
-                  value: 0.705271,
-                  inTangent: 2.6108968,
-                  outTangent: 2.6976657,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.649146,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.05 },
-                      { kind: 'constant', value: -0.05 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 135 },
-                      { kind: 'constant', value: 135 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.55 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 100 },
-                      { kind: 'constant', value: 100 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_attack4_r_02: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.9,
-                  inTangent: 0.14046417,
-                  outTangent: 0.14046417,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.49366102,
-                },
-                {
-                  time: 0.12457524,
-                  value: 0.93984157,
-                  inTangent: 0.6778289,
-                  outTangent: 0.97152007,
-                  weightedMode: 0,
-                  inWeight: 0.45941508,
-                  outWeight: 0.37325454,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.05 },
-                      { kind: 'constant', value: -0.05 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 240 },
-                      { kind: 'constant', value: 240 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.55 },
-                      { kind: 'constant', value: 0.55 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 100 },
-                      { kind: 'constant', value: 100 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_normal_attack: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 10 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 2,
-                  inTangent: -3.9952576,
-                  outTangent: -3.9952576,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.16500098,
-                  value: 1.3407786,
-                  inTangent: -2.0447524,
-                  outTangent: -2.0447524,
-                  weightedMode: 0,
-                  inWeight: 0.8832316,
-                  outWeight: 0.061716028,
-                },
-                {
-                  time: 0.4896845,
-                  value: 0.99144655,
-                  inTangent: 0.01655952,
-                  outTangent: 0.01655952,
-                  weightedMode: 0,
-                  inWeight: 0.44204327,
-                  outWeight: 0.09206248,
-                },
-                {
-                  time: 3,
-                  value: 1,
-                  inTangent: 0.003407319,
-                  outTangent: 0.003407319,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 0.8,
-                  inTangent: 0.53959215,
-                  outTangent: 0.53959215,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.17022358,
-                },
-                {
-                  time: 1.1467078,
-                  value: 1.2968235,
-                  inTangent: 0.23721509,
-                  outTangent: 0.23721509,
-                  weightedMode: 0,
-                  inWeight: 0.43372607,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 2,
-                  inTangent: 0.079425424,
-                  outTangent: 0.079425424,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 60 },
-                      { kind: 'constant', value: 60 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.25 },
-                      { kind: 'constant', value: 0.25 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.45 },
-                      { kind: 'constant', value: 0.5 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 10 },
-                      { kind: 'constant', value: 20 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.65 },
-                      { kind: 'constant', value: 0.65 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: false,
-        keepMovingOnReach: true,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_normal_attack_02: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 15 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.9,
-                  inTangent: 4.9284534,
-                  outTangent: 4.9284534,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.037657816,
-                  value: 1.0855948,
-                  inTangent: 0.070886254,
-                  outTangent: 0.36233142,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.6898763,
-                },
-                {
-                  time: 0.13663025,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.3 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 190 },
-                      { kind: 'constant', value: 195 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.25 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.55 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 110 },
-                      { kind: 'constant', value: 120 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.05 },
-                      { kind: 'constant', value: 0.05 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-    },
-    projectile_chr_0035_liino_normal_attack_03: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 15 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.8,
-                  inTangent: 0.0033495189,
-                  outTangent: 0.0033495189,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 1,
-                },
-                {
-                  time: 0.12286806,
-                  value: 0.8921515,
-                  inTangent: 2.2507484,
-                  outTangent: 2.399172,
-                  weightedMode: 0,
-                  inWeight: 0.10353847,
-                  outWeight: 0.65228266,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 100,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.05 },
-                      { kind: 'constant', value: 0.05 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 45 },
-                      { kind: 'constant', value: 45 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.63 },
-                      { kind: 'constant', value: 0.66 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 10 },
-                      { kind: 'constant', value: 15 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 35 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-    },
-    projectile_chr_0035_liino_normal_attack_l: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 25 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.1446312,
-                  value: 0.71687555,
-                  inTangent: 2.6108968,
-                  outTangent: 2.4248688,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.45778695,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 100,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.1 },
-                      { kind: 'constant', value: -0.1 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 45 },
-                      { kind: 'constant', value: 45 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.63 },
-                      { kind: 'constant', value: 0.66 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 10 },
-                      { kind: 'constant', value: 15 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 35 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.4 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_normal_attack_l_vfx01: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 25 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.1446312,
-                  value: 0.71687555,
-                  inTangent: 2.6108968,
-                  outTangent: 2.4248688,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.45778695,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 100,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.1 },
-                      { kind: 'constant', value: -0.1 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 45 },
-                      { kind: 'constant', value: 45 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.63 },
-                      { kind: 'constant', value: 0.66 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 35 },
-                      { kind: 'constant', value: 40 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.25 },
-                      { kind: 'constant', value: 0.25 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 35 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.4 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_normal_attack_l_vfx02: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 25 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.1446312,
-                  value: 0.71687555,
-                  inTangent: 2.6108968,
-                  outTangent: 2.4248688,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.45778695,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 100,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.35 },
-                      { kind: 'constant', value: -0.4 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 50 },
-                      { kind: 'constant', value: 55 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 1 },
-                      { kind: 'constant', value: 0.66 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 5 },
-                      { kind: 'constant', value: 5 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 35 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.4 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_normal_attack_r: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 25 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.14935903,
-                  value: 0.705271,
-                  inTangent: 2.6108968,
-                  outTangent: 2.6976657,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.649146,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.05 },
-                      { kind: 'constant', value: -0.05 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 135 },
-                      { kind: 'constant', value: 135 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.55 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 100 },
-                      { kind: 'constant', value: 100 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.4 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_normal_attack_r_vfx01: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 25 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.14935903,
-                  value: 0.705271,
-                  inTangent: 2.6108968,
-                  outTangent: 2.6976657,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.649146,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.05 },
-                      { kind: 'constant', value: -0.05 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 135 },
-                      { kind: 'constant', value: 135 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.55 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 145 },
-                      { kind: 'constant', value: 150 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.4 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_normal_attack_r_vfx02: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 25 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.14935903,
-                  value: 0.705271,
-                  inTangent: 2.6108968,
-                  outTangent: 2.6976657,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.649146,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.25 },
-                      { kind: 'constant', value: -0.3 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 135 },
-                      { kind: 'constant', value: 135 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.55 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 5 },
-                      { kind: 'constant', value: 5 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.4 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_normal_attack_soundwave: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 0 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'ring',
-          target: { side: 'operator' },
-          innerRadiusMeters: { kind: 'constant', value: 0 },
-          outerRadiusMeters: { kind: 'constant', value: 1.5 },
-          innerRadiusSpeed: { kind: 'constant', value: 10 },
-          outerRadiusSpeed: { kind: 'constant', value: 10 },
-          heightMeters: { kind: 'constant', value: 3 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 0.45 },
-        finishDistanceMeters: { kind: 'constant', value: 5.5 },
-        finishOnReach: false,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { target: 'allOperators', finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_normal_attack_soundwave_chrdung: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 0 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'ring',
-          target: { side: 'enemy' },
-          innerRadiusMeters: { kind: 'constant', value: 0 },
-          outerRadiusMeters: { kind: 'constant', value: 1.5 },
-          innerRadiusSpeed: { kind: 'constant', value: 10 },
-          outerRadiusSpeed: { kind: 'constant', value: 10 },
-          heightMeters: { kind: 'constant', value: 3 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 0.45 },
-        finishDistanceMeters: { kind: 'constant', value: 5.5 },
-        finishOnReach: false,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_normal_attack_vfx: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 10 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 2,
-                  inTangent: -3.9952576,
-                  outTangent: -3.9952576,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.16500098,
-                  value: 1.3407786,
-                  inTangent: -2.0447524,
-                  outTangent: -2.0447524,
-                  weightedMode: 0,
-                  inWeight: 0.8832316,
-                  outWeight: 0.061716028,
-                },
-                {
-                  time: 0.4896845,
-                  value: 0.99144655,
-                  inTangent: 0.01655952,
-                  outTangent: 0.01655952,
-                  weightedMode: 0,
-                  inWeight: 0.44204327,
-                  outWeight: 0.09206248,
-                },
-                {
-                  time: 3,
-                  value: 1,
-                  inTangent: 0.003407319,
-                  outTangent: 0.003407319,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 0.8,
-                  inTangent: 0.53959215,
-                  outTangent: 0.53959215,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.17022358,
-                },
-                {
-                  time: 1.1467078,
-                  value: 1.2968235,
-                  inTangent: 0.23721509,
-                  outTangent: 0.23721509,
-                  weightedMode: 0,
-                  inWeight: 0.43372607,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 2,
-                  inTangent: 0.079425424,
-                  outTangent: 0.079425424,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 60 },
-                      { kind: 'constant', value: 60 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.25 },
-                      { kind: 'constant', value: 0.25 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.45 },
-                      { kind: 'constant', value: 0.5 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 10 },
-                      { kind: 'constant', value: 20 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.65 },
-                      { kind: 'constant', value: 0.65 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_normal_attack_vfx_03: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 10 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 2,
-                  inTangent: -3.9952576,
-                  outTangent: -3.9952576,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.16500098,
-                  value: 1.3407786,
-                  inTangent: -2.0447524,
-                  outTangent: -2.0447524,
-                  weightedMode: 0,
-                  inWeight: 0.8832316,
-                  outWeight: 0.061716028,
-                },
-                {
-                  time: 0.4896845,
-                  value: 0.99144655,
-                  inTangent: 0.01655952,
-                  outTangent: 0.01655952,
-                  weightedMode: 0,
-                  inWeight: 0.44204327,
-                  outWeight: 0.09206248,
-                },
-                {
-                  time: 3,
-                  value: 1,
-                  inTangent: 0.003407319,
-                  outTangent: 0.003407319,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 0.8,
-                  inTangent: 0.53959215,
-                  outTangent: 0.53959215,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.17022358,
-                },
-                {
-                  time: 1.1467078,
-                  value: 1.2968235,
-                  inTangent: 0.23721509,
-                  outTangent: 0.23721509,
-                  weightedMode: 0,
-                  inWeight: 0.43372607,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 2,
-                  inTangent: 0.079425424,
-                  outTangent: 0.079425424,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 60 },
-                      { kind: 'constant', value: 60 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.25 },
-                      { kind: 'constant', value: 0.25 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.45 },
-                      { kind: 'constant', value: 0.5 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 10 },
-                      { kind: 'constant', value: 20 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.65 },
-                      { kind: 'constant', value: 0.65 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_normal_attack_vfx_04: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 13 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 2,
-                  inTangent: -3.9952576,
-                  outTangent: -3.9952576,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.16500098,
-                  value: 1.3407786,
-                  inTangent: -2.0447524,
-                  outTangent: -2.0447524,
-                  weightedMode: 0,
-                  inWeight: 0.8832316,
-                  outWeight: 0.061716028,
-                },
-                {
-                  time: 0.4896845,
-                  value: 0.99144655,
-                  inTangent: 0.01655952,
-                  outTangent: 0.01655952,
-                  weightedMode: 0,
-                  inWeight: 0.44204327,
-                  outWeight: 0.09206248,
-                },
-                {
-                  time: 3,
-                  value: 1,
-                  inTangent: 0.003407319,
-                  outTangent: 0.003407319,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 0.8,
-                  inTangent: 0.53959215,
-                  outTangent: 0.53959215,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.17022358,
-                },
-                {
-                  time: 1.1467078,
-                  value: 1.2968235,
-                  inTangent: 0.23721509,
-                  outTangent: 0.23721509,
-                  weightedMode: 0,
-                  inWeight: 0.43372607,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 2,
-                  inTangent: 0.079425424,
-                  outTangent: 0.079425424,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 60 },
-                      { kind: 'constant', value: 60 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.25 },
-                      { kind: 'constant', value: 0.25 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.45 },
-                      { kind: 'constant', value: 0.5 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 10 },
-                      { kind: 'constant', value: 20 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.65 },
-                      { kind: 'constant', value: 0.65 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_plunging_attack: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 6 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 4,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 0.8,
-                  inTangent: 0.53959215,
-                  outTangent: 0.53959215,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.17022358,
-                },
-                {
-                  time: 1.1467078,
-                  value: 1.2968235,
-                  inTangent: 0.23721509,
-                  outTangent: 0.23721509,
-                  weightedMode: 0,
-                  inWeight: 0.43372607,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 2,
-                  inTangent: 0.079425424,
-                  outTangent: 0.079425424,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: -0.05 },
-                      { kind: 'constant', value: -0.05 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 60 },
-                      { kind: 'constant', value: 60 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1 },
-                      { kind: 'constant', value: 1 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.15 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: 0 },
-    },
-    projectile_chr_0035_liino_ultskill_bomb: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 100 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.1446312,
-                  value: 0.71687555,
-                  inTangent: 2.6108968,
-                  outTangent: 2.4248688,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.45778695,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 100,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.3 },
-                      { kind: 'constant', value: 0.3 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 20 },
-                      { kind: 'constant', value: 25 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1.2 },
-                      { kind: 'constant', value: 1.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: -10 },
-                      { kind: 'constant', value: -15 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_ultskill_l_01: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.1446312,
-                  value: 0.71687555,
-                  inTangent: 2.6108968,
-                  outTangent: 2.4248688,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.45778695,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 100,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.5 },
-                      { kind: 'constant', value: 0.5 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 20 },
-                      { kind: 'constant', value: 35 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1.2 },
-                      { kind: 'constant', value: 1.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 1.5 },
-                      { kind: 'constant', value: 1.5 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 40 },
-                      { kind: 'constant', value: 50 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 3 },
-                      { kind: 'constant', value: 3 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 8 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_ultskill_l_02: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.1446312,
-                  value: 0.71687555,
-                  inTangent: 2.6108968,
-                  outTangent: 2.4248688,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.45778695,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 100,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 1.2 },
-                      { kind: 'constant', value: 1.2 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 20 },
-                      { kind: 'constant', value: 35 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 2 },
-                      { kind: 'constant', value: 2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 3.5 },
-                      { kind: 'constant', value: 3.5 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 35 },
-                      { kind: 'constant', value: 50 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1.5 },
-                      { kind: 'constant', value: 1.5 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 8 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_ultskill_l_03: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.1446312,
-                  value: 0.71687555,
-                  inTangent: 2.6108968,
-                  outTangent: 2.4248688,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.45778695,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 100,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 1.8 },
-                      { kind: 'constant', value: 2 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 60 },
-                      { kind: 'constant', value: 65 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1 },
-                      { kind: 'constant', value: 1 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 1 },
-                      { kind: 'constant', value: 1 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 40 },
-                      { kind: 'constant', value: 50 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1.2 },
-                      { kind: 'constant', value: 1.7 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 8 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_ultskill_r_01: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.14935903,
-                  value: 0.705271,
-                  inTangent: 2.6108968,
-                  outTangent: 2.6976657,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.649146,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.5 },
-                      { kind: 'constant', value: 0.5 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 110 },
-                      { kind: 'constant', value: 130 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1.2 },
-                      { kind: 'constant', value: 1.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 1.5 },
-                      { kind: 'constant', value: 1.5 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 130 },
-                      { kind: 'constant', value: 140 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 3 },
-                      { kind: 'constant', value: 3 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 8 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_ultskill_r_02: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.14935903,
-                  value: 0.705271,
-                  inTangent: 2.6108968,
-                  outTangent: 2.6976657,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.649146,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 1 },
-                      { kind: 'constant', value: 1 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 130 },
-                      { kind: 'constant', value: 135 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1 },
-                      { kind: 'constant', value: 1 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 3.5 },
-                      { kind: 'constant', value: 3.5 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 110 },
-                      { kind: 'constant', value: 115 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1.5 },
-                      { kind: 'constant', value: 1.5 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 8 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_ultskill_r_03: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.5,
-                  inTangent: 0.06796439,
-                  outTangent: 0.06796439,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.41590837,
-                },
-                {
-                  time: 0.14935903,
-                  value: 0.705271,
-                  inTangent: 2.6108968,
-                  outTangent: 2.6976657,
-                  weightedMode: 0,
-                  inWeight: 0.16508526,
-                  outWeight: 0.649146,
-                },
-                {
-                  time: 0.2,
-                  value: 1,
-                  inTangent: 0.13528097,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 0,
-                  inWeight: 1,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 2 },
-                      { kind: 'constant', value: 2 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 150 },
-                      { kind: 'constant', value: 155 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 1 },
-                      { kind: 'constant', value: 1 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 115 },
-                      { kind: 'constant', value: 125 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.8 },
-                      { kind: 'constant', value: 0.8 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 8 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0035_liino_ultskill_soundwave: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'always' },
-              speed: { kind: 'constant', value: 20 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'ring',
-          target: { side: 'enemy' },
-          innerRadiusMeters: { kind: 'constant', value: 0 },
-          outerRadiusMeters: { kind: 'constant', value: 2 },
-          innerRadiusSpeed: { kind: 'constant', value: 10 },
-          outerRadiusSpeed: { kind: 'constant', value: 10 },
-          heightMeters: { kind: 'constant', value: 3 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 0.4 },
-        finishDistanceMeters: { kind: 'constant', value: 6 },
-        finishOnReach: false,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_ultskill_soundwave_02: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 0 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'ring',
-          target: { side: 'enemy' },
-          innerRadiusMeters: { kind: 'constant', value: 0 },
-          outerRadiusMeters: { kind: 'constant', value: 2 },
-          innerRadiusSpeed: { kind: 'constant', value: 10 },
-          outerRadiusSpeed: { kind: 'constant', value: 10 },
-          heightMeters: { kind: 'constant', value: 3 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 0.4 },
-        finishDistanceMeters: { kind: 'constant', value: 6 },
-        finishOnReach: false,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0035_liino_ultskill_soundwave_heal: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'always' },
-              speed: { kind: 'constant', value: 20 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'ring',
-          target: { side: 'operator' },
-          innerRadiusMeters: { kind: 'constant', value: 0 },
-          outerRadiusMeters: { kind: 'constant', value: 2 },
-          innerRadiusSpeed: { kind: 'constant', value: 10 },
-          outerRadiusSpeed: { kind: 'constant', value: 10 },
-          heightMeters: { kind: 'constant', value: 3 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 0.4 },
-        finishDistanceMeters: { kind: 'constant', value: 6 },
-        finishOnReach: false,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { target: 'allOperators', finishOnHit: false, maxHitCount: -1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

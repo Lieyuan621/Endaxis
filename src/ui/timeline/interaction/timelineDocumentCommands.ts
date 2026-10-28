@@ -949,3 +949,22 @@ export function addExternalEventMarker(
     },
   };
 }
+
+export function setSkillCastInitialBlackboard(
+  scenario: ScenarioDocument,
+  trackIndex: TrackIndex,
+  skillCastId: string,
+  values: Readonly<Record<string, number>>,
+): ScenarioDocument {
+  if (Object.entries(values).some(([key, value]) => !key || !Number.isFinite(value)))
+    throw new Error('invalid skill initial blackboard');
+  const { track, castIndex, cast } = locateSkillCast(scenario, trackIndex, skillCastId);
+  const simulationInputs = { ...cast.simulationInputs };
+  if (Object.keys(values).length) simulationInputs.initialBlackboard = { ...values };
+  else delete simulationInputs.initialBlackboard;
+  const skillCasts = [...track.skillCasts];
+  skillCasts[castIndex] = { ...cast, simulationInputs };
+  const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
+  tracks[trackIndex] = { ...track, skillCasts };
+  return { ...scenario, tracks };
+}

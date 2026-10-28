@@ -15,13 +15,12 @@ export const fluoriteChr_0022_bounda_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'emit_pos' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -79,16 +78,6 @@ export const fluoriteChr_0022_bounda_attack1ActionGraph = {
             saveToContextKey: 'emit_pos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 1.4 },
-                { kind: 'constant', value: 0.95 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_1',
@@ -140,13 +129,12 @@ export const fluoriteChr_0022_bounda_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'emit_pos' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -204,16 +192,6 @@ export const fluoriteChr_0022_bounda_attack2ActionGraph = {
             saveToContextKey: 'emit_pos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: -0.1 },
-                { kind: 'constant', value: 1.4 },
-                { kind: 'constant', value: 0.5 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_1',
@@ -267,13 +245,12 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'emit_pos' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -394,16 +371,6 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
             saveToContextKey: 'emit_pos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 1.3 },
-                { kind: 'constant', value: 0.5 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_1',
@@ -467,6 +434,106 @@ export const fluoriteChr_0022_bounda_attack3: SkillDefinition = {
   nativeSkillType: 'attack',
 };
 
+const fluoriteChr_0022_bounda_attack4ActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        changeResource_3: {
+          action: {
+            kind: 'changeResource',
+            parameters: {
+              resource: 'sp',
+              amount: { kind: 'valueNode', nodeId: 'data_1' },
+              coefficient: { kind: 'constant', value: 1 },
+              source: { kind: 'source' },
+              targets: { kind: 'source' },
+              onlyMainOperator: true,
+              spGainKind: 'gain',
+              spGainSource: 'normalAttack',
+            },
+          },
+          next: null,
+        },
+        checkCondition_1: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          },
+          next: null,
+        },
+        checkCondition_2: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          },
+          next: 'checkCondition_1',
+        },
+        ifElse_4: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_4' },
+            whenTrue: { $sequence: 'changeResource_3' },
+            whenFalse: { $sequence: null },
+          },
+          next: null,
+        },
+        dealDamage_5: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+              tags: ['normalAttack', 'normalAttackLastCombo'],
+              stagger: { kind: 'valueNode', nodeId: 'data_6' },
+              staggerOnlyWhenCasterControlled: true,
+            },
+          },
+          next: 'ifElse_4',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+        data_2: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityCountCompare',
+            target: { kind: 'inputTarget' },
+            containsHittableTarget: false,
+            excludeDeadEntity: false,
+            operator: 'greaterOrEqual',
+            value: 1,
+          },
+        },
+        data_3: {
+          type: 'boolean',
+          expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+        },
+        data_4: {
+          type: 'boolean',
+          expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
+        },
+        data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+        data_6: { type: 'number', expression: { kind: 'blackboard', key: 'attack_poise' } },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0022_bounda_attack4_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { atb: 0, atk_scale: 0, attack_poise: 20 },
+  scheduledSequences: [{ startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } }],
+} as const;
+
 export const fluoriteChr_0022_bounda_attack4ActionGraph = {
   main: {
     nodes: {
@@ -474,128 +541,22 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [
+                { event: 'block', triggerFrames: [] },
+                { event: 'hit', triggerFrames: [2] },
+              ],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_attack4',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'emit_pos' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      changeResource_3: {
-                        action: {
-                          kind: 'changeResource',
-                          parameters: {
-                            resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_1' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            source: { kind: 'source' },
-                            targets: { kind: 'source' },
-                            onlyMainOperator: true,
-                            spGainKind: 'gain',
-                            spGainSource: 'normalAttack',
-                          },
-                        },
-                        next: null,
-                      },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
-                      checkCondition_2: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        },
-                        next: 'checkCondition_1',
-                      },
-                      ifElse_4: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                          whenTrue: { $sequence: 'changeResource_3' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      dealDamage_5: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            attacker: 'actionSource',
-                            target: { kind: 'inputTarget' },
-                            damageType: 'nature',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
-                            tags: ['normalAttack', 'normalAttackLastCombo'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_6' },
-                            staggerOnlyWhenCasterControlled: true,
-                          },
-                        },
-                        next: 'ifElse_4',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityCountCompare',
-                          target: { kind: 'inputTarget' },
-                          containsHittableTarget: false,
-                          excludeDeadEntity: false,
-                          operator: 'greaterOrEqual',
-                          value: 1,
-                        },
-                      },
-                      data_3: {
-                        type: 'boolean',
-                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-                      },
-                      data_4: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'checkActionResult',
-                          action: { $sequence: 'checkCondition_2' },
-                        },
-                      },
-                      data_5: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                      data_6: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'attack_poise' },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-                skillId: 'chr_0022_bounda_attack4_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0, attack_poise: 20 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
-              },
-            },
+            { event: 'block', skill: fluoriteChr_0022_bounda_attack4ActionGraphCallback1 },
+            { event: 'hit', skill: fluoriteChr_0022_bounda_attack4ActionGraphCallback1 },
           ],
         },
         next: null,
@@ -607,16 +568,6 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
             saveToContextKey: 'emit_pos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: -0.1 },
-                { kind: 'constant', value: 1.3 },
-                { kind: 'constant', value: 0.5 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_1',
@@ -681,6 +632,106 @@ export const fluoriteChr_0022_bounda_attack4: SkillDefinition = {
   nativeSkillType: 'attack',
 };
 
+const fluoriteChr_0022_bounda_attack4_1ActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        changeResource_3: {
+          action: {
+            kind: 'changeResource',
+            parameters: {
+              resource: 'sp',
+              amount: { kind: 'valueNode', nodeId: 'data_1' },
+              coefficient: { kind: 'constant', value: 1 },
+              source: { kind: 'source' },
+              targets: { kind: 'source' },
+              onlyMainOperator: true,
+              spGainKind: 'gain',
+              spGainSource: 'normalAttack',
+            },
+          },
+          next: null,
+        },
+        checkCondition_1: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          },
+          next: null,
+        },
+        checkCondition_2: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          },
+          next: 'checkCondition_1',
+        },
+        ifElse_4: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_4' },
+            whenTrue: { $sequence: 'changeResource_3' },
+            whenFalse: { $sequence: null },
+          },
+          next: null,
+        },
+        dealDamage_5: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+              tags: ['normalAttack', 'normalAttackLastCombo'],
+              stagger: { kind: 'valueNode', nodeId: 'data_6' },
+              staggerOnlyWhenCasterControlled: true,
+            },
+          },
+          next: 'ifElse_4',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+        data_2: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityCountCompare',
+            target: { kind: 'inputTarget' },
+            containsHittableTarget: false,
+            excludeDeadEntity: false,
+            operator: 'greaterOrEqual',
+            value: 1,
+          },
+        },
+        data_3: {
+          type: 'boolean',
+          expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+        },
+        data_4: {
+          type: 'boolean',
+          expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
+        },
+        data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+        data_6: { type: 'number', expression: { kind: 'blackboard', key: 'attack_poise' } },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0022_bounda_attack4_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { atb: 0, atk_scale: 0, attack_poise: 20 },
+  scheduledSequences: [{ startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } }],
+} as const;
+
 export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
   main: {
     nodes: {
@@ -688,128 +739,22 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [
+                { event: 'block', triggerFrames: [] },
+                { event: 'hit', triggerFrames: [2] },
+              ],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_attack4',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'emit_pos' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      changeResource_3: {
-                        action: {
-                          kind: 'changeResource',
-                          parameters: {
-                            resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_1' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            source: { kind: 'source' },
-                            targets: { kind: 'source' },
-                            onlyMainOperator: true,
-                            spGainKind: 'gain',
-                            spGainSource: 'normalAttack',
-                          },
-                        },
-                        next: null,
-                      },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
-                      checkCondition_2: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        },
-                        next: 'checkCondition_1',
-                      },
-                      ifElse_4: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                          whenTrue: { $sequence: 'changeResource_3' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      dealDamage_5: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            attacker: 'actionSource',
-                            target: { kind: 'inputTarget' },
-                            damageType: 'nature',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
-                            tags: ['normalAttack', 'normalAttackLastCombo'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_6' },
-                            staggerOnlyWhenCasterControlled: true,
-                          },
-                        },
-                        next: 'ifElse_4',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityCountCompare',
-                          target: { kind: 'inputTarget' },
-                          containsHittableTarget: false,
-                          excludeDeadEntity: false,
-                          operator: 'greaterOrEqual',
-                          value: 1,
-                        },
-                      },
-                      data_3: {
-                        type: 'boolean',
-                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-                      },
-                      data_4: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'checkActionResult',
-                          action: { $sequence: 'checkCondition_2' },
-                        },
-                      },
-                      data_5: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                      data_6: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'attack_poise' },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-                skillId: 'chr_0022_bounda_attack4_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0, attack_poise: 20 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
-              },
-            },
+            { event: 'block', skill: fluoriteChr_0022_bounda_attack4_1ActionGraphCallback1 },
+            { event: 'hit', skill: fluoriteChr_0022_bounda_attack4_1ActionGraphCallback1 },
           ],
         },
         next: null,
@@ -821,16 +766,6 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
             saveToContextKey: 'emit_pos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: -0.1 },
-                { kind: 'constant', value: 1.3 },
-                { kind: 'constant', value: 0.5 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_1',
@@ -1127,6 +1062,74 @@ export const fluoriteChr_0022_bounda_plunging_attack_end: SkillDefinition = {
   nativeSkillType: 'attack',
 };
 
+const fluoriteChr_0022_bounda_normal_skillActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_common_affixes_slow',
+                  blackboardAssignments: {
+                    duration: { kind: 'constant', value: 3.1 },
+                    rate: { kind: 'valueNode', nodeId: 'data_1' },
+                  },
+                },
+              ],
+              targets: { kind: 'inputTarget' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: null,
+        },
+        spawnAbilityEntity_2: {
+          action: {
+            kind: 'spawnAbilityEntity',
+            parameters: {
+              bornAt: { kind: 'inputTarget' },
+              abilityEntityId: 'abilityentity_chr_0022_bounda_normal_skill',
+              childSkillId: 'chr_0022_bounda_normal_skill_abilityrange',
+              source: { kind: 'source' },
+              inheritActionBlackboard: true,
+              dieWhenSourceDies: false,
+              target: 'enemy',
+            },
+          },
+          next: 'applyBuff_1',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'move_speed_scalar' } },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0022_bounda_normal_skill_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {
+    atk_scale: 0,
+    duration: 0,
+    duration_potential: 0,
+    move_speed_scalar: 0,
+    poise: 30,
+    potential_lv: 0,
+  },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_2' } },
+  ],
+} as const;
+
 export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
   main: {
     nodes: {
@@ -1146,88 +1149,22 @@ export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 7,
+              callbacks: [
+                { event: 'block', triggerFrames: [7] },
+                { event: 'hit', triggerFrames: [] },
+              ],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_normal_skill',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'start' } },
-              segmentTargets: [{ target: { kind: 'context', key: 'emitpos' } }, { side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      applyBuff_1: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [
-                              {
-                                buffId: 'buff_common_affixes_slow',
-                                blackboardAssignments: {
-                                  duration: { kind: 'constant', value: 3.1 },
-                                  rate: { kind: 'valueNode', nodeId: 'data_1' },
-                                },
-                              },
-                            ],
-                            targets: { kind: 'inputTarget' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      spawnAbilityEntity_2: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'inputTarget' },
-                            abilityEntityId: 'abilityentity_chr_0022_bounda_normal_skill',
-                            childSkillId: 'chr_0022_bounda_normal_skill_abilityrange',
-                            source: { kind: 'source' },
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                            target: 'enemy',
-                          },
-                        },
-                        next: 'applyBuff_1',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'move_speed_scalar' },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-                skillId: 'chr_0022_bounda_normal_skill_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  atk_scale: 0,
-                  duration: 0,
-                  duration_potential: 0,
-                  move_speed_scalar: 0,
-                  poise: 30,
-                  potential_lv: 0,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_2' } },
-                ],
-              },
-            },
+            { event: 'block', skill: fluoriteChr_0022_bounda_normal_skillActionGraphCallback1 },
+            { event: 'hit', skill: fluoriteChr_0022_bounda_normal_skillActionGraphCallback1 },
           ],
         },
         next: 'applyBuff_1',
@@ -1239,16 +1176,6 @@ export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
             saveToContextKey: 'emitpos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 1.25 },
-                { kind: 'constant', value: 0.7 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_2',
@@ -1260,16 +1187,6 @@ export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
             saveToContextKey: 'start',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: -0.2 },
-                { kind: 'constant', value: 2 },
-                { kind: 'constant', value: 0.4 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'createSpatialPointTargets_3',
@@ -1609,10 +1526,12 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -1682,10 +1601,12 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -1754,10 +1675,12 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -1826,10 +1749,12 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -3159,266 +3084,6 @@ export const fluorite: OperatorDefinition = {
           { startFrame: 0, endFrame: 89, sequence: { $sequence: 'jumpTimeline_27' } },
         ],
       },
-    },
-  },
-  projectileDefinitions: {
-    projectile_chr_0022_bounda_attack1: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 70 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 20 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0022_bounda_attack4: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 70 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 20 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0022_bounda_normal_skill: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: 'first',
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 3.8 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.1 },
-                      { kind: 'constant', value: 0.1 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 90 },
-                      { kind: 'constant', value: 90 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.174 },
-                      { kind: 'constant', value: 0.174 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.327 },
-                      { kind: 'constant', value: 0.327 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 90 },
-                      { kind: 'constant', value: 90 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-          {
-            targetKey: 'TargetPoint',
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 38 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1.05,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1.05,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'parabola',
-                definition: { kind: 'speedGravity', gravity: { kind: 'constant', value: 100 } },
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.4 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: false,
-        keepMovingOnReach: true,
-        reachRadiusMeters: { kind: 'constant', value: 0.4 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0022_bounda_ultimate_skill_1: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 70 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.3 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 20 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.3 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: 10 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

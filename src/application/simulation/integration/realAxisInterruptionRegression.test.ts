@@ -14,6 +14,28 @@ const resources = {
   normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
 };
 
+it('汤汤第三段普攻在五米固定站位四发均命中，飞行切面不丢失或重复伤害', () => {
+  const scenario = createEmptyScenario('tangtang-capsule', '散射与受击体');
+  scenario.tracks[0] = track('tangtang', [['basicAttack', 'basicAttack3', 0]]);
+  const session = createEditorSimulationService().createCombatSession(scenario);
+  session.advanceToFrame(20);
+  const restored = session.fork(session.runtime.save());
+  session.advanceToFrame(150);
+  restored.advanceToFrame(150);
+  const result = session.collectResult();
+  expect(restored.collectResult()).toEqual(result);
+  expect(result.receiptEntries.filter(entry => entry.event === 'ProjectileLaunched')).toHaveLength(
+    4,
+  );
+  expect(
+    result.receiptEntries.filter(
+      entry =>
+        entry.event === 'DamageApplied' &&
+        String(entry.data?.stepKey).includes('chr_0027_tangtang_attack3_projhit'),
+    ),
+  ).toHaveLength(4);
+});
+
 it('莱万汀终结技清除提前中断连携留下的普通攻击缓存', async () => {
   const scenario = createEmptyScenario('laevatain-mode-offset', '强化普攻接续');
   scenario.tracks[0] = track('laevatain', [
@@ -1238,9 +1260,8 @@ it.each([true, false])(
   },
 );
 
-it.each([0, 10])('梨诺战技上射到达后继续攻击，飞行切面不重复发射：%s 米', async distance => {
+it('梨诺战技上射到达后继续攻击，飞行切面不重复发射', async () => {
   const scenario = createEmptyScenario('liino-ascent', '梨诺上射');
-  scenario.battle.operatorEnemyDistanceMeters = distance;
   scenario.tracks[0] = track('liino', [['battleSkill', 'battleSkill', 10]]);
   const session = createEditorSimulationService().createCombatSession(scenario);
   session.advanceToFrame(34);

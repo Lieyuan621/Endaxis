@@ -40,9 +40,6 @@ import type { ActionValueCalculation, PostSkillCastRequest } from '../state/foun
 type RuntimeOperation = ResolvedCombatOperationStep;
 
 interface AbilityEntityRuntimeDependencies {
-  readonly resolvePosition?: (
-    target: RuntimeTargetRef,
-  ) => LogicalAbilityEntitySpawnRequest['position'];
   readonly resolveOperations: (
     state: CombatOperationHostState,
     program: CompiledAbilityEntityChildSkillProgram,
@@ -72,7 +69,8 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
   readonly #operatorId: string;
   readonly #entities: LogicalAbilityEntityRuntime;
   readonly #delegate: CombatOperationExecutor &
-    Pick<TargetContextOperationExecutor, 'queryTargets'>;
+    Pick<TargetContextOperationExecutor, 'queryTargets'> &
+    Partial<Pick<TargetContextOperationExecutor, 'filterTargetsByTags'>>;
   readonly #childRuntimeDependencies?: AbilityEntityRuntimeDependencies;
   readonly #resolveDefinition?: (
     abilityEntityId: string,
@@ -84,7 +82,9 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
   constructor(
     operatorId: string,
     entities: LogicalAbilityEntityRuntime,
-    delegate: CombatOperationExecutor & Pick<TargetContextOperationExecutor, 'queryTargets'>,
+    delegate: CombatOperationExecutor &
+      Pick<TargetContextOperationExecutor, 'queryTargets'> &
+      Partial<Pick<TargetContextOperationExecutor, 'filterTargetsByTags'>>,
     childRuntimeDependencies?: AbilityEntityRuntimeDependencies,
     resolveDefinition?: (abilityEntityId: string) => ResolvedAbilityEntityDefinition | undefined,
     restored?: {
@@ -176,13 +176,19 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
         : undefined;
       if (step.parameters.sameSourceSkillCast && sourceSkillCastId === undefined)
         throw new Error('AbilityEntity same-cast query requires inherited skill-cast info');
-      let targets = this.#entities.findOwnerSpawned({
-        ownerId: runtimeTargetEntityId(owner)!,
-        ...(step.parameters.abilityEntityIds === undefined
-          ? {}
-          : { abilityEntityIds: step.parameters.abilityEntityIds }),
-        ...(sourceSkillCastId === undefined ? {} : { sourceSkillCastId }),
-      });
+      let targets =
+        step.parameters.objectType === 'none'
+          ? []
+          : this.#entities.findOwnerSpawned({
+              ownerId: runtimeTargetEntityId(owner)!,
+              ...(sourceSkillCastId === undefined ? {} : { sourceSkillCastId }),
+            });
+      if (step.parameters.tagFilters?.length) {
+        if (!this.#delegate.filterTargetsByTags)
+          throw new Error('AbilityEntity query requires tag filtering');
+        targets = this.#delegate.filterTargetsByTags(targets, step.parameters.tagFilters);
+      }
+
       const circularOrder = step.parameters.circularOrder;
       if (circularOrder !== undefined) {
         if (targets.length !== circularOrder.desiredCount) {
@@ -376,7 +382,6 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
         soul = this.#childRuntimeDependencies.prepareSoul(target, definition.soul);
       }
       const entity = this.#entities.spawn({
-        position: this.#childRuntimeDependencies?.resolvePosition?.(bornTargets[bornIndex]!),
         ...(soul === undefined ? {} : { soul }),
         initialize: entity => {
           if (definition.soul !== undefined)
@@ -492,9 +497,6 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
       return (
         this.#entities.findOwnerSpawned({
           ownerId: this.#operatorId,
-          ...(condition.abilityEntityIds === undefined
-            ? {}
-            : { abilityEntityIds: condition.abilityEntityIds }),
           ...(sourceSkillCastId === undefined ? {} : { sourceSkillCastId }),
         }).length > 0
       );

@@ -300,6 +300,7 @@ import {
   setSkillCastForcedCritical,
   setSkillCastLocked,
   setSkillCastRandomSeed,
+  setSkillCastInitialBlackboard,
   setTimelinePrepExpanded,
   setUnifiedInitialUltimateEnergy,
   swapTimelineTracks,
@@ -6359,6 +6360,14 @@ function setContextCastColor(color: string | null): void {
   contextMenuTarget.value = null;
 }
 
+function setSelectedCastInitialBlackboard(value: Readonly<Record<string, number>>): void {
+  const selected = selectedCastModel.value;
+  if (selected === null) return;
+  commitScenario('setSkillCastInitialBlackboard', current =>
+    setSkillCastInitialBlackboard(current, selected.trackIndex, selected.cast.id, value),
+  );
+}
+
 function setSelectedCastRandomSeed(seed: number | null): void {
   const selected = selectedCastModel.value;
   if (selected === null) return;
@@ -6437,13 +6446,6 @@ function setGlobalRandomSeed(globalSeed: number): void {
       ...current.battle,
       random: { mode: current.battle.random?.mode ?? 'expected', globalSeed },
     },
-  }));
-}
-
-function setOperatorEnemyDistance(operatorEnemyDistanceMeters: number): void {
-  commitScenario('setOperatorEnemyDistance', current => ({
-    ...current,
-    battle: { ...current.battle, operatorEnemyDistanceMeters },
   }));
 }
 
@@ -6903,8 +6905,6 @@ function setMobileGuideFrame(frame: number | null): void {
         :appearance="appearance"
         :random-mode="scenario.battle.random?.mode ?? 'expected'"
         :automatic-control-switches="scenario.battle.automaticControlSwitches !== false"
-        :operator-enemy-distance-meters="scenario.battle.operatorEnemyDistanceMeters ?? 0"
-        @set-operator-enemy-distance="setOperatorEnemyDistance"
         :combo-skill-priority-enabled="scenario.battle.comboSkillPriority?.enabled ?? false"
         :combo-skill-priority-operators="comboSkillPriorityOperators"
         :global-random-seed="scenario.battle.random?.globalSeed ?? 0"
@@ -8132,6 +8132,7 @@ function setMobileGuideFrame(frame: number | null): void {
         :input-read-only="selectedCastId !== null && isHistoricalSkillInput(selectedCastId)"
         :label="selectedCastModel?.label ?? ''"
         :current-definition="selectedCastModel?.currentDefinition ?? null"
+        :operator-definition="selectedCastModel?.operator ?? undefined"
         :actual-duration-frames="
           selectedCastId === null ? undefined : skillCastActualDurationFrames.get(selectedCastId)
         "
@@ -8150,6 +8151,7 @@ function setMobileGuideFrame(frame: number | null): void {
         @edit-graph="openSkillGraphEditor"
         @execution-trace="openExecutionTrace"
         @set-random-seed="setSelectedCastRandomSeed"
+        @set-initial-blackboard="setSelectedCastInitialBlackboard"
         @roll-random-seed="rollSelectedCastRandomSeed"
         @set-start-frame="setSelectedCastStartFrame"
         @set-locked="setSelectedCastLocked"

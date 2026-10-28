@@ -8,7 +8,9 @@ export async function formatGeneratedSource(content: string, output: string): Pr
   const options = await resolveConfig(
     path.resolve(import.meta.dirname, '../../../../../.prettierrc.json'),
   );
-  const formatted = await format(content, { ...options, filepath: output });
+  // Prettier 保留对象原有换行；先统一 JSON 输入，避免生成与再次格式化得到不同排版。
+  const source = output.endsWith('.json') ? JSON.stringify(JSON.parse(content), null, 2) : content;
+  const formatted = await format(source, { ...options, filepath: output });
   return /\/(?:zh|en)\/operators\.json$/.test(output.replaceAll('\\', '/'))
     ? formatLevelValueArrays(formatted)
     : formatted;

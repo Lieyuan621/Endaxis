@@ -19,24 +19,6 @@ function createRuntime() {
 }
 
 describe('LogicalAbilityEntityRuntime', () => {
-  it('出生位置复制为快照，来源移动及切面恢复都不会重新解析位置', () => {
-    const runtime = createRuntime();
-    const position: [number, number, number] = [12, 2, 0];
-    const entity = runtime.spawn({
-      abilityEntityId: 'stationary',
-      ownerId: 'caster',
-      source: { kind: 'operator', operatorId: 'caster' },
-      definition: { lifetime: { kind: 'infinite' } },
-      position,
-    });
-    position[0] = 30;
-    expect(runtime.runtimeState.instances.get(entity.instanceId)?.position).toEqual([12, 2, 0]);
-    const restored = new LogicalAbilityEntityRuntime({
-      restoredState: structuredClone(runtime.runtimeState),
-    });
-    expect(restored.runtimeState.instances.get(entity.instanceId)?.position).toEqual([12, 2, 0]);
-  });
-
   it('出生初始化写入的黑板先于子技能可见，初始化失败不启动子技能', () => {
     const runtime = createRuntime();
     const start = vi.fn();
@@ -695,7 +677,7 @@ describe('LogicalAbilityEntityRuntime', () => {
       expect(observed).toEqual(['spawned', 'child', 'finished']);
     },
   );
-  it('uses one instance set for zero-space range and owner/entity-id lookup', () => {
+  it('uses one instance set for zero-space range and direct-owner lookup', () => {
     const runtime = createRuntime();
     const a = runtime.spawn({
       abilityEntityId: 'water',
@@ -703,7 +685,7 @@ describe('LogicalAbilityEntityRuntime', () => {
       ownerId: 'a',
       source: { kind: 'operator', operatorId: 'a' },
     });
-    runtime.spawn({
+    const sword = runtime.spawn({
       abilityEntityId: 'sword',
       definition: { lifetime: { kind: 'infinite' } },
       ownerId: 'a',
@@ -720,16 +702,15 @@ describe('LogicalAbilityEntityRuntime', () => {
     expect(
       runtime.findOwnerSpawned({
         ownerId: 'a',
-        abilityEntityIds: ['water'],
       }),
-    ).toEqual([a]);
+    ).toEqual([a, sword]);
     const child = runtime.spawn({
       abilityEntityId: 'water',
       definition: { lifetime: { kind: 'infinite' } },
       ownerId: 'a',
       source: a,
     });
-    expect(runtime.findOwnerSpawned({ ownerId: 'a', abilityEntityIds: ['water'] })).toEqual([a]);
+    expect(runtime.findOwnerSpawned({ ownerId: 'a' })).toEqual([a, sword]);
     expect(runtime.findOwnerSpawned({ ownerId: `ability-entity:${a.instanceId}` })).toEqual([
       child,
     ]);
@@ -790,7 +771,6 @@ describe('LogicalAbilityEntityRuntime', () => {
     expect(
       runtime.findOwnerSpawned({
         ownerId: 'arcane',
-        abilityEntityIds: ['seal'],
         sourceSkillCastId: 17,
       }),
     ).toEqual([first]);

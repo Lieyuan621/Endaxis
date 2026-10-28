@@ -1,4 +1,3 @@
-import { sampleFloatRange, type RangeSampleSource } from '../random/simulationRandom';
 import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
 import { isAntiFaction, isFactionTargetUnmarkable } from '../abilities/targetFaction';
 import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
@@ -484,8 +483,6 @@ export type CombatDamageExecutorContext =
 
 /** 场景编译器拥有的战斗输入，不属于外部运行环境。 */
 export interface CombatRuntimeScenarioOptions {
-  /** 所有干员与敌人的固定端点距离，旧方案为 0 米。 */
-  readonly operatorEnemyDistanceMeters?: number;
   readonly resources: CombatResourceSnapshot;
   /** 由场景敌人实例编译得到，操作执行器不得另行读取定义默认值。 */
   readonly enemy: CombatEnemyProgram;
@@ -565,7 +562,6 @@ export interface CombatRuntimeEnvironmentOptions extends CombatRuntimeInputRules
   readonly deferInitialInput?: boolean;
   /** RandomUtil.Dice 使用的独立样本源；只有实际执行概率条件时才要求存在。 */
   readonly probabilitySamples?: ProbabilitySampleSource;
-  readonly rangeSamples?: RangeSampleSource;
   /** StoreAttributeValue 的动态来源属性读取端口；只有技能实际使用时才要求提供。 */
   readonly readSourceAttributeValue?: (
     sourceId: string,
@@ -678,7 +674,6 @@ export interface CombatRuntimeEnvironmentOptions extends CombatRuntimeInputRules
 
 /** 从同一切面树的固定程序与标准环境配置建立完整的当前分支装配。 */
 export interface CombatRuntimeAssemblyRestoreOptions extends CombatRuntimeInputRules {
-  readonly operatorEnemyDistanceMeters?: number;
   readonly operatorControl?: OperatorControlConfiguration;
   readonly receiptHistory: CombatReceiptView;
   readonly graph: CombatStateGraph;
@@ -973,7 +968,6 @@ export class CombatRuntimeAssembly {
           this.#projectileRuntimeDependencies(definitionOperatorId),
       });
       options = {
-        operatorEnemyDistanceMeters: restoreOptions.operatorEnemyDistanceMeters,
         resources: restoreOptions.resources,
         enemy: restoreOptions.enemy,
         operators: [...restored.preparation.programs.values()],
@@ -1396,8 +1390,7 @@ export class CombatRuntimeAssembly {
         matchesHitTags: (target, query) =>
           this.#selectorBuffTarget(target)?.matchesEntityTags(query.tags, query.tagQueryType) ??
           false,
-        sampleRange: castId => (minimum, maximum) =>
-          this.#sampleProjectileRange(minimum, maximum, castId),
+
         projectiles: this.projectileLifetimes,
         foundation,
         entities,
@@ -2374,6 +2367,8 @@ export class CombatRuntimeAssembly {
       undefined,
       false,
       consumeComboWindow,
+      this.#castParameters.get(`${operatorId}\u0000${castId ?? expectedSkillId}`)
+        ?.initialBlackboard,
     );
   }
 
@@ -2459,6 +2454,7 @@ export class CombatRuntimeAssembly {
     inheritedSkillCastInfo?: CombatSkillCastInfo,
     resolveSkillSlot = true,
     consumeComboWindow = true,
+    initialBlackboard: Readonly<Record<string, number>> = {},
   ): T {
     const ability = this.#requireAbilitySystem(operatorId);
     const definitionSkillId = ability.resolveSkillId(skillId, undefined, resolveSkillSlot);
@@ -2475,7 +2471,16 @@ export class CombatRuntimeAssembly {
     const skillCastId =
       effectiveInheritedSkillCastInfo?.skillCastId ?? this.#skillCastIds.allocate();
     ability.prepareSkillCastId(skillId, castId, skillCastId, resolveSkillSlot);
+    const initialValues = Object.fromEntries(
+      Object.entries(initialBlackboard).filter(
+        ([key]) => program !== undefined && Object.hasOwn(program.initialBlackboard, key),
+      ),
+    );
+    if (Object.values(initialValues).some(value => !Number.isFinite(value)))
+      throw new Error('skill initial blackboard values must be finite');
     const prepareAndStart = (result?: ComboWindowConsumeResult): T => {
+      if (Object.keys(initialValues).length)
+        ability.prepareSkillStartBlackboard(skillId, castId, initialValues, resolveSkillSlot);
       if (program?.skillType === 'comboSkill' && result !== undefined) {
         if (result.consumed) {
           if (result.window.nativeCondition !== undefined) {
@@ -2489,7 +2494,7 @@ export class CombatRuntimeAssembly {
             ability.prepareSkillStartBlackboard(
               skillId,
               castId,
-              result.window.blackboard,
+              { ...initialValues, ...result.window.blackboard },
               resolveSkillSlot,
             );
           }
@@ -3000,40 +3005,6 @@ export class CombatRuntimeAssembly {
     }
   }
 
-  #sampleProjectileRange(minimum: number, maximum: number, castId?: string): number {
-    const source = this.#options.rangeSamples;
-    if (source === undefined)
-      throw new Error('projectile trajectory requires a range sample source');
-    return sampleFloatRange(source, minimum, maximum, castId);
-  }
-
-  #targetPosition(target: RuntimeTargetRef): ProjectilePosition {
-    const position = this.#findTargetPosition(target);
-    if (!position) {
-      const resource =
-        target.kind === 'abilityEntity'
-          ? this.abilityEntities.runtimeState.instances.get(target.instanceId)?.abilityEntityId
-          : undefined;
-      throw new Error(
-        `target position is unavailable for ${JSON.stringify(target)}${resource ? ` (${resource})` : ''}`,
-      );
-    }
-    return position;
-  }
-
-  #findTargetPosition(target: RuntimeTargetRef): ProjectilePosition | undefined {
-    if (target.kind === 'operator') return [0, 0, 0];
-    if (target.kind === 'enemy') return [this.#options.operatorEnemyDistanceMeters ?? 0, 0, 0];
-    if (target.kind === 'spatialPoint' && target.position) return [...target.position];
-    if (target.kind === 'abilityEntity') {
-      const projectile = this.projectileLifetimes.runtimeState.instances.get(target.instanceId);
-      if (projectile?.movement) return [...projectile.movement.position];
-      const position = this.abilityEntities.runtimeState.instances.get(target.instanceId)?.position;
-      if (position) return [...position];
-    }
-    return undefined;
-  }
-
   #projectileRuntimeDependencies(operatorId: string): ProjectileRuntimeDependencies {
     return {
       createCallbackSkillHost: createCallbackSkillHostFactory({
@@ -3050,40 +3021,9 @@ export class CombatRuntimeAssembly {
         const sourceId = request.sourceId ?? operatorId;
         if (request.hit?.target === 'currentTarget' && request.hitTarget === undefined)
           throw new Error('projectile current target is missing');
-        const flight = resolveProjectileFlightEndpoints(
-          request.flight,
-          (query, role) => {
-            const targets = request.resolveFlightTargets?.(query, role);
-            if (!targets || targets.length !== 1)
-              throw new Error('projectile endpoint must resolve to exactly one position');
-            return this.#targetPosition(targets[0]!);
-          },
-          request.resolveFlightValue,
-        );
-        // 到达命中使用发射目标；固定落点不能被替换为场景敌人。
-        let reachTarget: RuntimeTargetRef | undefined;
-        if (request.hit?.onReach && request.hit.target === undefined) {
-          const endpoint = request.flight.segments.at(-1)!.target;
-          if ('side' in endpoint) {
-            reachTarget =
-              endpoint.side === 'enemy' ? { kind: 'enemy' } : this.#resolveRuntimeTarget(sourceId);
-          } else if (endpoint.offset) {
-            const resolved = flight.segments.at(-1)!.target;
-            if (!('position' in resolved)) throw new Error('offset target position is missing');
-            reachTarget = {
-              kind: 'spatialPoint',
-              pointId: this.sharedState.identities.spatialPoints.nextSpatialPointId++,
-              position: [...resolved.position],
-            };
-          } else {
-            const targets = request.resolveFlightTargets?.(endpoint.target, 'target');
-            if (targets?.length !== 1) throw new Error('projectile reach target is missing');
-            reachTarget = targets[0];
-          }
-        }
+        if (!request.schedule) throw new Error('projectile launch has no schedule');
         const hitTarget: RuntimeTargetRef =
           request.hitTarget ??
-          reachTarget ??
           (request.hit?.target === 'controlledOperator'
             ? {
                 kind: 'operator',
@@ -3099,7 +3039,7 @@ export class CombatRuntimeAssembly {
             callback.runtime.runtimeState.event === 'block' ||
             callback.runtime.runtimeState.event === 'reach'
           ) {
-            // 预留空间身份；回调发生时由生命周期写入对应位置。
+            // 保留回调的逻辑空间点身份，不从投射物轨迹推导坐标。
             callback.runtime.runtimeState.inputTarget = {
               kind: 'spatialPoint',
               pointId: this.sharedState.identities.spatialPoints.nextSpatialPointId++,
@@ -3122,17 +3062,16 @@ export class CombatRuntimeAssembly {
                 hitTagFilter: request.hit.hitTagFilter,
               };
         const entity = this.projectileLifetimes.launch({
+          schedule: request.schedule,
           originCastId: skillCastInfo?.originCastId,
-          sampleRange: (minimum, maximum) =>
-            this.#sampleProjectileRange(minimum, maximum, skillCastInfo?.originCastId),
+
           callbacks: request.callbacks.map(callback => callback.runtime.runtimeState),
           entityBlackboard: request.entityBlackboard,
           callbackPrograms: request.callbacks.map(callback => callback.program),
           source: this.#resolveRuntimeTarget(sourceId),
-          flight,
-          operatorEnemyDistanceMeters: this.#options.operatorEnemyDistanceMeters ?? 0,
+
           recycleDelaySeconds: request.recycleDelaySeconds,
-          hitPolicy: request.hit,
+
           hitTargets,
           released: () =>
             this.timeDilation?.releaseInheritedEntityScale(
@@ -3149,8 +3088,6 @@ export class CombatRuntimeAssembly {
               ? undefined
               : {
                   state: hitTargets,
-                  repeatIntervalSeconds: request.hit?.repeatIntervalSeconds,
-                  resolveTimeSeconds: () => this.clock.time,
                   matchesTags: (target, query) =>
                     this.#selectorBuffTarget(target)?.matchesEntityTags(
                       query.tags,
@@ -4556,9 +4493,6 @@ export class CombatRuntimeAssembly {
       {
         // MainTargetFinder 读取全局主目标；单敌场景固定为木桩。
         height: target => this.#queryGroundHeight(target),
-        sampleRange: (minimum, maximum, castId) =>
-          this.#sampleProjectileRange(minimum, maximum, castId),
-        position: target => this.#findTargetPosition(target),
         mainTarget: () => ({ kind: 'enemy' }),
         enemyMatchesTags: query =>
           this.#resolveBuffTargetById('enemy').matchesEntityTags(query.tags, query.tagQueryType),
@@ -4583,7 +4517,6 @@ export class CombatRuntimeAssembly {
       this.abilityEntities,
       targetContextOperations,
       {
-        resolvePosition: target => this.#findTargetPosition(target),
         resolveOperations: (state, childProgram, origin) =>
           this.#createAbilityEntityChildOperations(operatorId, childProgram, state, origin),
         semanticEvents: this.semanticEvents,
@@ -4801,7 +4734,6 @@ export class CombatRuntimeAssembly {
         },
       },
       { state: operationHost.state.actionBlackboard, programs: operationHost.programs },
-      this.#options.rangeSamples,
     );
     const operationChain = new SkillResourceOperationExecutor(
       {
@@ -4947,9 +4879,6 @@ export class CombatRuntimeAssembly {
       {
         // MainTargetFinder 读取全局主目标；单敌场景固定为木桩。
         height: target => this.#queryGroundHeight(target),
-        sampleRange: (minimum, maximum, castId) =>
-          this.#sampleProjectileRange(minimum, maximum, castId),
-        position: target => this.#findTargetPosition(target),
         mainTarget: () => ({ kind: 'enemy' }),
         enemyMatchesTags: query =>
           this.#resolveBuffTargetById('enemy').matchesEntityTags(query.tags, query.tagQueryType),
@@ -4974,7 +4903,6 @@ export class CombatRuntimeAssembly {
       this.abilityEntities,
       targetContextOperations,
       {
-        resolvePosition: target => this.#findTargetPosition(target),
         resolveOperations: (state, childProgram, origin) =>
           this.#createAbilityEntityChildOperations(operatorId, childProgram, state, origin),
         semanticEvents: this.semanticEvents,
@@ -5195,7 +5123,6 @@ export class CombatRuntimeAssembly {
         },
       },
       { state: operationHost.state.actionBlackboard, programs: operationHost.programs },
-      this.#options.rangeSamples,
     );
     const operationChain = new SkillResourceOperationExecutor(
       {
@@ -5383,10 +5310,16 @@ export class CombatRuntimeAssembly {
           return this.abilityEntities
             .findOwnerSpawned({
               ownerId: operatorId,
-              ...(query.abilityEntityIds === undefined
-                ? {}
-                : { abilityEntityIds: query.abilityEntityIds }),
             })
+            .filter(target =>
+              (query.tagFilters ?? []).every(
+                filter =>
+                  this.#selectorBuffTarget(target)?.matchesEntityTags(
+                    filter.tags,
+                    filter.queryType,
+                  ) !== false,
+              ),
+            )
             .map(target => {
               if (target.kind !== 'abilityEntity') {
                 throw new Error('owner-spawned AbilityEntity query returned a non-entity target');
@@ -6219,5 +6152,3 @@ export class CombatRuntimeAssembly {
 }
 
 import type { CombatFaction } from '../../../../packages/game-data-contract/src/primitives';
-import { resolveProjectileFlightEndpoints } from '../abilities/projectileFlightEndpoints';
-import type { ProjectilePosition } from '../state/projectileMovementState';

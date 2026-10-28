@@ -167,11 +167,11 @@ it('多目标命中复用回调宿主，并逐次传递各自的输入目标', (
     },
     factory,
   );
-  targets.forEach(target => callback.hit(target));
+  targets.forEach(target => callback.invoke(target));
   expect(factory).toHaveBeenCalledOnce();
   expect(seen).toEqual(targets);
   callback.advance(COMBAT_FRAME_INTERVAL);
-  targets.forEach(target => callback.hit(target));
+  targets.forEach(target => callback.invoke(target));
   expect(factory).toHaveBeenCalledOnce();
   expect(seen).toEqual([...targets, ...targets]);
 });
@@ -301,7 +301,6 @@ it('恢复回调宿主后逐帧状态和回执一致，绑定不分配编号或�
   expect(allocate).not.toHaveBeenCalled();
   expect(nextExecute).not.toHaveBeenCalled();
   expect(nextReceipt.entries).toEqual(receipt.entries);
-  expect(() => projectile.start()).toThrow('already started');
   for (let i = 0; i < 5; i++) {
     original.advance(COMBAT_FRAME_INTERVAL);
     projectile.advance(COMBAT_FRAME_INTERVAL);

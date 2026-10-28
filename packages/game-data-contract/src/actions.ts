@@ -1,4 +1,5 @@
-import type { ProjectileLaunchDefinition } from './projectiles.ts';
+import type { GameplayTagQueryDefinition } from './gameplayTags.ts';
+import type { ProjectileLaunchSchedule } from './projectileSchedule.ts';
 import type { ActionEntitySelection, ActionTargetQuery, BuffLookupQuery } from './conditions.ts';
 import type { NativeSkillType } from './skills.ts';
 /**
@@ -16,10 +17,8 @@ import type {
   ActionValueCalculationOperation,
   ActionValueOperand,
   ActionValueOperation,
-  SpatialPointOffsetDefinition,
   CombatCondition,
   TimeScaleCurveDefinition,
-  TimeScaleCurveKeyDefinition,
 } from './conditions.ts';
 import type {
   AttributeModifierSlot,
@@ -288,31 +287,23 @@ export interface CombatStepParameters {
           readonly excludeCurrentTarget?: true;
         };
   };
-  /** 生成带稳定身份的空间点，位置在执行查询时确定。 */
+  /** 生成带独立身份的逻辑点，不计算空间位置。 */
   createSpatialPointTargets: {
-    /** 点的位置来源；挂点在固定距离模型中取所属对象的位置。 */
+    /** 来源不存在时不生成点；省略时直接生成。 */
     origin?: ActionTargetQuery;
-    offset?: SpatialPointOffsetDefinition;
-    /** 保存临时空间点目标的动作环境键。 */
+    /** 保存逻辑点目标的动作环境键。 */
     saveToContextKey: string;
-    /** 要创建的空间点数量。 */
+    /** 原生按整数索引逐个生成：正数向上取整，非正数不生成。 */
     count: ActionValueOperand;
-    /** 固定朝向为干员面向敌人；地形与导航网格不在场景模型内。 */
-    randomDistribution?: {
-      shape: 'circle' | 'sector';
-      radius: ActionValueOperand;
-      minimumRadius: ActionValueOperand;
-      angleDegrees: ActionValueOperand;
-      localPlaneRotation: readonly [ActionValueOperand, ActionValueOperand, ActionValueOperand];
-      centerOnGround: boolean;
-    };
   };
-  /** 按 owner 与生成期已解析的实体身份查询，并保存为本次释放的 Context 目标组。 */
+  /** 按 owner 与运行时筛选条件查询，并保存为本次释放的 Context 目标组。 */
   findOwnerSpawnedAbilityEntities: {
+    /** 原生对象类型筛选；省略时查询能力实体，none 表示不匹配任何对象。 */
+    objectType?: 'abilityEntity' | 'none';
     /** 保存查询结果的动作环境键。 */
     saveToContextKey: string;
-    /** 只查找这些能力实体 ID；省略时不按 ID 筛选。 */
-    abilityEntityIds?: readonly string[];
+    /** 按实例执行标签筛选，按声明顺序取交集。 */
+    tagFilters?: readonly GameplayTagQueryDefinition[];
     /** 原生选择器的查询所有者，不等同于技能定义所属干员。 */
     owner: ActionTargetQuery;
     /** 原生查询后处理保留的目标数量；零空间模型会消去距离排序，但不能消去截断。 */
@@ -1073,25 +1064,6 @@ export interface CombatStepParameters {
     /** 运算输入值。 */
     value: ActionValueOperand;
   };
-  /** 按输入值读取曲线，结果显著变化时写入动作变量。 */
-  evaluateCurve: {
-    /** 保存曲线结果的动作变量。 */
-    key: string;
-    input: ActionValueOperand;
-    curve: readonly TimeScaleCurveKeyDefinition[];
-  };
-  /** 保存两个首目标的位置距离；任一目标不存在时不写入。 */
-  saveTargetDistance: {
-    source: ActionTargetQuery;
-    target: ActionTargetQuery;
-    outputKey: string;
-  };
-  /** 在浮点范围内取样并写入变量；允许反向范围。 */
-  storeRandomFloat: {
-    key: string;
-    minimum: ActionValueOperand;
-    maximum: ActionValueOperand;
-  };
   /** 执行时从左闭右开的整数范围取样并写入动作黑板；端点按原生容差向上取整。 */
   storeRandomInteger: {
     /** 保存随机结果的动作黑板键。 */
@@ -1300,9 +1272,9 @@ export interface CombatStepParameters {
   };
   /** 发射一个独立投射物；所有事件回调共享这一个对象的寿命和实体黑板。 */
   launchProjectile: {
-    /** 按原生移动参数推进；零距离也使用同一套飞行和碰撞规则。 */
+    schedule?: ProjectileLaunchSchedule<number | ActionValueOperand>;
+    /** 投射物资源身份；回调时刻由时间表决定。 */
     projectileId: string;
-    launch: ProjectileLaunchDefinition;
     /** 发射时解析的碰撞白名单；空间点不具备可命中的实体身份。 */
     onlyHitTargets?: ActionTargetQuery;
     /** 每个目标各发射一枚；count 用于已折算为数量的零空间目标。省略时发射一枚。 */
@@ -1320,7 +1292,11 @@ export interface CombatStepParameters {
     /** 结束后的回收等待，取所有启用回调的最大技能时长。 */
     recycleDelaySeconds?: number;
     /** 到达时绑定的角色目标；省略时使用资源的碰撞阵营。 */
-    hitTarget?: 'controlledOperator' | 'currentTarget';
+    entityInitialValues?: Readonly<Record<string, number>>;
+    hit?: {
+      target?: 'controlledOperator' | 'allOperators' | 'currentTarget';
+      hitTagFilter?: { tagQueryType: GameplayTagQueryType; tags: readonly GameplayTag[] };
+    };
   };
   /** 为当前干员开启固定五秒的连携候选；下一段技能身份随候选进入场景级队列。 */
   openComboWindow:
@@ -1505,10 +1481,7 @@ export const COMBAT_STEP_KINDS = [
   'storeShieldValue',
   'modifyActionValue',
   'storeRandomInteger',
-  'storeRandomFloat',
   'calculateActionValue',
-  'evaluateCurve',
-  'saveTargetDistance',
   'storeSourceAttributeValue',
   'storeEntityPropertyValue',
   'setHealthFloor',
@@ -1798,3 +1771,6 @@ export interface CombatEventHandlerDefinition {
   /** 相对事件时刻调度的动作序列。 */
   scheduledSequences: readonly ScheduledSequenceDefinition[];
 }
+
+/** 发射时绑定的回调目标与标签过滤，不推导碰撞次数或时间。 */
+export type ProjectileHitParameters = NonNullable<CombatStepParameters['launchProjectile']['hit']>;

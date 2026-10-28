@@ -5576,14 +5576,6 @@ it('Buff 的随机点查询保留空间点数量，不冒充敌人目标', () =>
       saveToContextKey: 'randomPos',
       count: { kind: 'constant', value: 1 },
       origin: { kind: 'owner' },
-      randomDistribution: {
-        shape: 'circle',
-        radius: { kind: 'blackboard', key: 'radius' },
-        minimumRadius: { kind: 'blackboard', key: 'radius_min' },
-        angleDegrees: { kind: 'constant', value: 0 },
-        localPlaneRotation: [0, 0, 0].map(value => ({ kind: 'constant', value })),
-        centerOnGround: true,
-      },
     },
   });
 });

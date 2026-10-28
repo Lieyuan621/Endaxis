@@ -23,11 +23,9 @@ import {
 } from './actionBlackboard';
 import { compareCombatNumbers } from '../../math/combatNumbers.ts';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
-import { sampleFloatRange, type RangeSampleSource } from '../random/simulationRandom';
 import type { ProbabilitySampleSource } from '../random/probabilitySampleSource';
 import type { ResolvedCombatStepParameters } from '../../compiler/combatProgram';
 import { CombatOperationPrograms } from './combatOperationPrograms';
-import { evaluateTimeScaleCurve } from '../time/timeScaleCurve';
 import type { ActionBlackboardActionState } from '../state/actionState';
 
 // AbilityActionUtils.CharTypeIdToInt：两个角色属性读取动作共享同一原生编码。
@@ -108,7 +106,6 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       readonly state: ActionBlackboardActionState;
       readonly programs: CombatOperationPrograms;
     },
-    readonly rangeSamples?: RangeSampleSource,
   ) {
     this.runtimeState = restored?.state ?? {
       healthFloors: new Map(),
@@ -140,17 +137,6 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
           });
         }
       }
-      return true;
-    }
-    if (step.kind === 'storeRandomFloat') {
-      if (!context || !this.rangeSamples)
-        throw new Error('storeRandomFloat requires an action context and range sample source');
-      const minimum = resolveActionValueOperand(step.parameters.minimum, context.blackboard);
-      const maximum = resolveActionValueOperand(step.parameters.maximum, context.blackboard);
-      context.blackboard.assignDynamic(
-        step.parameters.key,
-        sampleFloatRange(this.rangeSamples, minimum, maximum, context.skillCastInfo?.originCastId),
-      );
       return true;
     }
     if (step.kind === 'storeRandomInteger') {
@@ -318,18 +304,6 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         step.parameters.outputKey,
         step.parameters.value === 'overflow' ? 0 : finalValue,
       );
-      return true;
-    }
-    if (step.kind === 'evaluateCurve') {
-      if (!context) throw new Error('evaluateCurve requires a combat operation context');
-      const input = Math.fround(
-        resolveActionValueOperand(step.parameters.input, context.blackboard),
-      );
-      const value = Math.fround(evaluateTimeScaleCurve(step.parameters.curve, input));
-      const previous = Math.fround(context.blackboard.getNumber(step.parameters.key) ?? 0);
-      if (!(Math.abs(Math.fround(previous - value)) <= PROBABILITY_TOLERANCE)) {
-        context.blackboard.assignDynamic(step.parameters.key, value);
-      }
       return true;
     }
     if (step.kind === 'modifyActionValue') {

@@ -102,13 +102,6 @@ export function validateCombatCondition(
       break;
     case 'ownerSpawnedAbilityEntityPresent':
       if (
-        record.abilityEntityIds !== undefined &&
-        (!Array.isArray(record.abilityEntityIds) ||
-          !record.abilityEntityIds.every(value => typeof value === 'string' && value.length > 0))
-      ) {
-        push(out, `${path}.abilityEntityIds`, 'expected non-empty string IDs');
-      }
-      if (
         record.sameSourceSkillCast !== undefined &&
         typeof record.sameSourceSkillCast !== 'boolean'
       ) {
@@ -578,12 +571,5 @@ export function validateTargetQuery(
     requireBoolean(query, 'containsUnmarkable', path, out);
     requireBoolean(query, 'replacePartsWithMainBodies', path, out);
   }
-  if (query.kind === 'ownerSpawned') {
-    if (
-      !Array.isArray(query.abilityEntityIds) ||
-      query.abilityEntityIds.some(id => typeof id !== 'string')
-    )
-      push(out, `${path}.abilityEntityIds`, 'expected string array');
-    requireBoolean(query, 'sameSourceSkillCast', path, out);
-  }
+  if (query.kind === 'ownerSpawned') requireBoolean(query, 'sameSourceSkillCast', path, out);
 }

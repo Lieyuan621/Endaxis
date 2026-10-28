@@ -44,7 +44,6 @@ const props = defineProps<{
   appearance: 'light' | 'dark';
   randomMode: 'expected' | 'sampled';
   automaticControlSwitches: boolean;
-  operatorEnemyDistanceMeters: number;
   comboSkillPriorityEnabled: boolean;
   comboSkillPriorityOperators: readonly {
     id: string | null;
@@ -108,7 +107,6 @@ const emit = defineEmits<{
   toggleComboSkillPriority: [];
   setComboSkillPriorityOrder: [order: string[]];
   setGlobalRandomSeed: [seed: number];
-  setOperatorEnemyDistance: [meters: number];
   rollGlobalRandomSeed: [];
   clearSelection: [];
 }>();
@@ -695,33 +693,11 @@ onBeforeUnmount(() => {
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m12 3 9 5v8l-9 5-9-5V8z M3 8l9 5 9-5 M12 13v8" />
               </svg>
-              <span>{{ t('assetWorkspace.title') }}</span>
+              <span>{{ t('assetWorkspace.openWorkspace') }}</span>
             </EaButton>
           </section>
           <section class="header-more-section">
             <h4 class="header-more-section__title">{{ labels.scenarioSettings }}</h4>
-            <label
-              class="header-more-mode-row"
-              :title="t('timeline.header.operatorEnemyDistanceHelp')"
-            >
-              <span>{{ t('timeline.header.operatorEnemyDistance') }}</span>
-              <EaNumberInput
-                class="header-more-number-input"
-                :model-value="operatorEnemyDistanceMeters"
-                :aria-label="t('timeline.header.operatorEnemyDistance')"
-                :disabled="configurationReadOnly"
-                :min="0"
-                :step="1"
-                size="sm"
-                controls-position="right"
-                @change="
-                  value =>
-                    value !== undefined &&
-                    Number.isFinite(value) &&
-                    emit('setOperatorEnemyDistance', value)
-                "
-              />
-            </label>
             <div class="header-more-checklist">
               <EaButton
                 type="button"

@@ -751,16 +751,6 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
             saveToContextKey: 'front',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'context', key: 'mainchar' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 12 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: null,
@@ -800,20 +790,6 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
             saveToContextKey: 'pos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'context', key: 'maintar' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: -4 },
-              ],
-              facing: {
-                source: { kind: 'context', key: 'mainchar' },
-                target: { kind: 'context', key: 'maintar' },
-                invert: false,
-              },
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: null,
@@ -850,14 +826,13 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0021_whiten_normal_skill',
             recycleDelaySeconds: 5,
             targets: { kind: 'context', contextKey: 'tar_behind' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ target: { kind: 'context', key: 'tar_behind' } }],
-            },
+            entityInitialValues: { EntityBB_first_hit: 0 },
+            hit: {},
           },
           callbacks: [
             {
@@ -1036,15 +1011,6 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
             saveToContextKey: 'tar_behind',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 1 },
-                { kind: 'valueNode', nodeId: 'data_3' },
-              ],
-              facing: 'operatorToEnemy',
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_27',
@@ -1053,7 +1019,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'createSpatialPointTargets_28' },
           whenFalse: { $sequence: null },
         },
@@ -1087,7 +1053,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_5' },
+            amount: { kind: 'valueNode', nodeId: 'data_4' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1112,7 +1078,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
       checkCondition_34: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: 'readBuffBlackboard_33',
       },
@@ -1133,13 +1099,12 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'distance' } },
-      data_4: {
+      data_3: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_6: {
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -2272,65 +2237,6 @@ export const estella: OperatorDefinition = {
     buff_chr_0021_whiten_talent_1: estellaBuff6,
   },
   abilityEntityDefinitions: {},
-  projectileDefinitions: {
-    projectile_chr_0021_whiten_normal_skill: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 58 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0.061312966,
-                  outTangent: 0.061312966,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.2875,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: -0.0024219134,
-                  outTangent: -0.0024219134,
-                  weightedMode: 0,
-                  inWeight: 0.56875,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'box',
-          target: { side: 'enemy' },
-          centerMeters: [
-            { kind: 'constant', value: 0 },
-            { kind: 'constant', value: 0.5 },
-            { kind: 'constant', value: 1.5 },
-          ],
-          halfExtentsMeters: [
-            { kind: 'constant', value: 1.6 },
-            { kind: 'constant', value: 2.1 },
-            { kind: 'constant', value: 3 },
-          ],
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 20 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: { EntityBB_first_hit: 0 },
-      hit: { finishOnHit: false, maxHitCount: 99 },
-    },
-  },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },
 } as const satisfies OperatorDefinition;
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { OperatorDefinition } from '../../../../packages/game-data-contract/src/operators';
 import { useI18n } from 'vue-i18n';
 import {
   EaButton,
@@ -34,6 +35,7 @@ const props = defineProps<{
   cast: SkillCastDocument | null;
   label: string;
   currentDefinition: SkillDefinition | null;
+  operatorDefinition?: OperatorDefinition;
   skillLevel: number;
   minimumFrame: number;
   maximumFrame: number;
@@ -48,6 +50,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
+  setInitialBlackboard: [value: Readonly<Record<string, number>>];
   setRandomSeed: [seed: number | null];
   rollRandomSeed: [];
   setStartFrame: [frame: number];
@@ -121,6 +124,20 @@ function commitRandomSeed(value: number | undefined): void {
     return;
   }
   if (Number.isInteger(value) && value >= 0 && value <= 0xffffffff) emit('setRandomSeed', value);
+}
+const initialFields = computed(() =>
+  Object.entries(props.currentDefinition?.blackboard ?? {}).map(([key, value]) => ({
+    key,
+    value: typeof value === 'number' ? value : value[props.skillLevel - 1],
+  })),
+);
+function setInitialValue(key: string, value: number | undefined) {
+  if (props.cast === null) return;
+  if (value !== undefined && !Number.isFinite(value)) return;
+  const values = { ...props.cast.simulationInputs?.initialBlackboard };
+  if (value === undefined) delete values[key];
+  else values[key] = value;
+  emit('setInitialBlackboard', values);
 }
 </script>
 
@@ -248,6 +265,30 @@ function commitRandomSeed(value: number | undefined): void {
         </div>
       </section>
 
+      <section v-if="isDev && initialFields.length" class="section-container">
+        <div class="panel-tag-mini">{{ t('actionGraphEditor.initialVariables') }}</div>
+        <div class="attribute-grid">
+          <div v-for="field in initialFields" :key="field.key" class="form-group">
+            <span :title="field.key">{{ field.key }}</span>
+            <EaNumberInput
+              size="sm"
+              controls-position="right"
+              :disabled="inputReadOnly"
+              :model-value="cast.simulationInputs?.initialBlackboard?.[field.key] ?? field.value"
+              :step="0.01"
+              @update:model-value="setInitialValue(field.key, $event)"
+            />
+            <EaButton
+              v-if="Object.hasOwn(cast.simulationInputs?.initialBlackboard ?? {}, field.key)"
+              size="sm"
+              :disabled="inputReadOnly"
+              @click="setInitialValue(field.key, undefined)"
+            >
+              {{ t('battleLog.ui.clear') }}
+            </EaButton>
+          </div>
+        </div>
+      </section>
       <section class="section-container">
         <div class="panel-tag-mini">{{ t('timeline.inspector.sections.presentation') }}</div>
         <div class="attribute-grid">

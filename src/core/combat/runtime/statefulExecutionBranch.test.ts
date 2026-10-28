@@ -1,4 +1,3 @@
-import { returnProjectileFlight } from '../../test/projectileFlight';
 /**
  * 在一个明确完整的小型数据根上串联生产中的 Buff 周期触发、Ability 事件、投射物和随机算法。
  * 用于验证分支恢复的跨模块因果关系；不冒充技能、Buff 容器和整场装配的完整迁移验收。
@@ -51,7 +50,7 @@ function executeFrame(step: StateTestContext<BranchState>, input: BranchInput): 
   state.frame++;
   advanceProjectileLifetimes(state.projectiles, {
     resolveTickDeltaSeconds: () => DELTA,
-    finish: instanceId => {
+    invokeScheduledCallback: instanceId => {
       state.damage.push({
         frame: state.frame,
         instanceId,
@@ -76,9 +75,9 @@ function executeFrame(step: StateTestContext<BranchState>, input: BranchInput): 
           resolveHandler: () => () => {
             const id = state.nextEntityId++;
             launchProjectile(state.projectiles, id, {
-              flight: {
-                ...returnProjectileFlight,
-                finishDurationSeconds: { kind: 'constant', value: 10 },
+              schedule: {
+                endFrame: 2,
+                callbacks: [{ event: 'finish', triggerFrames: [2] }],
               },
               recycleDelaySeconds: 0,
             });

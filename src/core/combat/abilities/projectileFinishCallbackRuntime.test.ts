@@ -1,5 +1,3 @@
-import { resolveProjectileFlightEndpoints } from './projectileFlightEndpoints';
-import { stationaryProjectileDefinition, pointProjectileLaunch } from '../../test/projectileFlight';
 import { describe, expect, it } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -18,11 +16,6 @@ import { createCallbackSkillHostFactory, type CallbackSkillHostFactory } from '.
 import { bindProjectileCallbackLifecycle } from './projectileCallbackRuntime';
 import { ProjectileLifecycleRuntime } from './projectileLifecycleRuntime';
 import { RuntimeTargetContext } from './runtimeTargetContext';
-
-const projectileDefinitions = {
-  delayedProbe: stationaryProjectileDefinition(3, { EntityBB_seed: 4 }),
-  stationary: stationaryProjectileDefinition(1),
-};
 
 const compileGraphEntry = (
   revision: string,
@@ -45,7 +38,7 @@ const compileGraphEntry = (
     1,
     revision,
     {},
-    { abilityEntities: {}, projectiles: projectileDefinitions },
+    { abilityEntities: {} },
   ).compileAll(),
   entry,
   callSite: revision,
@@ -118,7 +111,12 @@ const delayedProbeNodes = (): ActionGraphDefinition['nodes'] => ({
       kind: 'launchProjectile',
       parameters: {
         projectileId: 'delayedProbe',
-        launch: pointProjectileLaunch,
+        entityInitialValues: { EntityBB_seed: 4 },
+        schedule: {
+          endFrame: 90,
+          callbacks: [{ event: 'finish', triggerFrames: [90] }],
+        },
+
         inheritActionBlackboard: true,
 
         recycleDelaySeconds: 0,
@@ -169,6 +167,75 @@ function delayedProbe(): ResolvedActionSequence {
 }
 
 describe('projectile callback action lifecycle', () => {
+  it('时间表通过图编译及发射动作执行回调，保留来源和黑板且不建立轨迹', () => {
+    const projectiles = new ProjectileLifecycleRuntime();
+    const calls: number[] = [];
+    const runtime = new CombatActionSequenceRuntime(
+      {
+        execute: () => {
+          calls.push(1);
+          return true;
+        },
+        evaluate: () => true,
+      },
+      {
+        blackboard: new ActionBlackboard({ launchValue: 7 }),
+        skillCastInfo: {
+          skillCastId: 42,
+          originSkillId: 'source',
+          originCastId: 'block:1',
+          nonReturnedSpCost: 0,
+        },
+        createCallbackSkillHost: createTestHost,
+        launchProjectile: request => {
+          return projectiles.launch({
+            schedule: request.schedule,
+            entityBlackboard: request.entityBlackboard,
+            callbacks: request.callbacks.map(c => c.runtime.runtimeState),
+            callbackPrograms: request.callbacks.map(c => c.program),
+            recycleDelaySeconds: 0,
+            ...bindProjectileCallbackLifecycle(
+              request.callbacks.map(c => c.runtime),
+              () => 1 / 30,
+            ),
+          });
+        },
+      },
+      undefined,
+      undefined,
+      'source',
+    );
+    const nodes = delayedProbeNodes();
+    const action = nodes.launch!.action;
+    if (action.kind !== 'launchProjectile') throw new Error('expected launch');
+    const entry = compileGraphEntry('scheduled-probe', 'launch', {
+      ...nodes,
+      launch: {
+        ...nodes.launch!,
+        action: {
+          ...action,
+          parameters: {
+            ...action.parameters,
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'finish', triggerFrames: [3] }],
+            },
+          },
+        },
+      },
+    });
+    runtime.createSequence(entry).executeInstant({});
+    const instance = [...projectiles.runtimeState.instances.values()][0]!;
+    expect(instance.callbacks[0]!.skillCastInfo?.originCastId).toBe('block:1');
+    expect(
+      ActionBlackboard.bindRuntimeState(instance.callbacks[0]!.blackboard).snapshot().launchValue,
+    ).toBe(7);
+    projectiles.advanceFrame();
+    projectiles.advanceFrame();
+    expect(calls).toEqual([]);
+    projectiles.advanceFrame();
+    expect(calls).toEqual([1]);
+  });
   it.each(['finish', 'launch'] as const)('%s 回调按对应时点启动，并保存宿主与输入目标', event => {
     const projectiles = new ProjectileLifecycleRuntime();
     let calls = 0;
@@ -191,13 +258,10 @@ describe('projectile callback action lifecycle', () => {
         createCallbackSkillHost: createTestHost,
         launchProjectile: request =>
           projectiles.launch({
-            flight: resolveProjectileFlightEndpoints(request.flight, () => {
-              throw new Error('unexpected endpoint query');
-            }),
+            schedule: request.schedule,
             recycleDelaySeconds: request.recycleDelaySeconds,
             callbacks: request.callbacks.map(c => c.runtime.runtimeState),
             callbackPrograms: request.callbacks.map(c => c.program),
-            hitPolicy: request.hit,
             ...bindProjectileCallbackLifecycle(
               request.callbacks.map(c => c.runtime),
               () => 1,
@@ -217,6 +281,13 @@ describe('projectile callback action lifecycle', () => {
         ...nodes.launch!,
         action: {
           ...action,
+          parameters: {
+            ...action.parameters,
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event, triggerFrames: [event === 'launch' ? 0 : 3] }],
+            },
+          },
           callbacks: action.callbacks.map(callback => ({ ...callback, event })),
         },
       },
@@ -392,13 +463,10 @@ describe('projectile callback action lifecycle', () => {
         createCallbackSkillHost: createTestHost,
         launchProjectile: request => {
           const projectile = scheduler.launch({
-            flight: resolveProjectileFlightEndpoints(request.flight, () => {
-              throw new Error('unexpected endpoint query');
-            }),
+            schedule: request.schedule,
             recycleDelaySeconds: request.recycleDelaySeconds,
             callbacks: request.callbacks.map(c => c.runtime.runtimeState),
             callbackPrograms: request.callbacks.map(c => c.program),
-            hitPolicy: request.hit,
             ...bindProjectileCallbackLifecycle(
               request.callbacks.map(c => c.runtime),
               () => componentDelta,
@@ -419,7 +487,11 @@ describe('projectile callback action lifecycle', () => {
             kind: 'launchProjectile',
             parameters: {
               projectileId: 'stationary',
-              launch: pointProjectileLaunch,
+              schedule: {
+                endFrame: 1,
+                callbacks: [{ event: 'finish', triggerFrames: [1] }],
+              },
+
               inheritActionBlackboard: true,
 
               recycleDelaySeconds: 100,
@@ -536,13 +608,10 @@ describe('projectile callback action lifecycle', () => {
         createCallbackSkillHost: createTestHost,
         launchProjectile: request => {
           const instance = scheduler.launch({
-            flight: resolveProjectileFlightEndpoints(request.flight, () => {
-              throw new Error('unexpected endpoint query');
-            }),
+            schedule: request.schedule,
             recycleDelaySeconds: request.recycleDelaySeconds,
             callbacks: request.callbacks.map(c => c.runtime.runtimeState),
             callbackPrograms: request.callbacks.map(c => c.program),
-            hitPolicy: request.hit,
             ...bindProjectileCallbackLifecycle(
               request.callbacks.map(c => c.runtime),
               () => 1,
@@ -563,7 +632,11 @@ describe('projectile callback action lifecycle', () => {
             kind: 'launchProjectile',
             parameters: {
               projectileId: 'stationary',
-              launch: pointProjectileLaunch,
+              schedule: {
+                endFrame: 1,
+                callbacks: [{ event: 'finish', triggerFrames: [1] }],
+              },
+
               inheritActionBlackboard: true,
 
               recycleDelaySeconds: 1,
@@ -630,13 +703,10 @@ describe('projectile callback action lifecycle', () => {
         createCallbackSkillHost: createTestHost,
         launchProjectile: request => {
           return scheduler.launch({
-            flight: resolveProjectileFlightEndpoints(request.flight, () => {
-              throw new Error('unexpected endpoint query');
-            }),
+            schedule: request.schedule,
             recycleDelaySeconds: request.recycleDelaySeconds,
             callbacks: request.callbacks.map(c => c.runtime.runtimeState),
             callbackPrograms: request.callbacks.map(c => c.program),
-            hitPolicy: request.hit,
             ...bindProjectileCallbackLifecycle(
               request.callbacks.map(c => c.runtime),
               () => COMBAT_FRAME_INTERVAL,
@@ -725,9 +795,7 @@ describe('projectile callback action lifecycle', () => {
             blackboard.assignDynamic('launchValue', 100);
             targets.set('selected', []);
             return scheduler.launch({
-              flight: resolveProjectileFlightEndpoints(request.flight, () => {
-                throw new Error('unexpected endpoint query');
-              }),
+              schedule: { ...request.schedule, callbacks: [] },
               recycleDelaySeconds: 0,
               callbacks: [],
               callbackPrograms: [],
@@ -798,13 +866,10 @@ describe('projectile callback action lifecycle', () => {
         createCallbackSkillHost: createTestHost,
         launchProjectile: request => {
           return scheduler.launch({
-            flight: resolveProjectileFlightEndpoints(request.flight, () => {
-              throw new Error('unexpected endpoint query');
-            }),
+            schedule: request.schedule,
             recycleDelaySeconds: request.recycleDelaySeconds,
             callbacks: request.callbacks.map(c => c.runtime.runtimeState),
             callbackPrograms: request.callbacks.map(c => c.program),
-            hitPolicy: request.hit,
             ...bindProjectileCallbackLifecycle(
               request.callbacks.map(c => c.runtime),
               () => COMBAT_FRAME_INTERVAL,

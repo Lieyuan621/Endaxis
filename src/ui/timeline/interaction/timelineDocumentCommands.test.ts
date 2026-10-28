@@ -25,6 +25,7 @@ import {
   dissolveSkillCastGroups,
   removeSkillCasts,
   setSkillCastForcedCritical,
+  setSkillCastInitialBlackboard,
   setReactionDamageForcedCritical,
   setUnifiedInitialUltimateEnergy,
   updateDodgeMarker,
@@ -44,6 +45,19 @@ import {
 import { createScenarioEditorSession } from '../../../test/scenarioEditorSession';
 
 describe('battle axis commands', () => {
+  it('保存顶层初始化覆盖且清除时保留其他模拟输入', () => {
+    const original = scenario();
+    const cast = original.tracks[0]!.skillCasts[0]!;
+    cast.simulationInputs = { randomSeed: 7 };
+    const updated = setSkillCastInitialBlackboard(original, 0, cast.id, { hit_frame: 5 });
+    expect(cast.simulationInputs.initialBlackboard).toBeUndefined();
+    const saved: ScenarioDocument = JSON.parse(JSON.stringify(updated));
+    expect(saved.tracks[0]!.skillCasts[0]!.simulationInputs?.initialBlackboard).toEqual({
+      hit_frame: 5,
+    });
+    const cleared = setSkillCastInitialBlackboard(saved, 0, cast.id, {});
+    expect(cleared.tracks[0]!.skillCasts[0]!.simulationInputs).toEqual({ randomSeed: 7 });
+  });
   it('changes the visual prep inset without shifting real battle frames', () => {
     const original = scenario();
     const updated = setBattlePrepFrames(original, 60);

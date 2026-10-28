@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
-import zh from '../../i18n/locales/zh-CN.json';
-import en from '../../i18n/locales/en.json';
+import zh from '../../i18n/locales/zh-CN/asset-editor.json';
+import en from '../../i18n/locales/en/asset-editor.json';
 import { i18n } from '../../i18n';
 import { optionName, optionValueKey } from './editorNodeText';
 import { actionNodeSchemas, dataNodeSchemas } from './actionNodeSchemas.generated';

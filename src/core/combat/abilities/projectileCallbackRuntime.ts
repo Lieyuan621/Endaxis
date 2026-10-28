@@ -1,4 +1,3 @@
-import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { ProjectileHitTargets } from '../state/instanceState';
 import { ActionBlackboard } from '../actions/actionBlackboard';
@@ -16,63 +15,36 @@ import type { ProjectileHostPorts } from './projectileLifecycleRuntime';
 
 export interface ProjectileHitBinding {
   readonly state: ProjectileHitTargets;
-  readonly repeatIntervalSeconds?: number;
-  readonly resolveTimeSeconds?: () => number;
   readonly matchesTags?: (
     target: RuntimeTargetRef,
     query: NonNullable<ProjectileHitTargets['hitTagFilter']>,
   ) => boolean;
 }
 
-/** 新建与恢复共用事件绑定；命中历史随投射物状态保存。 */
+/** 新建与恢复共用事件绑定；命中目标和标签条件随投射物状态保存。 */
 export function bindProjectileCallbackLifecycle(
   callbacks: readonly ProjectileCallbackRuntime[],
   resolveTickDeltaSeconds: () => number | null,
   hit?: ProjectileHitBinding,
 ): ProjectileHostPorts {
-  const start = (event: 'block' | 'reach' | 'finish') => {
-    for (const callback of callbacks) if (callback.runtimeState.event === event) callback.start();
-  };
   return {
     resolveTickDeltaSeconds,
-    reach: () => start('reach'),
-    block: () => start('block'),
-    hit: () => {
-      if (!hit) return 0;
-      let accepted = 0;
-      const state = hit.state;
-      for (const target of state.targets) {
-        const key =
-          target.kind === 'spatialPoint'
-            ? `point:${target.pointId}`
-            : runtimeTargetEntityId(target);
-        if (key === undefined) continue;
-        if (state.hitTagFilter) {
-          if (!hit.matchesTags) throw new Error('projectile hit filtering requires target tags');
-          if (!hit.matchesTags(target, state.hitTagFilter)) continue;
-        }
-        const interval = hit.repeatIntervalSeconds;
-        const previous = state.hitTimes?.get(key);
-        if (previous !== undefined && interval === undefined) continue;
-        let now = 0;
-        if (interval !== undefined) {
-          const time = hit.resolveTimeSeconds?.();
-          if (time === undefined || !Number.isFinite(time))
-            throw new Error('repeated projectile hits require the scene clock');
-          now = Math.fround(time);
-          if (previous !== undefined) {
-            const elapsed = Math.fround(now - previous);
-            if (elapsed < Math.fround(interval - 0.00001) || Math.abs(elapsed) <= 0.00001) continue;
-          }
-        }
-        (state.hitTimes ??= new Map()).set(key, now);
-        accepted++;
-        for (const callback of callbacks)
-          if (callback.runtimeState.event === 'hit') callback.hit(target);
+    invokeScheduledCallback: index => {
+      const callback = callbacks[index];
+      if (!callback) throw new Error(`unknown projectile callback index ${index}`);
+      if (callback.runtimeState.event !== 'hit') {
+        callback.invoke();
+        return;
       }
-      return accepted;
+      if (!hit) throw new Error('scheduled hit requires target binding');
+      for (const target of hit.state.targets) {
+        if (hit.state.hitTagFilter) {
+          if (!hit.matchesTags) throw new Error('projectile hit filtering requires target tags');
+          if (!hit.matchesTags(target, hit.state.hitTagFilter)) continue;
+        }
+        callback.invoke(target);
+      }
     },
-    finish: () => start('finish'),
     beforeReset: () => callbacks.forEach(callback => callback.beforeReset()),
     abilityRuntime: {
       advanceFrame: () => {
@@ -146,20 +118,12 @@ export class ProjectileCallbackRuntime {
       throw new Error('restored projectile callback must bind the saved host data');
   }
 
-  start(inputTarget = this.runtimeState.inputTarget): void {
-    if (this.#host !== null) throw new Error('projectile callback has already started');
+  /** 时间表允许再次调用同一回调，复用原能力系统的重启语义。 */
+  invoke(inputTarget = this.runtimeState.inputTarget): void {
     this.runtimeState.inputTarget = inputTarget;
-    this.#startHost(inputTarget);
-  }
-
-  #startHost(inputTarget = this.runtimeState.inputTarget): void {
     this.#host ??= this.createHost(null);
     this.runtimeState.host = this.#host.runtimeState;
     this.#host.start(inputTarget);
-  }
-
-  hit(target: RuntimeTargetRef): void {
-    this.#startHost(target);
   }
 
   advance(deltaSeconds: number): void {

@@ -79,11 +79,16 @@ export function createLocaleResourceLoaders(
     const normalized = normalizeLocale(locale);
     const existing = uiPromises.get(normalized);
     if (existing !== undefined) return existing;
-    const path = `./locales/${normalized}.json`;
-    const promise = requireImporter(modules.ui, path)().catch(error => {
-      uiPromises.delete(normalized);
-      throw error;
-    });
+    const path = `./locales/${normalized}/common.json`;
+    const promise = Promise.all([
+      requireImporter(modules.ui, path)(),
+      requireImporter(modules.ui, `./locales/${normalized}/asset-editor.json`)(),
+    ])
+      .then(([common, editor]) => ({ ...common, ...editor }))
+      .catch(error => {
+        uiPromises.delete(normalized);
+        throw error;
+      });
     uiPromises.set(normalized, promise);
     return promise;
   }
@@ -128,7 +133,7 @@ export function createLocaleResourceLoaders(
 }
 
 // `eager` 保持 false，构建产物只在对应 loader 被调用时请求目标 locale 模块。
-const uiLocaleModules = import.meta.glob<LocaleTable>('./locales/*.json', {
+const uiLocaleModules = import.meta.glob<LocaleTable>('./locales/*/*.json', {
   eager: false,
   import: 'default',
 });

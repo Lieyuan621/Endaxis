@@ -3,8 +3,8 @@ import { createSSRApp, h } from 'vue';
 import { createI18n } from 'vue-i18n';
 import { renderToString } from 'vue/server-renderer';
 import type * as DesignSystem from '../../../design-system/index';
-import enMessages from '../../../i18n/locales/en.json';
-import zhMessages from '../../../i18n/locales/zh-CN.json';
+import enMessages from '../../../i18n/locales/en/common.json';
+import zhMessages from '../../../i18n/locales/zh-CN/common.json';
 import Dialog from './TimelineBuffDetailDialog.vue';
 import { initialBuffDetailInstanceIndex, type BuffDetailTarget } from './buffDetail';
 

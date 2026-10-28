@@ -270,7 +270,6 @@ type EnvironmentOptions = Pick<
   | 'resolveVitals'
   | 'resolveOperatorVitals'
   | 'probabilitySamples'
-  | 'rangeSamples'
   | 'readSourceAttributeValue'
   | 'emitOperatorEnterFight'
   | 'clearPendingAbilityEvents'
@@ -570,7 +569,6 @@ export class StandardPlayerDamageEnvironment {
     // 对象字面量中的 getter 会把自己的 this 绑定为字面量本身，因此用箭头闭包引用环境实例。
     const vitalsRuntimeOf = (): FrameRuntime | null => this.#enemyVitalsRuntime;
     this.runtimeOptions = {
-      ...(options.rangeSamples === undefined ? {} : { rangeSamples: options.rangeSamples }),
       ...(options.probabilitySamples === undefined
         ? {}
         : { probabilitySamples: options.probabilitySamples }),

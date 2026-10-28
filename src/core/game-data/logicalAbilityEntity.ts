@@ -25,7 +25,6 @@ export type RuntimeTargetRef =
   | {
       readonly kind: 'spatialPoint';
       readonly pointId: number;
-      readonly position?: readonly [number, number, number];
     };
 
 /** 普通能力实体与投射物技能宿主共用的实例句柄。 */
@@ -61,7 +60,6 @@ export function runtimeTargetFromEntityId(entityId: string): RuntimeTargetRef {
 /** OwnerSpawnedEntityFinder 经生成期解析后仍需保留的非空间筛选。 */
 export interface OwnerSpawnedAbilityEntityQuery {
   readonly ownerId: string;
-  readonly abilityEntityIds?: readonly string[];
   /** 原生 SkillCastIdValidator：只保留同一来源施法生成的实例。 */
   readonly sourceSkillCastId?: number;
 }

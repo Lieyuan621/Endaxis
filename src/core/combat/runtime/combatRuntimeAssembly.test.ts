@@ -1,10 +1,3 @@
-import {
-  stationaryProjectileDefinition,
-  pointProjectileDefinition,
-  pointProjectileLaunch,
-} from '../../test/projectileFlight';
-import { stationaryProjectileFlight } from '../../test/projectileFlight';
-
 import { describe, expect, it, vi } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -73,13 +66,6 @@ const gilbertaBattleSkill = gilbertaGeneratedOperator.skills.find(
   skill => skill.key === 'chr_0013_aglina_normal_skill',
 ) as SkillDefinition;
 
-const projectileDefinitions = {
-  point: pointProjectileDefinition,
-  hitPoint: { ...pointProjectileDefinition, hit: { finishOnHit: true } },
-  brief: stationaryProjectileDefinition(0.01),
-  stationary: stationaryProjectileDefinition(0.1),
-};
-
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
@@ -91,7 +77,7 @@ const compileGraphEntry = (
     1,
     revision,
     {},
-    { abilityEntities: {}, projectiles: projectileDefinitions },
+    { abilityEntities: {} },
   ).compileAll(),
   entry,
   callSite: revision,
@@ -1404,7 +1390,7 @@ describe('CombatRuntimeAssembly', () => {
             source,
 
             projectileId: event === 'hit' ? 'hitPoint' : event === 'reach' ? 'point' : 'brief',
-            launch: pointProjectileLaunch,
+
             recycleDelaySeconds: 10,
           },
           callbacks: [{ event, skill: callbackSkill }],
@@ -1552,7 +1538,7 @@ describe('CombatRuntimeAssembly', () => {
                     kind: 'launchProjectile',
                     parameters: {
                       projectileId: 'stationary',
-                      launch: pointProjectileLaunch,
+
                       inheritActionBlackboard: true,
 
                       recycleDelaySeconds: 0,
@@ -1667,7 +1653,8 @@ describe('CombatRuntimeAssembly', () => {
                         inheritActionBlackboard: true,
 
                         projectileId: 'point',
-                        launch: pointProjectileLaunch,
+
+                        schedule: { endFrame: 1, callbacks: [] },
                         recycleDelaySeconds,
                       },
                       callbacks: [],
@@ -1707,6 +1694,9 @@ describe('CombatRuntimeAssembly', () => {
       expect(assembly.timeDilation!.currentGlobalScale).toBe(globalScale);
       expect(assembly.receipt.entries.some(entry => entry.event === 'SkillInterrupted')).toBe(true);
       expect(reset).not.toHaveBeenCalled();
+      // 先完成一帧逻辑寿命，再验证独立的回收等待。
+      for (let i = 1; i < Math.ceil(1 / globalScale); i++)
+        assembly.projectileLifetimes.advanceFrame();
       for (let i = 0; i < Math.floor((recycleDelaySeconds * 30) / globalScale); i++) {
         assembly.projectileLifetimes.advanceFrame();
         expect(reset).not.toHaveBeenCalled();
@@ -1730,10 +1720,13 @@ describe('CombatRuntimeAssembly', () => {
     });
     calls.length = 0;
     const projectile = assembly.projectileLifetimes.launch({
-      flight: stationaryProjectileFlight(0.01),
+      schedule: {
+        endFrame: 1,
+        callbacks: [{ event: 'finish', triggerFrames: [1] }],
+      },
+      invokeScheduledCallback: () => calls.push('finish-callback'),
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 1 / 30,
-      finish: () => calls.push('finish-callback'),
       beforeReset: () => calls.push('end-callback'),
       abilityRuntime: { advanceFrame: () => calls.push('ability') },
     });
@@ -2831,7 +2824,6 @@ describe('CombatRuntimeAssembly', () => {
                                   inheritActionBlackboard: true,
 
                                   projectileId: 'point',
-                                  launch: pointProjectileLaunch,
                                 },
                                 callbacks: [],
                               },
@@ -3298,7 +3290,7 @@ describe('CombatRuntimeAssembly', () => {
     );
   });
 
-  it('resolves owner/entity-id AbilityEntity targets through the assembled time-dilation chain', () => {
+  it('resolves direct-owner AbilityEntity targets through the assembled time-dilation chain', () => {
     const program = skill({
       costs: [],
       costFrame: undefined,
@@ -3319,7 +3311,6 @@ describe('CombatRuntimeAssembly', () => {
                 abilityEntityTargets: [
                   {
                     kind: 'ownerSpawned',
-                    abilityEntityIds: ['marked'],
                   },
                 ],
               },
@@ -3352,8 +3343,8 @@ describe('CombatRuntimeAssembly', () => {
     assembly.abilityEntities.spawn({
       abilityEntityId: 'plain',
       definition: { lifetime: { kind: 'limited', durationSeconds: 2 } },
-      ownerId: 'operator',
-      source: { kind: 'operator', operatorId: 'operator' },
+      ownerId: 'other',
+      source: { kind: 'operator', operatorId: 'other' },
     });
     if (markedEntity.kind !== 'abilityEntity') throw new Error('spawn must return an entity');
 
@@ -6192,4 +6183,18 @@ it('冻结标签立即中断当前技能，移除标签不恢复技能', () => {
   expect(assembly.receipt.entries.filter(entry => entry.event === 'SkillInterrupted')).toHaveLength(
     1,
   );
+});
+
+it('顶层初始化覆盖只改本次实例，不修改定义或引入未声明变量', () => {
+  const program = skill({ initialBlackboard: { delay: 3 } });
+  const assembly = createAssembly([program]);
+  expect(
+    assembly.tryStartPlayerInput('operator', 'skill', undefined, 'battleSkill', {
+      initialBlackboard: { delay: 5, unknown: 9 },
+    }),
+  ).toBe(true);
+  const state = assembly.stateGraph.operators.get('operator')!.skills.get('skill\u0000')!;
+  expect(state.blackboard.values.get('delay')).toBe(5);
+  expect(state.blackboard.values.has('unknown')).toBe(false);
+  expect(program.initialBlackboard).toEqual({ delay: 3 });
 });

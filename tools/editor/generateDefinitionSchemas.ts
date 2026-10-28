@@ -26,7 +26,6 @@ const sources = {
   skillGroupVariant: ['skills.ts', 'SkillGroupVariantDefinition'],
   buff: ['buffs.ts', 'SkillBuffDefinition'],
   abilityEntity: ['skills.ts', 'AbilityEntityDefinition'],
-  projectile: ['projectiles.ts', 'ProjectileDefinition'],
   abilityEntityChildSkill: ['skills.ts', 'AbilityEntityChildSkillDefinition'],
   abilityEntityPassiveSkill: ['skills.ts', 'AbilityEntityPassiveSkillDefinition'],
   operatorPassiveSkill: ['operators.ts', 'OperatorPassiveSkillDefinition'],

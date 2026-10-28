@@ -129,7 +129,7 @@ export function optimizeResourceGraphs<T>(
   function visit(
     value: unknown,
     path: string,
-    phase: 'simplify' | 'extract',
+    phase: 'simplify' | 'initials' | 'extract',
     kind?: 'passive' | 'buffDefinitions',
     buffId?: string,
     entityKeys?: ReadonlySet<string>,
@@ -223,6 +223,21 @@ export function optimizeResourceGraphs<T>(
       entryResultsUsed.push(!scheduled && !buffEvent);
       return entry;
     });
+    if (phase === 'initials') {
+      const current = changed ? replaceResourceGraph(record, fields, resource) : value;
+      if (!('nativeSkillType' in record) || !('scheduledSequences' in record)) return current;
+      const pruned = pruneUnusedGraphSkillValues(
+        current as SkillDefinition | AbilityEntityChildSkillDefinition,
+        undefined,
+        resourceValues?.usageContext,
+        typeof record.key === 'string'
+          ? resourceValues?.skillInitialKeys?.get(record.key)
+          : undefined,
+        true,
+      );
+      recordValueReport(path, pruned.report);
+      return pruned.skill;
+    }
     if (phase === 'extract') {
       // 裁掉写入后，原来不同的后续可能变得相同；先重新共享这些分支。
       const shared = deduplicateActionGraph(resource.main, entries);
@@ -417,6 +432,8 @@ export function optimizeResourceGraphs<T>(
       simplified = next;
     }
   }
+  // 初值证明在死代码收敛后、宏提取前执行，避免提前删值阻碍条件裁剪。
+  if (mode !== 'off') simplified = visit(simplified, 'definition', 'initials') as T;
   const candidate = mode === 'off' ? simplified : (visit(simplified, 'definition', 'extract') as T);
   return {
     value: mode === 'apply' ? candidate : value,

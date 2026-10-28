@@ -266,13 +266,6 @@ describe('ScenarioSimulationService', () => {
         expect(actualData).toEqual(expectedData);
         expect([...actualHistory.entries()]).toEqual([...expectedHistory.entries()]);
       }
-      const changedDistance = structuredClone(scenario);
-      changedDistance.battle.operatorEnemyDistanceMeters = 10;
-      const actual = await service.simulate(changedDistance, 200);
-      const expected = await full.simulate(changedDistance, 200);
-      expect(samples.at(-1)?.resumedFromFrame).toBeNull();
-      expect(actual.receiptEntries).toEqual(expected.receiptEntries);
-      expect(actual.finalResources).toEqual(expected.finalResources);
     } finally {
       service.clearCache();
       full.clearCache();
@@ -1135,7 +1128,6 @@ describe('ScenarioSimulationService', () => {
 
   it('连携技按原生公共 Buff 链施加导电并保留完整持续时间', async () => {
     const scenario = createPerlicaScenario();
-    scenario.battle.operatorEnemyDistanceMeters = 0;
     const placed = placeSkillGroup({
       scenario,
       trackIndex: 0,
@@ -1159,7 +1151,7 @@ describe('ScenarioSimulationService', () => {
         entry.event === 'BuffFinished' &&
         entry.data?.buffId === 'buff_common_pulse_pulse_conduct_triggered_do',
     );
-    expect((finished?.frame ?? 0) - conduct.frame).toBeGreaterThanOrEqual(150);
+    expect((finished?.frame ?? 0) - conduct.frame).toBeGreaterThanOrEqual(149);
     expect((finished?.frame ?? 0) - conduct.frame).toBeLessThanOrEqual(152);
     expect(run.receiptEntries.some(entry => entry.event === 'DamageApplied')).toBe(true);
     expect(run.receiptEntries.some(entry => entry.event === 'PoiseApplied')).toBe(true);
@@ -1168,7 +1160,6 @@ describe('ScenarioSimulationService', () => {
 
   it('由队友末段普攻开启佩丽卡窗口并在后续输入中消费', async () => {
     const { scenario, attacker } = createTwoOperatorComboScenario();
-    scenario.battle.operatorEnemyDistanceMeters = 0;
     let nextId = 0;
     const ids = { allocate: (kind: string) => `${kind}:${++nextId}` };
     const withTrigger = placeSkillGroup({
@@ -1185,7 +1176,7 @@ describe('ScenarioSimulationService', () => {
       trackIndex: 1,
       operator: perlica,
       skillGroupKey: 'comboSkill',
-      startFrame: 30,
+      startFrame: 31,
       ids,
     }).scenario;
     const service = new ScenarioSimulationService({
@@ -1214,9 +1205,9 @@ describe('ScenarioSimulationService', () => {
     const opened = run.receiptEntries.find(entry => entry.event === 'ComboWindowOpened');
     const consumed = run.receiptEntries.find(entry => entry.event === 'ComboWindowConsumed');
 
-    // 第28帧发射；Default 投射物 Tick 在下一帧命中后才触发末段普攻事件。
-    expect(opened).toMatchObject({ frame: 29, sourceId: 'track:1' });
-    expect(consumed).toMatchObject({ frame: 30, sourceId: 'track:1' });
+    // 第28帧发射；3米标定时延为2帧，窗口在第31帧的连携输入前开启。
+    expect(opened).toMatchObject({ frame: 30, sourceId: 'track:1' });
+    expect(consumed).toMatchObject({ frame: 31, sourceId: 'track:1' });
     expect(opened!.sequence).toBeLessThan(consumed!.sequence);
     expect(run.comboWindowDiagnostics).toEqual([]);
     expect(

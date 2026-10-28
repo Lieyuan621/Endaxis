@@ -1,9 +1,3 @@
-import type { ResolvedProjectileFlight } from '../state/projectileMovementState';
-import {
-  stationaryProjectileFlight,
-  pointProjectileFlight,
-  returnProjectileFlight,
-} from '../../test/projectileFlight';
 import { describe, expect, it, vi } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -476,10 +470,10 @@ describe('attachBuffLifecycleSequences', () => {
     );
     const originalProjectiles = new ProjectileLifecycleRuntime();
     const originalProjectile = originalProjectiles.launch({
-      flight: pointProjectileFlight,
+      schedule: { endFrame: 1, callbacks: [] },
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 1 / 30,
-      finish: () => {},
+
       beforeReset: () => {},
     });
     originalDispatcher.dispatch(
@@ -541,7 +535,7 @@ describe('attachBuffLifecycleSequences', () => {
     restoredProjectiles.bindRestoredRelations({
       resolveHost: () => ({
         resolveTickDeltaSeconds: () => 1 / 30,
-        finish: () => {},
+
         beforeReset: () => {},
       }),
     });
@@ -669,32 +663,25 @@ describe('attachBuffLifecycleSequences', () => {
         (
           [
             {
-              name: 'duration',
-              flight: stationaryProjectileFlight(1),
+              name: 'long',
               finishTicks: 8,
               recycleDelay: 0,
               recycleTicks: 1,
             },
             {
-              name: 'presentation',
-              flight: pointProjectileFlight,
+              name: 'short',
               finishTicks: 1,
               recycleDelay: 0.25,
               recycleTicks: 2,
             },
             {
-              name: 'segments',
-              flight: {
-                ...returnProjectileFlight,
-                finishDurationSeconds: { kind: 'constant', value: 2 },
-              },
+              name: 'medium',
               finishTicks: 2,
               recycleDelay: 0.25,
               recycleTicks: 2,
             },
           ] satisfies readonly {
             name: string;
-            flight: ResolvedProjectileFlight;
             finishTicks: number;
             recycleDelay: number;
             recycleTicks: number;
@@ -704,7 +691,7 @@ describe('attachBuffLifecycleSequences', () => {
     ),
   )(
     'SkillAffix独立编号与投射物引用 processing=$processing hasSource=$hasSource lifetime=$name',
-    ({ processing, hasSource, flight, finishTicks, recycleDelay, recycleTicks }) => {
+    ({ processing, hasSource, finishTicks, recycleDelay, recycleTicks }) => {
       const container = new CombatBuffContainer<never>('owner', new CombatAttributeSet<never>());
       const dispatcher = new AbilityEventDispatcher<
         AbilityResponseEventName,
@@ -838,10 +825,13 @@ describe('attachBuffLifecycleSequences', () => {
       const projectiles = new ProjectileLifecycleRuntime();
       let projectileDelta: number | null = 0.125;
       const projectile = projectiles.launch({
-        flight,
+        schedule: {
+          endFrame: Math.floor(finishTicks * 0.125 * 30),
+          callbacks: [],
+        },
         recycleDelaySeconds: recycleDelay,
         resolveTickDeltaSeconds: () => projectileDelta,
-        finish: () => {},
+
         beforeReset: () => {},
       });
       dispatcher.dispatch(
@@ -1343,7 +1333,6 @@ describe('attachBuffLifecycleSequences', () => {
                 parameters: {
                   owner: { kind: 'source' },
                   saveToContextKey: 'seals',
-                  abilityEntityIds: ['seal'],
                 },
               },
               next: 'loop',

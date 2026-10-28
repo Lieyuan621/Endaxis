@@ -55,7 +55,7 @@ import {
 } from './resolveSkillDefinition';
 
 function createOperatorSkillCompiler(
-  definitions: Pick<OperatorDefinition, 'abilityEntityDefinitions' | 'projectileDefinitions'>,
+  definitions: Pick<OperatorDefinition, 'abilityEntityDefinitions'>,
   programs: ActionGraphDefinitionRepository,
   importsForLevel?: (level: number) => ActionGraphImports,
   localEntitiesForLevelOverride?: (level: number) => ActionGraphImports,
@@ -66,7 +66,6 @@ function createOperatorSkillCompiler(
       definitions.abilityEntityDefinitions,
       programs,
       importsForLevel,
-      definitions.projectileDefinitions,
     );
   const resolveSkillImports = (level: number): ActionGraphImports => {
     return programs.mergeResourceImports(importsForLevel?.(level), localEntitiesForLevel(level));
@@ -212,7 +211,7 @@ function compileCastBindings(
   localEntitiesForLevel?: (level: number) => ActionGraphImports,
 ): readonly CombatSkillCastProgram[] {
   const compileDefinition = createOperatorSkillCompiler(
-    { abilityEntityDefinitions, projectileDefinitions: operator.projectileDefinitions },
+    { abilityEntityDefinitions },
     programs,
     importsForLevel,
     localEntitiesForLevel,
@@ -375,7 +374,6 @@ function compileResolvedTimelineTracks(
       operator.abilityEntityDefinitions,
       context.programs,
       importsForLevel,
-      operator.projectileDefinitions,
     );
     const imports = (level: number) =>
       context.programs.mergeResourceImports(importsForLevel(level), localEntities(level));

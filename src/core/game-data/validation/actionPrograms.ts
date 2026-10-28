@@ -143,11 +143,28 @@ function validateAbilityEntityTargetQueries(
       requireString(query, 'contextKey', queryPath, out);
       return;
     }
-    if (query.abilityEntityIds !== undefined) {
-      validateNonEmptyStringArray(query.abilityEntityIds, `${queryPath}.abilityEntityIds`, out);
-    }
+    validateEntityTagFilters(query.tagFilters, `${queryPath}.tagFilters`, out);
   });
   return true;
+}
+
+function validateEntityTagFilters(
+  value: unknown,
+  path: string,
+  out: SkillDefinitionValidationIssue[],
+): void {
+  if (value === undefined) return;
+  if (!Array.isArray(value)) {
+    push(out, path, 'expected tag filter array');
+    return;
+  }
+  value.forEach((entry, index) => {
+    const itemPath = `${path}[${index}]`;
+    const filter = asRecord(entry, itemPath, out);
+    if (!filter) return;
+    requireEnum(filter, 'queryType', TAG_QUERY_TYPES_SET, itemPath, out);
+    validateGameplayTags(filter.tags, `${itemPath}.tags`, out);
+  });
 }
 
 /** 可为空但每一项都必须是非空字符串的数组。 */
@@ -629,15 +646,17 @@ function validateCombatStep(
       validateActionValueOperand(parameters.count, `${path}.parameters.count`, out);
       break;
     case 'findOwnerSpawnedAbilityEntities': {
+      if (
+        parameters.objectType !== undefined &&
+        parameters.objectType !== 'abilityEntity' &&
+        parameters.objectType !== 'none'
+      ) {
+        push(out, `${path}.parameters.objectType`, 'expected abilityEntity or none');
+      }
+      validateEntityTagFilters(parameters.tagFilters, `${path}.parameters.tagFilters`, out);
       requireString(parameters, 'saveToContextKey', `${path}.parameters`, out);
       validateTargetQuery(parameters.owner, `${path}.parameters.owner`, out);
-      if (parameters.abilityEntityIds !== undefined) {
-        validateNonEmptyStringArray(
-          parameters.abilityEntityIds,
-          `${path}.parameters.abilityEntityIds`,
-          out,
-        );
-      }
+
       if (parameters.sameSourceSkillCast !== undefined) {
         requireBoolean(parameters, 'sameSourceSkillCast', `${path}.parameters`, out);
       }
@@ -1804,25 +1823,10 @@ function validateCombatStep(
       requireEnum(parameters, 'operation', ACTION_VALUE_OPERATIONS_SET, `${path}.parameters`, out);
       validateActionValueOperand(parameters.value, `${path}.parameters.value`, out);
       break;
-    case 'storeRandomFloat':
     case 'storeRandomInteger':
       requireString(parameters, 'key', `${path}.parameters`, out);
       validateActionValueOperand(parameters.minimum, `${path}.parameters.minimum`, out);
       validateActionValueOperand(parameters.maximum, `${path}.parameters.maximum`, out);
-      break;
-    case 'evaluateCurve':
-      requireString(parameters, 'key', `${path}.parameters`, out);
-      validateActionValueOperand(parameters.input, `${path}.parameters.input`, out);
-      validateTimeScaleCurve(
-        { kind: 'inline', keys: parameters.curve },
-        `${path}.parameters.curve`,
-        out,
-      );
-      break;
-    case 'saveTargetDistance':
-      requireString(parameters, 'outputKey', `${path}.parameters`, out);
-      validateTargetQuery(parameters.source, `${path}.parameters.source`, out);
-      validateTargetQuery(parameters.target, `${path}.parameters.target`, out);
       break;
     case 'calculateActionValue':
       requireString(parameters, 'key', `${path}.parameters`, out);

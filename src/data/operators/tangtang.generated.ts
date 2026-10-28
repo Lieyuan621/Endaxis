@@ -15,10 +15,12 @@ export const tangtangChr_0027_tangtang_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0027_tangtang_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -118,10 +120,12 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0027_tangtang_attack2',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -176,10 +180,12 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0027_tangtang_attack2_2',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -338,43 +344,6 @@ export const tangtangChr_0027_tangtang_attack2: SkillDefinition = {
   nativeSkillType: 'attack',
 };
 
-const tangtangChr_0027_tangtang_attack3ActionGraphCallback1 = {
-  actionGraph: {
-    main: {
-      nodes: {
-        dealDamage_1: {
-          action: {
-            kind: 'dealDamage',
-            parameters: {
-              attacker: 'actionSource',
-              target: { kind: 'inputTarget' },
-              damageType: 'cryo',
-              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-              tags: ['normalAttack'],
-            },
-          },
-          next: null,
-        },
-      },
-      dataNodes: {
-        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
-      },
-    },
-    macros: {},
-  },
-  skillId: 'chr_0027_tangtang_attack3_projhit',
-  nativeSkillType: 'normalSkill',
-  naturalDurationFrames: 1,
-  castResource: {
-    costFrame: 0,
-    cooldownSeconds: 0,
-    maxChargeTime: 1,
-    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-  },
-  blackboard: { atk_scale_2: 0 },
-  scheduledSequences: [{ startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } }],
-} as const;
-
 export const tangtangChr_0027_tangtang_attack3ActionGraph = {
   main: {
     nodes: {
@@ -419,45 +388,58 @@ export const tangtangChr_0027_tangtang_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 8, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0027_tangtang_attack3',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [
-                {
-                  target: { kind: 'source' },
-                  offset: {
-                    local: [
-                      { kind: 'constant', value: 0 },
-                      { kind: 'constant', value: 0 },
-                      { kind: 'constant', value: 0 },
-                    ],
-                    facing: 'operatorToEnemy',
-                    rotation: [0, 0, 0, 1],
-                    centerOnGround: false,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      dealDamage_1: {
+                        action: {
+                          kind: 'dealDamage',
+                          parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
+                            damageType: 'cryo',
+                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                            tags: ['normalAttack'],
+                          },
+                        },
+                        next: null,
+                      },
+                    },
+                    dataNodes: {
+                      data_1: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atk_scale_2' },
+                      },
+                    },
                   },
+                  macros: {},
                 },
-              ],
+                skillId: 'chr_0027_tangtang_attack3_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale_2: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
+                ],
+              },
             },
-          },
-          callbacks: [
-            { event: 'hit', skill: tangtangChr_0027_tangtang_attack3ActionGraphCallback1 },
-          ],
-        },
-        next: null,
-      },
-      launchProjectile_7: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            projectileId: 'projectile_chr_0027_tangtang_attack3',
-            recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
-          },
-          callbacks: [
-            { event: 'hit', skill: tangtangChr_0027_tangtang_attack3ActionGraphCallback1 },
           ],
         },
         next: null,
@@ -503,7 +485,7 @@ export const tangtangChr_0027_tangtang_attack3: SkillDefinition = {
     { startFrame: 17, endFrame: 17, sequence: { $sequence: 'launchProjectile_4' } },
     { startFrame: 17, endFrame: 17, sequence: { $sequence: 'launchProjectile_4' } },
     { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_7' } },
+    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_4' } },
     { startFrame: 0, endFrame: 43, sequence: { $sequence: 'overrideBasicAttackMapping_8' } },
     { startFrame: 26, endFrame: 43, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
   ],
@@ -637,27 +619,12 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 7, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0027_tangtang_attack5',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [
-                {
-                  target: { kind: 'source' },
-                  offset: {
-                    local: [
-                      { kind: 'constant', value: 0 },
-                      { kind: 'constant', value: 1 },
-                      { kind: 'constant', value: 12 },
-                    ],
-                    facing: 'operatorToEnemy',
-                    rotation: [0, 0, 0, 1],
-                    centerOnGround: false,
-                  },
-                },
-              ],
-            },
+            entityInitialValues: { EntityBB_atk05_cnt: 0 },
+            hit: {},
           },
           callbacks: [
             {
@@ -1377,7 +1344,9 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'water',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0027_tangtang/ComboSkillWater'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -1422,7 +1391,12 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'normalwater_move',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+            tagFilters: [
+              {
+                queryType: 'hasAny',
+                tags: ['Skill/Character/chr_0027_tangtang/NormalSkillWaterMove'],
+              },
+            ],
             owner: { kind: 'owner' },
             sameSourceSkillCast: true,
           },
@@ -1696,7 +1670,12 @@ const tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 = {
             kind: 'findOwnerSpawnedAbilityEntities',
             parameters: {
               saveToContextKey: 'water_group',
-              abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+              tagFilters: [
+                {
+                  queryType: 'hasAny',
+                  tags: ['Skill/Character/chr_0027_tangtang/ComboSkillWater'],
+                },
+              ],
               owner: { kind: 'source' },
             },
           },
@@ -1807,28 +1786,17 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 18,
+              callbacks: [
+                { event: 'block', triggerFrames: [18] },
+                { event: 'finish', triggerFrames: [] },
+              ],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0027_tangtang_water',
             recycleDelaySeconds: 30,
-            launch: {
-              start: { side: 'enemy' },
-              segmentTargets: [
-                {
-                  target: { kind: 'context', key: 'tar01' },
-                  offset: {
-                    local: [
-                      { kind: 'constant', value: 0 },
-                      { kind: 'constant', value: 0.1 },
-                      { kind: 'constant', value: 0 },
-                    ],
-                    facing: 'operatorToEnemy',
-                    rotation: [0, 0, 0, 1],
-                    centerOnGround: true,
-                  },
-                },
-              ],
-              landingAtTarget: true,
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             { event: 'block', skill: tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 },
@@ -1975,7 +1943,9 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'water_group',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0027_tangtang/ComboSkillWater'] },
+            ],
             owner: { kind: 'source' },
           },
         },
@@ -3146,7 +3116,12 @@ const tangtangBuff10ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'water_move',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+            tagFilters: [
+              {
+                queryType: 'hasAny',
+                tags: ['Skill/Character/chr_0027_tangtang/NormalSkillWaterMove'],
+              },
+            ],
             owner: { kind: 'owner' },
             sameSourceSkillCast: true,
           },
@@ -3193,7 +3168,10 @@ const tangtangBuff11ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'ultwater_abilityentity',
-            abilityEntityIds: [],
+            objectType: 'none',
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0027_tangtang/UltSkillWater'] },
+            ],
             owner: { kind: 'source' },
           },
         },
@@ -3510,7 +3488,9 @@ const tangtangBuff16ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'ultwater_abilityentity',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_ultskill'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0027_tangtang/UltSkillWater'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -3521,7 +3501,9 @@ const tangtangBuff16ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'water',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0027_tangtang/ComboSkillWater'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -3566,7 +3548,12 @@ const tangtangBuff16ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'ultwater_move',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+            tagFilters: [
+              {
+                queryType: 'hasAny',
+                tags: ['Skill/Character/chr_0027_tangtang/NormalSkillWaterMove'],
+              },
+            ],
             owner: { kind: 'owner' },
             sameSourceSkillCast: true,
           },
@@ -4586,27 +4573,7 @@ export const tangtang: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              launchProjectile_3: {
-                action: {
-                  kind: 'launchProjectile',
-                  parameters: {
-                    inheritActionBlackboard: true,
-                    projectileId: 'projectile_chr_0027_tangtang_waterwake01',
-                    recycleDelaySeconds: 0,
-                    targets: { kind: 'context', contextKey: 'tangtang' },
-                    launch: {
-                      start: { target: { kind: 'context', key: 'water_back_pos' } },
-                      segmentTargets: [
-                        { target: { kind: 'context', key: 'tangtang' } },
-                        { target: { kind: 'context', key: 'tangtang' } },
-                      ],
-                    },
-                  },
-                  callbacks: [],
-                },
-                next: null,
-              },
-              finishBuffsById_7: {
+              finishBuffsById_4: {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
@@ -4619,41 +4586,21 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              launchProjectile_13: {
-                action: {
-                  kind: 'launchProjectile',
-                  parameters: {
-                    inheritActionBlackboard: true,
-                    projectileId: 'projectile_chr_0027_tangtang_waterwake01',
-                    recycleDelaySeconds: 0,
-                    targets: { kind: 'context', contextKey: 'ultskill_center_abilityentity' },
-                    launch: {
-                      start: { target: { kind: 'context', key: 'water_back_pos' } },
-                      segmentTargets: [
-                        { target: { kind: 'context', key: 'ultskill_center_abilityentity' } },
-                        { target: { kind: 'context', key: 'ultskill_center_abilityentity' } },
-                      ],
-                    },
-                  },
-                  callbacks: [],
-                },
-                next: null,
-              },
-              checkCondition_17: {
+              checkCondition_11: {
                 action: {
                   kind: 'checkCondition',
                   parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 },
                 next: null,
               },
-              checkCondition_18: {
+              checkCondition_12: {
                 action: {
                   kind: 'checkCondition',
                   parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 },
-                next: 'checkCondition_17',
+                next: 'checkCondition_11',
               },
-              jumpTimeline_25: {
+              jumpTimeline_19: {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 1500 },
@@ -4661,7 +4608,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              jumpTimeline_27: {
+              jumpTimeline_21: {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 1515 },
@@ -4669,15 +4616,15 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              finishOwner_28: {
+              finishOwner_22: {
                 action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                 next: null,
               },
-              finishOwner_31: {
+              finishOwner_25: {
                 action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
-                next: 'finishBuffsById_7',
+                next: 'finishBuffsById_4',
               },
-              applyBuff_35: {
+              applyBuff_29: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -4697,7 +4644,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              finishBuffsById_34: {
+              finishBuffsById_28: {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
@@ -4709,7 +4656,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              applyBuff_37: {
+              applyBuff_31: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -4729,7 +4676,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              finishBuffsById_36: {
+              finishBuffsById_30: {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
@@ -4741,7 +4688,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              aura_38: {
+              aura_32: {
                 action: {
                   kind: 'aura',
                   parameters: {
@@ -4758,12 +4705,12 @@ export const tangtang: OperatorDefinition = {
                       },
                     ],
                   },
-                  onEnter: { $sequence: 'finishBuffsById_36' },
-                  onExit: { $sequence: 'applyBuff_37' },
+                  onEnter: { $sequence: 'finishBuffsById_30' },
+                  onExit: { $sequence: 'applyBuff_31' },
                 },
                 next: null,
               },
-              aura_39: {
+              aura_33: {
                 action: {
                   kind: 'aura',
                   parameters: {
@@ -4780,135 +4727,91 @@ export const tangtang: OperatorDefinition = {
                       },
                     ],
                   },
-                  onEnter: { $sequence: 'finishBuffsById_34' },
-                  onExit: { $sequence: 'applyBuff_35' },
+                  onEnter: { $sequence: 'finishBuffsById_28' },
+                  onExit: { $sequence: 'applyBuff_29' },
                 },
-                next: 'aura_38',
+                next: 'aura_32',
               },
-              checkCondition_40: {
+              checkCondition_34: {
                 action: {
                   kind: 'checkCondition',
                   parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 },
-                next: 'aura_39',
+                next: 'aura_33',
               },
               ifElse_opt1: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
                   condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                  whenTrue: { $sequence: 'launchProjectile_3' },
-                  whenFalse: { $sequence: 'launchProjectile_3' },
+                  whenTrue: { $sequence: null },
+                  whenFalse: { $sequence: null },
                 },
-                next: null,
+                next: 'finishBuffsById_4',
               },
-              ifElse_opt2: {
-                action: {
-                  kind: 'ifElse',
-                  parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_10' },
-                  whenTrue: { $sequence: 'launchProjectile_3' },
-                  whenFalse: { $sequence: 'ifElse_opt1' },
-                },
-                next: 'finishBuffsById_7',
-              },
-              createSpatialPointTargets_opt3: {
+              createSpatialPointTargets_opt2: {
                 action: {
                   kind: 'createSpatialPointTargets',
                   parameters: {
                     saveToContextKey: 'water_back_pos',
                     count: { kind: 'constant', value: 1 },
                     origin: { kind: 'owner' },
-                    offset: {
-                      local: [
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0 },
-                      ],
-                      facing: {
-                        source: { kind: 'owner' },
-                        target: { kind: 'context', key: 'tangtang' },
-                        invert: true,
-                      },
-                      rotation: [0, 0, 0, 1],
-                      centerOnGround: false,
-                    },
                   },
                 },
-                next: 'ifElse_opt2',
+                next: 'ifElse_opt1',
               },
-              findOwnerSpawnedAbilityEntities_opt4: {
+              findOwnerSpawnedAbilityEntities_opt3: {
                 action: {
                   kind: 'findOwnerSpawnedAbilityEntities',
                   parameters: {
                     saveToContextKey: 'tangtang',
-                    abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+                    tagFilters: [
+                      {
+                        queryType: 'hasAny',
+                        tags: ['Skill/Character/chr_0027_tangtang/NormalSkillWaterMove'],
+                      },
+                    ],
                     owner: { kind: 'source' },
                   },
                 },
-                next: 'createSpatialPointTargets_opt3',
+                next: 'createSpatialPointTargets_opt2',
               },
-              ifElse_opt5: {
+              ifElse_opt4: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_11' },
-                  whenTrue: { $sequence: 'launchProjectile_13' },
-                  whenFalse: { $sequence: 'launchProjectile_13' },
-                },
-                next: null,
-              },
-              ifElse_opt6: {
-                action: {
-                  kind: 'ifElse',
-                  parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_12' },
-                  whenTrue: { $sequence: 'launchProjectile_13' },
-                  whenFalse: { $sequence: 'ifElse_opt5' },
-                },
-                next: 'finishBuffsById_7',
-              },
-              ifElse_opt7: {
-                action: {
-                  kind: 'ifElse',
-                  parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_13' },
-                  whenTrue: { $sequence: 'ifElse_opt6' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_10' },
+                  whenTrue: { $sequence: 'ifElse_opt1' },
                   whenFalse: { $sequence: null },
                 },
                 next: null,
               },
-              findOwnerSpawnedAbilityEntities_opt8: {
+              findOwnerSpawnedAbilityEntities_opt5: {
                 action: {
                   kind: 'findOwnerSpawnedAbilityEntities',
                   parameters: {
                     saveToContextKey: 'ultskill_center_abilityentity',
-                    abilityEntityIds: ['abilityentity_chr_0027_tangtang_ultskill'],
+                    tagFilters: [
+                      {
+                        queryType: 'hasAny',
+                        tags: ['Skill/Character/chr_0027_tangtang/UltSkillWater'],
+                      },
+                    ],
                     owner: { kind: 'source' },
                   },
                 },
-                next: 'ifElse_opt7',
+                next: 'ifElse_opt4',
               },
-              createSpatialPointTargets_opt9: {
+              createSpatialPointTargets_opt6: {
                 action: {
                   kind: 'createSpatialPointTargets',
                   parameters: {
                     saveToContextKey: 'water_back_pos',
                     count: { kind: 'constant', value: 1 },
                     origin: { kind: 'owner' },
-                    offset: {
-                      local: [
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0 },
-                      ],
-                      facing: 'operatorToEnemy',
-                      rotation: [0, 0, 0, 1],
-                      centerOnGround: false,
-                    },
                   },
                 },
-                next: 'findOwnerSpawnedAbilityEntities_opt8',
+                next: 'findOwnerSpawnedAbilityEntities_opt5',
               },
             },
             dataNodes: {
@@ -4982,30 +4885,8 @@ export const tangtang: OperatorDefinition = {
               data_10: {
                 type: 'boolean',
                 expression: {
-                  kind: 'timedMarkerPresent',
-                  target: { kind: 'owner' },
-                  returnTrueIfNotExists: false,
-                  markerId: 'tangtang_waterabilityentity01',
-                },
-              },
-              data_11: {
-                type: 'boolean',
-                expression: { kind: 'checkActionResult', action: { $sequence: null } },
-              },
-              data_12: {
-                type: 'boolean',
-                expression: {
-                  kind: 'timedMarkerPresent',
-                  target: { kind: 'owner' },
-                  returnTrueIfNotExists: false,
-                  markerId: 'tangtang_waterabilityentity01',
-                },
-              },
-              data_13: {
-                type: 'boolean',
-                expression: {
                   kind: 'checkActionResult',
-                  action: { $sequence: 'checkCondition_18' },
+                  action: { $sequence: 'checkCondition_12' },
                 },
               },
             },
@@ -5031,21 +4912,21 @@ export const tangtang: OperatorDefinition = {
           {
             startFrame: 1500,
             endFrame: 1501,
-            sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt4' },
+            sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt3' },
           },
           {
             startFrame: 1515,
             endFrame: 1516,
-            sequence: { $sequence: 'createSpatialPointTargets_opt9' },
+            sequence: { $sequence: 'createSpatialPointTargets_opt6' },
           },
-          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_25' } },
-          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_27' } },
-          { startFrame: 1500, endFrame: 1501, sequence: { $sequence: 'finishOwner_28' } },
-          { startFrame: 1515, endFrame: 1516, sequence: { $sequence: 'finishOwner_28' } },
-          { startFrame: 900, endFrame: 901, sequence: { $sequence: 'finishOwner_31' } },
-          { startFrame: 1500, endFrame: 1501, sequence: { $sequence: 'finishOwner_28' } },
-          { startFrame: 1515, endFrame: 1516, sequence: { $sequence: 'finishOwner_28' } },
-          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'checkCondition_40' } },
+          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_19' } },
+          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_21' } },
+          { startFrame: 1500, endFrame: 1501, sequence: { $sequence: 'finishOwner_22' } },
+          { startFrame: 1515, endFrame: 1516, sequence: { $sequence: 'finishOwner_22' } },
+          { startFrame: 900, endFrame: 901, sequence: { $sequence: 'finishOwner_25' } },
+          { startFrame: 1500, endFrame: 1501, sequence: { $sequence: 'finishOwner_22' } },
+          { startFrame: 1515, endFrame: 1516, sequence: { $sequence: 'finishOwner_22' } },
+          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'checkCondition_34' } },
         ],
       },
     },
@@ -7487,499 +7368,6 @@ export const tangtang: OperatorDefinition = {
         nameKey: 'effects.name.waterspouts',
         placement: 'enemy',
       },
-    },
-  },
-  projectileDefinitions: {
-    projectile_chr_0027_tangtang_attack1: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 55 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0027_tangtang_attack2: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 70 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0027_tangtang_attack2_2: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 70 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0027_tangtang_attack3: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.45 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 2 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.45 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0027_tangtang_attack5: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 50 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 1.5 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 12 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: { EntityBB_atk05_cnt: 0 },
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0027_tangtang_water: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 10 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 2,
-                  inTangent: -3.9952576,
-                  outTangent: -3.9952576,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.16500098,
-                  value: 1.3407786,
-                  inTangent: -2.0447524,
-                  outTangent: -2.0447524,
-                  weightedMode: 0,
-                  inWeight: 0.8832316,
-                  outWeight: 0.061716028,
-                },
-                {
-                  time: 0.4896845,
-                  value: 0.99144655,
-                  inTangent: 0.01655952,
-                  outTangent: 0.01655952,
-                  weightedMode: 0,
-                  inWeight: 0.44204327,
-                  outWeight: 0.09206248,
-                },
-                {
-                  time: 3,
-                  value: 1,
-                  inTangent: 0.003407319,
-                  outTangent: 0.003407319,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 0.8,
-                  inTangent: 0.53959215,
-                  outTangent: 0.53959215,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.17022358,
-                },
-                {
-                  time: 1.1467078,
-                  value: 1.2968235,
-                  inTangent: 0.23721509,
-                  outTangent: 0.23721509,
-                  weightedMode: 0,
-                  inWeight: 0.43372607,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 2,
-                  inTangent: 0.079425424,
-                  outTangent: 0.079425424,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'parabola',
-                definition: {
-                  kind: 'vertexDuration',
-                  durationSeconds: { kind: 'constant', value: 1.7 },
-                  vertexOffsetMeters: { kind: 'constant', value: 1.2 },
-                },
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: false,
-        keepMovingOnReach: true,
-        reachRadiusMeters: { kind: 'constant', value: 0.3 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: 0 },
-    },
-    projectile_chr_0027_tangtang_waterwake01: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: 'TargetPoint',
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 0 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 5,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            earlyNextAfterSeconds: { kind: 'constant', value: 0.3 },
-            skipCollision: false,
-          },
-          {
-            targetKey: 'TargetPoint',
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 15 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 3,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 0,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 5,
-                  value: 0.8,
-                  inTangent: 0.08868233,
-                  outTangent: 0.08868233,
-                  weightedMode: 0,
-                  inWeight: 0.40446645,
-                  outWeight: 0.25231886,
-                },
-                {
-                  time: 10,
-                  value: 2,
-                  inTangent: 0.045270614,
-                  outTangent: 0.045270614,
-                  weightedMode: 0,
-                  inWeight: 0.8724321,
-                  outWeight: 0.28513914,
-                },
-                {
-                  time: 15.802985,
-                  value: 4.6871285,
-                  inTangent: 0.14569657,
-                  outTangent: 0.14569657,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.07896385,
-                },
-                {
-                  time: 50,
-                  value: 6,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'box',
-          target: { side: 'enemy' },
-          centerMeters: [
-            { kind: 'constant', value: 0 },
-            { kind: 'constant', value: 1.5 },
-            { kind: 'constant', value: 0 },
-          ],
-          halfExtentsMeters: [
-            { kind: 'constant', value: 3 },
-            { kind: 'constant', value: 3 },
-            { kind: 'constant', value: 3 },
-          ],
-        },
-        finishDurationSeconds: { kind: 'constant', value: 2 },
-        finishDistanceMeters: { kind: 'constant', value: 50 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1, repeatIntervalSeconds: 0.15 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

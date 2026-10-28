@@ -12,26 +12,13 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 9, callbacks: [{ event: 'hit', triggerFrames: [9] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_combo_skill',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'bomb' },
-            launch: {
-              start: {
-                target: { kind: 'source' },
-                offset: {
-                  local: [
-                    { kind: 'constant', value: 0 },
-                    { kind: 'constant', value: 1 },
-                    { kind: 'constant', value: 0 },
-                  ],
-                  facing: 'operatorToEnemy',
-                  rotation: [0, 0, 0, 1],
-                  centerOnGround: false,
-                },
-              },
-              segmentTargets: [{ target: { kind: 'context', key: 'bomb' } }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -84,16 +71,6 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
             saveToContextKey: 'bomb',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'context', key: 'smart_target' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: -0.2 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_1',
@@ -161,13 +138,12 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'tar' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -255,16 +231,6 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
             saveToContextKey: 'tar',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0.003 },
-                { kind: 'constant', value: 1.526 },
-                { kind: 'constant', value: 1.26 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_1',
@@ -273,13 +239,12 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'tar' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -367,16 +332,6 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
             saveToContextKey: 'tar',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: -0.185 },
-                { kind: 'constant', value: 1.526 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_3',
@@ -432,13 +387,12 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack_2',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'tar' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -526,37 +480,6 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
             saveToContextKey: 'tar',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: -0.174 },
-                { kind: 'constant', value: 0.865 },
-                { kind: 'constant', value: 1.475 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: 'launchProjectile_1',
-      },
-      createSpatialPointTargets_4: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'tar',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0.27 },
-                { kind: 'constant', value: 1.533 },
-                { kind: 'constant', value: 1.05 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_1',
@@ -595,7 +518,7 @@ export const wulfgardChr_0006_wolfgd_attack2: SkillDefinition = {
   costFrame: 11,
   scheduledSequences: [
     { startFrame: 10, endFrame: 10, sequence: { $sequence: 'createSpatialPointTargets_2' } },
-    { startFrame: 16, endFrame: 16, sequence: { $sequence: 'createSpatialPointTargets_4' } },
+    { startFrame: 16, endFrame: 16, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 0, endFrame: 38, sequence: { $sequence: 'overrideBasicAttackMapping_5' } },
     { startFrame: 23, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
   ],
@@ -612,13 +535,12 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack_3',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'tar' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -706,37 +628,6 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
             saveToContextKey: 'tar',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: -0.092 },
-                { kind: 'constant', value: 1.078 },
-                { kind: 'constant', value: 1.127 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: 'launchProjectile_1',
-      },
-      createSpatialPointTargets_4: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'tar',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0.123 },
-                { kind: 'constant', value: 1.127 },
-                { kind: 'constant', value: 0.972 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_1',
@@ -775,7 +666,7 @@ export const wulfgardChr_0006_wolfgd_attack3: SkillDefinition = {
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 12, endFrame: 12, sequence: { $sequence: 'createSpatialPointTargets_2' } },
-    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'createSpatialPointTargets_4' } },
+    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 24, endFrame: 24, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 0, endFrame: 52, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
     { startFrame: 32, endFrame: 52, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
@@ -793,13 +684,12 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack_4',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'tar' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -890,16 +780,6 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
             saveToContextKey: 'tar',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 1.3 },
-                { kind: 'constant', value: 0.3 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_1',
@@ -1133,11 +1013,13 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -1198,11 +1080,13 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -1274,11 +1158,13 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -1472,11 +1358,13 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill_plus',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -1962,150 +1850,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      launchProjectile_5: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            projectileId: 'projectile_chr_0006_wolfgd_UltimateWolf',
-            recycleDelaySeconds: 0,
-            targets: { kind: 'context', contextKey: 'targetpoint' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ target: { kind: 'context', key: 'targetpoint' } }],
-            },
-          },
-          callbacks: [],
-        },
-        next: null,
-      },
-      createSpatialPointTargets_6: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'targetpoint',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 10 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, -0.3826835, 0, 0.9238795],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: 'launchProjectile_5',
-      },
-      createSpatialPointTargets_8: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'targetpoint',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 10 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, -0.8660254, 0, 0.5],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: 'launchProjectile_5',
-      },
-      createSpatialPointTargets_10: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'targetpoint',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 10 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0.9659258, 0, -0.258819],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: 'launchProjectile_5',
-      },
-      createSpatialPointTargets_12: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'targetpoint',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 10 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0.7660444, 0, 0.6427876],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: 'launchProjectile_5',
-      },
-      createSpatialPointTargets_14: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'targetpoint',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 10 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0.9659258, 0, 0.2588191],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: 'launchProjectile_5',
-      },
-      createSpatialPointTargets_16: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'targetpoint',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 10 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, -0.258819, 0, 0.9659258],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: 'launchProjectile_5',
-      },
-      dealDamage_17: {
+      dealDamage_11: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -2120,7 +1865,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_18: {
+      mergeContextTargets_12: {
         action: {
           kind: 'mergeContextTargets',
           parameters: {
@@ -2128,9 +1873,9 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
             sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_17',
+        next: 'dealDamage_11',
       },
-      dealDamage_19: {
+      dealDamage_13: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -2145,7 +1890,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_20: {
+      mergeContextTargets_14: {
         action: {
           kind: 'mergeContextTargets',
           parameters: {
@@ -2153,9 +1898,9 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
             sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_19',
+        next: 'dealDamage_13',
       },
-      dealDamage_21: {
+      dealDamage_15: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -2170,7 +1915,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_22: {
+      mergeContextTargets_16: {
         action: {
           kind: 'mergeContextTargets',
           parameters: {
@@ -2178,9 +1923,9 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
             sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_21',
+        next: 'dealDamage_15',
       },
-      dealDamage_23: {
+      dealDamage_17: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -2195,7 +1940,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_24: {
+      mergeContextTargets_18: {
         action: {
           kind: 'mergeContextTargets',
           parameters: {
@@ -2203,9 +1948,9 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
             sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_23',
+        next: 'dealDamage_17',
       },
-      dealDamage_25: {
+      dealDamage_19: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -2220,7 +1965,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_26: {
+      mergeContextTargets_20: {
         action: {
           kind: 'mergeContextTargets',
           parameters: {
@@ -2228,9 +1973,9 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
             sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_25',
+        next: 'dealDamage_19',
       },
-      applyBuff_27: {
+      applyBuff_21: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2242,7 +1987,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      repeatEachTick_28: {
+      repeatEachTick_22: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
@@ -2255,26 +2000,26 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
               targetTriggerIntervalSeconds: 0.2,
             },
           },
-          body: { $sequence: 'applyBuff_27' },
+          body: { $sequence: 'applyBuff_21' },
         },
         next: null,
       },
-      mergeContextTargets_29: {
+      mergeContextTargets_23: {
         action: {
           kind: 'mergeContextTargets',
           parameters: { saveToContextKey: 'target', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
-        next: 'repeatEachTick_28',
+        next: 'repeatEachTick_22',
       },
-      reachSkillOperableBoundary_30: {
+      reachSkillOperableBoundary_24: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0006_wolfgd_normal_skill', 'chr_0006_wolfgd_combo_skill'] },
         },
         next: null,
       },
-      hideUi_31: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_32: {
+      hideUi_25: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_26: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -2285,7 +2030,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_33: {
+      applyBuff_27: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2337,22 +2082,16 @@ export const wulfgardChr_0006_wolfgd_ultimate_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 14, sequence: { $sequence: 'ifElse_3' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_4' } },
-    { startFrame: 45, endFrame: 47, sequence: { $sequence: 'createSpatialPointTargets_6' } },
-    { startFrame: 50, endFrame: 52, sequence: { $sequence: 'createSpatialPointTargets_8' } },
-    { startFrame: 56, endFrame: 58, sequence: { $sequence: 'createSpatialPointTargets_10' } },
-    { startFrame: 61, endFrame: 63, sequence: { $sequence: 'createSpatialPointTargets_12' } },
-    { startFrame: 45, endFrame: 47, sequence: { $sequence: 'createSpatialPointTargets_14' } },
-    { startFrame: 63, endFrame: 65, sequence: { $sequence: 'createSpatialPointTargets_16' } },
-    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'mergeContextTargets_18' } },
-    { startFrame: 52, endFrame: 55, sequence: { $sequence: 'mergeContextTargets_20' } },
-    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'mergeContextTargets_22' } },
-    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'mergeContextTargets_24' } },
-    { startFrame: 69, endFrame: 72, sequence: { $sequence: 'mergeContextTargets_26' } },
-    { startFrame: 45, endFrame: 72, sequence: { $sequence: 'mergeContextTargets_29' } },
-    { startFrame: 75, endFrame: 89, sequence: { $sequence: 'reachSkillOperableBoundary_30' } },
-    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'hideUi_31' } },
-    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'startUltimateTimeDilation_32' } },
-    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'applyBuff_33' } },
+    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'mergeContextTargets_12' } },
+    { startFrame: 52, endFrame: 55, sequence: { $sequence: 'mergeContextTargets_14' } },
+    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'mergeContextTargets_16' } },
+    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'mergeContextTargets_18' } },
+    { startFrame: 69, endFrame: 72, sequence: { $sequence: 'mergeContextTargets_20' } },
+    { startFrame: 45, endFrame: 72, sequence: { $sequence: 'mergeContextTargets_23' } },
+    { startFrame: 75, endFrame: 89, sequence: { $sequence: 'reachSkillOperableBoundary_24' } },
+    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'hideUi_25' } },
+    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'startUltimateTimeDilation_26' } },
+    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'applyBuff_27' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 300,
@@ -2822,388 +2561,6 @@ export const wulfgard: OperatorDefinition = {
           { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_4' } },
         ],
       },
-    },
-  },
-  projectileDefinitions: {
-    projectile_chr_0006_wolfgd_UltimateWolf: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 20 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 300 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0006_wolfgd_combo_skill: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: -0.053507984,
-                  outTangent: -0.053507984,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.49985462,
-                  value: 0.9732538,
-                  inTangent: -0.000015553087,
-                  outTangent: -0.000015553087,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0.053476878,
-                  outTangent: 0.053476878,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'parabola',
-                definition: {
-                  kind: 'vertexDuration',
-                  durationSeconds: { kind: 'constant', value: 0.3 },
-                  vertexOffsetMeters: { kind: 'constant', value: 0.7 },
-                },
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0006_wolfgd_normal_attack: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0006_wolfgd_normal_attack_2: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0006_wolfgd_normal_attack_3: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0006_wolfgd_normal_attack_4: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0006_wolfgd_normal_skill: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 10 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0006_wolfgd_normal_skill_plus: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

@@ -2328,98 +2328,6 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
         next: null,
       },
-      createSpatialPointTargets_31: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'targetpos',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'inputTarget' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_32: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'effect_z_scale',
-            operation: 'divide',
-            value: { kind: 'constant', value: 8 },
-          },
-        },
-        next: null,
-      },
-      saveTargetDistance_33: {
-        action: {
-          kind: 'saveTargetDistance',
-          parameters: {
-            source: { kind: 'owner' },
-            target: { kind: 'context', key: 'targetpos' },
-            outputKey: 'effect_z_scale',
-          },
-        },
-        next: 'modifyActionValue_32',
-      },
-      ifElse_34: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'createSpatialPointTargets_31' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'saveTargetDistance_33',
-      },
-      saveTargetDistance_35: {
-        action: {
-          kind: 'saveTargetDistance',
-          parameters: {
-            source: { kind: 'owner' },
-            target: { kind: 'inputTarget' },
-            outputKey: 'effect_z_scale',
-          },
-        },
-        next: 'ifElse_34',
-      },
-      checkCondition_36: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-        },
-        next: 'saveTargetDistance_35',
-      },
-      createSpatialPointTargets_37: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'targetpos',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'owner' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 8 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: 'checkCondition_36',
-      },
       applyBuff_38: {
         action: {
           kind: 'applyBuff',
@@ -2436,7 +2344,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 204 },
-          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
         },
         next: null,
       },
@@ -2544,30 +2452,6 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         },
       },
       data_9: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'effect_z_scale', fallback: 0 },
-      },
-      data_10: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_9' },
-          operator: 'lessOrEqual',
-          right: { kind: 'constant', value: 8 },
-        },
-      },
-      data_11: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'inputTarget' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_12: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
@@ -2580,10 +2464,7 @@ export const mifuChr_0031_mifu_normalskill_1: SkillDefinition = {
   actionGraph: mifuChr_0031_mifu_normalskill_1ActionGraph,
   key: 'chr_0031_mifu_normalskill_1',
   element: 'physical',
-  blackboard: {
-    atk_scale: [0.67, 0.73, 0.8, 0.87, 0.93, 1, 1.07, 1.13, 1.2, 1.28, 1.38, 1.5],
-    effect_z_scale: 1,
-  },
+  blackboard: { atk_scale: [0.67, 0.73, 0.8, 0.87, 0.93, 1, 1.07, 1.13, 1.2, 1.28, 1.38, 1.5] },
   timelineBlockFrames: 11,
   naturalDurationFrames: 203,
   exclusiveFrame: 125,
@@ -2598,7 +2479,6 @@ export const mifuChr_0031_mifu_normalskill_1: SkillDefinition = {
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'changeResource_18' } },
     { startFrame: 7, endFrame: 12, sequence: { $sequence: 'checkCondition_28' } },
     { startFrame: 25, endFrame: 31, sequence: { $sequence: 'markCurrentSkillCanInterrupt_29' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'createSpatialPointTargets_37' } },
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'applyBuff_38' } },
     { startFrame: 104, endFrame: 104, sequence: { $sequence: 'jumpTimeline_39' } },
     { startFrame: 0, endFrame: 131, sequence: { $sequence: 'overrideBasicAttackMapping_40' } },

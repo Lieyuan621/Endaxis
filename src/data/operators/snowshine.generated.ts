@@ -1306,6 +1306,51 @@ export const snowshineChr_0014_aurora_normal_skill: SkillDefinition = {
   nativeSkillType: 'normalSkill',
 };
 
+const snowshineChr_0014_aurora_combo_skillActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        spawnAbilityEntity_1: {
+          action: {
+            kind: 'spawnAbilityEntity',
+            parameters: {
+              bornAt: { kind: 'inputTarget' },
+              abilityEntityId: 'abilityentity_chr_0014_aurora_combo_skill',
+              childSkillId: 'chr_0014_aurora_combo_skill_abilityrange',
+              source: { kind: 'source' },
+              inheritActionBlackboard: true,
+              dieWhenSourceDies: false,
+              target: 'enemy',
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0014_aurora_combo_skill_bear_gene',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 60,
+  castResource: {
+    costFrame: 9,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {
+    duration: 0,
+    heal_scale: 0,
+    heal_scale_loop: 0,
+    heal_static_value: 0,
+    heal_static_value_loop: 0,
+    interval: 0,
+  },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'spawnAbilityEntity_1' } },
+  ],
+} as const;
+
 export const snowshineChr_0014_aurora_combo_skillActionGraph = {
   main: {
     nodes: {
@@ -1323,16 +1368,6 @@ export const snowshineChr_0014_aurora_combo_skillActionGraph = {
             saveToContextKey: 'TempPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 100 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: null,
@@ -1351,63 +1386,15 @@ export const snowshineChr_0014_aurora_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 1, callbacks: [{ event: 'reach', triggerFrames: [1] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0014_aurora_combo_skill_bear_out',
             recycleDelaySeconds: 2,
             targets: { kind: 'context', contextKey: 'BearPos' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ target: { kind: 'context', key: 'BearPos' } }],
-            },
+            entityInitialValues: {},
           },
           callbacks: [
-            {
-              event: 'reach',
-              skill: {
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      spawnAbilityEntity_1: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'inputTarget' },
-                            abilityEntityId: 'abilityentity_chr_0014_aurora_combo_skill',
-                            childSkillId: 'chr_0014_aurora_combo_skill_abilityrange',
-                            source: { kind: 'source' },
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                            target: 'enemy',
-                          },
-                        },
-                        next: null,
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-                skillId: 'chr_0014_aurora_combo_skill_bear_gene',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 60,
-                castResource: {
-                  costFrame: 9,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  duration: 0,
-                  heal_scale: 0,
-                  heal_scale_loop: 0,
-                  heal_static_value: 0,
-                  heal_static_value_loop: 0,
-                  interval: 0,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 2, sequence: { $sequence: 'spawnAbilityEntity_1' } },
-                ],
-              },
-            },
+            { event: 'reach', skill: snowshineChr_0014_aurora_combo_skillActionGraphCallback1 },
           ],
         },
         next: null,
@@ -1419,6 +1406,23 @@ export const snowshineChr_0014_aurora_combo_skillActionGraph = {
         },
         next: 'launchProjectile_9',
       },
+      launchProjectile_7: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: { endFrame: 9, callbacks: [{ event: 'reach', triggerFrames: [9] }] },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0014_aurora_combo_skill_bear_out',
+            recycleDelaySeconds: 2,
+            targets: { kind: 'context', contextKey: 'BearPos' },
+            entityInitialValues: {},
+          },
+          callbacks: [
+            { event: 'reach', skill: snowshineChr_0014_aurora_combo_skillActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
       createSpatialPointTargets_8: {
         action: {
           kind: 'createSpatialPointTargets',
@@ -1426,19 +1430,9 @@ export const snowshineChr_0014_aurora_combo_skillActionGraph = {
             saveToContextKey: 'BearPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 2 },
-                { kind: 'constant', value: 2 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
-        next: 'launchProjectile_9',
+        next: 'launchProjectile_7',
       },
       ifElse_11: {
         action: {
@@ -1632,16 +1626,6 @@ export const snowshineChr_0014_aurora_ultimate_skillActionGraph = {
             saveToContextKey: 'ult_pos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 1 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: 'ifElse_8',
@@ -2755,75 +2739,6 @@ export const snowshine: OperatorDefinition = {
           scheduledSequences: [{ startFrame: 4, endFrame: 157, sequence: { $sequence: 'aura_1' } }],
         },
       },
-    },
-  },
-  projectileDefinitions: {
-    projectile_chr_0014_aurora_combo_skill_bear_out: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 55 } },
-              speed: { kind: 'constant', value: 9 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.3 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 45 },
-                      { kind: 'constant', value: 135 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.3 },
-                      { kind: 'constant', value: 0.5 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.3 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 99 },
-        finishDistanceMeters: { kind: 'constant', value: 50 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.3 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

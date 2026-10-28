@@ -267,16 +267,6 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
             saveToContextKey: 'pos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'context', key: 'mainchr' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 2 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: null,
@@ -337,11 +327,13 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_combo_skill',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'main' },
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: xaihiChr_0011_seraph_combo_skillActionGraphCallback1 },
@@ -353,14 +345,13 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_combo_skill',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'main' },
-            launch: {
-              start: { target: { kind: 'context', key: 'ball' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: xaihiChr_0011_seraph_combo_skillActionGraphCallback1 },
@@ -383,12 +374,11 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'ball',
-            abilityEntityIds: [
-              'abilityentity_chr_0011_seraph_normal_skill',
-              'abilityentity_chr_0011_seraph_normal_skill_02',
-              'abilityentity_chr_0011_seraph_normal_skill_03',
-              'abilityentity_chr_0011_seraph_normal_skill_buff',
-              'abilityentity_chr_0027_tangtang_normal_skill_02_02',
+            tagFilters: [
+              {
+                queryType: 'hasAny',
+                tags: ['Skill/Character/chr_0011_seraph/UltimateAbilityEntity'],
+              },
             ],
             owner: { kind: 'owner' },
           },
@@ -503,10 +493,12 @@ export const xaihiChr_0011_seraph_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_normal_attack',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -670,10 +662,12 @@ export const xaihiChr_0011_seraph_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_normal_attack2',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -837,10 +831,12 @@ export const xaihiChr_0011_seraph_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_normal_attack3_true',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -1101,10 +1097,12 @@ export const xaihiChr_0011_seraph_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_normal_attack3',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [{ event: 'hit', skill: xaihiChr_0011_seraph_attack4ActionGraphCallback1 }],
         },
@@ -1114,10 +1112,12 @@ export const xaihiChr_0011_seraph_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_normal_attack3_02',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [{ event: 'hit', skill: xaihiChr_0011_seraph_attack4ActionGraphCallback1 }],
         },
@@ -2335,7 +2335,12 @@ const xaihiBuff6ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'ball',
-            abilityEntityIds: ['abilityentity_chr_0011_seraph_normal_skill'],
+            tagFilters: [
+              {
+                queryType: 'hasAny',
+                tags: ['Skill/Character/chr_0011_seraph/UltimateAbilityEntity'],
+              },
+            ],
             owner: { kind: 'context', key: 'seraph' },
           },
         },
@@ -2994,461 +2999,6 @@ export const xaihi: OperatorDefinition = {
           { startFrame: 600, endFrame: 603, sequence: { $sequence: 'ifElse_6' } },
         ],
       },
-    },
-  },
-  projectileDefinitions: {
-    projectile_chr_0011_seraph_combo_skill: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 45 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.8,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0011_seraph_normal_attack: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 22 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.05 },
-                      { kind: 'constant', value: 0.05 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 32 },
-                      { kind: 'constant', value: 32 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.102 },
-                      { kind: 'constant', value: 0.102 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.166 },
-                      { kind: 'constant', value: 0.166 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 32 },
-                      { kind: 'constant', value: 32 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.075 },
-                      { kind: 'constant', value: 0.075 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0011_seraph_normal_attack2: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 24 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.4 },
-                      { kind: 'constant', value: 0.4 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 170 },
-                      { kind: 'constant', value: 170 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.11 },
-                      { kind: 'constant', value: 0.11 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 170 },
-                      { kind: 'constant', value: 170 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.22 },
-                      { kind: 'constant', value: 0.22 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0011_seraph_normal_attack3: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 36 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.01 },
-                      { kind: 'constant', value: 0.01 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 150 },
-                      { kind: 'constant', value: 150 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.06 },
-                      { kind: 'constant', value: 0.06 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.36 },
-                      { kind: 'constant', value: 0.36 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 150 },
-                      { kind: 'constant', value: 150 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.05 },
-                      { kind: 'constant', value: 0.05 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0011_seraph_normal_attack3_02: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 36 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.01 },
-                      { kind: 'constant', value: 0.01 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 30 },
-                      { kind: 'constant', value: 30 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.06 },
-                      { kind: 'constant', value: 0.06 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.08 },
-                      { kind: 'constant', value: 0.08 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 30 },
-                      { kind: 'constant', value: 30 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.05 },
-                      { kind: 'constant', value: 0.05 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0011_seraph_normal_attack3_true: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 22 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.4 },
-                      { kind: 'constant', value: 0.4 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 32 },
-                      { kind: 'constant', value: 32 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.11 },
-                      { kind: 'constant', value: 0.11 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 32 },
-                      { kind: 'constant', value: 32 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.22 },
-                      { kind: 'constant', value: 0.22 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

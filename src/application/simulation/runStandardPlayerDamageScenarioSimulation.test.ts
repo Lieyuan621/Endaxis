@@ -3174,7 +3174,6 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
   it('runs every generated Perlica skill type through the production simulation flow', () => {
     const scenario = placeGeneratedPerlicaFlow(perlicaFormalOperator);
     // 此回归验证重叠目标下的完整回调链，不依赖新方案的默认交战距离。
-    scenario.battle.operatorEnemyDistanceMeters = 0;
     const result = runStandardPlayerDamageScenarioSimulation({
       scenario,
       endFrame: 350,
@@ -3217,16 +3216,13 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       'chr_0004_pelica_attack4',
       'chr_0004_pelica_attack4_projhit',
       'chr_0004_pelica_combo_skill',
-      'chr_0004_pelica_combo_skill_projhit',
       'chr_0004_pelica_normal_skill',
+      'chr_0004_pelica_combo_skill_projhit',
       'chr_0004_pelica_ultimate_skill',
       'chr_0004_pelica_ultimate_skill_abilityrange',
       'chr_0004_pelica_plunging_attack_start',
       'chr_0004_pelica_plunging_attack_end',
-      'chr_0004_pelica_plunging_attack_projhit',
-      'chr_0004_pelica_plunging_attack_projhit',
-      'chr_0004_pelica_plunging_attack_projhit',
-      'chr_0004_pelica_plunging_attack_projhit',
+      // 下落攻击的四发短程散射止于自身周围，不会跨越5米站距命中敌人。
       'chr_0004_pelica_power_attack',
     ]);
     expect(result.receiptEntries.some(entry => entry.event === 'ComboWindowOpened')).toBe(true);

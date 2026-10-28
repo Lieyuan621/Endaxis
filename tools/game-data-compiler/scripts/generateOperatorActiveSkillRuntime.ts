@@ -1,5 +1,9 @@
 import { OperatorPlanningSources } from './operatorPlanningSources.ts';
 import {
+  configuredProjectileSchedule,
+  shouldOmitProjectileLaunch,
+} from './projectileScheduleDefaults.ts';
+import {
   parseNativeJsonEncodingSchema,
   type NativeJsonEncodingSchema,
 } from '../src/source/nativeJsonEncoding.ts';
@@ -223,7 +227,8 @@ export function prepareProjectileProjection(
     CombatActionProjectionExtensionsSource['compileProjectileLaunch']
   >;
   compileProjectileLaunch = createProjectileProjectionExtensionSource({
-    registerProjectile: sources.registerProjectile,
+    resolveSchedule: configuredProjectileSchedule,
+    shouldOmitLaunch: shouldOmitProjectileLaunch,
     catalog: {
       runtimes: runtimeCatalog,
       templates: templateCatalog,
@@ -493,7 +498,8 @@ export function planOperatorActiveSkillRuntime(
   );
   let projectile: NonNullable<CombatActionProjectionExtensionsSource['compileProjectileLaunch']>;
   projectile = createProjectileProjectionExtensionSource({
-    registerProjectile: sources.registerProjectile,
+    resolveSchedule: configuredProjectileSchedule,
+    shouldOmitLaunch: shouldOmitProjectileLaunch,
     catalog: {
       runtimes: runtimeCatalog,
       templates: templateCatalog,
@@ -759,16 +765,12 @@ export function planOperatorActiveSkillRuntime(
           {
             skillId,
             projectileIds,
-            resourcePatches: projectileIds.flatMap(id => {
-              const record = sources.resourcePatches.get(id);
-              return record ? [record] : [];
-            }),
             callbackIds,
             runtimeBuffIds: [...runtimeBuffIds].sort(),
             supplementalBuffIds: [...args.supplementalBuffIds].sort(),
             omittedVisualOnlyBuffIds: [...visualOnlyIds].sort(),
             source: { file: sourcePath, sha256: sha256(sourceText) },
-            scope: 'full-active-skill-action-graph-zero-distance-runtime',
+            scope: 'full-active-skill-action-graph-scheduled-projectiles',
           },
           null,
           2,

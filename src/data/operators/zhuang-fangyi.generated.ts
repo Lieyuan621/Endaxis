@@ -15,10 +15,12 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -157,75 +159,20 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
             saveToContextKey: 'SwordCenter',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: -1 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: null,
-      },
-      modifyActionValue_5: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_dist',
-            operation: 'assign',
-            value: { kind: 'constant', value: 14 },
-          },
-        },
-        next: 'createSpatialPointTargets_4',
-      },
-      modifyActionValue_3: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_dist',
-            operation: 'add',
-            value: { kind: 'constant', value: 3 },
-          },
-        },
-        next: 'createSpatialPointTargets_4',
-      },
-      ifElse_6: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'modifyActionValue_3' },
-          whenFalse: { $sequence: 'modifyActionValue_5' },
-        },
-        next: null,
-      },
-      saveTargetDistance_7: {
-        action: {
-          kind: 'saveTargetDistance',
-          parameters: {
-            source: { kind: 'owner' },
-            target: { kind: 'inputTarget' },
-            outputKey: 'sword_dist',
-          },
-        },
-        next: 'ifElse_6',
       },
       launchProjectile_8: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
             inheritActionBlackboard: true,
-            entityAssignments: { EntityBB_max_dist: { kind: 'valueNode', nodeId: 'data_3' } },
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_2',
             recycleDelaySeconds: 0.100000001490116,
-            launch: {
-              start: { target: { kind: 'context', key: 'SwordCenter' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: zhuangFangyiChr_0030_zhuangfy_attack2ActionGraphCallback1 },
@@ -237,14 +184,12 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
             inheritActionBlackboard: true,
-            entityAssignments: { EntityBB_max_dist: { kind: 'valueNode', nodeId: 'data_3' } },
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_1',
             recycleDelaySeconds: 0.100000001490116,
-            launch: {
-              start: { target: { kind: 'context', key: 'SwordCenter' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: zhuangFangyiChr_0030_zhuangfy_attack2ActionGraphCallback1 },
@@ -273,16 +218,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
             saveToContextKey: 'thunderPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'context', key: 'thunderPos' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: 'spawnAbilityEntity_14',
@@ -294,16 +229,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
             saveToContextKey: 'thunderPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0.5 },
-                { kind: 'constant', value: 9 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'createSpatialPointTargets_15',
@@ -315,16 +240,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
             saveToContextKey: 'thunderPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'inputTarget' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0.5 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'createSpatialPointTargets_15',
@@ -333,7 +248,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'createSpatialPointTargets_13' },
           whenFalse: { $sequence: 'createSpatialPointTargets_16' },
         },
@@ -353,23 +268,19 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
         },
         next: null,
       },
+      ifElse_opt1: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_4' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_4' },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'sword_dist', fallback: 0 },
-      },
-      data_2: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_1' },
-          operator: 'lessOrEqual',
-          right: { kind: 'constant', value: 10 },
-        },
-      },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'sword_dist' } },
-      data_4: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -380,6 +291,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
           includeTargetRadius: true,
           containsHittableObject: false,
         },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -393,7 +308,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2: SkillDefinition = {
   blackboard: {
     atk_scale: [0.04, 0.04, 0.04, 0.05, 0.05, 0.05, 0.06, 0.06, 0.06, 0.07, 0.07, 0.08],
     atk_scale_sword: [0.05, 0.06, 0.06, 0.07, 0.07, 0.08, 0.08, 0.09, 0.09, 0.1, 0.1, 0.11],
-    sword_dist: 0,
   },
   timelineBlockFrames: 15,
   naturalDurationFrames: 320,
@@ -401,7 +315,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2: SkillDefinition = {
   offsetRecordFrame: 15,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 2, endFrame: 3, sequence: { $sequence: 'saveTargetDistance_7' } },
+    { startFrame: 2, endFrame: 3, sequence: { $sequence: 'ifElse_opt1' } },
     { startFrame: 2, endFrame: 3, sequence: { $sequence: 'launchProjectile_9' } },
     { startFrame: 15, endFrame: 18, sequence: { $sequence: 'ifElse_17' } },
     { startFrame: 0, endFrame: 36, sequence: { $sequence: 'overrideBasicAttackMapping_18' } },
@@ -460,75 +374,20 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
             saveToContextKey: 'SwordCenter',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: null,
-      },
-      modifyActionValue_5: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_dist',
-            operation: 'assign',
-            value: { kind: 'constant', value: 14 },
-          },
-        },
-        next: 'createSpatialPointTargets_4',
-      },
-      modifyActionValue_3: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_dist',
-            operation: 'add',
-            value: { kind: 'constant', value: 3 },
-          },
-        },
-        next: 'createSpatialPointTargets_4',
-      },
-      ifElse_6: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'modifyActionValue_3' },
-          whenFalse: { $sequence: 'modifyActionValue_5' },
-        },
-        next: null,
-      },
-      saveTargetDistance_7: {
-        action: {
-          kind: 'saveTargetDistance',
-          parameters: {
-            source: { kind: 'owner' },
-            target: { kind: 'inputTarget' },
-            outputKey: 'sword_dist',
-          },
-        },
-        next: 'ifElse_6',
       },
       launchProjectile_8: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
             inheritActionBlackboard: true,
-            entityAssignments: { EntityBB_max_dist: { kind: 'valueNode', nodeId: 'data_3' } },
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_2',
             recycleDelaySeconds: 0.100000001490116,
-            launch: {
-              start: { target: { kind: 'context', key: 'SwordCenter' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: zhuangFangyiChr_0030_zhuangfy_attack3ActionGraphCallback1 },
@@ -540,14 +399,12 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
             inheritActionBlackboard: true,
-            entityAssignments: { EntityBB_max_dist: { kind: 'valueNode', nodeId: 'data_3' } },
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_1',
             recycleDelaySeconds: 0.100000001490116,
-            launch: {
-              start: { target: { kind: 'context', key: 'SwordCenter' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: zhuangFangyiChr_0030_zhuangfy_attack3ActionGraphCallback1 },
@@ -559,14 +416,12 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
             inheritActionBlackboard: true,
-            entityAssignments: { EntityBB_max_dist: { kind: 'valueNode', nodeId: 'data_3' } },
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_1',
             recycleDelaySeconds: 0.100000001490116,
-            launch: {
-              start: { target: { kind: 'context', key: 'SwordCenter' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: zhuangFangyiChr_0030_zhuangfy_attack3ActionGraphCallback1 },
@@ -578,14 +433,12 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
             inheritActionBlackboard: true,
-            entityAssignments: { EntityBB_max_dist: { kind: 'valueNode', nodeId: 'data_3' } },
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_2',
             recycleDelaySeconds: 0.100000001490116,
-            launch: {
-              start: { target: { kind: 'context', key: 'SwordCenter' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: zhuangFangyiChr_0030_zhuangfy_attack3ActionGraphCallback1 },
@@ -607,22 +460,22 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
         },
         next: null,
       },
+      ifElse_opt1: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_4' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_4' },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'sword_dist', fallback: 0 },
-      },
-      data_2: {
         type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_1' },
-          operator: 'lessOrEqual',
-          right: { kind: 'constant', value: 10 },
-        },
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'sword_dist' } },
     },
   },
   macros: {},
@@ -634,7 +487,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3: SkillDefinition = {
   element: 'electric',
   blackboard: {
     atk_scale_sword: [0.08, 0.09, 0.1, 0.1, 0.11, 0.12, 0.13, 0.14, 0.14, 0.15, 0.17, 0.18],
-    sword_dist: 0,
   },
   timelineBlockFrames: 26,
   naturalDurationFrames: 105,
@@ -642,7 +494,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3: SkillDefinition = {
   offsetRecordFrame: 14,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'saveTargetDistance_7' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'ifElse_opt1' } },
     { startFrame: 14, endFrame: 15, sequence: { $sequence: 'launchProjectile_9' } },
     { startFrame: 16, endFrame: 17, sequence: { $sequence: 'launchProjectile_11' } },
     { startFrame: 0, endFrame: 39, sequence: { $sequence: 'overrideBasicAttackMapping_12' } },
@@ -678,16 +530,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack4ActionGraph = {
             saveToContextKey: 'thunderPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'context', key: 'thunderPos' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: 'spawnAbilityEntity_5',
@@ -699,16 +541,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack4ActionGraph = {
             saveToContextKey: 'thunderPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0.5 },
-                { kind: 'constant', value: 9 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'createSpatialPointTargets_6',
@@ -720,16 +552,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack4ActionGraph = {
             saveToContextKey: 'thunderPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'inputTarget' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0.5 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'createSpatialPointTargets_6',
@@ -825,16 +647,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack5ActionGraph = {
             saveToContextKey: 'abiPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'context', key: 'abiPos' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: 'spawnAbilityEntity_15',
@@ -846,16 +658,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack5ActionGraph = {
             saveToContextKey: 'abiPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 2 },
-                { kind: 'constant', value: 5 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'createSpatialPointTargets_16',
@@ -867,70 +669,9 @@ export const zhuangFangyiChr_0030_zhuangfy_attack5ActionGraph = {
             saveToContextKey: 'abiPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'inputTarget' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 2 },
-                { kind: 'constant', value: 1 },
-              ],
-              facing: { source: { kind: 'owner' }, target: { kind: 'inputTarget' }, invert: false },
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'createSpatialPointTargets_16',
-      },
-      createSpatialPointTargets_7: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'abiPos',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 2 },
-                { kind: 'constant', value: 4 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
-          },
-        },
-        next: 'createSpatialPointTargets_16',
-      },
-      ifElse_9: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'createSpatialPointTargets_17' },
-          whenFalse: { $sequence: 'createSpatialPointTargets_7' },
-        },
-        next: null,
-      },
-      ifElse_14: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'ifElse_9' },
-          whenFalse: { $sequence: 'createSpatialPointTargets_12' },
-        },
-        next: null,
-      },
-      ifElse_18: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'ifElse_14' },
-          whenFalse: { $sequence: 'createSpatialPointTargets_17' },
-        },
-        next: null,
       },
       overrideBasicAttackMapping_19: {
         action: {
@@ -946,19 +687,41 @@ export const zhuangFangyiChr_0030_zhuangfy_attack5ActionGraph = {
         },
         next: null,
       },
+      ifElse_opt1: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_17' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_17' },
+        },
+        next: null,
+      },
+      ifElse_opt2: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'ifElse_opt1' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_12' },
+        },
+        next: null,
+      },
+      ifElse_opt3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'ifElse_opt2' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_17' },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: {
-          kind: 'targetDistance',
-          source: { kind: 'owner' },
-          target: { kind: 'inputTarget' },
-          distance: 10,
-          lessThan: false,
-          includeTargetRadius: true,
-          containsHittableObject: false,
-        },
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
       data_2: {
         type: 'boolean',
@@ -1003,7 +766,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack5: SkillDefinition = {
   offsetRecordFrame: 20,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 20, endFrame: 23, sequence: { $sequence: 'ifElse_18' } },
+    { startFrame: 20, endFrame: 23, sequence: { $sequence: 'ifElse_opt3' } },
     { startFrame: 21, endFrame: 60, sequence: { $sequence: 'overrideBasicAttackMapping_19' } },
     { startFrame: 50, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
   ],
@@ -2271,7 +2034,9 @@ export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_endActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'airSword',
-            abilityEntityIds: ['abilityentity_chr_0030_zhuangfy_air_attack'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0030_zhuangfy/AirAttackSword'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -2387,9 +2152,8 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'swordsForExtend',
-            abilityEntityIds: [
-              'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
-              'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0030_zhuangfy/ActivedSword'] },
             ],
             owner: { kind: 'owner' },
           },
@@ -2448,14 +2212,12 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'reach', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'swordPos' },
-            launch: {
-              start: { side: 'enemy' },
-              segmentTargets: [{ target: { kind: 'context', key: 'swordPos' } }],
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             {
@@ -2532,9 +2294,11 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
                           kind: 'findOwnerSpawnedAbilityEntities',
                           parameters: {
                             saveToContextKey: 'swords',
-                            abilityEntityIds: [
-                              'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
-                              'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
+                            tagFilters: [
+                              {
+                                queryType: 'hasAny',
+                                tags: ['Skill/Character/chr_0030_zhuangfy/ActivedSword'],
+                              },
                             ],
                             owner: { kind: 'source' },
                           },
@@ -2618,18 +2382,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
             saveToContextKey: 'swordPos',
             count: { kind: 'valueNode', nodeId: 'data_2' },
             origin: { kind: 'inputTarget' },
-            randomDistribution: {
-              shape: 'sector',
-              radius: { kind: 'constant', value: 8 },
-              minimumRadius: { kind: 'constant', value: 5 },
-              angleDegrees: { kind: 'constant', value: 200 },
-              localPlaneRotation: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              centerOnGround: true,
-            },
           },
         },
         next: 'launchProjectile_32',
@@ -3262,9 +3014,8 @@ const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraphCallback1 = {
             kind: 'findOwnerSpawnedAbilityEntities',
             parameters: {
               saveToContextKey: 'swords',
-              abilityEntityIds: [
-                'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
-                'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
+              tagFilters: [
+                { queryType: 'hasAny', tags: ['Skill/Character/chr_0030_zhuangfy/ActivedSword'] },
               ],
               owner: { kind: 'source' },
             },
@@ -3357,9 +3108,8 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'swordsForExtend',
-            abilityEntityIds: [
-              'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
-              'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0030_zhuangfy/ActivedSword'] },
             ],
             owner: { kind: 'owner' },
           },
@@ -3406,14 +3156,12 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'reach', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'swordPos' },
-            launch: {
-              start: { side: 'enemy' },
-              segmentTargets: [{ target: { kind: 'context', key: 'swordPos' } }],
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             {
@@ -3431,18 +3179,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
             saveToContextKey: 'swordPos',
             count: { kind: 'valueNode', nodeId: 'data_2' },
             origin: { kind: 'inputTarget' },
-            randomDistribution: {
-              shape: 'sector',
-              radius: { kind: 'constant', value: 8 },
-              minimumRadius: { kind: 'constant', value: 5 },
-              angleDegrees: { kind: 'constant', value: 200 },
-              localPlaneRotation: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              centerOnGround: true,
-            },
           },
         },
         next: 'launchProjectile_37',
@@ -3580,14 +3316,12 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'reach', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'swordPos' },
-            launch: {
-              start: { side: 'enemy' },
-              segmentTargets: [{ target: { kind: 'context', key: 'swordPos' } }],
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             {
@@ -3605,18 +3339,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
             saveToContextKey: 'swordPos',
             count: { kind: 'constant', value: 3 },
             origin: { kind: 'inputTarget' },
-            randomDistribution: {
-              shape: 'sector',
-              radius: { kind: 'constant', value: 8 },
-              minimumRadius: { kind: 'constant', value: 5 },
-              angleDegrees: { kind: 'constant', value: 200 },
-              localPlaneRotation: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              centerOnGround: true,
-            },
           },
         },
         next: 'launchProjectile_15',
@@ -3628,18 +3350,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
             saveToContextKey: 'swordPos',
             count: { kind: 'constant', value: 4 },
             origin: { kind: 'inputTarget' },
-            randomDistribution: {
-              shape: 'sector',
-              radius: { kind: 'constant', value: 8 },
-              minimumRadius: { kind: 'constant', value: 5 },
-              angleDegrees: { kind: 'constant', value: 200 },
-              localPlaneRotation: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              centerOnGround: true,
-            },
           },
         },
         next: 'launchProjectile_15',
@@ -3740,16 +3450,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
             saveToContextKey: 'thunderPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'context', key: 'smart_target' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: 'spawnAbilityEntity_54',
@@ -4485,11 +4185,13 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_combo_skill_ring',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: { start: { side: 'enemy' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -4715,16 +4417,6 @@ export const zhuangFangyiChr_0030_zhuangfy_ultimate_skillActionGraph = {
             saveToContextKey: 'abPosMirror',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'spawnAbilityEntity_4',
@@ -4752,16 +4444,6 @@ export const zhuangFangyiChr_0030_zhuangfy_ultimate_skillActionGraph = {
             saveToContextKey: 'abPosMirror',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'spawnAbilityEntity_6',
@@ -4938,24 +4620,7 @@ export const zhuangFangyiChr_0030_zhuangfy_perfect_dodge: SkillDefinition = {
 export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_startActionGraph = {
   main: {
     nodes: {
-      launchProjectile_1: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            projectileId: 'projectile_chr_0030_zhuangfy_air_attack',
-            recycleDelaySeconds: 0,
-            targets: { kind: 'context', contextKey: 'hitPos' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ target: { kind: 'context', key: 'hitPos' } }],
-            },
-          },
-          callbacks: [],
-        },
-        next: null,
-      },
-      physicsCast_3: {
+      physicsCast_2: {
         action: {
           kind: 'physicsCast',
           parameters: {
@@ -4964,22 +4629,22 @@ export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_startActionGraph = {
             maxDistance: 100,
             saveToContextKey: 'hitPos',
           },
-          whenHit: { $sequence: 'launchProjectile_1' },
+          whenHit: { $sequence: null },
           whenMiss: { $sequence: null },
         },
         next: null,
       },
-      ifElse_4: {
+      ifElse_3: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'physicsCast_3' },
+          whenFalse: { $sequence: 'physicsCast_2' },
         },
         next: null,
       },
-      applyBuff_13: {
+      applyBuff_12: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5022,8 +4687,8 @@ export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_start: SkillDefinitio
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 10, endFrame: 13, sequence: { $sequence: 'ifElse_4' } },
-    { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'applyBuff_13' } },
+    { startFrame: 10, endFrame: 13, sequence: { $sequence: 'ifElse_3' } },
+    { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'applyBuff_12' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
@@ -5565,7 +5230,9 @@ const zhuangFangyiBuff4ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'swordTar',
-            abilityEntityIds: ['abilityentity_chr_0030_zhuangfy_normal_skill_fake_target'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0030_zhuangfy/ThunderAura'] },
+            ],
             owner: { kind: 'source' },
           },
         },
@@ -5576,7 +5243,9 @@ const zhuangFangyiBuff4ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'sword',
-            abilityEntityIds: ['abilityentity_chr_0030_zhuangfy_normal_skill_sword'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0030_zhuangfy/ActivedSword'] },
+            ],
             owner: { kind: 'source' },
             maxTargets: 128,
           },
@@ -5782,16 +5451,6 @@ const zhuangFangyiBuff5ActionGraph = {
             saveToContextKey: 'fakePos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'owner' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: 'spawnAbilityEntity_1',
@@ -5847,7 +5506,9 @@ const zhuangFangyiBuff6ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'swordsInRange',
-            abilityEntityIds: ['abilityentity_chr_0030_zhuangfy_normal_skill_sword'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0030_zhuangfy/ActivedSword'] },
+            ],
             owner: { kind: 'source' },
           },
         },
@@ -6047,7 +5708,9 @@ const zhuangFangyiBuff11ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'thunderTar',
-            abilityEntityIds: ['abilityentity_chr_0030_zhuangfy_normal_skill_fake_target'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0030_zhuangfy/ThunderAura'] },
+            ],
             owner: { kind: 'source' },
           },
         },
@@ -7198,90 +6861,6 @@ export const zhuangFangyi: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              createSpatialPointTargets_2: {
-                action: {
-                  kind: 'createSpatialPointTargets',
-                  parameters: {
-                    saveToContextKey: 'thunderPos2',
-                    count: { kind: 'constant', value: 1 },
-                    origin: { kind: 'context', key: 'thunderPos2' },
-                    offset: {
-                      local: [
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0 },
-                      ],
-                      facing: 'operatorToEnemy',
-                      rotation: [0, 0, 0, 1],
-                      centerOnGround: true,
-                    },
-                  },
-                },
-                next: null,
-              },
-              createSpatialPointTargets_3: {
-                action: {
-                  kind: 'createSpatialPointTargets',
-                  parameters: {
-                    saveToContextKey: 'thunderPos2',
-                    count: { kind: 'constant', value: 1 },
-                    origin: { kind: 'owner' },
-                    offset: {
-                      local: [
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0.5 },
-                        { kind: 'constant', value: 2.5 },
-                      ],
-                      facing: 'operatorToEnemy',
-                      rotation: [0, 0, 0, 1],
-                      centerOnGround: false,
-                    },
-                  },
-                },
-                next: 'createSpatialPointTargets_2',
-              },
-              createSpatialPointTargets_4: {
-                action: {
-                  kind: 'createSpatialPointTargets',
-                  parameters: {
-                    saveToContextKey: 'thunderPos3',
-                    count: { kind: 'constant', value: 1 },
-                    origin: { kind: 'context', key: 'thunderPos3' },
-                    offset: {
-                      local: [
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0 },
-                      ],
-                      facing: 'operatorToEnemy',
-                      rotation: [0, 0, 0, 1],
-                      centerOnGround: true,
-                    },
-                  },
-                },
-                next: null,
-              },
-              createSpatialPointTargets_5: {
-                action: {
-                  kind: 'createSpatialPointTargets',
-                  parameters: {
-                    saveToContextKey: 'thunderPos3',
-                    count: { kind: 'constant', value: 1 },
-                    origin: { kind: 'owner' },
-                    offset: {
-                      local: [
-                        { kind: 'constant', value: 0 },
-                        { kind: 'constant', value: 0.5 },
-                        { kind: 'constant', value: 5 },
-                      ],
-                      facing: 'operatorToEnemy',
-                      rotation: [0, 0, 0, 1],
-                      centerOnGround: false,
-                    },
-                  },
-                },
-                next: 'createSpatialPointTargets_4',
-              },
               finishOwner_6: {
                 action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                 next: null,
@@ -7442,8 +7021,6 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         blackboard: { atb: 20, atk_scale: 0.2, hasGainAtb: 0, poise: 15 },
         scheduledSequences: [
-          { startFrame: 4, endFrame: 6, sequence: { $sequence: 'createSpatialPointTargets_3' } },
-          { startFrame: 8, endFrame: 10, sequence: { $sequence: 'createSpatialPointTargets_5' } },
           { startFrame: 897, endFrame: 900, sequence: { $sequence: 'finishOwner_6' } },
           { startFrame: 0, endFrame: 2, sequence: { $sequence: 'mergeContextTargets_7' } },
           { startFrame: 4, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_7' } },
@@ -8369,366 +7946,6 @@ export const zhuangFangyi: OperatorDefinition = {
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
       lifetime: { kind: 'limited', durationSeconds: 3 },
       maxStackingCount: 1,
-    },
-  },
-  projectileDefinitions: {
-    projectile_chr_0030_zhuangfy_air_attack: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 200 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.05 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 2 },
-        finishDistanceMeters: { kind: 'constant', value: 200 },
-        finishOnReach: false,
-        keepMovingOnReach: true,
-        reachRadiusMeters: { kind: 'constant', value: 0.05 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: 0 },
-    },
-    projectile_chr_0030_zhuangfy_attack1: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 40 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.3 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 2 },
-        finishDistanceMeters: { kind: 'constant', value: 50 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.3 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0030_zhuangfy_attack_sword_1: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: 'TargetPoint',
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 100 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.35,
-                  value: 1,
-                  inTangent: Number.POSITIVE_INFINITY,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 3,
-                  inWeight: 0.5125675,
-                  outWeight: 0.30866656,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 1,
-                  inWeight: 0.2793663,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.3 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 2 },
-        finishDistanceMeters: { blackboardKey: 'EntityBB_max_dist' },
-        finishOnReach: false,
-        keepMovingOnReach: true,
-        reachRadiusMeters: { kind: 'constant', value: 0.3 },
-      },
-      blackboard: { EntityBB_max_dist: 0 },
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0030_zhuangfy_attack_sword_2: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: 'TargetPoint',
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 100 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.35,
-                  value: 1,
-                  inTangent: Number.POSITIVE_INFINITY,
-                  outTangent: Number.POSITIVE_INFINITY,
-                  weightedMode: 3,
-                  inWeight: 0.5125675,
-                  outWeight: 0.30866656,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 1,
-                  inWeight: 0.2793663,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.3 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 2 },
-        finishDistanceMeters: { blackboardKey: 'EntityBB_max_dist' },
-        finishOnReach: false,
-        keepMovingOnReach: true,
-        reachRadiusMeters: { kind: 'constant', value: 0.3 },
-      },
-      blackboard: { EntityBB_max_dist: 0 },
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0030_zhuangfy_combo_skill_ring: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 0 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'ring',
-          target: { side: 'enemy' },
-          innerRadiusMeters: { kind: 'constant', value: 0 },
-          outerRadiusMeters: { kind: 'constant', value: 0.5 },
-          innerRadiusSpeed: { kind: 'constant', value: 40 },
-          outerRadiusSpeed: { kind: 'constant', value: 40 },
-          heightMeters: { kind: 'constant', value: 2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 0.5 },
-        finishDistanceMeters: { kind: 'constant', value: 20 },
-        finishOnReach: false,
-        keepMovingOnReach: true,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0030_zhuangfy_normal_skill_gene_sword: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 50 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0.2,
-                  outTangent: 0.2,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 5,
-                  value: 2,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 10,
-                  value: 2,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.4 },
-                      { kind: 'constant', value: 0.4 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 130 },
-                      { kind: 'constant', value: 140 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.8 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.1 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 2 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: false,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.1 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

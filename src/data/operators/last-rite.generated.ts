@@ -1023,11 +1023,12 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 1, callbacks: [{ event: 'reach', triggerFrames: [1] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0026_lastrite_normal_skill',
             source: 'actionOwner',
             recycleDelaySeconds: 1,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
+            entityInitialValues: {},
           },
           callbacks: [
             {
@@ -3419,71 +3420,6 @@ export const lastRite: OperatorDefinition = {
     buff_chr_0026_lastrite_talent_1_vul: lastRiteBuff11,
   },
   abilityEntityDefinitions: {},
-  projectileDefinitions: {
-    projectile_chr_0026_lastrite_normal_skill: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 20 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.65,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 20,
-                  value: 1.5,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-  },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },
 } as const satisfies OperatorDefinition;
 

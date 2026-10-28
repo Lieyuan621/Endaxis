@@ -63,6 +63,8 @@ const PROJECTILE_TARGET_FILTER_MODES = new Map<number, ProjectileTargetFilterMod
 
 export interface ProjectileLaunchActionSource {
   readonly kind: 'projectileLaunch';
+  /** 原始资源内的动作身份，保留到时延配置匹配阶段。 */
+  readonly serverActionIndex: number;
   readonly projectileId: string;
   readonly projectileSkillId: string;
   readonly projectileSource: TargetReferenceSource;
@@ -353,6 +355,7 @@ export function parseProjectileLaunchActionSource(
     : 'None';
   return {
     kind: 'projectileLaunch',
+    serverActionIndex: requireInteger(action.serverActionIndex, `${path}.serverActionIndex`),
     projectileId: requireNonEmptyString(action.projectileId, `${path}.projectileId`),
     projectileSkillId,
     projectileSource: parseTargetReferenceSource(

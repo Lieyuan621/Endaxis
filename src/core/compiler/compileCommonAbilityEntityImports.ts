@@ -11,10 +11,8 @@ export function createIndependentAbilityEntityImportResolver(
   definitions: OperatorAbilityEntityDefinitions | undefined,
   programs: ActionGraphDefinitionRepository,
   importsForLevel?: (level: number) => ActionGraphImports,
-  projectiles?: ActionGraphImports['projectiles'],
 ): (level: number) => ActionGraphImports {
-  return level =>
-    programs.compileAbilityEntities(definitions, level, importsForLevel?.(level), projectiles);
+  return level => programs.compileAbilityEntities(definitions, level, importsForLevel?.(level));
 }
 
 /** 构建一次定义表；复用和修订隔离由定义仓库负责。 */
@@ -33,7 +31,6 @@ export function compileIndependentAbilityEntityDefinitions(
   }
   const imports = {
     abilityEntities: { ...external.abilityEntities, ...linked },
-    projectiles: external.projectiles,
   };
   const compiler = createProgramDefinitionCompiler(
     level,
@@ -51,7 +48,6 @@ export function compileIndependentAbilityEntityDefinitions(
   Object.values(linked).forEach(Object.freeze);
   const result = Object.freeze({
     abilityEntities: Object.freeze(linked),
-    projectiles: external.projectiles,
   });
   return result;
 }

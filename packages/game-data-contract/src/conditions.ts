@@ -143,25 +143,8 @@ export type ActionTargetQuery =
       readonly kind: 'ownerSpawned';
       readonly owner: ActionEntitySelection;
       readonly objectType: 'abilityEntity' | 'all';
-      readonly abilityEntityIds?: readonly string[];
       readonly sameSourceSkillCast: boolean;
     };
-
-/** 固定端点场景中的显式位置偏移；不包含骨骼挂点偏移。 */
-export interface SpatialPointOffsetDefinition {
-  readonly local: readonly [ActionValueOperand, ActionValueOperand, ActionValueOperand];
-  readonly facing:
-    | 'operatorToEnemy'
-    | 'enemyToOperator'
-    | {
-        /** 已保存的两个位置决定水平朝向，不模拟角色转身。 */
-        readonly source: ActionTargetQuery;
-        readonly target: ActionTargetQuery;
-        readonly invert: boolean;
-      };
-  readonly rotation?: readonly [number, number, number, number];
-  readonly centerOnGround?: boolean;
-}
 
 export const ABILITY_ENTITY_FINISH_REASONS = [
   'other',
@@ -684,10 +667,8 @@ export type CombatConditionExpression =
   /** 事件来源是否等于 Buff 来源能力实体的原生 AbilitySystem.source。 */
   /** 当前 Buff 的创建来源实体是否也是其宿主。 */
   | {
-      /** 当前施术者生成的活动能力实体中是否存在匹配模板（零空间不再做距离裁剪）。 */
+      /** 当前施术者是否存在符合施法来源限制的活动能力实体。 */
       kind: 'ownerSpawnedAbilityEntityPresent';
-      /** 只匹配这些能力实体 ID；省略时接受任意 ID。 */
-      abilityEntityIds?: readonly string[];
       /** 是否只接受和当前 Buff 来自同一次技能施放的实体。 */
       sameSourceSkillCast?: boolean;
     }

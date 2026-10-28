@@ -449,11 +449,10 @@ export function projectOperatorDefinition(
     ...candidate,
     operator: {
       ...candidate.operator,
-      projectileDefinitions: Object.fromEntries(args.sources.projectileDefinitions),
       ...(modes === undefined ? {} : { playerActionModes: modes }),
     },
     activeSkills,
-    audit: { ...candidate.audit, resourcePatches: [...args.sources.resourcePatches.values()] },
+    audit: candidate.audit,
   };
 }
 

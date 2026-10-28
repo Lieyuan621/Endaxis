@@ -387,7 +387,6 @@ export function createActionGraphCompilation(
           bindInternalEntry,
           resolveEntity,
           bindResource,
-          resourceImports.projectiles,
         );
       } else if (isLeafCombatStep(node.action)) {
         const compiled = compileLeafAction(node.action, skillLevel, `graph.${id}`);

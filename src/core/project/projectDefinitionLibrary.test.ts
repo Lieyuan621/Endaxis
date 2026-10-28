@@ -538,12 +538,10 @@ it('自定义干员保存往返保留独立投射物资源与技能引用', () =
     gilberta,
   );
   const derived = getProjectDefinitionLibrary(project).operators[id]!.definition;
-  expect(Object.keys(derived.projectileDefinitions ?? {}).length).toBeGreaterThan(0);
-  expect(derived.projectileDefinitions).not.toBe(gilberta.projectileDefinitions);
+  expect(derived.skills).toEqual(gilberta.skills);
   const parsed = parseProjectDocument(serializeProjectDocument(project));
   expect(parsed.ok).toBe(true);
   if (!parsed.ok) throw new Error('project roundtrip failed');
   const restored = getProjectDefinitionLibrary(parsed.value).operators[id]!.definition;
-  expect(restored.projectileDefinitions).toEqual(gilberta.projectileDefinitions);
   expect(restored.skills).toEqual(gilberta.skills);
 });

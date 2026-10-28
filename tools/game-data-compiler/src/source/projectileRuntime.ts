@@ -3,7 +3,6 @@ import {
   requireBoolean,
   requireInteger,
   requireNonEmptyString,
-  requireNumber,
   requireRecord,
   requireString,
 } from './primitives.ts';
@@ -12,12 +11,9 @@ import {
   projectNativeTagQueryType,
   type TagQuerySource,
 } from './tagQuery.ts';
-import { parseScalarSource, type ScalarSource } from './scalar.ts';
 import { parseBlackboardDataPairs, type DeclaredBlackboardValueSource } from './blackboard.ts';
 import { parseActiveSkillTypesSource } from './activeSkillTypes.ts';
 import { parseAbilitySystemReferences } from './abilitySystemReferences.ts';
-import { parseProjectileMoveModes, type ProjectileMoveModeSource } from './projectileMovement.ts';
-
 /**
  * 完整 AbilitySystem 的黑板接收者。ProjectileComponent 尚未解码的末段只有特效/声音配置，
  * 不提供技能或 Buff 入口；它的战斗数值字段仍由原始 value 参与键读取检查。
@@ -35,7 +31,6 @@ export function parseProjectileBlackboardReceiverSource(value: unknown, path: st
   const result = parseAbilitySystemReferences(root.abilitySystem, path + '.abilitySystem');
   return result.complete ? { value, references: result.references } : undefined;
 }
-
 export interface ProjectileRuntimeSource {
   /** Missing means the source exporter did not preserve the owning AbilitySystem bundle. */
   readonly activeSkills?: ReturnType<typeof parseActiveSkillTypesSource>;
@@ -43,44 +38,7 @@ export interface ProjectileRuntimeSource {
   readonly decodeStatus: 'partial' | 'complete';
   /** 新版 VFS 严格解码直接恢复的 Projectile AbilitySystem 实体黑板；缺少表示尚未解出。 */
   readonly entityBlackboard?: readonly DeclaredBlackboardValueSource[];
-  readonly finishDuration: number;
-  /** 保留 BlackboardDouble 身份；零空间投影可以忽略距离阈值，但审计不能丢掉来源键。 */
-  readonly finishDistance: ScalarSource;
-  readonly finishOnReach: boolean;
-  readonly finishOnBlock?: boolean;
-  /** 普通更新先碰撞后 Reach；1.6.3 固定为 true，旧导出仍按其显式字段读取。 */
-  readonly useHitBlockReachOrder: boolean;
   readonly hitOnReach: boolean;
-  readonly allowHitSameTarget: boolean;
-  readonly hitIntervalPerTarget: number;
-  readonly maxHitCount: number;
-  readonly collisionDetectTiming: number;
-  readonly hitAndBlockDetectDelayTime: number;
-  readonly hitAndBlockDetectDelayDistance: number;
-  readonly keepMoveOnReach: boolean;
-  readonly canTraceTargetAfterReach: boolean;
-  readonly colliderShape: {
-    readonly shapeType: number;
-    readonly radius: number;
-    readonly center: readonly [number, number, number];
-    readonly extent: readonly [number, number, number];
-    readonly ring?: {
-      readonly initialOuterRadius: number;
-      readonly initialInnerRadius: number;
-      readonly outerRadiusIncreaseSpeed: number;
-      readonly innerRadiusIncreaseSpeed: number;
-      readonly height: number;
-      readonly isSector: boolean;
-      readonly sectorDirection: number;
-      readonly sectorAngle: number;
-    } | null;
-  } | null;
-  readonly blockLayerDef: {
-    readonly value: -1 | 0 | 1;
-    readonly name: 'Custom' | 'Nothing' | 'WallAndGround';
-  } | null;
-  /** 自定义阻挡层的原生 Unity 掩码，仅在 blockLayerDef=Custom 时使用。 */
-  readonly blockLayerMask?: number;
   readonly targetFilter: {
     readonly checkAlive: boolean;
     readonly autoSetTargetFaction: boolean;
@@ -92,21 +50,8 @@ export interface ProjectileRuntimeSource {
     readonly filterGameplayTag: boolean;
     readonly gameplayTagQuery: TagQuerySource | null;
   };
-  readonly presetPointKeys: readonly string[];
-  readonly useSegmentMove: boolean;
-  /** 原生移动模式；动态参数保留变量身份，由对应实例读取。 */
-  readonly moveModes: ReadonlyMap<string, ProjectileMoveModeSource>;
-  readonly moveSegments: readonly {
-    readonly startPointKey: string;
-    readonly moveModeId: string;
-    readonly endPointKey: string;
-    readonly earlyNextByDuration: boolean;
-    readonly segmentDuration: number;
-    readonly skipHitAndBlockDetection: boolean;
-  }[];
 }
-
-/** 读取 ProjectileComponentData partial 解码中已经命名、且足以审计首帧投影的字段。 */
+/** 读取 ProjectileComponentData partial 解码中已经命名、且用于回调身份与命中目标筛选的字段。 */
 export function parseProjectileRuntimeSource(
   value: unknown,
   path: string,
@@ -117,18 +62,6 @@ export function parseProjectileRuntimeSource(
   if (root.decodeStatus !== 'partial' && root.decodeStatus !== 'complete')
     throw new Error(`${path}.decodeStatus: expected decoded component`);
   const targetFilter = requireRecord(root.targetFilter, `${path}.targetFilter`);
-  const colliderShape =
-    root.colliderShapeData === undefined
-      ? null
-      : requireRecord(root.colliderShapeData, `${path}.colliderShapeData`);
-  const shapeType =
-    colliderShape === null
-      ? null
-      : requireRecord(colliderShape.shapeType, `${path}.colliderShapeData.shapeType`);
-  const blockLayerDef =
-    root.blockLayerDef === undefined
-      ? null
-      : requireRecord(root.blockLayerDef, `${path}.blockLayerDef`);
   const factionTarget = requireRecord(
     targetFilter.factionTarget,
     `${path}.targetFilter.factionTarget`,
@@ -142,37 +75,8 @@ export function parseProjectileRuntimeSource(
     targetFilter.filterGameplayTag,
     `${path}.targetFilter.filterGameplayTag`,
   );
-  const segments = requireArray(root.moveSegments, `${path}.moveSegments`).map((entry, index) => {
-    const segmentPath = `${path}.moveSegments[${index}]`;
-    const segment = requireRecord(entry, segmentPath);
-    return {
-      startPointKey: requireNonEmptyString(segment.startPointKey, `${segmentPath}.startPointKey`),
-      moveModeId: requireNonEmptyString(segment.moveModeId, `${segmentPath}.moveModeId`),
-      endPointKey: requireNonEmptyString(segment.endPointKey, `${segmentPath}.endPointKey`),
-      earlyNextByDuration: requireBoolean(
-        segment.earlyNextByDuration,
-        `${segmentPath}.earlyNextByDuration`,
-      ),
-      segmentDuration: parseDirectBlackboardDouble(
-        segment.segmentDuration,
-        `${segmentPath}.segmentDuration`,
-      ),
-      skipHitAndBlockDetection: requireBoolean(
-        segment.skipHitAndBlockDetection,
-        `${segmentPath}.skipHitAndBlockDetection`,
-      ),
-    };
-  });
-  const tail = requireRecord(root.tail, `${path}.tail`);
-  const moveModes = parseProjectileMoveModes(tail.moveModeDict, `${path}.tail.moveModeDict`);
   return {
     projectileId: requireNonEmptyString(root.id, `${path}.id`),
-    // 1.6.3 移除该开关，OnTick(04FEB600) 固定在碰撞后触发 Reach。
-    // 旧来源保留显式开关；这不是缺失配置时假定旧版默认值。
-    useHitBlockReachOrder:
-      root.useHitBlockReachOrder === undefined
-        ? true
-        : requireBoolean(root.useHitBlockReachOrder, `${path}.useHitBlockReachOrder`),
     ...(root.abilitySystem === undefined
       ? {}
       : {
@@ -190,103 +94,9 @@ export function parseProjectileRuntimeSource(
             `${path}.entityBlackboard`,
           ),
         }),
-    finishDuration: parseDirectBlackboardDouble(root.finishDuration, `${path}.finishDuration`),
-    finishDistance: parseScalarSource(root.finishDistance, `${path}.finishDistance`, {}),
-    finishOnReach: requireBoolean(root.finishOnReach, `${path}.finishOnReach`),
-    ...(root.finishOnBlock === undefined
-      ? {}
-      : { finishOnBlock: requireBoolean(root.finishOnBlock, `${path}.finishOnBlock`) }),
+
     hitOnReach: requireBoolean(root.hitOnReach, `${path}.hitOnReach`),
-    allowHitSameTarget: requireBoolean(root.allowHitSameTarget, `${path}.allowHitSameTarget`),
-    hitIntervalPerTarget: requireNumber(root.hitIntervalPerTarget, `${path}.hitIntervalPerTarget`),
-    maxHitCount: requireInteger(
-      requireRecord(root.maxHitCount, `${path}.maxHitCount`).valueIntCandidate,
-      `${path}.maxHitCount.valueIntCandidate`,
-    ),
-    collisionDetectTiming: requireInteger(
-      requireRecord(root.collisionDetectTiming, `${path}.collisionDetectTiming`).value,
-      `${path}.collisionDetectTiming.value`,
-    ),
-    hitAndBlockDetectDelayTime: parseDirectBlackboardDouble(
-      root.hitAndBlockDetectDelayTime,
-      `${path}.hitAndBlockDetectDelayTime`,
-    ),
-    hitAndBlockDetectDelayDistance: parseDirectBlackboardDouble(
-      root.hitAndBlockDetectDelayDistance,
-      `${path}.hitAndBlockDetectDelayDistance`,
-    ),
-    keepMoveOnReach: requireBoolean(root.keepMoveOnReach, `${path}.keepMoveOnReach`),
-    canTraceTargetAfterReach: requireBoolean(
-      root.canTraceTargetAfterReach,
-      `${path}.canTraceTargetAfterReach`,
-    ),
-    colliderShape:
-      colliderShape === null || shapeType === null
-        ? null
-        : {
-            shapeType: requireInteger(shapeType.value, `${path}.colliderShapeData.shapeType.value`),
-            radius: parseDirectBlackboardDouble(
-              colliderShape.radius,
-              `${path}.colliderShapeData.radius`,
-            ),
-            extent: parseDirectBlackboardVector3(
-              colliderShape.extent,
-              `${path}.colliderShapeData.extent`,
-            ),
-            center: parseDirectBlackboardVector3(
-              colliderShape.center,
-              `${path}.colliderShapeData.center`,
-            ),
-            ring:
-              shapeType.value === 3
-                ? {
-                    initialOuterRadius: parseDirectBlackboardDouble(
-                      colliderShape.initOuterRadius,
-                      `${path}.colliderShapeData.initOuterRadius`,
-                    ),
-                    initialInnerRadius: parseDirectBlackboardDouble(
-                      colliderShape.initInnerRadius,
-                      `${path}.colliderShapeData.initInnerRadius`,
-                    ),
-                    outerRadiusIncreaseSpeed: parseDirectBlackboardDouble(
-                      colliderShape.outerRadiusIncreaseSpeed,
-                      `${path}.colliderShapeData.outerRadiusIncreaseSpeed`,
-                    ),
-                    innerRadiusIncreaseSpeed: parseDirectBlackboardDouble(
-                      colliderShape.innerRadiusIncreaseSpeed,
-                      `${path}.colliderShapeData.innerRadiusIncreaseSpeed`,
-                    ),
-                    height: parseDirectBlackboardDouble(
-                      colliderShape.height,
-                      `${path}.colliderShapeData.height`,
-                    ),
-                    isSector: requireBoolean(
-                      colliderShape.isSector,
-                      `${path}.colliderShapeData.isSector`,
-                    ),
-                    sectorDirection: requireInteger(
-                      requireRecord(
-                        colliderShape.sectorDirection,
-                        `${path}.colliderShapeData.sectorDirection`,
-                      ).value,
-                      `${path}.colliderShapeData.sectorDirection.value`,
-                    ),
-                    sectorAngle: parseDirectBlackboardDouble(
-                      colliderShape.sectorAngle,
-                      `${path}.colliderShapeData.sectorAngle`,
-                    ),
-                  }
-                : null,
-          },
-    blockLayerDef: parseProjectileBlockLayer(blockLayerDef, `${path}.blockLayerDef`),
-    ...(root.blockLayer === undefined
-      ? {}
-      : {
-          blockLayerMask: requireInteger(
-            requireRecord(root.blockLayer, `${path}.blockLayer`).value,
-            `${path}.blockLayer.value`,
-          ),
-        }),
+
     targetFilter: {
       checkAlive: requireBoolean(targetFilter.checkAlive, `${path}.targetFilter.checkAlive`),
       autoSetTargetFaction: requireBoolean(
@@ -312,15 +122,8 @@ export function parseProjectileRuntimeSource(
         ? parseDecodedProjectileTagQuery(targetFilter.tagQuery, `${path}.targetFilter.tagQuery`)
         : null,
     },
-    presetPointKeys: requireArray(root.presetPointKeys, `${path}.presetPointKeys`).map(
-      (entry, index) => requireNonEmptyString(entry, `${path}.presetPointKeys[${index}]`),
-    ),
-    useSegmentMove: requireBoolean(root.useSegmentMove, `${path}.useSegmentMove`),
-    moveModes,
-    moveSegments: segments,
   };
 }
-
 /** ProjectileData 的二进制解码器保留枚举数值和标签哈希包装，形状不同于动作 JSON。 */
 function parseDecodedProjectileTagQuery(value: unknown, path: string): TagQuerySource {
   const query = requireRecord(value, path);
@@ -341,52 +144,4 @@ function parseDecodedProjectileTagQuery(value: unknown, path: string): TagQueryS
     return id;
   });
   return { queryType, tagIds };
-}
-
-function parseProjectileBlockLayer(
-  value: Record<string, unknown> | null,
-  path: string,
-): ProjectileRuntimeSource['blockLayerDef'] {
-  if (value === null) return null;
-  const numeric = requireInteger(value.value, `${path}.value`);
-  const names = {
-    [-1]: 'Custom',
-    0: 'Nothing',
-    1: 'WallAndGround',
-  } as const;
-  const name = names[numeric as keyof typeof names];
-  if (name === undefined) throw new Error(`${path}.value: unsupported value ${numeric}`);
-  // 1.4.4 机器码按 value 分支；VFS 的 name 是非权威导出标签。当前全量样本中绝大多数
-  // name 仍沿用旧的偏移枚举（例如 value=1/name=Nothing），因此只校验它是已知标签，
-  // 正式 IR 始终写入由数值恢复的规范名称。
-  if (value.name !== undefined) {
-    const exportedName = requireString(value.name, `${path}.name`);
-    if (!['', 'Custom', 'Nothing', 'WallAndGround'].includes(exportedName))
-      throw new Error(`${path}.name: unsupported value ${JSON.stringify(exportedName)}`);
-  }
-  return { value: numeric as -1 | 0 | 1, name };
-}
-
-function parseDirectBlackboardDouble(value: unknown, path: string): number {
-  const wrapper = requireRecord(value, path);
-  if (wrapper.useBlackboardKey !== false)
-    throw new Error(`${path}: blackboard-driven scalar is unsupported`);
-  // BlackboardDouble 的开关为 false 时读取常量 value；导出数据仍可能保留一个不会被读取的
-  // blackboardKey。不能仅凭这个残留字符串把常量误判成动态参数。
-  requireString(wrapper.blackboardKey, `${path}.blackboardKey`);
-  const result = requireNumber(wrapper.value, `${path}.value`);
-  if (!Number.isFinite(result)) throw new Error(`${path}.value: expected finite number`);
-  return result;
-}
-
-function parseDirectBlackboardVector3(
-  value: unknown,
-  path: string,
-): readonly [number, number, number] {
-  const vector = requireRecord(value, path);
-  return [
-    parseDirectBlackboardDouble(vector.x, `${path}.x`),
-    parseDirectBlackboardDouble(vector.y, `${path}.y`),
-    parseDirectBlackboardDouble(vector.z, `${path}.z`),
-  ];
 }

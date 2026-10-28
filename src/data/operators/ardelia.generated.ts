@@ -12,25 +12,12 @@ export const ardeliaChr_0025_ardelia_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_normal_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: {
-                target: { kind: 'source' },
-                offset: {
-                  local: [
-                    { kind: 'constant', value: 0.1 },
-                    { kind: 'constant', value: 2.1 },
-                    { kind: 'constant', value: 0.6 },
-                  ],
-                  facing: 'operatorToEnemy',
-                  rotation: [0, 0, 0, 1],
-                  centerOnGround: false,
-                },
-              },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -291,10 +278,12 @@ export const ardeliaChr_0025_ardelia_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 5, callbacks: [{ event: 'hit', triggerFrames: [5] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_normal_attack2_1',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [{ event: 'hit', skill: ardeliaChr_0025_ardelia_attack2ActionGraphCallback1 }],
         },
@@ -304,10 +293,12 @@ export const ardeliaChr_0025_ardelia_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 5, callbacks: [{ event: 'hit', triggerFrames: [5] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_normal_attack2',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [{ event: 'hit', skill: ardeliaChr_0025_ardelia_attack2ActionGraphCallback1 }],
         },
@@ -364,13 +355,12 @@ export const ardeliaChr_0025_ardelia_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 6, callbacks: [{ event: 'hit', triggerFrames: [6] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_normal_attack3',
             recycleDelaySeconds: 0.0333333350718021,
-            launch: {
-              start: { target: { kind: 'context', key: 'firePoint' } },
-              segmentTargets: [{ side: 'enemy' }],
-            },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -522,18 +512,6 @@ export const ardeliaChr_0025_ardelia_attack3ActionGraph = {
             saveToContextKey: 'firePoint',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'context', key: 'sectorCenter' },
-            randomDistribution: {
-              shape: 'sector',
-              radius: { kind: 'constant', value: 1.6 },
-              minimumRadius: { kind: 'constant', value: 0.4 },
-              angleDegrees: { kind: 'constant', value: 180 },
-              localPlaneRotation: [
-                { kind: 'constant', value: -90 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              centerOnGround: false,
-            },
           },
         },
         next: 'launchProjectile_1',
@@ -545,16 +523,6 @@ export const ardeliaChr_0025_ardelia_attack3ActionGraph = {
             saveToContextKey: 'sectorCenter',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0.6 },
-                { kind: 'constant', value: 0.3 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: 'createSpatialPointTargets_2',
@@ -658,16 +626,6 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
             saveToContextKey: 'sheepPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 9 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: 'ifElse_10',
@@ -704,16 +662,6 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
             saveToContextKey: 'sheepPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'inputTarget' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: 'ifElse_8',
@@ -790,16 +738,6 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
             saveToContextKey: 'sheepPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 9 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: 'ifElse_25',
@@ -836,16 +774,6 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
             saveToContextKey: 'sheepPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'inputTarget' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              facing: 'operatorToEnemy',
-              rotation: [0, 0, 0, 1],
-              centerOnGround: true,
-            },
           },
         },
         next: 'ifElse_23',
@@ -987,20 +915,7 @@ export const ardeliaChr_0025_ardelia_attack4: SkillDefinition = {
 export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
   main: {
     nodes: {
-      launchProjectile_1: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            projectileId: 'projectile_chr_0025_ardelia_power_attack_start',
-            recycleDelaySeconds: 0,
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
-          },
-          callbacks: [],
-        },
-        next: null,
-      },
-      dealDamage_2: {
+      dealDamage_1: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1015,7 +930,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
         },
         next: null,
       },
-      dealDamage_3: {
+      dealDamage_2: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1030,15 +945,15 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
         },
         next: null,
       },
-      repeatEachTick_4: {
+      repeatEachTick_3: {
         action: {
           kind: 'repeatEachTick',
           parameters: { nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.11 } },
-          body: { $sequence: 'dealDamage_3' },
+          body: { $sequence: 'dealDamage_2' },
         },
         next: null,
       },
-      gainFinisherSp_5: {
+      gainFinisherSp_4: {
         action: {
           kind: 'gainFinisherSp',
           parameters: {
@@ -1049,7 +964,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
         },
         next: null,
       },
-      dealDamage_6: {
+      dealDamage_5: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1062,48 +977,9 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'gainFinisherSp_5',
+        next: 'gainFinisherSp_4',
       },
-      launchProjectile_7: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            projectileId: 'projectile_chr_0025_ardelia_power_attack',
-            recycleDelaySeconds: 0,
-            launch: { start: { side: 'enemy' }, segmentTargets: [{ side: 'operator' }] },
-          },
-          callbacks: [],
-        },
-        next: null,
-      },
-      launchProjectile_8: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            projectileId: 'projectile_chr_0025_ardelia_power_attack',
-            recycleDelaySeconds: 0,
-            launch: { start: { side: 'enemy' }, segmentTargets: [{ side: 'operator' }] },
-          },
-          callbacks: [],
-        },
-        next: 'launchProjectile_7',
-      },
-      launchProjectile_9: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            projectileId: 'projectile_chr_0025_ardelia_power_attack',
-            recycleDelaySeconds: 0,
-            launch: { start: { side: 'enemy' }, segmentTargets: [{ side: 'operator' }] },
-          },
-          callbacks: [],
-        },
-        next: 'launchProjectile_8',
-      },
-      repeatEachTick_10: {
+      repeatEachTick_6: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
@@ -1116,45 +992,11 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
               targetTriggerIntervalSeconds: 0,
             },
           },
-          body: { $sequence: 'launchProjectile_9' },
+          body: { $sequence: null },
         },
         next: null,
       },
-      repeatEachTick_13: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              catchUpMissedTicks: false,
-              target: { kind: 'inputTarget' },
-              executeEachFrame: false,
-              triggerIntervalSeconds: 0.1,
-              maxCountPerTarget: -1,
-              targetTriggerIntervalSeconds: 0,
-            },
-          },
-          body: { $sequence: 'launchProjectile_8' },
-        },
-        next: null,
-      },
-      repeatEachTick_15: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              catchUpMissedTicks: false,
-              target: { kind: 'inputTarget' },
-              executeEachFrame: false,
-              triggerIntervalSeconds: 0.1,
-              maxCountPerTarget: -1,
-              targetTriggerIntervalSeconds: 0,
-            },
-          },
-          body: { $sequence: 'launchProjectile_7' },
-        },
-        next: null,
-      },
-      startTimeDilation_16: {
+      startTimeDilation_9: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1200,7 +1042,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_17: {
+      applyBuff_10: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1213,7 +1055,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_18: {
+      applyBuff_11: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1226,7 +1068,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_19: {
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -1253,17 +1095,16 @@ export const ardeliaChr_0025_ardelia_power_attack: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 4,
   scheduledSequences: [
-    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 18, endFrame: 21, sequence: { $sequence: 'dealDamage_2' } },
-    { startFrame: 21, endFrame: 53, sequence: { $sequence: 'repeatEachTick_4' } },
-    { startFrame: 57, endFrame: 60, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 15, endFrame: 28, sequence: { $sequence: 'repeatEachTick_10' } },
-    { startFrame: 28, endFrame: 41, sequence: { $sequence: 'repeatEachTick_13' } },
-    { startFrame: 41, endFrame: 51, sequence: { $sequence: 'repeatEachTick_15' } },
-    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'startTimeDilation_16' } },
-    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_17' } },
-    { startFrame: 0, endFrame: 57, sequence: { $sequence: 'applyBuff_18' } },
-    { startFrame: 57, endFrame: 65, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
+    { startFrame: 18, endFrame: 21, sequence: { $sequence: 'dealDamage_1' } },
+    { startFrame: 21, endFrame: 53, sequence: { $sequence: 'repeatEachTick_3' } },
+    { startFrame: 57, endFrame: 60, sequence: { $sequence: 'dealDamage_5' } },
+    { startFrame: 15, endFrame: 28, sequence: { $sequence: 'repeatEachTick_6' } },
+    { startFrame: 28, endFrame: 41, sequence: { $sequence: 'repeatEachTick_6' } },
+    { startFrame: 41, endFrame: 51, sequence: { $sequence: 'repeatEachTick_6' } },
+    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'startTimeDilation_9' } },
+    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_10' } },
+    { startFrame: 0, endFrame: 57, sequence: { $sequence: 'applyBuff_11' } },
+    { startFrame: 57, endFrame: 65, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -1324,7 +1165,9 @@ export const ardeliaChr_0025_ardelia_plunging_attack_endActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'Sheep',
-            abilityEntityIds: ['abilityentity_chr_0025_ardelia_air_attack'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0025_ardelia/AirAttackSheep'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -1424,15 +1267,12 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 26, callbacks: [{ event: 'block', triggerFrames: [26] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_normal_skill',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'SheepPoint' },
-            launch: {
-              start: { side: 'operator' },
-              segmentTargets: [{ target: { kind: 'context', key: 'SheepPoint' } }],
-              landingAtTarget: true,
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             {
@@ -1485,18 +1325,6 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
             saveToContextKey: 'SheepPoint',
             count: { kind: 'valueNode', nodeId: 'data_3' },
             origin: { kind: 'source' },
-            randomDistribution: {
-              shape: 'sector',
-              radius: { kind: 'constant', value: 6 },
-              minimumRadius: { kind: 'constant', value: 3 },
-              angleDegrees: { kind: 'constant', value: 200 },
-              localPlaneRotation: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              centerOnGround: true,
-            },
           },
         },
         next: 'launchProjectile_9',
@@ -1871,11 +1699,13 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 6, callbacks: [{ event: 'hit', triggerFrames: [6] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_combo_skill',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -2190,27 +2020,12 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 21, callbacks: [{ event: 'block', triggerFrames: [21] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_ultimate_skill',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'ranPos' },
-            launch: {
-              start: {
-                target: { kind: 'source' },
-                offset: {
-                  local: [
-                    { kind: 'constant', value: 0 },
-                    { kind: 'constant', value: 3.5 },
-                    { kind: 'constant', value: 0 },
-                  ],
-                  facing: 'operatorToEnemy',
-                  rotation: [0, 0, 0, 1],
-                  centerOnGround: false,
-                },
-              },
-              segmentTargets: [{ target: { kind: 'context', key: 'ranPos' } }],
-              landingAtTarget: true,
-            },
+            entityInitialValues: {},
           },
           callbacks: [
             {
@@ -2352,18 +2167,6 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
             saveToContextKey: 'ranPos',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'source' },
-            randomDistribution: {
-              shape: 'circle',
-              radius: { kind: 'constant', value: 6 },
-              minimumRadius: { kind: 'constant', value: 2 },
-              angleDegrees: { kind: 'constant', value: 0 },
-              localPlaneRotation: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              centerOnGround: true,
-            },
           },
         },
         next: 'launchProjectile_4',
@@ -2382,46 +2185,6 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
             },
           },
           body: { $sequence: 'createSpatialPointTargets_5' },
-        },
-        next: null,
-      },
-      createSpatialPointTargets_8: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'ranPos',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'source' },
-            randomDistribution: {
-              shape: 'sector',
-              radius: { kind: 'constant', value: 6 },
-              minimumRadius: { kind: 'constant', value: 1.5 },
-              angleDegrees: { kind: 'constant', value: 120 },
-              localPlaneRotation: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              centerOnGround: true,
-            },
-          },
-        },
-        next: 'launchProjectile_4',
-      },
-      repeatEachTick_9: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              catchUpMissedTicks: false,
-              target: { kind: 'owner' },
-              executeEachFrame: false,
-              triggerIntervalSeconds: 0.1,
-              maxCountPerTarget: -1,
-              targetTriggerIntervalSeconds: 0.03,
-            },
-          },
-          body: { $sequence: 'createSpatialPointTargets_8' },
         },
         next: null,
       },
@@ -2502,7 +2265,7 @@ export const ardeliaChr_0025_ardelia_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'startTimeDilation_1' } },
     { startFrame: 171, endFrame: 174, sequence: { $sequence: 'jumpTimeline_3' } },
     { startFrame: 81, endFrame: 201, sequence: { $sequence: 'repeatEachTick_6' } },
-    { startFrame: 81, endFrame: 201, sequence: { $sequence: 'repeatEachTick_9' } },
+    { startFrame: 81, endFrame: 201, sequence: { $sequence: 'repeatEachTick_6' } },
     { startFrame: 0, endFrame: 80, sequence: { $sequence: 'startUltimateTimeDilation_10' } },
     { startFrame: 0, endFrame: 80, sequence: { $sequence: 'hideUi_11' } },
     { startFrame: 0, endFrame: 81, sequence: { $sequence: 'applyBuff_12' } },
@@ -2709,7 +2472,9 @@ const ardeliaBuff3ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'Sheep',
-            abilityEntityIds: ['abilityentity_chr_0025_ardelia_air_attack'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0025_ardelia/AirAttackSheep'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -2747,10 +2512,8 @@ const ardeliaBuff4ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'attack4_sheep',
-            abilityEntityIds: [
-              'abilityentity_chr_0025_ardelia_attack4',
-              'abilityentity_chr_0025_ardelia_attack4_end',
-              'abilityentity_chr_0025_ardelia_attack4_low',
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0025_ardelia/Attack4Sheep'] },
             ],
             owner: { kind: 'owner' },
           },
@@ -2789,7 +2552,9 @@ const ardeliaBuff5ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'combo_skill_sheep',
-            abilityEntityIds: ['abilityentity_chr_0025_ardelia_combo_skill'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0025_ardelia/ComboSkillSheep'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -2827,7 +2592,9 @@ const ardeliaBuff6ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'normal_skill_sheep',
-            abilityEntityIds: ['abilityentity_chr_0025_ardelia_normal_skill'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0025_ardelia/NormalSkillSheep'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -4099,594 +3866,6 @@ export const ardelia: OperatorDefinition = {
           { startFrame: 2999, endFrame: 3000, sequence: { $sequence: 'finishOwner_1' } },
         ],
       },
-    },
-  },
-  projectileDefinitions: {
-    projectile_chr_0025_ardelia_combo_skill: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 15 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: -2.0563517,
-                  outTangent: -2.0563517,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.03850051,
-                },
-                {
-                  time: 1,
-                  value: 0.3,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0025_ardelia_normal_attack1: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 23 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 1.3679806,
-                  outTangent: 1.3679806,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.034226187,
-                },
-                {
-                  time: 1,
-                  value: 1.5,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.5 },
-                      { kind: 'constant', value: 0.5 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 60 },
-                      { kind: 'constant', value: 120 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.4 },
-                      { kind: 'constant', value: 0.4 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: false,
-        keepMovingOnReach: true,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0025_ardelia_normal_attack2: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 22 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.3 },
-                      { kind: 'constant', value: 0.3 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: -15 },
-                      { kind: 'constant', value: 15 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.3 },
-                      { kind: 'constant', value: 0.3 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 165 },
-                      { kind: 'constant', value: 195 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0025_ardelia_normal_attack2_1: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 22 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.3 },
-                      { kind: 'constant', value: 0.3 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 165 },
-                      { kind: 'constant', value: 195 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.3 },
-                      { kind: 'constant', value: 0.3 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: -15 },
-                      { kind: 'constant', value: 15 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0025_ardelia_normal_attack3: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 27 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.6,
-                  inTangent: 0.33854777,
-                  outTangent: 0.33854777,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.052587647,
-                },
-                {
-                  time: 1,
-                  value: 2,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 0.33333334,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 0 },
-                      { kind: 'constant', value: 180 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.5 },
-                      { kind: 'constant', value: 0.5 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.6 },
-                      { kind: 'constant', value: 0.6 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 180 },
-                      { kind: 'constant', value: 360 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.1 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 100 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.1 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0025_ardelia_normal_skill: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 20 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 1.5843414,
-                  outTangent: 1.5843414,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.032421477,
-                },
-                {
-                  time: 1,
-                  value: 1.5,
-                  inTangent: 0.043605793,
-                  outTangent: 0.043605793,
-                  weightedMode: 0,
-                  inWeight: 0.06484288,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'parabola',
-                definition: {
-                  kind: 'vertexDuration',
-                  durationSeconds: { kind: 'constant', value: 1 },
-                  vertexOffsetMeters: { kind: 'constant', value: 2 },
-                },
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 30 },
-        finishOnReach: false,
-        keepMovingOnReach: true,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0025_ardelia_power_attack: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 25 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.6,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.3 },
-                      { kind: 'constant', value: 0.3 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: -20 },
-                      { kind: 'constant', value: 200 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.5 },
-                      { kind: 'constant', value: 0.5 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.7 },
-                      { kind: 'constant', value: 0.7 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 0 },
-                      { kind: 'constant', value: 360 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 1 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0025_ardelia_power_attack_start: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
-              speed: { kind: 'constant', value: 22 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: { kind: 'straight' },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 1 },
-        finishDistanceMeters: { kind: 'constant', value: 10 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: true, maxHitCount: 1 },
-    },
-    projectile_chr_0025_ardelia_ultimate_skill: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
-              speed: { kind: 'constant', value: 10 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'parabola',
-                definition: {
-                  kind: 'vertexDuration',
-                  durationSeconds: { kind: 'constant', value: 0.7 },
-                  vertexOffsetMeters: { kind: 'constant', value: 1.5 },
-                },
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        collision: {
-          kind: 'sphere',
-          target: { side: 'enemy' },
-          radiusMeters: { kind: 'constant', value: 0.2 },
-        },
-        finishDurationSeconds: { kind: 'constant', value: 3 },
-        finishDistanceMeters: { kind: 'constant', value: 30 },
-        finishOnReach: false,
-        keepMovingOnReach: true,
-        reachRadiusMeters: { kind: 'constant', value: 0.2 },
-      },
-      blackboard: {},
-      hit: { finishOnHit: false, maxHitCount: -1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

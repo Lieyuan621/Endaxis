@@ -1065,7 +1065,6 @@ export function projectActionTargetQuery(
       kind: 'ownerSpawned',
       owner: owner(),
       objectType: 'abilityEntity',
-      abilityEntityIds: query.candidateTemplateIds,
       sameSourceSkillCast: query.validators.some(v => v.kind === 'sameSkillCast'),
     };
   }

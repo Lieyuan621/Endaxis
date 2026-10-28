@@ -9,7 +9,6 @@ export type DefinitionResourceKind =
   | 'skillGroup'
   | 'skillGroupVariant'
   | 'buff'
-  | 'projectile'
   | 'abilityEntity'
   | 'abilityEntityChildSkill'
   | 'abilityEntityPassiveSkill'
@@ -70,8 +69,6 @@ export function listDefinitionResources(
     add(result, 'buff', ['buffDefinitions', id], value, id);
 
   if (kind === 'operator') {
-    for (const [id, value] of Object.entries(record(root.projectileDefinitions)))
-      add(result, 'projectile', ['projectileDefinitions', id], value, id);
     for (const [index, group] of array(root.skillGroups).entries()) {
       const path = ['skillGroups', index] as const;
       add(result, 'skillGroup', path, group, `${index + 1}`);

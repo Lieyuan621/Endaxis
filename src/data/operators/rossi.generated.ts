@@ -1584,12 +1584,14 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 12, callbacks: [{ event: 'hit', triggerFrames: [12] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_5',
             source: 'actionOwner',
             recycleDelaySeconds: 1,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -2035,12 +2037,14 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 14, callbacks: [{ event: 'hit', triggerFrames: [14] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_4',
             source: 'actionOwner',
             recycleDelaySeconds: 1,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -2486,12 +2490,14 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 13, callbacks: [{ event: 'hit', triggerFrames: [13] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_3',
             source: 'actionOwner',
             recycleDelaySeconds: 1,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -2950,12 +2956,14 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 16, callbacks: [{ event: 'hit', triggerFrames: [16] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_2',
             source: 'actionOwner',
             recycleDelaySeconds: 0.333333343267441,
             targets: { kind: 'context', contextKey: 'smart_target' },
-            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -5855,20 +5863,6 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             saveToContextKey: 'pos1',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'context', key: 'smart_target' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 2.5 },
-              ],
-              facing: {
-                source: { kind: 'source' },
-                target: { kind: 'context', key: 'smart_target' },
-                invert: true,
-              },
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
           },
         },
         next: null,
@@ -6284,13 +6278,6 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      modifyActionValue_68: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: { key: 'hit_times', operation: 'add', value: { kind: 'constant', value: 1 } },
-        },
-        next: null,
-      },
       dealDamage_69: {
         action: {
           kind: 'dealDamage',
@@ -6303,7 +6290,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             features: ['canBreakWeakness'],
           },
         },
-        next: 'modifyActionValue_68',
+        next: null,
       },
       ifElse_74: {
         action: {
@@ -6329,84 +6316,14 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             saveToContextKey: 'pos2',
             count: { kind: 'constant', value: 1 },
             origin: { kind: 'context', key: 'pos1' },
-            randomDistribution: {
-              shape: 'circle',
-              radius: { kind: 'constant', value: 0.5 },
-              minimumRadius: { kind: 'constant', value: 0.3 },
-              angleDegrees: { kind: 'constant', value: 0 },
-              localPlaneRotation: [
-                { kind: 'constant', value: 90 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              centerOnGround: false,
-            },
           },
         },
         next: 'mergeContextTargets_75',
-      },
-      createSpatialPointTargets_73: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'pos2',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'context', key: 'pos1' },
-            randomDistribution: {
-              shape: 'circle',
-              radius: { kind: 'constant', value: 0 },
-              minimumRadius: { kind: 'constant', value: 0 },
-              angleDegrees: { kind: 'constant', value: 0 },
-              localPlaneRotation: [
-                { kind: 'constant', value: 90 },
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0 },
-              ],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: 'mergeContextTargets_75',
-      },
-      ifElse_77: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_23' },
-          whenTrue: { $sequence: 'createSpatialPointTargets_73' },
-          whenFalse: { $sequence: 'createSpatialPointTargets_76' },
-        },
-        next: null,
-      },
-      createSpatialPointTargets_78: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'pos1',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'context', key: 'init_pos' },
-            offset: {
-              local: [
-                { kind: 'constant', value: 0 },
-                { kind: 'constant', value: 0.9 },
-                { kind: 'constant', value: 2.5 },
-              ],
-              facing: {
-                source: { kind: 'context', key: 'init_pos' },
-                target: { kind: 'context', key: 'smart_target' },
-                invert: false,
-              },
-              rotation: [0, 0, 0, 1],
-              centerOnGround: false,
-            },
-          },
-        },
-        next: 'ifElse_77',
       },
       checkCondition_487: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_24' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_22' } },
         },
         next: null,
       },
@@ -6431,7 +6348,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_25' },
+          condition: { kind: 'conditionNode', nodeId: 'data_23' },
           whenTrue: { $sequence: 'applyElementalInfliction_45' },
           whenFalse: { $sequence: 'applyElementalInfliction_45' },
         },
@@ -6464,6 +6381,27 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
           },
         },
         next: 'repeatEachTick_opt2',
+      },
+      ifElse_opt4: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_24' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_76' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_76' },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_opt5: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'pos1',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'init_pos' },
+          },
+        },
+        next: 'ifElse_opt4',
       },
     },
     dataNodes: {
@@ -6593,19 +6531,6 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
       data_22: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'hit_times', fallback: 0 },
-      },
-      data_23: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_22' },
-          operator: 'equal',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_24: {
         type: 'boolean',
         expression: {
           kind: 'enemyRankIn',
@@ -6613,7 +6538,11 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
           ranks: ['elite', 'boss'],
         },
       },
-      data_25: {
+      data_23: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_24: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
@@ -6632,7 +6561,6 @@ export const rossiChr_0028_wulfa_ultimate_skill: SkillDefinition = {
     atk_scale_3: [3.33, 3.67, 4, 4.33, 4.67, 5, 5.34, 5.67, 6, 6.42, 6.92, 7.5],
     crit_damage_up_to_bleed: 0.6,
     hit_num: 0,
-    hit_times: 0,
     poise: 25,
     potential_5: 0,
     potential_5_critical_damage: 0,
@@ -6659,31 +6587,31 @@ export const rossiChr_0028_wulfa_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 57, sequence: { $sequence: 'startUltimateTimeDilation_55' } },
     { startFrame: 58, endFrame: 208, sequence: { $sequence: 'checkCondition_60' } },
     { startFrame: 58, endFrame: 208, sequence: { $sequence: 'applyBuff_61' } },
-    { startFrame: 63, endFrame: 64, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 65, endFrame: 66, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 66, endFrame: 67, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 69, endFrame: 70, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 71, endFrame: 72, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 74, endFrame: 75, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 75, endFrame: 76, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 77, endFrame: 78, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 78, endFrame: 79, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 80, endFrame: 81, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 83, endFrame: 84, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 84, endFrame: 85, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 87, endFrame: 88, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 88, endFrame: 89, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 90, endFrame: 91, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 92, endFrame: 93, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 94, endFrame: 95, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 96, endFrame: 97, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 97, endFrame: 98, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 99, endFrame: 100, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 102, endFrame: 103, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 103, endFrame: 104, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 106, endFrame: 107, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 108, endFrame: 109, sequence: { $sequence: 'createSpatialPointTargets_78' } },
-    { startFrame: 111, endFrame: 112, sequence: { $sequence: 'createSpatialPointTargets_78' } },
+    { startFrame: 63, endFrame: 64, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 65, endFrame: 66, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 66, endFrame: 67, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 69, endFrame: 70, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 71, endFrame: 72, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 74, endFrame: 75, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 75, endFrame: 76, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 77, endFrame: 78, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 78, endFrame: 79, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 80, endFrame: 81, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 83, endFrame: 84, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 84, endFrame: 85, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 87, endFrame: 88, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 88, endFrame: 89, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 90, endFrame: 91, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 92, endFrame: 93, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 94, endFrame: 95, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 96, endFrame: 97, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 97, endFrame: 98, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 99, endFrame: 100, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 102, endFrame: 103, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 103, endFrame: 104, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 106, endFrame: 107, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 108, endFrame: 109, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
+    { startFrame: 111, endFrame: 112, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
     { startFrame: 63, endFrame: 131, sequence: { $sequence: 'repeatEachTick_488' } },
   ],
   defaultTarget: 'enemy',
@@ -8513,408 +8441,6 @@ export const rossi: OperatorDefinition = {
           ],
         },
       },
-    },
-  },
-  projectileDefinitions: {
-    projectile_chr_0028_wulfa_normalskill_2: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 4 } },
-              speed: { kind: 'constant', value: 18 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.4,
-                  inTangent: -5,
-                  outTangent: -5,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.05,
-                  value: 0.15,
-                  inTangent: -0.23454694,
-                  outTangent: -0.23454694,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 1,
-                },
-                {
-                  time: 0.35,
-                  value: 12,
-                  inTangent: 30.838955,
-                  outTangent: 0.16619848,
-                  weightedMode: 0,
-                  inWeight: 0.06963997,
-                  outWeight: 0.18017247,
-                },
-                {
-                  time: 1,
-                  value: 12,
-                  inTangent: -0.024137268,
-                  outTangent: -0.024137268,
-                  weightedMode: 0,
-                  inWeight: 0.17732245,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 10,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.15 },
-                      { kind: 'constant', value: 0.15 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 45 },
-                      { kind: 'constant', value: 45 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1.1 },
-                      { kind: 'constant', value: 1.1 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 300 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0028_wulfa_normalskill_3: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 4 } },
-              speed: { kind: 'constant', value: 26 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.4,
-                  inTangent: -5,
-                  outTangent: -5,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.05,
-                  value: 0.15,
-                  inTangent: -0.23454694,
-                  outTangent: -0.23454694,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 1,
-                },
-                {
-                  time: 0.35,
-                  value: 12,
-                  inTangent: 30.838955,
-                  outTangent: 0.16619848,
-                  weightedMode: 0,
-                  inWeight: 0.06963997,
-                  outWeight: 0.18017247,
-                },
-                {
-                  time: 1,
-                  value: 12,
-                  inTangent: -0.024137268,
-                  outTangent: -0.024137268,
-                  weightedMode: 0,
-                  inWeight: 0.17732245,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 10,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.2 },
-                      { kind: 'constant', value: 0.2 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 135 },
-                      { kind: 'constant', value: 135 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1.1 },
-                      { kind: 'constant', value: 1.1 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 300 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0028_wulfa_normalskill_4: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 4 } },
-              speed: { kind: 'constant', value: 22 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.4,
-                  inTangent: -5,
-                  outTangent: -5,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.05,
-                  value: 0.15,
-                  inTangent: -0.23454694,
-                  outTangent: -0.23454694,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 1,
-                },
-                {
-                  time: 0.35,
-                  value: 12,
-                  inTangent: 30.838955,
-                  outTangent: 0.16619848,
-                  weightedMode: 0,
-                  inWeight: 0.06963997,
-                  outWeight: 0.18017247,
-                },
-                {
-                  time: 1,
-                  value: 12,
-                  inTangent: -0.024137268,
-                  outTangent: -0.024137268,
-                  weightedMode: 0,
-                  inWeight: 0.17732245,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 10,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.25 },
-                      { kind: 'constant', value: 0.25 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: -15 },
-                      { kind: 'constant', value: -15 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1.45 },
-                      { kind: 'constant', value: 1.45 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 300 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: false, maxHitCount: -1 },
-    },
-    projectile_chr_0028_wulfa_normalskill_5: {
-      flight: {
-        hitBeforeReach: true,
-        segments: [
-          {
-            targetKey: null,
-            movement: {
-              trace: { kind: 'duration', seconds: { kind: 'constant', value: 4 } },
-              speed: { kind: 'constant', value: 30 },
-              speedCurve: [
-                {
-                  time: 0,
-                  value: 0.4,
-                  inTangent: -5,
-                  outTangent: -5,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0.33333334,
-                },
-                {
-                  time: 0.05,
-                  value: 0.15,
-                  inTangent: -0.23454694,
-                  outTangent: -0.23454694,
-                  weightedMode: 0,
-                  inWeight: 0.33333334,
-                  outWeight: 1,
-                },
-                {
-                  time: 0.35,
-                  value: 12,
-                  inTangent: 30.838955,
-                  outTangent: 0.16619848,
-                  weightedMode: 0,
-                  inWeight: 0.06963997,
-                  outWeight: 0.18017247,
-                },
-                {
-                  time: 1,
-                  value: 12,
-                  inTangent: -0.024137268,
-                  outTangent: -0.024137268,
-                  weightedMode: 0,
-                  inWeight: 0.17732245,
-                  outWeight: 0,
-                },
-              ],
-              distanceScaleCurve: [
-                {
-                  time: 0,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 10,
-                  value: 1,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-              path: {
-                kind: 'bezier',
-                controlPoints: [
-                  {
-                    distanceRatioRange: [
-                      { kind: 'constant', value: 0.3 },
-                      { kind: 'constant', value: 0.3 },
-                    ],
-                    angleDegreesRange: [
-                      { kind: 'constant', value: 195 },
-                      { kind: 'constant', value: 195 },
-                    ],
-                    radiusMetersRange: [
-                      { kind: 'constant', value: 1.45 },
-                      { kind: 'constant', value: 1.45 },
-                    ],
-                    scaleWithDistance: true,
-                  },
-                ],
-              },
-            },
-            skipCollision: false,
-          },
-        ],
-        finishDurationSeconds: { kind: 'constant', value: 5 },
-        finishDistanceMeters: { kind: 'constant', value: 300 },
-        finishOnReach: true,
-        keepMovingOnReach: false,
-        reachRadiusMeters: { kind: 'constant', value: 0.5 },
-      },
-      blackboard: {},
-      hit: { onReach: true, finishOnHit: false, maxHitCount: -1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

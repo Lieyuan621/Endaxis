@@ -1,3 +1,4 @@
+import { createI18n } from 'vue-i18n';
 import { describe, expect, it, vi } from 'vitest';
 import {
   createLocaleResourceLoaders,
@@ -10,13 +11,25 @@ function table(id: string): LocaleTable {
 }
 
 describe('localeResourceLoaders', () => {
-  it('loads existing UI and game text modules through the default non-eager glob maps', async () => {
+  it.each(['en', 'zh-CN'] as const)('loads and resolves shared UI text for %s', async locale => {
     const [ui, terms] = await Promise.all([
-      localeResourceLoaders.loadUiLocale('en'),
-      localeResourceLoaders.loadGameTextFamily('en', 'terms'),
+      localeResourceLoaders.loadUiLocale(locale),
+      localeResourceLoaders.loadGameTextFamily(locale, 'terms'),
     ]);
 
     expect(ui).toHaveProperty('common');
+    expect(ui).toHaveProperty('actionGraphEditor.nodes.launchProjectile.name');
+    const translator = createI18n({ legacy: false, locale, messages: {} });
+    translator.global.setLocaleMessage(locale, ui);
+    const t = translator.global.t;
+    expect(t('assetWorkspace.close')).toBe(t('common.close'));
+    expect(t('actionGraphEditor.options.roleCaster')).toBe(t('enumTerms.class.caster'));
+    if (locale === 'zh-CN') {
+      expect(t('actionGraphEditor.options.caster')).toBe('施放者');
+      expect(t('actionGraphEditor.options.roleCaster')).toBe('术师');
+    }
+    expect(t('assetWorkspace.operatorProperties.strength')).toBe(t('stats.strength'));
+    translator.dispose();
     expect(terms.battleTerms).toHaveProperty('ba.fireburst');
     expect(terms.enums).toHaveProperty('element');
   });
@@ -30,7 +43,10 @@ describe('localeResourceLoaders', () => {
         }),
     );
     const loaders = createLocaleResourceLoaders({
-      ui: { './locales/zh-CN.json': importer },
+      ui: {
+        './locales/zh-CN/common.json': importer,
+        './locales/zh-CN/asset-editor.json': async () => ({}),
+      },
       gameText: {},
     });
 
@@ -55,7 +71,10 @@ describe('localeResourceLoaders', () => {
 
   it('forms terms from battle text and the effective UI locale enum terms', async () => {
     const loaders = createLocaleResourceLoaders({
-      ui: { './locales/en.json': async () => ({ enumTerms: table('enum-terms') }) },
+      ui: {
+        './locales/en/common.json': async () => ({ enumTerms: table('enum-terms') }),
+        './locales/en/asset-editor.json': async () => ({}),
+      },
       gameText: {
         './game-locales/en/terms.json': async () => table('battle-terms'),
       },

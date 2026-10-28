@@ -33,17 +33,12 @@ export function compileProjectileBlackboardSource(input: {
     readonly entityBlackboard: readonly DeclaredBlackboardValueSource[];
   } | null;
   readonly invocations: readonly ProjectileCallbackInvocationSource[];
-  readonly movementBlackboardReads?: ReadonlySet<string>;
   /** 仅限调用方已由完整 ProjectileData 证明不需要实体黑板的特殊回调。 */
   readonly allowMissingEntityBlackboardEvidence?: boolean;
-  /** Block 结束飞行时不会触发超时 Finish，二者可复用同一技能而无重入。 */
-  readonly blockEndsFlight?: boolean;
 }): ProjectileBlackboardSource {
   const { sourcePath, launch, template, invocations } = input;
-  const projectedInvocations = invocations;
   const callbackEntityBlackboardKeys = new Set([
-    ...[...(input.movementBlackboardReads ?? [])].filter(key => key.startsWith('EntityBB_')),
-    ...projectedInvocations.flatMap(invocation => [
+    ...invocations.flatMap(invocation => [
       ...invocation.declaredBlackboard
         .filter(value => value.key.startsWith('EntityBB_'))
         .map(value => value.key),
@@ -76,20 +71,12 @@ export function compileProjectileBlackboardSource(input: {
       throw new Error(`${sourcePath}: invalid enabled projectile callback ${callback.event}`);
     routes.set(callback.event, callback.skillId);
   }
-  const skills = new Map<string, ProjectileSkillCallbackSource['event']>();
-  for (const invocation of projectedInvocations) {
+
+  for (const invocation of invocations) {
     if (routes.get(invocation.event) !== invocation.skillId)
       throw new Error(
         `${sourcePath}: callback ${invocation.event} does not match the native route`,
       );
-    const previous = skills.get(invocation.skillId);
-    const exclusiveBlockFinish =
-      input.blockEndsFlight &&
-      ((previous === 'block' && invocation.event === 'finish') ||
-        (previous === 'finish' && invocation.event === 'block'));
-    if (previous !== undefined && !exclusiveBlockFinish)
-      throw new Error(`${sourcePath}: repeated callback skill requires restart semantics`);
-    skills.set(invocation.skillId, invocation.event);
   }
   return {
     inheritActionBlackboard: launch.assignBlackboard,
@@ -149,7 +136,6 @@ export function omitDeadSingleEnemyBounceBookkeeping(
   graph: ActionGraphBuilder<CompiledBuffStepSource>,
   sequence: CompiledBuffSequenceSource,
   laterActions: readonly CompiledBuffStepSource[],
-  movementBlackboardReads: ReadonlySet<string> = new Set(),
 ): CompiledBuffSequenceSource {
   const actions = graph.actions(sequence);
   const retained = actions.filter((step, index, steps) => {
@@ -174,9 +160,7 @@ export function omitDeadSingleEnemyBounceBookkeeping(
       ...graph.reachableActions(graph.sequence(steps.slice(index + 1))),
       ...laterActions,
     ];
-    return writes.some(
-      key => movementBlackboardReads.has(key) || containsStringValue(remaining, key),
-    );
+    return writes.some(key => containsStringValue(remaining, key));
   });
   return retained.length === actions.length ? sequence : graph.sequence(retained);
 }

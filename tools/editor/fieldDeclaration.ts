@@ -78,7 +78,6 @@ const REFERENCE_DECLARATIONS: Readonly<
   triggerBuffIds: { kind: 'buff', files: ['actions', 'buffs'] },
   buffIds: { kind: 'buff', files: ['actions', 'operators', 'conditions', 'modifiers'] },
   inheritToNextSkillIds: { kind: 'skill', files: ['actions'] },
-  abilityEntityIds: { kind: 'abilityEntity', files: ['actions', 'skills', 'conditions'] },
 };
 
 /** Ignore anonymous containers, union branches, and array/Readonly wrappers. An exact

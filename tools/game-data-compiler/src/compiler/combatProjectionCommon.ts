@@ -212,7 +212,7 @@ export interface CombatActionProjectionExtensionsSource {
     action: ProjectileLaunchActionSource,
     sourcePath: string,
     context: CombatActionProjectionContextSource,
-  ) => readonly [Extract<CompiledBuffStepSource, { kind: 'launchProjectile' }>];
+  ) => readonly [] | readonly [Extract<CompiledBuffStepSource, { kind: 'launchProjectile' }>];
   readonly resolveTimeDilationPriority?: (tagId: number, sourcePath: string) => number;
   readonly compileGlobalBuffAction?: (
     action: GlobalBuffActionSource,

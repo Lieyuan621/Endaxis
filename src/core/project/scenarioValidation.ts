@@ -151,15 +151,6 @@ export function validateBattle(value: unknown, path: string, issues: ValidationI
   }
   requireNonNegativeInteger(value.prepFrames, `${path}.prepFrames`, issues);
   requirePositiveInteger(value.durationFrames, `${path}.durationFrames`, issues);
-  if (value.operatorEnemyDistanceMeters !== undefined) {
-    const distance = value.operatorEnemyDistanceMeters;
-    if (typeof distance !== 'number' || !Number.isFinite(distance) || distance < 0) {
-      issues.push({
-        path: `${path}.operatorEnemyDistanceMeters`,
-        message: 'expected a non-negative finite distance in meters',
-      });
-    }
-  }
   if (
     value.reactionCriticalOverrides !== undefined &&
     (!isObject(value.reactionCriticalOverrides) ||

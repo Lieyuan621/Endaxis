@@ -164,6 +164,7 @@ function projectile(assignBlackboard: boolean): ProjectileLaunchActionSource {
   const zero = [0, 0, 0] as const;
   return {
     kind: 'projectileLaunch',
+    serverActionIndex: 0,
     projectileId: 'projectile',
     projectileSkillId: 'callback',
     projectileSource: target,

@@ -1,4 +1,3 @@
-import { stationaryProjectileDefinition, pointProjectileLaunch } from '../../test/projectileFlight';
 import { describe, expect, it } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -9,8 +8,6 @@ import type { CompiledSkillProgram, ResolvedActionSequence } from '../../compile
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type { CombatOperatorProgram } from './combatRuntimeAssembly';
 import { inspectStandardPlayerDamageCompatibility } from './standardPlayerDamageCompatibility';
-
-const projectileDefinitions = { stationary: stationaryProjectileDefinition(0.1) };
 
 const compileGraphEntry = (
   revision: string,
@@ -23,7 +20,7 @@ const compileGraphEntry = (
     1,
     revision,
     {},
-    { abilityEntities: {}, projectiles: projectileDefinitions },
+    { abilityEntities: {} },
   ).compileAll(),
   entry,
   callSite: revision,
@@ -125,22 +122,6 @@ function compatibilityInput(
 }
 
 describe('standardPlayerDamageCompatibility', () => {
-  it('允许完整重放执行投射物路径所需的目标距离读取', () => {
-    const sequence = chainEntry('compat-projectile-distance', [
-      {
-        kind: 'saveTargetDistance',
-        parameters: {
-          source: { kind: 'source' },
-          target: { kind: 'inputTarget' },
-          outputKey: 'distance',
-        },
-      },
-    ]);
-    expect(
-      inspectStandardPlayerDamageCompatibility(compatibilityInput(operator(sequence))),
-    ).toEqual([]);
-  });
-
   it('accepts the native skill-local Dash window marker in a scheduled skill', () => {
     expect(
       inspectStandardPlayerDamageCompatibility(
@@ -669,7 +650,7 @@ describe('standardPlayerDamageCompatibility', () => {
                 kind: 'launchProjectile',
                 parameters: {
                   projectileId: 'stationary',
-                  launch: pointProjectileLaunch,
+
                   inheritActionBlackboard: true,
 
                   recycleDelaySeconds: 0,

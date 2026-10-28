@@ -117,7 +117,19 @@ export function parseProjectDocument(
 
   const validation = validateLoadedProject(decodeProjectNumbers(value), options);
   if (!validation.ok) return { ok: false, kind: 'invalid-document', issues: validation.issues };
-  return validation;
+  return { ok: true, value: withoutLegacyDistance(validation.value) };
+}
+
+/** 旧方案的统一距离已由干员固定站位取代，加载后不再携带这个设置。 */
+function withoutLegacyDistance(project: EndaxisProjectDocument): EndaxisProjectDocument {
+  return {
+    ...project,
+    scenarios: project.scenarios.map(scenario => {
+      if (!('operatorEnemyDistanceMeters' in scenario.battle)) return scenario;
+      const { operatorEnemyDistanceMeters: _distance, ...battle } = scenario.battle;
+      return { ...scenario, battle };
+    }),
+  };
 }
 
 export function serializeProjectDocument(project: EndaxisProjectDocument, pretty = false): string {
@@ -126,5 +138,9 @@ export function serializeProjectDocument(project: EndaxisProjectDocument, pretty
     const summary = validation.issues.map(issue => `${issue.path}: ${issue.message}`).join('\n');
     throw new Error(`cannot serialize invalid project document:\n${summary}`);
   }
-  return JSON.stringify(project, encodeProjectNumber, pretty ? 2 : undefined);
+  return JSON.stringify(
+    withoutLegacyDistance(project),
+    encodeProjectNumber,
+    pretty ? 2 : undefined,
+  );
 }

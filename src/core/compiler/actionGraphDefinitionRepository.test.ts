@@ -20,14 +20,6 @@ it('跨场景重建解析器仍复用实体定义表，修订、等级、外部�
   const programs = new ActionGraphDefinitionRepository();
   const definitions = { entity: { lifetime: { kind: 'limited' as const, durationSeconds: 2 } } };
   const resolve = () => createIndependentAbilityEntityImportResolver(definitions, programs);
-  const projectiles = {};
-  const resolveWithProjectiles = () =>
-    createIndependentAbilityEntityImportResolver(definitions, programs, undefined, projectiles);
-  const withProjectiles = resolveWithProjectiles()(1);
-  expect(resolveWithProjectiles()(1)).toBe(withProjectiles);
-  expect(
-    createIndependentAbilityEntityImportResolver(definitions, programs, undefined, {})(1),
-  ).not.toBe(withProjectiles);
   const first = resolve()(1);
   expect(resolve()(1)).toBe(first);
   expect(resolve()(2)).not.toBe(first);
@@ -85,12 +77,8 @@ it('已发布图只准备一次，不同等级与导入目录仍分别编译，�
   try {
     const programs = new ActionGraphDefinitionRepository();
     const resource = { main: definition(), macros: {} };
-    const first = programs
-      .compile(resource, 1, undefined, { abilityEntities: {}, projectiles: {} })
-      .compileAll();
-    const second = programs
-      .compile(resource, 2, undefined, { abilityEntities: {}, projectiles: {} })
-      .compileAll();
+    const first = programs.compile(resource, 1, undefined, { abilityEntities: {} }).compileAll();
+    const second = programs.compile(resource, 2, undefined, { abilityEntities: {} }).compileAll();
     expect(prepare).toHaveBeenCalledTimes(1);
     expect(first).not.toBe(second);
     expect(first.nodes.get('[null,"first"]')!.action).toMatchObject({ parameters: { value: 1 } });
@@ -190,7 +178,7 @@ it('imported entity entries retain their owning graph when local node IDs collid
     },
     'common.entity',
   );
-  const imports = { abilityEntities: { entity }, projectiles: {} };
+  const imports = { abilityEntities: { entity } };
   const local: ActionGraphDefinition = {
     nodes: {
       same: {
@@ -236,9 +224,9 @@ it('imported entity entries retain their owning graph when local node IDs collid
   expect(skill.timelineActions[0]!.sequence.graph).toBe(compiled.program);
 
   expect(programs.compile(localResource, 1, undefined, imports)).toBe(compiled);
-  expect(
-    programs.compile(localResource, 1, undefined, { abilityEntities: { entity }, projectiles: {} }),
-  ).not.toBe(compiled);
+  expect(programs.compile(localResource, 1, undefined, { abilityEntities: { entity } })).not.toBe(
+    compiled,
+  );
   expect(() =>
     programs
       .compile(localResource, 1, { entity: { lifetime: { kind: 'infinite' } } }, imports)

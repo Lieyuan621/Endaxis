@@ -1,5 +1,5 @@
-import { applyProjectileResourcePatch } from '../src/patches/projectiles.ts';
 import { describe, expect, it } from 'vitest';
+import type { ProjectileLaunchSchedule } from '../../../packages/game-data-contract/src/projectileSchedule.ts';
 import type { SkillCastResourceDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import {
   compileProjectileCallbackSkillSource,
@@ -14,136 +14,15 @@ import type { CombatActionProjectionContextSource } from '../src/compiler/combat
 import type { KnownNativeActionLeafSource } from '../src/source/actionLeaf.ts';
 import type { NativeActionNodeSource } from '../src/source/controlFlow.ts';
 import { gameplayTagIdFromPath } from '../src/source/nativeGameplayTags.ts';
-import type { ProjectileMoveModeSource } from '../src/source/projectileMovement.ts';
 import type { ProjectileRuntimeSource } from '../src/source/projectileRuntime.ts';
 import type { ProjectileLaunchActionSource } from '../src/source/referenceActions.ts';
 import type { SkillActionGraphSource } from '../src/source/skillActionGraph.ts';
 import { parseTargetReferenceSource } from '../src/source/target.ts';
-import { scalarFixture, targetFixture } from './sourceFixtures.ts';
+import { targetFixture } from './sourceFixtures.ts';
 import { returnProjectionContext } from './support/avywennaReturnProjection.ts';
-import {
-  projectProjectileFlightSource,
-  projectProjectileFlightTemplateSource,
-} from '../src/compiler/abilities/projectileFlightProjection.ts';
-
-it('投射物 PointFinder 保留中心贴地和偏移，交由现有端点解析计算', () => {
-  const input = reachInput();
-  const target = parseTargetReferenceSource(
-    {
-      ...targetFixture('InstantSearch', {
-        finderData: {
-          $type: 'Beyond.Gameplay.Core.Selector+PointFinder+Data, Gameplay.Beyond',
-          positionOffset: { x: scalarFixture(0), y: scalarFixture(2), z: scalarFixture(3) },
-          rotationOffset: { x: scalarFixture(0), y: scalarFixture(0), z: scalarFixture(0) },
-        },
-        validatorData: [],
-        postProcessorData: [],
-      }),
-      centerType: 'CurrentTarget',
-      centerToGround: true,
-      selectorDirection: 'TargetToSource',
-    },
-    'fixture.point',
-  );
-  const flight = projectProjectileFlightSource(
-    input.runtime,
-    { ...input.launch, target },
-    {
-      ...input.projectionContext,
-      graph: createActionGraphBuilder<CompiledBuffStepSource>(),
-    },
-    'fixture',
-  );
-  expect(flight.segments[0]?.target).toEqual({
-    target: { kind: 'fixed', target: 'enemy' },
-    offset: {
-      centerOnGround: true,
-      facing: 'enemyToOperator',
-      local: [0, 2, 3].map(value => ({ kind: 'constant', value })),
-    },
-  });
-});
-
-it('分段飞行只要求实际使用的端点可解析，不能把未知端点默认为敌人', () => {
-  const input = reachInput();
-  const unknown = parseTargetReferenceSource(targetFixture('Context'), 'fixture.unknown');
-  const launch = {
-    ...input.launch,
-    target: unknown,
-    presetPoints: [{ key: 'unused', point: unknown }],
-  };
-  const runtime = {
-    ...input.runtime,
-    useSegmentMove: true,
-    moveSegments: [
-      {
-        startPointKey: 'LaunchPoint',
-        endPointKey: 'LaunchPoint',
-        moveModeId: 'Default',
-        earlyNextByDuration: false,
-        segmentDuration: 0,
-        skipHitAndBlockDetection: false,
-      },
-    ],
-  };
-  const context = {
-    ...input.projectionContext,
-    graph: createActionGraphBuilder<CompiledBuffStepSource>(),
-  };
-  expect(
-    projectProjectileFlightSource(runtime, launch, context, 'fixture').segments[0]?.target,
-  ).toEqual({ side: 'operator' });
-  expect(() =>
-    projectProjectileFlightSource(
-      { ...runtime, useSegmentMove: false },
-      launch,
-      context,
-      'fixture',
-    ),
-  ).toThrow('unsupported action target Context');
-  expect(() =>
-    projectProjectileFlightSource(
-      { ...runtime, moveSegments: [{ ...runtime.moveSegments[0]!, endPointKey: 'unused' }] },
-      launch,
-      context,
-      'fixture',
-    ),
-  ).toThrow('unsupported action target Context');
-});
-
-const scalar = { value: 1, blackboardKey: null, levelValues: null };
-const curve = { keys: [], preInfinity: 2, postInfinity: 2 };
-const point = {
-  usePresetPoint: false,
-  presetPointKey: '',
-  xRatioRange: [scalar, scalar],
-  yzAngleRange: [scalar, scalar],
-  yzRadiusRange: [scalar, scalar],
-  scaledYzRadius: false,
-} as const;
-const straightMovement: ProjectileMoveModeSource = {
-  moveType: 0,
-  traceType: 0,
-  traceTime: scalar,
-  traceUntilDistance: scalar,
-  speed: scalar,
-  speedCurve: curve,
-  useSpeedScaleWithDistance: false,
-  speedScaleWithDistance: curve,
-  lockVelocityToXZ: false,
-  groundedMove: false,
-  limitAngularSpeed: false,
-  angularSpeed: scalar,
-  angularSpeedCurve: curve,
-  parabolaDef: 0,
-  travelDuration: scalar,
-  vertexYOffset: scalar,
-  gravity: scalar,
-  bezierMidPoint1: point,
-  bezierMidPoint2: point,
-};
 
 type ProjectileFixture = {
+  schedule?: ProjectileLaunchSchedule;
   sourcePath: string;
   recycleDelaySeconds: number;
   castResource: SkillCastResourceDefinition;
@@ -167,6 +46,7 @@ function projectFixture(
 ) {
   const graph = input.hitGraph ?? input.reachGraph;
   const project = createProjectileProjectionExtensionSource({
+    ...(input.schedule ? { resolveSchedule: () => input.schedule! } : {}),
     catalog: {
       runtimes: new Map([[input.runtime.projectileId, input.runtime]]),
       templates: new Map([[input.template.projectileId, input.template]]),
@@ -206,6 +86,7 @@ function reachInput(): ProjectileFixture {
     template: { projectileId: 'projectile', entityBlackboard: [] },
     launch: {
       kind: 'projectileLaunch',
+      serverActionIndex: 0,
       projectileId: 'projectile',
       projectileSkillId: '',
       projectileSource: source,
@@ -241,22 +122,7 @@ function reachInput(): ProjectileFixture {
         skillIds: ['callback'],
         initialNativeSkillTypeById: { callback: 'normalSkill' },
       },
-      finishDuration: 10,
-      finishDistance: { value: 0, blackboardKey: null, levelValues: null },
-      finishOnReach: true,
-      finishOnBlock: false,
-      useHitBlockReachOrder: false,
       hitOnReach: false,
-      allowHitSameTarget: false,
-      hitIntervalPerTarget: 0,
-      maxHitCount: -1,
-      collisionDetectTiming: 0,
-      hitAndBlockDetectDelayTime: 0,
-      hitAndBlockDetectDelayDistance: 0,
-      keepMoveOnReach: false,
-      canTraceTargetAfterReach: false,
-      colliderShape: null,
-      blockLayerDef: { value: 0, name: 'Nothing' },
       targetFilter: {
         checkAlive: true,
         autoSetTargetFaction: false,
@@ -268,10 +134,6 @@ function reachInput(): ProjectileFixture {
         filterGameplayTag: false,
         gameplayTagQuery: null,
       },
-      presetPointKeys: ['LaunchPoint', 'TargetPoint'],
-      useSegmentMove: false,
-      moveModes: new Map([['Default', straightMovement]]),
-      moveSegments: [],
     },
   };
 }
@@ -308,6 +170,33 @@ it('Source 来源不读取未启用的目标组名', () => {
   expect(projectFixture(input)).toEqual(expected);
 });
 
+describe('发射动作的显式回调时间表', () => {
+  it('保留具体发射的身份与重复回调帧', () => {
+    const input = reachInput();
+    input.schedule = {
+      endFrame: 12,
+      callbacks: [{ event: 'reach', triggerFrames: [3, 9] }],
+    };
+    input.runtime = {
+      ...input.runtime,
+    };
+    input.runtime = { ...input.runtime };
+    const result = projectFixture(input);
+    expect(result.steps[0]!.parameters.schedule).toEqual(input.schedule);
+    expect(result.steps[0]!.parameters).not.toHaveProperty('flight');
+    expect(result.steps[0]!.parameters).not.toHaveProperty('launch');
+  });
+
+  it('拒绝把其他事件的时间表套到当前回调技能', () => {
+    const input = reachInput();
+    input.schedule = {
+      endFrame: 12,
+      callbacks: [{ event: 'hit', triggerFrames: [3] }],
+    };
+    expect(() => projectFixture(input)).toThrow('schedule does not match compiled callbacks');
+  });
+});
+
 describe('独立到达回调的编译', () => {
   it('零空间输入只证明可到达，OnlyHit 仍按实际输入身份筛选', () => {
     const input = reachInput();
@@ -328,10 +217,7 @@ describe('独立到达回调的编译', () => {
     if (launch?.kind !== 'launchProjectile') throw new Error('expected projectile');
     expect(launch.parameters).toMatchObject({
       onlyHitTargets: { kind: 'inputTarget' },
-      flight: {
-        finishOnReach: true,
-        finishDurationSeconds: { kind: 'constant', value: input.runtime.finishDuration },
-      },
+      schedule: expect.objectContaining({ endFrame: 0 }),
     });
   });
 
@@ -366,26 +252,17 @@ describe('独立到达回调的编译', () => {
     };
     input.runtime = {
       ...input.runtime,
-      finishOnReach: false,
-      finishOnBlock: true,
-      blockLayerDef: { value: 1, name: 'WallAndGround' },
-      colliderShape: { shapeType: 1, radius: 1, center: [0, 0, 0] as const, extent: [0, 0, 0] },
     };
     expect(projectFixture(input).steps).toEqual([
       expect.objectContaining({
         kind: 'launchProjectile',
         parameters: expect.objectContaining({
-          flight: expect.objectContaining({ landingAtTarget: true }),
+          schedule: expect.objectContaining({ endFrame: 0 }),
         }),
         callbacks: [expect.objectContaining({ event: 'block' })],
       }),
     ]);
-    expect(() =>
-      projectFixture({
-        ...input,
-        runtime: { ...input.runtime, hitAndBlockDetectDelayTime: 1 },
-      }),
-    ).toThrow('projectile collision delay requires lifecycle projection');
+
     input.launch = {
       ...input.launch,
       callbacks: [
@@ -397,7 +274,7 @@ describe('独立到达回调的编译', () => {
       expect.objectContaining({
         kind: 'launchProjectile',
         parameters: expect.objectContaining({
-          flight: expect.objectContaining({ landingAtTarget: true }),
+          schedule: expect.objectContaining({ endFrame: 0 }),
         }),
         callbacks: [
           expect.objectContaining({ event: 'block' }),
@@ -407,18 +284,6 @@ describe('独立到达回调的编译', () => {
     ]);
   });
 
-  it('没有场景表面时自定义表面阻挡层不改变到达程序，敌人层不能被忽略', () => {
-    const input = reachInput();
-    const runtime = {
-      ...input.runtime,
-      blockLayerDef: { value: -1 as const, name: 'Custom' as const },
-      blockLayerMask: 193,
-    };
-    expect(projectFixture({ ...input, runtime })).toEqual(projectFixture(input));
-    expect(() =>
-      projectFixture({ ...input, runtime: { ...runtime, blockLayerMask: 1 << 12 } }),
-    ).toThrow('projectile environment blocking is not modeled');
-  });
   it('即时写入和延迟读取留在同一个回调程序中，不调度到发射者的技能上', () => {
     const input = reachInput();
     const scope = projectFixture(input);
@@ -442,19 +307,41 @@ describe('独立到达回调的编译', () => {
     expect(action.callbacks[0]!.skill.naturalDurationFrames).toBe(30);
   });
 
+  it('显式时间表保留与到达并存的阻挡回调', () => {
+    const input = reachInput();
+    input.launch = {
+      ...input.launch,
+      callbacks: [
+        ...input.launch.callbacks,
+        { event: 'block', enabled: true, skillId: input.reachGraph.skillId },
+      ],
+    };
+    input.schedule = {
+      endFrame: 7,
+      callbacks: [
+        { event: 'reach', triggerFrames: [] },
+        { event: 'block', triggerFrames: [7] },
+      ],
+    };
+    const action = projectFixture(input).steps[0]!;
+    expect(action.callbacks.map(callback => callback.event)).toEqual(['reach', 'block']);
+    expect(action.parameters.schedule).toEqual(input.schedule);
+  });
+
   it('不能把到达后仍存活的投射物提前结束', () => {
     const input = reachInput();
+    input.schedule = {
+      endFrame: 30,
+      callbacks: [{ event: 'reach', triggerFrames: [3] }],
+    };
     const scope = projectFixture({
       ...input,
-      runtime: { ...input.runtime, finishOnReach: false },
+      runtime: { ...input.runtime },
     });
     expect(scope.steps[0]).toMatchObject({
       kind: 'launchProjectile',
       parameters: {
-        flight: {
-          finishDurationSeconds: { kind: 'constant', value: input.runtime.finishDuration },
-          finishOnReach: false,
-        },
+        schedule: input.schedule,
       },
     });
   });
@@ -472,12 +359,7 @@ describe('独立到达回调的编译', () => {
   });
 });
 
-it.each([
-  [-1, false],
-  [1, false],
-  [-1, true],
-  [1, true],
-] as const)('命中路由保留完整回调和寿命：上限 %s，过滤 %s', (maxHitCount, filtered) => {
+it.each([false, true])('命中回调保留目标标签过滤：%s', filtered => {
   const input = reachInput();
   const launch = {
     ...input.launch,
@@ -485,14 +367,6 @@ it.each([
   };
   const runtime = {
     ...input.runtime,
-    maxHitCount,
-    finishOnReach: false,
-    colliderShape: {
-      shapeType: 1,
-      radius: 1,
-      center: [0, 0, 0] as const,
-      extent: [0, 0, 0] as const,
-    },
     targetFilter: {
       ...input.runtime.targetFilter,
       autoSetTargetFaction: true,
@@ -523,15 +397,12 @@ it.each([
   expect(action.parameters).toMatchObject({
     inheritActionBlackboard: launch.assignBlackboard,
     entityInitialValues: {},
-    flight: { finishDurationSeconds: { kind: 'constant', value: 10 } },
+    schedule: expect.objectContaining({ endFrame: 0 }),
     recycleDelaySeconds: 1,
     hit: {
-      finishOnHit: maxHitCount === 1,
-      maxHitCount,
       ...(filtered
         ? {
             hitTagFilter: { tagQueryType: 'exceptAny', tags: ['Immune/Physical'] },
-            retryRejectedHit: true,
           }
         : {}),
     },
@@ -553,8 +424,6 @@ it.each([false, true])('空阵营掩码只禁止实体碰撞，不禁止到达�
     runtime: {
       ...input.runtime,
       hitOnReach,
-      maxHitCount: 1,
-      colliderShape: { shapeType: 1, radius: 1, center: [0, 0, 0], extent: [0, 0, 0] },
       targetFilter: {
         ...input.runtime.targetFilter,
         autoSetTargetFaction: false,
@@ -562,22 +431,17 @@ it.each([false, true])('空阵营掩码只禁止实体碰撞，不禁止到达�
       },
     },
   }).steps[0]!;
-  if (!('flight' in action.parameters)) throw new Error('expected projected flight');
-  expect(action.parameters.flight?.collision).toBeUndefined();
   expect(action.callbacks.some(callback => callback.event === 'hit')).toBe(hitOnReach);
   expect(action.parameters.hit !== undefined).toBe(hitOnReach);
 });
 
-it('无命中回调时仍保留影响寿命的碰撞计数和标签条件', () => {
+it('无命中回调时不携带命中过滤', () => {
   const input = reachInput();
   const result = projectFixture({
     ...input,
     runtime: {
       ...input.runtime,
-      maxHitCount: 1,
       hitOnReach: false,
-      finishOnReach: false,
-      colliderShape: { shapeType: 1, radius: 1, center: [0, 0, 0], extent: [0, 0, 0] },
       targetFilter: {
         ...input.runtime.targetFilter,
         autoSetTargetFaction: true,
@@ -592,10 +456,7 @@ it('无命中回调时仍保留影响寿命的碰撞计数和标签条件', () =
   });
   const action = result.steps[0]!;
   expect(action.callbacks.some(callback => callback.event === 'hit')).toBe(false);
-  expect('hit' in action.parameters ? action.parameters.hit : undefined).toMatchObject({
-    maxHitCount: 1,
-    hitTagFilter: { tagQueryType: 'exceptAny', tags: ['Immune/Physical'] },
-  });
+  expect(action.parameters.hit).toBeUndefined();
 });
 
 it('飞向主控的投射物仍按碰撞阵营决定命中对象', () => {
@@ -609,66 +470,11 @@ it('飞向主控的投射物仍按碰撞阵营决定命中对象', () => {
     },
     runtime: {
       ...input.runtime,
-      finishOnReach: false,
-      maxHitCount: 1,
-      colliderShape: { shapeType: 1, radius: 1, center: [0, 0, 0] as const, extent: [0, 0, 0] },
       targetFilter: { ...input.runtime.targetFilter, autoSetTargetFaction: true, factionTarget: 1 },
     },
   });
   expect(scope.steps[0]?.kind).toBe('launchProjectile');
 });
-
-it.each([false, true])(
-  '两段投射物不能在碰撞先于到达时省略第二次命中：%s',
-  useHitBlockReachOrder => {
-    const input = reachInput();
-    const project = () =>
-      projectFixture({
-        ...input,
-        hitGraph: statefulCallback(false),
-        launch: {
-          ...input.launch,
-          callbacks: [{ event: 'hit', enabled: true, skillId: 'callback' }],
-        },
-        runtime: {
-          ...input.runtime,
-          useHitBlockReachOrder,
-          useSegmentMove: true,
-          allowHitSameTarget: true,
-          colliderShape: { shapeType: 1, radius: 1, center: [0, 0, 0] as const, extent: [0, 0, 0] },
-          targetFilter: {
-            ...input.runtime.targetFilter,
-            autoSetTargetFaction: true,
-            factionTarget: 1,
-          },
-          moveSegments: [
-            {
-              startPointKey: 'LaunchPoint',
-              endPointKey: 'TargetPoint',
-              moveModeId: 'Default',
-              earlyNextByDuration: true,
-              segmentDuration: 1,
-              skipHitAndBlockDetection: false,
-            },
-            {
-              startPointKey: 'TargetPoint',
-              endPointKey: 'TargetPoint',
-              moveModeId: 'Default',
-              earlyNextByDuration: false,
-              segmentDuration: 0,
-              skipHitAndBlockDetection: false,
-            },
-          ],
-        },
-      });
-    const action = project().steps[0]!;
-    expect(action.kind).toBe('launchProjectile');
-    if (!('flight' in action.parameters)) throw new Error('expected projected flight');
-    expect(action.parameters.flight?.hitBeforeReach).toBe(useHitBlockReachOrder);
-    expect(action.parameters.flight?.segments).toHaveLength(2);
-    expect(action.parameters.hit?.repeatIntervalSeconds).toBe(input.runtime.hitIntervalPerTarget);
-  },
-);
 
 function callbackNode(
   body: NativeActionNodeSource<KnownNativeActionLeafSource>['body'],
@@ -889,72 +695,17 @@ describe('complete projectile callback skill source', () => {
   });
 });
 
-it.each(['02', '03', 'attack'])('梨诺只省略上射弹的敌人碰撞：%s', suffix => {
+it('明确裁剪的发射不生成节点、回调或实例寿命', () => {
   const input = reachInput();
-  const projectileId =
-    suffix === 'attack'
-      ? 'projectile_chr_0035_liino_normal_attack'
-      : `projectile_chr_0035_liino_normal_attack_${suffix}`;
-  const flight = projectProjectileFlightSource(
-    {
-      ...input.runtime,
-      projectileId,
-      colliderShape: { shapeType: 1, radius: 0.2, center: [0, 0, 0], extent: [0, 0, 0] },
-      targetFilter: { ...input.runtime.targetFilter, autoSetTargetFaction: true, factionTarget: 1 },
-    },
-    { ...input.launch, projectileId },
-    { ...input.projectionContext, graph: createActionGraphBuilder<CompiledBuffStepSource>() },
-    'fixture',
-  );
-  expect(flight.collision !== undefined).toBe(suffix === 'attack');
-  expect(flight.segments).toHaveLength(1);
-});
-
-it('投射物模板保留变量身份，不吸收发射动作的目标或赋值', () => {
-  const input = reachInput();
-  const runtime = {
-    ...input.runtime,
-    finishDistance: {
-      ...input.runtime.finishDistance,
-      value: 20,
-      blackboardKey: 'EntityBB_maxDistance',
-    },
-  };
-  const template = projectProjectileFlightTemplateSource(runtime, 'fixture');
-  expect(template.finishDistanceMeters).toEqual({ blackboardKey: 'EntityBB_maxDistance' });
-  expect(template).not.toHaveProperty('start');
-  expect(template.segments[0]).not.toHaveProperty('target');
-  const flight = projectProjectileFlightSource(
-    runtime,
-    input.launch,
-    { ...input.projectionContext, graph: createActionGraphBuilder<CompiledBuffStepSource>() },
-    'fixture',
-  );
-  expect(flight.finishDistanceMeters).toEqual({ kind: 'blackboard', key: 'EntityBB_maxDistance' });
-  expect(template.finishDistanceMeters).toEqual({ blackboardKey: 'EntityBB_maxDistance' });
-});
-
-it('回收雷枪补丁只改工作副本半径，原生结构变化时拒绝生成', () => {
-  const base = reachInput().runtime;
-  const source: ProjectileRuntimeSource = {
-    ...base,
-    projectileId: 'projectile_chr_0012_avywen_combo_skill_lance_back',
-    colliderShape: { shapeType: 1, radius: 1.5, center: [0, 0, 0], extent: [0, 0, 0] },
-    targetFilter: { ...base.targetFilter, autoSetTargetFaction: true, factionTarget: 1 },
-  };
-  expect(applyProjectileResourcePatch(base)).toBe(base);
-  expect(applyProjectileResourcePatch(source)).toEqual({
-    ...source,
-    colliderShape: { ...source.colliderShape, radius: 2.6 },
+  const project = createProjectileProjectionExtensionSource({
+    shouldOmitLaunch: () => true,
+    catalog: { runtimes: new Map(), templates: new Map(), callbackGraphs: new Map() },
+    callbackContext: input.callbackContext,
   });
-  expect(source.colliderShape?.radius).toBe(1.5);
-  expect(() => applyProjectileResourcePatch({ ...source, hitOnReach: true })).toThrow(
-    'patch expected',
-  );
-  expect(() =>
-    applyProjectileResourcePatch({
-      ...source,
-      colliderShape: { ...source.colliderShape!, radius: 2 },
+  expect(
+    project({ ...input.launch, callbacks: [] }, input.sourcePath, {
+      ...input.projectionContext,
+      graph: createActionGraphBuilder<CompiledBuffStepSource>(),
     }),
-  ).toThrow('patch expected');
+  ).toEqual([]);
 });

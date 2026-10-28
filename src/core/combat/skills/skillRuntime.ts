@@ -1,5 +1,6 @@
+import type { ProjectileLaunchSchedule } from '../../../../packages/game-data-contract/src/projectileSchedule';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-import type { CompiledValueInput } from '../../compiler/compiledGraphData';
+
 import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 
 import type { EnemyPartTransferInfo } from '../state/foundationState';
@@ -50,14 +51,11 @@ import {
 
 /** 发射动作只提交一次请求；回调技能及其宿主都归该投射物持有。 */
 export type LaunchProjectile = (request: {
-  readonly resolveFlightTargets?: (
-    query: CompiledTargetQuery,
-    role: 'start' | 'target',
-  ) => readonly RuntimeTargetRef[];
-  readonly resolveFlightValue?: (value: CompiledValueInput) => number;
+  readonly schedule: ProjectileLaunchSchedule;
+
   readonly entityBlackboard: ActionBlackboardState;
   readonly syncTimeScale?: boolean;
-  readonly flight: ResolvedCombatStepForKind<'launchProjectile'>['parameters']['flight'];
+
   readonly recycleDelaySeconds: number;
   readonly callbacks: readonly {
     readonly runtime: ProjectileCallbackRuntime;

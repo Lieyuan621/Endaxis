@@ -276,11 +276,10 @@ describe('validateSkillDefinition', () => {
     expect(validateSkillDefinition(definition)).toEqual([]);
   });
 
-  it('严格校验时间膨胀中的能力实体 ID 与 Context 查询', () => {
+  it('严格校验时间膨胀中的能力实体 Context 查询', () => {
     const queries: Array<Record<string, unknown>> = [
       {
         kind: 'ownerSpawned',
-        abilityEntityIds: ['abilityentity_test'],
       },
       { kind: 'context', contextKey: 'mirrors' },
     ];
@@ -302,15 +301,10 @@ describe('validateSkillDefinition', () => {
 
     expect(validateSkillDefinition(definition)).toEqual([]);
 
-    queries[0]!.abilityEntityIds = [];
     queries[1]!.contextKey = '';
 
     expect(validateSkillDefinition(definition)).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          path: `${nodeActionPath('step-0')}.parameters.abilityEntityTargets[0].abilityEntityIds`,
-          message: 'expected a non-empty array',
-        }),
         expect.objectContaining({
           path: `${nodeActionPath('step-0')}.parameters.abilityEntityTargets[1].contextKey`,
           message: 'expected a non-empty string',
