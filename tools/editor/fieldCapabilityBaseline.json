@@ -104,10 +104,7 @@
       "reason": "structured-editor-pending",
       "phase": "P4",
       "category": "structured-editor",
-      "keys": [
-        "action/launchProjectile/parameters/entityAssignments",
-        "action/createSpatialPointTargets/parameters/randomDistribution"
-      ]
+      "keys": ["action/launchProjectile/parameters/entityAssignments"]
     }
   ],
   "resolvedDefinitionDepthPositions": [
