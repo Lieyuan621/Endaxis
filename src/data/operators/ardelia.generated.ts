@@ -12,7 +12,10 @@ export const ardeliaChr_0025_ardelia_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_normal_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -278,7 +281,10 @@ export const ardeliaChr_0025_ardelia_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 5, callbacks: [{ event: 'hit', triggerFrames: [5] }] },
+            schedule: {
+              endFrame: 5,
+              callbacks: [{ event: 'hit', triggerFrames: [5], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_normal_attack2_1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -293,7 +299,10 @@ export const ardeliaChr_0025_ardelia_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 5, callbacks: [{ event: 'hit', triggerFrames: [5] }] },
+            schedule: {
+              endFrame: 5,
+              callbacks: [{ event: 'hit', triggerFrames: [5], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_normal_attack2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -355,7 +364,10 @@ export const ardeliaChr_0025_ardelia_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 6, callbacks: [{ event: 'hit', triggerFrames: [6] }] },
+            schedule: {
+              endFrame: 6,
+              callbacks: [{ event: 'hit', triggerFrames: [6], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_normal_attack3',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1699,7 +1711,10 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 6, callbacks: [{ event: 'hit', triggerFrames: [6] }] },
+            schedule: {
+              endFrame: 6,
+              callbacks: [{ event: 'hit', triggerFrames: [6], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0025_ardelia_combo_skill',
             recycleDelaySeconds: 0.0333333350718021,

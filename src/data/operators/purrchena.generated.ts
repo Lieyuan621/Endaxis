@@ -4369,7 +4369,10 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0038_purrche_combo_skill_giftbox',
             syncTimeScale: true,
@@ -4387,7 +4390,10 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0038_purrche_combo_skill_giftbox_self',
             syncTimeScale: true,
@@ -4415,7 +4421,10 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0038_purrche_combo_skill_giftbox',
             syncTimeScale: true,
@@ -9228,7 +9237,10 @@ export const purrchena: OperatorDefinition = {
                 action: {
                   kind: 'launchProjectile',
                   parameters: {
-                    schedule: { endFrame: 8, callbacks: [{ event: 'hit', triggerFrames: [8] }] },
+                    schedule: {
+                      endFrame: 8,
+                      callbacks: [{ event: 'hit', triggerFrames: [8], hitKind: 'arrival' }],
+                    },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0038_purrche_combo_skill_4',
                     recycleDelaySeconds: 0.0666666701436043,

@@ -15,7 +15,10 @@ export const gilbertaChr_0013_aglina_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -195,7 +198,10 @@ export const gilbertaChr_0013_aglina_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -319,7 +325,10 @@ export const gilbertaChr_0013_aglina_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack3',
             recycleDelaySeconds: 0.0333333350718021,
@@ -590,7 +599,10 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack4',
             recycleDelaySeconds: 0.0333333350718021,
@@ -716,7 +728,10 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack4_2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -731,7 +746,10 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack4_1',
             recycleDelaySeconds: 0.0333333350718021,

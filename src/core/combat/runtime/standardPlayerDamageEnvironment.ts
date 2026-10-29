@@ -405,6 +405,7 @@ export class StandardPlayerDamageEnvironment {
   readonly #inflictionAdapters = new Map<string, ElementalInflictionBuffAdapter<string>>();
   #resolveAbilitySystemSourceId: (entityId: string) => string = entityId => entityId;
   #resolveSharedDamageTransfer: PlayerDamageOperationDependencies['resolveSharedDamageTransfer'];
+  #targetExists: PlayerDamageOperationDependencies['targetExists'];
   #resolveProjectileRuntimeDependencies:
     ((definitionOperatorId: string) => ProjectileRuntimeDependencies) | null = null;
   readonly #operatorPanels = new Map<string, ResolvedOperatorPanel>();
@@ -892,6 +893,7 @@ export class StandardPlayerDamageEnvironment {
       this.#resolveAbilitySystemSourceId = context.resolveAbilitySystemSourceId;
     }
     // 主动、被动和恢复后的宿主都从同一装配根取得目录；独立 Buff 伤害复用此端口。
+    if (context.targetExists !== undefined) this.#targetExists = context.targetExists;
     if (context.resolveSharedDamageTransfer !== undefined)
       this.#resolveSharedDamageTransfer = context.resolveSharedDamageTransfer;
     this.#bindBattleRuntime(context);
@@ -910,6 +912,7 @@ export class StandardPlayerDamageEnvironment {
       queryTargets: 'queryTargets' in context ? context.queryTargets : undefined,
       sourceOperatorId: operatorId,
       resolveSharedDamageTransfer: context.resolveSharedDamageTransfer,
+      targetExists: context.targetExists,
       resolveDefaultDamageTarget: context.resolveDefaultDamageTarget,
       castId: 'program' in context ? context.castId : undefined,
       skillId: program?.skillId,
@@ -1628,6 +1631,7 @@ export class StandardPlayerDamageEnvironment {
       ...this.#damagePreparationPorts(sourceId, operatorBuffs),
       sourceOperatorId: sourceId,
       resolveSharedDamageTransfer: this.#resolveSharedDamageTransfer,
+      targetExists: this.#targetExists,
       resolveReactionCriticalOverride: identity => this.#resolveReactionCriticalOverride(identity),
       ...(skillCastInfo === undefined
         ? {}

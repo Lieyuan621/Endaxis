@@ -692,10 +692,9 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     return bodyId === undefined ? undefined : this.runtimeState.soulParts.get(bodyId);
   }
 
-  /** 木桩默认攻击优先选择仍存活的灵体；OwnerSoulFinder 本身保留停用实体的原生语义。 */
+  /** 木桩默认攻击选择本体，避免灵体提前结束丢失延迟命中；显式灵体查询不受影响。 */
   preferredAttackTarget(mainBody: RuntimeTargetRef): RuntimeTargetRef {
-    const soul = this.ownerSoul(mainBody);
-    return soul !== undefined && this.isAlive(soul) === true ? soul : mainBody;
+    return this.mainBody(mainBody);
   }
 
   /** 独立生命账本；失衡是否转给主体由伤害路由决定，不能在此替换整个账本。 */

@@ -12,7 +12,10 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 9, callbacks: [{ event: 'hit', triggerFrames: [9] }] },
+            schedule: {
+              endFrame: 9,
+              callbacks: [{ event: 'hit', triggerFrames: [9], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_combo_skill',
             recycleDelaySeconds: 0.0333333350718021,
@@ -138,7 +141,10 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack',
             recycleDelaySeconds: 0.0333333350718021,
@@ -239,7 +245,10 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack',
             recycleDelaySeconds: 0.0333333350718021,
@@ -387,7 +396,10 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack_2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -535,7 +547,10 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack_3',
             recycleDelaySeconds: 0.0333333350718021,
@@ -684,7 +699,10 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack_4',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1013,7 +1031,10 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1080,7 +1101,10 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1158,7 +1182,10 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1358,7 +1385,10 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill_plus',
             recycleDelaySeconds: 0.0333333350718021,

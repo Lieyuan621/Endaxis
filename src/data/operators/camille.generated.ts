@@ -414,7 +414,10 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 15, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 15,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_attack4',
             recycleDelaySeconds: 1,
@@ -861,7 +864,10 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 16, callbacks: [{ event: 'hit', triggerFrames: [16] }] },
+            schedule: {
+              endFrame: 16,
+              callbacks: [{ event: 'hit', triggerFrames: [16], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_power_attack',
             recycleDelaySeconds: 0.100000001490116,
@@ -923,7 +929,10 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 17, callbacks: [{ event: 'hit', triggerFrames: [17] }] },
+            schedule: {
+              endFrame: 17,
+              callbacks: [{ event: 'hit', triggerFrames: [17], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_power_attack_R_blue',
             recycleDelaySeconds: 0.100000001490116,
@@ -940,7 +949,10 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 21, callbacks: [{ event: 'hit', triggerFrames: [21] }] },
+            schedule: {
+              endFrame: 21,
+              callbacks: [{ event: 'hit', triggerFrames: [21], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_power_attack_R_red',
             recycleDelaySeconds: 0.100000001490116,
@@ -957,7 +969,10 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 16, callbacks: [{ event: 'hit', triggerFrames: [16] }] },
+            schedule: {
+              endFrame: 16,
+              callbacks: [{ event: 'hit', triggerFrames: [16], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_power_attack_L_red',
             recycleDelaySeconds: 0.100000001490116,
@@ -974,7 +989,10 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 22, callbacks: [{ event: 'hit', triggerFrames: [22] }] },
+            schedule: {
+              endFrame: 22,
+              callbacks: [{ event: 'hit', triggerFrames: [22], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_power_attack_L_blue',
             recycleDelaySeconds: 0.100000001490116,
@@ -1263,7 +1281,10 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_normal_skill',
             recycleDelaySeconds: 2.96666669845581,
@@ -4074,7 +4095,10 @@ const camilleBuff8ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 0, callbacks: [{ event: 'hit', triggerFrames: [0] }] },
+            schedule: {
+              endFrame: 0,
+              callbacks: [{ event: 'hit', triggerFrames: [0], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_normal_skill_last',
             source: 'actionOwner',

@@ -15,7 +15,10 @@ export const fluoriteChr_0022_bounda_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -129,7 +132,10 @@ export const fluoriteChr_0022_bounda_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -245,7 +251,10 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -545,7 +554,7 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
               endFrame: 2,
               callbacks: [
                 { event: 'block', triggerFrames: [] },
-                { event: 'hit', triggerFrames: [2] },
+                { event: 'hit', triggerFrames: [2], hitKind: 'collision' },
               ],
             },
             inheritActionBlackboard: true,
@@ -743,7 +752,7 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
               endFrame: 2,
               callbacks: [
                 { event: 'block', triggerFrames: [] },
-                { event: 'hit', triggerFrames: [2] },
+                { event: 'hit', triggerFrames: [2], hitKind: 'collision' },
               ],
             },
             inheritActionBlackboard: true,
@@ -1153,7 +1162,7 @@ export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
               endFrame: 7,
               callbacks: [
                 { event: 'block', triggerFrames: [7] },
-                { event: 'hit', triggerFrames: [] },
+                { event: 'hit', triggerFrames: [], hitKind: 'collision' },
               ],
             },
             inheritActionBlackboard: true,
@@ -1526,7 +1535,10 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1601,7 +1613,10 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1675,7 +1690,10 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1749,7 +1767,10 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,

@@ -123,6 +123,7 @@ function reachInput(): ProjectileFixture {
         initialNativeSkillTypeById: { callback: 'normalSkill' },
       },
       hitOnReach: false,
+      hasCollisionShape: false,
       targetFilter: {
         checkAlive: true,
         autoSetTargetFaction: false,
@@ -433,6 +434,7 @@ it.each([false, true])('空阵营掩码只禁止实体碰撞，不禁止到达�
   }).steps[0]!;
   expect(action.callbacks.some(callback => callback.event === 'hit')).toBe(hitOnReach);
   expect(action.parameters.hit !== undefined).toBe(hitOnReach);
+  if (hitOnReach) expect(action.parameters.schedule?.callbacks[0]?.hitKind).toBe('arrival');
 });
 
 it('无命中回调时不携带命中过滤', () => {
@@ -708,4 +710,27 @@ it('明确裁剪的发射不生成节点、回调或实例寿命', () => {
       graph: createActionGraphBuilder<CompiledBuffStepSource>(),
     }),
   ).toEqual([]);
+});
+
+it('碰撞与到达路径并存时由时间表明确命中方式', () => {
+  const input = reachInput();
+  input.launch = {
+    ...input.launch,
+    callbacks: [{ event: 'hit', enabled: true, skillId: 'callback' }],
+  };
+  input.runtime = {
+    ...input.runtime,
+    hitOnReach: true,
+    hasCollisionShape: true,
+    targetFilter: { ...input.runtime.targetFilter, autoSetTargetFaction: true, factionTarget: 1 },
+  };
+  expect(() => projectFixture(input)).toThrow(
+    'mixed collision/arrival hit requires explicit hitKind',
+  );
+  for (const hitKind of ['collision', 'arrival'] as const) {
+    input.schedule = { endFrame: 2, callbacks: [{ event: 'hit', hitKind, triggerFrames: [2] }] };
+    expect(projectFixture(input).steps[0]!.parameters.schedule?.callbacks[0]?.hitKind).toBe(
+      hitKind,
+    );
+  }
 });

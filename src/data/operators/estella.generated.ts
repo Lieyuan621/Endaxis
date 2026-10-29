@@ -826,7 +826,10 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0021_whiten_normal_skill',
             recycleDelaySeconds: 5,

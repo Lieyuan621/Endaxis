@@ -146,7 +146,7 @@ describe('LogicalAbilityEntityRuntime', () => {
     expect(restored.faction(entity)).toBe('bad');
     expect(restored.ownerSoul({ kind: 'enemy' })).toEqual(entity);
     expect(restored.ownerSoul(entity)).toEqual(entity);
-    expect(restored.preferredAttackTarget({ kind: 'enemy' })).toEqual(entity);
+    expect(restored.preferredAttackTarget({ kind: 'enemy' })).toEqual({ kind: 'enemy' });
     restored.soulVitals(entity)!.takeDamage(100);
     expect(killed).toHaveBeenCalledOnce();
     expect(restored.isAlive(entity)).toBe(false);

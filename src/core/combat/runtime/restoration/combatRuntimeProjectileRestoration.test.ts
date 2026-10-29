@@ -74,161 +74,180 @@ it('空投射物目录的关系阶段保持无操作', () => {
   expect(createCallbackBindings).not.toHaveBeenCalled();
 });
 
-it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
-  '整场投射物阶段按保存事件 %s 恢复回调',
-  mode => {
-    const event = mode === 'filteredHit' || mode === 'emptyHitTargets' ? 'hit' : mode;
-    let acceptsHit = mode !== 'filteredHit';
-    const evaluate = vi.fn((..._args: unknown[]) => acceptsHit);
-    const program: CompiledAbilityEntityChildSkillProgram = {
-      skillId: 'callback',
-      nativeSkillType: 'normalSkill',
-      naturalDurationFrames: 1,
-      initialBlackboard: {},
-      castResource: {
-        costFrame: 0,
-        cooldownSeconds: 0,
-        maxChargeTime: 1,
-        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-      },
-      timelineActions: [],
-    };
-    const original = new ProjectileLifecycleRuntime(() => 4);
-    const callback: ProjectileCallbackState = {
-      event,
-      ...(mode === 'reach' ? { inputTarget: { kind: 'spatialPoint' as const, pointId: 9 } } : {}),
-      programId: original.callbackPrograms.register(program),
-      definitionOperatorId: 'definition-owner',
-      skillId: program.skillId,
-      blackboard: new ActionBlackboard().runtimeState,
-      skillCastInfo: {
-        skillCastId: 7,
-        originSkillId: 'source',
-        originSkillType: 'battleSkill',
-        nonReturnedSpCost: 0,
-      },
-      host: null,
-    };
-    original.launch({
-      hitTargets: {
-        targets: mode === 'emptyHitTargets' ? [] : [{ kind: 'enemy' }],
-        ...(mode === 'filteredHit'
-          ? { hitTagFilter: { tagQueryType: 'exceptAny' as const, tags: ['Immune/Physical'] } }
-          : {}),
-      },
-      callbacks: [callback],
-      callbackPrograms: [program],
-      schedule: {
-        endFrame: 3,
-        callbacks: [{ event, triggerFrames: mode === 'filteredHit' ? [1, 2] : [1] }],
-      },
-      invokeScheduledCallback: () => {
-        throw new Error('original is saved before advancing');
-      },
-      recycleDelaySeconds: 0,
-      resolveTickDeltaSeconds: () => 1 / 30,
-
-      beforeReset: () => {},
-    });
-    const saved = structuredClone(original.runtimeState);
-    const clock = new CombatClock();
-    const receipt = new CombatReceiptCollector();
-    const timeDilation = new TimeDilationRuntime({});
-    timeDilation.startEntity({
-      entityId: 'ability-entity:4',
-      durationSeconds: 10,
-      slot: 'TimeDilation/Layer/Entity/HitStop',
-      priority: 1,
-      curve: () => 0.25,
-    });
-    const foundation = {
-      shared: {
-        abilityEntityInstanceIds: { allocate: () => 5 },
-        timeDilation,
-        clock,
-        receipt,
-      },
-    } as never;
-    const restored = createRestoredCombatProjectileDirectory({
-      preparation: {
-        graph: { instances: { projectiles: saved } },
-        programs: new Map([['definition-owner', {}]]),
-      } as never,
-      foundation,
-      callbackPrograms: original.callbackPrograms,
-    });
-    const createHost = vi.fn(
-      createCallbackSkillHostFactory({
-        callbackPrograms: original.callbackPrograms,
-        clock,
-        receipt,
-        definitionOperatorId: 'definition-owner',
-        allocateSkillCastId: () => {
-          throw new Error('callback inherits its cast id');
-        },
-      }),
-    );
-    const factory = createHost.getMockImplementation()!;
-    const observedCandidates: unknown[] = [];
-    createHost.mockImplementation((...args) => {
-      observedCandidates.push(restored.getUnfinishedTargets());
-      return factory(...args);
-    });
-    const requestedOwners: string[] = [];
-    const matchesHitTags = vi.fn(() => acceptsHit);
-    bindRestoredCombatProjectileRelations({
-      matchesHitTags,
-      projectiles: restored,
-      foundation,
-      entities: { targets: new Map() } as never,
-      createCallbackBindings: input => {
-        requestedOwners.push(input.definitionOperatorId);
-        return {
-          operations: { execute: () => true, evaluate },
-          createCallbackSkillHost: createHost,
-          launchProjectile: () => {
-            throw new Error('fixture has no nested projectile');
-          },
-        };
-      },
-    });
-
-    expect(restored.runtimeState).toBe(saved);
-    expect(requestedOwners).toEqual(['definition-owner']);
-    expect(createHost).not.toHaveBeenCalled();
-    if (mode === 'filteredHit') {
-      for (let i = 0; i < 4; i++) restored.advanceFrame();
-      expect(createHost).not.toHaveBeenCalled();
-      expect(restored.getUnfinishedTargets()).toEqual([{ kind: 'abilityEntity', instanceId: 4 }]);
-      expect(matchesHitTags).toHaveBeenCalledWith(
-        { kind: 'enemy' },
+it.each([
+  'hit',
+  'reach',
+  'finish',
+  'filteredHit',
+  'emptyHitTargets',
+  'dynamicHit',
+  'releasedTarget',
+  'filteredDynamicHit',
+  'arrivalHit',
+] as const)('整场投射物阶段按保存事件 %s 恢复回调', mode => {
+  const event = mode === 'reach' || mode === 'finish' ? mode : 'hit';
+  let acceptsHit = mode !== 'filteredHit';
+  const evaluate = vi.fn((..._args: unknown[]) => acceptsHit);
+  const program: CompiledAbilityEntityChildSkillProgram = {
+    skillId: 'callback',
+    nativeSkillType: 'normalSkill',
+    naturalDurationFrames: 1,
+    initialBlackboard: {},
+    castResource: {
+      costFrame: 0,
+      cooldownSeconds: 0,
+      maxChargeTime: 1,
+      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+    },
+    timelineActions: [],
+  };
+  const original = new ProjectileLifecycleRuntime(() => 4);
+  const callback: ProjectileCallbackState = {
+    event,
+    ...(mode === 'reach' ? { inputTarget: { kind: 'spatialPoint' as const, pointId: 9 } } : {}),
+    programId: original.callbackPrograms.register(program),
+    definitionOperatorId: 'definition-owner',
+    skillId: program.skillId,
+    blackboard: new ActionBlackboard().runtimeState,
+    skillCastInfo: {
+      skillCastId: 7,
+      originSkillId: 'source',
+      originSkillType: 'battleSkill',
+      nonReturnedSpCost: 0,
+    },
+    host: null,
+  };
+  original.launch({
+    hitTargets: {
+      targets: mode === 'emptyHitTargets' ? [] : [{ kind: 'enemy' }],
+      resolveOnHit: mode === 'dynamicHit' || mode === 'filteredDynamicHit',
+      ...(mode === 'filteredDynamicHit' ? { onlyHitTargets: [{ kind: 'enemy' as const }] } : {}),
+      ...(mode === 'filteredHit'
+        ? { hitTagFilter: { tagQueryType: 'exceptAny' as const, tags: ['Immune/Physical'] } }
+        : {}),
+    },
+    callbacks: [callback],
+    callbackPrograms: [program],
+    schedule: {
+      endFrame: 3,
+      callbacks: [
         {
-          tagQueryType: 'exceptAny',
-          tags: ['Immune/Physical'],
+          event,
+          ...(mode === 'arrivalHit' ? { hitKind: 'arrival' as const } : {}),
+          triggerFrames: mode === 'filteredHit' ? [1, 2] : [1],
         },
-      );
-      acceptsHit = true;
-    }
+      ],
+    },
+    invokeScheduledCallback: () => {
+      throw new Error('original is saved before advancing');
+    },
+    recycleDelaySeconds: 0,
+    resolveTickDeltaSeconds: () => 1 / 30,
+
+    beforeReset: () => {},
+  });
+  const saved = structuredClone(original.runtimeState);
+  const clock = new CombatClock();
+  const receipt = new CombatReceiptCollector();
+  const timeDilation = new TimeDilationRuntime({});
+  timeDilation.startEntity({
+    entityId: 'ability-entity:4',
+    durationSeconds: 10,
+    slot: 'TimeDilation/Layer/Entity/HitStop',
+    priority: 1,
+    curve: () => 0.25,
+  });
+  const foundation = {
+    shared: {
+      abilityEntityInstanceIds: { allocate: () => 5 },
+      timeDilation,
+      clock,
+      receipt,
+    },
+  } as never;
+  const restored = createRestoredCombatProjectileDirectory({
+    preparation: {
+      graph: { instances: { projectiles: saved } },
+      programs: new Map([['definition-owner', {}]]),
+    } as never,
+    foundation,
+    callbackPrograms: original.callbackPrograms,
+  });
+  const createHost = vi.fn(
+    createCallbackSkillHostFactory({
+      callbackPrograms: original.callbackPrograms,
+      clock,
+      receipt,
+      definitionOperatorId: 'definition-owner',
+      allocateSkillCastId: () => {
+        throw new Error('callback inherits its cast id');
+      },
+    }),
+  );
+  const factory = createHost.getMockImplementation()!;
+  const observedCandidates: unknown[] = [];
+  createHost.mockImplementation((...args) => {
+    observedCandidates.push(restored.getUnfinishedTargets());
+    return factory(...args);
+  });
+  const requestedOwners: string[] = [];
+  const matchesHitTags = vi.fn(() => acceptsHit);
+  bindRestoredCombatProjectileRelations({
+    matchesHitTags,
+    resolveHitTargets: () => [{ kind: 'abilityEntity', instanceId: 99 }],
+    hitTargetExists: () => mode !== 'releasedTarget',
+    projectiles: restored,
+    foundation,
+    entities: { targets: new Map() } as never,
+    createCallbackBindings: input => {
+      requestedOwners.push(input.definitionOperatorId);
+      return {
+        operations: { execute: () => true, evaluate },
+        createCallbackSkillHost: createHost,
+        launchProjectile: () => {
+          throw new Error('fixture has no nested projectile');
+        },
+      };
+    },
+  });
+
+  expect(restored.runtimeState).toBe(saved);
+  expect(requestedOwners).toEqual(['definition-owner']);
+  expect(createHost).not.toHaveBeenCalled();
+  if (mode === 'filteredHit') {
     for (let i = 0; i < 4; i++) restored.advanceFrame();
-    if (mode === 'emptyHitTargets') {
-      expect(createHost).not.toHaveBeenCalled();
-      expect(restored.getUnfinishedTargets()).toEqual([{ kind: 'abilityEntity', instanceId: 4 }]);
-      expect(saved.instances.get(4)!.callbacks[0]!.host).toBeNull();
-      return;
-    }
-    expect(createHost).toHaveBeenCalledOnce();
-    expect(observedCandidates).toEqual([[{ kind: 'abilityEntity', instanceId: 4 }]]);
-    expect(saved.instances.get(4)!.callbacks[0]!.host).not.toBeNull();
-    const execution = saved.instances.get(4)!.callbacks[0]!.host!.skill.execution;
-    if (mode === 'reach')
-      expect(execution.inputTarget).toEqual({
-        kind: 'spatialPoint',
-        pointId: 9,
-      });
-    const before = execution.passedFrames;
-    clock.advanceFrame();
-    restored.beginAbilityFrame();
-    restored.advanceAbilityFrame();
-    expect(execution.passedFrames - before).toBeCloseTo(0.25);
-  },
-);
+    expect(createHost).not.toHaveBeenCalled();
+    expect(restored.getUnfinishedTargets()).toEqual([{ kind: 'abilityEntity', instanceId: 4 }]);
+    expect(matchesHitTags).toHaveBeenCalledWith(
+      { kind: 'enemy' },
+      {
+        tagQueryType: 'exceptAny',
+        tags: ['Immune/Physical'],
+      },
+    );
+    acceptsHit = true;
+  }
+  for (let i = 0; i < 4; i++) restored.advanceFrame();
+  if (mode === 'emptyHitTargets' || mode === 'releasedTarget' || mode === 'filteredDynamicHit') {
+    expect(createHost).not.toHaveBeenCalled();
+    expect(restored.getUnfinishedTargets()).toEqual([{ kind: 'abilityEntity', instanceId: 4 }]);
+    expect(saved.instances.get(4)!.callbacks[0]!.host).toBeNull();
+    return;
+  }
+  expect(createHost).toHaveBeenCalledOnce();
+  expect(observedCandidates).toEqual([[{ kind: 'abilityEntity', instanceId: 4 }]]);
+  expect(saved.instances.get(4)!.callbacks[0]!.host).not.toBeNull();
+  const execution = saved.instances.get(4)!.callbacks[0]!.host!.skill.execution;
+  if (mode === 'dynamicHit')
+    expect(execution.inputTarget).toEqual({ kind: 'abilityEntity', instanceId: 99 });
+  if (mode === 'reach')
+    expect(execution.inputTarget).toEqual({
+      kind: 'spatialPoint',
+      pointId: 9,
+    });
+  const before = execution.passedFrames;
+  clock.advanceFrame();
+  restored.beginAbilityFrame();
+  restored.advanceAbilityFrame();
+  expect(execution.passedFrames - before).toBeCloseTo(0.25);
+});

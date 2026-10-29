@@ -313,8 +313,9 @@ describe('PlayerDamageOperationExecutor', () => {
         targetVitals,
         clock: new CombatClock(),
         receipt,
+        targetExists: target => target.kind !== 'abilityEntity' || entities.isActive(target),
         resolveSharedDamageTransfer: target => entities.sharedDamageTransfer(target),
-        resolveDefaultDamageTarget: () => entities.preferredAttackTarget({ kind: 'enemy' }),
+        resolveDefaultDamageTarget: () => part,
         captureAttributeSnapshots: () => createAttributeSnapshots(),
         criticalSamples: { nextCriticalSample: () => 1 },
         resolveNonRandomRuntimeSnapshot: () => ({
@@ -380,6 +381,19 @@ describe('PlayerDamageOperationExecutor', () => {
         damageTransferMultiplier: 1.5,
         transferredSourceId: `ability-entity:${part.instanceId}`,
       });
+      entities.finish(part);
+      // 延迟伤害仍持有旧句柄：回收后跳过，不改投主体，也不再次结算。
+      expect(() =>
+        executor.execute(
+          {
+            ...DAMAGE_STEP,
+            parameters: { ...DAMAGE_STEP.parameters, target: 'actionInputTarget' },
+          },
+          { blackboard: new ActionBlackboard(), actionInputTarget: part },
+        ),
+      ).not.toThrow();
+      expect(targetVitals.health).toBe(1500);
+      expect(receipt.entries.filter(entry => entry.event === 'DamageApplied')).toHaveLength(1);
     },
   );
   it.each([

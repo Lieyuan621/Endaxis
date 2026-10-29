@@ -15,7 +15,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -167,7 +170,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
+            schedule: {
+              endFrame: 23,
+              callbacks: [{ event: 'hit', triggerFrames: [23], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_2',
             recycleDelaySeconds: 0.100000001490116,
@@ -184,7 +190,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
+            schedule: {
+              endFrame: 23,
+              callbacks: [{ event: 'hit', triggerFrames: [23], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_1',
             recycleDelaySeconds: 0.100000001490116,
@@ -382,7 +391,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
+            schedule: {
+              endFrame: 23,
+              callbacks: [{ event: 'hit', triggerFrames: [23], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_2',
             recycleDelaySeconds: 0.100000001490116,
@@ -399,7 +411,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
+            schedule: {
+              endFrame: 23,
+              callbacks: [{ event: 'hit', triggerFrames: [23], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_1',
             recycleDelaySeconds: 0.100000001490116,
@@ -416,7 +431,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
+            schedule: {
+              endFrame: 23,
+              callbacks: [{ event: 'hit', triggerFrames: [23], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_1',
             recycleDelaySeconds: 0.100000001490116,
@@ -433,7 +451,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 23, callbacks: [{ event: 'hit', triggerFrames: [23] }] },
+            schedule: {
+              endFrame: 23,
+              callbacks: [{ event: 'hit', triggerFrames: [23], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_2',
             recycleDelaySeconds: 0.100000001490116,
@@ -4185,7 +4206,10 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_combo_skill_ring',
             recycleDelaySeconds: 0.0333333350718021,

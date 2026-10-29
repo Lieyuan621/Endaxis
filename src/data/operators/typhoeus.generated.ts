@@ -27,7 +27,10 @@ export const typhoeusChr_0034_typhoea_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_attack_01',
             recycleDelaySeconds: 0.0333333350718021,
@@ -152,7 +155,10 @@ export const typhoeusChr_0034_typhoea_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_attack_01',
             recycleDelaySeconds: 0.0333333350718021,
@@ -432,7 +438,10 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
             recycleDelaySeconds: 0.16666667163372,
@@ -450,7 +459,10 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
             recycleDelaySeconds: 0.16666667163372,
@@ -468,7 +480,10 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
             recycleDelaySeconds: 0.16666667163372,
@@ -519,7 +534,10 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
             recycleDelaySeconds: 0.16666667163372,
@@ -537,7 +555,10 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
             recycleDelaySeconds: 0.16666667163372,
@@ -555,7 +576,10 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
             recycleDelaySeconds: 0.16666667163372,
@@ -692,7 +716,10 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_attack_04_02',
             recycleDelaySeconds: 0.0333333350718021,
@@ -769,7 +796,10 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 5, callbacks: [{ event: 'hit', triggerFrames: [5] }] },
+            schedule: {
+              endFrame: 5,
+              callbacks: [{ event: 'hit', triggerFrames: [5], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_attack_04_01',
             recycleDelaySeconds: 0.0333333350718021,
@@ -943,7 +973,7 @@ export const typhoeusChr_0034_typhoea_attack5ActionGraph = {
               endFrame: 7,
               callbacks: [
                 { event: 'block', triggerFrames: [7] },
-                { event: 'hit', triggerFrames: [2] },
+                { event: 'hit', triggerFrames: [2], hitKind: 'collision' },
               ],
             },
             inheritActionBlackboard: true,
@@ -1923,7 +1953,10 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1940,7 +1973,10 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1957,7 +1993,10 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1974,7 +2013,10 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -2001,7 +2043,10 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
             recycleDelaySeconds: 0.0333333350718021,
@@ -2018,7 +2063,10 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
             recycleDelaySeconds: 0.0333333350718021,
@@ -3224,7 +3272,10 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -3241,7 +3292,10 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -3258,7 +3312,10 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -3275,7 +3332,10 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -3302,7 +3362,10 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
             recycleDelaySeconds: 0.0333333350718021,
@@ -3319,7 +3382,10 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
             recycleDelaySeconds: 0.0333333350718021,
@@ -4550,7 +4616,10 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -4567,7 +4636,10 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -4584,7 +4656,10 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -4601,7 +4676,10 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -4628,7 +4706,10 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
             recycleDelaySeconds: 0.0333333350718021,
@@ -4645,7 +4726,10 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
             recycleDelaySeconds: 0.0333333350718021,
@@ -5773,7 +5857,10 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -5790,7 +5877,10 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -5807,7 +5897,10 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -5824,7 +5917,10 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -5851,7 +5947,10 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
             recycleDelaySeconds: 0.0333333350718021,
@@ -5868,7 +5967,10 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
             recycleDelaySeconds: 0.0333333350718021,
@@ -7316,7 +7418,10 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -7333,7 +7438,10 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -7350,7 +7458,10 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -7367,7 +7478,10 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
             recycleDelaySeconds: 0.0333333350718021,
@@ -7394,7 +7508,10 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
             recycleDelaySeconds: 0.0333333350718021,
@@ -7411,7 +7528,10 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
             recycleDelaySeconds: 0.0333333350718021,
@@ -7516,7 +7636,10 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_05',
             recycleDelaySeconds: 0.200000002980232,
@@ -7533,7 +7656,10 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_05_enhence',
             recycleDelaySeconds: 0.200000002980232,
@@ -8685,7 +8811,10 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
             recycleDelaySeconds: 0.0333333350718021,
@@ -8705,7 +8834,10 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
             recycleDelaySeconds: 0.0333333350718021,
@@ -8725,7 +8857,10 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
             onlyHitTargets: { kind: 'inputTarget' },
@@ -8792,7 +8927,10 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
             recycleDelaySeconds: 0.0333333350718021,
@@ -8812,7 +8950,10 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
             recycleDelaySeconds: 0.0333333350718021,
@@ -8832,7 +8973,10 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
             onlyHitTargets: { kind: 'inputTarget' },
@@ -9967,7 +10111,10 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 7, callbacks: [{ event: 'hit', triggerFrames: [7] }] },
+            schedule: {
+              endFrame: 7,
+              callbacks: [{ event: 'hit', triggerFrames: [7], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_combo_2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -9984,7 +10131,10 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_combo_2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -10023,7 +10173,10 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 9, callbacks: [{ event: 'hit', triggerFrames: [9] }] },
+            schedule: {
+              endFrame: 9,
+              callbacks: [{ event: 'hit', triggerFrames: [9], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_combo_1',
             recycleDelaySeconds: 0.433333337306976,
@@ -10051,7 +10204,10 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_combo_1',
             recycleDelaySeconds: 0.433333337306976,
@@ -10566,7 +10722,10 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 7, callbacks: [{ event: 'hit', triggerFrames: [7] }] },
+            schedule: {
+              endFrame: 7,
+              callbacks: [{ event: 'hit', triggerFrames: [7], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_combo_2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -10586,7 +10745,10 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_combo_2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -10628,7 +10790,10 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 11, callbacks: [{ event: 'hit', triggerFrames: [11] }] },
+            schedule: {
+              endFrame: 11,
+              callbacks: [{ event: 'hit', triggerFrames: [11], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_combo_1',
             recycleDelaySeconds: 0.433333337306976,
@@ -10659,7 +10824,10 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0034_typhoea_archery_combo_1',
             recycleDelaySeconds: 0.433333337306976,

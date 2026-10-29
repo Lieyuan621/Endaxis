@@ -1,3 +1,5 @@
+import type { ProjectileCallbackSchedule } from '../../../../packages/game-data-contract/src/projectileSchedule';
+import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { ProjectileHitTargets } from '../state/instanceState';
 import { ActionBlackboard } from '../actions/actionBlackboard';
@@ -14,14 +16,17 @@ import type { ProjectileCallbackPrograms } from './projectileCallbackPrograms';
 import type { ProjectileHostPorts } from './projectileLifecycleRuntime';
 
 export interface ProjectileHitBinding {
+  readonly kind?: ProjectileCallbackSchedule['hitKind'];
   readonly state: ProjectileHitTargets;
+  readonly resolveTargets?: () => readonly RuntimeTargetRef[];
+  readonly targetExists?: (target: RuntimeTargetRef) => boolean;
   readonly matchesTags?: (
     target: RuntimeTargetRef,
     query: NonNullable<ProjectileHitTargets['hitTagFilter']>,
   ) => boolean;
 }
 
-/** 新建与恢复共用事件绑定；命中目标和标签条件随投射物状态保存。 */
+/** 新建与恢复共用事件绑定；目标选择方式和过滤条件随投射物状态保存。 */
 export function bindProjectileCallbackLifecycle(
   callbacks: readonly ProjectileCallbackRuntime[],
   resolveTickDeltaSeconds: () => number | null,
@@ -37,8 +42,21 @@ export function bindProjectileCallbackLifecycle(
         return;
       }
       if (!hit) throw new Error('scheduled hit requires target binding');
-      for (const target of hit.state.targets) {
-        if (hit.state.hitTagFilter) {
+      const targets = hit.state.resolveOnHit ? hit.resolveTargets?.() : hit.state.targets;
+      if (!targets) throw new Error('projectile collision requires target resolution');
+      for (const target of targets) {
+        if (target.kind !== 'spatialPoint' && hit.targetExists?.(target) === false) continue;
+        if (
+          hit.kind !== 'arrival' &&
+          hit.state.onlyHitTargets !== undefined &&
+          !hit.state.onlyHitTargets.some(
+            allowed =>
+              runtimeTargetEntityId(allowed) !== undefined &&
+              runtimeTargetEntityId(allowed) === runtimeTargetEntityId(target),
+          )
+        )
+          continue;
+        if (hit.kind !== 'arrival' && hit.state.hitTagFilter) {
           if (!hit.matchesTags) throw new Error('projectile hit filtering requires target tags');
           if (!hit.matchesTags(target, hit.state.hitTagFilter)) continue;
         }

@@ -12,7 +12,10 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0004_pelica_normal_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -180,7 +183,10 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0004_pelica_normal_attack2',
             recycleDelaySeconds: 0.100000001490116,
@@ -317,7 +323,10 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0004_pelica_normal_attack3',
             recycleDelaySeconds: 0.0333333350718021,
@@ -487,7 +496,10 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0004_pelica_normal_attack4',
             recycleDelaySeconds: 0.0333333350718021,
@@ -863,7 +875,10 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0004_pelica_plunging_attack',
             recycleDelaySeconds: 0.0333333350718021,
@@ -880,7 +895,10 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0004_pelica_plunging_attack',
             recycleDelaySeconds: 0.0333333350718021,
@@ -897,7 +915,10 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0004_pelica_plunging_attack',
             recycleDelaySeconds: 0.0333333350718021,
@@ -914,7 +935,10 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [] }] },
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0004_pelica_plunging_attack',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1072,7 +1096,10 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0004_pelica_combo_skill',
             recycleDelaySeconds: 0.0333333350718021,

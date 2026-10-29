@@ -327,7 +327,10 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_combo_skill',
             recycleDelaySeconds: 0.0333333350718021,
@@ -345,7 +348,10 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_combo_skill',
             recycleDelaySeconds: 0.0333333350718021,
@@ -493,7 +499,10 @@ export const xaihiChr_0011_seraph_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_normal_attack',
             recycleDelaySeconds: 0.0333333350718021,
@@ -662,7 +671,10 @@ export const xaihiChr_0011_seraph_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_normal_attack2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -831,7 +843,10 @@ export const xaihiChr_0011_seraph_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_normal_attack3_true',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1097,7 +1112,10 @@ export const xaihiChr_0011_seraph_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_normal_attack3',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1112,7 +1130,10 @@ export const xaihiChr_0011_seraph_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0011_seraph_normal_attack3_02',
             recycleDelaySeconds: 0.0333333350718021,

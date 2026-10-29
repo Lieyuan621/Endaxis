@@ -853,7 +853,9 @@
       "detachSkill": "解除技能",
       "interruptAction": "动作打断",
       "dash": "闪避",
-      "castNextSkill": "施放下一技能"
+      "castNextSkill": "施放下一技能",
+      "collision": "碰撞命中",
+      "arrival": "到达命中"
     },
     "optional": "可选",
     "unset": "未设置",
@@ -1927,6 +1929,10 @@
       "entityInitialValues": {
         "name": "实体初始化变量",
         "help": "发射时传入投射物实例的黑板初值。"
+      },
+      "hitKind": {
+        "name": "命中方式",
+        "help": "碰撞命中在触发时选择目标；到达命中使用发射时的目标。"
       }
     },
     "help": "查看说明",

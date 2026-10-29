@@ -5069,6 +5069,13 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
                 kind: 'object',
                 fields: {
                   event: schema_f2a8b3847ddd,
+                  hitKind: {
+                    kind: 'enum',
+                    options: ['collision', 'arrival'],
+                    semantics: schema_4107b248d073,
+                    optional: true,
+                    description: 'hit 的目标来源：碰撞时选取对象，或使用发射时的到达目标。',
+                  },
                   triggerFrames: {
                     kind: 'array',
                     element: schema_9f4351f81806,

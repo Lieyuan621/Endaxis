@@ -1420,7 +1420,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             schedule: {
               endFrame: 9,
               callbacks: [
-                { event: 'hit', triggerFrames: [6] },
+                { event: 'hit', triggerFrames: [6], hitKind: 'collision' },
                 { event: 'reach', triggerFrames: [9] },
               ],
             },
@@ -1660,7 +1660,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             schedule: {
               endFrame: 8,
               callbacks: [
-                { event: 'hit', triggerFrames: [7] },
+                { event: 'hit', triggerFrames: [7], hitKind: 'collision' },
                 { event: 'reach', triggerFrames: [8] },
               ],
             },

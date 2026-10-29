@@ -139,7 +139,10 @@ export const yvonneChr_0017_yvonne_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -316,7 +319,10 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -439,7 +445,10 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_attack2_robot',
             recycleDelaySeconds: 0.0333333350718021,
@@ -714,7 +723,10 @@ export const yvonneChr_0017_yvonne_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 11, callbacks: [{ event: 'hit', triggerFrames: [11] }] },
+            schedule: {
+              endFrame: 11,
+              callbacks: [{ event: 'hit', triggerFrames: [11], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_attack3',
             recycleDelaySeconds: 0.0333333350718021,
@@ -729,7 +741,10 @@ export const yvonneChr_0017_yvonne_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 11, callbacks: [{ event: 'hit', triggerFrames: [11] }] },
+            schedule: {
+              endFrame: 11,
+              callbacks: [{ event: 'hit', triggerFrames: [11], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_attack3_2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -744,7 +759,10 @@ export const yvonneChr_0017_yvonne_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 11, callbacks: [{ event: 'hit', triggerFrames: [11] }] },
+            schedule: {
+              endFrame: 11,
+              callbacks: [{ event: 'hit', triggerFrames: [11], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_attack3_3',
             recycleDelaySeconds: 0.0333333350718021,
@@ -916,7 +934,7 @@ export const yvonneChr_0017_yvonne_attack4ActionGraph = {
               endFrame: 2,
               callbacks: [
                 { event: 'block', triggerFrames: [] },
-                { event: 'hit', triggerFrames: [2] },
+                { event: 'hit', triggerFrames: [2], hitKind: 'collision' },
               ],
             },
             inheritActionBlackboard: true,
@@ -1276,7 +1294,10 @@ export const yvonneChr_0017_yvonne_power_attackActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 9, callbacks: [{ event: 'hit', triggerFrames: [9] }] },
+            schedule: {
+              endFrame: 9,
+              callbacks: [{ event: 'hit', triggerFrames: [9], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_power_attack',
             recycleDelaySeconds: 0.0333333350718021,
@@ -2154,7 +2175,10 @@ export const yvonneChr_0017_yvonne_ult_attack1_1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_ult_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -2449,7 +2473,10 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_ult_attack2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -2572,7 +2599,10 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_ult_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -2926,7 +2956,10 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_ult_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -3308,7 +3341,10 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_ult_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -3399,7 +3435,10 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_ult_attack2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -3889,7 +3928,10 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_ult_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -3980,7 +4022,10 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0017_yvonne_ult_attack2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -6244,7 +6289,7 @@ const yvonneBuff5ActionGraph = {
               endFrame: 10,
               callbacks: [
                 { event: 'block', triggerFrames: [] },
-                { event: 'hit', triggerFrames: [10] },
+                { event: 'hit', triggerFrames: [10], hitKind: 'collision' },
               ],
             },
             inheritActionBlackboard: true,

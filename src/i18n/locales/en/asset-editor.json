@@ -836,7 +836,9 @@
       "detachSkill": "Detach skill",
       "interruptAction": "Action interruption",
       "dash": "Dodge",
-      "castNextSkill": "Cast next skill"
+      "castNextSkill": "Cast next skill",
+      "collision": "Collision hit",
+      "arrival": "Arrival hit"
     },
     "optional": "Optional",
     "unset": "Not set",
@@ -1910,6 +1912,10 @@
       "entityInitialValues": {
         "name": "Entity initial values",
         "help": "Initial blackboard values passed to the projectile instance at launch."
+      },
+      "hitKind": {
+        "name": "Hit trigger",
+        "help": "Collision selects a target when triggered; arrival uses the launch target."
       }
     },
     "help": "Help",

@@ -39,6 +39,7 @@ export interface ProjectileRuntimeSource {
   /** 新版 VFS 严格解码直接恢复的 Projectile AbilitySystem 实体黑板；缺少表示尚未解出。 */
   readonly entityBlackboard?: readonly DeclaredBlackboardValueSource[];
   readonly hitOnReach: boolean;
+  readonly hasCollisionShape: boolean;
   readonly targetFilter: {
     readonly checkAlive: boolean;
     readonly autoSetTargetFaction: boolean;
@@ -96,6 +97,14 @@ export function parseProjectileRuntimeSource(
         }),
 
     hitOnReach: requireBoolean(root.hitOnReach, `${path}.hitOnReach`),
+    hasCollisionShape:
+      requireInteger(
+        requireRecord(
+          requireRecord(root.colliderShapeData, `${path}.colliderShapeData`).shapeType,
+          `${path}.colliderShapeData.shapeType`,
+        ).value,
+        `${path}.colliderShapeData.shapeType.value`,
+      ) !== 0,
 
     targetFilter: {
       checkAlive: requireBoolean(targetFilter.checkAlive, `${path}.targetFilter.checkAlive`),

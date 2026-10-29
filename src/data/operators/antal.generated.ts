@@ -286,7 +286,10 @@ export const antalChr_0023_antal_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_normal_attack1',
             recycleDelaySeconds: 0.0333333350718021,
@@ -454,7 +457,10 @@ export const antalChr_0023_antal_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_normal_attack2',
             recycleDelaySeconds: 0.0333333350718021,
@@ -622,7 +628,10 @@ export const antalChr_0023_antal_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_normal_attack3',
             recycleDelaySeconds: 0.0333333350718021,
@@ -946,7 +955,10 @@ export const antalChr_0023_antal_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_normal_attack4',
             recycleDelaySeconds: 0.0333333350718021,
@@ -961,7 +973,10 @@ export const antalChr_0023_antal_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_normal_attack4',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1034,7 +1049,10 @@ export const antalChr_0023_antal_power_attackActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 2, callbacks: [{ event: 'hit', triggerFrames: [2] }] },
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_power_attack02',
             recycleDelaySeconds: 5,
@@ -1158,7 +1176,10 @@ export const antalChr_0023_antal_power_attackActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_power_attack',
             syncTimeScale: true,

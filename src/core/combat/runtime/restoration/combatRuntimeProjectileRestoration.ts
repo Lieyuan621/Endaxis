@@ -60,6 +60,12 @@ export function createRestoredCombatProjectileDirectory(options: {
 }
 
 export function bindRestoredCombatProjectileRelations(options: {
+  readonly resolveHitTargets?: NonNullable<
+    Parameters<typeof bindProjectileCallbackLifecycle>[2]
+  >['resolveTargets'];
+  readonly hitTargetExists?: NonNullable<
+    Parameters<typeof bindProjectileCallbackLifecycle>[2]
+  >['targetExists'];
   readonly matchesHitTags?: NonNullable<
     Parameters<typeof bindProjectileCallbackLifecycle>[2]
   >['matchesTags'];
@@ -115,6 +121,10 @@ export function bindRestoredCombatProjectileRelations(options: {
             ? undefined
             : {
                 state: state.hitTargets,
+                kind: state.schedule.definition.callbacks.find(entry => entry.event === 'hit')
+                  ?.hitKind,
+                resolveTargets: options.resolveHitTargets,
+                targetExists: options.hitTargetExists,
                 matchesTags: options.matchesHitTags,
               },
         ),

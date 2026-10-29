@@ -271,7 +271,7 @@ it('祀正式定义可放置全部技能并完成模拟', async () => {
       entry => entry.event === 'DamageApplied' && entry.data?.castId === castId,
     );
   expect(hits('attack-soul:0').length).toBeGreaterThan(0);
-  expect(hits('attack-soul:0').some(entry => entry.data?.transferredSourceId !== undefined)).toBe(
+  expect(hits('attack-soul:0').every(entry => entry.data?.transferredSourceId === undefined)).toBe(
     true,
   );
   expect(hits('attack-soul:1').length).toBeGreaterThan(0);

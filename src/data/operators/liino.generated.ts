@@ -825,7 +825,10 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 5, callbacks: [{ event: 'hit', triggerFrames: [5] }] },
+            schedule: {
+              endFrame: 5,
+              callbacks: [{ event: 'hit', triggerFrames: [5], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_attack3_l_02',
             recycleDelaySeconds: 0.0333333350718021,
@@ -840,7 +843,10 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 6, callbacks: [{ event: 'hit', triggerFrames: [6] }] },
+            schedule: {
+              endFrame: 6,
+              callbacks: [{ event: 'hit', triggerFrames: [6], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_attack3_l_02',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1192,7 +1198,10 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_attack4_l',
             recycleDelaySeconds: 0.0333333350718021,
@@ -1207,7 +1216,10 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 4, callbacks: [{ event: 'hit', triggerFrames: [4] }] },
+            schedule: {
+              endFrame: 4,
+              callbacks: [{ event: 'hit', triggerFrames: [4], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_attack4_r',
             recycleDelaySeconds: 0.0333333350718021,
@@ -5279,7 +5291,10 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 12, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 12,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_ultskill_soundwave_02',
             recycleDelaySeconds: 0.0333333350718021,
@@ -7111,7 +7126,10 @@ const liinoBuff12ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 14, callbacks: [{ event: 'hit', triggerFrames: [5] }] },
+            schedule: {
+              endFrame: 14,
+              callbacks: [{ event: 'hit', triggerFrames: [5], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_soundwave',
             recycleDelaySeconds: 0.0333333350718021,
@@ -7133,7 +7151,10 @@ const liinoBuff12ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 14, callbacks: [{ event: 'hit', triggerFrames: [5] }] },
+            schedule: {
+              endFrame: 14,
+              callbacks: [{ event: 'hit', triggerFrames: [5], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_soundwave_chrdung',
             recycleDelaySeconds: 0.0333333350718021,
@@ -8389,7 +8410,10 @@ const liinoBuff33ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 12, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            schedule: {
+              endFrame: 12,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_ultskill_soundwave_heal',
             recycleDelaySeconds: 0.0333333350718021,
@@ -8404,7 +8428,10 @@ const liinoBuff33ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 12, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 12,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_ultskill_soundwave',
             recycleDelaySeconds: 0.0333333350718021,

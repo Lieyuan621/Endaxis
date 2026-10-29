@@ -134,6 +134,8 @@ export interface SharedDamageTransfer {
 }
 
 export interface PlayerDamageOperationDependencies {
+  /** 对应原生目标句柄锁定；死亡但尚未回收的实体仍可能存在。 */
+  readonly targetExists?: (target: RuntimeTargetRef) => boolean;
   /** 为实际受击实体绑定属性、修正器和账本，保持当前技能/来源身份。 */
   readonly resolveTargetDependencies?: (
     targetId: string,
@@ -318,6 +320,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     return new PlayerDamageOperationExecutor({
       ...bound,
       queryTargets: this.dependencies.queryTargets,
+      targetExists: this.dependencies.targetExists,
       resolveDefaultDamageTarget: this.dependencies.resolveDefaultDamageTarget,
       castId: this.dependencies.castId,
       skillId: this.dependencies.skillId,
@@ -347,6 +350,14 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
   }
 
   #executeTarget(step: RuntimeOperation, operationContext?: CombatOperationContext): boolean {
+    if (step.kind === 'dealDamage' || step.kind === 'dealStagger') {
+      const receiver = this.#resolveDamageTarget(step, operationContext);
+      if (
+        runtimeTargetEntityId(receiver) === undefined ||
+        this.dependencies.targetExists?.(receiver) === false
+      )
+        return step.parameters.alwaysNext !== false;
+    }
     const target =
       step.kind === 'dealDamage' ? this.#resolveDamageTarget(step, operationContext) : undefined;
     const targetId = target === undefined ? undefined : runtimeTargetEntityId(target);
@@ -919,7 +930,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     for (const target of targets) {
       const targetId = runtimeTargetEntityId(target);
       // 与普通伤害共用原生实体锁定边界：空间目标不进入计算，也不读取操作数。
-      if (targetId === undefined) continue;
+      if (targetId === undefined || this.dependencies.targetExists?.(target) === false) continue;
       const vitals = ports.resolveVitals(targetId);
       ports.emitPreparationEvent('beforeCalculateDamage', {
         sourceId,

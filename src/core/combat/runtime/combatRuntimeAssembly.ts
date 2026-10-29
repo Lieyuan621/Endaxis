@@ -402,6 +402,7 @@ interface CombatOperationTargetBindings {
   readonly resolveInflictionTarget?: (target: RuntimeTargetRef) => RuntimeTargetRef;
   readonly queryTargets?: CombatOperationExecutor['queryTargets'];
   readonly resolveDefaultDamageTarget?: () => RuntimeTargetRef;
+  readonly targetExists?: (target: RuntimeTargetRef) => boolean;
   /** 查询本次战斗分支的部位身份和账本；不能捕获另一切面的实体目录。 */
   readonly resolveSharedDamageTransfer?: (
     target: RuntimeTargetRef,
@@ -1387,6 +1388,8 @@ export class CombatRuntimeAssembly {
       // Buff 的 SkillAffix 先接回投射物 reset 监听，投射物随后核对完整的监听登记。
       buffs.restoration.bindRelations();
       bindRestoredCombatProjectileRelations({
+        resolveHitTargets: () => [this.abilityEntities.preferredAttackTarget({ kind: 'enemy' })],
+        hitTargetExists: target => this.#damageTargetExists(target),
         matchesHitTags: (target, query) =>
           this.#selectorBuffTarget(target)?.matchesEntityTags(query.tags, query.tagQueryType) ??
           false,
@@ -3022,6 +3025,8 @@ export class CombatRuntimeAssembly {
         if (request.hit?.target === 'currentTarget' && request.hitTarget === undefined)
           throw new Error('projectile current target is missing');
         if (!request.schedule) throw new Error('projectile launch has no schedule');
+        const collisionHit =
+          request.schedule.callbacks.find(entry => entry.event === 'hit')?.hitKind !== 'arrival';
         const hitTarget: RuntimeTargetRef =
           request.hitTarget ??
           (request.hit?.target === 'controlledOperator'
@@ -3045,20 +3050,19 @@ export class CombatRuntimeAssembly {
               pointId: this.sharedState.identities.spatialPoints.nextSpatialPointId++,
             };
           }
-        let targets: readonly RuntimeTargetRef[] =
+        const targets: readonly RuntimeTargetRef[] =
           request.hit?.target === 'allOperators'
             ? this.#operatorOrder.map(operatorId => ({ kind: 'operator' as const, operatorId }))
-            : [hitTarget];
-        if (request.onlyHitTargets !== undefined) {
-          const allowed = new Set(request.onlyHitTargets.map(runtimeTargetEntityId));
-          allowed.delete(undefined);
-          targets = targets.filter(target => allowed.has(runtimeTargetEntityId(target)));
-        }
+            : request.hit?.target === undefined && collisionHit
+              ? []
+              : [hitTarget];
         const hitTargets =
           request.hit === undefined
             ? undefined
             : {
                 targets,
+                resolveOnHit: request.hit.target === undefined && collisionHit,
+                onlyHitTargets: request.onlyHitTargets,
                 hitTagFilter: request.hit.hitTagFilter,
               };
         const entity = this.projectileLifetimes.launch({
@@ -3088,6 +3092,11 @@ export class CombatRuntimeAssembly {
               ? undefined
               : {
                   state: hitTargets,
+                  kind: collisionHit ? 'collision' : 'arrival',
+                  resolveTargets: () => [
+                    this.abilityEntities.preferredAttackTarget({ kind: 'enemy' }),
+                  ],
+                  targetExists: target => this.#damageTargetExists(target),
                   matchesTags: (target, query) =>
                     this.#selectorBuffTarget(target)?.matchesEntityTags(
                       query.tags,
@@ -4429,6 +4438,7 @@ export class CombatRuntimeAssembly {
       resolveDefaultDamageTarget: () =>
         this.abilityEntities.preferredAttackTarget({ kind: 'enemy' }),
       resolveAbilitySystemSourceId: entityId => this.#resolveAbilitySystemSourceId(entityId),
+      targetExists: target => this.#damageTargetExists(target),
       resolveSharedDamageTransfer: target => this.abilityEntities.sharedDamageTransfer(target),
       buffDefinitions: definitionOperator.buffDefinitions,
       enemy,
@@ -4797,6 +4807,7 @@ export class CombatRuntimeAssembly {
         queryTargets,
         resolveInflictionTarget: target => this.#resolveInflictionTarget(target),
         ...source,
+        targetExists: target => this.#damageTargetExists(target),
         resolveSharedDamageTransfer: target => this.abilityEntities.sharedDamageTransfer(target),
         buffDefinitions: operator.buffDefinitions,
         enemy: options.enemy,
@@ -5201,6 +5212,7 @@ export class CombatRuntimeAssembly {
         castId: sourceActionId,
         sourceOperatorId: operator.operatorId,
         resolveAbilitySystemSourceId: entityId => this.#resolveAbilitySystemSourceId(entityId),
+        targetExists: target => this.#damageTargetExists(target),
         resolveSharedDamageTransfer: target => this.abilityEntities.sharedDamageTransfer(target),
         buffDefinitions: operator.buffDefinitions,
         program: {
@@ -5751,6 +5763,23 @@ export class CombatRuntimeAssembly {
     if (skillIds.size !== 1) return undefined;
     const fixedCandidates = candidates.filter(candidate => fixedPrograms.has(candidate.program));
     return fixedCandidates.length === 1 ? fixedCandidates[0]!.definition : undefined;
+  }
+
+  #damageTargetExists(target: RuntimeTargetRef): boolean {
+    switch (target.kind) {
+      case 'enemy':
+      case 'godEntity':
+        return true;
+      case 'operator':
+        return this.#operators.has(target.operatorId);
+      case 'abilityEntity':
+        return (
+          this.abilityEntities.isActive(target) ||
+          this.projectileLifetimes.runtimeState.instances.has(target.instanceId)
+        );
+      case 'spatialPoint':
+        return false;
+    }
   }
 
   /** Selector 的 Buff/标签过滤共用原生部位 Buff 归属。 */

@@ -157,7 +157,10 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 3, callbacks: [{ event: 'hit', triggerFrames: [3] }] },
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0016_laevat_combo_skill_indicator',
             recycleDelaySeconds: 0.0333333350718021,
@@ -893,7 +896,7 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
               endFrame: 4,
               callbacks: [
                 { event: 'block', triggerFrames: [4] },
-                { event: 'hit', triggerFrames: [4] },
+                { event: 'hit', triggerFrames: [4], hitKind: 'collision' },
               ],
             },
             inheritActionBlackboard: true,
@@ -933,7 +936,7 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
               endFrame: 4,
               callbacks: [
                 { event: 'block', triggerFrames: [4] },
-                { event: 'hit', triggerFrames: [4] },
+                { event: 'hit', triggerFrames: [4], hitKind: 'collision' },
               ],
             },
             inheritActionBlackboard: true,
@@ -4507,7 +4510,10 @@ const laevatainBuff12ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 21, callbacks: [{ event: 'hit', triggerFrames: [21] }] },
+            schedule: {
+              endFrame: 21,
+              callbacks: [{ event: 'hit', triggerFrames: [21], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0016_laevat_absorb',
             recycleDelaySeconds: 5,
@@ -4555,7 +4561,10 @@ const laevatainBuff12ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 21, callbacks: [{ event: 'hit', triggerFrames: [21] }] },
+            schedule: {
+              endFrame: 21,
+              callbacks: [{ event: 'hit', triggerFrames: [21], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0016_laevat_absorb',
             recycleDelaySeconds: 5,
@@ -4603,7 +4612,10 @@ const laevatainBuff12ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 21, callbacks: [{ event: 'hit', triggerFrames: [21] }] },
+            schedule: {
+              endFrame: 21,
+              callbacks: [{ event: 'hit', triggerFrames: [21], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0016_laevat_absorb',
             recycleDelaySeconds: 5,
@@ -4651,7 +4663,10 @@ const laevatainBuff12ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 21, callbacks: [{ event: 'hit', triggerFrames: [21] }] },
+            schedule: {
+              endFrame: 21,
+              callbacks: [{ event: 'hit', triggerFrames: [21], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0016_laevat_absorb',
             recycleDelaySeconds: 5,

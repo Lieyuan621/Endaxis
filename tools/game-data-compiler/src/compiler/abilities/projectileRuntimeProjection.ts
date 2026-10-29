@@ -127,19 +127,6 @@ export function createProjectileProjectionExtensionSource(input: {
     };
     const runtime = input.catalog.runtimes.get(launch.projectileId);
     if (!runtime) throw new Error(`${sourcePath}: missing ProjectileData ${launch.projectileId}`);
-    const reachesCurrentOperator =
-      runtime.hitOnReach &&
-      launch.target.targetSource === 'Target' &&
-      projectionContext.actionTargetTarget === 'currentOperator';
-    if (
-      (runtime.hitOnReach && launch.target.targetSource === 'MainCharacter') ||
-      reachesCurrentOperator
-    )
-      callbackContext = {
-        ...callbackContext,
-        actionTargetTarget: 'actionInputTarget',
-        actionInputIsOperator: true,
-      };
     const template = input.catalog.templates.get(launch.projectileId) ?? null;
     const enabled = launch.callbacks.filter(callback => callback.enabled);
     // 只开放回调输入不依赖飞行目标的 launch-only 路线。目标集合可能为空或有多个，
@@ -181,7 +168,7 @@ export function createProjectileProjectionExtensionSource(input: {
           isEmptyProjectileCollisionPopulation(runtime.targetFilter)
         ),
     );
-    const schedule = input.resolveSchedule?.(
+    const configuredSchedule: ProjectileLaunchSchedule = input.resolveSchedule?.(
       launch,
       sourcePath,
       routes.map(route => route.event),
@@ -190,9 +177,36 @@ export function createProjectileProjectionExtensionSource(input: {
       endFrame: 0,
       callbacks: routes.map(route => ({ event: route.event, triggerFrames: [0] })),
     };
+    const schedule = {
+      ...configuredSchedule,
+      callbacks: configuredSchedule.callbacks.map(entry => {
+        if (entry.event !== 'hit') return entry;
+        // 现有到达命中资源均无碰撞形状；两种路径并存时必须由时点配置明确选择。
+        if (entry.hitKind === undefined && runtime.hitOnReach && runtime.hasCollisionShape)
+          throw new Error(`${sourcePath}: mixed collision/arrival hit requires explicit hitKind`);
+        return {
+          ...entry,
+          hitKind:
+            entry.hitKind ?? (runtime.hitOnReach ? ('arrival' as const) : ('collision' as const)),
+        };
+      }),
+    };
+    const arrivalHit = schedule.callbacks.some(
+      entry => entry.event === 'hit' && entry.hitKind === 'arrival',
+    );
+    const reachesCurrentOperator =
+      arrivalHit &&
+      launch.target.targetSource === 'Target' &&
+      projectionContext.actionTargetTarget === 'currentOperator';
+    if ((arrivalHit && launch.target.targetSource === 'MainCharacter') || reachesCurrentOperator)
+      callbackContext = {
+        ...callbackContext,
+        actionTargetTarget: 'actionInputTarget',
+        actionInputIsOperator: true,
+      };
     const tracksHits = routes.some(route => route.event === 'hit');
     const hitsParty =
-      tracksHits && !runtime.hitOnReach && isFixedGoodCharacterTargetFilter(runtime.targetFilter);
+      tracksHits && !arrivalHit && isFixedGoodCharacterTargetFilter(runtime.targetFilter);
     if (hitsParty)
       callbackContext = {
         ...callbackContext,
@@ -201,11 +215,11 @@ export function createProjectileProjectionExtensionSource(input: {
       };
     if (
       tracksHits &&
-      !runtime.hitOnReach &&
+      !arrivalHit &&
       !isSupportedSingleEnemyOrGoodCharacterTargetFilter(runtime.targetFilter)
     )
       throw new Error(`${sourcePath}: unsupported projectile collision population`);
-    const hitTagFilter = !runtime.hitOnReach
+    const hitTagFilter = !arrivalHit
       ? projectProjectileHitTagFilter(runtime, callbackContext, sourcePath)
       : undefined;
     const callbacks = routes.map(route => {
@@ -271,11 +285,11 @@ export function createProjectileProjectionExtensionSource(input: {
     });
     const hit: ProjectileLaunchHitParameters | undefined = tracksHits
       ? {
-          ...(!runtime.hitOnReach && isFixedGoodCharacterTargetFilter(runtime.targetFilter)
+          ...(!arrivalHit && isFixedGoodCharacterTargetFilter(runtime.targetFilter)
             ? { target: 'allOperators' as const }
             : {}),
           ...(hitTagFilter === undefined ? {} : { hitTagFilter }),
-          ...(runtime.hitOnReach && launch.target.targetSource === 'MainCharacter'
+          ...(arrivalHit && launch.target.targetSource === 'MainCharacter'
             ? { target: 'controlledOperator' as const }
             : {}),
           ...(reachesCurrentOperator ? { target: 'currentTarget' as const } : {}),

@@ -1584,7 +1584,10 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 12, callbacks: [{ event: 'hit', triggerFrames: [12] }] },
+            schedule: {
+              endFrame: 12,
+              callbacks: [{ event: 'hit', triggerFrames: [12], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_5',
             source: 'actionOwner',
@@ -2037,7 +2040,10 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 14, callbacks: [{ event: 'hit', triggerFrames: [14] }] },
+            schedule: {
+              endFrame: 14,
+              callbacks: [{ event: 'hit', triggerFrames: [14], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_4',
             source: 'actionOwner',
@@ -2490,7 +2496,10 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 13, callbacks: [{ event: 'hit', triggerFrames: [13] }] },
+            schedule: {
+              endFrame: 13,
+              callbacks: [{ event: 'hit', triggerFrames: [13], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_3',
             source: 'actionOwner',
@@ -2956,7 +2965,10 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            schedule: { endFrame: 16, callbacks: [{ event: 'hit', triggerFrames: [16] }] },
+            schedule: {
+              endFrame: 16,
+              callbacks: [{ event: 'hit', triggerFrames: [16], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_2',
             source: 'actionOwner',

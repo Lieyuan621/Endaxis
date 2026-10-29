@@ -195,6 +195,9 @@ export interface ProjectileCallbackState {
 }
 
 export interface ProjectileHitTargets {
+  /** 碰撞近似在命中时选择目标；显式到达目标保留发射身份。 */
+  readonly resolveOnHit?: boolean;
+  readonly onlyHitTargets?: readonly RuntimeTargetRef[];
   readonly targets: readonly RuntimeTargetRef[];
   readonly hitTagFilter?: ProjectileHitParameters['hitTagFilter'];
 }
