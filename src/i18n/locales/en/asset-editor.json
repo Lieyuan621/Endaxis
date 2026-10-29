@@ -1,14 +1,4 @@
 {
-  "projectileTiming": {
-    "title": "Projectile callback delays (frames)",
-    "launch": "Launch",
-    "hit": "Hit",
-    "reach": "Reach",
-    "block": "Land/block",
-    "finish": "Finish",
-    "none": "Not triggered",
-    "default": "Default: {frames} frames"
-  },
   "imagePicker": {
     "choose": "Choose image",
     "clear": "Use default",

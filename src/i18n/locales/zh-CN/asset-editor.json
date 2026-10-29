@@ -1,14 +1,4 @@
 {
-  "projectileTiming": {
-    "title": "投射物回调时延（帧）",
-    "launch": "发射",
-    "hit": "命中",
-    "reach": "到达",
-    "block": "落地/阻挡",
-    "finish": "结束",
-    "none": "不触发",
-    "default": "默认：{frames} 帧"
-  },
   "imagePicker": {
     "choose": "选择图标",
     "clear": "使用默认",

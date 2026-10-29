@@ -204,13 +204,14 @@ test('技能库整组和单段放置、取消及横向滚动', async ({ page, br
   await expect(page.locator('#custom-drag-ghost')).toHaveCount(0);
 
   const scrollbar = await box(page.locator('.timeline-horizontal-scrollbar'));
-  await page.mouse.move(scrollbar.x + 20, scrollbar.y + 7);
+  // 避开 Windows 原生滚动条左侧箭头和滑块边缘，避免命中区域随系统缩放抖动。
+  await page.mouse.move(scrollbar.x + 50, scrollbar.y + 7);
   if (browserName === 'webkit') {
     // 无头 WebKit 不显示可拖的原生滑块，仍验证滚动槽的真实横向输入与同步。
     await page.mouse.wheel(200, 0);
   } else {
     await page.mouse.down();
-    await page.mouse.move(scrollbar.x + 180, scrollbar.y + 7, { steps: 15 });
+    await page.mouse.move(scrollbar.x + 210, scrollbar.y + 7, { steps: 15 });
     await page.mouse.up();
   }
   await expect
@@ -226,9 +227,12 @@ for (const menuName of ['更多', '显示']) {
     const before = await box(block);
     const menu = page.getByRole('button', { name: menuName, exact: true });
     await menu.click();
-    await expect(
-      page.locator(menuName === '更多' ? '.header-more-panel' : '.timeline-display-menu'),
-    ).toBeVisible();
+    const menuPanel = page.locator(
+      menuName === '更多'
+        ? '.header-more-panel:not(.header-project-panel)'
+        : '.timeline-display-menu',
+    );
+    await expect(menuPanel).toBeVisible();
     await page.mouse.move(before.x + 10, before.y + 25);
     await page.mouse.down();
     await page.mouse.move(before.x + 110, before.y + 25, { steps: 10 });
@@ -240,9 +244,7 @@ for (const menuName of ['更多', '显示']) {
     await page.mouse.move(dropped.x + 180, dropped.y + 25);
     await expect.poll(async () => (await box(block)).x).toBeCloseTo(dropped.x, 0);
     await menu.click();
-    await expect(
-      page.locator(menuName === '更多' ? '.header-more-panel' : '.timeline-display-menu'),
-    ).toBeVisible();
+    await expect(menuPanel).toBeVisible();
     await page.mouse.move(dropped.x + 10, dropped.y + 25);
     await page.mouse.down();
     await page.mouse.move(dropped.x + 70, dropped.y + 25, { steps: 10 });
