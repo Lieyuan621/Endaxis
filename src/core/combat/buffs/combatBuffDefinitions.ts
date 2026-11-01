@@ -96,6 +96,7 @@ export interface CombatBuffDefinitionCompilerPorts<Key extends string> {
   ) => number;
   /** 法术爆发触发端口；爆发 Buff 存在该动作时必须提供。 */
   readonly onSpellBurstTriggered?: (payload: {
+    readonly targetId: string;
     readonly burstType: string;
     readonly sourceId: string;
     readonly skillCastInfo?: CombatSkillCastInfo;
@@ -1551,6 +1552,7 @@ function compileDefinitionActionList<Key extends string>(
         }
         return buff => {
           onSpellBurstTriggered({
+            targetId: buff.owner.ownerId,
             burstType: action.burstType,
             sourceId: buff.sourceId,
             ...(buff.skillCastInfo === null ? {} : { skillCastInfo: buff.skillCastInfo }),

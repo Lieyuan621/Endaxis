@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { expect, it, vi } from 'vitest';
 import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
@@ -243,7 +244,7 @@ it('添加 Buff 的被动响应保留原事件、来源与目标，并在被动�
       execute: (_step, context) => {
         seen.push({
           event: context?.event,
-          input: context?.actionInputTarget,
+          input: context?.actionInputTargets?.[0],
           source: context?.eventSkillCastInfo,
         });
         return true;
@@ -323,7 +324,7 @@ it('复用被动黑板与所有权，事件目标独立，并在注销后停止�
   expect(seen[0]).toMatchObject({
     actionOwnerId: 'owner',
     actionSourceId: 'owner',
-    actionInputTarget: { kind: 'abilityEntity', instanceId: 7 },
+    actionInputTargets: singleTargetList({ kind: 'abilityEntity', instanceId: 7 }),
     event: { event: 'abilityEntityFinished', payload: { targetId: 'ability-entity:7' } },
   });
   expect(seen[0]!.blackboard).toBe(blackboard);
@@ -422,9 +423,7 @@ it('当前响应步骤已进入时不重启本序列，仍恢复外层事件目�
     {
       evaluate: () => true,
       execute: (_step, context) => {
-        const target = context?.event
-          ? (abilityEventTargetId(context.event) ?? '')
-          : '';
+        const target = context?.event ? (abilityEventTargetId(context.event) ?? '') : '';
         seen.push(target);
         if (!nested) {
           nested = true;

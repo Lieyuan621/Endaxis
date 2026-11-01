@@ -27,7 +27,9 @@ describe('ComboWindowOperationExecutor', () => {
     let ready = false;
     const resolveSlot = vi.fn(() => current);
     const query = vi.fn((q: Parameters<NonNullable<CombatOperationExecutor['queryTargets']>>[0]) =>
-      resolveDirectActionTargets(q, context, 'different-source')!,
+      q.kind === 'battleMainTarget'
+        ? [{ kind: 'enemy' as const, enemyId: 'enemy:secondary' }]
+        : resolveDirectActionTargets(q, context, 'different-source')!,
     );
     const executor = new ComboWindowOperationExecutor(
       'different-source',
@@ -46,10 +48,16 @@ describe('ComboWindowOperationExecutor', () => {
         trigger: { kind: 'battleMainTarget' as const },
       },
     };
-    targets.set('owners', [{ kind: 'enemy' }, { kind: 'operator', operatorId: 'owner' }]);
+    targets.set('owners', [
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'operator', operatorId: 'owner' },
+    ]);
     expect(executor.execute(step, context)).toBe(false);
     expect(resolveSlot).not.toHaveBeenCalled();
-    targets.setSingle('owners', { kind: 'operator', operatorId: 'owner' });
+    targets.set('owners', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'owner' },
+    ]);
     expect(executor.execute(step, context)).toBe(false);
     expect(query.mock.calls.at(-1)?.[0]).toEqual(step.parameters.owner);
     ready = true;
@@ -59,8 +67,8 @@ describe('ComboWindowOperationExecutor', () => {
       operatorId: 'owner',
       nextSkillKey: 'first-combo',
       nativeCondition: {
-        inputTarget: { kind: 'operator', operatorId: 'input-target' },
-        triggerTarget: { kind: 'enemy' },
+        inputTargets: [{ kind: 'operator', operatorId: 'input-target' }],
+        triggerTargets: [{ kind: 'enemy', enemyId: 'enemy:secondary' }],
         assignPairs: null,
       },
     });
@@ -76,22 +84,23 @@ describe('ComboWindowOperationExecutor', () => {
       [],
       structuredClone(windows.runtimeState),
     );
-    targets.setSingle('target', { kind: 'enemy' });
+    targets.setSingle('target', { kind: 'enemy', enemyId: 'enemy' });
     expect(restored.first).toMatchObject({
       nextSkillKey: 'replacement-combo',
       nativeCondition: {
-        inputTarget: { kind: 'operator', operatorId: 'input-target' },
-        triggerTarget: null,
+        inputTargets: [{ kind: 'operator', operatorId: 'input-target' }],
+        triggerTargets: null,
       },
     });
   });
 
-  it('未实现的多目标候选不能被截成首目标或拆成多个开窗动作', () => {
+  it.each([0, 2])('目标组长度 %s 原样复制为一个候选', count => {
     const windows = new ComboWindowRuntime(new CombatClock(), new CombatReceiptCollector(), 5);
-    const group: RuntimeTargetRef[] = [
-      { kind: 'enemy' },
+    const allTargets: RuntimeTargetRef[] = [
+      { kind: 'enemy', enemyId: 'enemy' },
       { kind: 'operator', operatorId: 'other' },
     ];
+    const group = allTargets.slice(0, count);
     const executor = new ComboWindowOperationExecutor(
       'owner',
       windows,
@@ -100,7 +109,7 @@ describe('ComboWindowOperationExecutor', () => {
       query => (query.kind === 'owner' ? [{ kind: 'operator', operatorId: 'owner' }] : group),
       () => true,
     );
-    expect(() =>
+    expect(
       executor.execute(
         {
           kind: 'openComboWindow',
@@ -112,8 +121,11 @@ describe('ComboWindowOperationExecutor', () => {
         },
         { blackboard: new ActionBlackboard() },
       ),
-    ).toThrow('requires one input target');
-    expect(windows.pending).toHaveLength(0);
+    ).toBe(true);
+    expect(windows.pending).toHaveLength(1);
+    expect(windows.first?.nativeCondition?.inputTargets).toEqual(group);
+    group.push({ kind: 'enemy', enemyId: 'enemy:later' });
+    expect(windows.first?.nativeCondition?.inputTargets).toHaveLength(count);
   });
   it('reads the first context owner and resolves that character slot without falling back', () => {
     const windows = new ComboWindowRuntime(new CombatClock(), new CombatReceiptCollector(), 5);
@@ -135,11 +147,17 @@ describe('ComboWindowOperationExecutor', () => {
     } as const;
     targetContext.set('owner', []);
     executor.execute(step, context);
-    targetContext.set('owner', [{ kind: 'enemy' }, { kind: 'operator', operatorId: 'owner' }]);
+    targetContext.set('owner', [
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'operator', operatorId: 'owner' },
+    ]);
     executor.execute(step, context);
     expect(resolveSlot).not.toHaveBeenCalled();
     expect(windows.first).toBeUndefined();
-    targetContext.setSingle('owner', { kind: 'operator', operatorId: 'owner' });
+    targetContext.set('owner', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'owner' },
+    ]);
     executor.execute(step, context);
     expect(resolveSlot).toHaveBeenCalledWith('comboSkill', 'owner');
     expect(windows.first).toMatchObject({ operatorId: 'owner', nextSkillKey: 'ownerCombo' });
@@ -150,7 +168,10 @@ describe('ComboWindowOperationExecutor', () => {
     const windows = new ComboWindowRuntime(new CombatClock(), new CombatReceiptCollector(), 5);
     const resolveSlot = vi.fn(() => 'differentSkill');
     const targetContext = new RuntimeTargetContext();
-    targetContext.setSingle('candidate', { kind: 'operator', operatorId: 'owner' });
+    targetContext.set('candidate', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'owner' },
+    ]);
     const context = { blackboard: new ActionBlackboard(), targetContext };
     const executor = new ComboWindowOperationExecutor('other', windows, delegate, resolveSlot, () =>
       targetContext.get('candidate'),

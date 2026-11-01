@@ -1,3 +1,5 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import { describe, expect, it, vi } from 'vitest';
 import type { DamageModifierSide } from '../../../../packages/game-data-contract/src/modifiers';
 import { compileGraphEntry } from '../../../test/compiledGraphEntry';
@@ -78,8 +80,12 @@ describe('PlayerDamageOperationExecutor', () => {
     const nextCriticalSample = vi.fn(() => 0);
     const events: string[] = [];
     let queriedTargets: readonly RuntimeTargetRef[] = [];
-    let defaultTarget: RuntimeTargetRef = { kind: 'enemy' };
-    const queryTargets = vi.fn(() => queriedTargets);
+    let defaultTarget: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy' };
+    const queryTargets = vi.fn((query: CompiledTargetQuery) =>
+      query.kind === 'fixed' && query.target === 'enemy'
+        ? [{ kind: 'enemy' as const, enemyId: 'enemy' }]
+        : queriedTargets,
+    );
     const executor = new PlayerDamageOperationExecutor({
       queryTargets,
       resolveDefaultDamageTarget: () => defaultTarget,
@@ -158,7 +164,11 @@ describe('PlayerDamageOperationExecutor', () => {
     };
     // 显式接收组不能被默认选敌替换，即便默认目标已经变为空间对象。
     defaultTarget = { kind: 'spatialPoint', pointId: 99 };
-    queriedTargets = [{ kind: 'enemy' }, { kind: 'spatialPoint', pointId: 1 }, { kind: 'enemy' }];
+    queriedTargets = [
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ];
     const beforeQuery = events.length;
     executor.execute(selected, { blackboard });
     expect(events.slice(beforeQuery).filter(event => event === 'beforeDamageAction')).toHaveLength(
@@ -214,7 +224,10 @@ describe('PlayerDamageOperationExecutor', () => {
         },
       }),
     });
-    queriedTargets = [{ kind: 'operator', operatorId: 'other' }, { kind: 'enemy' }];
+    queriedTargets = [
+      { kind: 'operator', operatorId: 'other' },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ];
     const beforeMixed = events.length;
     boundExecutor.execute(selected, { blackboard });
     expect(otherVitals.health).toBe(940);
@@ -230,7 +243,7 @@ describe('PlayerDamageOperationExecutor', () => {
       { ...step, parameters: { ...step.parameters, target: 'enemy' } },
       {
         blackboard,
-        actionInputTarget: { kind: 'operator', operatorId: 'other' },
+        actionInputTargets: singleTargetList({ kind: 'operator', operatorId: 'other' }),
       },
     );
     expect(otherVitals.health).toBe(880);
@@ -273,12 +286,14 @@ describe('PlayerDamageOperationExecutor', () => {
     expect(receipt.entries.at(-1)?.data).not.toHaveProperty('hitId');
   });
   it.each([
-    { finishDuringBodyEvent: false, defaultTarget: false },
-    { finishDuringBodyEvent: true, defaultTarget: false },
-    { finishDuringBodyEvent: false, defaultTarget: true },
+    { finishDuringBodyEvent: false, defaultTarget: false, initialTargetId: 'enemy' },
+    { finishDuringBodyEvent: true, defaultTarget: false, initialTargetId: 'enemy' },
+    { finishDuringBodyEvent: false, defaultTarget: true, initialTargetId: 'enemy' },
+    { finishDuringBodyEvent: false, defaultTarget: false, initialTargetId: 'enemy:other' },
+    { finishDuringBodyEvent: false, defaultTarget: true, initialTargetId: 'enemy:other' },
   ])(
-    'SharedDamage 只结算一次主体公式（提前结束=$finishDuringBodyEvent，默认选目标=$defaultTarget）',
-    ({ finishDuringBodyEvent, defaultTarget }) => {
+    'SharedDamage 只结算一次主体公式（提前结束=$finishDuringBodyEvent，默认选目标=$defaultTarget，初始目标=$initialTargetId）',
+    ({ finishDuringBodyEvent, defaultTarget, initialTargetId }) => {
       const vitals = {
         health: 2000,
         maxHealth: 2000,
@@ -298,19 +313,25 @@ describe('PlayerDamageOperationExecutor', () => {
         soul: {
           canBeDirectlyBuffed: false,
           damageTransferType: 'sharedDamage',
-          mainBody: { kind: 'enemy' },
+          mainBody: { kind: 'enemy', enemyId: 'enemy' },
           vitals: { ...vitals, health: 1000, maxHealth: 1000 },
           damageRatio: 1.5,
           poiseRatio: 2,
         },
       });
       const targetVitals = new CombatVitals(vitals);
+      const unrelatedVitals = new CombatVitals(vitals);
       const receipt = new CombatReceiptCollector();
       const events: string[] = [];
       const executor = new PlayerDamageOperationExecutor({
         sourceOperatorId: 'caster',
-        targetId: 'enemy',
-        targetVitals,
+        targetId: initialTargetId,
+        targetVitals: initialTargetId === 'enemy' ? targetVitals : unrelatedVitals,
+        resolveTargetDependencies: (targetId, current) => {
+          expect(targetId).toBe('enemy');
+          expect(unrelatedVitals.health).toBe(2000);
+          return { ...current, targetId, targetVitals };
+        },
         clock: new CombatClock(),
         receipt,
         targetExists: target => target.kind !== 'abilityEntity' || entities.isActive(target),
@@ -363,11 +384,13 @@ describe('PlayerDamageOperationExecutor', () => {
         },
         {
           blackboard: new ActionBlackboard(),
-          actionInputTarget: part,
+          actionInputTargets: singleTargetList(part),
         },
       );
       expect(targetVitals.health).toBe(1500);
       expect(targetVitals.poise).toBe(60);
+      expect(unrelatedVitals.health).toBe(2000);
+      expect(unrelatedVitals.poise).toBe(100);
       expect(entities.soulVitals(part)!.poise).toBe(100);
       expect(events).not.toContain('beforeOutputPoiseDamage');
       expect(events).toContain('beforeTakePoiseDamage');
@@ -389,7 +412,7 @@ describe('PlayerDamageOperationExecutor', () => {
             ...DAMAGE_STEP,
             parameters: { ...DAMAGE_STEP.parameters, target: 'actionInputTarget' },
           },
-          { blackboard: new ActionBlackboard(), actionInputTarget: part },
+          { blackboard: new ActionBlackboard(), actionInputTargets: singleTargetList(part) },
         ),
       ).not.toThrow();
       expect(targetVitals.health).toBe(1500);

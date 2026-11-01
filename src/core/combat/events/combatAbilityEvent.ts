@@ -90,6 +90,7 @@ export type LifecycleAbilityEvent = CombatAbilityEvent<
   | 'ownerSwitchToCenter'
   | 'ownerSwitchToGuard'
   | 'ownerHpZero'
+  | 'ownerDead'
   | 'hpChanged'
   | 'abilityEntitySpawned'
   | 'abilityEntityFinished'
@@ -107,6 +108,7 @@ export function lifecycleAbilityEvent(
     case 'ownerSwitchToCenter':
     case 'ownerSwitchToGuard':
     case 'ownerHpZero':
+    case 'ownerDead':
     case 'hpChanged':
     case 'abilityEntitySpawned':
     case 'abilityEntitySelfFinished':
@@ -344,6 +346,7 @@ export interface AbilityEventPayloadMap {
   ownerSwitchToCenter: AbilityOriginPayload;
   ownerSwitchToGuard: AbilityOriginPayload;
   ownerHpZero: AbilityOriginPayload;
+  ownerDead: AbilityOriginPayload;
   hpChanged: AbilityOriginPayload;
   abilityEntitySpawned: AbilityEntitySpawnedPayload;
   soulDisabled: AbilityOriginPayload;
@@ -548,7 +551,7 @@ export function damageAbilityEvent(event: AbilityEventCandidate): DamageAbilityE
 /** 极限闪避标记声明的可闪避受击：只通知监听器，不写入生命或伤害结果。 */
 export interface ExternalOperatorHitPayload {
   readonly external: true;
-  readonly sourceId: 'enemy';
+  readonly sourceId: string;
   readonly targetId: string;
   readonly damageType?: DamageType;
   readonly tags: readonly DamageTag[];

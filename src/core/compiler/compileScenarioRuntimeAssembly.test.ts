@@ -1,4 +1,9 @@
+import { firstScenarioEnemy } from '../project/level';
+import { GAMEPLAY_TAG_PREDEFINE } from '../../data/combat/gameplayTagPredefine.generated';
+import { GameplayTagPredefine } from '../combat/tags/gameplayTagPredefine';
 import { actionSteps } from '../../test/actionProgramMatchers';
+import { compileScenarioEnemy } from './compileScenarioEnemy';
+import { createEnemyCombatVitals } from '../combat/resources/combatVitalsFactory';
 import { createTestBuffReference } from '../combat/buffs/buffTestFixtures';
 
 import { createActionGraphCompilation } from './compileActionGraph';
@@ -91,6 +96,7 @@ function enemyBuffRuntime(): EnemyBuffRuntime {
   return {
     ownerId: 'enemy',
     advanceFrame: () => undefined,
+    releaseAll: () => {},
     getCountByIds: () => 0,
     findFirstByIds: () => undefined,
     finishByIds: () => 0,
@@ -110,6 +116,9 @@ function operationExecutor(): CombatOperationExecutor {
 }
 
 function options(): CompileScenarioRuntimeAssemblyOptions {
+  const enemyVitals = createEnemyCombatVitals(
+    compileScenarioEnemy(firstScenarioEnemy(createScenario()).enemy),
+  );
   return {
     index: {
       getOperator: slug => (slug === perlica.slug ? perlica : null),
@@ -127,6 +136,9 @@ function options(): CompileScenarioRuntimeAssemblyOptions {
       normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
     },
     environment: {
+      skillAvailabilityTags: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
+      resolveVitals: () => enemyVitals,
+      bindEnemyHealthChanged: (_id, listener) => enemyVitals.bindHealthChangeObserver(listener),
       comboSkillPendingInterval: 5,
       enemyBuffRuntime: enemyBuffRuntime(),
       createOperationExecutor: () => operationExecutor(),

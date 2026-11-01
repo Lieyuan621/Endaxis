@@ -47,12 +47,15 @@ describe('修正条件的公共动作宿主', () => {
           const tag = check.tags[0]!;
           const current = context!.modifierContext;
           visited.push(
-            `${tag}:${context!.actionInputTarget?.kind === 'operator' ? context!.actionInputTarget.operatorId : ''}`,
+            `${tag}:${context!.actionInputTargets?.[0]?.kind === 'operator' ? context!.actionInputTargets?.[0].operatorId : ''}`,
           );
           if (tag === 'second') {
             expect(condition.execute('nested')).toBe(false);
             expect(context!.modifierContext).toBe(current);
-            expect(context!.actionInputTarget).toEqual({ kind: 'operator', operatorId: 'outer' });
+            expect(context!.actionInputTargets?.[0]).toEqual({
+              kind: 'operator',
+              operatorId: 'outer',
+            });
           }
           return true;
         },
@@ -128,7 +131,10 @@ describe('修正条件的公共动作宿主', () => {
           evaluate(condition, context) {
             observed = context;
             expect(context?.modifierContext?.kind).toBe(kind);
-            expect(context?.actionInputTarget).toEqual({ kind: 'operator', operatorId: 'other' });
+            expect(context?.actionInputTargets?.[0]).toEqual({
+              kind: 'operator',
+              operatorId: 'other',
+            });
             return events.evaluate(condition, context);
           },
         },
@@ -168,7 +174,7 @@ describe('修正条件的公共动作宿主', () => {
       expect(condition.execute(true)).toBe(true);
       expect(condition.execute(false)).toBe(false);
       expect(observed?.modifierContext).toBeUndefined();
-      expect(observed?.actionInputTarget).toBeUndefined();
+      expect(observed?.actionInputTargets?.[0]).toBeUndefined();
       const state = structuredClone(condition.runtimeState);
       const restored = create(state);
       expect(restored.runtimeState).toBe(state);

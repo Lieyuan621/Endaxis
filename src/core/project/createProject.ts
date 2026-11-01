@@ -25,21 +25,28 @@ export function createEmptyScenario(id: string, name: string): ScenarioDocument 
     name,
     tracks: [null, null, null, null],
     connections: [],
-    enemy: {
-      source: { kind: 'custom', level: 90 },
-      rank: 'mob',
-      editable: {
-        hp: 100000,
-        defense: 100,
-        superArmor: 0,
-        finisherMultiplier: 1,
-        resistances: {},
-        stagger: {
-          maximum: 300,
-          knotThresholds: [0.5],
-          knotBreakDurationFrames: 60,
-          brokenDurationFrames: 300,
-          finisherSpRecovery: 100,
+    level: {
+      kind: 'singleEnemy',
+      enemy: {
+        id: 'enemy',
+        name: '',
+        enemy: {
+          source: { kind: 'custom', level: 90 },
+          rank: 'mob',
+          editable: {
+            hp: 100000,
+            defense: 100,
+            superArmor: 0,
+            finisherMultiplier: 1,
+            resistances: {},
+            stagger: {
+              maximum: 300,
+              knotThresholds: [0.5],
+              knotBreakDurationFrames: 60,
+              brokenDurationFrames: 300,
+              finisherSpRecovery: 100,
+            },
+          },
         },
       },
     },
@@ -54,7 +61,6 @@ export function createEmptyScenario(id: string, name: string): ScenarioDocument 
       cycleBoundaries: [],
       controlSwitches: [],
       automaticControlSwitches: true,
-      // 新方案采用近距离站位；旧存档缺省值仍由加载流程按 0 米处理。
       externalEventMarkers: [],
       dodgeMarkers: [],
     },

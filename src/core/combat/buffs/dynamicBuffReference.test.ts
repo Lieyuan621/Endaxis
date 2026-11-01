@@ -34,7 +34,10 @@ function fixture(blackboard: ActionBlackboard) {
     delegate,
     executor: new BuffOperationExecutor({
       sourceId: 'caster',
-      queryTargets: (query, context) => resolveDirectActionTargets(query, context, 'caster')!,
+      queryTargets: (query, context) =>
+        query.kind === 'fixed' && query.target === 'enemy'
+          ? [{ kind: 'enemy', enemyId: container.ownerId }]
+          : (resolveDirectActionTargets(query, context, 'caster') ?? []),
       resolveEventTarget: () => target,
       resolveTarget: () => target,
       resolveBuffDefinition: lookup,
@@ -122,7 +125,10 @@ describe('动态 Buff 引用复用公共施加管线', () => {
     expect(() => executor.execute(inlineStep, { blackboard })).toThrow('owner Buff definition');
     const withoutPort = new BuffOperationExecutor({
       sourceId: 'caster',
-      queryTargets: (query, context) => resolveDirectActionTargets(query, context, 'caster')!,
+      queryTargets: (query, context) =>
+        query.kind === 'fixed' && query.target === 'enemy'
+          ? [{ kind: 'enemy', enemyId: 'enemy' }]
+          : (resolveDirectActionTargets(query, context, 'caster') ?? []),
       resolveEventTarget: () =>
         new CombatBuffContainer<string>('enemy', new CombatAttributeSet<string>()),
       resolveTarget: () =>

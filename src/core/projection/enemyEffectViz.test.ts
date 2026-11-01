@@ -13,7 +13,12 @@ function receipt(
 
 describe('projectEnemyEffectViz', () => {
   it('retains exact burst receipts including zero damage and never guesses by frame', () => {
-    const ordinary = receipt(0, 20, 'DamageApplied', { value: 123 });
+    const ordinary = receipt(0, 20, 'DamageApplied', {
+      value: 123,
+      castId: 'cast',
+      hitId: 'hit',
+      stepKey: 'step',
+    });
     const first = receipt(1, 20, 'DamageApplied', { spellBurstType: 'Pulse', value: 400 });
     const second = receipt(2, 20, 'DamageApplied', { spellBurstType: 'Pulse', value: 0 });
     const result = projectEnemyEffectViz(

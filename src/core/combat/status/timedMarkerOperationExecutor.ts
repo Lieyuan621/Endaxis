@@ -8,7 +8,11 @@ import type { CombatOperationContext } from '../skills/skillRuntime';
  * 目标到实体容器的映射由装配层提供；动态时长只读取当前技能实例黑板。
  */
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import { runtimeTargetEntityId, type RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import {
+  firstRuntimeEntityTarget,
+  runtimeTargetEntityId,
+  type RuntimeTargetRef,
+} from '../../game-data/logicalAbilityEntity';
 
 import type { GlobalCooldowns } from '../skills/globalCooldowns';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
@@ -51,7 +55,9 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
     if (step.kind === 'setGlobalCooldown') {
       if (context === undefined)
         throw new Error('setGlobalCooldown requires a combat operation context');
-      const first = this.dependencies.queryTargets(step.parameters.target, context)[0];
+      const first = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(step.parameters.target, context),
+      );
       const characterId = first === undefined ? undefined : runtimeTargetEntityId(first);
       if (characterId === undefined) return true;
       const cooldowns = this.dependencies.globalCooldowns;
@@ -126,7 +132,9 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'globalCooldownPresent') {
       if (!context) throw new Error('globalCooldownPresent requires an action context');
-      const target = this.dependencies.queryTargets(condition.target, context)[0];
+      const target = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(condition.target, context),
+      );
       const id = target === undefined ? undefined : runtimeTargetEntityId(target);
       if (id === undefined) return false;
       const cooldowns = this.dependencies.globalCooldowns;
@@ -136,7 +144,9 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
     }
     if (condition.kind === 'timedMarkerPresent') {
       if (!context) throw new Error('timedMarkerPresent requires an action context');
-      const target = this.dependencies.queryTargets(condition.target, context)[0];
+      const target = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(condition.target, context),
+      );
       const id = target === undefined ? undefined : runtimeTargetEntityId(target);
       if (id === undefined) return false;
       const exists = this.#resolveOwner(id).has(resolveMarkerId(condition.markerId, context));

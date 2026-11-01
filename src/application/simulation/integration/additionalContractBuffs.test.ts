@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { prepareStandardPlayerDamageScenarioRuntime } from '../runStandardPlayerDamageScenarioSimulation';
 import { createStandardPlayerDamageCombatSession } from '../standardPlayerDamageCombatSession';
 import { projectPoiseCurveFromReceipt } from '../../../core/projection/poiseCurves';
@@ -20,7 +21,7 @@ function run(
   checkpointFrame?: number,
 ) {
   const scenario = createEmptyScenario('native-contract', 'native-contract');
-  scenario.enemy.editable.hp = 1000000;
+  firstScenarioEnemy(scenario).enemy.editable.hp = 1000000;
   scenario.battle.resourceRules = { maxSp: 1000, initialSp: 0, spRecoveryPerSecond: 8 };
   for (let i = 0; i < 2; i++)
     scenario.tracks[i] = {
@@ -387,7 +388,12 @@ it('原生失衡上限增幅同步敌方账本，后续命中与曲线不中断'
   expect(change?.data?.maxPoise).toBeCloseTo(Number(change?.data?.previousMaxPoise) * 1.15, 4);
   expect(change?.data?.currentPoise).toBeCloseTo(Number(change?.data?.previousPoise) * 1.15, 4);
   expect(change?.data?.maxPoise).toBeCloseTo(345, 4);
-  const curve = projectPoiseCurveFromReceipt({ poise: 300, maxPoise: 300 }, result.receiptEntries);
+  const curve = projectPoiseCurveFromReceipt(
+    { poise: 300, maxPoise: 300 },
+    result.receiptEntries,
+    0,
+    'enemy',
+  );
   expect(curve.maxValue).toBeCloseTo(345, 4);
   expect(curve.maximumPoints?.at(-1)?.value).toBeCloseTo(345, 4);
 });

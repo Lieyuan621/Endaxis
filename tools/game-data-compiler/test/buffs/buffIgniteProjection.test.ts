@@ -1,3 +1,4 @@
+import { TargetContextOperationExecutor } from '../../../../src/core/combat/abilities/targetContextOperationExecutor';
 import { fixtureGameplayTagRegistry } from '../gameplayTagFixtures.ts';
 import { describe, expect, it } from 'vitest';
 import { parseKnownNativeActionLeafSource } from '../../src/source/actionLeaf.ts';
@@ -66,7 +67,11 @@ describe('公共 Buff 点燃投影', () => {
     expect(result.steps).toEqual([
       {
         kind: 'igniteBuffs',
-        parameters: { target: 'buffOwner', source: 'buffOwner', igniteType: 'NoGuard' },
+        parameters: {
+          target: { kind: 'owner' },
+          source: { kind: 'inputTarget' },
+          igniteType: 'NoGuard',
+        },
       },
     ]);
   });
@@ -96,6 +101,11 @@ describe('公共 Buff 点燃投影', () => {
     );
     const executor = new BuffOperationExecutor({
       sourceId: 'caster',
+      queryTargets: (query, ctx) =>
+        new TargetContextOperationExecutor('caster', {
+          execute: () => false,
+          evaluate: () => false,
+        }).queryTargets(query, ctx),
       resolveTarget: () => source,
       resolveEventTarget: id => {
         expect(id).toBe('enemy');
@@ -111,6 +121,8 @@ describe('公共 Buff 点燃投影', () => {
     const runtime = new CombatActionSequenceRuntime(executor, {
       blackboard: new ActionBlackboard(),
       buffOwnerId: 'enemy',
+      actionOwnerId: 'enemy',
+      actionSourceId: 'caster',
       buffSourceId: 'caster',
       skillCastInfo: cast,
     });
@@ -131,18 +143,32 @@ describe('公共 Buff 点燃投影', () => {
     expect(result.steps).toEqual([
       {
         kind: 'igniteBuffs',
-        parameters: { target: 'enemy', source: 'caster', igniteType: 'PhysicalStatus' },
+        parameters: {
+          target: { kind: 'inputTarget' },
+          source: { kind: 'source' },
+          igniteType: 'PhysicalStatus',
+        },
       },
     ]);
   });
 
-  it('未知字段和未支持的成功目标回写继续阻断', () => {
+  it('保留成功组与动态 Context 查询；未知字段仍报错', () => {
     expect(() => project([{ ...rawIgnite(), guessed: true }])).toThrow('guessed');
-    expect(() => project([{ ...rawIgnite(), successTargetContextKey: 'success' }])).toThrow(
-      'success target context',
-    );
-    expect(() =>
-      project([{ ...rawIgnite(), targetSettings: targetFixture('Context', undefined, 'unknown') }]),
-    ).toThrow('unsupported Ignite');
+    const result = project([
+      {
+        ...rawIgnite(),
+        successTargetContextKey: 'success',
+        targetSettings: targetFixture('Context', undefined, 'targets'),
+      },
+    ]);
+    expect(result.steps[0]).toEqual({
+      kind: 'igniteBuffs',
+      parameters: {
+        source: { kind: 'source' },
+        target: { kind: 'context', key: 'targets' },
+        igniteType: 'PhysicalStatus',
+        successTargetContextKey: 'success',
+      },
+    });
   });
 });

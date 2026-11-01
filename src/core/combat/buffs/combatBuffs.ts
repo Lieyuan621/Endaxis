@@ -217,6 +217,7 @@ export interface BuffLifecycleActions<Key extends string> {
     igniteType: string,
     sourceId: string,
     skillCastInfo?: CombatSkillCastInfo,
+    partTransferInfo?: EnemyPartTransferInfo,
   ) => boolean;
   readonly duringEnable?: BuffDuringEnableAction<Key>;
 }
@@ -1788,14 +1789,27 @@ export class CombatBuffContainer<Key extends string> {
   }
 
   /** 同步点燃所有在调用开始时仍活动的 Buff；响应可在处理过程中结束自身。 */
-  ignite(igniteType: string, sourceId: string, skillCastInfo?: CombatSkillCastInfo): number {
+  ignite(
+    igniteType: string,
+    sourceId: string,
+    skillCastInfo?: CombatSkillCastInfo,
+    partTransferInfo?: EnemyPartTransferInfo,
+  ): number {
     if (igniteType.length === 0) throw new Error('Buff ignite type must not be empty');
     if (sourceId.length === 0) throw new Error('Buff ignite source id must not be empty');
     const active = this.#snapshotBuffs().filter(buff => !buff.isFinished);
     let count = 0;
     for (const buff of active) {
       if (buff.isFinished) continue;
-      if (buff.definition.actions?.ignite?.(buff, igniteType, sourceId, skillCastInfo)) {
+      if (
+        buff.definition.actions?.ignite?.(
+          buff,
+          igniteType,
+          sourceId,
+          skillCastInfo,
+          partTransferInfo,
+        )
+      ) {
         count += 1;
       }
     }

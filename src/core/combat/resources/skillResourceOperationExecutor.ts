@@ -1,6 +1,9 @@
 import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
-import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
-import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import { singleTargetList, runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import {
+  firstRuntimeEntityTarget,
+  type RuntimeTargetRef,
+} from '../../game-data/logicalAbilityEntity';
 
 import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
@@ -109,7 +112,7 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
     if (step.kind === 'changeResource') {
       const p = step.parameters;
       if (context === undefined) throw new Error('resource change requires an action context');
-      const source = this.#queryTargets(p.source, context)[0];
+      const source = firstRuntimeEntityTarget(this.#queryTargets(p.source, context));
       if (!source) return false;
       const sourceId = runtimeTargetEntityId(source);
       if (sourceId === undefined) return false;
@@ -123,7 +126,7 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
               kind: 'checkMainCharacter',
               target: { kind: 'inputTarget' },
             },
-            { ...context, actionInputTarget: source },
+            { ...context, actionInputTargets: singleTargetList(source) },
           ))
       )
         return true;
@@ -165,10 +168,10 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
 
     if (step.kind === 'gainFinisherSp') {
       if (context === undefined) throw new Error('gainFinisherSp requires an action context');
-      const source = this.#queryTargets(step.parameters.source, context)[0];
+      const source = firstRuntimeEntityTarget(this.#queryTargets(step.parameters.source, context));
       const sourceId = source === undefined ? undefined : runtimeTargetEntityId(source);
       if (sourceId === undefined) return false;
-      const target = this.#queryTargets(step.parameters.target, context)[0];
+      const target = firstRuntimeEntityTarget(this.#queryTargets(step.parameters.target, context));
       if (target === undefined || runtimeTargetEntityId(target) === undefined) return false;
       const recovery = this.dependencies.readFinisherSpRecovery(target);
       if (recovery === undefined) return false;

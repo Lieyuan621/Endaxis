@@ -144,7 +144,7 @@ function createGraph(heldInstanceId: number, viaEvaluation = false): CombatState
         },
       ],
     ]),
-    enemy: { timedMarkers: createTimedMarkerState(), buffs: null },
+    enemy: { id: 'enemy', timedMarkers: createTimedMarkerState(), buffs: null },
     instances: {
       projectiles: createProjectileLifecycleState(),
       abilityEntities: { instances: new Map(), deadSources: [], soulParts: new Map() },

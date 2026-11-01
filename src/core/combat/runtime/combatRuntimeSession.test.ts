@@ -124,6 +124,7 @@ function createFixture(
   operatorControl?: OperatorControlConfiguration,
 ) {
   const environment = new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     ...environmentInput(isOperatorControlled),
     enemyVitals: new CombatVitals({
       health: 100,
@@ -432,6 +433,7 @@ it.each([0, 4, 6])('投射物在第 %i 帧分支恢复后保留伤害的技能�
     { frame: 0, operatorId: 'operator', skillId: 'launch', castId: 'cast:projectile' },
   ];
   const environment = new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     ...environmentInput(),
     enemyVitals: createEnemyCombatVitals(enemy),
   });
@@ -494,6 +496,7 @@ it('恢复后群体 GlobalBuff 仍按原生队伍逆序应用子 Buff', () => {
   };
   const createEnvironment = () =>
     new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       ...environmentInput(),
       enemyVitals: new CombatVitals({
         health: 100,

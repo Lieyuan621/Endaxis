@@ -1,3 +1,4 @@
+import { singleTargetList, runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
 import { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
 import { GAMEPLAY_TAG_PREDEFINE } from '../../../data/combat/gameplayTagPredefine.generated';
 import { describe, expect, it, vi } from 'vitest';
@@ -34,7 +35,15 @@ const delegate: CombatOperationExecutor = {
 
 /** 单容器测试使用同一容器接收查询结果；涉及多个对象的测试显式提供实例解析器。 */
 function createExecutor(dependencies: BuffOperationDependencies): BuffOperationExecutor {
-  const queries = new TargetContextOperationExecutor(dependencies.sourceId, delegate);
+  const queries = new TargetContextOperationExecutor(
+    dependencies.sourceId,
+    delegate,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+  );
   return new BuffOperationExecutor({
     physicalTagPredefine: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
     queryTargets: queries.queryTargets.bind(queries),
@@ -44,6 +53,121 @@ function createExecutor(dependencies: BuffOperationDependencies): BuffOperationE
 }
 
 describe('BuffOperationExecutor', () => {
+  it('驱散跳过来源位置点，逐个处理接收者且不替换来源身份', () => {
+    const first = new CombatBuffContainer('enemy:first', new CombatAttributeSet());
+    const second = new CombatBuffContainer('enemy:second', new CombatAttributeSet());
+    const calls = [vi.spyOn(first, 'dispel'), vi.spyOn(second, 'dispel')];
+    const targetContext = new RuntimeTargetContext();
+    targetContext.set('source', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'actual-source' },
+      { kind: 'operator', operatorId: 'ignored-source' },
+    ]);
+    targetContext.set('receivers', [
+      { kind: 'enemy', enemyId: 'enemy:first' },
+      { kind: 'enemy', enemyId: 'enemy:second' },
+    ]);
+    const executor = createExecutor({
+      sourceId: 'caster',
+      resolveTarget: () => first,
+      resolveEventTarget: id => (id === 'enemy:first' ? first : second),
+      delegate,
+    });
+    const action = {
+      kind: 'dispelBuffs',
+      parameters: {
+        source: { kind: 'context', key: 'source' },
+        targets: { kind: 'context', key: 'receivers' },
+        level: 1,
+      },
+    } as const;
+    const context = { blackboard: new ActionBlackboard(), targetContext };
+    expect(executor.execute(action, context)).toBe(true);
+    for (const call of calls)
+      expect(call).toHaveBeenCalledExactlyOnceWith('actual-source', 1, undefined);
+    targetContext.set('source', [{ kind: 'spatialPoint', pointId: 1 }]);
+    expect(executor.execute(action, context)).toBe(true);
+    for (const call of calls) expect(call).toHaveBeenCalledTimes(1);
+  });
+
+  it('点燃遍历多个目标并在结束时替换成功组，保留部位上下文', () => {
+    const first = new CombatBuffContainer('enemy:first', new CombatAttributeSet());
+    const second = new CombatBuffContainer('enemy:second', new CombatAttributeSet());
+    const calls: string[] = [];
+    let successful = true;
+    first.add(
+      {
+        id: 'first-listener',
+        stackingType: 'unique',
+        actions: {
+          ignite: (_buff, _type, _source, _cast, transfer) => {
+            calls.push('first');
+            expect(transfer?.mainBodyToPart.get('enemy:first')).toBe('enemy:part');
+            return successful;
+          },
+        },
+      },
+      'caster',
+    );
+    second.add(
+      {
+        id: 'second-listener',
+        stackingType: 'unique',
+        actions: {
+          ignite: () => {
+            calls.push('second');
+            return false;
+          },
+        },
+      },
+      'caster',
+    );
+    const targets = new RuntimeTargetContext();
+    targets.set('targets', [
+      runtimeTargetFromEntityId('enemy:part'),
+      runtimeTargetFromEntityId('enemy:second'),
+    ]);
+    targets.setSingle('success', runtimeTargetFromEntityId('enemy:second'));
+    const executor = createExecutor({
+      sourceId: 'caster',
+      delegate,
+      resolveTarget: () => first,
+      resolveEventTarget: id => {
+        if (id === 'enemy:first') return first;
+        if (id === 'enemy:second') return second;
+        throw new Error(`unexpected target ${id}`);
+      },
+      resolvePartBuffSource: target =>
+        target.kind === 'enemy' && target.enemyId === 'enemy:part'
+          ? runtimeTargetFromEntityId('enemy:first')
+          : target,
+    });
+    const step = {
+      kind: 'igniteBuffs',
+      parameters: {
+        source: { kind: 'source' },
+        target: { kind: 'context', key: 'targets' },
+        igniteType: 'PhysicalStatus',
+        successTargetContextKey: 'success',
+      },
+    } as const;
+    const context = {
+      blackboard: new ActionBlackboard(),
+      actionSourceId: 'caster',
+      targetContext: targets,
+    };
+    expect(executor.execute(step, context)).toBe(true);
+    expect(calls).toEqual(['first', 'second']);
+    expect(targets.get('success')).toEqual([runtimeTargetFromEntityId('enemy:first')]);
+    successful = false;
+    expect(executor.execute(step, context)).toBe(true);
+    expect(targets.get('success')).toEqual([]);
+    targets.setSingle('success', runtimeTargetFromEntityId('enemy:second'));
+    targets.set('targets', []);
+    expect(executor.execute(step, context)).toBe(false);
+    expect(targets.get('success')).toEqual([runtimeTargetFromEntityId('enemy:second')]);
+  });
+
   it('战技禁用标签随动作结束移除，重叠动作互不清除对方的标签', () => {
     const container = new CombatBuffContainer('caster', new CombatAttributeSet());
     const target = new BuffDefinitionOperationTarget(container, { get: () => undefined });
@@ -104,7 +228,7 @@ describe('BuffOperationExecutor', () => {
             if (query.kind === 'source') {
               if (reason === 'other') throw new Error('Other must not query finishSource');
               blackboard.assignDynamic('layers', 3.8);
-              return sourceGroup;
+              return [{ kind: 'spatialPoint', pointId: 1 }, ...sourceGroup];
             }
             return targets.map(target => ({ kind: 'operator', operatorId: target.ownerId }));
           },
@@ -213,6 +337,94 @@ describe('BuffOperationExecutor', () => {
     expect(apply).toHaveBeenCalledTimes(1);
   });
 
+  it('强制反应逐目标检查附着，首目标不足不跳过后续目标，来源和数值只求值一次', () => {
+    const blackboard = new ActionBlackboard({ count: 2 });
+    const targets = ['enemy', 'enemy:second', 'enemy:third'].map(id => {
+      const target = new BuffDefinitionOperationTarget(
+        new CombatBuffContainer(id, new CombatAttributeSet()),
+        {
+          get: buffId => ({
+            id: buffId,
+            stackingType: 'unlimited',
+            applyTags:
+              buffId === 'attachment' ? ['Skill/Character/Common/SpellInflict/CrystInflict'] : [],
+          }),
+          compile: entry => ({
+            id: entry.id,
+            stackingType: 'unlimited',
+            applyTags: entry.applyTags,
+          }),
+        },
+      );
+      if (id !== 'enemy')
+        target.apply({ buffId: 'attachment', sourceId: 'caster', blackboardValues: {} });
+      const finish = target.finishCountByTags.bind(target);
+      vi.spyOn(target, 'finishCountByTags').mockImplementation((...args) => {
+        const result = finish(...args);
+        blackboard.assignDynamic('count', 99);
+        return result;
+      });
+      return { target, apply: vi.spyOn(target, 'apply') };
+    });
+    const query = new TargetContextOperationExecutor(
+      'caster',
+      delegate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+    );
+    const context = { blackboard, targetContext: new RuntimeTargetContext() };
+    context.targetContext.set('sources', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'actual-source' },
+    ]);
+    context.targetContext.set('targets', [
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy:second' },
+      { kind: 'enemy', enemyId: 'enemy:third' },
+    ]);
+    const executor = new BuffOperationExecutor({
+      sourceId: 'legacy-source',
+      delegate,
+      resolveTarget: () => {
+        throw new Error('legacy target must not be used');
+      },
+      resolveEventTarget: id => {
+        const target = targets.find(entry => entry.target.ownerId === id)?.target;
+        if (!target) throw new Error(`unexpected target ${id}`);
+        return target;
+      },
+      queryTargets: (targets, context) => query.queryTargets(targets, context),
+      resolveBuffDefinition: () => ({ stackingType: 'unlimited' }),
+    });
+    const step = {
+      kind: 'forceSpellStatus',
+      parameters: {
+        source: { kind: 'context', key: 'sources' },
+        target: { kind: 'context', key: 'targets' },
+        element: 'heat',
+        consumedElement: 'cryo',
+        consumedLayers: numberInput({ kind: 'constant', value: 1 }),
+        count: numberInput({ kind: 'blackboard', key: 'count' }),
+        isExtra: true,
+      },
+    } as const;
+    expect(executor.execute(step, context)).toBe(true);
+    expect(targets[0]!.apply).not.toHaveBeenCalled();
+    for (const entry of targets.slice(1))
+      expect(entry.apply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceId: 'actual-source',
+          blackboardValues: { count: 2, consumed_type: 2, consumed_layer: 1 },
+        }),
+      );
+    context.targetContext.set('sources', []);
+    expect(executor.execute(step, context)).toBe(false);
+    for (const entry of targets.slice(1)) expect(entry.apply).toHaveBeenCalledTimes(1);
+  });
+
   it('干员附着在多层循环外检查冷却，直接异常消费附着而不派发普通 Before 事件', () => {
     const attached = 'buff_common_enemy_spell_cryst_attached';
     const triggered = 'buff_common_enemy_spell_cryst_triggered_frozen';
@@ -285,7 +497,7 @@ describe('BuffOperationExecutor', () => {
             ? [{ kind: 'godEntity' }]
             : []
           : [
-              { kind: 'enemy' },
+              { kind: 'enemy', enemyId: 'enemy' },
               { kind: 'operator', operatorId: 'a' },
               { kind: 'operator', operatorId: 'b' },
             ],
@@ -357,8 +569,8 @@ describe('BuffOperationExecutor', () => {
     );
     expect(target.apply).not.toHaveBeenCalled();
   });
-  it('Buff 黑板查询与施加都使用动作输入目标，不误读 Buff 来源或迭代目标', () => {
-    const recipient = Object.assign(new CombatBuffContainer('enemy', new CombatAttributeSet()), {
+  it.each(['enemy', 'enemy:second'])('Buff 黑板查询与施加保留输入目标 %s 的实例身份', entityId => {
+    const recipient = Object.assign(new CombatBuffContainer(entityId, new CombatAttributeSet()), {
       apply: vi.fn(() => true),
     });
     recipient.add(
@@ -371,7 +583,7 @@ describe('BuffOperationExecutor', () => {
         throw new Error('不得回退固定施法者');
       },
       resolveEventTarget: id => {
-        expect(id).toBe('enemy');
+        expect(id).toBe(entityId);
         return recipient;
       },
       delegate,
@@ -398,7 +610,7 @@ describe('BuffOperationExecutor', () => {
       actionSourceId: 'creator',
       buffOwnerId: 'holder',
       currentTarget: { kind: 'operator' as const, operatorId: 'other' },
-      actionInputTarget: { kind: 'enemy' as const },
+      actionInputTargets: singleTargetList(runtimeTargetFromEntityId(entityId)),
     };
     expect(
       new CombatActionSequenceRuntime(executor, context)
@@ -530,7 +742,7 @@ describe('BuffOperationExecutor', () => {
           blackboard: new ActionBlackboard(),
           actionOwnerId: 'recipient',
           actionSourceId: 'recipient',
-          actionInputTarget: { kind: 'operator', operatorId: 'recipient' },
+          actionInputTargets: singleTargetList({ kind: 'operator', operatorId: 'recipient' }),
         }),
       ).toBe(true);
       expect(applied?.finishReason).toBe('early');
@@ -544,7 +756,15 @@ describe('BuffOperationExecutor', () => {
     const target = new BuffDefinitionOperationTarget(container, { get: () => undefined });
     // Preserve the container methods while overriding only the live reader.
     Object.defineProperty(container, 'currentFiniteShieldValue', { get: () => liveValue });
-    const queryExecutor = new TargetContextOperationExecutor('source', delegate);
+    const queryExecutor = new TargetContextOperationExecutor(
+      'source',
+      delegate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+    );
     const executor = new BuffOperationExecutor({
       sourceId: 'source',
       queryTargets: queryExecutor.queryTargets.bind(queryExecutor),
@@ -591,7 +811,10 @@ describe('BuffOperationExecutor', () => {
         target: { kind: 'context' as const, key: 'selected' },
       },
     };
-    targetContext.set('selected', [{ kind: 'operator', operatorId: 'owner' }, { kind: 'enemy' }]);
+    targetContext.set('selected', [
+      { kind: 'operator', operatorId: 'owner' },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
     executor.execute(selected, { ...context, actionOwnerId: 'other', targetContext });
     expect(blackboard.getNumber('shield')).toBe(liveValue);
     liveValue = 1;
@@ -600,7 +823,7 @@ describe('BuffOperationExecutor', () => {
       { kind: 'operator', operatorId: 'owner' },
     ]);
     expect(executor.execute(selected, { ...context, targetContext })).toBe(true);
-    expect(blackboard.getNumber('shield')).toBe(80.123456789);
+    expect(blackboard.getNumber('shield')).toBe(liveValue);
   });
   it.each([false, true])('结束动作传递自身施法而非事件施法，存在来源=%s', hasSource => {
     const target = new CombatBuffContainer<string>('caster', new CombatAttributeSet());
@@ -709,7 +932,7 @@ describe('BuffOperationExecutor', () => {
   });
   it.each([
     [{ kind: 'operator', operatorId: 'recipient' }, 'recipient'],
-    [{ kind: 'enemy' }, 'enemy'],
+    [{ kind: 'enemy', enemyId: 'enemy' }, 'enemy'],
     [{ kind: 'abilityEntity', instanceId: 7 }, 'ability-entity:7'],
   ] as const)('Context 接收者 %j 与 Context 来源保持独立', (currentTarget, targetId) => {
     const apply = vi.fn(() => true);
@@ -747,7 +970,7 @@ describe('BuffOperationExecutor', () => {
         blackboard: new ActionBlackboard(),
         targetContext,
         currentTarget,
-        actionInputTarget: currentTarget,
+        actionInputTargets: singleTargetList(currentTarget),
         buffSourceId: 'original-source',
       },
     );
@@ -758,7 +981,7 @@ describe('BuffOperationExecutor', () => {
   });
   it.each([
     [{ kind: 'operator', operatorId: 'queried' }, 'queried'],
-    [{ kind: 'enemy' }, 'enemy'],
+    [{ kind: 'enemy', enemyId: 'enemy' }, 'enemy'],
     [{ kind: 'abilityEntity', instanceId: 7 }, 'ability-entity:7'],
   ] as const)('结束 Buff 使用 Context 当前实例：%j', (currentTarget, expectedId) => {
     const target = new CombatBuffContainer(expectedId, new CombatAttributeSet());
@@ -784,7 +1007,7 @@ describe('BuffOperationExecutor', () => {
       },
       {
         blackboard: new ActionBlackboard(),
-        actionInputTarget: currentTarget,
+        actionInputTargets: singleTargetList(currentTarget),
         buffSourceId: 'original',
       },
     );
@@ -822,7 +1045,11 @@ describe('BuffOperationExecutor', () => {
     };
     executor.execute(step, context);
     expect(apply).toHaveBeenCalledWith(expect.objectContaining({ sourceId: 'xaihi' }));
-    targetContext.set('seraph', [{ kind: 'operator', operatorId: 'xaihi' }, { kind: 'enemy' }]);
+    targetContext.set('seraph', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'xaihi' },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
     expect(executor.execute(step, context)).toBe(true);
     expect(apply).toHaveBeenLastCalledWith(expect.objectContaining({ sourceId: 'xaihi' }));
     const skipped = {
@@ -832,10 +1059,7 @@ describe('BuffOperationExecutor', () => {
         buffs: [{ buffId: stringInput('unread') }],
       },
     };
-    for (const group of [
-      [],
-      [{ kind: 'spatialPoint' as const, pointId: 1 }, { kind: 'enemy' as const }],
-    ]) {
+    for (const group of [[], [{ kind: 'spatialPoint' as const, pointId: 1 }]]) {
       targetContext.set('seraph', group);
       expect(executor.execute(skipped, context)).toBe(true);
     }
@@ -1243,7 +1467,15 @@ describe('BuffOperationExecutor', () => {
       },
     ]);
     expect(applied).toEqual(['buff_physical_no_guard', 'buff_physical_fracture']);
-    const queries = new TargetContextOperationExecutor('antal', delegate);
+    const queries = new TargetContextOperationExecutor(
+      'antal',
+      delegate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+    );
     const targetContext = new RuntimeTargetContext();
     const queried = new BuffOperationExecutor({
       ...executor.dependencies,
@@ -1258,23 +1490,24 @@ describe('BuffOperationExecutor', () => {
         isExtra: true,
       },
     };
-    targetContext.set('sources', [
-      { kind: 'spatialPoint', pointId: 1 },
-      { kind: 'operator', operatorId: 'selected-source' },
+    targetContext.set('sources', [{ kind: 'spatialPoint', pointId: 1 }]);
+    targetContext.set('receivers', [
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
     ]);
-    targetContext.set('receivers', [{ kind: 'enemy' }, { kind: 'enemy' }]);
     expect(queried.execute(dynamic, { ...context, targetContext })).toBe(false);
     expect(applied).toHaveLength(2);
     targetContext.set('sources', [
+      { kind: 'spatialPoint', pointId: 1 },
       { kind: 'operator', operatorId: 'selected-source' },
       { kind: 'operator', operatorId: 'ignored-source' },
     ]);
     targetContext.set('receivers', []);
     expect(queried.execute(dynamic, { ...context, targetContext })).toBe(false);
     targetContext.set('receivers', [
-      { kind: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
       { kind: 'spatialPoint', pointId: 2 },
-      { kind: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
     ]);
     expect(queried.execute(dynamic, { ...context, targetContext })).toBe(true);
     expect(applied).toEqual([
@@ -1379,6 +1612,7 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
+    const crushBlackboard = new ActionBlackboard({ crush_multi: 1.75 });
     const executor = createExecutor({
       sourceId: 'dapan',
       resolveTarget: () => target,
@@ -1393,7 +1627,10 @@ describe('BuffOperationExecutor', () => {
           },
         ],
       }),
-      onBeforeOutputPhysicalInfliction: () => events.push('before'),
+      onBeforeOutputPhysicalInfliction: () => {
+        events.push('before');
+        crushBlackboard.assign({ crush_multi: 9 });
+      },
       onPhysicalInflictionApplied: () => events.push('after'),
       delegate,
     });
@@ -1412,7 +1649,7 @@ describe('BuffOperationExecutor', () => {
           },
         },
         {
-          blackboard: new ActionBlackboard({ crush_multi: 1.75 }),
+          blackboard: crushBlackboard,
           skillCastInfo: {
             skillCastId: 1,
             originSkillId: 'combo',
@@ -1447,7 +1684,12 @@ describe('BuffOperationExecutor', () => {
     expect(events).toEqual(['before', 'after', 'before', 'after']);
     noGuardCount = 1;
     immune = true;
-    expect(executor.execute(step, { blackboard: new ActionBlackboard() })).toBe(true);
+    expect(() => executor.execute(step, { blackboard: new ActionBlackboard() })).toThrow(
+      "action blackboard value 'multiplier' is missing",
+    );
+    expect(executor.execute(step, { blackboard: new ActionBlackboard({ multiplier: 1 }) })).toBe(
+      true,
+    );
     expect(applied).toHaveLength(2);
     expect(events).toHaveLength(4);
   });
@@ -2034,7 +2276,7 @@ describe('BuffOperationExecutor', () => {
         },
         {
           blackboard: new ActionBlackboard(),
-          actionInputTarget: { kind: 'abilityEntity', instanceId: 7 },
+          actionInputTargets: singleTargetList({ kind: 'abilityEntity', instanceId: 7 }),
         },
       ),
     ).toBe(true);
@@ -2243,7 +2485,7 @@ describe('BuffOperationExecutor', () => {
     expect(executor.execute(step, { blackboard: new ActionBlackboard() })).toBe(true);
     empty = false;
     spatialFirst = true;
-    expect(
+    expect(() =>
       executor.execute(
         {
           ...step,
@@ -2254,8 +2496,14 @@ describe('BuffOperationExecutor', () => {
         },
         { blackboard: new ActionBlackboard() },
       ),
-    ).toBe(true);
+    ).toThrow("action blackboard value 'missing' is missing");
     expect(two.remainingDuration).toBe(9);
+    executor.execute(
+      { ...step, parameters: { ...step.parameters, value: { kind: 'constant', value: 7 } } },
+      { blackboard: new ActionBlackboard() },
+    );
+    expect(one.remainingDuration).toBe(3);
+    expect(two.remainingDuration).toBe(7);
   });
 
   it('uses container order for lifetime reads and preserves the native write tolerance', () => {
@@ -2274,7 +2522,10 @@ describe('BuffOperationExecutor', () => {
     const executor = new BuffOperationExecutor({
       sourceId: 'operator',
       delegate,
-      queryTargets: () => [{ kind: 'operator', operatorId: 'operator' }],
+      queryTargets: () => [
+        { kind: 'spatialPoint', pointId: 1 },
+        { kind: 'operator', operatorId: 'operator' },
+      ],
       resolveEventTarget: () => target,
       resolveTarget: () => target,
     });
@@ -2651,7 +2902,7 @@ describe('BuffOperationExecutor', () => {
         {
           blackboard: new ActionBlackboard(),
           actionSourceId: 'operator-a',
-          actionInputTarget: { kind: 'operator', operatorId: 'operator-b' },
+          actionInputTargets: singleTargetList({ kind: 'operator', operatorId: 'operator-b' }),
           event: {
             event: 'receiveHeal' as const,
             payload: {
@@ -2812,7 +3063,7 @@ describe('BuffOperationExecutor', () => {
         },
         {
           blackboard,
-          actionInputTarget: { kind: 'enemy' },
+          actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' }),
           event: {
             event: 'buffConsumed' as const,
             payload: {
@@ -2925,7 +3176,7 @@ describe('BuffOperationExecutor', () => {
         },
         {
           blackboard: new ActionBlackboard(),
-          actionInputTarget: { kind: 'abilityEntity', instanceId: 7 },
+          actionInputTargets: singleTargetList({ kind: 'abilityEntity', instanceId: 7 }),
         },
       ),
     ).toBe(true);
@@ -3080,8 +3331,14 @@ describe('BuffOperationExecutor', () => {
     const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => body,
-      queryTargets: () => [{ kind: 'abilityEntity', instanceId: 7 }],
-      resolvePartBuffSource: () => ({ kind: 'enemy' }),
+      queryTargets: () => [
+        { kind: 'spatialPoint', pointId: 1 },
+        { kind: 'abilityEntity', instanceId: 7 },
+      ],
+      resolvePartBuffSource: selected => {
+        expect(selected).toEqual({ kind: 'abilityEntity', instanceId: 7 });
+        return { kind: 'enemy', enemyId: 'enemy' };
+      },
       resolveCurrentAbilityEntityTarget: () => part,
       resolveEventTarget: () => body,
       delegate,
@@ -3264,7 +3521,10 @@ describe('BuffOperationExecutor', () => {
       delegate,
       resolveEventTarget: id => (id === 'enemy' ? untagged : target),
     });
-    targetContext.set('group', [{ kind: 'operator', operatorId: 'operator' }, { kind: 'enemy' }]);
+    targetContext.set('group', [
+      { kind: 'operator', operatorId: 'operator' },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
     expect(grouped.evaluate(groupCondition, context)).toBe(false);
     untagged.addEntityTags([childPath]);
     expect(grouped.evaluate(groupCondition, context)).toBe(true);
@@ -3275,6 +3535,34 @@ describe('BuffOperationExecutor', () => {
         actionOwnerId: 'operator',
       }),
     ).toBe(false);
+  });
+
+  it('普通标签条件读取部位的 Buff 归属，CheckPartTagMatch 仍只检查部位', () => {
+    const tag = 'Test/BatTarget';
+    const registry = new GameplayTagRegistry([tag]);
+    const body = new CombatBuffContainer('enemy', new CombatAttributeSet(), registry);
+    const part = new CombatBuffContainer('ability-entity:1', new CombatAttributeSet(), registry);
+    body.addEntityTags([tag]);
+    const executor = new BuffOperationExecutor({
+      sourceId: 'operator',
+      resolveTarget: () => body,
+      queryTargets: () => [{ kind: 'abilityEntity', instanceId: 1 }],
+      resolvePartBuffSource: () => ({ kind: 'enemy', enemyId: 'enemy' }),
+      resolveEventTarget: () => body,
+      resolveCurrentAbilityEntityTarget: () => part,
+      delegate: { execute: () => true, evaluate: () => true },
+    });
+    const condition = {
+      kind: 'entityTagMatch' as const,
+      target: { kind: 'inputTarget' as const },
+      tagQueryType: 'hasAny' as const,
+      tags: [tag],
+    };
+    const context = { blackboard: new ActionBlackboard() };
+    expect(executor.evaluate(condition, context)).toBe(true);
+    expect(executor.evaluate({ ...condition, checkPartTags: true }, context)).toBe(false);
+    part.addEntityTags([tag]);
+    expect(executor.evaluate({ ...condition, checkPartTags: true }, context)).toBe(true);
   });
 
   it('reads the first matching active buff and writes its value to the action blackboard', () => {
@@ -3328,6 +3616,84 @@ describe('BuffOperationExecutor', () => {
       ),
     ).toBe(true);
     expect(blackboard.getNumber('conductCount')).toBe(4);
+  });
+
+  it('读取 Buff 黑板跟随查询的首个实际目标，部位回到主体，空查询不回退首敌', () => {
+    const target = new CombatBuffContainer('enemy:secondary', new CombatAttributeSet());
+    target.add({ id: 'wanted', stackingType: 'unlimited', blackboard: { value: 8 } }, 'operator');
+    const query = new TargetContextOperationExecutor(
+      'operator',
+      delegate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+    );
+    const resolveTarget = vi.fn(() => {
+      throw new Error('must not read the legacy primary enemy');
+    });
+    const resolveEventTarget = vi.fn((id: string) => {
+      expect(id).toBe('enemy:secondary');
+      return target;
+    });
+    const executor = new BuffOperationExecutor({
+      sourceId: 'operator',
+      delegate,
+      resolveTarget,
+      resolveEventTarget,
+      queryTargets: (targets, context) => query.queryTargets(targets, context),
+      resolvePartBuffSource: selected =>
+        selected.kind === 'abilityEntity'
+          ? { kind: 'enemy', enemyId: 'enemy:secondary' }
+          : selected,
+    });
+    const context = {
+      blackboard: new ActionBlackboard({ output: 3 }),
+      targetContext: new RuntimeTargetContext(),
+    };
+    const step = {
+      kind: 'readBuffBlackboard',
+      parameters: {
+        target: { kind: 'context', key: 'selected' },
+        query: { kind: 'id', buffIds: ['wanted'] },
+        desiredKey: 'value',
+        outputKey: 'output',
+      },
+    } as const;
+    context.targetContext.set('selected', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'abilityEntity', instanceId: 7 },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
+    expect(executor.execute(step, context)).toBe(true);
+    expect(context.blackboard.getNumber('output')).toBe(8);
+    expect(resolveEventTarget).toHaveBeenCalledTimes(1);
+    context.targetContext.set('selected', []);
+    expect(executor.execute(step, context)).toBe(false);
+    expect(context.blackboard.getNumber('output')).toBe(8);
+    expect(resolveTarget).not.toHaveBeenCalled();
+    const stackStep = {
+      kind: 'readBuffStackCount',
+      parameters: {
+        target: step.parameters.target,
+        query: step.parameters.query,
+        outputKey: 'count',
+      },
+    } as const;
+    context.targetContext.set('selected', [
+      { kind: 'abilityEntity', instanceId: 7 },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
+    expect(executor.execute(stackStep, context)).toBe(true);
+    expect(context.blackboard.getNumber('count')).toBe(1);
+    context.targetContext.set('selected', []);
+    expect(executor.execute(stackStep, context)).toBe(true);
+    expect(context.blackboard.getNumber('count')).toBe(0);
+    context.targetContext.set('selected', [{ kind: 'spatialPoint', pointId: 1 }]);
+    expect(executor.execute(step, context)).toBe(false);
+    expect(executor.execute(stackStep, context)).toBe(true);
+    expect(context.blackboard.getNumber('count')).toBe(0);
   });
 
   it('reads the first Buff matching an ID query', () => {

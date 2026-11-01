@@ -14,6 +14,10 @@ import {
 import { parseBlackboardDataPairs, type DeclaredBlackboardValueSource } from './blackboard.ts';
 import { parseActiveSkillTypesSource } from './activeSkillTypes.ts';
 import { parseAbilitySystemReferences } from './abilitySystemReferences.ts';
+import {
+  COMBAT_FACTIONS,
+  type CombatFaction,
+} from '../../../../packages/game-data-contract/src/primitives.ts';
 /**
  * 完整 AbilitySystem 的黑板接收者。ProjectileComponent 尚未解码的末段只有特效/声音配置，
  * 不提供技能或 Buff 入口；它的战斗数值字段仍由原始 value 参与键读取检查。
@@ -31,7 +35,15 @@ export function parseProjectileBlackboardReceiverSource(value: unknown, path: st
   const result = parseAbilitySystemReferences(root.abilitySystem, path + '.abilitySystem');
   return result.complete ? { value, references: result.references } : undefined;
 }
+function readProjectileFaction(value: unknown, path: string): CombatFaction {
+  const index = requireInteger(value, path);
+  const faction = COMBAT_FACTIONS[index];
+  if (faction === undefined) throw new Error(`${path}: unsupported faction index ${index}`);
+  return faction;
+}
+
 export interface ProjectileRuntimeSource {
+  readonly faction?: CombatFaction;
   /** Missing means the source exporter did not preserve the owning AbilitySystem bundle. */
   readonly activeSkills?: ReturnType<typeof parseActiveSkillTypesSource>;
   readonly projectileId: string;
@@ -77,6 +89,9 @@ export function parseProjectileRuntimeSource(
     `${path}.targetFilter.filterGameplayTag`,
   );
   return {
+    ...(root.factionIndex === undefined
+      ? {}
+      : { faction: readProjectileFaction(root.factionIndex, `${path}.factionIndex`) }),
     projectileId: requireNonEmptyString(root.id, `${path}.id`),
     ...(root.abilitySystem === undefined
       ? {}

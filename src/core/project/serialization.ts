@@ -2,6 +2,7 @@
  * 存档与文本/对象输入之间的稳定 I/O 边界。
  * 解析时只识别当前项目格式与旧版异构格式；序列化只接受合法的当前项目。
  */
+import { canUpgradeProjectVersion, upgradeProjectDocument } from './projectUpgrades';
 import type { EndaxisProjectDocument, JsonObject } from './schema';
 import { PROJECT_SCHEMA_VERSION } from './schema';
 import { validateProjectDocument, type ValidationIssue, type ValidationResult } from './validation';
@@ -9,7 +10,7 @@ import type { GameDataRepository } from '../game-data/gameDataRepository';
 import { validateProjectWithGameData } from './definitionValidation';
 
 /** 只做结构识别的输入类别，不代表文档已经通过完整校验。 */
-export type ProjectInputKind = 'current' | 'legacy' | 'unsupported';
+export type ProjectInputKind = 'current' | 'upgradeable' | 'legacy' | 'unsupported';
 
 /** 项目输入的轻量检查结果，供加载流程选择校验或迁移路径。 */
 export interface ProjectInspection {
@@ -44,7 +45,12 @@ export function inspectProjectInput(value: unknown): ProjectInspection {
   if (!isObject(value)) return { kind: 'unsupported' };
   if (typeof value.schemaVersion === 'number') {
     return {
-      kind: value.schemaVersion === PROJECT_SCHEMA_VERSION ? 'current' : 'unsupported',
+      kind:
+        value.schemaVersion === PROJECT_SCHEMA_VERSION
+          ? 'current'
+          : canUpgradeProjectVersion(value.schemaVersion)
+            ? 'upgradeable'
+            : 'unsupported',
       schemaVersion: value.schemaVersion,
     };
   }
@@ -115,6 +121,19 @@ export function parseProjectDocument(
     };
   }
 
+  if (inspection.kind === 'upgradeable' && isObject(value)) {
+    try {
+      value = upgradeProjectDocument(value);
+    } catch (error) {
+      return {
+        ok: false,
+        kind: 'invalid-document',
+        issues: [
+          { path: '$', message: error instanceof Error ? error.message : 'project upgrade failed' },
+        ],
+      };
+    }
+  }
   const validation = validateLoadedProject(decodeProjectNumbers(value), options);
   if (!validation.ok) return { ok: false, kind: 'invalid-document', issues: validation.issues };
   return { ok: true, value: withoutLegacyDistance(validation.value) };

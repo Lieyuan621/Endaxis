@@ -8,10 +8,21 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const rossiChr_0028_wulfa_attack1ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -19,13 +30,13 @@ export const rossiChr_0028_wulfa_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.03 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -109,7 +120,7 @@ export const rossiChr_0028_wulfa_attack1: SkillDefinition = {
   offsetRecordFrame: 8,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 3, endFrame: 34, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
     { startFrame: 9, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
@@ -123,17 +134,39 @@ export const rossiChr_0028_wulfa_attack1: SkillDefinition = {
 export const rossiChr_0028_wulfa_attack2ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar1', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar1',
+          },
         },
         next: null,
       },
-      mergeContextTargets_2: {
+      findTargets_2: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar2',
+          },
         },
         next: null,
       },
@@ -141,13 +174,13 @@ export const rossiChr_0028_wulfa_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar1' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.03 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -191,13 +224,13 @@ export const rossiChr_0028_wulfa_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar2' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -268,8 +301,8 @@ export const rossiChr_0028_wulfa_attack2: SkillDefinition = {
   offsetRecordFrame: 9,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_2' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_2' } },
     { startFrame: 5, endFrame: 6, sequence: { $sequence: 'calculateActionValue_7' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_11' } },
     { startFrame: 4, endFrame: 35, sequence: { $sequence: 'overrideBasicAttackMapping_12' } },
@@ -284,17 +317,39 @@ export const rossiChr_0028_wulfa_attack2: SkillDefinition = {
 export const rossiChr_0028_wulfa_attack3ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar1', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar1',
+          },
         },
         next: null,
       },
-      mergeContextTargets_2: {
+      findTargets_2: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -302,13 +357,13 @@ export const rossiChr_0028_wulfa_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar1' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.03 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -354,13 +409,13 @@ export const rossiChr_0028_wulfa_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -452,8 +507,8 @@ export const rossiChr_0028_wulfa_attack3: SkillDefinition = {
   offsetRecordFrame: 12,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_2' } },
+    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_2' } },
     { startFrame: 4, endFrame: 5, sequence: { $sequence: 'calculateActionValue_7' } },
     { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_12' } },
     { startFrame: 5, endFrame: 35, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
@@ -486,10 +541,21 @@ export const rossiChr_0028_wulfa_attack4ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_4: {
+      findTargets_4: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -613,25 +679,25 @@ export const rossiChr_0028_wulfa_attack4: SkillDefinition = {
   costFrame: 8,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_3' } },
-    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 22, endFrame: 23, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 195, endFrame: 196, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 196, endFrame: 197, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 197, endFrame: 198, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 198, endFrame: 199, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 203, endFrame: 204, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 204, endFrame: 205, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 205, endFrame: 206, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 206, endFrame: 207, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 212, endFrame: 213, sequence: { $sequence: 'mergeContextTargets_4' } },
-    { startFrame: 213, endFrame: 214, sequence: { $sequence: 'mergeContextTargets_4' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 22, endFrame: 23, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 195, endFrame: 196, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 196, endFrame: 197, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 197, endFrame: 198, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 198, endFrame: 199, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 203, endFrame: 204, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 204, endFrame: 205, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 205, endFrame: 206, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 206, endFrame: 207, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 212, endFrame: 213, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 213, endFrame: 214, sequence: { $sequence: 'findTargets_4' } },
     { startFrame: 6, endFrame: 8, sequence: { $sequence: 'calculateActionValue_27' } },
     { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_26' } },
     { startFrame: 13, endFrame: 15, sequence: { $sequence: 'dealDamage_26' } },
@@ -658,10 +724,21 @@ export const rossiChr_0028_wulfa_attack4: SkillDefinition = {
 export const rossiChr_0028_wulfa_attack5ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -704,7 +781,7 @@ export const rossiChr_0028_wulfa_attack5ActionGraph = {
         },
         next: null,
       },
-      modifyActionValue_6: {
+      modifyActionValue_7: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -715,27 +792,27 @@ export const rossiChr_0028_wulfa_attack5ActionGraph = {
         },
         next: null,
       },
-      ifElse_8: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'modifyActionValue_6' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
       ifElse_9: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'ifElse_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
+          whenTrue: { $sequence: 'modifyActionValue_7' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_10: {
+      ifElse_10: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'ifElse_9' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_11: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -748,15 +825,17 @@ export const rossiChr_0028_wulfa_attack5ActionGraph = {
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'ifElse_9',
+        next: 'ifElse_10',
       },
-      startTimeDilation_12: {
+      startTimeDilation_13: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.25 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -799,30 +878,28 @@ export const rossiChr_0028_wulfa_attack5ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      ifElse_13: {
+      ifElse_14: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'startTimeDilation_12' },
+          whenTrue: { $sequence: 'startTimeDilation_13' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      overrideBasicAttackMapping_14: {
+      overrideBasicAttackMapping_15: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0028_wulfa_attack1'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_15: {
+      reachSkillOperableBoundary_16: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0028_wulfa_attack1'] },
@@ -853,7 +930,14 @@ export const rossiChr_0028_wulfa_attack5ActionGraph = {
       },
       data_5: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_6: {
         type: 'boolean',
@@ -895,12 +979,12 @@ export const rossiChr_0028_wulfa_attack5: SkillDefinition = {
   offsetRecordFrame: 15,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 15, endFrame: 17, sequence: { $sequence: 'ifElse_5' } },
-    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 16, endFrame: 18, sequence: { $sequence: 'ifElse_13' } },
-    { startFrame: 27, endFrame: 60, sequence: { $sequence: 'overrideBasicAttackMapping_14' } },
-    { startFrame: 45, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
+    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'dealDamage_11' } },
+    { startFrame: 16, endFrame: 18, sequence: { $sequence: 'ifElse_14' } },
+    { startFrame: 27, endFrame: 60, sequence: { $sequence: 'overrideBasicAttackMapping_15' } },
+    { startFrame: 45, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_16' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -911,6 +995,60 @@ export const rossiChr_0028_wulfa_attack5: SkillDefinition = {
 export const rossiChr_0028_wulfa_power_attackActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: false,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar1',
+          },
+        },
+        next: null,
+      },
+      findTargets_3: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: false,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar2',
+          },
+        },
+        next: null,
+      },
+      findTargets_5: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: false,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_7: {
         action: {
           kind: 'changeResource',
@@ -930,28 +1068,43 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.03 },
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['caster'],
           },
         },
         next: 'changeResource_7',
       },
-      ifElse_9: {
+      startTimeDilation_9: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyAttacker',
+            durationSeconds: { kind: 'constant', value: 0.06 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: 'startTimeDilation_8',
+      },
+      ifElse_10: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'startTimeDilation_8' },
+          whenTrue: { $sequence: 'startTimeDilation_9' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_10: {
+      dealDamage_11: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -964,16 +1117,16 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'ifElse_9',
+        next: 'ifElse_10',
       },
-      checkCondition_11: {
+      checkCondition_12: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
-        next: 'dealDamage_10',
+        next: 'dealDamage_11',
       },
-      findTargets_12: {
+      findTargets_13: {
         action: {
           kind: 'findTargets',
           parameters: {
@@ -982,26 +1135,43 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
             saveToContextKey: 'MainTar',
           },
         },
-        next: 'checkCondition_11',
+        next: 'checkCondition_12',
       },
-      repeatEachTick_13: {
+      repeatEachTick_14: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar1' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'findTargets_12' },
+          body: { $sequence: 'findTargets_13' },
         },
         next: null,
       },
-      dealDamage_22: {
+      repeatEachTick_23: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'context', key: 'tar2' },
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'findTargets_13' },
+        },
+        next: null,
+      },
+      dealDamage_24: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1016,7 +1186,7 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
         },
         next: null,
       },
-      gainFinisherSp_23: {
+      gainFinisherSp_25: {
         action: {
           kind: 'gainFinisherSp',
           parameters: {
@@ -1025,15 +1195,17 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
             factor: { kind: 'constant', value: 1 },
           },
         },
-        next: 'dealDamage_22',
+        next: 'dealDamage_24',
       },
-      startTimeDilation_24: {
+      startTimeDilation_27: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.45 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -1076,23 +1248,21 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      ifElse_25: {
+      ifElse_28: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'startTimeDilation_24' },
+          whenTrue: { $sequence: 'startTimeDilation_27' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      applyBuff_26: {
+      applyBuff_29: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1105,14 +1275,14 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
         },
         next: null,
       },
-      checkCondition_27: {
+      checkCondition_30: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
-        next: 'applyBuff_26',
+        next: 'applyBuff_29',
       },
-      applyBuff_28: {
+      applyBuff_31: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1125,7 +1295,7 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_29: {
+      applyBuff_32: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1155,7 +1325,14 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
       },
       data_4: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_5: {
         type: 'boolean',
@@ -1185,13 +1362,18 @@ export const rossiChr_0028_wulfa_power_attack: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 4,
   scheduledSequences: [
-    { startFrame: 6, endFrame: 8, sequence: { $sequence: 'repeatEachTick_13' } },
-    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'repeatEachTick_13' } },
-    { startFrame: 36, endFrame: 39, sequence: { $sequence: 'gainFinisherSp_23' } },
-    { startFrame: 38, endFrame: 41, sequence: { $sequence: 'ifElse_25' } },
-    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'checkCondition_27' } },
-    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_28' } },
-    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_29' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 36, endFrame: 39, sequence: { $sequence: 'findTargets_5' } },
+    { startFrame: 6, endFrame: 8, sequence: { $sequence: 'repeatEachTick_14' } },
+    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'repeatEachTick_23' } },
+    { startFrame: 36, endFrame: 39, sequence: { $sequence: 'gainFinisherSp_25' } },
+    { startFrame: 38, endFrame: 41, sequence: { $sequence: 'ifElse_28' } },
+    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'checkCondition_30' } },
+    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_31' } },
+    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_32' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -1202,10 +1384,21 @@ export const rossiChr_0028_wulfa_power_attack: SkillDefinition = {
 export const rossiChr_0028_wulfa_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1274,7 +1467,7 @@ export const rossiChr_0028_wulfa_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
   ],
   defaultTarget: 'enemy',
@@ -1286,35 +1479,71 @@ export const rossiChr_0028_wulfa_plunging_attack_end: SkillDefinition = {
 export const rossiChr_0028_wulfa_normal_skillActionGraph = {
   main: {
     nodes: {
-      createSpatialPointTargets_1: {
+      copyContextTargets_1: {
         action: {
-          kind: 'createSpatialPointTargets',
+          kind: 'copyContextTargets',
           parameters: {
+            source: { kind: 'context', key: 'smart_target' },
             saveToContextKey: 'TarPos',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'context', key: 'smart_target' },
+            convertEntitiesToPositions: true,
           },
         },
         next: null,
       },
-      mergeContextTargets_23: {
+      findTargets_23: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar1', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar1',
+            continuousIntervalSeconds: 0.0333333351,
+          },
         },
         next: null,
       },
-      mergeContextTargets_24: {
+      findTargets_24: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar2',
+            continuousIntervalSeconds: 0.0333333351,
+          },
         },
         next: null,
       },
-      mergeContextTargets_25: {
+      findTargets_25: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar3', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar3',
+            continuousIntervalSeconds: 0.0333333351,
+          },
         },
         next: null,
       },
@@ -1366,7 +1595,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar1' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1389,6 +1618,35 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         },
         next: 'repeatEachTick_33',
       },
+      repeatEachTick_42: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'context', key: 'tar2' },
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'findTargets_32' },
+        },
+        next: null,
+      },
+      calculateActionValue_43: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'atk_scale_once',
+            operation: 'multiply',
+            left: { kind: 'valueNode', nodeId: 'data_3' },
+            right: { kind: 'constant', value: 0.3 },
+          },
+        },
+        next: 'repeatEachTick_42',
+      },
       ifElse_55: {
         action: {
           kind: 'ifElse',
@@ -1403,9 +1661,11 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -1448,8 +1708,6 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1534,7 +1792,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar3' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1591,6 +1849,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_5',
             source: 'actionOwner',
+            faction: 'good',
             recycleDelaySeconds: 1,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -1603,12 +1862,21 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      mergeContextTargets_1: {
+                      findTargets_1: {
                         action: {
-                          kind: 'mergeContextTargets',
+                          kind: 'findTargets',
                           parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                            continuousIntervalSeconds: 0.0333333351,
                           },
                         },
                         next: null,
@@ -1780,7 +2048,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                           parameters: {
                             nativeChanneling: {
                               catchUpMissedTicks: false,
-                              target: { kind: 'fixed', target: 'enemy' },
+                              target: { kind: 'context', key: 'tar' },
                               executeEachFrame: true,
                               triggerIntervalSeconds: 0.033,
                               maxCountPerTarget: 1,
@@ -2026,7 +2294,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                   usp_2: 0,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_1' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_1' } },
                   { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_59' } },
                   { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_67' } },
                 ],
@@ -2047,6 +2315,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_4',
             source: 'actionOwner',
+            faction: 'good',
             recycleDelaySeconds: 1,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -2059,12 +2328,21 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      mergeContextTargets_1: {
+                      findTargets_1: {
                         action: {
-                          kind: 'mergeContextTargets',
+                          kind: 'findTargets',
                           parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                            continuousIntervalSeconds: 0.0333333351,
                           },
                         },
                         next: null,
@@ -2236,7 +2514,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                           parameters: {
                             nativeChanneling: {
                               catchUpMissedTicks: false,
-                              target: { kind: 'fixed', target: 'enemy' },
+                              target: { kind: 'context', key: 'tar' },
                               executeEachFrame: true,
                               triggerIntervalSeconds: 0.033,
                               maxCountPerTarget: 1,
@@ -2482,7 +2760,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                   usp_2: 0,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_1' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_1' } },
                   { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_59' } },
                   { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_67' } },
                 ],
@@ -2503,6 +2781,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_3',
             source: 'actionOwner',
+            faction: 'good',
             recycleDelaySeconds: 1,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -2515,12 +2794,21 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      mergeContextTargets_1: {
+                      findTargets_1: {
                         action: {
-                          kind: 'mergeContextTargets',
+                          kind: 'findTargets',
                           parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                            continuousIntervalSeconds: 0.0333333351,
                           },
                         },
                         next: null,
@@ -2705,7 +2993,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                           parameters: {
                             nativeChanneling: {
                               catchUpMissedTicks: false,
-                              target: { kind: 'fixed', target: 'enemy' },
+                              target: { kind: 'context', key: 'tar' },
                               executeEachFrame: true,
                               triggerIntervalSeconds: 0.033,
                               maxCountPerTarget: 1,
@@ -2951,7 +3239,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                   usp_2: 0,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_1' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_1' } },
                   { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_60' } },
                   { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_71' } },
                 ],
@@ -2972,6 +3260,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0028_wulfa_normalskill_2',
             source: 'actionOwner',
+            faction: 'good',
             recycleDelaySeconds: 0.333333343267441,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -2984,12 +3273,21 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      mergeContextTargets_1: {
+                      findTargets_1: {
                         action: {
-                          kind: 'mergeContextTargets',
+                          kind: 'findTargets',
                           parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                            continuousIntervalSeconds: 0.0333333351,
                           },
                         },
                         next: null,
@@ -3161,7 +3459,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                           parameters: {
                             nativeChanneling: {
                               catchUpMissedTicks: false,
-                              target: { kind: 'fixed', target: 'enemy' },
+                              target: { kind: 'context', key: 'tar' },
                               executeEachFrame: true,
                               triggerIntervalSeconds: 0.033,
                               maxCountPerTarget: 1,
@@ -3407,7 +3705,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                   usp_2: 0,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_1' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_1' } },
                   { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_59' } },
                   { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_67' } },
                 ],
@@ -3536,6 +3834,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
+          checkPartTags: true,
           target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoul'],
@@ -3642,13 +3941,13 @@ export const rossiChr_0028_wulfa_normal_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 215, endFrame: 230, sequence: { $sequence: 'createSpatialPointTargets_1' } },
-    { startFrame: 230, endFrame: 260, sequence: { $sequence: 'createSpatialPointTargets_1' } },
-    { startFrame: 16, endFrame: 20, sequence: { $sequence: 'mergeContextTargets_23' } },
-    { startFrame: 22, endFrame: 26, sequence: { $sequence: 'mergeContextTargets_24' } },
-    { startFrame: 35, endFrame: 37, sequence: { $sequence: 'mergeContextTargets_25' } },
+    { startFrame: 215, endFrame: 230, sequence: { $sequence: 'copyContextTargets_1' } },
+    { startFrame: 230, endFrame: 260, sequence: { $sequence: 'copyContextTargets_1' } },
+    { startFrame: 16, endFrame: 20, sequence: { $sequence: 'findTargets_23' } },
+    { startFrame: 22, endFrame: 26, sequence: { $sequence: 'findTargets_24' } },
+    { startFrame: 35, endFrame: 37, sequence: { $sequence: 'findTargets_25' } },
     { startFrame: 16, endFrame: 20, sequence: { $sequence: 'calculateActionValue_34' } },
-    { startFrame: 22, endFrame: 26, sequence: { $sequence: 'calculateActionValue_34' } },
+    { startFrame: 22, endFrame: 26, sequence: { $sequence: 'calculateActionValue_43' } },
     { startFrame: 35, endFrame: 37, sequence: { $sequence: 'calculateActionValue_71' } },
     { startFrame: 230, endFrame: 233, sequence: { $sequence: 'applyBuff_77' } },
     { startFrame: 35, endFrame: 37, sequence: { $sequence: 'checkCondition_79' } },
@@ -3672,13 +3971,34 @@ export const rossiChr_0028_wulfa_normal_skill: SkillDefinition = {
 export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
       startTimeDilation_14: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.24 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -3712,8 +4032,6 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -3812,7 +4130,7 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -3926,7 +4244,7 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -4130,12 +4448,24 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
         },
         next: 'adjustSkillCooldown_57',
       },
-      mergeContextTargets_59: {
+      findTargets_59: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 128,
+            },
             saveToContextKey: 'new_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'openComboWindow_58',
@@ -4157,7 +4487,7 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_21' },
           whenTrue: { $sequence: 'openComboWindow_55' },
-          whenFalse: { $sequence: 'mergeContextTargets_59' },
+          whenFalse: { $sequence: 'findTargets_59' },
         },
         next: null,
       },
@@ -4188,8 +4518,15 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -4347,6 +4684,8 @@ export const rossiChr_0028_wulfa_combo_2_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 12,
   scheduledSequences: [
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_22' } },
     { startFrame: 24, endFrame: 25, sequence: { $sequence: 'findTargets_36' } },
     { startFrame: 24, endFrame: 25, sequence: { $sequence: 'ifElse_39' } },
@@ -4370,13 +4709,34 @@ export const rossiChr_0028_wulfa_combo_2_skill: SkillDefinition = {
 export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
       startTimeDilation_6: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 50,
             curve: {
               kind: 'inline',
@@ -4419,8 +4779,6 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -4441,7 +4799,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -4516,7 +4874,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             outputKey: 'buff_stack',
             query: {
               kind: 'tag',
@@ -4554,7 +4912,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             outputKey: 'buff_stack',
             query: {
               kind: 'tag',
@@ -4592,7 +4950,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             outputKey: 'buff_stack',
             query: {
               kind: 'tag',
@@ -4630,7 +4988,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             outputKey: 'buff_stack',
             query: {
               kind: 'tag',
@@ -4657,7 +5015,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -4708,7 +5066,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
       forEachContextTarget_48: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'tar' } },
           body: { $sequence: 'checkCondition_46' },
         },
         next: null,
@@ -4836,7 +5194,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             outputKey: 'spellinflict_stack_max',
             query: { kind: 'id', buffIds: ['buff_chr_0028_wulfa_combo_inflictnum'] },
           },
@@ -4849,7 +5207,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -5004,7 +5362,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -5055,7 +5413,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
       forEachContextTarget_121: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'tar' } },
           body: { $sequence: 'checkCondition_119' },
         },
         next: null,
@@ -5144,7 +5502,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             outputKey: 'spellinflict_stack_max',
             query: { kind: 'id', buffIds: ['buff_chr_0028_wulfa_combo_inflictnum'] },
           },
@@ -5157,7 +5515,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -5313,7 +5671,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
               ],
             },
             finishByAction: false,
-            ignoredTargets: ['caster'],
+            ignoredTargets: [{ kind: 'owner' }],
           },
         },
         next: 'finishOwner_157',
@@ -5438,8 +5796,15 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -5817,12 +6182,14 @@ export const rossiChr_0028_wulfa_combo_3_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 225, endFrame: 226, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 225, endFrame: 226, sequence: { $sequence: 'findTargets_9' } },
     { startFrame: 227, endFrame: 227, sequence: { $sequence: 'repeatEachTick_40' } },
     { startFrame: 227, endFrame: 228, sequence: { $sequence: 'ifElse_51' } },
     { startFrame: 227, endFrame: 228, sequence: { $sequence: 'findTargets_71' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'applyBuff_76' } },
     { startFrame: 227, endFrame: 228, sequence: { $sequence: 'checkCondition_78' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 29, endFrame: 29, sequence: { $sequence: 'repeatEachTick_111' } },
     { startFrame: 29, endFrame: 30, sequence: { $sequence: 'ifElse_124' } },
     { startFrame: 27, endFrame: 28, sequence: { $sequence: 'findTargets_9' } },
@@ -6029,12 +6396,59 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         },
         next: 'checkCondition_29',
       },
-      mergeContextTargets_31: {
+      findTargets_31: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'tar_battleshape',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
+      findTargets_32: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar1',
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
+      findTargets_33: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar2',
+            continuousIntervalSeconds: 0.0333333351,
           },
         },
         next: null,
@@ -6079,7 +6493,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar1' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -6119,17 +6533,17 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
       applyElementalInfliction_45: {
         action: {
           kind: 'applyElementalInfliction',
-          parameters: { element: 'heat', isExtra: false },
+          parameters: { element: 'heat', isExtra: false, target: { kind: 'inputTarget' } },
         },
         next: 'dealDamage_44',
       },
-      createSpatialPointTargets_49: {
+      copyContextTargets_49: {
         action: {
-          kind: 'createSpatialPointTargets',
+          kind: 'copyContextTargets',
           parameters: {
+            source: { kind: 'owner' },
             saveToContextKey: 'init_pos',
-            count: { kind: 'constant', value: 1 },
-            origin: { kind: 'owner' },
+            convertEntitiesToPositions: true,
           },
         },
         next: null,
@@ -6138,9 +6552,11 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'smart_target' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.32 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 50,
             curve: {
               kind: 'inline',
@@ -6174,8 +6590,6 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -6314,10 +6728,22 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_75: {
+      findTargets_75: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'context', key: 'pos2' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: 'ifElse_74',
       },
@@ -6330,7 +6756,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             origin: { kind: 'context', key: 'pos1' },
           },
         },
-        next: 'mergeContextTargets_75',
+        next: 'findTargets_75',
       },
       checkCondition_487: {
         action: {
@@ -6345,7 +6771,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'smart_target' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: -1,
@@ -6372,7 +6798,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar2' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -6588,11 +7014,13 @@ export const rossiChr_0028_wulfa_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_8' } },
     { startFrame: 57, endFrame: 150, sequence: { $sequence: 'findTargets_19' } },
     { startFrame: 64, endFrame: 150, sequence: { $sequence: 'findTargets_30' } },
-    { startFrame: 64, endFrame: 111, sequence: { $sequence: 'mergeContextTargets_31' } },
+    { startFrame: 64, endFrame: 111, sequence: { $sequence: 'findTargets_31' } },
+    { startFrame: 122, endFrame: 125, sequence: { $sequence: 'findTargets_32' } },
+    { startFrame: 131, endFrame: 134, sequence: { $sequence: 'findTargets_33' } },
     { startFrame: 64, endFrame: 111, sequence: { $sequence: 'applyBuff_34' } },
     { startFrame: 122, endFrame: 125, sequence: { $sequence: 'modifyActionValue_38' } },
     { startFrame: 131, endFrame: 134, sequence: { $sequence: 'modifyActionValue_opt3' } },
-    { startFrame: 1, endFrame: 4, sequence: { $sequence: 'createSpatialPointTargets_49' } },
+    { startFrame: 1, endFrame: 4, sequence: { $sequence: 'copyContextTargets_49' } },
     { startFrame: 134, endFrame: 135, sequence: { $sequence: 'ifElse_52' } },
     { startFrame: 0, endFrame: 155, sequence: { $sequence: 'applyBuff_53' } },
     { startFrame: 0, endFrame: 57, sequence: { $sequence: 'hideUi_54' } },

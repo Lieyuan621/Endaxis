@@ -6,11 +6,13 @@ export function inheritCombatOperationContext(
   overrides: Partial<CombatOperationContext>,
 ): CombatOperationContext {
   const derived = { ...parent, ...overrides };
-  if (!Object.hasOwn(overrides, 'skillCastInfo'))
-    Object.defineProperty(derived, 'skillCastInfo', {
+  for (const key of ['skillCastInfo', 'partTransferInfo'] as const) {
+    if (Object.hasOwn(overrides, key)) continue;
+    Object.defineProperty(derived, key, {
       enumerable: true,
       configurable: true,
-      get: () => parent.skillCastInfo,
+      get: () => parent[key],
     });
+  }
   return derived;
 }

@@ -36,6 +36,7 @@
     "check:definition-fields": "node --experimental-strip-types tools/editor/generateDefinitionSchemas.ts --check",
     "check:field-capabilities": "node --experimental-strip-types tools/editor/checkFieldCapabilities.ts",
     "test": "vitest run src",
+    "test:all": "vitest run && npm run test:editor-schema",
     "test:game-data": "vitest run tools/game-data-compiler",
     "test:tools": "vitest run tools/legacy-timeline",
     "test:editor-schema": "node --experimental-strip-types --test tools/editor/generateActionNodeSchema.test.ts tools/editor/fieldSemantics.test.ts tools/editor/fieldDeclaration.test.ts tools/editor/fieldCapabilities.test.ts",

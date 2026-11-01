@@ -17,6 +17,27 @@ function historyOf(entries: readonly CombatReceiptEntry[]) {
 }
 
 describe('projectTimelineDamageAnalysis', () => {
+  it('全部敌人的伤害计入总量和贡献，能力实体转伤不重复计算', () => {
+    const scenario = createTimelineSampleScenario();
+    const sourceId = scenario.tracks[0]!.id;
+    const result = projectTimelineDamageAnalysis(
+      ['enemy', 'enemy:second', 'track:1', 'ability-entity:1'].map((targetId, sequence) => ({
+        sequence,
+        frame: sequence * 30,
+        time: sequence,
+        event: 'DamageApplied',
+        sourceId,
+        targetId,
+        data: { value: (sequence + 1) * 100, damageType: 'physical' },
+      })),
+      scenario,
+      String,
+      String,
+    );
+    expect(result.totalDamage).toBe(300);
+    expect(result.byOperator.map(entry => entry.value)).toEqual([300]);
+    expect(result.byContribution.map(entry => entry.value)).toEqual([300]);
+  });
   it('按直接提供者汇总贡献，保留负贡献并与攻击者总伤害守恒', () => {
     const scenario = createTimelineSampleScenario();
     const attacker = scenario.tracks[0]!;

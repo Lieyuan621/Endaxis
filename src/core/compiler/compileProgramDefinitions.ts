@@ -23,6 +23,7 @@ import type { CompiledGraphEntry } from './combatProgram';
 export type BindProgramResource = (
   graph: ActionGraphResourceDefinition,
   path: string,
+  callbackSkills?: ReadonlyMap<string, CompiledAbilityEntityChildSkillProgram>,
 ) => (source: ActionGraphReference, path: string) => CompiledGraphEntry;
 
 export function createProgramDefinitionCompiler(
@@ -31,6 +32,7 @@ export function createProgramDefinitionCompiler(
   bindResource: BindProgramResource = (_graph, path) => {
     throw new Error(`${path}: independent resource compiler is required`);
   },
+  callbackSkills: ReadonlyMap<string, CompiledAbilityEntityChildSkillProgram> = new Map(),
 ) {
   function resolveSkillBuffDefinition(
     definition: SkillBuffDefinition,
@@ -222,17 +224,19 @@ export function createProgramDefinitionCompiler(
   }
 
   function compileAbilityEntityChildSkill(
-    childSkill: AbilityEntityChildSkillDefinition,
+    childSkill: AbilityEntityChildSkillDefinition | { readonly $skill: string },
     path: string,
   ): CompiledAbilityEntityChildSkillProgram {
+    if ('$skill' in childSkill) {
+      const referenced = callbackSkills.get(childSkill.$skill);
+      if (!referenced)
+        throw new Error(`${path}: unknown enclosing callback skill ${childSkill.$skill}`);
+      return referenced;
+    }
     if (!Number.isInteger(childSkill.naturalDurationFrames) || childSkill.naturalDurationFrames < 1)
       throw new RangeError(`${path}.naturalDurationFrames must be a positive integer`);
-    const compiler = createProgramDefinitionCompiler(
-      skillLevel,
-      bindResource(childSkill.actionGraph, path),
-      bindResource,
-    );
-    return {
+    const timelineActions: CompiledTimelineAction[] = [];
+    const program: CompiledAbilityEntityChildSkillProgram = {
       skillId: childSkill.skillId,
       skillLevel,
       nativeSkillType: childSkill.nativeSkillType,
@@ -257,12 +261,25 @@ export function createProgramDefinitionCompiler(
         },
       },
       initialBlackboard: compileSkillBlackboard(childSkill.blackboard, `${path}.blackboard`),
-      timelineActions: compiler.timeline(
+      timelineActions,
+    };
+    const childScope = new Map(callbackSkills);
+    childScope.set(childSkill.skillId, program);
+    const compiler = createProgramDefinitionCompiler(
+      skillLevel,
+      bindResource(childSkill.actionGraph, path, childScope),
+      bindResource,
+      childScope,
+    );
+    timelineActions.push(
+      ...compiler.timeline(
         childSkill.scheduledSequences,
         `${deriveChildSkillCallSite(path, childSkill.skillId)}.scheduledSequences`,
       ),
-    };
+    );
+    return program;
   }
+
   return {
     buff: resolveSkillBuffDefinition,
     entity: compileAbilityEntityDefinition,

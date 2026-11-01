@@ -19,14 +19,27 @@ import {
   readAbilityActionReturnTrueMethod,
 } from './controlEnums.ts';
 
-export interface StaticEnemyControlActionSource {
-  readonly kind: 'enemyHurtAnimation' | 'pushBack';
+export interface EnemyHurtAnimationActionSource {
+  readonly kind: 'enemyHurtAnimation';
   readonly source: TargetReferenceSource;
   readonly target: TargetReferenceSource;
 }
 
-export interface PullActionSource extends Omit<StaticEnemyControlActionSource, 'kind'> {
+export interface PushBackActionSource extends Pick<
+  EnemyHurtAnimationActionSource,
+  'source' | 'target'
+> {
+  readonly kind: 'pushBack';
+  /** 原生在取得非空目标表后求值；无位置时回退到攻击者位置。 */
+  readonly sourcePoint: TargetReferenceSource;
+}
+
+export interface PullActionSource extends Pick<
+  EnemyHurtAnimationActionSource,
+  'source' | 'target'
+> {
   readonly kind: 'pull';
+  readonly targetType: 'Enemy' | 'Character';
   /** 普通目标/目的地未命中时的继续策略；不是拉拽是否成功的结果。 */
   readonly alwaysNext: boolean;
 }
@@ -81,7 +94,8 @@ export interface LaunchUpwardActionSource {
 }
 
 export type StumpControlActionSource =
-  | StaticEnemyControlActionSource
+  | EnemyHurtAnimationActionSource
+  | PushBackActionSource
   | PullActionSource
   | TargetHitStopActionSource
   | BlowOffEnemyActionSource
@@ -254,8 +268,12 @@ export function parsePullActionSource(value: unknown, path: string): StumpContro
     ]),
     path,
   );
+  const targetType = requireString(action.pullTargetType, `${path}.pullTargetType`);
+  if (targetType !== 'Enemy' && targetType !== 'Character')
+    throw new Error(`${path}.pullTargetType: unsupported Pull target type ${targetType}`);
   return {
     kind: 'pull',
+    targetType,
     // 旧结构等价于默认关闭；来源层保留控制策略，不能按位移参数丢失。
     alwaysNext:
       'alwaysNext' in action ? requireBoolean(action.alwaysNext, `${path}.alwaysNext`) : false,
@@ -293,7 +311,6 @@ export function parsePushBackActionSource(
     ]),
     path,
   );
-  parseTargetReferenceSource(action.sourcePointSettings, `${path}.sourcePointSettings`);
   for (const key of ['pushBackDistance', 'pushBackTime', 'unmovableTime'] as const)
     parseScalarSource(action[key], `${path}.${key}`, inheritedBlackboard);
   for (const key of [
@@ -311,6 +328,10 @@ export function parsePushBackActionSource(
   requireString(action.curveTemplate, `${path}.curveTemplate`);
   return {
     kind: 'pushBack',
+    sourcePoint: parseTargetReferenceSource(
+      action.sourcePointSettings,
+      `${path}.sourcePointSettings`,
+    ),
     source: parseTargetReferenceSource(
       action.attackerTargetSettings,
       `${path}.attackerTargetSettings`,

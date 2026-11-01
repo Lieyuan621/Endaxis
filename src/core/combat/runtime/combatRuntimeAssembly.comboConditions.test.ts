@@ -151,6 +151,7 @@ function setup() {
     enemyBuffRuntime: {
       ownerId: 'enemy',
       advanceFrame: () => {},
+      releaseAll: () => {},
       getCountByIds: () => 0,
       finishByIds: () => 0,
       holdByIds: () => ({ release: () => {} }),
@@ -305,8 +306,8 @@ describe('assembly 原生常驻连携条件', () => {
     expect(frames).toEqual([
       {
         local: { local: 2, label: 'condition' },
-        trigger: [{ kind: 'enemy' }],
-        smart: [{ kind: 'enemy' }],
+        trigger: [{ kind: 'enemy', enemyId: 'enemy' }],
+        smart: [{ kind: 'enemy', enemyId: 'enemy' }],
       },
     ]);
     expect(assembly.tryStartSkill('owner', 'combo')).toBe(false);
@@ -315,7 +316,7 @@ describe('assembly 原生常驻连携条件', () => {
     expect(frames[1]).toEqual({
       local: { local: 0 },
       trigger: undefined,
-      smart: [{ kind: 'enemy' }],
+      smart: [{ kind: 'enemy', enemyId: 'enemy' }],
     });
   });
 
@@ -834,11 +835,11 @@ describe('assembly 原生常驻连携条件', () => {
     });
     if (target.kind !== 'abilityEntity') throw new Error('invalid fixture');
     f.emit(`ability-entity:${target.instanceId}`);
-    expect(f.pending[0]?.inputTarget).toEqual(target);
+    expect(f.pending[0]?.inputTargets).toEqual([target]);
     assembly.abilityEntities.finish(target);
     f.emit(`ability-entity:${target.instanceId}`);
     expect(f.pending).toHaveLength(2);
-    expect(f.pending[1]?.inputTarget).toEqual(target);
+    expect(f.pending[1]?.inputTargets).toEqual([target]);
   });
 
   it('真实单充能账本：startCdFrame 前放行，等于和之后拒绝，就绪再放行', () => {
@@ -1015,8 +1016,8 @@ describe('assembly 原生常驻连携条件', () => {
     expect(() => f.emit('ability-entity:42')).toThrow('unknown entity');
     f.emit();
     expect(f.pending[0]).toMatchObject({
-      inputTarget: { kind: 'operator', operatorId: 'owner' },
-      triggerTarget: { kind: 'enemy' },
+      inputTargets: [{ kind: 'operator', operatorId: 'owner' }],
+      triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
     });
     expect(f.pending[0]?.assignPairs?.local).toBe(1);
   });

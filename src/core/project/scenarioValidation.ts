@@ -5,6 +5,7 @@
 import { type JsonObject } from './schema';
 import { validateScenarioBuff } from '../game-data/validateGlobalEffectDefinition';
 import { ENEMY_RANKS } from '../game-data/enemyRank';
+import { validateEnemyLifecycle } from './enemyLifecycleValidation';
 import {
   isObject,
   requireBoolean,
@@ -73,6 +74,8 @@ export function validateEnemy(value: unknown, path: string, issues: ValidationIs
     issues.push({ path, message: 'expected an object' });
     return;
   }
+  if (value.lifecycle !== undefined)
+    validateEnemyLifecycle(value.lifecycle, `${path}.lifecycle`, issues);
   if (!isObject(value.source)) {
     issues.push({ path: `${path}.source`, message: 'expected an object' });
   } else if (value.source.kind === 'prefab') {
@@ -144,11 +147,41 @@ export function validateEnemy(value: unknown, path: string, issues: ValidationIs
   }
 }
 
+export function validateEnemyInstances(
+  value: readonly unknown[],
+  pathForIndex: (index: number) => string,
+  issues: ValidationIssue[],
+): void {
+  const identities = new Set<string>();
+  value.forEach((instance, index) => {
+    const itemPath = pathForIndex(index);
+    if (!isObject(instance)) {
+      issues.push({ path: itemPath, message: 'expected an object' });
+      return;
+    }
+    if (typeof instance.id !== 'string' || !instance.id.trim())
+      issues.push({ path: `${itemPath}.id`, message: 'expected a non-empty enemy instance id' });
+    else if (
+      instance.id !== 'enemy' &&
+      (!instance.id.startsWith('enemy:') || !instance.id.slice(6).trim())
+    )
+      issues.push({ path: `${itemPath}.id`, message: 'expected enemy or enemy:<instance id>' });
+    else if (identities.has(instance.id))
+      issues.push({ path: `${itemPath}.id`, message: 'duplicate enemy instance id' });
+    else identities.add(instance.id);
+    if (typeof instance.name !== 'string')
+      issues.push({ path: `${itemPath}.name`, message: 'expected a string' });
+    validateEnemy(instance.enemy, `${itemPath}.enemy`, issues);
+  });
+}
+
 export function validateBattle(value: unknown, path: string, issues: ValidationIssue[]): void {
   if (!isObject(value)) {
     issues.push({ path, message: 'expected an object' });
     return;
   }
+  if (value.enemyAutomaticDeath !== undefined)
+    requireBoolean(value.enemyAutomaticDeath, `${path}.enemyAutomaticDeath`, issues);
   requireNonNegativeInteger(value.prepFrames, `${path}.prepFrames`, issues);
   requirePositiveInteger(value.durationFrames, `${path}.durationFrames`, issues);
   if (

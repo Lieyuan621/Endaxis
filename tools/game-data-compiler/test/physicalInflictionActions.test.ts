@@ -37,7 +37,10 @@ function projectSequence(
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 import { projectKnockDownAction } from '../src/compiler/actions/knockDownProjection.ts';
 import { collectCompiledBuffApplications } from '../src/compiler/references/compiledReferences.ts';
-import { projectPhysicalInflictionAction } from '../src/compiler/actions/physicalInflictionProjection.ts';
+import {
+  physicalInflictionParameters,
+  projectPhysicalInflictionAction,
+} from '../src/compiler/actions/physicalInflictionProjection.ts';
 
 const sequence = (actionData: unknown[]) => ({
   actionData,
@@ -501,3 +504,33 @@ describe('浮空公共物理异常链', () => {
     expect(projected.parameters).toMatchObject({ targetFilter: 'skipAll', returnWhen: 'always' });
   });
 });
+
+it.each(['dynamicEnemy', 'runtimeTargets'] as const)(
+  '物理异常闭包使用当前目标组事实：%s',
+  identity => {
+    const parameters = physicalInflictionParameters(
+      {
+        type: 'knockDown',
+        source: { kind: 'source' },
+        target: { kind: 'context', key: 'tar' },
+        duration: { kind: 'constant', value: 1 },
+        force: false,
+        isExtra: false,
+        targetFilter: 'aliveOnly',
+        returnWhen: 'always',
+      },
+      withProjectionGraph({
+        actionSourceTarget: 'caster',
+        actionOwnerTarget: 'caster',
+        actionTargetTarget: 'enemy',
+        staticEnemyTargetGroupKeys: new Set(['tar']),
+      }),
+      new Map([['tar', identity]]),
+    );
+    const refs = collectCompiledBuffApplications({ kind: 'applyPhysicalInfliction', parameters });
+    expect(refs.length).toBeGreaterThan(0);
+    expect(
+      refs.every(ref => ref.target === (identity === 'dynamicEnemy' ? 'enemy' : 'unknown')),
+    ).toBe(true);
+  },
+);

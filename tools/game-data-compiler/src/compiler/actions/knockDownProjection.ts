@@ -5,6 +5,7 @@ import type { KnockDownActionSource } from '../../source/physicalInflictionActio
 import {
   actionValueOperand,
   type CombatActionProjectionContextSource,
+  type ProjectedTargetGroup,
 } from '../combatProjectionCommon.ts';
 
 /** 普通根倒地：来源和目标通过通用查询解析，不涉及防反或浮空转入。 */
@@ -12,6 +13,7 @@ export function projectKnockDownAction(
   action: KnockDownActionSource,
   path: string,
   context: CombatActionProjectionContextSource,
+  targetGroups: ReadonlyMap<string, ProjectedTargetGroup> = new Map(),
 ): {
   readonly kind: 'applyPhysicalInfliction';
   readonly parameters: Extract<
@@ -44,6 +46,7 @@ export function projectKnockDownAction(
         returnWhen: returnWhen[action.returnTrueWhen],
       },
       context,
+      targetGroups,
     ),
   };
 }

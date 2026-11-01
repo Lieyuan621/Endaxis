@@ -79,7 +79,10 @@ it('groups actual damage without counting audit receipts twice', () => {
   const a = hit(),
     b = hit(2),
     audit = { ...hit(3), event: 'BuffDamageApplied' };
-  const ordinary = { ...hit(4), data: { value: 9 } };
+  const ordinary = {
+    ...hit(4),
+    data: { value: 9, castId: 'cast', hitId: 'hit', stepKey: 'step' },
+  };
   expect(projectEnemyEffectViz([applied, a, b, audit, ordinary], 30).damageHits).toEqual([a, b]);
   expect(groupEnemyBuffDamageHits([a, b, audit, ordinary])).toEqual([[a, b]]);
 });
@@ -87,7 +90,13 @@ it('groups actual damage without counting audit receipts twice', () => {
 it('leaves ability-entity-owned Buff damage to the source skill timeline', () => {
   const delegated = {
     ...hit(),
-    data: { ...hit().data, buffOwnerId: 'ability-entity:2' },
+    data: {
+      ...hit().data,
+      buffOwnerId: 'ability-entity:2',
+      castId: 'cast',
+      hitId: 'hit',
+      stepKey: 'step',
+    },
   };
   expect(projectEnemyEffectViz([delegated], 30).damageHits).toBeUndefined();
   expect(groupEnemyBuffDamageHits([delegated])).toEqual([]);

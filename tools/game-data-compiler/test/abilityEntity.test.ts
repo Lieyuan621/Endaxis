@@ -5,6 +5,48 @@ import { abilityEntityFixture } from './sourceFixtures.ts';
 import { parseAbilityEntityBlackboardReceiverSource } from '../src/source/abilityEntity.ts';
 
 describe('AbilityEntityTemplateData 来源', () => {
+  it.each([45, 180])('保留部位阻挡半角 %s，不能丢弃后将所有部位视为独立目标', halfBlockAngle => {
+    const source = parseNativeAbilityEntityTemplateSource(
+      {
+        ...abilityEntityFixture(),
+        nativeData: {
+          decodeStatus: 'complete',
+          id: 'abilityentity_fixture',
+          template: {
+            id: 'abilityentity_fixture',
+            componentList: ['soul'],
+            skillDataBundle: bundle(),
+          },
+          components: {
+            soul: {
+              type: 'Beyond.Gameplay.Core.AbilitySystemForSoulData',
+              data: {
+                skillDataBundle: bundle(),
+                defaultEnabled: true,
+                partAttributes: [],
+                useMainBodyHp: false,
+                useMainBodyPoise: false,
+                canBeHitIndividually: false,
+                halfBlockAngle,
+                onlyHitByNormalAttack: false,
+                canBeDirectlyBuffed: false,
+                asIndividualInExcludeTargetProcessor: false,
+                damageTransferType: 2,
+                damageRatio: 1,
+                poiseRatio: 1,
+                soulHpBlackboardKey: 'hp',
+                soulDamageRatioBB: { value: 1, blackboardKey: '', useBlackboardKey: false },
+                soulPoiseRatioBB: { value: 1, blackboardKey: '', useBlackboardKey: false },
+                asPrimaryTarget: true,
+              },
+            },
+          },
+        },
+      },
+      'AbilityEntityData.soul',
+    );
+    expect(source.soul).toMatchObject({ halfBlockAngle, canBeHitIndividually: false });
+  });
   const bundle = (ids: string[] = []) => ({
     allNormalAttackId: [],
     allActiveSkillId: ids,

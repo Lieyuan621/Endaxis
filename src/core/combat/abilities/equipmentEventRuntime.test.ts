@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { describe, expect, it, vi } from 'vitest';
 import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
 import type {
@@ -894,7 +895,7 @@ describe('EquipmentEventRuntime', () => {
       | ((
           published: CombatAbilityEvent<'outputBuff'>,
           actionContext?: {
-            readonly inputTarget: { readonly kind: 'enemy' };
+            readonly inputTarget: { readonly kind: 'enemy'; readonly enemyId: string };
             readonly triggerTarget: { readonly kind: 'operator'; readonly operatorId: string };
           },
         ) => void)
@@ -940,7 +941,7 @@ describe('EquipmentEventRuntime', () => {
         },
       },
       {
-        inputTarget: { kind: 'enemy' },
+        inputTarget: { kind: 'enemy', enemyId: 'enemy' },
         triggerTarget: { kind: 'operator', operatorId: 'operator:a' },
       },
     );
@@ -949,9 +950,9 @@ describe('EquipmentEventRuntime', () => {
     expect(observed).toMatchObject({
       actionOwnerId: 'operator:a',
       actionSourceId: 'operator:a',
-      actionInputTarget: { kind: 'enemy' },
+      actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' }),
     });
-    expect(execute.mock.calls[0]?.[1]?.actionInputTarget).toBeUndefined();
+    expect(execute.mock.calls[0]?.[1]?.actionInputTargets?.[0]).toBeUndefined();
     expect(execute.mock.calls[0]?.[1]?.targetContext).toBeUndefined();
     expect(trigger).toEqual([
       {

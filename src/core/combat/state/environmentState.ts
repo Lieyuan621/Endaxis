@@ -1,3 +1,5 @@
+import type { GameplayTagQueryType } from '../../../../packages/game-data-contract/src/gameplayTags';
+import type { EnemyLifecycleState } from './enemyLifecycleState';
 /**
  * 战斗环境、全局账本和输入游标的数据。
  *
@@ -11,8 +13,9 @@ import type {
 } from '../../../../packages/game-data-contract/src/primitives';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { PlayerSkillInput } from '../../game-data/operatorDefinition';
-import type { BuffInstanceState } from './instanceState';
+import type { BuffInstanceState, BuffContainerState } from './instanceState';
 import type {
+  BuffReference,
   CombatObjectRef,
   AbilityOriginPayload,
   CombatSkillCastInfo,
@@ -61,8 +64,8 @@ export interface SkillCastInheritanceState {
 
 /** 连携条件求值后可保存到候选窗口的数据。 */
 export interface ComboCastParameters {
-  readonly inputTarget: RuntimeTargetRef;
-  readonly triggerTarget: RuntimeTargetRef | null;
+  readonly inputTargets: readonly RuntimeTargetRef[];
+  readonly triggerTargets: readonly RuntimeTargetRef[] | null;
   readonly assignPairs: Readonly<Record<string, ActionBlackboardValue>> | null;
 }
 
@@ -327,6 +330,7 @@ export interface BuffFrameEndPayloadState extends AbilityOriginPayload {
 
 /** 标准敌我战斗环境使用的可变数据。 */
 export interface StandardCombatEnvironmentState {
+  readonly enemyInstances?: Map<string, EnemyEnvironmentState>;
   /** 每个发布宿主的帧末聚合；保留实际 Buff 引用，由整场切面复制维护别名。 */
   readonly buffFrameEndEvents: Map<
     string,
@@ -349,6 +353,22 @@ export interface StandardCombatEnvironmentState {
   readonly knockDown: OrdinaryKnockDownState | null;
   readonly poiseBreakBuffs: Set<number>;
   readonly postSkillRequestListeners: PostSkillRequestListenerState;
+}
+
+/** 一个敌人独占的可变状态；队伍资源和随机流不属于此处。 */
+export interface EnemyEnvironmentState {
+  /** 出生前初始化账本；切面恢复保留原值，曲线不得以恢复时的当前值重新起算。 */
+  readonly initialVitals: {
+    readonly health: number;
+    readonly poise: number;
+    readonly maxHealth: number;
+    readonly maxPoise: number;
+  };
+  readonly lifecycle?: EnemyLifecycleState;
+  readonly vitals: CombatVitalsState;
+  readonly buffs: BuffContainerState<string>;
+  readonly knockDown: OrdinaryKnockDownState | null;
+  readonly poiseBreakBuffs: Set<number>;
 }
 
 /** 一组连续技能输入当前消费到的位置。 */
@@ -408,7 +428,44 @@ export function createPlayerMultiDashState(): PlayerMultiDashState {
 }
 
 /** 所有干员和动态实例共享的战斗数据。 */
+/** 提弗洛斯瞄准系统已选列表；恢复时保留实例身份与顺序。 */
+export interface TyphoeaArcherySelectionState {
+  selected: RuntimeTargetRef[];
+}
+
+export interface TyphoeaArcheryConfiguration {
+  readonly markBuffId: string;
+  readonly sourceId: string;
+  readonly definitionOwnerId: string;
+  readonly sourceActionId?: string;
+  readonly skillCastInfo?: CombatSkillCastInfo;
+  readonly priorityTags: readonly GameplayTag[];
+  readonly priorityTagQueryType: GameplayTagQueryType;
+}
+
+export interface TyphoeaArcheryState extends TyphoeaArcherySelectionState {
+  configuration: TyphoeaArcheryConfiguration | null;
+  readonly marks: Map<string, BuffReference>;
+  readonly registrations: Set<number>;
+  nextRegistrationId: number;
+  targetCount: number;
+  needsFullPick: boolean;
+}
+
+export function createTyphoeaArcheryState(): TyphoeaArcheryState {
+  return {
+    selected: [],
+    configuration: null,
+    marks: new Map(),
+    registrations: new Set(),
+    nextRegistrationId: 1,
+    targetCount: 0,
+    needsFullPick: false,
+  };
+}
+
 export interface CombatSharedState {
+  readonly typhoeaArcherySelection: TyphoeaArcheryState;
   /** 已登记的非施法动作来源。宿主结束后，其创建的 Buff 仍可依此恢复执行绑定。 */
   readonly reactiveOperationSources: Map<string, Set<string>>;
   readonly clock: CombatClockState;

@@ -10,10 +10,16 @@ interface Spawner {
   waveMap: Record<
     string,
     {
+      repeatable?: boolean;
+      defaultDisable?: boolean;
       groupMap: Record<
         string,
         {
-          actionMap: Record<string, { libraryKey?: string }>;
+          defaultDisable?: boolean;
+          actionMap: Record<
+            string,
+            { libraryKey?: string; spawnCount?: number; defaultDisable?: boolean }
+          >;
         }
       >;
     }
@@ -54,25 +60,89 @@ export function findSpawnerBuffs(
   for (const spawner of spawners) {
     if (
       !spawner.enemyLibrary.length ||
-      !spawner.enemyLibrary.every(
+      !usedSpawnerEntries(spawner).every(
         entry => enemies.includes(entry.enemyId) && entry.enemyLevel === level,
       )
     )
       continue;
-    const used = new Set(
-      Object.values(spawner.waveMap).flatMap(wave =>
-        Object.values(wave.groupMap).flatMap(group =>
-          Object.values(group.actionMap).flatMap(action =>
-            action.libraryKey ? [action.libraryKey] : [],
-          ),
-        ),
-      ),
-    );
-    for (const entry of spawner.enemyLibrary) {
-      if (entry.enemyId !== enemyId || !used.has(entry.key)) continue;
+    for (const entry of usedSpawnerEntries(spawner)) {
+      if (entry.enemyId !== enemyId) continue;
       const buffs = entry.bornBuffList ?? [];
       matches.set(JSON.stringify(buffs), buffs);
     }
   }
   return matches.size ? [...matches.values()] : [[]];
+}
+
+/** 只统计可唯一匹配且没有循环/禁用分支的刷怪配置；未知不回退成一只。 */
+export function findSpawnerCount(
+  spawners: readonly Spawner[],
+  enemyIds: readonly string[],
+  levels: readonly number[],
+  enemyId: string,
+  level: number,
+  buffs: readonly SpawnerBuff[],
+): number | null {
+  const candidates = spawners.filter(
+    spawner =>
+      spawner.enemyLibrary.length > 0 &&
+      usedSpawnerEntries(spawner).every(entry =>
+        enemyIds.some((id, index) => id === entry.enemyId && levels[index] === entry.enemyLevel),
+      ),
+  );
+  if (candidates.length !== 1) return null;
+  const spawner = candidates[0]!;
+  const library = new Map(spawner.enemyLibrary.map(entry => [entry.key, entry]));
+  let count = 0;
+  for (const wave of Object.values(spawner.waveMap)) {
+    if (wave.repeatable || wave.defaultDisable) return null;
+    for (const group of Object.values(wave.groupMap)) {
+      if (group.defaultDisable) return null;
+      for (const action of Object.values(group.actionMap)) {
+        if (!action.libraryKey) continue;
+        const entry = library.get(action.libraryKey);
+        if (!entry) return null;
+        if (
+          action.defaultDisable ||
+          !Number.isSafeInteger(action.spawnCount) ||
+          action.spawnCount! < 0
+        )
+          return null;
+        if (
+          entry.enemyId === enemyId &&
+          entry.enemyLevel === level &&
+          JSON.stringify(entry.bornBuffList ?? []) === JSON.stringify(buffs)
+        )
+          count += action.spawnCount!;
+      }
+    }
+  }
+  return count > 0 ? count : null;
+}
+
+/** 合约的展示名单不完整，敌人种类与等级取实际刷怪动作引用的库条目。 */
+export function collectSpawnerEnemies(spawners: readonly Spawner[]) {
+  const entries = new Map<string, { enemyId: string; level: number }>();
+  for (const spawner of spawners) {
+    for (const entry of usedSpawnerEntries(spawner)) {
+      entries.set(`${entry.enemyId}:${entry.enemyLevel}`, {
+        enemyId: entry.enemyId,
+        level: entry.enemyLevel,
+      });
+    }
+  }
+  return [...entries.values()];
+}
+
+function usedSpawnerEntries(spawner: Spawner) {
+  const used = new Set(
+    Object.values(spawner.waveMap).flatMap(wave =>
+      Object.values(wave.groupMap).flatMap(group =>
+        Object.values(group.actionMap).flatMap(action =>
+          action.libraryKey ? [action.libraryKey] : [],
+        ),
+      ),
+    ),
+  );
+  return spawner.enemyLibrary.filter(entry => used.has(entry.key));
 }

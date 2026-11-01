@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
 import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it } from 'vitest';
@@ -76,7 +77,7 @@ describe('战斗级全局冷却', () => {
         blackboard: new ActionBlackboard({ cd: 0.1 }),
         actionOwnerId: 'b',
         actionSourceId: 'c',
-        actionInputTarget: { kind: 'operator' as const, operatorId: 'a' },
+        actionInputTargets: singleTargetList({ kind: 'operator' as const, operatorId: 'a' }),
       };
       const executor = new TimedMarkerOperationExecutor({
         globalCooldowns,
@@ -128,7 +129,7 @@ describe('战斗级全局冷却', () => {
       expect(noTarget.execute(step, { blackboard: new ActionBlackboard() })).toBe(true);
     },
   );
-  it('只消费查询首项：敌人可写入，空间点和空查询不写入也不读取时长', () => {
+  it('只消费首个实体：敌人可写入，仅空间点和空查询不读取时长', () => {
     const globalCooldowns = new GlobalCooldowns({ time: 0 });
     const delegate = { execute: () => false, evaluate: () => false };
     const query = new TargetContextOperationExecutor('caster', delegate);
@@ -153,10 +154,14 @@ describe('战斗级全局冷却', () => {
     };
     const context = { blackboard: new ActionBlackboard(), targetContext };
     expect(executor.execute(step, context)).toBe(true);
-    targetContext.set('selected', [{ kind: 'spatialPoint', pointId: 1 }, { kind: 'enemy' }]);
+    targetContext.set('selected', [{ kind: 'spatialPoint', pointId: 1 }]);
     expect(executor.execute(step, context)).toBe(true);
     expect(globalCooldowns.has('enemy', 'x')).toBe(false);
-    targetContext.setSingle('selected', { kind: 'enemy' });
+    targetContext.set('selected', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy:second' },
+    ]);
     context.blackboard.assign({ duration: 1 });
     expect(executor.execute(step, context)).toBe(true);
     const condition = {
@@ -166,5 +171,6 @@ describe('战斗级全局冷却', () => {
       returnTrueIfNotExists: false,
     };
     expect(executor.evaluate(condition, context)).toBe(true);
+    expect(globalCooldowns.has('enemy:second', 'x')).toBe(false);
   });
 });

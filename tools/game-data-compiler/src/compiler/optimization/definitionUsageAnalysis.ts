@@ -24,8 +24,18 @@ function targetQueryValueInputs(query: ActionTargetQuery): ActionValueOperand[] 
       ...targetQueryValueInputs(query.targets),
       ...targetQueryValueInputs(query.center),
     ];
-  if (query.kind === 'buffFilter' || query.kind === 'tagFilter')
+  if (
+    query.kind === 'buffFilter' ||
+    query.kind === 'tagFilter' ||
+    query.kind === 'limit' ||
+    query.kind === 'partBuffSource'
+  )
     return targetQueryValueInputs(query.targets);
+  if (query.kind === 'intersection')
+    return [
+      ...targetQueryValueInputs(query.targets),
+      ...targetQueryValueInputs(query.parentTargets),
+    ];
   if (query.kind === 'exclude')
     return [
       ...targetQueryValueInputs(query.targets),
@@ -51,11 +61,23 @@ function projectileValueInputs(
 }
 /** 这些查询只读取已有目标身份，不创建位置或修改目标组。 */
 export function isReadOnlyTargetQuery(query: ActionTargetQuery): boolean {
-  if (query.kind === 'buffFilter' || query.kind === 'tagFilter')
+  if (
+    query.kind === 'buffFilter' ||
+    query.kind === 'tagFilter' ||
+    query.kind === 'limit' ||
+    query.kind === 'partBuffSource'
+  )
     return isReadOnlyTargetQuery(query.targets);
+  if (query.kind === 'intersection')
+    return isReadOnlyTargetQuery(query.targets) && isReadOnlyTargetQuery(query.parentTargets);
   if (query.kind === 'exclude')
     return isReadOnlyTargetQuery(query.targets) && isReadOnlyTargetQuery(query.excludeTargets);
-  if (query.kind === 'mainTarget' || query.kind === 'abilitySystemSource')
+  if (
+    query.kind === 'mainTarget' ||
+    query.kind === 'abilitySystemSource' ||
+    query.kind === 'factionHitBox' ||
+    query.kind === 'ownerSpawned'
+  )
     return isReadOnlyTargetQuery(query.owner);
   return [
     'owner',
@@ -64,6 +86,7 @@ export function isReadOnlyTargetQuery(query: ActionTargetQuery): boolean {
     'context',
     'mainCharacter',
     'characterTeam',
+    'enemyByTags',
     'fixed',
     'battleMainTarget',
     'godEntity',
@@ -89,7 +112,7 @@ export type DefinitionExternalValueRead =
       /** 从指定目标身上按 ID 或标签找到 Buff。 */
       readonly kind: 'buff';
       /** 被查询 Buff 的宿主选择器，沿用原动作或条件。 */
-      readonly target: BuffConditionTarget;
+      readonly target: BuffConditionTarget | ActionTargetQuery;
       /** 原有 ID 或标签筛选。 */
       readonly query: CombatStepParameters['readBuffBlackboard']['query'];
       /** 从查询到的 Buff 实例黑板读取的键。 */
@@ -189,6 +212,40 @@ function numericOutputUsage(keys: readonly (string | undefined)[]): DefinitionVa
 
 /** 条件即使只返回真假，也可能写值、抽样或要求特定事件环境。 */
 export function analyzeConditionUsage(
+  condition: CombatCondition,
+  sequenceUsage?: (reference: ActionGraphReference) => DefinitionValueUsage,
+): DefinitionValueUsage {
+  const queries: ActionTargetQuery[] = [];
+  if ('target' in condition && typeof condition.target === 'object') queries.push(condition.target);
+  switch (condition.kind) {
+    case 'targetDistance':
+      queries.push(condition.source);
+      break;
+    case 'targetContains':
+      queries.push(condition.parent, condition.child);
+      break;
+    case 'targetsEqual':
+      queries.push(condition.first, condition.second);
+      break;
+    case 'targetFacingAngle':
+      queries.push(condition.origin);
+      break;
+    case 'twoDirectionAngleCompare':
+      queries.push(
+        condition.direction1Source,
+        condition.direction1Target,
+        condition.direction2Source,
+        condition.direction2Target,
+      );
+      break;
+  }
+  return mergeDefinitionValueUsage([
+    analyzeConditionOwnUsage(condition, sequenceUsage),
+    ...queries.flatMap(targetQueryValueInputs).map(actionValueUsage),
+  ]);
+}
+
+function analyzeConditionOwnUsage(
   condition: CombatCondition,
   sequenceUsage?: (reference: ActionGraphReference) => DefinitionValueUsage,
 ): DefinitionValueUsage {
@@ -361,7 +418,6 @@ export function analyzeConditionUsage(
       return { ...EMPTY, mayThrow: true, observable: !isReadOnlyTargetQuery(condition.target) };
     case 'skillHasHit':
     case 'combatActive':
-    case 'singleEnemyPresent':
     case 'comboCameraAlphaSetting':
     case 'characterTypeIn':
     case 'targetStaggered':
@@ -535,9 +591,10 @@ export function analyzeStepUsage(
       };
     case 'setCurrentBuffRemainingDuration':
     case 'setHealthFloor':
-    case 'setCharacterPassiveUiValue':
     case 'adjustSkillCooldown':
       return effect([step.parameters.value]);
+    case 'setCharacterPassiveUiValue':
+      return effect([step.parameters.value, ...targetQueryValueInputs(step.parameters.target)]);
     case 'applyPhysicalInfliction': {
       const usage = effect(
         step.parameters.type === 'airborne'
@@ -554,7 +611,14 @@ export function analyzeStepUsage(
         : { ...usage, unknownAccess: true };
     }
     case 'forceSpellStatus':
-      return effect([step.parameters.consumedLayers, step.parameters.count]);
+      return effect([
+        step.parameters.consumedLayers,
+        step.parameters.count,
+        ...(step.parameters.source ? targetQueryValueInputs(step.parameters.source) : []),
+        ...(typeof step.parameters.target === 'string'
+          ? []
+          : targetQueryValueInputs(step.parameters.target)),
+      ]);
     case 'readSkillSettingData':
       return effect(
         step.parameters.items.map(item => item.column),
@@ -562,7 +626,12 @@ export function analyzeStepUsage(
       );
     case 'readBuffBlackboard':
       return {
-        ...effect([], [step.parameters.outputKey]),
+        ...effect(
+          typeof step.parameters.target === 'string'
+            ? []
+            : targetQueryValueInputs(step.parameters.target),
+          [step.parameters.outputKey],
+        ),
         externalReads: [
           {
             kind: 'buff',
@@ -592,11 +661,45 @@ export function analyzeStepUsage(
         externalReads: [{ kind: 'eventBuff', key: step.parameters.desiredKey }],
       };
     case 'saveTwoDirectionAngle':
-    case 'readBuffRemainingDuration':
       return {
         ...effect([], [step.parameters.outputKey]),
         reads: new Set([step.parameters.outputKey]),
       };
+    case 'readBuffRemainingDuration': {
+      const usage = effect(targetQueryValueInputs(step.parameters.target), [
+        step.parameters.outputKey,
+      ]);
+      return {
+        ...usage,
+        // 执行器比较旧值与剩余时间后才写回；查询本身也可能读取筛选阈值。
+        reads: new Set([...usage.reads, step.parameters.outputKey]),
+      };
+    }
+    case 'igniteBuffs':
+      return effect([
+        ...(typeof step.parameters.source === 'string'
+          ? []
+          : targetQueryValueInputs(step.parameters.source)),
+        ...(typeof step.parameters.target === 'string'
+          ? []
+          : targetQueryValueInputs(step.parameters.target)),
+      ]);
+    case 'blowOffEnemy':
+      return effect([
+        ...targetQueryValueInputs(step.parameters.source),
+        ...targetQueryValueInputs(step.parameters.targets),
+      ]);
+    case 'pushBack':
+      return effect([
+        ...targetQueryValueInputs(step.parameters.source),
+        ...targetQueryValueInputs(step.parameters.targets),
+        ...targetQueryValueInputs(step.parameters.sourcePoint),
+      ]);
+    case 'pull':
+      return effect([
+        ...targetQueryValueInputs(step.parameters.targets),
+        ...targetQueryValueInputs(step.parameters.destination),
+      ]);
     case 'saveTargetDistance': {
       const usage = effect(
         [
@@ -611,6 +714,12 @@ export function analyzeStepUsage(
         : { ...usage, unknownAccess: true };
     }
     case 'readBuffStackCount':
+      return effect(
+        step.parameters.query.kind === 'environment' || typeof step.parameters.target === 'string'
+          ? []
+          : targetQueryValueInputs(step.parameters.target),
+        [step.parameters.outputKey],
+      );
     case 'storeCharacterTypeId':
     case 'storeCurrentTimelineFrame':
     case 'storeEventDamageValue':
@@ -691,19 +800,44 @@ export function analyzeStepUsage(
         ? result
         : { ...result, unknownAccess: true };
     }
-    case 'startTimeDilation':
-      return effect([
+    case 'startTimeDilation': {
+      const queries =
+        step.parameters.scope === 'hitStop'
+          ? [step.parameters.attacker, step.parameters.targets]
+          : step.parameters.scope === 'entity'
+            ? step.parameters.targets.filter(target => typeof target !== 'string')
+            : step.parameters.ignoredTargets.filter(target => typeof target !== 'string');
+      const usage = effect([
         step.parameters.durationSeconds,
+        ...queries.flatMap(targetQueryValueInputs),
         ...(step.parameters.scope === 'global'
           ? [step.parameters.influenceSkillCooldownSeconds]
           : []),
       ]);
-    case 'startUltimateTimeDilation':
-      return effect([step.parameters.targetScale]);
+      return queries.every(isReadOnlyTargetQuery) ? usage : { ...usage, unknownAccess: true };
+    }
+    case 'setIgnoreGlobalTimeScale': {
+      const query = step.parameters.targets;
+      const usage = effect(query ? targetQueryValueInputs(query) : []);
+      return !query || isReadOnlyTargetQuery(query) ? usage : { ...usage, unknownAccess: true };
+    }
+    case 'startUltimateTimeDilation': {
+      const queries = step.parameters.ignoredTargets.filter(target => typeof target !== 'string');
+      const usage = effect([
+        step.parameters.targetScale,
+        ...queries.flatMap(targetQueryValueInputs),
+      ]);
+      return queries.every(isReadOnlyTargetQuery) ? usage : { ...usage, unknownAccess: true };
+    }
     case 'recoverDashEnergy':
       return effect([step.parameters.amount]);
     case 'changeResource':
-      return effect([step.parameters.amount, step.parameters.coefficient]);
+      return effect([
+        step.parameters.amount,
+        step.parameters.coefficient,
+        ...targetQueryValueInputs(step.parameters.source),
+        ...targetQueryValueInputs(step.parameters.targets),
+      ]);
     case 'playAnimation':
       return effect([]);
     case 'showComboRingQte':
@@ -752,6 +886,9 @@ export function analyzeStepUsage(
       ]);
     case 'spawnAbilityEntity': {
       const direct = effect([
+        ...[step.parameters.bornAt, step.parameters.source, step.parameters.target].flatMap(
+          query => (typeof query === 'object' ? targetQueryValueInputs(query) : []),
+        ),
         step.parameters.overrideDurationSeconds,
         ...Object.values(step.parameters.blackboardAssignments ?? {}),
       ]);
@@ -761,6 +898,8 @@ export function analyzeStepUsage(
       // 不扣除显式覆盖键：首版只闭合接收方用途，保持赋值、缺键与旧值比较的保守语义。
       return mergeDefinitionValueUsage([direct, inherited]);
     }
+    case 'setAbilityEntityTarget':
+      return effect(targetQueryValueInputs(step.parameters.targets));
     case 'jumpTimeline':
       // 跳转本身不访问变量；条件子序列由图遍历汇总，回跳由活性分析保留观察边界。
       return effect();
@@ -771,13 +910,28 @@ export function analyzeStepUsage(
         step.parameters.durationSeconds === undefined ? [] : [step.parameters.durationSeconds],
       );
     case 'copyContextTargets':
+      return effect([
+        ...targetQueryValueInputs(step.parameters.source),
+        ...(step.parameters.excludeTargets
+          ? targetQueryValueInputs(step.parameters.excludeTargets)
+          : []),
+      ]);
     case 'saveTransferredSource':
+      return effect(targetQueryValueInputs(step.parameters.source));
     case 'interruptCurrentSkill':
-    case 'mergeContextTargets':
-    case 'findCharacterTeamTargets':
     case 'finishOwner':
-    case 'startCurrentAbilityEntityChildSkillById':
+      return effect(targetQueryValueInputs(step.parameters.targets));
+    case 'mergeContextTargets':
+      return effect(step.parameters.sources.flatMap(targetQueryValueInputs));
     case 'applyElementalInfliction':
+      return effect([
+        ...(typeof step.parameters.target === 'object'
+          ? targetQueryValueInputs(step.parameters.target)
+          : []),
+        ...(step.parameters.source ? targetQueryValueInputs(step.parameters.source) : []),
+      ]);
+    case 'findCharacterTeamTargets':
+    case 'startCurrentAbilityEntityChildSkillById':
     case 'triggerSpellBurst':
     case 'triggerCharacterInflictionEvent':
     case 'recordPerfectDodge':
@@ -788,13 +942,11 @@ export function analyzeStepUsage(
     case 'skillAffix':
     case 'finishCurrentBuff':
     case 'setCurrentBuffTimePaused':
-    case 'igniteBuffs':
     case 'holdBuffsById':
     case 'inheritBuffById':
     case 'changeOriginSkillToEventContextSkill':
     case 'terminateAddingBuff':
     case 'hideUi':
-    case 'setIgnoreGlobalTimeScale':
     case 'gainSquadUltimateEnergyFromSkillCost':
     case 'markCurrentSkillCanInterrupt':
     case 'reachSkillOperableBoundary':
@@ -807,7 +959,15 @@ export function analyzeStepUsage(
     case 'inheritSkillCastInfoForBasicAttack':
       return effect();
     case 'triggerCustomAbilityEvent':
-      return effect([step.parameters.eventParam]);
+      return effect([
+        step.parameters.eventParam,
+        ...(typeof step.parameters.target === 'object'
+          ? targetQueryValueInputs(step.parameters.target)
+          : []),
+        ...(typeof step.parameters.source === 'object'
+          ? targetQueryValueInputs(step.parameters.source)
+          : []),
+      ]);
     case 'gainFinisherSp': {
       const usage = effect([step.parameters.factor]);
       return isReadOnlyTargetQuery(step.parameters.source) &&
@@ -824,8 +984,17 @@ export function analyzeStepUsage(
         unknownAccess: queries.some(query => query !== undefined && !isReadOnlyTargetQuery(query)),
       };
     }
-    case 'castSkillDuringAction':
-      return mergeDefinitionValueUsage([effect(), actionStringUsage(step.parameters.skillId)]);
+    case 'castSkillDuringAction': {
+      const queries = [
+        ...(step.parameters.caster ? [step.parameters.caster] : []),
+        ...(typeof step.parameters.target === 'object' ? [step.parameters.target] : []),
+      ];
+      const usage = mergeDefinitionValueUsage([
+        effect(queries.flatMap(targetQueryValueInputs)),
+        actionStringUsage(step.parameters.skillId),
+      ]);
+      return queries.every(isReadOnlyTargetQuery) ? usage : { ...usage, unknownAccess: true };
+    }
     default:
       // 外部未经检查的对象或新增类型都不能静默变成“没有读取”。
       return { ...EMPTY, unknownAccess: true, mayThrow: true, observable: true };

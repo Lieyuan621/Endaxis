@@ -1088,7 +1088,7 @@ describe('公共 Buff 运行时投影', () => {
               {
                 kind: 'readBuffBlackboard',
                 parameters: {
-                  target: 'actionInputTarget',
+                  target: { kind: 'inputTarget' },
                   query: { kind: 'id', buffIds: ['buff.potential'] },
                   desiredKey: 'ratio',
                   outputKey: 'ratio_dynamic',
@@ -2579,7 +2579,7 @@ describe('公共 Buff 运行时投影', () => {
 
     expect(result.steps[0]).toMatchObject({
       kind: 'readBuffStackCount',
-      parameters: { target: 'enemy', outputKey: 'count' },
+      parameters: { target: { kind: 'inputTarget' }, outputKey: 'count' },
     });
   });
 
@@ -2609,71 +2609,78 @@ describe('公共 Buff 运行时投影', () => {
         },
       },
     };
-    expect(() =>
-      projectSequence(
-        {
-          ...sequence,
-          actions: [
-            {
-              sourcePath: 'SkillData.fixture.guard',
-              metadata,
-              body: {
-                kind: 'ifElse',
-                condition: {
-                  ...sequence,
-                  actions: [
-                    {
-                      sourcePath: 'SkillData.fixture.guard.count',
-                      metadata,
-                      body: {
-                        kind: 'leaf',
-                        value: {
-                          family: 'condition',
-                          action: {
-                            kind: 'entityCount',
-                            target,
-                            targetSource: 'Context',
-                            targetGroupKey: 'tar2',
-                            containsHittableTarget: false,
-                            excludeDeadEntity: false,
-                            storeKey: '',
-                            comparison: 'GE',
-                            minimumCount: 1,
-                          },
+    const result = projectSequence(
+      {
+        ...sequence,
+        actions: [
+          {
+            sourcePath: 'SkillData.fixture.guard',
+            metadata,
+            body: {
+              kind: 'ifElse',
+              condition: {
+                ...sequence,
+                actions: [
+                  {
+                    sourcePath: 'SkillData.fixture.guard.count',
+                    metadata,
+                    body: {
+                      kind: 'leaf',
+                      value: {
+                        family: 'condition',
+                        action: {
+                          kind: 'entityCount',
+                          target,
+                          targetSource: 'Context',
+                          targetGroupKey: 'tar2',
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          storeKey: '',
+                          comparison: 'GE',
+                          minimumCount: 1,
                         },
                       },
                     },
-                  ],
-                },
-                whenTrue: {
-                  ...sequence,
-                  actions: [
-                    {
-                      sourcePath: 'SkillData.fixture.guard.forEach',
-                      metadata,
-                      body: {
-                        kind: 'forEach',
-                        target,
-                        action: { ...sequence, actions: [readNode] },
-                      },
-                    },
-                  ],
-                },
-                whenFalse: { ...sequence, actions: [] },
-                alwaysNext: true,
+                  },
+                ],
               },
+              whenTrue: {
+                ...sequence,
+                actions: [
+                  {
+                    sourcePath: 'SkillData.fixture.guard.forEach',
+                    metadata,
+                    body: {
+                      kind: 'forEach',
+                      target,
+                      action: { ...sequence, actions: [readNode] },
+                    },
+                  },
+                ],
+              },
+              whenFalse: { ...sequence, actions: [] },
+              alwaysNext: true,
             },
-          ],
-        } as never,
-        {
-          gameplayTagRegistry: fixtureGameplayTagRegistry,
-          actionOwnerTarget: 'currentAbilityEntity',
-          actionSourceTarget: 'caster',
-          actionTargetTarget: 'caster',
-          atMostOneZeroSpaceTargetGroupKeys: new Set(['tar2']),
-        },
-      ),
-    ).toThrow('unsupported Buff stack read');
+          },
+        ],
+      } as never,
+      {
+        gameplayTagRegistry: fixtureGameplayTagRegistry,
+        actionOwnerTarget: 'currentAbilityEntity',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'caster',
+        atMostOneZeroSpaceTargetGroupKeys: new Set(['tar2']),
+      },
+    );
+    expect(Object.values(result.graph.nodes).map(node => node.action)).toContainEqual(
+      expect.objectContaining({
+        kind: 'readBuffStackCount',
+        parameters: expect.objectContaining({
+          target: { kind: 'inputTarget' },
+          outputKey: 'count',
+        }),
+      }),
+    );
   });
 
   it('公共动作投影按宿主上下文解析 ActionOwner，而不把武器宿主伪装成 Buff', () => {
@@ -4765,7 +4772,7 @@ describe('公共 Buff 运行时投影', () => {
             },
             {
               kind: 'readBuffStackCount',
-              parameters: { target: 'eventTarget', outputKey: 'count' },
+              parameters: { target: { kind: 'inputTarget' }, outputKey: 'count' },
             },
             {
               kind: 'modifyActionValue',
@@ -5175,7 +5182,7 @@ describe('固定木桩 RangedAura 投影', () => {
     const aura = result.steps[0]!;
     expect(aura).toMatchObject({
       kind: 'aura',
-      parameters: { targets: { kind: 'fixed', target: 'enemy' }, buffs: [] },
+      parameters: { targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [] }, buffs: [] },
       onExit: { $sequence: null },
     });
     if (aura.kind !== 'aura') throw new Error('expected Aura');
@@ -5189,7 +5196,7 @@ describe('固定木桩 RangedAura 投影', () => {
 });
 
 describe('Typhoea 弓术目标选择投影', () => {
-  it('在唯一木桩模型中移除只服务于目标选择的持续标记', () => {
+  it('保留多敌人弓术选靶的持续注册、标记与优先标签', () => {
     const sequence = {
       onlyExecuteWhenSourceIsMainCharacter: false,
       onlyExecuteWhenSourceIsGuard: false,
@@ -5243,7 +5250,17 @@ describe('Typhoea 弓术目标选择投影', () => {
         fixedBuffOwnerTarget: 'caster',
         fixedBuffSourceTarget: 'caster',
       }).steps,
-    ).toEqual([]);
+    ).toEqual([
+      {
+        kind: 'startTyphoeaArchery',
+        parameters: {
+          markBuffId: 'buff_chr_0034_typhoea_normal_skill_aimmedenemy',
+          targetCount: { kind: 'constant', value: 2 },
+          priorityTagQueryType: 'hasAny',
+          priorityTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+        },
+      },
+    ]);
   });
 });
 

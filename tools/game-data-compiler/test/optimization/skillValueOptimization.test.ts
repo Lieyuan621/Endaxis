@@ -129,7 +129,12 @@ function executeSkillPrograms(input: SkillDefinition): readonly number[] {
 }
 
 describe('技能黑板和算术写入裁剪', () => {
-  it.each([false, true])('距离与曲线链只在结果被消费时保留：%s', consumed => {
+  it.each([
+    { consumed: false, area: false },
+    { consumed: true, area: false },
+    { consumed: false, area: true },
+    { consumed: true, area: true },
+  ])('距离与曲线链只在结果被消费时保留：%j', ({ consumed, area }) => {
     const input = skill(
       nodes => [
         {
@@ -139,7 +144,16 @@ describe('技能黑板和算术写入裁剪', () => {
               kind: 'saveTargetDistance',
               parameters: {
                 source: { kind: 'owner' },
-                target: { kind: 'battleMainTarget' },
+                target: area
+                  ? {
+                      kind: 'factionHitBox',
+                      owner: { kind: 'owner' },
+                      factionTarget: 'anti',
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    }
+                  : { kind: 'battleMainTarget' },
                 outputKey: 'distance',
               },
             },

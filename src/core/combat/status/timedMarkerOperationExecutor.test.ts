@@ -9,7 +9,7 @@ import { TimedMarkerContainer } from './timedMarkers';
 import { LogicalAbilityEntityRuntime } from '../abilities/logicalAbilityEntityRuntime';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
-import { runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
+import { singleTargetList, runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
 import { createStateTestSession } from '../../../test/stateTestSession';
 import { TimeDilationRuntime } from '../time/timeDilationRuntime';
 
@@ -293,7 +293,10 @@ describe('TimedMarkerOperationExecutor', () => {
     });
     const context = {
       blackboard: new ActionBlackboard(),
-      actionInputTarget: { kind: 'operator' as const, operatorId: 'operator:receiver' },
+      actionInputTargets: singleTargetList({
+        kind: 'operator' as const,
+        operatorId: 'operator:receiver',
+      }),
       event: {
         event: 'receiveHeal' as const,
         payload: {
@@ -348,7 +351,7 @@ describe('TimedMarkerOperationExecutor', () => {
     const context = {
       blackboard: new ActionBlackboard(),
       currentTarget: target,
-      actionInputTarget: target,
+      actionInputTargets: singleTargetList(target),
     };
     const step: ResolvedCombatOperationStep = {
       kind: 'createTimedMarker',
@@ -408,7 +411,7 @@ describe('TimedMarkerOperationExecutor', () => {
     const context = {
       blackboard: new ActionBlackboard(),
       currentTarget: target,
-      actionInputTarget: target,
+      actionInputTargets: singleTargetList(target),
       targetContext,
     };
     const globalStep: ResolvedCombatOperationStep = {
@@ -440,7 +443,7 @@ describe('TimedMarkerOperationExecutor', () => {
       ownerId: 'operator',
       source: { kind: 'operator', operatorId: 'operator' },
     });
-    targetContext.set('water_group', [unmarked, target]);
+    targetContext.set('water_group', [{ kind: 'spatialPoint', pointId: 1 }, unmarked, target]);
     expect(
       executor.evaluate(
         {
@@ -475,7 +478,7 @@ describe('TimedMarkerOperationExecutor', () => {
         context,
       ),
     ).toBe(false);
-    targetContext.set('water_group', [target, unmarked]);
+    targetContext.set('water_group', [{ kind: 'spatialPoint', pointId: 1 }, target, unmarked]);
     for (let frame = 0; frame < 31; frame += 1) {
       globalClock.advanceFrame();
       entities.advanceFrame();

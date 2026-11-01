@@ -8,6 +8,24 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const aleshChr_0024_deepfin_combo_skillActionGraph = {
   main: {
     nodes: {
+      createSpatialPointTargets_1: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'mainchar' },
+          },
+        },
+        next: null,
+      },
+      findCharacterTeamTargets_2: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
+        },
+        next: 'createSpatialPointTargets_1',
+      },
       applyBuff_3: {
         action: {
           kind: 'applyBuff',
@@ -20,62 +38,140 @@ export const aleshChr_0024_deepfin_combo_skillActionGraph = {
         },
         next: null,
       },
-      dealDamage_6: {
+      jumpTimeline_8: {
+        action: {
+          kind: 'jumpTimeline',
+          parameters: { destinationFrame: 4 },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+        },
+        next: null,
+      },
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'jumpTimeline_8' },
+        },
+        next: null,
+      },
+      ifElse_9: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'ifElse_7' },
+          whenFalse: { $sequence: 'jumpTimeline_8' },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_12: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
+        },
+        next: null,
+      },
+      copyContextTargets_11: {
+        action: {
+          kind: 'copyContextTargets',
+          parameters: {
+            source: { kind: 'context', key: 'smart_target' },
+            saveToContextKey: 'pos',
+            convertEntitiesToPositions: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_13: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          whenTrue: { $sequence: 'copyContextTargets_11' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_12' },
+        },
+        next: null,
+      },
+      dealDamage_14: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'context', key: 'combo_tar' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+            stagger: { kind: 'valueNode', nodeId: 'data_6' },
           },
         },
         next: null,
       },
-      mergeContextTargets_7: {
+      findTargets_15: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'source' },
+            center: { kind: 'context', key: 'pos' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'source' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'combo_tar',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_6',
+        next: 'dealDamage_14',
       },
-      dealDamage_10: {
+      dealDamage_20: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'context', key: 'combo_tar' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+            stagger: { kind: 'valueNode', nodeId: 'data_6' },
           },
         },
         next: null,
       },
-      mergeContextTargets_11: {
+      findTargets_21: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'source' },
+            center: { kind: 'context', key: 'pos' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'source' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'combo_tar',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_10',
+        next: 'dealDamage_20',
       },
-      changeResource_12: {
+      changeResource_22: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_4' },
+            amount: { kind: 'valueNode', nodeId: 'data_8' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -83,101 +179,110 @@ export const aleshChr_0024_deepfin_combo_skillActionGraph = {
             spGainSource: 'default',
           },
         },
-        next: 'mergeContextTargets_11',
+        next: 'findTargets_21',
       },
-      startTimeDilation_15: {
+      startTimeDilation_25: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'deepfin_combo2' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      startTimeDilation_14: {
+      startTimeDilation_24: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.95 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'deepfin_combo2' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      ifElse_16: {
+      ifElse_27: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'startTimeDilation_14' },
-          whenFalse: { $sequence: 'startTimeDilation_15' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+          whenTrue: { $sequence: 'startTimeDilation_24' },
+          whenFalse: { $sequence: 'startTimeDilation_25' },
         },
         next: null,
       },
-      changeResource_17: {
+      changeResource_28: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_6' },
+            amount: { kind: 'valueNode', nodeId: 'data_10' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
             onlyMainOperator: true,
           },
         },
-        next: 'ifElse_16',
+        next: 'ifElse_27',
       },
-      ifElse_18: {
+      ifElse_29: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'changeResource_17' },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'changeResource_28' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_25: {
+      dealDamage_37: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'context', key: 'combo_tar_1' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_12' },
             tags: ['comboSkill'],
           },
         },
         next: null,
       },
-      mergeContextTargets_26: {
+      findTargets_38: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'source' },
+            center: { kind: 'context', key: 'pos' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'source' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'combo_tar_1',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_25',
+        next: 'dealDamage_37',
       },
-      changeResource_27: {
+      changeResource_39: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_9' },
+            amount: { kind: 'valueNode', nodeId: 'data_13' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -185,45 +290,54 @@ export const aleshChr_0024_deepfin_combo_skillActionGraph = {
             spGainSource: 'skill',
           },
         },
-        next: 'mergeContextTargets_26',
+        next: 'findTargets_38',
       },
-      jumpTimeline_28: {
+      jumpTimeline_40: {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 120 },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
         },
         next: null,
       },
-      dealDamage_29: {
+      dealDamage_41: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'context', key: 'combo_tar_1' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_11' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_15' },
             tags: ['comboSkill'],
           },
         },
         next: null,
       },
-      mergeContextTargets_30: {
+      findTargets_42: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'source' },
+            center: { kind: 'context', key: 'pos' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'source' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'combo_tar_1',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_29',
+        next: 'dealDamage_41',
       },
-      changeResource_31: {
+      changeResource_43: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_9' },
+            amount: { kind: 'valueNode', nodeId: 'data_13' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -231,41 +345,41 @@ export const aleshChr_0024_deepfin_combo_skillActionGraph = {
             spGainSource: 'skill',
           },
         },
-        next: 'mergeContextTargets_30',
+        next: 'findTargets_42',
       },
-      jumpTimeline_35: {
+      jumpTimeline_47: {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 65 },
-          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
         },
         next: null,
       },
-      checkCondition_36: {
+      checkCondition_48: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
         },
-        next: 'jumpTimeline_35',
+        next: 'jumpTimeline_47',
       },
-      checkCondition_34: {
+      checkCondition_46: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
         },
-        next: 'jumpTimeline_35',
+        next: 'jumpTimeline_47',
       },
-      ifElse_37: {
+      ifElse_49: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_19' },
-          whenTrue: { $sequence: 'checkCondition_34' },
-          whenFalse: { $sequence: 'checkCondition_36' },
+          condition: { kind: 'conditionNode', nodeId: 'data_23' },
+          whenTrue: { $sequence: 'checkCondition_46' },
+          whenFalse: { $sequence: 'checkCondition_48' },
         },
         next: null,
       },
-      storeSourceAttributeValue_38: {
+      storeSourceAttributeValue_50: {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
@@ -274,38 +388,38 @@ export const aleshChr_0024_deepfin_combo_skillActionGraph = {
             stage: 'finalNonConverted',
             useFloor: false,
             divisor: { kind: 'constant', value: 1 },
-            multiplier: { kind: 'valueNode', nodeId: 'data_20' },
-            base: { kind: 'valueNode', nodeId: 'data_15' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_24' },
+            base: { kind: 'valueNode', nodeId: 'data_19' },
             targetKey: 'prob',
           },
         },
-        next: 'ifElse_37',
+        next: 'ifElse_49',
       },
-      calculateActionValue_39: {
+      calculateActionValue_51: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'prob_add',
             operation: 'divide',
-            left: { kind: 'valueNode', nodeId: 'data_20' },
-            right: { kind: 'valueNode', nodeId: 'data_21' },
+            left: { kind: 'valueNode', nodeId: 'data_24' },
+            right: { kind: 'valueNode', nodeId: 'data_25' },
           },
         },
-        next: 'storeSourceAttributeValue_38',
+        next: 'storeSourceAttributeValue_50',
       },
-      calculateActionValue_40: {
+      calculateActionValue_52: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'prob_max',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_15' },
-            right: { kind: 'valueNode', nodeId: 'data_13' },
+            left: { kind: 'valueNode', nodeId: 'data_19' },
+            right: { kind: 'valueNode', nodeId: 'data_17' },
           },
         },
-        next: 'calculateActionValue_39',
+        next: 'calculateActionValue_51',
       },
-      applyBuff_42: {
+      applyBuff_54: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -322,7 +436,7 @@ export const aleshChr_0024_deepfin_combo_skillActionGraph = {
         },
         next: null,
       },
-      findTargets_43: {
+      findTargets_55: {
         action: {
           kind: 'findTargets',
           parameters: {
@@ -331,36 +445,36 @@ export const aleshChr_0024_deepfin_combo_skillActionGraph = {
             saveToContextKey: 'team',
           },
         },
-        next: 'applyBuff_42',
+        next: 'applyBuff_54',
       },
-      ifElse_44: {
+      ifElse_56: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_23' },
-          whenTrue: { $sequence: 'findTargets_43' },
+          condition: { kind: 'conditionNode', nodeId: 'data_27' },
+          whenTrue: { $sequence: 'findTargets_55' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      checkCondition_45: {
+      checkCondition_57: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_24' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_28' } },
         },
         next: null,
       },
-      ifElse_46: {
+      ifElse_58: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_25' },
+          condition: { kind: 'conditionNode', nodeId: 'data_29' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      reachSkillOperableBoundary_47: {
+      reachSkillOperableBoundary_59: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0024_deepfin_normal_skill'] },
@@ -369,73 +483,118 @@ export const aleshChr_0024_deepfin_combo_skillActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2ex' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atb_sp' } },
-      data_5: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'context', key: 'smart_target' },
+          distance: 4.5,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'smart_target' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'smart_target' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2ex' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atb_sp' } },
+      data_9: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'usp_normal' } },
-      data_7: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_10: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1ex' } },
-      data_12: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'prob_max' } },
-      data_14: {
-        type: 'boolean',
-        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_13' } },
-      },
-      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'prob' } },
-      data_16: {
-        type: 'boolean',
-        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_15' } },
-      },
-      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'prob', fallback: 0 } },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'prob_max', fallback: 0 } },
-      data_19: {
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'usp_normal' } },
+      data_11: {
         type: 'boolean',
         expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_17' },
-          operator: 'lessOrEqual',
-          right: { kind: 'valueNode', nodeId: 'data_18' },
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'combo_tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
         },
       },
-      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'prob_add' } },
-      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
-      data_22: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_14: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
+      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1ex' } },
+      data_16: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'prob_max' } },
+      data_18: {
+        type: 'boolean',
+        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_17' } },
+      },
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'prob' } },
+      data_20: {
+        type: 'boolean',
+        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_19' } },
+      },
+      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'prob', fallback: 0 } },
+      data_22: { type: 'number', expression: { kind: 'blackboard', key: 'prob_max', fallback: 0 } },
       data_23: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_22' },
+          left: { kind: 'valueNode', nodeId: 'data_21' },
+          operator: 'lessOrEqual',
+          right: { kind: 'valueNode', nodeId: 'data_22' },
+        },
+      },
+      data_24: { type: 'number', expression: { kind: 'blackboard', key: 'prob_add' } },
+      data_25: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
+      data_26: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
+      },
+      data_27: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_26' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_24: {
+      data_28: {
         type: 'boolean',
         expression: { kind: 'probability', probability: { kind: 'constant', value: 0.5 } },
       },
-      data_25: {
+      data_29: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_45' } },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_57' } },
       },
     },
   },
@@ -470,20 +629,24 @@ export const aleshChr_0024_deepfin_combo_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findCharacterTeamTargets_2' } },
     { startFrame: 0, endFrame: 23, sequence: { $sequence: 'applyBuff_3' } },
-    { startFrame: 38, endFrame: 41, sequence: { $sequence: 'mergeContextTargets_7' } },
-    { startFrame: 93, endFrame: 96, sequence: { $sequence: 'changeResource_12' } },
-    { startFrame: 38, endFrame: 43, sequence: { $sequence: 'ifElse_18' } },
-    { startFrame: 93, endFrame: 98, sequence: { $sequence: 'ifElse_18' } },
-    { startFrame: 22, endFrame: 24, sequence: { $sequence: 'changeResource_27' } },
-    { startFrame: 64, endFrame: 66, sequence: { $sequence: 'jumpTimeline_28' } },
-    { startFrame: 77, endFrame: 79, sequence: { $sequence: 'changeResource_31' } },
-    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'calculateActionValue_40' } },
-    { startFrame: 93, endFrame: 96, sequence: { $sequence: 'ifElse_44' } },
-    { startFrame: 34, endFrame: 75, sequence: { $sequence: 'ifElse_46' } },
-    { startFrame: 39, endFrame: 65, sequence: { $sequence: 'reachSkillOperableBoundary_47' } },
-    { startFrame: 94, endFrame: 120, sequence: { $sequence: 'reachSkillOperableBoundary_47' } },
-    { startFrame: 120, endFrame: 130, sequence: { $sequence: 'reachSkillOperableBoundary_47' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_9' } },
+    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'ifElse_13' } },
+    { startFrame: 38, endFrame: 41, sequence: { $sequence: 'findTargets_15' } },
+    { startFrame: 76, endFrame: 77, sequence: { $sequence: 'ifElse_13' } },
+    { startFrame: 93, endFrame: 96, sequence: { $sequence: 'changeResource_22' } },
+    { startFrame: 38, endFrame: 43, sequence: { $sequence: 'ifElse_29' } },
+    { startFrame: 93, endFrame: 98, sequence: { $sequence: 'ifElse_29' } },
+    { startFrame: 22, endFrame: 24, sequence: { $sequence: 'changeResource_39' } },
+    { startFrame: 64, endFrame: 66, sequence: { $sequence: 'jumpTimeline_40' } },
+    { startFrame: 77, endFrame: 79, sequence: { $sequence: 'changeResource_43' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'calculateActionValue_52' } },
+    { startFrame: 93, endFrame: 96, sequence: { $sequence: 'ifElse_56' } },
+    { startFrame: 34, endFrame: 75, sequence: { $sequence: 'ifElse_58' } },
+    { startFrame: 39, endFrame: 65, sequence: { $sequence: 'reachSkillOperableBoundary_59' } },
+    { startFrame: 94, endFrame: 120, sequence: { $sequence: 'reachSkillOperableBoundary_59' } },
+    { startFrame: 120, endFrame: 130, sequence: { $sequence: 'reachSkillOperableBoundary_59' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'trigger',
@@ -496,10 +659,21 @@ export const aleshChr_0024_deepfin_combo_skill: SkillDefinition = {
 export const aleshChr_0024_deepfin_attack1ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -522,13 +696,13 @@ export const aleshChr_0024_deepfin_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_3',
@@ -597,7 +771,7 @@ export const aleshChr_0024_deepfin_attack1: SkillDefinition = {
   offsetRecordFrame: 7,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 7, endFrame: 25, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
     { startFrame: 12, endFrame: 25, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
@@ -611,10 +785,21 @@ export const aleshChr_0024_deepfin_attack1: SkillDefinition = {
 export const aleshChr_0024_deepfin_attack2ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -637,13 +822,13 @@ export const aleshChr_0024_deepfin_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.03 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_3',
@@ -675,13 +860,13 @@ export const aleshChr_0024_deepfin_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -745,7 +930,7 @@ export const aleshChr_0024_deepfin_attack2: SkillDefinition = {
   offsetRecordFrame: 5,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 5, endFrame: 11, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 5, endFrame: 8, sequence: { $sequence: 'checkCondition_8' } },
     { startFrame: 6, endFrame: 25, sequence: { $sequence: 'overrideBasicAttackMapping_9' } },
@@ -760,10 +945,21 @@ export const aleshChr_0024_deepfin_attack2: SkillDefinition = {
 export const aleshChr_0024_deepfin_attack3ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -771,13 +967,13 @@ export const aleshChr_0024_deepfin_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.12 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -879,7 +1075,7 @@ export const aleshChr_0024_deepfin_attack3: SkillDefinition = {
   offsetRecordFrame: 13,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'checkCondition_3' } },
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 13, endFrame: 31, sequence: { $sequence: 'overrideBasicAttackMapping_8' } },
@@ -894,14 +1090,25 @@ export const aleshChr_0024_deepfin_attack3: SkillDefinition = {
 export const aleshChr_0024_deepfin_attack4ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
-      changeResource_2: {
+      changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -916,42 +1123,42 @@ export const aleshChr_0024_deepfin_attack4ActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_3: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.12 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'changeResource_2',
-      },
-      ifElse_5: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
+        next: 'changeResource_3',
       },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'ifElse_5' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_7: {
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'ifElse_6' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_8: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -962,16 +1169,16 @@ export const aleshChr_0024_deepfin_attack4ActionGraph = {
             tags: ['normalAttack'],
           },
         },
-        next: 'ifElse_6',
+        next: 'ifElse_7',
       },
-      overrideBasicAttackMapping_8: {
+      overrideBasicAttackMapping_9: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0024_deepfin_attack5'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_9: {
+      reachSkillOperableBoundary_10: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0024_deepfin_attack5'] },
@@ -983,7 +1190,14 @@ export const aleshChr_0024_deepfin_attack4ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_3: {
         type: 'boolean',
@@ -1009,10 +1223,10 @@ export const aleshChr_0024_deepfin_attack4: SkillDefinition = {
   offsetRecordFrame: 15,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 15, endFrame: 33, sequence: { $sequence: 'overrideBasicAttackMapping_8' } },
-    { startFrame: 22, endFrame: 33, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'dealDamage_8' } },
+    { startFrame: 15, endFrame: 33, sequence: { $sequence: 'overrideBasicAttackMapping_9' } },
+    { startFrame: 22, endFrame: 33, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -1023,35 +1237,36 @@ export const aleshChr_0024_deepfin_attack4: SkillDefinition = {
 export const aleshChr_0024_deepfin_attack5ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
-        },
-        next: null,
-      },
-      startTimeDilation_2: {
-        action: {
-          kind: 'startTimeDilation',
+          kind: 'findTargets',
           parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'char_hard_zero' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
           },
         },
         next: null,
       },
-      ifElse_4: {
+      startTimeDilation_3: {
         action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'startTimeDilation_2' },
-          whenFalse: { $sequence: null },
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
+            durationSeconds: { kind: 'constant', value: 0.2 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_zero' },
+          },
         },
         next: null,
       },
@@ -1059,13 +1274,23 @@ export const aleshChr_0024_deepfin_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'ifElse_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'startTimeDilation_3' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_6: {
+      ifElse_6: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'ifElse_5' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1078,9 +1303,9 @@ export const aleshChr_0024_deepfin_attack5ActionGraph = {
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'ifElse_5',
+        next: 'ifElse_6',
       },
-      changeResource_8: {
+      changeResource_10: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1095,42 +1320,42 @@ export const aleshChr_0024_deepfin_attack5ActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_9: {
+      startTimeDilation_11: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'changeResource_8',
+        next: 'changeResource_10',
       },
-      ifElse_11: {
+      ifElse_13: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'startTimeDilation_9' },
+          whenTrue: { $sequence: 'startTimeDilation_11' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      ifElse_12: {
+      ifElse_14: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'ifElse_11' },
+          whenTrue: { $sequence: 'ifElse_13' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_13: {
+      dealDamage_15: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1143,16 +1368,16 @@ export const aleshChr_0024_deepfin_attack5ActionGraph = {
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'ifElse_12',
+        next: 'ifElse_14',
       },
-      overrideBasicAttackMapping_14: {
+      overrideBasicAttackMapping_16: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0024_deepfin_attack1'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_15: {
+      reachSkillOperableBoundary_17: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0024_deepfin_attack1'] },
@@ -1163,7 +1388,14 @@ export const aleshChr_0024_deepfin_attack5ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_2: {
         type: 'boolean',
@@ -1174,7 +1406,14 @@ export const aleshChr_0024_deepfin_attack5ActionGraph = {
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_6: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_7: {
         type: 'boolean',
@@ -1200,12 +1439,12 @@ export const aleshChr_0024_deepfin_attack5: SkillDefinition = {
   offsetRecordFrame: 18,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'dealDamage_13' } },
-    { startFrame: 14, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_14' } },
-    { startFrame: 31, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'dealDamage_15' } },
+    { startFrame: 14, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_16' } },
+    { startFrame: 31, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_17' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -1235,13 +1474,13 @@ export const aleshChr_0024_deepfin_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_zero' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_2',
@@ -1286,13 +1525,13 @@ export const aleshChr_0024_deepfin_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1336,13 +1575,13 @@ export const aleshChr_0024_deepfin_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyAttacker',
             durationSeconds: { kind: 'constant', value: 0.12 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['caster'],
           },
         },
         next: null,
@@ -1470,10 +1709,21 @@ export const aleshChr_0024_deepfin_power_attack: SkillDefinition = {
 export const aleshChr_0024_deepfin_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1542,7 +1792,7 @@ export const aleshChr_0024_deepfin_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
   ],
   defaultTarget: 'enemy',
@@ -1554,6 +1804,24 @@ export const aleshChr_0024_deepfin_plunging_attack_end: SkillDefinition = {
 export const aleshChr_0024_deepfin_normal_skillActionGraph = {
   main: {
     nodes: {
+      findTargets_6: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       modifyActionValue_8: {
         action: {
           kind: 'modifyActionValue',
@@ -1579,7 +1847,7 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             outputKey: 'num_1',
             query: {
               kind: 'tag',
@@ -1596,7 +1864,7 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1742,13 +2010,13 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1784,7 +2052,7 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1795,7 +2063,7 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_33: {
+      applyBuff_34: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1807,21 +2075,22 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_34: {
+      ifElse_35: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'applyBuff_33' },
+          whenTrue: { $sequence: 'applyBuff_34' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      forceSpellStatus_36: {
+      forceSpellStatus_37: {
         action: {
           kind: 'forceSpellStatus',
           parameters: {
-            target: 'enemy',
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
             element: 'cryo',
             consumedElement: 'cryo',
             consumedLayers: { kind: 'valueNode', nodeId: 'data_17' },
@@ -1831,11 +2100,11 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
         },
         next: null,
       },
-      readBuffStackCount_37: {
+      readBuffStackCount_38: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             outputKey: 'count',
             query: {
               kind: 'tag',
@@ -1844,32 +2113,32 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
             },
           },
         },
-        next: 'forceSpellStatus_36',
+        next: 'forceSpellStatus_37',
       },
-      ifElse_38: {
+      ifElse_39: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_18' },
-          whenTrue: { $sequence: 'readBuffStackCount_37' },
+          whenTrue: { $sequence: 'readBuffStackCount_38' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      repeatEachTick_39: {
+      repeatEachTick_40: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'ifElse_38' },
+          body: { $sequence: 'ifElse_39' },
         },
         next: null,
       },
@@ -1921,7 +2190,14 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
       data_15: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_16: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_17: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
       data_18: {
@@ -1965,11 +2241,12 @@ export const aleshChr_0024_deepfin_normal_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'findTargets_6' } },
     { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_11' } },
     { startFrame: 27, endFrame: 28, sequence: { $sequence: 'ifElse_27' } },
     { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_32' } },
-    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'ifElse_34' } },
-    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_39' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'ifElse_35' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_40' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'enemy',
@@ -1997,7 +2274,31 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      dealDamage_10: {
+      modifyActionValue_2: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: { key: 'kill_num', operation: 'add', value: { kind: 'constant', value: 1 } },
+        },
+        next: null,
+      },
+      listenForCombatEvents_3: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
+            responses: [
+              {
+                key: 'SkillData.chr_0024_deepfin_ultimate_skill.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'abilityEvent', event: 'afterKillEntity' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'modifyActionValue_2' },
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      dealDamage_12: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -2012,7 +2313,7 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      calculateActionValue_8: {
+      calculateActionValue_10: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
@@ -2022,67 +2323,67 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
             right: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
-        next: 'dealDamage_10',
+        next: 'dealDamage_12',
       },
-      checkCondition_4: {
+      checkCondition_6: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: null,
       },
-      checkCondition_5: {
+      checkCondition_7: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
-        next: 'checkCondition_4',
+        next: 'checkCondition_6',
       },
-      ifElse_11: {
+      ifElse_13: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: 'calculateActionValue_8' },
-          whenFalse: { $sequence: 'dealDamage_10' },
+          whenTrue: { $sequence: 'calculateActionValue_10' },
+          whenFalse: { $sequence: 'dealDamage_12' },
         },
         next: null,
       },
-      repeatEachTick_12: {
+      repeatEachTick_15: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'ifElse_11' },
+          body: { $sequence: 'ifElse_13' },
         },
         next: null,
       },
-      applyElementalInfliction_13: {
+      applyElementalInfliction_16: {
         action: {
           kind: 'applyElementalInfliction',
-          parameters: { element: 'cryo', isExtra: false },
+          parameters: { element: 'cryo', isExtra: false, target: { kind: 'context', key: 'tar' } },
         },
-        next: 'repeatEachTick_12',
+        next: 'repeatEachTick_15',
       },
-      ifElse_14: {
+      ifElse_17: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_9' },
-          whenTrue: { $sequence: 'applyElementalInfliction_13' },
+          whenTrue: { $sequence: 'applyElementalInfliction_16' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      changeResource_17: {
+      changeResource_20: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -2097,7 +2398,7 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      changeResource_16: {
+      changeResource_19: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -2112,17 +2413,17 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_18: {
+      ifElse_22: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'changeResource_16' },
-          whenFalse: { $sequence: 'changeResource_17' },
+          whenTrue: { $sequence: 'changeResource_19' },
+          whenFalse: { $sequence: 'changeResource_20' },
         },
         next: null,
       },
-      modifyActionValue_19: {
+      modifyActionValue_23: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -2131,9 +2432,9 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_14' },
           },
         },
-        next: 'ifElse_18',
+        next: 'ifElse_22',
       },
-      modifyActionValue_20: {
+      modifyActionValue_24: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -2142,51 +2443,51 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_15' },
           },
         },
-        next: 'modifyActionValue_19',
+        next: 'modifyActionValue_23',
       },
-      ifElse_21: {
+      ifElse_25: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'modifyActionValue_20' },
+          whenTrue: { $sequence: 'modifyActionValue_24' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_22: {
+      startTimeDilation_27: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'deepfin_ult' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      ifElse_23: {
+      ifElse_28: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_17' },
-          whenTrue: { $sequence: 'startTimeDilation_22' },
+          whenTrue: { $sequence: 'startTimeDilation_27' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      checkCondition_24: {
+      checkCondition_29: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
         },
-        next: 'ifElse_23',
+        next: 'ifElse_28',
       },
-      applyBuff_25: {
+      applyBuff_30: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2199,8 +2500,8 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      hideUi_26: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_27: {
+      hideUi_31: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_32: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -2211,14 +2512,14 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      overrideBasicAttackMapping_28: {
+      overrideBasicAttackMapping_33: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0024_deepfin_attack1'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_29: {
+      reachSkillOperableBoundary_34: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -2227,6 +2528,24 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
               'chr_0024_deepfin_normal_skill',
               'chr_0024_deepfin_combo_skill',
             ],
+          },
+        },
+        next: null,
+      },
+      findTargets_opt1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
           },
         },
         next: null,
@@ -2262,11 +2581,18 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
       },
       data_8: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_5' } },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_7' } },
       },
       data_9: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atb_max' } },
       data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atb_up' } },
@@ -2284,11 +2610,25 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
       data_15: { type: 'number', expression: { kind: 'blackboard', key: 'kill_num' } },
       data_16: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_17: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_18: {
         type: 'boolean',
@@ -2321,14 +2661,16 @@ export const aleshChr_0024_deepfin_ultimate_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 90, endFrame: 93, sequence: { $sequence: 'ifElse_14' } },
-    { startFrame: 91, endFrame: 94, sequence: { $sequence: 'ifElse_21' } },
-    { startFrame: 90, endFrame: 93, sequence: { $sequence: 'checkCondition_24' } },
-    { startFrame: 0, endFrame: 110, sequence: { $sequence: 'applyBuff_25' } },
-    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'hideUi_26' } },
-    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'startUltimateTimeDilation_27' } },
-    { startFrame: 87, endFrame: 113, sequence: { $sequence: 'overrideBasicAttackMapping_28' } },
-    { startFrame: 96, endFrame: 113, sequence: { $sequence: 'reachSkillOperableBoundary_29' } },
+    { startFrame: 89, endFrame: 91, sequence: { $sequence: 'listenForCombatEvents_3' } },
+    { startFrame: 90, endFrame: 93, sequence: { $sequence: 'findTargets_opt1' } },
+    { startFrame: 90, endFrame: 93, sequence: { $sequence: 'ifElse_17' } },
+    { startFrame: 91, endFrame: 94, sequence: { $sequence: 'ifElse_25' } },
+    { startFrame: 90, endFrame: 93, sequence: { $sequence: 'checkCondition_29' } },
+    { startFrame: 0, endFrame: 110, sequence: { $sequence: 'applyBuff_30' } },
+    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'hideUi_31' } },
+    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'startUltimateTimeDilation_32' } },
+    { startFrame: 87, endFrame: 113, sequence: { $sequence: 'overrideBasicAttackMapping_33' } },
+    { startFrame: 96, endFrame: 113, sequence: { $sequence: 'reachSkillOperableBoundary_34' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -2489,8 +2831,15 @@ const aleshBuff1ActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
             influenceSkillCooldownSeconds: { kind: 'constant', value: 0.3 },
           },
         },

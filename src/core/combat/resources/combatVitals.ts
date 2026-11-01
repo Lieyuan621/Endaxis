@@ -130,6 +130,12 @@ export class CombatVitals {
     if (result.currentHealth !== result.previousHealth) this.healthChanged?.();
     return result;
   }
+  /** 人工死亡输入直接归零，不伪造伤害来源，不受伤害保底生命限制。 */
+  setHealthToZero(): void {
+    if (this.runtimeState.health === 0) return;
+    this.runtimeState.health = 0;
+    this.healthChanged?.();
+  }
   /** 出生阶段的直接生命赋值，不伪装成治疗或产生治疗事件。 */
   initializeHealth(maxHealth: number): void {
     if (!Number.isFinite(maxHealth) || maxHealth <= 0)

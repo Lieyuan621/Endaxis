@@ -4,7 +4,11 @@ import {
   layoutBuffTimelineSegments,
   mergeOverlappingBuffTimelineSegments,
 } from '../../../core/projection/buffTimelineViz';
-import { isEnemyTimelineBuffVisible, layoutEnemyStatusRows } from './enemyStatusRows';
+import {
+  isEnemyTimelineBuffVisible,
+  layoutEnemyStatusRows,
+  layoutEnemyOverviewStatuses,
+} from './enemyStatusRows';
 
 const attachmentIds = new Set(['electric', 'heat']);
 function buff(buffId: string, extras: Partial<BuffTimelineSegment> = {}): BuffTimelineSegment {
@@ -255,4 +259,56 @@ describe('enemy status presentation rows', () => {
     expect(result.rowCount).toBe(4);
     expect(layoutEnemyStatusRows([], [], attachmentIds).rowCount).toBe(3);
   });
+});
+
+it.each(['enemy', 'enemy:second'])(
+  '敌人 %s 总览压缩空行，只保留关键状态及物理异常代表图标',
+  targetId => {
+    const summary = layoutEnemyOverviewStatuses(
+      [
+        buff('ordinary', { targetId }),
+        buff('hidden', {
+          targetId,
+          iconStyleInSquad: 'SpellAbnormal',
+          showInHeadBarCommon: false,
+          showInHeadBarAttached: false,
+        }),
+        buff('buff_physical_no_guard', { targetId }),
+        buff('buff_physical_airborne', { targetId }),
+        buff('corrosion', { targetId, iconStyleInSquad: 'SpellAbnormal' }),
+      ],
+      attachmentIds,
+    );
+    expect(summary.segments.map(segment => [segment.buffId, segment.lane])).toEqual([
+      ['buff_physical_no_guard', 0],
+      ['buff_physical_airborne', 0],
+      ['corrosion', 1],
+    ]);
+    expect(summary.laneCount).toBe(2);
+    expect([...summary.hiddenIcons].map(segment => segment.buffId)).toEqual([
+      'buff_physical_no_guard',
+    ]);
+    expect(summary.segments.every(segment => segment.targetId === targetId)).toBe(true);
+    expect(
+      layoutEnemyOverviewStatuses([buff('heat', { targetId })], attachmentIds).segments[0]?.lane,
+    ).toBe(0);
+  },
+);
+
+it('总览保留无伤害反应的附着行，并沿用详情同帧图标避让', () => {
+  const markers = [
+    { frame: 0, kind: 'attachmentTrigger' as const, element: 'Fire' },
+    { frame: 0, kind: 'burst' as const, burstType: 'Fire' },
+  ];
+  const buffs = [buff('heat')];
+  const detail = layoutEnemyStatusRows(buffs, markers, attachmentIds);
+  const overview = layoutEnemyOverviewStatuses(buffs, attachmentIds, markers);
+  expect(overview.markerPositions).toEqual(
+    detail.markerPositions.map(position => ({ ...position, row: 0 })),
+  );
+  expect(overview.markerPositions.map(position => position.slot)).toEqual([1, 2]);
+  expect(overview.laneCount).toBe(1);
+  const noBuffs = layoutEnemyOverviewStatuses([], attachmentIds, [markers[0]!]);
+  expect(noBuffs.markerPositions).toEqual([{ row: 0, slot: 0 }]);
+  expect(noBuffs.laneCount).toBe(1);
 });

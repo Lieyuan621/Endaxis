@@ -33,6 +33,7 @@ export const BUFF_ABILITY_EVENTS = [
   'collectAddedBuffBlackboard',
   'collectOutputBuffBlackboard',
   'ownerHpZero',
+  'ownerDead',
   'hpChanged',
   'abilityEntitySpawned',
   'abilityEntityFinished',

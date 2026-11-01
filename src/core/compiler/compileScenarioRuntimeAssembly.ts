@@ -1,3 +1,5 @@
+import { firstScenarioEnemy } from '../project/level';
+import { scenarioEnemyOrder } from '../project/enemyTargeting';
 /**
  * 将场景的时间轴、初始资源和应用层提供的运行环境组合成运行时装配参数。
  *
@@ -30,6 +32,7 @@ import { resolveScenarioInitialFrame } from '../project/skillCastPlacement';
 import type { CompiledEquipmentContribution } from './compileEquipment';
 import { compileGlobalEffects } from './compileGlobalEffects';
 import { compileScenarioEnemy } from './compileScenarioEnemy';
+import { compileEnemyLifecycle } from './compileEnemyLifecycle';
 import { compileResolvedScenarioEquipment } from './compileScenarioEquipment';
 import {
   compileScenarioResources,
@@ -529,6 +532,10 @@ export function compileScenarioRuntimeAssembly(
   return {
     ...options.environment,
     initialFrame,
+    enemyTargeting: {
+      order: scenarioEnemyOrder(scenario),
+      switches: scenario.battle.enemyTargetSwitches ?? [],
+    },
     squadSlotCount: scenario.tracks.length,
     operatorControl: {
       initialOperatorId: initialControlledOperatorId,
@@ -555,7 +562,14 @@ export function compileScenarioRuntimeAssembly(
       : {}),
     ...(options.liveInputInitialFrame === undefined ? {} : { deferInitialInput: true }),
     resources,
-    enemy: compileScenarioEnemy(scenario.enemy),
+    enemy: {
+      id: firstScenarioEnemy(scenario).id,
+      ...compileScenarioEnemy(firstScenarioEnemy(scenario).enemy),
+      lifecycle: compileEnemyLifecycle(firstScenarioEnemy(scenario).enemy.lifecycle, initialFrame),
+    },
+    ...(scenario.battle.enemyAutomaticDeath === undefined
+      ? {}
+      : { enemyAutomaticDeath: scenario.battle.enemyAutomaticDeath }),
     operators,
     consumables: options.index.getConsumables?.() ?? [],
     consumableUses:

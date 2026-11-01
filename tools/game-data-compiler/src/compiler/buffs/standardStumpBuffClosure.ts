@@ -38,7 +38,6 @@ import {
   collectBuffRuntimeLevelEventActionPaths,
   collectBuffRuntimePresentationActionPaths,
   compileBuffRuntimeDefinitionSource,
-  isAfterEnemyDefeatedOnlyBuffRuntime,
   isPresentationOnlyBuffStackEffect,
 } from './buffRuntimeProjection.ts';
 import { collectCombatInvisibleBuffClosureIds } from './combatInvisibleBuffClosure.ts';
@@ -144,13 +143,6 @@ export function compileStandardStumpBuffClosure(
         sourcePath: `BuffData.${buffId}.stackingSettings.stackEffects`,
         reason:
           'particle-only stack effect does not affect the fixed-target damage simulation; Buff identity and stacking remain active',
-      });
-    } else if (isAfterEnemyDefeatedOnlyBuffRuntime(source)) {
-      omittedBuffIds.add(buffId);
-      diagnostics.push({
-        status: 'scenario-omitted',
-        sourcePath: `BuffData.${buffId}.abilityEventAction`,
-        reason: 'enemy-defeated response occurs after the fixed single target simulation has ended',
       });
     }
   }
@@ -298,6 +290,9 @@ export function compileStandardStumpBuffClosure(
                 ),
               }
             : {}),
+          enemyOrSpatialTargetGroupKeys: new Set(
+            buffCapturedTargetGroups.get(buffId)?.enemyOrSpatialKeys ?? [],
+          ),
           ...(buffCapturedTargetGroups.get(buffId)?.zeroSpaceKeys.length
             ? {
                 staticZeroSpaceTargetGroupKeys: new Set(
@@ -481,6 +476,9 @@ function propagateBuffTargets(
           id,
           {
             enemyKeys: [...new Set(groups.enemyKeys)].sort(),
+            enemyOrSpatialKeys: [
+              ...new Set([...groups.enemyKeys, ...(groups.enemyOrSpatialKeys ?? [])]),
+            ].sort(),
             zeroSpaceKeys: [...new Set(groups.zeroSpaceKeys)]
               .filter(key => !groups.enemyKeys.includes(key))
               .sort(),
@@ -513,6 +511,9 @@ function propagateBuffTargets(
   ) => {
     const normalized = {
       enemyKeys: [...new Set(value.enemyKeys)].sort(),
+      enemyOrSpatialKeys: [
+        ...new Set([...value.enemyKeys, ...(value.enemyOrSpatialKeys ?? [])]),
+      ].sort(),
       zeroSpaceKeys: [...new Set(value.zeroSpaceKeys)]
         .filter(key => !value.enemyKeys.includes(key))
         .sort(),
@@ -526,9 +527,13 @@ function propagateBuffTargets(
     // whose identity is proven on every producer path.
     const next = {
       enemyKeys: previous.enemyKeys.filter(key => normalized.enemyKeys.includes(key)),
+      enemyOrSpatialKeys: previous.enemyOrSpatialKeys.filter(key =>
+        normalized.enemyOrSpatialKeys.includes(key),
+      ),
       zeroSpaceKeys: previous.zeroSpaceKeys.filter(key => normalized.zeroSpaceKeys.includes(key)),
     };
     if (
+      next.enemyOrSpatialKeys.length === previous.enemyOrSpatialKeys.length &&
       next.enemyKeys.length === previous.enemyKeys.length &&
       next.zeroSpaceKeys.length === previous.zeroSpaceKeys.length
     )
@@ -732,7 +737,10 @@ function propagateBuffTargets(
                     ? ('enemy' as const)
                     : (action.target.targetSource === 'Context' ||
                           action.target.targetSource === 'Target') &&
-                        staticEnemyTargetGroupKeys.has(action.target.targetGroupKey)
+                        (staticEnemyTargetGroupKeys.has(action.target.targetGroupKey) ||
+                          capturedTargetGroups
+                            .get(id)
+                            ?.enemyOrSpatialKeys.includes(action.target.targetGroupKey) === true)
                       ? ('enemy' as const)
                       : action.target.targetSource === 'Context' &&
                           abilityEntityTargetGroupKeys.has(action.target.targetGroupKey)
@@ -755,6 +763,12 @@ function propagateBuffTargets(
             changed =
               registerCapturedTargetGroups(entry.buffId, {
                 enemyKeys: [...staticEnemyTargetGroupKeys],
+                enemyOrSpatialKeys: [
+                  ...new Set([
+                    ...staticEnemyTargetGroupKeys,
+                    ...(capturedTargetGroups.get(id)?.enemyOrSpatialKeys ?? []),
+                  ]),
+                ],
                 zeroSpaceKeys: [...staticZeroSpaceTargetGroupKeys].filter(
                   key => !staticEnemyTargetGroupKeys.has(key),
                 ),

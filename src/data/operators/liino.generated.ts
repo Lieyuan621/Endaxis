@@ -8,14 +8,40 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const liinoChr_0035_liino_combo_skillActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_2: {
+      findTargets_2: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
-      dealDamage_4: {
+      startTimeDilation_4: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.067 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_5: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -27,9 +53,9 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             features: ['canBreakWeakness'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_4',
       },
-      changeResource_5: {
+      changeResource_7: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -40,9 +66,9 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             targets: { kind: 'source' },
           },
         },
-        next: null,
+        next: 'startTimeDilation_4',
       },
-      heal_6: {
+      heal_8: {
         action: {
           kind: 'heal',
           parameters: {
@@ -53,9 +79,9 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             amount: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
-        next: 'changeResource_5',
+        next: 'changeResource_7',
       },
-      storeSourceAttributeValue_7: {
+      storeSourceAttributeValue_9: {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
@@ -69,9 +95,9 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             targetKey: 'final_heal_value',
           },
         },
-        next: 'heal_6',
+        next: 'heal_8',
       },
-      dealDamage_8: {
+      dealDamage_10: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -84,9 +110,9 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
-        next: 'storeSourceAttributeValue_7',
+        next: 'storeSourceAttributeValue_9',
       },
-      createGlobalBuff_9: {
+      createGlobalBuff_11: {
         action: {
           kind: 'createGlobalBuff',
           parameters: {
@@ -116,14 +142,14 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_10: {
+      checkCondition_12: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
         },
-        next: 'createGlobalBuff_9',
+        next: 'createGlobalBuff_11',
       },
-      finishBuffsById_11: {
+      finishBuffsById_13: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -138,7 +164,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_12: {
+      inheritBuffById_14: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -151,7 +177,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_13: {
+      inheritBuffById_15: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -162,9 +188,9 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             finishWithNextSkillIfNotInherited: true,
           },
         },
-        next: 'inheritBuffById_12',
+        next: 'inheritBuffById_14',
       },
-      inheritBuffById_14: {
+      inheritBuffById_16: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -175,9 +201,9 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             finishWithNextSkillIfNotInherited: true,
           },
         },
-        next: 'inheritBuffById_13',
+        next: 'inheritBuffById_15',
       },
-      inheritBuffById_15: {
+      inheritBuffById_17: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -188,9 +214,9 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             finishWithNextSkillIfNotInherited: true,
           },
         },
-        next: 'inheritBuffById_14',
+        next: 'inheritBuffById_16',
       },
-      triggerCustomAbilityEvent_16: {
+      triggerCustomAbilityEvent_18: {
         action: {
           kind: 'triggerCustomAbilityEvent',
           parameters: {
@@ -202,14 +228,14 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_17: {
+      checkCondition_19: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
         },
-        next: 'triggerCustomAbilityEvent_16',
+        next: 'triggerCustomAbilityEvent_18',
       },
-      startTimeDilation_18: {
+      startTimeDilation_20: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -219,13 +245,19 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            targets: [],
-            abilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            targets: [
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
       },
-      startTimeDilation_19: {
+      startTimeDilation_21: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -235,13 +267,20 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
       },
-      reachSkillOperableBoundary_20: {
+      reachSkillOperableBoundary_22: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -250,7 +289,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_22: {
+      inheritBuffById_24: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -268,7 +307,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_25: {
+      applyBuff_27: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -285,7 +324,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_24: {
+      inheritBuffById_26: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -301,27 +340,27 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_26: {
+      ifElse_28: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_14' },
-          whenTrue: { $sequence: 'inheritBuffById_24' },
-          whenFalse: { $sequence: 'applyBuff_25' },
+          whenTrue: { $sequence: 'inheritBuffById_26' },
+          whenFalse: { $sequence: 'applyBuff_27' },
         },
         next: null,
       },
-      ifElse_27: {
+      ifElse_29: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'inheritBuffById_22' },
+          whenTrue: { $sequence: 'inheritBuffById_24' },
           whenFalse: { $sequence: null },
         },
-        next: 'ifElse_26',
+        next: 'ifElse_28',
       },
-      applyBuff_28: {
+      applyBuff_30: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -339,7 +378,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_31: {
+      applyBuff_33: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -356,7 +395,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_30: {
+      inheritBuffById_32: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -372,17 +411,17 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_32: {
+      ifElse_34: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'inheritBuffById_30' },
-          whenFalse: { $sequence: 'applyBuff_31' },
+          whenTrue: { $sequence: 'inheritBuffById_32' },
+          whenFalse: { $sequence: 'applyBuff_33' },
         },
         next: null,
       },
-      applyBuff_33: {
+      applyBuff_35: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -536,21 +575,21 @@ export const liinoChr_0035_liino_combo_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 9, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_2' } },
-    { startFrame: 33, endFrame: 37, sequence: { $sequence: 'mergeContextTargets_2' } },
-    { startFrame: 9, endFrame: 13, sequence: { $sequence: 'dealDamage_4' } },
-    { startFrame: 33, endFrame: 37, sequence: { $sequence: 'dealDamage_8' } },
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'checkCondition_10' } },
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'finishBuffsById_11' } },
-    { startFrame: 0, endFrame: 78, sequence: { $sequence: 'inheritBuffById_15' } },
-    { startFrame: 67, endFrame: 67, sequence: { $sequence: 'checkCondition_17' } },
-    { startFrame: 0, endFrame: 7, sequence: { $sequence: 'startTimeDilation_18' } },
-    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'startTimeDilation_19' } },
-    { startFrame: 68, endFrame: 109, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
-    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'ifElse_27' } },
-    { startFrame: 0, endFrame: 64, sequence: { $sequence: 'applyBuff_28' } },
-    { startFrame: 0, endFrame: 48, sequence: { $sequence: 'ifElse_32' } },
-    { startFrame: 0, endFrame: 48, sequence: { $sequence: 'applyBuff_33' } },
+    { startFrame: 9, endFrame: 13, sequence: { $sequence: 'findTargets_2' } },
+    { startFrame: 33, endFrame: 37, sequence: { $sequence: 'findTargets_2' } },
+    { startFrame: 9, endFrame: 13, sequence: { $sequence: 'dealDamage_5' } },
+    { startFrame: 33, endFrame: 37, sequence: { $sequence: 'dealDamage_10' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'checkCondition_12' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'finishBuffsById_13' } },
+    { startFrame: 0, endFrame: 78, sequence: { $sequence: 'inheritBuffById_17' } },
+    { startFrame: 67, endFrame: 67, sequence: { $sequence: 'checkCondition_19' } },
+    { startFrame: 0, endFrame: 7, sequence: { $sequence: 'startTimeDilation_20' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'startTimeDilation_21' } },
+    { startFrame: 68, endFrame: 109, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
+    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'ifElse_29' } },
+    { startFrame: 0, endFrame: 64, sequence: { $sequence: 'applyBuff_30' } },
+    { startFrame: 0, endFrame: 48, sequence: { $sequence: 'ifElse_34' } },
+    { startFrame: 0, endFrame: 48, sequence: { $sequence: 'applyBuff_35' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'enemy',
@@ -568,17 +607,40 @@ export const liinoChr_0035_liino_combo_skill: SkillDefinition = {
 export const liinoChr_0035_liino_attack1ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar1', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar1',
+            continuousIntervalSeconds: 0.0333333351,
+          },
         },
         next: null,
       },
-      mergeContextTargets_2: {
+      findTargets_2: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar2',
+          },
         },
         next: null,
       },
@@ -586,13 +648,13 @@ export const liinoChr_0035_liino_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -672,8 +734,8 @@ export const liinoChr_0035_liino_attack1: SkillDefinition = {
   offsetRecordFrame: 3,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 3, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 7, endFrame: 11, sequence: { $sequence: 'mergeContextTargets_2' } },
+    { startFrame: 3, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 7, endFrame: 11, sequence: { $sequence: 'findTargets_2' } },
     { startFrame: 3, endFrame: 6, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 7, endFrame: 11, sequence: { $sequence: 'dealDamage_10' } },
     { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
@@ -688,6 +750,25 @@ export const liinoChr_0035_liino_attack1: SkillDefinition = {
 export const liinoChr_0035_liino_attack2ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
       dealDamage_2: {
         action: {
           kind: 'dealDamage',
@@ -707,7 +788,7 @@ export const liinoChr_0035_liino_attack2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 5,
@@ -751,6 +832,7 @@ export const liinoChr_0035_liino_attack2: SkillDefinition = {
   offsetRecordFrame: 7,
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 7, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 7, endFrame: 19, sequence: { $sequence: 'repeatEachTick_3' } },
     { startFrame: 0, endFrame: 38, sequence: { $sequence: 'overrideBasicAttackMapping_4' } },
     { startFrame: 20, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
@@ -801,10 +883,22 @@ const liinoChr_0035_liino_attack3ActionGraphCallback1 = {
 export const liinoChr_0035_liino_attack3ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar2',
+            continuousIntervalSeconds: 0.0333333351,
+          },
         },
         next: null,
       },
@@ -831,6 +925,7 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_attack3_l_02',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -849,6 +944,7 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_attack3_l_02',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -1127,14 +1223,14 @@ export const liinoChr_0035_liino_attack3: SkillDefinition = {
   offsetRecordFrame: 12,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 19, endFrame: 21, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 19, endFrame: 21, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 12, endFrame: 21, sequence: { $sequence: 'dealDamage_9' } },
     { startFrame: 12, endFrame: 12, sequence: { $sequence: 'launchProjectile_10' } },
     { startFrame: 14, endFrame: 14, sequence: { $sequence: 'launchProjectile_10' } },
@@ -1204,6 +1300,7 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_attack4_l',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -1222,6 +1319,7 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_attack4_r',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -1522,14 +1620,26 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = {
 export const liinoChr_0035_liino_attack5ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar1', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar1',
+            continuousIntervalSeconds: 0.0333333351,
+          },
         },
         next: null,
       },
-      changeResource_2: {
+      changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1544,46 +1654,61 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      ifElse_4: {
+      ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'changeResource_2' },
+          whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_5: {
+      startTimeDilation_6: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyAttacker',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['caster'],
           },
         },
-        next: 'ifElse_4',
+        next: 'ifElse_5',
       },
-      ifElse_6: {
+      startTimeDilation_7: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.15 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: 'startTimeDilation_6',
+      },
+      ifElse_8: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'startTimeDilation_5' },
+          whenTrue: { $sequence: 'startTimeDilation_7' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      once_7: {
+      once_9: {
         action: { kind: 'once', parameters: {}, body: { $sequence: null } },
-        next: 'ifElse_6',
+        next: 'ifElse_8',
       },
-      dealDamage_8: {
+      dealDamage_10: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1596,9 +1721,9 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'once_7',
+        next: 'once_9',
       },
-      applyBuff_11: {
+      applyBuff_13: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1618,7 +1743,7 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_10: {
+      inheritBuffById_12: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -1637,17 +1762,17 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      ifElse_12: {
+      ifElse_14: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'inheritBuffById_10' },
-          whenFalse: { $sequence: 'applyBuff_11' },
+          whenTrue: { $sequence: 'inheritBuffById_12' },
+          whenFalse: { $sequence: 'applyBuff_13' },
         },
         next: null,
       },
-      applyBuff_15: {
+      applyBuff_17: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1665,7 +1790,7 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_14: {
+      inheritBuffById_16: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -1682,17 +1807,17 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      ifElse_16: {
+      ifElse_18: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'inheritBuffById_14' },
-          whenFalse: { $sequence: 'applyBuff_15' },
+          whenTrue: { $sequence: 'inheritBuffById_16' },
+          whenFalse: { $sequence: 'applyBuff_17' },
         },
         next: null,
       },
-      applyBuff_19: {
+      applyBuff_21: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1713,7 +1838,7 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_18: {
+      inheritBuffById_20: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -1733,17 +1858,17 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      ifElse_20: {
+      ifElse_22: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: 'inheritBuffById_18' },
-          whenFalse: { $sequence: 'applyBuff_19' },
+          whenTrue: { $sequence: 'inheritBuffById_20' },
+          whenFalse: { $sequence: 'applyBuff_21' },
         },
         next: null,
       },
-      applyBuff_23: {
+      applyBuff_25: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1761,7 +1886,7 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_22: {
+      inheritBuffById_24: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -1778,24 +1903,24 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      ifElse_24: {
+      ifElse_26: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_9' },
-          whenTrue: { $sequence: 'inheritBuffById_22' },
-          whenFalse: { $sequence: 'applyBuff_23' },
+          whenTrue: { $sequence: 'inheritBuffById_24' },
+          whenFalse: { $sequence: 'applyBuff_25' },
         },
         next: null,
       },
-      overrideBasicAttackMapping_25: {
+      overrideBasicAttackMapping_27: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0035_liino_attack1'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_26: {
+      reachSkillOperableBoundary_28: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0035_liino_attack1'] },
@@ -1807,7 +1932,14 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar1' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_3: {
         type: 'boolean',
@@ -1879,14 +2011,14 @@ export const liinoChr_0035_liino_attack5: SkillDefinition = {
   offsetRecordFrame: 17,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 17, endFrame: 24, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 17, endFrame: 24, sequence: { $sequence: 'dealDamage_8' } },
-    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'ifElse_12' } },
-    { startFrame: 5, endFrame: 23, sequence: { $sequence: 'ifElse_16' } },
-    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'ifElse_20' } },
-    { startFrame: 4, endFrame: 20, sequence: { $sequence: 'ifElse_24' } },
-    { startFrame: 0, endFrame: 49, sequence: { $sequence: 'overrideBasicAttackMapping_25' } },
-    { startFrame: 28, endFrame: 49, sequence: { $sequence: 'reachSkillOperableBoundary_26' } },
+    { startFrame: 17, endFrame: 24, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 17, endFrame: 24, sequence: { $sequence: 'dealDamage_10' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'ifElse_14' } },
+    { startFrame: 5, endFrame: 23, sequence: { $sequence: 'ifElse_18' } },
+    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'ifElse_22' } },
+    { startFrame: 4, endFrame: 20, sequence: { $sequence: 'ifElse_26' } },
+    { startFrame: 0, endFrame: 49, sequence: { $sequence: 'overrideBasicAttackMapping_27' } },
+    { startFrame: 28, endFrame: 49, sequence: { $sequence: 'reachSkillOperableBoundary_28' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -1959,13 +2091,13 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyAttacker',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['caster'],
           },
         },
         next: null,
@@ -1974,9 +2106,26 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.2 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: 'startTimeDilation_5',
+      },
+      startTimeDilation_7: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyAttacker',
             durationSeconds: { kind: 'constant', value: 0.35 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -2019,13 +2168,48 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['caster'],
           },
         },
         next: null,
       },
-      applyBuff_7: {
+      startTimeDilation_8: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.35 },
+            priority: 10,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: 0,
+                  value: 0.75,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 2,
+                  value: 0.75,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+            },
+          },
+        },
+        next: 'startTimeDilation_7',
+      },
+      applyBuff_9: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2038,7 +2222,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_8: {
+      applyBuff_10: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2051,7 +2235,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_9: {
+      reachSkillOperableBoundary_11: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -2064,7 +2248,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_12: {
+      applyBuff_14: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2082,7 +2266,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_11: {
+      inheritBuffById_13: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -2099,7 +2283,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_15: {
+      applyBuff_17: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2117,7 +2301,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_14: {
+      inheritBuffById_16: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -2134,27 +2318,27 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      ifElse_16: {
+      ifElse_18: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'inheritBuffById_14' },
-          whenFalse: { $sequence: 'applyBuff_15' },
+          whenTrue: { $sequence: 'inheritBuffById_16' },
+          whenFalse: { $sequence: 'applyBuff_17' },
         },
         next: null,
       },
-      ifElse_17: {
+      ifElse_19: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'inheritBuffById_11' },
-          whenFalse: { $sequence: 'applyBuff_12' },
+          whenTrue: { $sequence: 'inheritBuffById_13' },
+          whenFalse: { $sequence: 'applyBuff_14' },
         },
-        next: 'ifElse_16',
+        next: 'ifElse_18',
       },
-      applyBuff_18: {
+      applyBuff_20: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2167,7 +2351,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_21: {
+      applyBuff_23: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2188,7 +2372,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_20: {
+      inheritBuffById_22: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -2208,17 +2392,17 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      ifElse_22: {
+      ifElse_24: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'inheritBuffById_20' },
-          whenFalse: { $sequence: 'applyBuff_21' },
+          whenTrue: { $sequence: 'inheritBuffById_22' },
+          whenFalse: { $sequence: 'applyBuff_23' },
         },
         next: null,
       },
-      applyBuff_23: {
+      applyBuff_25: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2286,15 +2470,15 @@ export const liinoChr_0035_liino_power_attack: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 12, endFrame: 24, sequence: { $sequence: 'repeatEachTick_2' } },
     { startFrame: 34, endFrame: 35, sequence: { $sequence: 'gainFinisherSp_4' } },
-    { startFrame: 31, endFrame: 31, sequence: { $sequence: 'startTimeDilation_5' } },
-    { startFrame: 44, endFrame: 60, sequence: { $sequence: 'startTimeDilation_6' } },
-    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'applyBuff_7' } },
-    { startFrame: 0, endFrame: 58, sequence: { $sequence: 'applyBuff_8' } },
-    { startFrame: 58, endFrame: 74, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
-    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'ifElse_17' } },
-    { startFrame: 3, endFrame: 49, sequence: { $sequence: 'applyBuff_18' } },
-    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'ifElse_22' } },
-    { startFrame: 3, endFrame: 49, sequence: { $sequence: 'applyBuff_23' } },
+    { startFrame: 31, endFrame: 31, sequence: { $sequence: 'startTimeDilation_6' } },
+    { startFrame: 44, endFrame: 60, sequence: { $sequence: 'startTimeDilation_8' } },
+    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'applyBuff_9' } },
+    { startFrame: 0, endFrame: 58, sequence: { $sequence: 'applyBuff_10' } },
+    { startFrame: 58, endFrame: 74, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'ifElse_19' } },
+    { startFrame: 3, endFrame: 49, sequence: { $sequence: 'applyBuff_20' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'ifElse_24' } },
+    { startFrame: 3, endFrame: 49, sequence: { $sequence: 'applyBuff_25' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -2305,10 +2489,22 @@ export const liinoChr_0035_liino_power_attack: SkillDefinition = {
 export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.0333333351,
+          },
         },
         next: null,
       },
@@ -2344,7 +2540,7 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -2369,6 +2565,7 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
             schedule: { endFrame: 7, callbacks: [{ event: 'reach', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_plunging_attack',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
           },
@@ -2573,7 +2770,7 @@ export const liinoChr_0035_liino_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 2, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 2, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 2, endFrame: 2, sequence: { $sequence: 'dealDamage_2' } },
     { startFrame: 8, endFrame: 9, sequence: { $sequence: 'repeatEachTick_4' } },
     { startFrame: 11, endFrame: 20, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
@@ -2600,6 +2797,7 @@ const liinoChr_0035_liino_normal_skillActionGraphCallback1 = {
               schedule: { endFrame: 5, callbacks: [{ event: 'block', triggerFrames: [5] }] },
               inheritActionBlackboard: true,
               projectileId: 'projectile_chr_0035_liino_normal_attack_vfx',
+              faction: 'good',
               recycleDelaySeconds: 0.133333340287209,
               entityInitialValues: {},
             },
@@ -2610,12 +2808,22 @@ const liinoChr_0035_liino_normal_skillActionGraphCallback1 = {
                   actionGraph: {
                     main: {
                       nodes: {
-                        mergeContextTargets_1: {
+                        findTargets_1: {
                           action: {
-                            kind: 'mergeContextTargets',
+                            kind: 'findTargets',
                             parameters: {
+                              owner: { kind: 'owner' },
+                              center: { kind: 'inputTarget' },
+                              query: {
+                                kind: 'factionHitBox',
+                                factionTarget: 'anti',
+                                owner: { kind: 'owner' },
+                                checkAlive: true,
+                                containsUnmarkable: false,
+                                replacePartsWithMainBodies: false,
+                              },
                               saveToContextKey: 'tar',
-                              sources: [{ kind: 'fixed', target: 'enemy' }],
+                              continuousIntervalSeconds: 0.0333333351,
                             },
                           },
                           next: null,
@@ -2637,7 +2845,7 @@ const liinoChr_0035_liino_normal_skillActionGraphCallback1 = {
                         forEachContextTarget_3: {
                           action: {
                             kind: 'forEachContextTarget',
-                            parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                            parameters: { targets: { kind: 'context', key: 'tar' } },
                             body: { $sequence: null },
                           },
                           next: 'dealDamage_2',
@@ -2667,11 +2875,7 @@ const liinoChr_0035_liino_normal_skillActionGraphCallback1 = {
                   },
                   blackboard: { atk_scale: 0.1, poise: 2 },
                   scheduledSequences: [
-                    {
-                      startFrame: 0,
-                      endFrame: 4,
-                      sequence: { $sequence: 'mergeContextTargets_1' },
-                    },
+                    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'findTargets_1' } },
                     {
                       startFrame: 0,
                       endFrame: 4,
@@ -2691,6 +2895,7 @@ const liinoChr_0035_liino_normal_skillActionGraphCallback1 = {
               schedule: { endFrame: 5, callbacks: [{ event: 'block', triggerFrames: [5] }] },
               inheritActionBlackboard: true,
               projectileId: 'projectile_chr_0035_liino_normal_attack_vfx',
+              faction: 'good',
               recycleDelaySeconds: 0.133333340287209,
               targets: { kind: 'context', contextKey: 'smart_target' },
               entityInitialValues: {},
@@ -2702,12 +2907,22 @@ const liinoChr_0035_liino_normal_skillActionGraphCallback1 = {
                   actionGraph: {
                     main: {
                       nodes: {
-                        mergeContextTargets_1: {
+                        findTargets_1: {
                           action: {
-                            kind: 'mergeContextTargets',
+                            kind: 'findTargets',
                             parameters: {
+                              owner: { kind: 'owner' },
+                              center: { kind: 'inputTarget' },
+                              query: {
+                                kind: 'factionHitBox',
+                                factionTarget: 'anti',
+                                owner: { kind: 'owner' },
+                                checkAlive: true,
+                                containsUnmarkable: false,
+                                replacePartsWithMainBodies: false,
+                              },
                               saveToContextKey: 'tar',
-                              sources: [{ kind: 'fixed', target: 'enemy' }],
+                              continuousIntervalSeconds: 0.0333333351,
                             },
                           },
                           next: null,
@@ -2729,7 +2944,7 @@ const liinoChr_0035_liino_normal_skillActionGraphCallback1 = {
                         forEachContextTarget_3: {
                           action: {
                             kind: 'forEachContextTarget',
-                            parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                            parameters: { targets: { kind: 'context', key: 'tar' } },
                             body: { $sequence: null },
                           },
                           next: 'dealDamage_2',
@@ -2759,11 +2974,7 @@ const liinoChr_0035_liino_normal_skillActionGraphCallback1 = {
                   },
                   blackboard: { atk_scale: 0.1, poise: 2 },
                   scheduledSequences: [
-                    {
-                      startFrame: 0,
-                      endFrame: 4,
-                      sequence: { $sequence: 'mergeContextTargets_1' },
-                    },
+                    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'findTargets_1' } },
                     {
                       startFrame: 0,
                       endFrame: 4,
@@ -2791,7 +3002,11 @@ const liinoChr_0035_liino_normal_skillActionGraphCallback1 = {
             kind: 'findTargets',
             parameters: {
               owner: { kind: 'source' },
-              query: { kind: 'mainTarget', owner: { kind: 'source' } },
+              query: {
+                kind: 'smartTargetByBuff',
+                owner: { kind: 'source' },
+                buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+              },
               saveToContextKey: 'smart_target',
             },
           },
@@ -2873,6 +3088,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
             schedule: { endFrame: 18, callbacks: [{ event: 'reach', triggerFrames: [18] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_03',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
           },
@@ -2889,6 +3105,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
             schedule: { endFrame: 18, callbacks: [{ event: 'reach', triggerFrames: [18] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_03',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
           },
@@ -2909,6 +3126,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                             },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack',
+                            faction: 'good',
                             recycleDelaySeconds: 0.133333340287209,
                             entityInitialValues: {},
                           },
@@ -2919,12 +3137,22 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                 actionGraph: {
                                   main: {
                                     nodes: {
-                                      mergeContextTargets_1: {
+                                      findTargets_1: {
                                         action: {
-                                          kind: 'mergeContextTargets',
+                                          kind: 'findTargets',
                                           parameters: {
+                                            owner: { kind: 'owner' },
+                                            center: { kind: 'inputTarget' },
+                                            query: {
+                                              kind: 'factionHitBox',
+                                              factionTarget: 'anti',
+                                              owner: { kind: 'owner' },
+                                              checkAlive: true,
+                                              containsUnmarkable: false,
+                                              replacePartsWithMainBodies: false,
+                                            },
                                             saveToContextKey: 'tar',
-                                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                                            continuousIntervalSeconds: 0.0333333351,
                                           },
                                         },
                                         next: null,
@@ -2947,9 +3175,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                       forEachContextTarget_3: {
                                         action: {
                                           kind: 'forEachContextTarget',
-                                          parameters: {
-                                            targets: { kind: 'fixed', target: 'enemy' },
-                                          },
+                                          parameters: { targets: { kind: 'context', key: 'tar' } },
                                           body: { $sequence: null },
                                         },
                                         next: 'dealDamage_2',
@@ -2986,7 +3212,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                   {
                                     startFrame: 0,
                                     endFrame: 4,
-                                    sequence: { $sequence: 'mergeContextTargets_1' },
+                                    sequence: { $sequence: 'findTargets_1' },
                                   },
                                   {
                                     startFrame: 0,
@@ -3010,6 +3236,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                             },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack',
+                            faction: 'good',
                             recycleDelaySeconds: 0.133333340287209,
                             targets: { kind: 'context', contextKey: 'smart_target' },
                             entityInitialValues: {},
@@ -3021,12 +3248,22 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                 actionGraph: {
                                   main: {
                                     nodes: {
-                                      mergeContextTargets_1: {
+                                      findTargets_1: {
                                         action: {
-                                          kind: 'mergeContextTargets',
+                                          kind: 'findTargets',
                                           parameters: {
+                                            owner: { kind: 'owner' },
+                                            center: { kind: 'inputTarget' },
+                                            query: {
+                                              kind: 'factionHitBox',
+                                              factionTarget: 'anti',
+                                              owner: { kind: 'owner' },
+                                              checkAlive: true,
+                                              containsUnmarkable: false,
+                                              replacePartsWithMainBodies: false,
+                                            },
                                             saveToContextKey: 'tar',
-                                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                                            continuousIntervalSeconds: 0.0333333351,
                                           },
                                         },
                                         next: null,
@@ -3049,9 +3286,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                       forEachContextTarget_3: {
                                         action: {
                                           kind: 'forEachContextTarget',
-                                          parameters: {
-                                            targets: { kind: 'fixed', target: 'enemy' },
-                                          },
+                                          parameters: { targets: { kind: 'context', key: 'tar' } },
                                           body: { $sequence: null },
                                         },
                                         next: 'dealDamage_2',
@@ -3088,7 +3323,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                   {
                                     startFrame: 0,
                                     endFrame: 4,
-                                    sequence: { $sequence: 'mergeContextTargets_1' },
+                                    sequence: { $sequence: 'findTargets_1' },
                                   },
                                   {
                                     startFrame: 0,
@@ -3117,7 +3352,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                           kind: 'findTargets',
                           parameters: {
                             owner: { kind: 'source' },
-                            query: { kind: 'mainTarget', owner: { kind: 'source' } },
+                            query: {
+                              kind: 'smartTargetByBuff',
+                              owner: { kind: 'source' },
+                              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+                            },
                             saveToContextKey: 'smart_target',
                           },
                         },
@@ -3166,6 +3405,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
             schedule: { endFrame: 14, callbacks: [{ event: 'reach', triggerFrames: [14] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_02',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
           },
@@ -3186,6 +3426,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                             },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx_04',
+                            faction: 'good',
                             recycleDelaySeconds: 0.133333340287209,
                             entityInitialValues: {},
                           },
@@ -3196,12 +3437,22 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                 actionGraph: {
                                   main: {
                                     nodes: {
-                                      mergeContextTargets_1: {
+                                      findTargets_1: {
                                         action: {
-                                          kind: 'mergeContextTargets',
+                                          kind: 'findTargets',
                                           parameters: {
+                                            owner: { kind: 'owner' },
+                                            center: { kind: 'inputTarget' },
+                                            query: {
+                                              kind: 'factionHitBox',
+                                              factionTarget: 'anti',
+                                              owner: { kind: 'owner' },
+                                              checkAlive: true,
+                                              containsUnmarkable: false,
+                                              replacePartsWithMainBodies: false,
+                                            },
                                             saveToContextKey: 'tar',
-                                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                                            continuousIntervalSeconds: 0.0333333351,
                                           },
                                         },
                                         next: null,
@@ -3223,9 +3474,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                       forEachContextTarget_3: {
                                         action: {
                                           kind: 'forEachContextTarget',
-                                          parameters: {
-                                            targets: { kind: 'fixed', target: 'enemy' },
-                                          },
+                                          parameters: { targets: { kind: 'context', key: 'tar' } },
                                           body: { $sequence: null },
                                         },
                                         next: 'dealDamage_2',
@@ -3262,7 +3511,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                   {
                                     startFrame: 0,
                                     endFrame: 4,
-                                    sequence: { $sequence: 'mergeContextTargets_1' },
+                                    sequence: { $sequence: 'findTargets_1' },
                                   },
                                   {
                                     startFrame: 0,
@@ -3286,6 +3535,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                             },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx_04',
+                            faction: 'good',
                             recycleDelaySeconds: 0.133333340287209,
                             targets: { kind: 'context', contextKey: 'smart_target' },
                             entityInitialValues: {},
@@ -3297,12 +3547,22 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                 actionGraph: {
                                   main: {
                                     nodes: {
-                                      mergeContextTargets_1: {
+                                      findTargets_1: {
                                         action: {
-                                          kind: 'mergeContextTargets',
+                                          kind: 'findTargets',
                                           parameters: {
+                                            owner: { kind: 'owner' },
+                                            center: { kind: 'inputTarget' },
+                                            query: {
+                                              kind: 'factionHitBox',
+                                              factionTarget: 'anti',
+                                              owner: { kind: 'owner' },
+                                              checkAlive: true,
+                                              containsUnmarkable: false,
+                                              replacePartsWithMainBodies: false,
+                                            },
                                             saveToContextKey: 'tar',
-                                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                                            continuousIntervalSeconds: 0.0333333351,
                                           },
                                         },
                                         next: null,
@@ -3324,9 +3584,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                       forEachContextTarget_3: {
                                         action: {
                                           kind: 'forEachContextTarget',
-                                          parameters: {
-                                            targets: { kind: 'fixed', target: 'enemy' },
-                                          },
+                                          parameters: { targets: { kind: 'context', key: 'tar' } },
                                           body: { $sequence: null },
                                         },
                                         next: 'dealDamage_2',
@@ -3363,7 +3621,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                   {
                                     startFrame: 0,
                                     endFrame: 4,
-                                    sequence: { $sequence: 'mergeContextTargets_1' },
+                                    sequence: { $sequence: 'findTargets_1' },
                                   },
                                   {
                                     startFrame: 0,
@@ -3392,7 +3650,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                           kind: 'findTargets',
                           parameters: {
                             owner: { kind: 'source' },
-                            query: { kind: 'mainTarget', owner: { kind: 'source' } },
+                            query: {
+                              kind: 'smartTargetByBuff',
+                              owner: { kind: 'source' },
+                              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+                            },
                             saveToContextKey: 'smart_target',
                           },
                         },
@@ -3441,6 +3703,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
             schedule: { endFrame: 14, callbacks: [{ event: 'reach', triggerFrames: [14] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_02',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
           },
@@ -3461,6 +3724,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                             },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx_03',
+                            faction: 'good',
                             recycleDelaySeconds: 0.133333340287209,
                             entityInitialValues: {},
                           },
@@ -3471,12 +3735,22 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                 actionGraph: {
                                   main: {
                                     nodes: {
-                                      mergeContextTargets_1: {
+                                      findTargets_1: {
                                         action: {
-                                          kind: 'mergeContextTargets',
+                                          kind: 'findTargets',
                                           parameters: {
+                                            owner: { kind: 'owner' },
+                                            center: { kind: 'inputTarget' },
+                                            query: {
+                                              kind: 'factionHitBox',
+                                              factionTarget: 'anti',
+                                              owner: { kind: 'owner' },
+                                              checkAlive: true,
+                                              containsUnmarkable: false,
+                                              replacePartsWithMainBodies: false,
+                                            },
                                             saveToContextKey: 'tar',
-                                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                                            continuousIntervalSeconds: 0.0333333351,
                                           },
                                         },
                                         next: null,
@@ -3498,9 +3772,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                       forEachContextTarget_3: {
                                         action: {
                                           kind: 'forEachContextTarget',
-                                          parameters: {
-                                            targets: { kind: 'fixed', target: 'enemy' },
-                                          },
+                                          parameters: { targets: { kind: 'context', key: 'tar' } },
                                           body: { $sequence: null },
                                         },
                                         next: 'dealDamage_2',
@@ -3537,7 +3809,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                   {
                                     startFrame: 0,
                                     endFrame: 4,
-                                    sequence: { $sequence: 'mergeContextTargets_1' },
+                                    sequence: { $sequence: 'findTargets_1' },
                                   },
                                   {
                                     startFrame: 0,
@@ -3561,6 +3833,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                             },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx_03',
+                            faction: 'good',
                             recycleDelaySeconds: 0.133333340287209,
                             targets: { kind: 'context', contextKey: 'smart_target' },
                             entityInitialValues: {},
@@ -3572,12 +3845,22 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                 actionGraph: {
                                   main: {
                                     nodes: {
-                                      mergeContextTargets_1: {
+                                      findTargets_1: {
                                         action: {
-                                          kind: 'mergeContextTargets',
+                                          kind: 'findTargets',
                                           parameters: {
+                                            owner: { kind: 'owner' },
+                                            center: { kind: 'inputTarget' },
+                                            query: {
+                                              kind: 'factionHitBox',
+                                              factionTarget: 'anti',
+                                              owner: { kind: 'owner' },
+                                              checkAlive: true,
+                                              containsUnmarkable: false,
+                                              replacePartsWithMainBodies: false,
+                                            },
                                             saveToContextKey: 'tar',
-                                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                                            continuousIntervalSeconds: 0.0333333351,
                                           },
                                         },
                                         next: null,
@@ -3599,9 +3882,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                       forEachContextTarget_3: {
                                         action: {
                                           kind: 'forEachContextTarget',
-                                          parameters: {
-                                            targets: { kind: 'fixed', target: 'enemy' },
-                                          },
+                                          parameters: { targets: { kind: 'context', key: 'tar' } },
                                           body: { $sequence: null },
                                         },
                                         next: 'dealDamage_2',
@@ -3638,7 +3919,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                   {
                                     startFrame: 0,
                                     endFrame: 4,
-                                    sequence: { $sequence: 'mergeContextTargets_1' },
+                                    sequence: { $sequence: 'findTargets_1' },
                                   },
                                   {
                                     startFrame: 0,
@@ -3667,7 +3948,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                           kind: 'findTargets',
                           parameters: {
                             owner: { kind: 'source' },
-                            query: { kind: 'mainTarget', owner: { kind: 'source' } },
+                            query: {
+                              kind: 'smartTargetByBuff',
+                              owner: { kind: 'source' },
+                              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+                            },
                             saveToContextKey: 'smart_target',
                           },
                         },
@@ -3716,6 +4001,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
             schedule: { endFrame: 15, callbacks: [{ event: 'reach', triggerFrames: [15] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_02',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
           },
@@ -3732,6 +4018,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
             schedule: { endFrame: 14, callbacks: [{ event: 'reach', triggerFrames: [14] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_02',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
           },
@@ -3752,6 +4039,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                             },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx',
+                            faction: 'good',
                             recycleDelaySeconds: 0.133333340287209,
                             entityInitialValues: {},
                           },
@@ -3762,12 +4050,22 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                 actionGraph: {
                                   main: {
                                     nodes: {
-                                      mergeContextTargets_1: {
+                                      findTargets_1: {
                                         action: {
-                                          kind: 'mergeContextTargets',
+                                          kind: 'findTargets',
                                           parameters: {
+                                            owner: { kind: 'owner' },
+                                            center: { kind: 'inputTarget' },
+                                            query: {
+                                              kind: 'factionHitBox',
+                                              factionTarget: 'anti',
+                                              owner: { kind: 'owner' },
+                                              checkAlive: true,
+                                              containsUnmarkable: false,
+                                              replacePartsWithMainBodies: false,
+                                            },
                                             saveToContextKey: 'tar',
-                                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                                            continuousIntervalSeconds: 0.0333333351,
                                           },
                                         },
                                         next: null,
@@ -3789,9 +4087,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                       forEachContextTarget_3: {
                                         action: {
                                           kind: 'forEachContextTarget',
-                                          parameters: {
-                                            targets: { kind: 'fixed', target: 'enemy' },
-                                          },
+                                          parameters: { targets: { kind: 'context', key: 'tar' } },
                                           body: { $sequence: null },
                                         },
                                         next: 'dealDamage_2',
@@ -3828,7 +4124,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                   {
                                     startFrame: 0,
                                     endFrame: 4,
-                                    sequence: { $sequence: 'mergeContextTargets_1' },
+                                    sequence: { $sequence: 'findTargets_1' },
                                   },
                                   {
                                     startFrame: 0,
@@ -3852,6 +4148,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                             },
                             inheritActionBlackboard: true,
                             projectileId: 'projectile_chr_0035_liino_normal_attack_vfx',
+                            faction: 'good',
                             recycleDelaySeconds: 0.133333340287209,
                             targets: { kind: 'context', contextKey: 'smart_target' },
                             entityInitialValues: {},
@@ -3863,12 +4160,22 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                 actionGraph: {
                                   main: {
                                     nodes: {
-                                      mergeContextTargets_1: {
+                                      findTargets_1: {
                                         action: {
-                                          kind: 'mergeContextTargets',
+                                          kind: 'findTargets',
                                           parameters: {
+                                            owner: { kind: 'owner' },
+                                            center: { kind: 'inputTarget' },
+                                            query: {
+                                              kind: 'factionHitBox',
+                                              factionTarget: 'anti',
+                                              owner: { kind: 'owner' },
+                                              checkAlive: true,
+                                              containsUnmarkable: false,
+                                              replacePartsWithMainBodies: false,
+                                            },
                                             saveToContextKey: 'tar',
-                                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                                            continuousIntervalSeconds: 0.0333333351,
                                           },
                                         },
                                         next: null,
@@ -3890,9 +4197,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                       forEachContextTarget_3: {
                                         action: {
                                           kind: 'forEachContextTarget',
-                                          parameters: {
-                                            targets: { kind: 'fixed', target: 'enemy' },
-                                          },
+                                          parameters: { targets: { kind: 'context', key: 'tar' } },
                                           body: { $sequence: null },
                                         },
                                         next: 'dealDamage_2',
@@ -3929,7 +4234,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                   {
                                     startFrame: 0,
                                     endFrame: 4,
-                                    sequence: { $sequence: 'mergeContextTargets_1' },
+                                    sequence: { $sequence: 'findTargets_1' },
                                   },
                                   {
                                     startFrame: 0,
@@ -3958,7 +4263,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                           kind: 'findTargets',
                           parameters: {
                             owner: { kind: 'source' },
-                            query: { kind: 'mainTarget', owner: { kind: 'source' } },
+                            query: {
+                              kind: 'smartTargetByBuff',
+                              owner: { kind: 'source' },
+                              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+                            },
                             saveToContextKey: 'smart_target',
                           },
                         },
@@ -4168,7 +4477,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         action: {
           kind: 'aura',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: {
+              kind: 'exclude',
+              targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [], scope: 'global' },
+              excludeTargets: { kind: 'owner' },
+            },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             buffs: [{ buffId: 'buff_chr_0035_liino_normalskill_spelllnfliction_check' }],
@@ -5196,7 +5509,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
           },
         },
         next: null,
@@ -5297,6 +5610,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_ultskill_soundwave_02',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -5308,7 +5622,22 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      applyBuff_1: {
+                      startTimeDilation_2: {
+                        action: {
+                          kind: 'startTimeDilation',
+                          parameters: {
+                            scope: 'hitStop',
+                            attacker: { kind: 'source' },
+                            targets: { kind: 'inputTarget' },
+                            affectType: 'OnlyTarget',
+                            durationSeconds: { kind: 'constant', value: 0.15 },
+                            priority: 10,
+                            curve: { kind: 'named', key: 'char_normal_attack' },
+                          },
+                        },
+                        next: null,
+                      },
+                      applyBuff_3: {
                         action: {
                           kind: 'applyBuff',
                           parameters: {
@@ -5320,25 +5649,35 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_2: {
+                      checkCondition_4: {
                         action: {
                           kind: 'checkCondition',
                           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                         },
-                        next: 'applyBuff_1',
+                        next: 'applyBuff_3',
                       },
-                      dealDamage_3: {
+                      ifElse_5: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+                          whenTrue: { $sequence: 'startTimeDilation_2' },
+                          whenFalse: { $sequence: 'startTimeDilation_2' },
+                        },
+                        next: 'checkCondition_4',
+                      },
+                      dealDamage_6: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
                             attacker: 'actionSource',
                             target: { kind: 'inputTarget' },
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['ultimateSkill'],
                           },
                         },
-                        next: 'checkCondition_2',
+                        next: 'ifElse_5',
                       },
                     },
                     dataNodes: {
@@ -5354,6 +5693,10 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
                         },
                       },
                       data_2: {
+                        type: 'boolean',
+                        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+                      },
+                      data_3: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale_4' },
                       },
@@ -5372,7 +5715,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
                 },
                 blackboard: { atk_scale_4: 0.1 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_3' } },
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_6' } },
                 ],
               },
             },
@@ -6277,14 +6620,55 @@ const liinoBuff4ActionGraph = {
         },
         next: 'copyContextTargets_4',
       },
-      mergeContextTargets_7: {
+      findTargets_6: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByBuff',
+              owner: { kind: 'owner' },
+              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_hit'],
+            },
+            saveToContextKey: 'smart_target',
+          },
         },
         next: null,
       },
-      dealDamage_9: {
+      findTargets_7: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_9: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.067 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_10: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -6296,9 +6680,9 @@ const liinoBuff4ActionGraph = {
             features: ['canBreakWeakness'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_9',
       },
-      changeResource_10: {
+      changeResource_12: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -6309,9 +6693,9 @@ const liinoBuff4ActionGraph = {
             targets: { kind: 'source' },
           },
         },
-        next: null,
+        next: 'startTimeDilation_9',
       },
-      heal_11: {
+      heal_13: {
         action: {
           kind: 'heal',
           parameters: {
@@ -6322,9 +6706,9 @@ const liinoBuff4ActionGraph = {
             amount: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'changeResource_10',
+        next: 'changeResource_12',
       },
-      storeSourceAttributeValue_12: {
+      storeSourceAttributeValue_14: {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
@@ -6338,9 +6722,9 @@ const liinoBuff4ActionGraph = {
             targetKey: 'final_heal_value',
           },
         },
-        next: 'heal_11',
+        next: 'heal_13',
       },
-      dealDamage_13: {
+      dealDamage_15: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -6353,9 +6737,9 @@ const liinoBuff4ActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_8' },
           },
         },
-        next: 'storeSourceAttributeValue_12',
+        next: 'storeSourceAttributeValue_14',
       },
-      createGlobalBuff_14: {
+      createGlobalBuff_16: {
         action: {
           kind: 'createGlobalBuff',
           parameters: {
@@ -6385,14 +6769,14 @@ const liinoBuff4ActionGraph = {
         },
         next: null,
       },
-      checkCondition_15: {
+      checkCondition_17: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
         },
-        next: 'createGlobalBuff_14',
+        next: 'createGlobalBuff_16',
       },
-      readBuffRemainingDuration_16: {
+      readBuffRemainingDuration_18: {
         action: {
           kind: 'readBuffRemainingDuration',
           parameters: {
@@ -6403,14 +6787,14 @@ const liinoBuff4ActionGraph = {
         },
         next: null,
       },
-      checkCondition_18: {
+      checkCondition_20: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
         },
-        next: 'readBuffRemainingDuration_16',
+        next: 'readBuffRemainingDuration_18',
       },
-      startTimeDilation_19: {
+      startTimeDilation_21: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -6420,13 +6804,19 @@ const liinoBuff4ActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            targets: [],
-            abilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            targets: [
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
       },
-      startTimeDilation_20: {
+      startTimeDilation_22: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -6436,8 +6826,15 @@ const liinoBuff4ActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -6518,14 +6915,15 @@ const liinoBuff4: SkillBuffDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 68, sequence: { $sequence: 'finishBuffsById_3' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findCharacterTeamTargets_5' } },
-    { startFrame: 9, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_7' } },
-    { startFrame: 33, endFrame: 37, sequence: { $sequence: 'mergeContextTargets_7' } },
-    { startFrame: 9, endFrame: 13, sequence: { $sequence: 'dealDamage_9' } },
-    { startFrame: 33, endFrame: 37, sequence: { $sequence: 'dealDamage_13' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_15' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_18' } },
-    { startFrame: 0, endFrame: 7, sequence: { $sequence: 'startTimeDilation_19' } },
-    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'startTimeDilation_20' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 9, endFrame: 13, sequence: { $sequence: 'findTargets_7' } },
+    { startFrame: 33, endFrame: 37, sequence: { $sequence: 'findTargets_7' } },
+    { startFrame: 9, endFrame: 13, sequence: { $sequence: 'dealDamage_10' } },
+    { startFrame: 33, endFrame: 37, sequence: { $sequence: 'dealDamage_15' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_17' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_20' } },
+    { startFrame: 0, endFrame: 7, sequence: { $sequence: 'startTimeDilation_21' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'startTimeDilation_22' } },
   ],
   actionGraph: liinoBuff4ActionGraph,
 };
@@ -6606,10 +7004,23 @@ const liinoBuff8ActionGraphCallback1 = {
   actionGraph: {
     main: {
       nodes: {
-        mergeContextTargets_1: {
+        findTargets_1: {
           action: {
-            kind: 'mergeContextTargets',
-            parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+            kind: 'findTargets',
+            parameters: {
+              owner: { kind: 'owner' },
+              center: { kind: 'inputTarget' },
+              query: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              saveToContextKey: 'tar',
+              continuousIntervalSeconds: 0.0333333351,
+            },
           },
           next: null,
         },
@@ -6644,7 +7055,7 @@ const liinoBuff8ActionGraphCallback1 = {
   },
   blackboard: { atk_scale_2: 0 },
   scheduledSequences: [
-    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 0, endFrame: 4, sequence: { $sequence: 'dealDamage_2' } },
   ],
 } as const;
@@ -6652,12 +7063,17 @@ const liinoBuff8ActionGraphCallback1 = {
 const liinoBuff8ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByBuff',
+              owner: { kind: 'owner' },
+              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+            },
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -6669,6 +7085,7 @@ const liinoBuff8ActionGraph = {
             schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_l',
+            faction: 'good',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -6677,12 +7094,17 @@ const liinoBuff8ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_3: {
+      findTargets_3: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByBuff',
+              owner: { kind: 'owner' },
+              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+            },
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'launchProjectile_2',
@@ -6694,6 +7116,7 @@ const liinoBuff8ActionGraph = {
             schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_l_vfx02',
+            faction: 'good',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -6702,12 +7125,17 @@ const liinoBuff8ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_5: {
+      findTargets_5: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByBuff',
+              owner: { kind: 'owner' },
+              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+            },
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'launchProjectile_4',
@@ -6719,6 +7147,7 @@ const liinoBuff8ActionGraph = {
             schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_r',
+            faction: 'good',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -6727,12 +7156,17 @@ const liinoBuff8ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_7: {
+      findTargets_7: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByBuff',
+              owner: { kind: 'owner' },
+              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+            },
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'launchProjectile_6',
@@ -6744,6 +7178,7 @@ const liinoBuff8ActionGraph = {
             schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_r_vfx02',
+            faction: 'good',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -6752,12 +7187,17 @@ const liinoBuff8ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_9: {
+      findTargets_9: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByBuff',
+              owner: { kind: 'owner' },
+              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+            },
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'launchProjectile_8',
@@ -6769,6 +7209,7 @@ const liinoBuff8ActionGraph = {
             schedule: { endFrame: 6, callbacks: [{ event: 'block', triggerFrames: [6] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_l_vfx01',
+            faction: 'good',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -6777,12 +7218,17 @@ const liinoBuff8ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_11: {
+      findTargets_11: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByBuff',
+              owner: { kind: 'owner' },
+              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+            },
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'launchProjectile_10',
@@ -6794,6 +7240,7 @@ const liinoBuff8ActionGraph = {
             schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_r_vfx01',
+            faction: 'good',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -6802,12 +7249,17 @@ const liinoBuff8ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_13: {
+      findTargets_13: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByBuff',
+              owner: { kind: 'owner' },
+              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+            },
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'launchProjectile_12',
@@ -6827,13 +7279,13 @@ const liinoBuff8: SkillBuffDefinition = {
   blackboard: { atk_scale_2: 0, vfx_music_duration: 20 },
   attributeModifiers: [],
   scheduledSequences: [
-    { startFrame: 1, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 24, endFrame: 24, sequence: { $sequence: 'mergeContextTargets_3' } },
-    { startFrame: 32, endFrame: 32, sequence: { $sequence: 'mergeContextTargets_5' } },
-    { startFrame: 25, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_7' } },
-    { startFrame: 33, endFrame: 33, sequence: { $sequence: 'mergeContextTargets_9' } },
-    { startFrame: 28, endFrame: 28, sequence: { $sequence: 'mergeContextTargets_11' } },
-    { startFrame: 29, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_13' } },
+    { startFrame: 1, endFrame: 15, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 24, endFrame: 24, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 32, endFrame: 32, sequence: { $sequence: 'findTargets_5' } },
+    { startFrame: 25, endFrame: 25, sequence: { $sequence: 'findTargets_7' } },
+    { startFrame: 33, endFrame: 33, sequence: { $sequence: 'findTargets_9' } },
+    { startFrame: 28, endFrame: 28, sequence: { $sequence: 'findTargets_11' } },
+    { startFrame: 29, endFrame: 29, sequence: { $sequence: 'findTargets_13' } },
   ],
   actionGraph: liinoBuff8ActionGraph,
 };
@@ -6842,10 +7294,23 @@ const liinoBuff9ActionGraphCallback1 = {
   actionGraph: {
     main: {
       nodes: {
-        mergeContextTargets_1: {
+        findTargets_1: {
           action: {
-            kind: 'mergeContextTargets',
-            parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+            kind: 'findTargets',
+            parameters: {
+              owner: { kind: 'owner' },
+              center: { kind: 'inputTarget' },
+              query: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              saveToContextKey: 'tar',
+              continuousIntervalSeconds: 0.0333333351,
+            },
           },
           next: null,
         },
@@ -6880,7 +7345,7 @@ const liinoBuff9ActionGraphCallback1 = {
   },
   blackboard: { atk_scale_2: 0 },
   scheduledSequences: [
-    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 0, endFrame: 4, sequence: { $sequence: 'dealDamage_2' } },
   ],
 } as const;
@@ -6888,12 +7353,17 @@ const liinoBuff9ActionGraphCallback1 = {
 const liinoBuff9ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByBuff',
+              owner: { kind: 'owner' },
+              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+            },
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -6905,6 +7375,7 @@ const liinoBuff9ActionGraph = {
             schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_l',
+            faction: 'good',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -6913,12 +7384,17 @@ const liinoBuff9ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_3: {
+      findTargets_3: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByBuff',
+              owner: { kind: 'owner' },
+              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+            },
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'launchProjectile_2',
@@ -6930,6 +7406,7 @@ const liinoBuff9ActionGraph = {
             schedule: { endFrame: 7, callbacks: [{ event: 'block', triggerFrames: [7] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_r',
+            faction: 'good',
             recycleDelaySeconds: 0.133333340287209,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -6938,12 +7415,17 @@ const liinoBuff9ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_7: {
+      findTargets_7: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByBuff',
+              owner: { kind: 'owner' },
+              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+            },
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'launchProjectile_6',
@@ -6963,13 +7445,13 @@ const liinoBuff9: SkillBuffDefinition = {
   blackboard: { atk_scale_2: 0, vfx_music_duration: 20 },
   attributeModifiers: [],
   scheduledSequences: [
-    { startFrame: 1, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 24, endFrame: 24, sequence: { $sequence: 'mergeContextTargets_3' } },
-    { startFrame: 32, endFrame: 32, sequence: { $sequence: 'mergeContextTargets_3' } },
-    { startFrame: 25, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_7' } },
-    { startFrame: 33, endFrame: 33, sequence: { $sequence: 'mergeContextTargets_7' } },
-    { startFrame: 28, endFrame: 28, sequence: { $sequence: 'mergeContextTargets_3' } },
-    { startFrame: 29, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_7' } },
+    { startFrame: 1, endFrame: 15, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 24, endFrame: 24, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 32, endFrame: 32, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 25, endFrame: 25, sequence: { $sequence: 'findTargets_7' } },
+    { startFrame: 33, endFrame: 33, sequence: { $sequence: 'findTargets_7' } },
+    { startFrame: 28, endFrame: 28, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 29, endFrame: 29, sequence: { $sequence: 'findTargets_7' } },
   ],
   actionGraph: liinoBuff9ActionGraph,
 };
@@ -7132,6 +7614,7 @@ const liinoBuff12ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_soundwave',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: { target: 'allOperators' },
@@ -7157,6 +7640,7 @@ const liinoBuff12ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_normal_attack_soundwave_chrdung',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -7329,18 +7813,23 @@ const liinoBuff13ActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'source' },
             skillId: 'chr_0035_liino_normal_skill_combo',
-            target: 'enemy',
+            target: { kind: 'context', key: 'target' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      mergeContextTargets_9: {
+      findTargets_9: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'target', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'source' },
+            query: { kind: 'smartTargetByBuff', owner: { kind: 'source' }, buffIds: [] },
+            saveToContextKey: 'target',
+          },
         },
         next: 'castSkillDuringAction_8',
       },
@@ -7349,7 +7838,7 @@ const liinoBuff13ActionGraph = {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
-        next: 'mergeContextTargets_9',
+        next: 'findTargets_9',
       },
     },
     dataNodes: {
@@ -7573,12 +8062,13 @@ const liinoBuff15ActionGraph = {
         },
         next: 'checkCondition_12',
       },
-      mergeContextTargets_14: {
+      findTargets_14: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'smartTargetByBuff', owner: { kind: 'owner' }, buffIds: [] },
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'checkCondition_13',
@@ -7645,7 +8135,7 @@ const liinoBuff15: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { atk_scale_2: 0, hit_check: 1, hit_duration: 0.6, hit_tigger: 10, music_loop: 0 },
   attributeModifiers: [],
-  lifecycleSequences: { trigger: [{ $sequence: 'mergeContextTargets_14' }] },
+  lifecycleSequences: { trigger: [{ $sequence: 'findTargets_14' }] },
   actionGraph: liinoBuff15ActionGraph,
 };
 
@@ -8262,31 +8752,56 @@ const liinoBuff33ActionGraphCallback1 = {
   actionGraph: {
     main: {
       nodes: {
-        dealDamage_6: {
+        startTimeDilation_4: {
+          action: {
+            kind: 'startTimeDilation',
+            parameters: {
+              scope: 'hitStop',
+              attacker: { kind: 'source' },
+              targets: { kind: 'inputTarget' },
+              affectType: 'OnlyTarget',
+              durationSeconds: { kind: 'constant', value: 0.15 },
+              priority: 10,
+              curve: { kind: 'named', key: 'char_normal_attack' },
+            },
+          },
+          next: null,
+        },
+        ifElse_8: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_1' },
+            whenTrue: { $sequence: 'startTimeDilation_4' },
+            whenFalse: { $sequence: 'startTimeDilation_4' },
+          },
+          next: null,
+        },
+        dealDamage_9: {
           action: {
             kind: 'dealDamage',
             parameters: {
               attacker: 'actionSource',
               target: { kind: 'inputTarget' },
               damageType: 'electric',
-              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+              attackScale: { kind: 'valueNode', nodeId: 'data_2' },
               tags: ['ultimateSkill'],
             },
           },
-          next: null,
+          next: 'ifElse_8',
         },
-        anyCondition_7: {
+        anyCondition_10: {
           action: {
             kind: 'anyCondition',
             parameters: {},
             conditions: [
-              { kind: 'conditionNode', nodeId: 'data_2' },
               { kind: 'conditionNode', nodeId: 'data_3' },
+              { kind: 'conditionNode', nodeId: 'data_4' },
             ],
           },
-          next: 'dealDamage_6',
+          next: 'dealDamage_9',
         },
-        heal_4: {
+        heal_6: {
           action: {
             kind: 'heal',
             parameters: {
@@ -8294,12 +8809,12 @@ const liinoBuff33ActionGraphCallback1 = {
               healer: { kind: 'source' },
               alwaysNext: true,
               tags: ['Skill/Character/Common/Heal/UltimateSkillHeal'],
-              amount: { kind: 'valueNode', nodeId: 'data_4' },
+              amount: { kind: 'valueNode', nodeId: 'data_5' },
             },
           },
           next: null,
         },
-        storeSourceAttributeValue_5: {
+        storeSourceAttributeValue_7: {
           action: {
             kind: 'storeSourceAttributeValue',
             parameters: {
@@ -8308,14 +8823,14 @@ const liinoBuff33ActionGraphCallback1 = {
               stage: 'finalNonConverted',
               useFloor: false,
               divisor: { kind: 'constant', value: 1 },
-              multiplier: { kind: 'valueNode', nodeId: 'data_5' },
-              base: { kind: 'valueNode', nodeId: 'data_6' },
+              multiplier: { kind: 'valueNode', nodeId: 'data_6' },
+              base: { kind: 'valueNode', nodeId: 'data_7' },
               targetKey: 'final_heal_value',
             },
           },
-          next: 'heal_4',
+          next: 'heal_6',
         },
-        applyBuff_8: {
+        applyBuff_11: {
           action: {
             kind: 'applyBuff',
             parameters: {
@@ -8327,27 +8842,31 @@ const liinoBuff33ActionGraphCallback1 = {
           },
           next: null,
         },
-        checkCondition_9: {
+        checkCondition_12: {
           action: {
             kind: 'checkCondition',
-            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
           },
-          next: 'applyBuff_8',
+          next: 'applyBuff_11',
         },
-        ifElse_10: {
+        ifElse_13: {
           action: {
             kind: 'ifElse',
             parameters: { alwaysNext: true },
-            condition: { kind: 'conditionNode', nodeId: 'data_8' },
-            whenTrue: { $sequence: 'storeSourceAttributeValue_5' },
-            whenFalse: { $sequence: 'anyCondition_7' },
+            condition: { kind: 'conditionNode', nodeId: 'data_9' },
+            whenTrue: { $sequence: 'storeSourceAttributeValue_7' },
+            whenFalse: { $sequence: 'anyCondition_10' },
           },
-          next: 'checkCondition_9',
+          next: 'checkCondition_12',
         },
       },
       dataNodes: {
-        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_3' } },
-        data_2: {
+        data_1: {
+          type: 'boolean',
+          expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        },
+        data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_3' } },
+        data_3: {
           type: 'boolean',
           expression: {
             kind: 'targetObjectTypeMatch',
@@ -8355,19 +8874,20 @@ const liinoBuff33ActionGraphCallback1 = {
             objectTypes: ['enemy'],
           },
         },
-        data_3: {
+        data_4: {
           type: 'boolean',
           expression: {
             kind: 'entityTagMatch',
+            checkPartTags: true,
             target: { kind: 'inputTarget' },
             tagQueryType: 'hasAny',
             tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoul'],
           },
         },
-        data_4: { type: 'number', expression: { kind: 'blackboard', key: 'final_heal_value' } },
-        data_5: { type: 'number', expression: { kind: 'blackboard', key: 'ultheal_value' } },
-        data_6: { type: 'number', expression: { kind: 'blackboard', key: 'ultheal_rate' } },
-        data_7: {
+        data_5: { type: 'number', expression: { kind: 'blackboard', key: 'final_heal_value' } },
+        data_6: { type: 'number', expression: { kind: 'blackboard', key: 'ultheal_value' } },
+        data_7: { type: 'number', expression: { kind: 'blackboard', key: 'ultheal_rate' } },
+        data_8: {
           type: 'boolean',
           expression: {
             kind: 'buffIdStackCompare',
@@ -8378,7 +8898,7 @@ const liinoBuff33ActionGraphCallback1 = {
             buffIds: ['buff_chr_0035_liino_chrdung_armorbreak'],
           },
         },
-        data_8: {
+        data_9: {
           type: 'boolean',
           expression: {
             kind: 'targetObjectTypeMatch',
@@ -8400,7 +8920,7 @@ const liinoBuff33ActionGraphCallback1 = {
     cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
   },
   blackboard: { atk_scale_3: 0.1, final_heal_value: 0, ultheal_rate: 0, ultheal_value: 0 },
-  scheduledSequences: [{ startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_10' } }],
+  scheduledSequences: [{ startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_13' } }],
 } as const;
 
 const liinoBuff33ActionGraph = {
@@ -8416,6 +8936,7 @@ const liinoBuff33ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_ultskill_soundwave_heal',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: { target: 'allOperators' },
@@ -8434,6 +8955,7 @@ const liinoBuff33ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0035_liino_ultskill_soundwave',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -9237,6 +9759,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -9247,12 +9770,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -9293,11 +9825,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -9316,6 +9844,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -9326,12 +9855,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -9372,11 +9910,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -9395,6 +9929,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -9406,12 +9941,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -9452,11 +9996,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -9475,6 +10015,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -9486,12 +10027,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -9532,11 +10082,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -9565,6 +10111,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -9575,12 +10122,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -9621,11 +10177,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -9644,6 +10196,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -9654,12 +10207,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -9700,11 +10262,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -9723,6 +10281,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -9734,12 +10293,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -9780,11 +10348,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -9803,6 +10367,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -9814,12 +10379,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -9860,11 +10434,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -9893,6 +10463,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -9903,12 +10474,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -9949,11 +10529,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -9972,6 +10548,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -9982,12 +10559,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10028,11 +10614,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10051,6 +10633,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -10062,12 +10645,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10108,11 +10700,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10131,6 +10719,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -10142,12 +10731,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10188,11 +10786,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10221,6 +10815,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -10231,12 +10826,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10277,11 +10881,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10300,6 +10900,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -10310,12 +10911,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10356,11 +10966,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10379,6 +10985,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -10390,12 +10997,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10436,11 +11052,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10459,6 +11071,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -10470,12 +11083,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10516,11 +11138,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10549,6 +11167,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -10559,12 +11178,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10605,11 +11233,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10628,6 +11252,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -10638,12 +11263,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10684,11 +11318,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10707,6 +11337,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -10718,12 +11349,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10764,11 +11404,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10787,6 +11423,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -10798,12 +11435,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10844,11 +11490,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10877,6 +11519,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -10887,12 +11530,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -10933,11 +11585,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -10956,6 +11604,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -10966,12 +11615,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11012,11 +11670,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -11035,6 +11689,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -11046,12 +11701,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11092,11 +11756,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -11115,6 +11775,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -11126,12 +11787,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11172,11 +11842,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -11205,6 +11871,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -11215,12 +11882,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11261,11 +11937,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -11284,6 +11956,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -11294,12 +11967,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11340,11 +12022,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -11363,6 +12041,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -11374,12 +12053,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11420,11 +12108,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -11443,6 +12127,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_03',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -11454,12 +12139,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11500,11 +12194,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -11530,6 +12220,7 @@ export const liino: OperatorDefinition = {
                     schedule: { endFrame: 7, callbacks: [{ event: 'reach', triggerFrames: [7] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_bomb',
+                    faction: 'good',
                     recycleDelaySeconds: 0.133333340287209,
                     entityInitialValues: {},
                   },
@@ -11540,12 +12231,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11554,13 +12254,13 @@ export const liino: OperatorDefinition = {
                                 action: {
                                   kind: 'startTimeDilation',
                                   parameters: {
-                                    scope: 'entity',
+                                    scope: 'hitStop',
+                                    attacker: { kind: 'source' },
+                                    targets: { kind: 'inputTarget' },
+                                    affectType: 'Both',
                                     durationSeconds: { kind: 'constant', value: 0.25 },
-                                    slot: 'TimeDilation/Layer/Entity/HitStop',
                                     priority: 10,
                                     curve: { kind: 'named', key: 'char_hard_stop' },
-                                    finishByAction: false,
-                                    targets: ['enemy', 'caster'],
                                   },
                                 },
                                 next: null,
@@ -11586,7 +12286,8 @@ export const liino: OperatorDefinition = {
                                 action: {
                                   kind: 'forceSpellStatus',
                                   parameters: {
-                                    target: 'enemy',
+                                    source: { kind: 'source' },
+                                    target: { kind: 'context', key: 'tar' },
                                     element: 'electric',
                                     consumedElement: 'electric',
                                     consumedLayers: { kind: 'constant', value: 0 },
@@ -11625,11 +12326,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale_2: 0.1, count: 1, poise: 10 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 4,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 4, sequence: { $sequence: 'findTargets_1' } },
                           {
                             startFrame: 0,
                             endFrame: 4,
@@ -11649,6 +12346,7 @@ export const liino: OperatorDefinition = {
                     schedule: { endFrame: 8, callbacks: [{ event: 'reach', triggerFrames: [8] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_bomb',
+                    faction: 'good',
                     recycleDelaySeconds: 0.133333340287209,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -11660,12 +12358,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11674,13 +12381,13 @@ export const liino: OperatorDefinition = {
                                 action: {
                                   kind: 'startTimeDilation',
                                   parameters: {
-                                    scope: 'entity',
+                                    scope: 'hitStop',
+                                    attacker: { kind: 'source' },
+                                    targets: { kind: 'inputTarget' },
+                                    affectType: 'Both',
                                     durationSeconds: { kind: 'constant', value: 0.25 },
-                                    slot: 'TimeDilation/Layer/Entity/HitStop',
                                     priority: 10,
                                     curve: { kind: 'named', key: 'char_hard_stop' },
-                                    finishByAction: false,
-                                    targets: ['enemy', 'caster'],
                                   },
                                 },
                                 next: null,
@@ -11706,7 +12413,8 @@ export const liino: OperatorDefinition = {
                                 action: {
                                   kind: 'forceSpellStatus',
                                   parameters: {
-                                    target: 'enemy',
+                                    source: { kind: 'source' },
+                                    target: { kind: 'context', key: 'tar' },
                                     element: 'electric',
                                     consumedElement: 'electric',
                                     consumedLayers: { kind: 'constant', value: 0 },
@@ -11745,11 +12453,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale_2: 0.1, count: 1, poise: 10 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 4,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 4, sequence: { $sequence: 'findTargets_1' } },
                           {
                             startFrame: 0,
                             endFrame: 4,
@@ -11782,6 +12486,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_01',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -11792,12 +12497,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11838,11 +12552,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -11861,6 +12571,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_01',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -11871,12 +12582,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11917,11 +12637,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -11940,6 +12656,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_01',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -11951,12 +12668,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -11997,11 +12723,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -12020,6 +12742,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_01',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -12031,12 +12754,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -12077,11 +12809,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -12107,6 +12835,7 @@ export const liino: OperatorDefinition = {
                     schedule: { endFrame: 8, callbacks: [{ event: 'reach', triggerFrames: [8] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -12117,12 +12846,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -12163,11 +12901,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -12183,6 +12917,7 @@ export const liino: OperatorDefinition = {
                     schedule: { endFrame: 8, callbacks: [{ event: 'reach', triggerFrames: [8] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -12193,12 +12928,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -12239,11 +12983,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -12262,6 +13002,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -12273,12 +13014,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -12319,11 +13069,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -12342,6 +13088,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -12353,12 +13100,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -12399,11 +13155,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -12429,6 +13181,7 @@ export const liino: OperatorDefinition = {
                     schedule: { endFrame: 8, callbacks: [{ event: 'reach', triggerFrames: [8] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -12439,12 +13192,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -12485,11 +13247,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -12505,6 +13263,7 @@ export const liino: OperatorDefinition = {
                     schedule: { endFrame: 8, callbacks: [{ event: 'reach', triggerFrames: [8] }] },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     entityInitialValues: {},
                   },
@@ -12515,12 +13274,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -12561,11 +13329,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -12584,6 +13348,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_r_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -12595,12 +13360,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -12641,11 +13415,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },
@@ -12664,6 +13434,7 @@ export const liino: OperatorDefinition = {
                     },
                     inheritActionBlackboard: true,
                     projectileId: 'projectile_chr_0035_liino_ultskill_l_02',
+                    faction: 'good',
                     recycleDelaySeconds: 0.100000001490116,
                     targets: { kind: 'context', contextKey: 'bullet_target' },
                     entityInitialValues: {},
@@ -12675,12 +13446,21 @@ export const liino: OperatorDefinition = {
                         actionGraph: {
                           main: {
                             nodes: {
-                              mergeContextTargets_1: {
+                              findTargets_1: {
                                 action: {
-                                  kind: 'mergeContextTargets',
+                                  kind: 'findTargets',
                                   parameters: {
+                                    owner: { kind: 'owner' },
+                                    query: {
+                                      kind: 'factionHitBox',
+                                      factionTarget: 'anti',
+                                      owner: { kind: 'owner' },
+                                      checkAlive: true,
+                                      containsUnmarkable: false,
+                                      replacePartsWithMainBodies: false,
+                                    },
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                                    continuousIntervalSeconds: 0.0333333351,
                                   },
                                 },
                                 next: null,
@@ -12721,11 +13501,7 @@ export const liino: OperatorDefinition = {
                         },
                         blackboard: { atk_scale: 0.1 },
                         scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 3,
-                            sequence: { $sequence: 'mergeContextTargets_1' },
-                          },
+                          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
                           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
                         ],
                       },

@@ -145,7 +145,10 @@ describe('SkillResourceOperationExecutor', () => {
     expect(executor.execute(fromOther, context)).toBe(false);
     const sourceContext = {
       ...context,
-      actionInputTarget: { kind: 'operator' as const, operatorId: 'other' },
+      actionInputTargets: [
+        { kind: 'spatialPoint' as const, pointId: 1 },
+        { kind: 'operator' as const, operatorId: 'other' },
+      ],
     };
     executor.execute(fromOther, sourceContext);
     expect(resources.sp).toBe(30);
@@ -321,6 +324,7 @@ describe('SkillResourceOperationExecutor', () => {
       receipt,
       getNonReturnedSpCost: () => 0,
       readFinisherSpRecovery: () => 80,
+      queryTargets: () => [{ kind: 'enemy', enemyId: 'enemy' }],
       onSpGained: event => gains.push(event),
       delegate: { execute: () => false, evaluate: () => false },
     });
@@ -389,18 +393,21 @@ describe('SkillResourceOperationExecutor', () => {
     ]);
     expect(queried.execute(step, context)).toBe(false);
     targetContext.set('sources', [
+      { kind: 'spatialPoint', pointId: 1 },
       { kind: 'operator', operatorId: 'actual-source' },
       { kind: 'operator', operatorId: 'ignored-source' },
     ]);
     expect(queried.execute(step, context)).toBe(false);
-    for (const first of [
-      { kind: 'spatialPoint' as const, pointId: 2 },
-      { kind: 'operator' as const, operatorId: 'recipient' },
-    ]) {
-      targetContext.set('targets', [first, { kind: 'enemy' }]);
-      expect(queried.execute(step, context)).toBe(false);
-    }
-    targetContext.set('targets', [{ kind: 'enemy' }, { kind: 'enemy' }]);
+    targetContext.set('targets', [
+      { kind: 'operator', operatorId: 'recipient' },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
+    expect(queried.execute(step, context)).toBe(false);
+    targetContext.set('targets', [
+      { kind: 'spatialPoint', pointId: 2 },
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
     expect(() => queried.execute(step, context)).toThrow('factor');
     context.blackboard.assign({ factor: 0.5 });
     expect(queried.execute(step, context)).toBe(true);

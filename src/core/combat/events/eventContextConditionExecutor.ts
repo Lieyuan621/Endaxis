@@ -5,6 +5,8 @@ import type {
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import {
+  singleTargetList,
+  firstRuntimeEntityTarget,
   runtimeTargetEntityId,
   runtimeTargetFromEntityId,
 } from '../../game-data/logicalAbilityEntity';
@@ -149,7 +151,7 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
           tagQueryType: condition.tagQueryType,
           tags: condition.tags,
         },
-        { ...context!, actionInputTarget: part },
+        { ...context!, actionInputTargets: singleTargetList(part) },
       );
       if (matched && condition.saveToContextKey !== undefined) {
         if (context?.targetContext === undefined)
@@ -285,7 +287,7 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       }
       if (!context || !this.queryTargets)
         throw new Error('current skill query requires action targets');
-      const target = this.queryTargets(condition.target, context)[0];
+      const target = firstRuntimeEntityTarget(this.queryTargets(condition.target, context));
       const id = target === undefined ? undefined : runtimeTargetEntityId(target);
       if (id === undefined) return false;
       const skillType = this.resolveCurrentSkillType(id, context);

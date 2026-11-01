@@ -141,11 +141,7 @@ function graphExtractor(
         throw new Error(
           `${location} node ${id}: direction angle still affects combat and cannot be published (${node.action.parameters.outputKey})`,
         );
-      if (
-        node.action.kind === 'saveTargetDistance' ||
-        node.action.kind === 'evaluateCurve' ||
-        node.action.kind === 'storeRandomFloat'
-      )
+      if (node.action.kind === 'evaluateCurve' || node.action.kind === 'storeRandomFloat')
         throw new Error(
           `${location} node ${id}: ${node.action.kind} still affects combat and cannot be published`,
         );

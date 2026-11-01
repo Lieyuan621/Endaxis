@@ -313,6 +313,44 @@ describe('validateSkillDefinition', () => {
     );
   });
 
+  it('实体时缓允许空目标列表，但不允许遗漏目标字段', () => {
+    const parameters: Record<string, unknown> = {
+      scope: 'entity',
+      durationSeconds: { kind: 'constant', value: 1 },
+      slot: 'Test/TimeSlot1',
+      priority: 2,
+      curve: { kind: 'named', key: 'ComboSkill' },
+      finishByAction: false,
+      targets: [],
+    };
+    const definition = skillWithSteps([{ kind: 'startTimeDilation', parameters }]);
+    expect(validateSkillDefinition(definition)).toEqual([]);
+    delete parameters.targets;
+    expect(validateSkillDefinition(definition)).toContainEqual(
+      expect.objectContaining({ message: 'expected array' }),
+    );
+  });
+
+  it('命中停顿单独校验攻击者、受击查询和影响范围', () => {
+    const parameters = {
+      scope: 'hitStop',
+      durationSeconds: { kind: 'constant', value: 1 },
+      priority: 2,
+      curve: { kind: 'named', key: 'ComboSkill' },
+      attacker: { kind: 'source' },
+      targets: { kind: 'inputTarget' },
+      affectType: 'Both',
+    };
+    const definition = skillWithSteps([{ kind: 'startTimeDilation', parameters }]);
+    expect(validateSkillDefinition(definition)).toEqual([]);
+    parameters.affectType = 'unknown';
+    expect(validateSkillDefinition(definition)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: `${nodeActionPath('step-0')}.parameters.affectType` }),
+      ]),
+    );
+  });
+
   it('validates named and inline time-dilation curves', () => {
     const step: Record<string, unknown> = {
       kind: 'startTimeDilation',

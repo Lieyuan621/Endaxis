@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { TrackDocument } from '../../../core/project/schema';
@@ -989,8 +990,8 @@ it('洛茜在敌人破防但未失衡时仍执行战技后续并施加流血', a
   async function simulate(withNoGuard: boolean) {
     const scenario = createEmptyScenario('rossi-no-guard', '破防不是失衡');
     // 失衡槽设得足够大，先用一次战技建立原生破防 Buff，再测第二次战技。
-    scenario.enemy.editable.stagger.maximum = 100000;
-    scenario.enemy.editable.hp = 10000000;
+    firstScenarioEnemy(scenario).enemy.editable.stagger.maximum = 100000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 10000000;
     scenario.tracks[0] = track(
       'rossi',
       withNoGuard

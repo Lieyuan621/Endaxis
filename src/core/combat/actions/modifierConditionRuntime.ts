@@ -24,7 +24,7 @@ export function createModifierConditionRuntime<Input>(
     inheritCombatOperationContext(runtime.context, {
       event: undefined,
       eventSkillCastInfo: undefined,
-      actionInputTarget: undefined,
+      actionInputTargets: [],
       currentTarget: undefined,
       modifierContext: undefined,
     });
@@ -33,13 +33,13 @@ export function createModifierConditionRuntime<Input>(
     runtimeState: action.runtimeState,
     execute(input) {
       const previous = {
-        actionInputTarget: context.actionInputTarget,
+        actionInputTargets: context.actionInputTargets,
         currentTarget: context.currentTarget,
         modifierContext: context.modifierContext,
       };
       const binding = bind(input);
       try {
-        context.actionInputTarget = binding.target;
+        context.actionInputTargets = binding.target == null ? [] : [binding.target];
         context.currentTarget = binding.target;
         context.modifierContext = binding.context;
         return action.tryExecute({}, true);

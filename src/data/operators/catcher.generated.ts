@@ -8,6 +8,24 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const catcherChr_0020_meurs_attack1ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_4: {
         action: {
           kind: 'changeResource',
@@ -28,13 +46,13 @@ export const catcherChr_0020_meurs_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_4',
@@ -69,7 +87,7 @@ export const catcherChr_0020_meurs_attack1ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -121,6 +139,8 @@ export const catcherChr_0020_meurs_attack1: SkillDefinition = {
   offsetRecordFrame: 12,
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 12, endFrame: 14, sequence: { $sequence: 'repeatEachTick_8' } },
     { startFrame: 0, endFrame: 39, sequence: { $sequence: 'overrideBasicAttackMapping_9' } },
     { startFrame: 21, endFrame: 39, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
@@ -134,6 +154,24 @@ export const catcherChr_0020_meurs_attack1: SkillDefinition = {
 export const catcherChr_0020_meurs_attack2ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_5: {
         action: {
           kind: 'changeResource',
@@ -153,13 +191,13 @@ export const catcherChr_0020_meurs_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.25 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_5',
@@ -203,7 +241,7 @@ export const catcherChr_0020_meurs_attack2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -266,6 +304,9 @@ export const catcherChr_0020_meurs_attack2: SkillDefinition = {
   offsetRecordFrame: 10,
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 10, endFrame: 13, sequence: { $sequence: 'repeatEachTick_11' } },
     { startFrame: 0, endFrame: 35, sequence: { $sequence: 'overrideBasicAttackMapping_12' } },
     { startFrame: 21, endFrame: 35, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
@@ -279,14 +320,25 @@ export const catcherChr_0020_meurs_attack2: SkillDefinition = {
 export const catcherChr_0020_meurs_attack3ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
-      changeResource_2: {
+      changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -302,42 +354,42 @@ export const catcherChr_0020_meurs_attack3ActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_3: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'changeResource_2',
-      },
-      ifElse_5: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
+        next: 'changeResource_3',
       },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'ifElse_5' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_7: {
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'ifElse_6' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_8: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -348,16 +400,16 @@ export const catcherChr_0020_meurs_attack3ActionGraph = {
             tags: ['normalAttack'],
           },
         },
-        next: 'ifElse_6',
+        next: 'ifElse_7',
       },
-      overrideBasicAttackMapping_8: {
+      overrideBasicAttackMapping_9: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0020_meurs_attack4'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_9: {
+      reachSkillOperableBoundary_10: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0020_meurs_attack4'] },
@@ -369,7 +421,14 @@ export const catcherChr_0020_meurs_attack3ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_3: {
         type: 'boolean',
@@ -395,10 +454,10 @@ export const catcherChr_0020_meurs_attack3: SkillDefinition = {
   offsetRecordFrame: 16,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 0, endFrame: 44, sequence: { $sequence: 'overrideBasicAttackMapping_8' } },
-    { startFrame: 28, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'dealDamage_8' } },
+    { startFrame: 0, endFrame: 44, sequence: { $sequence: 'overrideBasicAttackMapping_9' } },
+    { startFrame: 28, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -409,6 +468,24 @@ export const catcherChr_0020_meurs_attack3: SkillDefinition = {
 export const catcherChr_0020_meurs_attack4ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -432,13 +509,13 @@ export const catcherChr_0020_meurs_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'once_5',
@@ -474,7 +551,7 @@ export const catcherChr_0020_meurs_attack4ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -528,6 +605,8 @@ export const catcherChr_0020_meurs_attack4: SkillDefinition = {
   offsetRecordFrame: 23,
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 23, endFrame: 25, sequence: { $sequence: 'repeatEachTick_9' } },
     { startFrame: 0, endFrame: 60, sequence: { $sequence: 'overrideBasicAttackMapping_10' } },
     { startFrame: 45, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
@@ -541,7 +620,42 @@ export const catcherChr_0020_meurs_attack4: SkillDefinition = {
 export const catcherChr_0020_meurs_power_attackActionGraph = {
   main: {
     nodes: {
-      gainFinisherSp_1: {
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'auro_power_attack' },
+          },
+        },
+        next: null,
+      },
+      ifElse_4: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'startTimeDilation_2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_5: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'ifElse_4' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      gainFinisherSp_6: {
         action: {
           kind: 'gainFinisherSp',
           parameters: {
@@ -550,74 +664,74 @@ export const catcherChr_0020_meurs_power_attackActionGraph = {
             factor: { kind: 'constant', value: 1 },
           },
         },
-        next: null,
+        next: 'ifElse_5',
       },
-      dealDamage_2: {
+      dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.4,
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'gainFinisherSp_1',
+        next: 'gainFinisherSp_6',
       },
-      startTimeDilation_4: {
+      startTimeDilation_9: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyAttacker',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['caster'],
           },
         },
         next: null,
       },
-      ifElse_6: {
+      ifElse_11: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'startTimeDilation_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          whenTrue: { $sequence: 'startTimeDilation_9' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      ifElse_7: {
+      ifElse_12: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'ifElse_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
+          whenTrue: { $sequence: 'ifElse_11' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_8: {
+      dealDamage_13: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.6,
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'ifElse_7',
+        next: 'ifElse_12',
       },
-      applyBuff_9: {
+      applyBuff_14: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -630,14 +744,14 @@ export const catcherChr_0020_meurs_power_attackActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_10: {
+      reachSkillOperableBoundary_15: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0020_meurs_normal_skill', 'chr_0020_meurs_combo_skill'] },
         },
         next: null,
       },
-      applyBuff_11: {
+      applyBuff_16: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -652,8 +766,7 @@ export const catcherChr_0020_meurs_power_attackActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_2: {
+      data_1: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -664,7 +777,23 @@ export const catcherChr_0020_meurs_power_attackActionGraph = {
           value: 1,
         },
       },
-      data_3: {
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'inputTarget' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_5: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
@@ -685,11 +814,11 @@ export const catcherChr_0020_meurs_power_attack: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'dealDamage_2' } },
-    { startFrame: 35, endFrame: 37, sequence: { $sequence: 'dealDamage_8' } },
-    { startFrame: 0, endFrame: 35, sequence: { $sequence: 'applyBuff_9' } },
-    { startFrame: 35, endFrame: 75, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
-    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'applyBuff_11' } },
+    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 35, endFrame: 37, sequence: { $sequence: 'dealDamage_13' } },
+    { startFrame: 0, endFrame: 35, sequence: { $sequence: 'applyBuff_14' } },
+    { startFrame: 35, endFrame: 75, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
+    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'applyBuff_16' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -700,10 +829,21 @@ export const catcherChr_0020_meurs_power_attack: SkillDefinition = {
 export const catcherChr_0020_meurs_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -759,7 +899,7 @@ export const catcherChr_0020_meurs_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 2, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 2, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 2, sequence: { $sequence: 'dealDamage_3' } },
   ],
   defaultTarget: 'enemy',
@@ -913,6 +1053,43 @@ export const catcherChr_0020_meurs_normal_skillActionGraph = {
         },
         next: null,
       },
+      findTargets_40: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
+      findTargets_41: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
       changeResource_42: {
         action: {
           kind: 'changeResource',
@@ -946,13 +1123,13 @@ export const catcherChr_0020_meurs_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1004,7 +1181,7 @@ export const catcherChr_0020_meurs_normal_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1056,7 +1233,7 @@ export const catcherChr_0020_meurs_normal_skillActionGraph = {
               ],
             },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'context', key: 'tar' }, { kind: 'owner' }],
           },
         },
         next: null,
@@ -1241,6 +1418,8 @@ export const catcherChr_0020_meurs_normal_skill: SkillDefinition = {
     { startFrame: 60, endFrame: 63, sequence: { $sequence: 'ifElse_opt5' } },
     { startFrame: 0, endFrame: 83, sequence: { $sequence: 'aura_31' } },
     { startFrame: 0, endFrame: 60, sequence: { $sequence: 'listenForCombatEvents_39' } },
+    { startFrame: 60, endFrame: 61, sequence: { $sequence: 'findTargets_40' } },
+    { startFrame: 83, endFrame: 85, sequence: { $sequence: 'findTargets_41' } },
     { startFrame: 83, endFrame: 85, sequence: { $sequence: 'repeatEachTick_51' } },
     { startFrame: 60, endFrame: 63, sequence: { $sequence: 'startTimeDilation_52' } },
     { startFrame: 95, endFrame: 129, sequence: { $sequence: 'reachSkillOperableBoundary_53' } },
@@ -1255,10 +1434,22 @@ export const catcherChr_0020_meurs_normal_skill: SkillDefinition = {
 export const catcherChr_0020_meurs_combo_skillActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.0333333351,
+          },
         },
         next: null,
       },
@@ -1279,13 +1470,13 @@ export const catcherChr_0020_meurs_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_2',
@@ -1308,13 +1499,13 @@ export const catcherChr_0020_meurs_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'meurs_comboskill2' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1437,8 +1628,15 @@ export const catcherChr_0020_meurs_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -1509,7 +1707,7 @@ export const catcherChr_0020_meurs_combo_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 17, endFrame: 18, sequence: { $sequence: 'dealDamage_4' } },
     { startFrame: 20, endFrame: 21, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 20, endFrame: 21, sequence: { $sequence: 'checkCondition_17' } },
@@ -1542,10 +1740,21 @@ export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_2: {
+      findTargets_2: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1569,22 +1778,22 @@ export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_6: {
+      startTimeDilation_7: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      dealDamage_7: {
+      dealDamage_8: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1598,19 +1807,19 @@ export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
-        next: 'startTimeDilation_6',
+        next: 'startTimeDilation_7',
       },
-      ifElse_8: {
+      ifElse_9: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'dealDamage_7' },
+          whenTrue: { $sequence: 'dealDamage_8' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_10: {
+      dealDamage_12: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1623,34 +1832,34 @@ export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
-        next: 'startTimeDilation_6',
+        next: 'startTimeDilation_7',
       },
-      ifElse_11: {
+      ifElse_13: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'dealDamage_10' },
+          whenTrue: { $sequence: 'dealDamage_12' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_12: {
+      startTimeDilation_15: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      dealDamage_13: {
+      dealDamage_16: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1663,9 +1872,9 @@ export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
-        next: 'startTimeDilation_12',
+        next: 'startTimeDilation_15',
       },
-      applyPhysicalInfliction_14: {
+      applyPhysicalInfliction_17: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
@@ -1679,19 +1888,19 @@ export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
             returnWhen: 'always',
           },
         },
-        next: 'dealDamage_13',
+        next: 'dealDamage_16',
       },
-      ifElse_15: {
+      ifElse_18: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_9' },
-          whenTrue: { $sequence: 'applyPhysicalInfliction_14' },
+          whenTrue: { $sequence: 'applyPhysicalInfliction_17' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      spawnAbilityEntity_16: {
+      spawnAbilityEntity_19: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
@@ -1705,15 +1914,15 @@ export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_17: {
+      checkCondition_20: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
         },
-        next: 'spawnAbilityEntity_16',
+        next: 'spawnAbilityEntity_19',
       },
-      hideUi_18: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_19: {
+      hideUi_21: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_22: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -1724,7 +1933,7 @@ export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_20: {
+      applyBuff_23: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1737,7 +1946,7 @@ export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_21: {
+      reachSkillOperableBoundary_24: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0020_meurs_combo_skill', 'chr_0020_meurs_normal_skill'] },
@@ -1750,19 +1959,40 @@ export const catcherChr_0020_meurs_ultimate_skillActionGraph = {
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_3: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
       data_5: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise1' } },
       data_8: { type: 'number', expression: { kind: 'blackboard', key: 'knockdown_time' } },
       data_9: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_10: { type: 'number', expression: { kind: 'blackboard', key: 'talent_1', fallback: 0 } },
       data_11: {
@@ -1802,18 +2032,18 @@ export const catcherChr_0020_meurs_ultimate_skill: SkillDefinition = {
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'mergeContextTargets_2' } },
-    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'mergeContextTargets_2' } },
-    { startFrame: 85, endFrame: 88, sequence: { $sequence: 'mergeContextTargets_2' } },
+    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'findTargets_2' } },
+    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'findTargets_2' } },
+    { startFrame: 85, endFrame: 88, sequence: { $sequence: 'findTargets_2' } },
     { startFrame: 46, endFrame: 49, sequence: { $sequence: 'applyBuff_5' } },
-    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'ifElse_8' } },
-    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'ifElse_11' } },
-    { startFrame: 85, endFrame: 88, sequence: { $sequence: 'ifElse_15' } },
-    { startFrame: 102, endFrame: 105, sequence: { $sequence: 'checkCondition_17' } },
-    { startFrame: 0, endFrame: 38, sequence: { $sequence: 'hideUi_18' } },
-    { startFrame: 0, endFrame: 38, sequence: { $sequence: 'startUltimateTimeDilation_19' } },
-    { startFrame: 0, endFrame: 120, sequence: { $sequence: 'applyBuff_20' } },
-    { startFrame: 103, endFrame: 120, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
+    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'ifElse_9' } },
+    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'ifElse_13' } },
+    { startFrame: 85, endFrame: 88, sequence: { $sequence: 'ifElse_18' } },
+    { startFrame: 102, endFrame: 105, sequence: { $sequence: 'checkCondition_20' } },
+    { startFrame: 0, endFrame: 38, sequence: { $sequence: 'hideUi_21' } },
+    { startFrame: 0, endFrame: 38, sequence: { $sequence: 'startUltimateTimeDilation_22' } },
+    { startFrame: 0, endFrame: 120, sequence: { $sequence: 'applyBuff_23' } },
+    { startFrame: 103, endFrame: 120, sequence: { $sequence: 'reachSkillOperableBoundary_24' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 450,
@@ -2039,10 +2269,21 @@ const catcherBuff2ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_2: {
+      findTargets_2: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: 'dealDamage_1',
       },
@@ -2051,7 +2292,7 @@ const catcherBuff2ActionGraph = {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
-        next: 'mergeContextTargets_2',
+        next: 'findTargets_2',
       },
     },
     dataNodes: {
@@ -2523,12 +2764,20 @@ export const catcher: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              mergeContextTargets_1: {
+              findTargets_1: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: null,
@@ -2623,9 +2872,9 @@ export const catcher: OperatorDefinition = {
         },
         blackboard: { atk_scale_shockwave: 0.42, talent_1: 0 },
         scheduledSequences: [
-          { startFrame: 3, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 18, endFrame: 20, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 33, endFrame: 35, sequence: { $sequence: 'mergeContextTargets_1' } },
+          { startFrame: 3, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 18, endFrame: 20, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 33, endFrame: 35, sequence: { $sequence: 'findTargets_1' } },
           { startFrame: 3, endFrame: 5, sequence: { $sequence: 'dealDamage_4' } },
           { startFrame: 18, endFrame: 20, sequence: { $sequence: 'dealDamage_5' } },
           { startFrame: 33, endFrame: 35, sequence: { $sequence: 'dealDamage_6' } },

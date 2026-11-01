@@ -1309,7 +1309,9 @@ describe('attachBuffLifecycleSequences', () => {
     const operations: CombatOperationExecutor = {
       execute(step, context): boolean {
         if (step.kind === 'findOwnerSpawnedAbilityEntities') {
-          expect(context!.targetContext!.get('inherited')).toEqual([{ kind: 'enemy' }]);
+          expect(context!.targetContext!.get('inherited')).toEqual([
+            { kind: 'enemy', enemyId: 'enemy' },
+          ]);
           context!.targetContext!.set('seals', [
             { kind: 'abilityEntity', instanceId: 11 },
             { kind: 'abilityEntity', instanceId: 12 },
@@ -1360,12 +1362,12 @@ describe('attachBuffLifecycleSequences', () => {
     const container = new CombatBuffContainer<never>('enemy', new CombatAttributeSet<never>());
 
     const inheritedTargetGroups = {
-      groups: new Map([['inherited', [{ kind: 'enemy' as const }]]]),
+      groups: new Map([['inherited', [{ kind: 'enemy' as const, enemyId: 'enemy' }]]]),
     };
     const buff = container.add(definition, 'operator', { inheritedTargetGroups });
     inheritedTargetGroups.groups.clear();
     expect(buff!.runtimeState.actionHost!.targets.groups.get('inherited')).toEqual([
-      { kind: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
     ]);
     expect(reached).toEqual([11, 12]);
   });
@@ -1618,7 +1620,7 @@ describe('attachBuffLifecycleSequences', () => {
         return dispatcher.registerAction(event, priority, context =>
           handle(context, {
             inputTarget: { kind: 'operator', operatorId: context.payload.sourceId! },
-            triggerTarget: { kind: 'enemy' },
+            triggerTarget: { kind: 'enemy', enemyId: 'enemy' },
           }),
         );
       },
@@ -2244,7 +2246,7 @@ describe('attachBuffLifecycleSequences', () => {
           reached.push([
             step.parameters.eventName,
             context?.actionSourceId,
-            context?.actionInputTarget,
+            context?.actionInputTargets?.[0],
           ]);
           return true;
         },
@@ -2322,7 +2324,7 @@ describe('attachBuffLifecycleSequences', () => {
             context?.actionSourceId,
             buff.enhanceCount,
             context?.buffSourceId,
-            context?.actionInputTarget,
+            context?.actionInputTargets?.[0],
           ]);
           return true;
         },
@@ -2371,6 +2373,14 @@ describe('attachBuffLifecycleSequences', () => {
     '点燃结束只由实际结束入口通知：%s',
     finishMode => {
       const reached: string[] = [];
+      const originalTransfer = {
+        currentMainBodyId: 'enemy',
+        mainBodyToPart: new Map([['enemy', 'old-part']]),
+      };
+      const igniteTransfer = {
+        currentMainBodyId: 'enemy',
+        mainBodyToPart: new Map([['enemy', 'new-part']]),
+      };
       const cast = {
         skillCastId: 52,
         originSkillId: 'ignite-skill',
@@ -2380,9 +2390,13 @@ describe('attachBuffLifecycleSequences', () => {
       const terminal: CombatOperationExecutor = {
         execute: (_step, context) => {
           reached.push(context?.buffSourceId ?? '<missing>');
+          expect(context?.partTransferInfo).toEqual(igniteTransfer);
           expect(context?.skillCastInfo).toEqual(cast);
           expect(context?.actionSourceId).toBe('original-source');
-          expect(context?.actionInputTarget).toEqual({ kind: 'operator', operatorId: 'operator' });
+          expect(context?.actionInputTargets?.[0]).toEqual({
+            kind: 'operator',
+            operatorId: 'operator',
+          });
           if (finishMode !== 'deferred')
             container.finishInstance(buff, finishMode, 'nested-source', cast);
           return true;
@@ -2428,14 +2442,18 @@ describe('attachBuffLifecycleSequences', () => {
       );
       const container = new CombatBuffContainer<never>('enemy', new CombatAttributeSet<never>());
       const originalCast = { ...cast, skillCastId: 12, originSkillId: 'original-skill' };
-      const buff = container.add(definition, 'original-source', { skillCastInfo: originalCast })!;
+      const buff = container.add(definition, 'original-source', {
+        skillCastInfo: originalCast,
+        partTransferInfo: originalTransfer,
+      })!;
       const consumed: unknown[] = [];
       container.configureConsumedObserver((instance, sourceId, layers, finishCast) => {
         consumed.push({ instance, sourceId, layers, finishCast });
       });
 
       expect(container.ignite('PhysicalStatus', 'operator')).toBe(0);
-      expect(container.ignite('EndminUlt', 'operator', cast)).toBe(1);
+      expect(container.ignite('EndminUlt', 'operator', cast, igniteTransfer)).toBe(1);
+      expect(buff.runtimeState.partTransferInfo).toEqual(originalTransfer);
       expect(reached).toEqual(
         finishMode === 'deferred' ? ['original-source', 'original-source'] : ['original-source'],
       );

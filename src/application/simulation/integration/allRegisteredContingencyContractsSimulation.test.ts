@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { describe, expect, it } from 'vitest';
 
 import { createEmptyScenario } from '../../../core/project/createProject';
@@ -103,7 +104,7 @@ describe('危机合约生效词条的开局装配', () => {
   });
   it('第二期预览按全队计数挂锁、清空能量并执行敌人回血', async () => {
     const scenario = createEmptyScenario('preview-contracts', 'preview');
-    scenario.enemy.editable.hp = 1000000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 1000000;
     for (let index = 0; index < 2; index++) {
       scenario.tracks[index] = {
         id: `track:${index}`,
@@ -270,7 +271,7 @@ describe('危机合约生效词条的开局装配', () => {
         `audit:contingency-contract:${operator.slug}:${tag.tagId}`,
         '危机合约横向装配门禁',
       );
-      scenario.enemy.editable.hp = 1_000_000_000;
+      firstScenarioEnemy(scenario).enemy.editable.hp = 1_000_000_000;
       scenario.tracks[0] = {
         id: `track:${operator.slug}`,
         operator: {

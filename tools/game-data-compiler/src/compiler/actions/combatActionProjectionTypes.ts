@@ -42,9 +42,6 @@ type BuffQueryTarget =
   | 'buffOwner'
   | 'buffSource'
   | 'currentTarget';
-type MarkerTarget =
-  'caster' | 'enemy' | 'eventTarget' | 'buffOwner' | 'buffSource' | 'currentAbilityEntity';
-
 export type CompiledBuffConditionSource =
   | Condition<'constant'>
   | Condition<'skillHasHit'>
@@ -119,11 +116,9 @@ export type CompiledBuffConditionSource =
 
 type GlobalTimeDilation = Omit<
   Extract<Parameters<'startTimeDilation'>, { scope: 'global' }>,
-  'influenceSkillCooldownSeconds' | 'curve' | 'ignoredTargets' | 'ignoredAbilityEntityTargets'
+  'curve'
 > & {
   readonly curve: TimeScaleCurveDefinition;
-  readonly ignoredTargets: readonly ('controlled' | 'caster')[];
-  readonly ignoredAbilityEntityTargets?: readonly [{ readonly kind: 'current' | 'ownerSpawned' }];
 };
 type EntityTimeDilation = Omit<
   Extract<Parameters<'startTimeDilation'>, { scope: 'entity' }>,
@@ -248,17 +243,17 @@ export type CompiledBuffStepSource =
   | Step<'setCharacterPassiveUiValue'>
   | Step<'inheritSkillCastInfoForBasicAttack'>
   | Step<'startCurrentAbilityEntityChildSkillById'>
-  | Step<'startTimeDilation', GlobalTimeDilation | EntityTimeDilation>
+  | Step<
+      'startTimeDilation',
+      | GlobalTimeDilation
+      | EntityTimeDilation
+      | Extract<Parameters<'startTimeDilation'>, { scope: 'hitStop' }>
+    >
   | Step<'setIgnoreGlobalTimeScale'>
   | Step<'changeOriginSkillToEventContextSkill'>
   | Step<'terminateAddingBuff'>
   | Step<'hideUi'>
-  | Step<
-      'startUltimateTimeDilation',
-      Pick<Parameters<'startUltimateTimeDilation'>, 'priority' | 'targetScale'> & {
-        readonly ignoredTargets: readonly [];
-      }
-    >
+  | Step<'startUltimateTimeDilation'>
   | Step<'findOwnerSpawnedAbilityEntities', Parameters<'findOwnerSpawnedAbilityEntities'>>
   | Step<
       'spawnAbilityEntity',
@@ -278,6 +273,7 @@ export type CompiledBuffStepSource =
         >
     >
   | Step<'setAbilityEntityRemainingDuration'>
+  | Step<'setAbilityEntityTarget'>
   | Step<'finishOwner'>
   | Step<'interruptCurrentSkill'>
   | (Step<'jumpTimeline'> & { readonly condition: CombatCondition })
@@ -311,20 +307,22 @@ export type CompiledBuffStepSource =
   | (Step<'launchProjectile'> & {
       readonly callbacks: readonly {
         readonly event: 'launch' | 'hit' | 'block' | 'reach' | 'finish';
-        readonly skill: {
-          readonly actionGraph: ActionGraphResourceDefinition;
-          readonly skillId: string;
-          readonly nativeSkillType: NativeSkillType;
-          readonly normalSkillSubType?: 'normal' | 'additionalNormalSkill';
-          readonly naturalDurationFrames: number;
-          readonly castResource: SkillCastResourceDefinition;
-          readonly blackboard: Readonly<Record<string, number>>;
-          readonly scheduledSequences: readonly {
-            readonly startFrame: number;
-            readonly endFrame: number;
-            readonly sequence: CompiledBuffSequenceSource;
-          }[];
-        };
+        readonly skill:
+          | { readonly $skill: string }
+          | {
+              readonly actionGraph: ActionGraphResourceDefinition;
+              readonly skillId: string;
+              readonly nativeSkillType: NativeSkillType;
+              readonly normalSkillSubType?: 'normal' | 'additionalNormalSkill';
+              readonly naturalDurationFrames: number;
+              readonly castResource: SkillCastResourceDefinition;
+              readonly blackboard: Readonly<Record<string, number>>;
+              readonly scheduledSequences: readonly {
+                readonly startFrame: number;
+                readonly endFrame: number;
+                readonly sequence: CompiledBuffSequenceSource;
+              }[];
+            };
       }[];
     })
   | (Step<'once'> & { readonly body: CompiledBuffSequenceSource })
@@ -334,6 +332,7 @@ export type CompiledBuffStepSource =
       })[];
     })
   | Step<'saveTwoDirectionAngle'>
+  | Step<'startTyphoeaArchery'>
   | Step<'copyContextTargets'>
   | Step<'findTargets'>
   | Step<
@@ -383,7 +382,7 @@ export type CompiledBuffStepSource =
   | Step<
       'readBuffStackCount',
       Pick<Parameters<'readBuffStackCount'>, 'outputKey'> & {
-        readonly target: MarkerTarget | 'enemy';
+        readonly target: Parameters<'readBuffStackCount'>['target'];
         readonly countType?: 'instance';
         readonly query: Parameters<'readBuffStackCount'>['query'];
       }
@@ -409,6 +408,9 @@ export type CompiledBuffStepSource =
   | Step<'calculateActionValue'>
   | Step<'evaluateCurve'>
   | Step<'saveTargetDistance'>
+  | Step<'blowOffEnemy'>
+  | Step<'pushBack'>
+  | Step<'pull'>
   | Step<'storeRandomInteger'>
   | Step<'storeRandomFloat'>
   | Step<'readBuffRemainingDuration'>

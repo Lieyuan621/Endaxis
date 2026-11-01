@@ -156,11 +156,15 @@ export class ComboWindowRuntime implements FrameRuntime {
         : {
             nativeCondition: Object.freeze({
               skillSlotKey: nativeCondition.skillSlotKey,
-              inputTarget: Object.freeze({ ...nativeCondition.inputTarget }),
-              triggerTarget:
-                nativeCondition.triggerTarget === null
+              inputTargets: Object.freeze(
+                nativeCondition.inputTargets.map(target => Object.freeze({ ...target })),
+              ),
+              triggerTargets:
+                nativeCondition.triggerTargets === null
                   ? null
-                  : Object.freeze({ ...nativeCondition.triggerTarget }),
+                  : Object.freeze(
+                      nativeCondition.triggerTargets.map(target => Object.freeze({ ...target })),
+                    ),
               assignPairs:
                 nativeCondition.assignPairs === null
                   ? null

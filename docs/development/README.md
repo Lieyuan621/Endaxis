@@ -28,6 +28,7 @@ npm run dev
 | 公共数据契约       | `npm run type-check:game-data-contract`          |
 | 生成器生产类型     | `npm run type-check:game-data-production`        |
 | 生成器及其测试类型 | `npm run type-check:game-data`                   |
+| 全部非浏览器测试   | `npm run test:all`                               |
 | 生成器测试         | `npm run test:game-data -- --maxWorkers=1`       |
 | 指定回归           | `npx vitest run <测试文件或目录> --maxWorkers=1` |
 | 空白与补丁错误     | `git diff --check`                               |
@@ -87,3 +88,5 @@ npm run preview
 - 节点字段与契约不一致：按[节点描述工具](../../tools/editor/README.md)重新生成并检查差异，不手改生成文件。
 - 游戏来源下载或 Unity 导出失败：检查生成报告与来源版本，不能复制旧产物补缺。
 - 页面与预期不一致：先确认当前端口、工作树和已发布结果，再检查缓存与运行错误。
+
+`test:all` 依次运行 Vitest 与编辑器的 Node 原生测试，任一失败立即返回失败。浏览器测试仍使用 `test:browser`（需要前端服务和浏览器环境），类型检查及构建独立执行。`tools/editor/**/*.test.ts` 归 Node 原生入口，不由 Vitest 收集。

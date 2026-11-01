@@ -11,10 +11,21 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const pogranichnikChr_0029_pograni_attack1ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -22,13 +33,13 @@ export const pogranichnikChr_0029_pograni_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -112,7 +123,7 @@ export const pogranichnikChr_0029_pograni_attack1: SkillDefinition = {
   offsetRecordFrame: 8,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 7, endFrame: 29, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
     { startFrame: 12, endFrame: 29, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
@@ -126,10 +137,21 @@ export const pogranichnikChr_0029_pograni_attack1: SkillDefinition = {
 export const pogranichnikChr_0029_pograni_attack2ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -137,13 +159,13 @@ export const pogranichnikChr_0029_pograni_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.02 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -190,13 +212,13 @@ export const pogranichnikChr_0029_pograni_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -284,8 +306,8 @@ export const pogranichnikChr_0029_pograni_attack2: SkillDefinition = {
   offsetRecordFrame: 7,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 7, endFrame: 13, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 14, endFrame: 20, sequence: { $sequence: 'dealDamage_12' } },
     { startFrame: 7, endFrame: 39, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
@@ -300,10 +322,21 @@ export const pogranichnikChr_0029_pograni_attack2: SkillDefinition = {
 export const pogranichnikChr_0029_pograni_attack3ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -311,13 +344,13 @@ export const pogranichnikChr_0029_pograni_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.04 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -366,13 +399,13 @@ export const pogranichnikChr_0029_pograni_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -464,8 +497,8 @@ export const pogranichnikChr_0029_pograni_attack3: SkillDefinition = {
   offsetRecordFrame: 9,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 15, endFrame: 16, sequence: { $sequence: 'dealDamage_12' } },
     { startFrame: 11, endFrame: 37, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
@@ -480,10 +513,21 @@ export const pogranichnikChr_0029_pograni_attack3: SkillDefinition = {
 export const pogranichnikChr_0029_pograni_attack4ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_2: {
+      findTargets_2: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -531,9 +575,11 @@ export const pogranichnikChr_0029_pograni_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -576,8 +622,6 @@ export const pogranichnikChr_0029_pograni_attack4ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -668,17 +712,17 @@ export const pogranichnikChr_0029_pograni_attack4: SkillDefinition = {
   offsetRecordFrame: 3,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 3, endFrame: 4, sequence: { $sequence: 'mergeContextTargets_2' } },
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_2' } },
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_2' } },
+    { startFrame: 3, endFrame: 4, sequence: { $sequence: 'findTargets_2' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'findTargets_2' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_2' } },
     { startFrame: 3, endFrame: 4, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 5, endFrame: 6, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_8' } },
-    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'mergeContextTargets_2' } },
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_2' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_2' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_2' } },
     { startFrame: 11, endFrame: 12, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_8' } },
-    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'mergeContextTargets_2' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'findTargets_2' } },
     { startFrame: 17, endFrame: 20, sequence: { $sequence: 'ifElse_31' } },
     { startFrame: 15, endFrame: 16, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 10, endFrame: 33, sequence: { $sequence: 'overrideBasicAttackMapping_36' } },
@@ -693,14 +737,25 @@ export const pogranichnikChr_0029_pograni_attack4: SkillDefinition = {
 export const pogranichnikChr_0029_pograni_attack5ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
-      modifyActionValue_2: {
+      modifyActionValue_3: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -711,7 +766,7 @@ export const pogranichnikChr_0029_pograni_attack5ActionGraph = {
         },
         next: null,
       },
-      changeResource_4: {
+      changeResource_5: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -726,27 +781,27 @@ export const pogranichnikChr_0029_pograni_attack5ActionGraph = {
         },
         next: null,
       },
-      ifElse_5: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'modifyActionValue_2' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'changeResource_4',
-      },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'modifyActionValue_3' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'changeResource_5',
+      },
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'ifElse_5' },
+          whenTrue: { $sequence: 'ifElse_6' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_7: {
+      dealDamage_8: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -759,41 +814,41 @@ export const pogranichnikChr_0029_pograni_attack5ActionGraph = {
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'ifElse_6',
+        next: 'ifElse_7',
       },
-      startTimeDilation_9: {
+      startTimeDilation_10: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.35 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      ifElse_10: {
+      ifElse_11: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'startTimeDilation_9' },
+          whenTrue: { $sequence: 'startTimeDilation_10' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      overrideBasicAttackMapping_11: {
+      overrideBasicAttackMapping_12: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0029_pograni_attack1'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_12: {
+      reachSkillOperableBoundary_13: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0029_pograni_attack1'] },
@@ -805,7 +860,14 @@ export const pogranichnikChr_0029_pograni_attack5ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_3: {
         type: 'boolean',
@@ -847,11 +909,11 @@ export const pogranichnikChr_0029_pograni_attack5: SkillDefinition = {
   offsetRecordFrame: 16,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 16, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 19, endFrame: 21, sequence: { $sequence: 'ifElse_10' } },
-    { startFrame: 15, endFrame: 32, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
-    { startFrame: 24, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
+    { startFrame: 16, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'dealDamage_8' } },
+    { startFrame: 19, endFrame: 21, sequence: { $sequence: 'ifElse_11' } },
+    { startFrame: 15, endFrame: 32, sequence: { $sequence: 'overrideBasicAttackMapping_12' } },
+    { startFrame: 24, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -866,13 +928,13 @@ export const pogranichnikChr_0029_pograni_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -906,13 +968,13 @@ export const pogranichnikChr_0029_pograni_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -982,13 +1044,13 @@ export const pogranichnikChr_0029_pograni_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.55 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1106,10 +1168,21 @@ export const pogranichnikChr_0029_pograni_power_attack: SkillDefinition = {
 export const pogranichnikChr_0029_pograni_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1178,7 +1251,7 @@ export const pogranichnikChr_0029_pograni_plunging_attack_end: SkillDefinition =
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 3, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 3, endFrame: 7, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 3, endFrame: 8, sequence: { $sequence: 'dealDamage_5' } },
   ],
   defaultTarget: 'enemy',
@@ -1201,10 +1274,21 @@ export const pogranichnikChr_0029_pograni_normal_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_21: {
+      findTargets_21: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1233,7 +1317,7 @@ export const pogranichnikChr_0029_pograni_normal_skillActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             outputKey: 'num_1',
             query: {
               kind: 'tag',
@@ -1250,7 +1334,7 @@ export const pogranichnikChr_0029_pograni_normal_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1338,13 +1422,13 @@ export const pogranichnikChr_0029_pograni_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1397,9 +1481,11 @@ export const pogranichnikChr_0029_pograni_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -1451,8 +1537,6 @@ export const pogranichnikChr_0029_pograni_normal_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1507,7 +1591,7 @@ export const pogranichnikChr_0029_pograni_normal_skillActionGraph = {
         },
         next: 'ifElse_42',
       },
-      applyBuff_44: {
+      applyBuff_45: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1519,17 +1603,17 @@ export const pogranichnikChr_0029_pograni_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_45: {
+      ifElse_46: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_17' },
-          whenTrue: { $sequence: 'applyBuff_44' },
+          whenTrue: { $sequence: 'applyBuff_45' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      reachSkillOperableBoundary_46: {
+      reachSkillOperableBoundary_47: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -1544,7 +1628,7 @@ export const pogranichnikChr_0029_pograni_normal_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_47: {
+      reachSkillOperableBoundary_48: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0029_pograni_normal_skill'] },
@@ -1600,7 +1684,14 @@ export const pogranichnikChr_0029_pograni_normal_skillActionGraph = {
       },
       data_17: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
     },
   },
@@ -1634,15 +1725,15 @@ export const pogranichnikChr_0029_pograni_normal_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 157, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 0, endFrame: 28, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 28, endFrame: 157, sequence: { $sequence: 'findTargets_1' } },
-    { startFrame: 28, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_21' } },
-    { startFrame: 38, endFrame: 39, sequence: { $sequence: 'mergeContextTargets_21' } },
+    { startFrame: 28, endFrame: 29, sequence: { $sequence: 'findTargets_21' } },
+    { startFrame: 38, endFrame: 39, sequence: { $sequence: 'findTargets_21' } },
     { startFrame: 38, endFrame: 39, sequence: { $sequence: 'repeatEachTick_27' } },
     { startFrame: 38, endFrame: 39, sequence: { $sequence: 'switch_32' } },
     { startFrame: 28, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_35' } },
     { startFrame: 38, endFrame: 39, sequence: { $sequence: 'mergeContextTargets_43' } },
-    { startFrame: 38, endFrame: 39, sequence: { $sequence: 'ifElse_45' } },
-    { startFrame: 48, endFrame: 55, sequence: { $sequence: 'reachSkillOperableBoundary_46' } },
-    { startFrame: 45, endFrame: 55, sequence: { $sequence: 'reachSkillOperableBoundary_47' } },
+    { startFrame: 38, endFrame: 39, sequence: { $sequence: 'ifElse_46' } },
+    { startFrame: 48, endFrame: 55, sequence: { $sequence: 'reachSkillOperableBoundary_47' } },
+    { startFrame: 45, endFrame: 55, sequence: { $sequence: 'reachSkillOperableBoundary_48' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -1807,10 +1898,21 @@ export const pogranichnikChr_0029_pograni_combo_skillActionGraph = {
         action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
         next: null,
       },
-      mergeContextTargets_30: {
+      findTargets_30: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'target', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'target',
+          },
         },
         next: null,
       },
@@ -1831,13 +1933,13 @@ export const pogranichnikChr_0029_pograni_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'target' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.133 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_39',
@@ -1888,13 +1990,13 @@ export const pogranichnikChr_0029_pograni_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'target' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.133 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1945,9 +2047,11 @@ export const pogranichnikChr_0029_pograni_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'target' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.6 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -1990,8 +2094,6 @@ export const pogranichnikChr_0029_pograni_combo_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -2112,8 +2214,15 @@ export const pogranichnikChr_0029_pograni_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -2128,8 +2237,15 @@ export const pogranichnikChr_0029_pograni_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -2144,8 +2260,15 @@ export const pogranichnikChr_0029_pograni_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -2288,15 +2411,15 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = {
     { startFrame: 391, endFrame: 394, sequence: { $sequence: 'interruptCurrentSkill_25' } },
     { startFrame: 450, endFrame: 453, sequence: { $sequence: 'markCurrentSkillCanInterrupt_24' } },
     { startFrame: 545, endFrame: 548, sequence: { $sequence: 'interruptCurrentSkill_25' } },
-    { startFrame: 23, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_30' } },
-    { startFrame: 37, endFrame: 39, sequence: { $sequence: 'mergeContextTargets_30' } },
-    { startFrame: 61, endFrame: 63, sequence: { $sequence: 'mergeContextTargets_30' } },
-    { startFrame: 223, endFrame: 225, sequence: { $sequence: 'mergeContextTargets_30' } },
-    { startFrame: 237, endFrame: 239, sequence: { $sequence: 'mergeContextTargets_30' } },
-    { startFrame: 261, endFrame: 263, sequence: { $sequence: 'mergeContextTargets_30' } },
-    { startFrame: 423, endFrame: 425, sequence: { $sequence: 'mergeContextTargets_30' } },
-    { startFrame: 437, endFrame: 439, sequence: { $sequence: 'mergeContextTargets_30' } },
-    { startFrame: 623, endFrame: 625, sequence: { $sequence: 'mergeContextTargets_30' } },
+    { startFrame: 23, endFrame: 25, sequence: { $sequence: 'findTargets_30' } },
+    { startFrame: 37, endFrame: 39, sequence: { $sequence: 'findTargets_30' } },
+    { startFrame: 61, endFrame: 63, sequence: { $sequence: 'findTargets_30' } },
+    { startFrame: 223, endFrame: 225, sequence: { $sequence: 'findTargets_30' } },
+    { startFrame: 237, endFrame: 239, sequence: { $sequence: 'findTargets_30' } },
+    { startFrame: 261, endFrame: 263, sequence: { $sequence: 'findTargets_30' } },
+    { startFrame: 423, endFrame: 425, sequence: { $sequence: 'findTargets_30' } },
+    { startFrame: 437, endFrame: 439, sequence: { $sequence: 'findTargets_30' } },
+    { startFrame: 623, endFrame: 625, sequence: { $sequence: 'findTargets_30' } },
     { startFrame: 23, endFrame: 26, sequence: { $sequence: 'calculateActionValue_43' } },
     { startFrame: 37, endFrame: 40, sequence: { $sequence: 'calculateActionValue_47' } },
     { startFrame: 61, endFrame: 64, sequence: { $sequence: 'calculateActionValue_51' } },
@@ -2348,44 +2471,28 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
       setIgnoreGlobalTimeScale_2: {
         action: {
           kind: 'setIgnoreGlobalTimeScale',
-          parameters: {
-            abilityEntityTargets: [{ kind: 'context', contextKey: 'ae4' }],
-            ignore: true,
-            revertOnEnd: true,
-          },
+          parameters: { targets: { kind: 'context', key: 'ae4' }, ignore: true, revertOnEnd: true },
         },
         next: null,
       },
       setIgnoreGlobalTimeScale_3: {
         action: {
           kind: 'setIgnoreGlobalTimeScale',
-          parameters: {
-            abilityEntityTargets: [{ kind: 'context', contextKey: 'ae3' }],
-            ignore: true,
-            revertOnEnd: true,
-          },
+          parameters: { targets: { kind: 'context', key: 'ae3' }, ignore: true, revertOnEnd: true },
         },
         next: 'setIgnoreGlobalTimeScale_2',
       },
       setIgnoreGlobalTimeScale_4: {
         action: {
           kind: 'setIgnoreGlobalTimeScale',
-          parameters: {
-            abilityEntityTargets: [{ kind: 'context', contextKey: 'ae2' }],
-            ignore: true,
-            revertOnEnd: true,
-          },
+          parameters: { targets: { kind: 'context', key: 'ae2' }, ignore: true, revertOnEnd: true },
         },
         next: 'setIgnoreGlobalTimeScale_3',
       },
       setIgnoreGlobalTimeScale_5: {
         action: {
           kind: 'setIgnoreGlobalTimeScale',
-          parameters: {
-            abilityEntityTargets: [{ kind: 'context', contextKey: 'ae1' }],
-            ignore: true,
-            revertOnEnd: true,
-          },
+          parameters: { targets: { kind: 'context', key: 'ae1' }, ignore: true, revertOnEnd: true },
         },
         next: 'setIgnoreGlobalTimeScale_4',
       },
@@ -2399,7 +2506,7 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
             source: { kind: 'owner' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'ae4',
           },
         },
@@ -2415,7 +2522,7 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
             source: { kind: 'owner' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'ae3',
           },
         },
@@ -2431,7 +2538,7 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
             source: { kind: 'owner' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'ae2',
           },
         },
@@ -2447,23 +2554,55 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
             source: { kind: 'owner' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'ae1',
           },
         },
         next: 'spawnAbilityEntity_8',
       },
-      mergeContextTargets_10: {
+      findTargets_10: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'inputTarget' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'centerRange',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
       },
-      dealDamage_12: {
+      pull_11: {
+        action: {
+          kind: 'pull',
+          parameters: {
+            targets: { kind: 'context', key: 'centerRange' },
+            destination: { kind: 'context', key: 'mainPos' },
+            targetType: 'Enemy',
+            alwaysNext: false,
+          },
+        },
+        next: null,
+      },
+      copyContextTargets_12: {
+        action: {
+          kind: 'copyContextTargets',
+          parameters: {
+            source: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'mainPos',
+            convertEntitiesToPositions: true,
+          },
+        },
+        next: 'pull_11',
+      },
+      dealDamage_13: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -2478,7 +2617,7 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_13: {
+      applyBuff_14: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2491,8 +2630,8 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      hideUi_14: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_15: {
+      hideUi_15: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_16: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -2503,7 +2642,7 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      finishBuffsById_16: {
+      finishBuffsById_17: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -2515,14 +2654,14 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      finishOwner_17: {
+      finishOwner_18: {
         action: {
           kind: 'finishOwner',
           parameters: { targets: { kind: 'context', key: 'soldiers' } },
         },
-        next: 'finishBuffsById_16',
+        next: 'finishBuffsById_17',
       },
-      findOwnerSpawnedAbilityEntities_18: {
+      findOwnerSpawnedAbilityEntities_19: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
@@ -2533,7 +2672,7 @@ export const pogranichnikChr_0029_pograni_ultimate_skillActionGraph = {
             owner: { kind: 'owner' },
           },
         },
-        next: 'finishOwner_17',
+        next: 'finishOwner_18',
       },
     },
     dataNodes: {
@@ -2570,12 +2709,13 @@ export const pogranichnikChr_0029_pograni_ultimate_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
     { startFrame: 74, endFrame: 77, sequence: { $sequence: 'spawnAbilityEntity_9' } },
-    { startFrame: 76, endFrame: 79, sequence: { $sequence: 'mergeContextTargets_10' } },
-    { startFrame: 76, endFrame: 82, sequence: { $sequence: 'dealDamage_12' } },
-    { startFrame: 0, endFrame: 90, sequence: { $sequence: 'applyBuff_13' } },
-    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'hideUi_14' } },
-    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'startUltimateTimeDilation_15' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_18' } },
+    { startFrame: 76, endFrame: 79, sequence: { $sequence: 'findTargets_10' } },
+    { startFrame: 76, endFrame: 79, sequence: { $sequence: 'copyContextTargets_12' } },
+    { startFrame: 76, endFrame: 82, sequence: { $sequence: 'dealDamage_13' } },
+    { startFrame: 0, endFrame: 90, sequence: { $sequence: 'applyBuff_14' } },
+    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'hideUi_15' } },
+    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'startUltimateTimeDilation_16' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_19' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 300,
@@ -2857,7 +2997,7 @@ const pogranichnikComboCondition1ActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'eventTarget',
+            target: { kind: 'context', key: 'trigger' },
             outputKey: 'EntityBB_noguard_count',
             query: { kind: 'id', buffIds: ['buff_physical_no_guard'] },
           },
@@ -3100,7 +3240,7 @@ const pogranichnikBuff8ActionGraph = {
         action: {
           kind: 'aura',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [], scope: 'global' },
             source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             buffs: [
@@ -3254,7 +3394,7 @@ const pogranichnikBuff9ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffSource',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0029_pograni_talent1_exist'] },
             desiredKey: 'max_stack_team',
             outputKey: 'max_stack_team_temp',
@@ -3266,7 +3406,7 @@ const pogranichnikBuff9ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffSource',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0029_pograni_talent1_exist'] },
             desiredKey: 'max_stack_owner',
             outputKey: 'max_stack_owner_temp',
@@ -3278,7 +3418,7 @@ const pogranichnikBuff9ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffSource',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0029_pograni_talent1_exist'] },
             desiredKey: 'physpell_up',
             outputKey: 'physpell_up_temp',
@@ -3290,7 +3430,7 @@ const pogranichnikBuff9ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffSource',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0029_pograni_talent1_exist'] },
             desiredKey: 'atk_up',
             outputKey: 'atk_up_temp',
@@ -3302,7 +3442,7 @@ const pogranichnikBuff9ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffSource',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0029_pograni_talent2'] },
             desiredKey: 'duration',
             outputKey: 'duration_temp',
@@ -3408,7 +3548,7 @@ const pogranichnikBuff9ActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'owner' },
           },
         },
         next: 'finishBuffsById_29',
@@ -3453,7 +3593,7 @@ const pogranichnikBuff9ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffSource',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0029_pograni_talent1_exist'] },
             desiredKey: 'max_stack_owner',
             outputKey: 'max_stack_owner_temp',
@@ -3465,7 +3605,7 @@ const pogranichnikBuff9ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffSource',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0029_pograni_talent1_exist'] },
             desiredKey: 'physpell_up',
             outputKey: 'physpell_up_temp',
@@ -3477,7 +3617,7 @@ const pogranichnikBuff9ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffSource',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0029_pograni_talent1_exist'] },
             desiredKey: 'atk_up',
             outputKey: 'atk_up_temp',
@@ -3489,7 +3629,7 @@ const pogranichnikBuff9ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffSource',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0029_pograni_talent2'] },
             desiredKey: 'duration',
             outputKey: 'duration_temp',
@@ -3609,7 +3749,7 @@ const pogranichnikBuff9ActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'owner' },
           },
         },
         next: 'finishBuffsById_55',
@@ -3883,7 +4023,7 @@ const pogranichnikBuff11ActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'owner' },
           },
         },
         next: null,
@@ -3898,13 +4038,17 @@ const pogranichnikBuff11ActionGraph = {
             priority: 100,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: [],
-            ignoredAbilityEntityTargets: [
+            ignoredTargets: [
               {
-                kind: 'ownerSpawned',
-                tagFilters: [
-                  { queryType: 'hasAny', tags: ['Skill/Character/chr_0029_pgrani/Soldier'] },
-                ],
+                kind: 'tagFilter',
+                targets: {
+                  kind: 'ownerSpawned',
+                  owner: { kind: 'source' },
+                  objectType: 'abilityEntity',
+                  sameSourceSkillCast: false,
+                },
+                tags: ['Skill/Character/chr_0029_pgrani/Soldier'],
+                tagQueryType: 'hasAny',
               },
             ],
           },
@@ -4310,12 +4454,20 @@ export const pogranichnik: OperatorDefinition = {
                   },
                   next: null,
                 },
-                mergeContextTargets_20: {
+                findTargets_20: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: null,
@@ -4324,14 +4476,13 @@ export const pogranichnik: OperatorDefinition = {
                   action: {
                     kind: 'startTimeDilation',
                     parameters: {
-                      scope: 'entity',
+                      scope: 'hitStop',
+                      attacker: { kind: 'owner' },
+                      targets: { kind: 'context', key: 'tar' },
+                      affectType: 'Both',
                       durationSeconds: { kind: 'constant', value: 0.2 },
-                      slot: 'TimeDilation/Layer/Entity/HitStop',
                       priority: 10,
                       curve: { kind: 'named', key: 'char_normal_attack' },
-                      finishByAction: false,
-                      targets: ['enemy'],
-                      abilityEntityTargets: [{ kind: 'current' }],
                     },
                   },
                   next: null,
@@ -4493,8 +4644,7 @@ export const pogranichnik: OperatorDefinition = {
                         ],
                       },
                       finishByAction: false,
-                      targets: [],
-                      abilityEntityTargets: [{ kind: 'current' }],
+                      targets: [{ kind: 'owner' }],
                     },
                   },
                   next: null,
@@ -4586,10 +4736,10 @@ export const pogranichnik: OperatorDefinition = {
             { startFrame: 265, endFrame: 268, sequence: { $sequence: 'interruptCurrentSkill_13' } },
             { startFrame: 357, endFrame: 360, sequence: { $sequence: 'finishOwner_12' } },
             { startFrame: 365, endFrame: 368, sequence: { $sequence: 'interruptCurrentSkill_13' } },
-            { startFrame: 9, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_20' } },
-            { startFrame: 108, endFrame: 112, sequence: { $sequence: 'mergeContextTargets_20' } },
-            { startFrame: 209, endFrame: 213, sequence: { $sequence: 'mergeContextTargets_20' } },
-            { startFrame: 307, endFrame: 311, sequence: { $sequence: 'mergeContextTargets_20' } },
+            { startFrame: 9, endFrame: 13, sequence: { $sequence: 'findTargets_20' } },
+            { startFrame: 108, endFrame: 112, sequence: { $sequence: 'findTargets_20' } },
+            { startFrame: 209, endFrame: 213, sequence: { $sequence: 'findTargets_20' } },
+            { startFrame: 307, endFrame: 311, sequence: { $sequence: 'findTargets_20' } },
             { startFrame: 9, endFrame: 13, sequence: { $sequence: 'changeResource_26' } },
             { startFrame: 108, endFrame: 112, sequence: { $sequence: 'changeResource_29' } },
             { startFrame: 209, endFrame: 213, sequence: { $sequence: 'changeResource_32' } },
@@ -4608,12 +4758,20 @@ export const pogranichnik: OperatorDefinition = {
                   action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                   next: null,
                 },
-                mergeContextTargets_2: {
+                findTargets_2: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: null,
@@ -4622,13 +4780,13 @@ export const pogranichnik: OperatorDefinition = {
                   action: {
                     kind: 'startTimeDilation',
                     parameters: {
-                      scope: 'entity',
+                      scope: 'hitStop',
+                      attacker: { kind: 'source' },
+                      targets: { kind: 'context', key: 'tar' },
+                      affectType: 'Both',
                       durationSeconds: { kind: 'constant', value: 0.12 },
-                      slot: 'TimeDilation/Layer/Entity/HitStop',
                       priority: 10,
                       curve: { kind: 'named', key: 'char_normal_attack' },
-                      finishByAction: false,
-                      targets: ['enemy', 'caster'],
                     },
                   },
                   next: null,
@@ -4672,8 +4830,7 @@ export const pogranichnik: OperatorDefinition = {
                       priority: 30,
                       curve: { kind: 'named', key: 'ComboSkill' },
                       finishByAction: false,
-                      ignoredTargets: [],
-                      ignoredAbilityEntityTargets: [{ kind: 'current' }],
+                      ignoredTargets: [{ kind: 'owner' }],
                     },
                   },
                   next: null,
@@ -4698,7 +4855,7 @@ export const pogranichnik: OperatorDefinition = {
           blackboard: { atb: 10, atk_scale: 1 },
           scheduledSequences: [
             { startFrame: 36, endFrame: 46, sequence: { $sequence: 'finishOwner_1' } },
-            { startFrame: 9, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_2' } },
+            { startFrame: 9, endFrame: 13, sequence: { $sequence: 'findTargets_2' } },
             { startFrame: 9, endFrame: 13, sequence: { $sequence: 'dealDamage_5' } },
             { startFrame: 0, endFrame: 14, sequence: { $sequence: 'startTimeDilation_6' } },
           ],
@@ -4711,12 +4868,20 @@ export const pogranichnik: OperatorDefinition = {
                   action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                   next: null,
                 },
-                mergeContextTargets_2: {
+                findTargets_2: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: null,
@@ -4770,7 +4935,7 @@ export const pogranichnik: OperatorDefinition = {
           blackboard: { atb: 10, atk_scale: 1 },
           scheduledSequences: [
             { startFrame: 36, endFrame: 46, sequence: { $sequence: 'finishOwner_1' } },
-            { startFrame: 9, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_2' } },
+            { startFrame: 9, endFrame: 13, sequence: { $sequence: 'findTargets_2' } },
             { startFrame: 9, endFrame: 13, sequence: { $sequence: 'dealDamage_4' } },
           ],
         },
@@ -4782,12 +4947,20 @@ export const pogranichnik: OperatorDefinition = {
                   action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                   next: null,
                 },
-                mergeContextTargets_2: {
+                findTargets_2: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: null,
@@ -4841,7 +5014,7 @@ export const pogranichnik: OperatorDefinition = {
           blackboard: { atb: 10, atk_scale: 1 },
           scheduledSequences: [
             { startFrame: 36, endFrame: 46, sequence: { $sequence: 'finishOwner_1' } },
-            { startFrame: 9, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_2' } },
+            { startFrame: 9, endFrame: 13, sequence: { $sequence: 'findTargets_2' } },
             { startFrame: 9, endFrame: 13, sequence: { $sequence: 'dealDamage_4' } },
           ],
         },
@@ -4865,12 +5038,20 @@ export const pogranichnik: OperatorDefinition = {
                   },
                   next: null,
                 },
-                mergeContextTargets_3: {
+                findTargets_3: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: null,
@@ -4981,8 +5162,7 @@ export const pogranichnik: OperatorDefinition = {
                         ],
                       },
                       finishByAction: false,
-                      targets: [],
-                      abilityEntityTargets: [{ kind: 'current' }],
+                      targets: [{ kind: 'owner' }],
                     },
                   },
                   next: null,
@@ -5021,7 +5201,7 @@ export const pogranichnik: OperatorDefinition = {
           scheduledSequences: [
             { startFrame: 75, endFrame: 78, sequence: { $sequence: 'finishOwner_1' } },
             { startFrame: 31, endFrame: 38, sequence: { $sequence: 'finishBuffsById_2' } },
-            { startFrame: 25, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_3' } },
+            { startFrame: 25, endFrame: 29, sequence: { $sequence: 'findTargets_3' } },
             { startFrame: 25, endFrame: 52, sequence: { $sequence: 'ifElse_9' } },
             { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_10' } },
           ],

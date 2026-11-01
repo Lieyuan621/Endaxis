@@ -11,10 +11,21 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const camilleChr_0033_camille_attack1ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -22,13 +33,13 @@ export const camilleChr_0033_camille_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.04 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -127,8 +138,8 @@ export const camilleChr_0033_camille_attack1: SkillDefinition = {
   offsetRecordFrame: 5,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 4, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 10, endFrame: 12, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 4, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 10, endFrame: 12, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 4, endFrame: 6, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 10, endFrame: 12, sequence: { $sequence: 'dealDamage_12' } },
     { startFrame: 0, endFrame: 29, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
@@ -143,10 +154,21 @@ export const camilleChr_0033_camille_attack1: SkillDefinition = {
 export const camilleChr_0033_camille_attack2ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -154,13 +176,13 @@ export const camilleChr_0033_camille_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.033 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -259,8 +281,8 @@ export const camilleChr_0033_camille_attack2: SkillDefinition = {
   offsetRecordFrame: 10,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 14, endFrame: 16, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 14, endFrame: 16, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 14, endFrame: 16, sequence: { $sequence: 'dealDamage_12' } },
     { startFrame: 0, endFrame: 34, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
@@ -275,17 +297,35 @@ export const camilleChr_0033_camille_attack2: SkillDefinition = {
 export const camilleChr_0033_camille_attack3ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       startTimeDilation_17: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.04 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -334,7 +374,7 @@ export const camilleChr_0033_camille_attack3ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 4,
@@ -386,6 +426,21 @@ export const camilleChr_0033_camille_attack3: SkillDefinition = {
   offsetRecordFrame: 7,
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 7, endFrame: 22, sequence: { $sequence: 'repeatEachTick_21' } },
     { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_22' } },
     { startFrame: 13, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_23' } },
@@ -420,6 +475,7 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_attack4',
+            faction: 'good',
             recycleDelaySeconds: 1,
             entityInitialValues: {},
             hit: {},
@@ -431,32 +487,69 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      mergeContextTargets_1: {
+                      findTargets_1: {
                         action: {
-                          kind: 'mergeContextTargets',
+                          kind: 'findTargets',
                           parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'fixed', target: 'enemy' }],
                           },
                         },
                         next: null,
                       },
-                      dealDamage_8: {
+                      startTimeDilation_9: {
+                        action: {
+                          kind: 'startTimeDilation',
+                          parameters: {
+                            scope: 'hitStop',
+                            attacker: { kind: 'source' },
+                            targets: { kind: 'context', key: 'tar' },
+                            affectType: 'OnlyTarget',
+                            durationSeconds: { kind: 'constant', value: 0.1 },
+                            priority: 10,
+                            curve: { kind: 'named', key: 'char_normal_attack' },
+                          },
+                        },
+                        next: null,
+                      },
+                      ifElse_10: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+                          whenTrue: { $sequence: 'startTimeDilation_9' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_11: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
                             attacker: 'actionSource',
                             target: { kind: 'context', key: 'tar' },
                             damageType: 'heat',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                             tags: ['normalAttack'],
                           },
                         },
-                        next: null,
+                        next: 'ifElse_10',
                       },
                     },
                     dataNodes: {
                       data_1: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+                      },
+                      data_2: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale_2' },
                       },
@@ -475,28 +568,20 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
                 },
                 blackboard: { atk_scale_2: 0.1 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_1' } },
-                  { startFrame: 2, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_1' } },
-                  { startFrame: 4, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
-                  { startFrame: 6, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_1' } },
-                  { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_1' } },
-                  {
-                    startFrame: 10,
-                    endFrame: 11,
-                    sequence: { $sequence: 'mergeContextTargets_1' },
-                  },
-                  {
-                    startFrame: 12,
-                    endFrame: 13,
-                    sequence: { $sequence: 'mergeContextTargets_1' },
-                  },
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 2, endFrame: 3, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 4, endFrame: 5, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_8' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_1' } },
+                  { startFrame: 2, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
+                  { startFrame: 4, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
+                  { startFrame: 6, endFrame: 7, sequence: { $sequence: 'findTargets_1' } },
+                  { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
+                  { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
+                  { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'dealDamage_11' } },
+                  { startFrame: 2, endFrame: 3, sequence: { $sequence: 'dealDamage_11' } },
+                  { startFrame: 4, endFrame: 5, sequence: { $sequence: 'dealDamage_11' } },
+                  { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_11' } },
+                  { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_11' } },
+                  { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_11' } },
+                  { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_11' } },
                 ],
               },
             },
@@ -504,14 +589,40 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_3: {
+      findTargets_3: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
-      changeResource_5: {
+      startTimeDilation_5: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: null,
+      },
+      changeResource_6: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -524,19 +635,19 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
             spGainSource: 'normalAttack',
           },
         },
-        next: null,
+        next: 'startTimeDilation_5',
       },
-      ifElse_6: {
+      ifElse_7: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'changeResource_5' },
+          whenTrue: { $sequence: 'changeResource_6' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_7: {
+      dealDamage_8: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -547,16 +658,16 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
             tags: ['normalAttack'],
           },
         },
-        next: 'ifElse_6',
+        next: 'ifElse_7',
       },
-      overrideBasicAttackMapping_8: {
+      overrideBasicAttackMapping_9: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0033_camille_attack5'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_9: {
+      reachSkillOperableBoundary_10: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0033_camille_attack5'] },
@@ -593,10 +704,10 @@ export const camilleChr_0033_camille_attack4: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'createSpatialPointTargets_1' } },
     { startFrame: 20, endFrame: 21, sequence: { $sequence: 'launchProjectile_2' } },
-    { startFrame: 11, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_3' } },
-    { startFrame: 11, endFrame: 15, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 0, endFrame: 34, sequence: { $sequence: 'overrideBasicAttackMapping_8' } },
-    { startFrame: 22, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
+    { startFrame: 11, endFrame: 15, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 11, endFrame: 15, sequence: { $sequence: 'dealDamage_8' } },
+    { startFrame: 0, endFrame: 34, sequence: { $sequence: 'overrideBasicAttackMapping_9' } },
+    { startFrame: 22, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -607,10 +718,21 @@ export const camilleChr_0033_camille_attack4: SkillDefinition = {
 export const camilleChr_0033_camille_attack5ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -618,13 +740,13 @@ export const camilleChr_0033_camille_attack5ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.25 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -735,7 +857,7 @@ export const camilleChr_0033_camille_attack5: SkillDefinition = {
   offsetRecordFrame: 21,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 21, endFrame: 23, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 21, endFrame: 23, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 21, endFrame: 23, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 12, endFrame: 15, sequence: { $sequence: 'startTimeDilation_7' } },
   ],
@@ -830,7 +952,7 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
               ],
             },
             finishByAction: false,
-            targets: ['enemy'],
+            targets: [{ kind: 'inputTarget' }],
           },
         },
         next: 'gainFinisherSp_2',
@@ -870,6 +992,7 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_power_attack',
+            faction: 'good',
             recycleDelaySeconds: 0.100000001490116,
             entityInitialValues: {},
             hit: {},
@@ -935,6 +1058,7 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_power_attack_R_blue',
+            faction: 'good',
             recycleDelaySeconds: 0.100000001490116,
             entityInitialValues: {},
             hit: {},
@@ -955,6 +1079,7 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_power_attack_R_red',
+            faction: 'good',
             recycleDelaySeconds: 0.100000001490116,
             entityInitialValues: {},
             hit: {},
@@ -975,6 +1100,7 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_power_attack_L_red',
+            faction: 'good',
             recycleDelaySeconds: 0.100000001490116,
             entityInitialValues: {},
             hit: {},
@@ -995,6 +1121,7 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_power_attack_L_blue',
+            faction: 'good',
             recycleDelaySeconds: 0.100000001490116,
             entityInitialValues: {},
             hit: {},
@@ -1037,7 +1164,7 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
               ],
             },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'inputTarget' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -1193,10 +1320,21 @@ export const camilleChr_0033_camille_power_attack: SkillDefinition = {
 export const camilleChr_0033_camille_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1265,7 +1403,7 @@ export const camilleChr_0033_camille_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
   ],
   defaultTarget: 'enemy',
@@ -1287,6 +1425,7 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_normal_skill',
+            faction: 'good',
             recycleDelaySeconds: 2.96666669845581,
             entityInitialValues: {},
             hit: {},
@@ -1314,13 +1453,13 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                         action: {
                           kind: 'startTimeDilation',
                           parameters: {
-                            scope: 'entity',
+                            scope: 'hitStop',
+                            attacker: { kind: 'source' },
+                            targets: { kind: 'inputTarget' },
+                            affectType: 'Both',
                             durationSeconds: { kind: 'constant', value: 0.15 },
-                            slot: 'TimeDilation/Layer/Entity/HitStop',
                             priority: 10,
                             curve: { kind: 'named', key: 'common' },
-                            finishByAction: false,
-                            targets: ['enemy', 'caster'],
                           },
                         },
                         next: 'applyBuff_8',
@@ -1358,7 +1497,7 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                             source: { kind: 'source' },
                             inheritActionBlackboard: true,
                             dieWhenSourceDies: false,
-                            target: 'enemy',
+                            target: { kind: 'inputTarget' },
                             saveToContextKey: 'Camille_Bat',
                             blackboardAssignments: {
                               EntityBB_bat_duration: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1371,6 +1510,44 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                           },
                         },
                         next: 'modifyActionValue_11',
+                      },
+                      startTimeDilation_3: {
+                        action: {
+                          kind: 'startTimeDilation',
+                          parameters: {
+                            scope: 'hitStop',
+                            attacker: { kind: 'source' },
+                            targets: { kind: 'context', key: 'soul_tar' },
+                            affectType: 'Both',
+                            durationSeconds: { kind: 'constant', value: 0.15 },
+                            priority: 10,
+                            curve: { kind: 'named', key: 'common' },
+                          },
+                        },
+                        next: 'applyBuff_8',
+                      },
+                      applyBuff_4: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [{ buffId: 'buff_chr_0033_camille_normal_skill_bateffect' }],
+                            targets: { kind: 'context', key: 'Camille_Bat' },
+                            source: { kind: 'source' },
+                            inheritSourceSkillCastInfo: true,
+                          },
+                        },
+                        next: 'startTimeDilation_3',
+                      },
+                      modifyActionValue_5: {
+                        action: {
+                          kind: 'modifyActionValue',
+                          parameters: {
+                            key: 'EntityBB_bat_spawned',
+                            operation: 'assign',
+                            value: { kind: 'constant', value: 1 },
+                          },
+                        },
+                        next: 'applyBuff_4',
                       },
                       spawnAbilityEntity_6: {
                         action: {
@@ -1394,7 +1571,7 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                             },
                           },
                         },
-                        next: 'modifyActionValue_11',
+                        next: 'modifyActionValue_5',
                       },
                       copyContextTargets_7: {
                         action: {
@@ -1450,6 +1627,7 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
+                          checkPartTags: true,
                           target: { kind: 'inputTarget' },
                           tagQueryType: 'hasAny',
                           tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoul'],
@@ -1550,8 +1728,33 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      findTargets_6: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
           },
         },
         next: null,
@@ -1560,13 +1763,13 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'common' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1601,7 +1804,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1616,13 +1819,13 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'common' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1657,7 +1860,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1770,13 +1973,13 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.08 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1886,7 +2089,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -2005,6 +2208,13 @@ export const camilleChr_0033_camille_combo_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_1' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 28, endFrame: 29, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 47, endFrame: 48, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 48, endFrame: 49, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 49, endFrame: 50, sequence: { $sequence: 'findTargets_6' } },
     { startFrame: 19, endFrame: 21, sequence: { $sequence: 'repeatEachTick_17' } },
     { startFrame: 27, endFrame: 29, sequence: { $sequence: 'repeatEachTick_22' } },
     { startFrame: 47, endFrame: 50, sequence: { $sequence: 'repeatEachTick_opt4' } },
@@ -2043,8 +2253,15 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -2059,7 +2276,25 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
             priority: 100,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
+            ignoredTargets: [{ kind: 'owner' }],
+          },
+        },
+        next: null,
+      },
+      findTargets_4: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
           },
         },
         next: null,
@@ -2068,13 +2303,13 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'common' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -2109,7 +2344,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -2139,13 +2374,13 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'common' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -2185,7 +2420,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -2216,7 +2451,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -2344,9 +2579,11 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -2371,8 +2608,6 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'checkCondition_52',
@@ -2451,7 +2686,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -2565,6 +2800,17 @@ export const camilleChr_0033_camille_combo_skill_2: SkillDefinition = {
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'finishBuffsById_1' } },
     { startFrame: 0, endFrame: 24, sequence: { $sequence: 'startTimeDilation_2' } },
     { startFrame: 52, endFrame: 67, sequence: { $sequence: 'startTimeDilation_3' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 22, endFrame: 23, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 33, endFrame: 34, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 34, endFrame: 35, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 35, endFrame: 36, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 49, endFrame: 50, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 50, endFrame: 51, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 70, endFrame: 71, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 71, endFrame: 72, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 72, endFrame: 73, sequence: { $sequence: 'findTargets_4' } },
     { startFrame: 20, endFrame: 23, sequence: { $sequence: 'repeatEachTick_19' } },
     { startFrame: 33, endFrame: 36, sequence: { $sequence: 'repeatEachTick_26' } },
     { startFrame: 49, endFrame: 51, sequence: { $sequence: 'repeatEachTick_31' } },
@@ -2602,8 +2848,15 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -2618,7 +2871,25 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
             priority: 100,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
+            ignoredTargets: [{ kind: 'owner' }],
+          },
+        },
+        next: null,
+      },
+      findTargets_4: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
           },
         },
         next: null,
@@ -2627,13 +2898,13 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'common' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -2668,7 +2939,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -2698,13 +2969,13 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'common' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -2744,7 +3015,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -2775,7 +3046,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -2903,9 +3174,11 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -2930,8 +3203,6 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'checkCondition_52',
@@ -3010,7 +3281,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -3124,6 +3395,17 @@ export const camilleChr_0033_camille_normal_skill_2: SkillDefinition = {
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'finishBuffsById_1' } },
     { startFrame: 0, endFrame: 24, sequence: { $sequence: 'startTimeDilation_2' } },
     { startFrame: 52, endFrame: 67, sequence: { $sequence: 'startTimeDilation_3' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 22, endFrame: 23, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 33, endFrame: 34, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 34, endFrame: 35, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 35, endFrame: 36, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 49, endFrame: 50, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 50, endFrame: 51, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 70, endFrame: 71, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 71, endFrame: 72, sequence: { $sequence: 'findTargets_4' } },
+    { startFrame: 72, endFrame: 73, sequence: { $sequence: 'findTargets_4' } },
     { startFrame: 20, endFrame: 23, sequence: { $sequence: 'repeatEachTick_19' } },
     { startFrame: 33, endFrame: 36, sequence: { $sequence: 'repeatEachTick_26' } },
     { startFrame: 49, endFrame: 51, sequence: { $sequence: 'repeatEachTick_31' } },
@@ -3172,13 +3454,46 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
               ],
             },
             finishByAction: true,
-            ignoredTargets: ['caster'],
+            ignoredTargets: [{ kind: 'source' }],
           },
         },
         next: null,
       },
       hideUi_2: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      dealDamage_21: {
+      findTargets_3: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_21: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.05 },
+            priority: 10,
+            curve: { kind: 'named', key: 'common' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_22: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -3190,26 +3505,41 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
             features: ['canBreakWeakness'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_21',
       },
-      repeatEachTick_22: {
+      repeatEachTick_23: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 7,
               targetTriggerIntervalSeconds: 0.05,
             },
           },
-          body: { $sequence: 'dealDamage_21' },
+          body: { $sequence: 'dealDamage_22' },
         },
         next: null,
       },
-      dealDamage_23: {
+      startTimeDilation_24: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.5 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_25: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -3221,26 +3551,26 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
             features: ['canBreakWeakness'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_24',
       },
-      repeatEachTick_24: {
+      repeatEachTick_26: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: -1,
             },
           },
-          body: { $sequence: 'dealDamage_23' },
+          body: { $sequence: 'dealDamage_25' },
         },
         next: null,
       },
-      applyBuff_26: {
+      applyBuff_28: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -3253,14 +3583,14 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyElementalInfliction_27: {
+      applyElementalInfliction_29: {
         action: {
           kind: 'applyElementalInfliction',
-          parameters: { element: 'heat', isExtra: false },
+          parameters: { element: 'heat', isExtra: false, target: { kind: 'inputTarget' } },
         },
-        next: 'applyBuff_26',
+        next: 'applyBuff_28',
       },
-      changeResource_28: {
+      changeResource_30: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -3275,13 +3605,15 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_29: {
+      startTimeDilation_31: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.5 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -3306,13 +3638,11 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      dealDamage_30: {
+      dealDamage_32: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -3325,40 +3655,40 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
-        next: 'startTimeDilation_29',
+        next: 'startTimeDilation_31',
       },
-      once_31: {
-        action: { kind: 'once', parameters: {}, body: { $sequence: 'changeResource_28' } },
-        next: 'dealDamage_30',
+      once_33: {
+        action: { kind: 'once', parameters: {}, body: { $sequence: 'changeResource_30' } },
+        next: 'dealDamage_32',
       },
-      ifElse_32: {
+      ifElse_34: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'applyElementalInfliction_27' },
+          whenTrue: { $sequence: 'applyElementalInfliction_29' },
           whenFalse: { $sequence: null },
         },
-        next: 'once_31',
+        next: 'once_33',
       },
-      repeatEachTick_33: {
+      repeatEachTick_35: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: -1,
             },
           },
-          body: { $sequence: 'ifElse_32' },
+          body: { $sequence: 'ifElse_34' },
         },
         next: null,
       },
-      applyBuff_34: {
+      applyBuff_36: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -3375,7 +3705,7 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_35: {
+      applyBuff_37: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -3388,7 +3718,7 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_36: {
+      reachSkillOperableBoundary_38: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -3446,12 +3776,30 @@ export const camilleChr_0033_camille_ultimate_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 69, sequence: { $sequence: 'startTimeDilation_1' } },
     { startFrame: 0, endFrame: 69, sequence: { $sequence: 'hideUi_2' } },
-    { startFrame: 75, endFrame: 91, sequence: { $sequence: 'repeatEachTick_22' } },
-    { startFrame: 104, endFrame: 108, sequence: { $sequence: 'repeatEachTick_24' } },
-    { startFrame: 120, endFrame: 124, sequence: { $sequence: 'repeatEachTick_33' } },
-    { startFrame: 118, endFrame: 119, sequence: { $sequence: 'applyBuff_34' } },
-    { startFrame: 0, endFrame: 133, sequence: { $sequence: 'applyBuff_35' } },
-    { startFrame: 125, endFrame: 150, sequence: { $sequence: 'reachSkillOperableBoundary_36' } },
+    { startFrame: 75, endFrame: 76, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 76, endFrame: 77, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 77, endFrame: 78, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 78, endFrame: 79, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 79, endFrame: 80, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 80, endFrame: 81, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 81, endFrame: 82, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 82, endFrame: 83, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 83, endFrame: 84, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 84, endFrame: 85, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 85, endFrame: 86, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 86, endFrame: 87, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 87, endFrame: 88, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 88, endFrame: 89, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 89, endFrame: 90, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 90, endFrame: 91, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 104, endFrame: 108, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 120, endFrame: 124, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 75, endFrame: 91, sequence: { $sequence: 'repeatEachTick_23' } },
+    { startFrame: 104, endFrame: 108, sequence: { $sequence: 'repeatEachTick_26' } },
+    { startFrame: 120, endFrame: 124, sequence: { $sequence: 'repeatEachTick_35' } },
+    { startFrame: 118, endFrame: 119, sequence: { $sequence: 'applyBuff_36' } },
+    { startFrame: 0, endFrame: 133, sequence: { $sequence: 'applyBuff_37' } },
+    { startFrame: 125, endFrame: 150, sequence: { $sequence: 'reachSkillOperableBoundary_38' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -3778,8 +4126,9 @@ const camilleBuff1ActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0033_camille_combo_skill_2',
-            target: 'enemy',
+            target: { kind: 'battleMainTarget' },
             skipApplyCost: false,
             inheritSourceSkillCastInfo: false,
           },
@@ -4102,6 +4451,7 @@ const camilleBuff8ActionGraph = {
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0033_camille_normal_skill_last',
             source: 'actionOwner',
+            faction: 'good',
             recycleDelaySeconds: 2.96666669845581,
             targets: { kind: 'context', contextKey: 'resettar' },
             entityInitialValues: {},
@@ -4114,7 +4464,7 @@ const camilleBuff8ActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      applyBuff_9: {
+                      applyBuff_11: {
                         action: {
                           kind: 'applyBuff',
                           parameters: {
@@ -4126,7 +4476,7 @@ const camilleBuff8ActionGraph = {
                         },
                         next: null,
                       },
-                      modifyActionValue_5: {
+                      modifyActionValue_6: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
@@ -4137,32 +4487,47 @@ const camilleBuff8ActionGraph = {
                         },
                         next: null,
                       },
-                      castSkillDuringAction_6: {
+                      castSkillDuringAction_7: {
                         action: {
                           kind: 'castSkillDuringAction',
                           parameters: {
+                            caster: { kind: 'source' },
                             skillId: 'chr_0033_camille_normal_skill_abilityrange',
-                            target: 'enemy',
+                            target: { kind: 'inputTarget' },
                             skipApplyCost: false,
                             inheritSourceSkillCastInfo: false,
                           },
                         },
-                        next: 'modifyActionValue_5',
+                        next: 'modifyActionValue_6',
+                      },
+                      setAbilityEntityTarget_8: {
+                        action: {
+                          kind: 'setAbilityEntityTarget',
+                          parameters: { targets: { kind: 'inputTarget' } },
+                        },
+                        next: 'castSkillDuringAction_7',
                       },
                       castSkillDuringAction_3: {
                         action: {
                           kind: 'castSkillDuringAction',
                           parameters: {
+                            caster: { kind: 'source' },
                             skillId: 'chr_0033_camille_normal_skill_abilityrange',
-                            targetContextKey: 'soul_tar',
-                            target: 'context',
+                            target: { kind: 'context', key: 'soul_tar' },
                             skipApplyCost: false,
                             inheritSourceSkillCastInfo: false,
                           },
                         },
-                        next: 'modifyActionValue_5',
+                        next: 'modifyActionValue_6',
                       },
-                      copyContextTargets_4: {
+                      setAbilityEntityTarget_4: {
+                        action: {
+                          kind: 'setAbilityEntityTarget',
+                          parameters: { targets: { kind: 'context', key: 'soul_tar' } },
+                        },
+                        next: 'castSkillDuringAction_3',
+                      },
+                      copyContextTargets_5: {
                         action: {
                           kind: 'copyContextTargets',
                           parameters: {
@@ -4170,25 +4535,25 @@ const camilleBuff8ActionGraph = {
                             saveToContextKey: 'soul_tar',
                           },
                         },
-                        next: 'castSkillDuringAction_3',
-                      },
-                      ifElse_8: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-                          whenTrue: { $sequence: 'copyContextTargets_4' },
-                          whenFalse: { $sequence: 'castSkillDuringAction_6' },
-                        },
-                        next: null,
+                        next: 'setAbilityEntityTarget_4',
                       },
                       ifElse_10: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+                          whenTrue: { $sequence: 'copyContextTargets_5' },
+                          whenFalse: { $sequence: 'setAbilityEntityTarget_8' },
+                        },
+                        next: null,
+                      },
+                      ifElse_12: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
                           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                          whenTrue: { $sequence: 'ifElse_8' },
-                          whenFalse: { $sequence: 'applyBuff_9' },
+                          whenTrue: { $sequence: 'ifElse_10' },
+                          whenFalse: { $sequence: 'applyBuff_11' },
                         },
                         next: null,
                       },
@@ -4198,6 +4563,7 @@ const camilleBuff8ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
+                          checkPartTags: true,
                           target: { kind: 'inputTarget' },
                           tagQueryType: 'hasAny',
                           tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoul'],
@@ -4229,7 +4595,7 @@ const camilleBuff8ActionGraph = {
                 },
                 blackboard: {},
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_10' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_12' } },
                 ],
               },
             },
@@ -4257,16 +4623,27 @@ const camilleBuff8ActionGraph = {
         },
         next: 'ifElse_8',
       },
-      copyContextTargets_10: {
+      findTargets_10: {
         action: {
-          kind: 'copyContextTargets',
+          kind: 'findTargets',
           parameters: {
-            source: {
-              kind: 'enemyByTags',
-              tagQueryType: 'exceptAny',
-              tags: ['SelectCategory/Unmarkable'],
+            owner: { kind: 'owner' },
+            center: { kind: 'source' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'exclude',
+                targets: {
+                  kind: 'enemyByTags',
+                  scope: 'global',
+                  reverse: true,
+                  tagQueryType: 'exceptAny',
+                  tags: ['SelectCategory/Unmarkable'],
+                },
+                excludeTargets: { kind: 'context', key: 'lasttar' },
+              },
+              count: 128,
             },
-            excludeTargets: { kind: 'context', key: 'lasttar' },
             saveToContextKey: 'resettar',
           },
         },
@@ -4302,7 +4679,7 @@ const camilleBuff8: SkillBuffDefinition = {
   attributeModifiers: [],
   lifecycleSequences: {
     start: [{ $sequence: 'findTargets_2' }],
-    finish: [{ $sequence: 'copyContextTargets_10' }],
+    finish: [{ $sequence: 'findTargets_10' }],
   },
   actionGraph: camilleBuff8ActionGraph,
 };
@@ -4963,12 +5340,20 @@ export const camille: OperatorDefinition = {
                   },
                   next: null,
                 },
-                mergeContextTargets_5: {
+                findTargets_5: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: null,
@@ -4993,7 +5378,11 @@ export const camille: OperatorDefinition = {
                 applyElementalInfliction_7: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'heat', isExtra: false },
+                    parameters: {
+                      element: 'heat',
+                      isExtra: false,
+                      target: { kind: 'context', key: 'tar' },
+                    },
                   },
                   next: 'dealDamage_6',
                 },
@@ -5026,7 +5415,7 @@ export const camille: OperatorDefinition = {
             { startFrame: 0, endFrame: 2000, sequence: { $sequence: 'applyBuff_2' } },
             { startFrame: 0, endFrame: 2000, sequence: { $sequence: 'applyBuff_3' } },
             { startFrame: 3, endFrame: 6, sequence: { $sequence: 'applyBuff_4' } },
-            { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_5' } },
+            { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_5' } },
             { startFrame: 0, endFrame: 1, sequence: { $sequence: 'applyElementalInfliction_7' } },
           ],
         },
@@ -5185,8 +5574,11 @@ export const camille: OperatorDefinition = {
                     kind: 'findTargets',
                     parameters: {
                       owner: { kind: 'owner' },
+                      center: { kind: 'source' },
                       query: {
                         kind: 'enemyByTags',
+                        scope: 'global',
+                        reverse: true,
                         tagQueryType: 'hasAny',
                         tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
                       },

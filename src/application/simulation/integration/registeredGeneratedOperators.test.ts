@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { skillFixture, type SkillFixtureProperties } from '../../../test/skillFixture';
 import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
@@ -404,8 +405,8 @@ it('梨诺战技接连携保留演唱，转入终结技时结束演唱且导电�
 
 it('真实失衡资格优先选出处决，命中消费后仍失衡但可以普攻', async () => {
   const scenario = createEmptyScenario('finisher-selection', 'finisher');
-  scenario.enemy.editable.stagger.maximum = 1;
-  scenario.enemy.editable.stagger.brokenDurationFrames = 1200;
+  firstScenarioEnemy(scenario).enemy.editable.stagger.maximum = 1;
+  firstScenarioEnemy(scenario).enemy.editable.stagger.brokenDurationFrames = 1200;
   scenario.tracks[0] = {
     id: 'perlica',
     operator: {
@@ -792,7 +793,7 @@ describe('registered generated operators', () => {
   it('runs Liino combo end custom event through the native deferred-cast slot', () => {
     const scenario = createEmptyScenario('scenario:liino:deferred-combo', '梨诺连携延迟施法回归');
     scenario.battle.durationFrames = 120;
-    scenario.enemy.editable.hp = 10_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
     scenario.tracks[0] = {
       id: 'track:liino',
       operator: {
@@ -865,7 +866,7 @@ describe('registered generated operators', () => {
       // CreateBuff must not recursively restart the completed native guard.
       const scenario = createEmptyScenario('scenario:liino:ultimate', '梨诺终结技生产回归');
       scenario.battle.durationFrames = 650;
-      scenario.enemy.editable.hp = 10_000_000;
+      firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
       scenario.tracks[0] = {
         id: 'track:liino',
         operator: {
@@ -977,7 +978,7 @@ describe('registered generated operators', () => {
         'Ardelia 潜能一生产回归',
       );
       scenario.battle.durationFrames = 80;
-      scenario.enemy.editable.hp = 10_000_000;
+      firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
       scenario.tracks[0] = {
         id: 'track:ardelia',
         operator: {
@@ -1060,7 +1061,7 @@ describe('registered generated operators', () => {
         'Catcher 潜能一生产回归',
       );
       scenario.battle.durationFrames = 150;
-      scenario.enemy.editable.hp = 10_000_000;
+      firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
       scenario.tracks[0] = {
         id: 'track:catcher',
         operator: {
@@ -1130,7 +1131,7 @@ describe('registered generated operators', () => {
   it('runs Avywenna ultimate block callback, lance spawn, and direct hit through production', () => {
     const scenario = createEmptyScenario('scenario:avywenna:ultimate', 'Avywenna 终结技生产回归');
     scenario.battle.durationFrames = 90;
-    scenario.enemy.editable.hp = 10_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
     scenario.tracks[0] = {
       id: 'track:avywenna:ultimate',
       operator: {
@@ -1208,7 +1209,7 @@ describe('registered generated operators', () => {
   it('runs Avywenna combo-lance return callbacks through the compiled production skill', () => {
     let scenario = createEmptyScenario('scenario:avywenna:return', 'Avywenna 回枪生产回归');
     scenario.battle.durationFrames = 120;
-    scenario.enemy.editable.hp = 10_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
     scenario.tracks[0] = {
       id: 'track:avywenna:return',
       operator: {
@@ -1338,7 +1339,7 @@ describe('registered generated operators', () => {
     const run = (withUltimate: boolean) => {
       const scenario = createEmptyScenario(`scenario:xaihi:${withUltimate}`, '熙海终结技增幅回归');
       scenario.battle.durationFrames = 180;
-      scenario.enemy.editable.hp = 10_000_000;
+      firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
       scenario.tracks[0] = {
         id: 'track:xaihi',
         operator: {
@@ -1421,7 +1422,7 @@ describe('registered generated operators', () => {
       '赛希支援晶体连携窗口回归',
     );
     scenario.battle.durationFrames = 180;
-    scenario.enemy.editable.hp = 10_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
     scenario.tracks[0] = {
       id: 'track:xaihi:crystal-combo-window',
       operator: {
@@ -1512,7 +1513,7 @@ describe('registered generated operators', () => {
     const run = (talentLevel: number) => {
       const scenario = createEmptyScenario(`scenario:dapan:${talentLevel}`, '大潘压制天赋回归');
       scenario.battle.durationFrames = 660;
-      scenario.enemy.editable.hp = 10_000_000;
+      firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
       scenario.tracks[0] = {
         id: 'track:dapan',
         operator: {
@@ -1703,7 +1704,7 @@ describe('registered generated operators', () => {
         '莱万汀天赋一默认仓库回归',
       );
       scenario.battle.durationFrames = 180;
-      scenario.enemy.editable.resistances.heat = 50;
+      firstScenarioEnemy(scenario).enemy.editable.resistances.heat = 50;
       scenario.tracks[0] = {
         id: 'track:laevatain',
         operator: {
@@ -1943,7 +1944,7 @@ describe('registered generated operators', () => {
   it('runs all four Fluorite ultimate projectile hits with the native per-target marker', () => {
     const scenario = createEmptyScenario('scenario:fluorite:ultimate', '萤石终结技完整回归');
     scenario.battle.durationFrames = 120;
-    scenario.enemy.editable.hp = 10_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
     scenario.tracks[0] = {
       id: 'track:fluorite',
       operator: {
@@ -2256,7 +2257,7 @@ describe('registered generated operators', () => {
         '卡米拉曜夜治疗增伤生产回归',
       );
       scenario.battle.durationFrames = 300;
-      scenario.enemy.editable.hp = 10_000_000;
+      firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
       scenario.tracks[0] = {
         id: 'track:camille',
         operator: {
@@ -2647,7 +2648,7 @@ describe('registered generated operators', () => {
       '庄方宜普攻独立输入回归',
     );
     scenario.battle.durationFrames = 60;
-    scenario.enemy.editable.hp = 10_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
     scenario.tracks[0] = {
       id: 'track:zhuang-fangyi',
       operator: {
@@ -2821,7 +2822,7 @@ describe('registered generated operators', () => {
       '庄方宜强化普攻命中回归',
     );
     scenario.battle.durationFrames = 90;
-    scenario.enemy.editable.hp = 10_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
     scenario.tracks[0] = {
       id: 'track:zhuang-fangyi',
       operator: {
@@ -2906,7 +2907,7 @@ describe('registered generated operators', () => {
         initialSp: 100,
         spRecoveryPerSecond: 0,
       };
-      scenario.enemy.editable.hp = 10_000_000;
+      firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
       scenario.tracks[0] = {
         id: 'track:zhuang-fangyi',
         operator: {

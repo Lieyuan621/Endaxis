@@ -1,6 +1,9 @@
 import type { CompiledCondition } from '../../compiler/compiledGraphData';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import {
+  firstRuntimeEntityTarget,
+  type RuntimeTargetRef,
+} from '../../game-data/logicalAbilityEntity';
 import type { CombatTarget } from '../../../../packages/game-data-contract/src/primitives';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
@@ -8,7 +11,8 @@ import type { CombatVitals } from './combatVitals';
 import { compareCombatNumbers } from '../../math/combatNumbers';
 
 export interface CombatVitalsConditionDependencies {
-  readonly resolveTarget: (target: CombatTarget, buffSourceId?: string) => CombatVitals;
+  readonly usesDummyHealthChecks?: (target: RuntimeTargetRef) => boolean;
+  readonly resolveTarget: (target: CombatTarget, buffSourceId?: string) => CombatVitals | undefined;
   readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']>;
   readonly resolveVitals: (
     target: RuntimeTargetRef,
@@ -31,13 +35,17 @@ export class CombatVitalsConditionExecutor implements CombatOperationExecutor {
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'targetStaggered') {
-      return this.dependencies.resolveTarget(condition.target, context?.buffSourceId)
-        .hasPoiseBrokenTag;
+      return (
+        this.dependencies.resolveTarget(condition.target, context?.buffSourceId)
+          ?.hasPoiseBrokenTag ?? false
+      );
     }
     if (condition.kind !== 'healthCompare' && condition.kind !== 'poiseCompare')
       return this.dependencies.delegate.evaluate(condition, context);
     if (!context) throw new Error(`${condition.kind} requires a combat operation context`);
-    const target = this.dependencies.queryTargets(condition.target, context)[0];
+    const target = firstRuntimeEntityTarget(
+      this.dependencies.queryTargets(condition.target, context),
+    );
     const vitals =
       target === undefined
         ? undefined
@@ -47,16 +55,25 @@ export class CombatVitalsConditionExecutor implements CombatOperationExecutor {
           );
     if (condition.kind === 'healthCompare') {
       const threshold = resolveActionValueOperand(condition.value, context.blackboard);
+      const useDummyChecks =
+        target !== undefined && (this.dependencies.usesDummyHealthChecks?.(target) ?? true);
       // 普通敌人归零后仍走存活分支；缺失目标或生命账本保持原有比较语义。
       if (
         target?.kind === 'enemy' &&
+        useDummyChecks &&
         vitals !== undefined &&
         condition.operator === 'lessOrEqual' &&
         threshold === 0
       )
         return false;
       // 木桩既有存活门禁简化保持不变；空目标不放行，其他比较照常读取真实账本。
-      if (vitals !== undefined && condition.operator === 'greater' && threshold === 0) return true;
+      if (
+        useDummyChecks &&
+        vitals !== undefined &&
+        condition.operator === 'greater' &&
+        threshold === 0
+      )
+        return true;
       const health = vitals?.health ?? 0;
       const current = condition.valueType === 'ratio' ? health / (vitals?.maxHealth ?? 0) : health;
       return compareCombatNumbers(current, threshold, condition.operator);

@@ -1,3 +1,4 @@
+import { firstScenarioEnemy, levelEnemies } from './level';
 import { skillFixture } from '../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import { createEmptyProject, createEmptyScenario } from './createProject';
@@ -8,6 +9,55 @@ import {
 } from './serialization';
 import { PROJECT_SCHEMA_VERSION, type TrackDocument } from './schema';
 import { validateProjectDocument } from './validation';
+
+it.each([undefined, false, true])(
+  '自动死亡 %s 的多敌人配置可保存加载，重复身份和无效帧被拒绝',
+  automaticDeath => {
+    const project = createEmptyProject({ createdWith: 'test' });
+    const scenario = project.scenarios[0]!;
+    if (automaticDeath !== undefined) scenario.battle.enemyAutomaticDeath = automaticDeath;
+    firstScenarioEnemy(scenario).enemy.lifecycle = {
+      spawnFrame: -30,
+      presenceChanges: [],
+      deathFrame: 90,
+    };
+    scenario.level = {
+      kind: 'multiEnemies',
+      enemies: [
+        firstScenarioEnemy(scenario),
+        ...[
+          {
+            id: 'a',
+            name: '敌人 A',
+            enemy: {
+              ...structuredClone(firstScenarioEnemy(scenario).enemy),
+              lifecycle: {
+                spawnFrame: 15,
+                presenceChanges: [
+                  { id: 'leave', frame: 30, present: false },
+                  { id: 'enter', frame: 60, present: true },
+                ],
+                deathFrame: 120,
+              },
+            },
+          },
+        ].map(item => ({ ...item, id: 'enemy:' + item.id })),
+      ],
+    };
+    const loaded = parseProjectDocument(JSON.parse(serializeProjectDocument(project)));
+    expect(loaded.ok).toBe(true);
+    if (!loaded.ok) throw new Error('expected valid project');
+    expect(loaded.value.scenarios[0]).toEqual(scenario);
+    scenario.level.enemies.push(structuredClone(levelEnemies(scenario.level).slice(1)[0]!));
+    expect(validateProjectDocument(project).ok).toBe(false);
+    levelEnemies(scenario.level).slice(1)[1]!.id = 'b';
+    levelEnemies(scenario.level).slice(1)[1]!.enemy.lifecycle = {
+      spawnFrame: 0.5,
+      presenceChanges: [],
+    };
+    expect(validateProjectDocument(project).ok).toBe(false);
+  },
+);
 
 it('旧方案统一距离不再参与加载和保存，且不修改导入对象', () => {
   const project = createEmptyProject({ createdWith: 'test' });
@@ -28,8 +78,8 @@ it('旧方案统一距离不再参与加载和保存，且不修改导入对象'
 
 it('旧存档的敌人 edited 字段不参与校验，新存档不再生成该字段', () => {
   const project = createEmptyProject({ createdWith: 'test' });
-  expect(project.scenarios[0]!.enemy).not.toHaveProperty('edited');
-  const enemy = { ...project.scenarios[0]!.enemy, edited: 'obsolete value' };
+  expect(firstScenarioEnemy(project.scenarios[0]!).enemy).not.toHaveProperty('edited');
+  const enemy = { ...firstScenarioEnemy(project.scenarios[0]!).enemy, edited: 'obsolete value' };
   expect(
     parseProjectDocument({ ...project, scenarios: [{ ...project.scenarios[0]!, enemy }] }).ok,
   ).toBe(true);
@@ -319,8 +369,8 @@ describe('current project document', () => {
 
     const malformed = JSON.parse(serializeProjectDocument(project));
     malformed.scenarios[0].tracks[0].operator.promoted = 'yes';
-    malformed.scenarios[0].enemy.rank = 'advanced';
-    malformed.scenarios[0].enemy.editable.finisherMultiplier = 'one';
+    malformed.scenarios[0].level.enemy.enemy.rank = 'advanced';
+    malformed.scenarios[0].level.enemy.enemy.editable.finisherMultiplier = 'one';
     malformed.scenarios[0].battle.controlSwitches.push({
       id: 'switch:invalid',
       frame: 30,
@@ -349,11 +399,11 @@ describe('current project document', () => {
             message: 'expected a boolean',
           },
           {
-            path: '$.scenarios[0].enemy.rank',
+            path: '$.scenarios[0].level.enemy.enemy.rank',
             message: 'unknown enemy rank',
           },
           {
-            path: '$.scenarios[0].enemy.editable.finisherMultiplier',
+            path: '$.scenarios[0].level.enemy.enemy.editable.finisherMultiplier',
             message: 'expected a finite number',
           },
           {
@@ -733,16 +783,16 @@ describe('current project document', () => {
 
   it('rejects other Next schema versions instead of treating them as legacy input', () => {
     const project = createEmptyProject({ createdWith: 'test' });
-    const oldNext = { ...project, schemaVersion: PROJECT_SCHEMA_VERSION - 1 };
+    const oldNext = { ...project, schemaVersion: PROJECT_SCHEMA_VERSION + 1 };
 
     expect(inspectProjectInput(oldNext)).toEqual({
       kind: 'unsupported',
-      schemaVersion: PROJECT_SCHEMA_VERSION - 1,
+      schemaVersion: PROJECT_SCHEMA_VERSION + 1,
     });
     expect(parseProjectDocument(oldNext)).toEqual({
       ok: false,
       kind: 'unsupported-version',
-      schemaVersion: PROJECT_SCHEMA_VERSION - 1,
+      schemaVersion: PROJECT_SCHEMA_VERSION + 1,
     });
   });
 });

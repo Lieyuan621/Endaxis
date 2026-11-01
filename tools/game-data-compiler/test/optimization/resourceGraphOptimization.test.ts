@@ -869,7 +869,7 @@ it('Buff 裁剪保留跨生命周期、参数和外部查询读取，只删除�
   const finish = graph.sequence([
     {
       kind: 'setCharacterPassiveUiValue',
-      parameters: { target: 'caster', value: { kind: 'blackboard', key: 'later' } },
+      parameters: { target: { kind: 'source' }, value: { kind: 'blackboard', key: 'later' } },
     },
   ]);
   const definitions = {
@@ -933,7 +933,7 @@ it('被动技能跨启用和事件共用变量，保留养成补丁与实体共�
     {
       kind: 'setCharacterPassiveUiValue',
       parameters: {
-        target: 'caster',
+        target: { kind: 'source' },
         value: { kind: 'blackboard', key: 'eventValue' },
       },
     },

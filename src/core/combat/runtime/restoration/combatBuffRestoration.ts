@@ -38,6 +38,8 @@ export interface CombatBuffRestorationOptions {
 export interface RestoredCombatBuffTargetDirectoryOptions {
   readonly enemyState: BuffContainerState<string> | null;
   readonly enemyTarget: BuffOperationTarget;
+  readonly additionalEnemyStates?: ReadonlyMap<string, BuffContainerState<string>>;
+  readonly additionalEnemyTargets?: ReadonlyMap<string, BuffOperationTarget>;
   readonly operatorStates: ReadonlyMap<string, BuffContainerState<string> | null>;
   readonly operatorTargets: ReadonlyMap<string, BuffOperationTarget>;
   readonly abilityEntities: LogicalAbilityEntityRuntime;
@@ -69,7 +71,10 @@ export function collectRestoredCombatBuffTargets(
     targets.set(ownerId, target);
   };
 
-  add('enemy', options.enemyState, options.enemyTarget);
+  add(options.enemyTarget.ownerId, options.enemyState, options.enemyTarget);
+  for (const [id, state] of options.additionalEnemyStates ?? []) {
+    add(id, state, options.additionalEnemyTargets?.get(id));
+  }
   for (const [operatorId, state] of options.operatorStates) {
     add(operatorId, state, options.operatorTargets.get(operatorId));
   }

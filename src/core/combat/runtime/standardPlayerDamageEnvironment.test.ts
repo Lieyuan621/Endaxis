@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { createActionGraphBuilder } from '../../../../tools/game-data-compiler/src/compiler/actions/actionGraphBuilder';
 import type { ActionGraphDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
 import { extractResourceDataNodes } from '../../../../tools/game-data-compiler/src/compiler/extractGraphDataNodes';
@@ -672,10 +673,18 @@ it.each([
       resolveTarget: () => target,
       resolveEventTarget: () => target,
       queryTargets: (query, context) =>
-        new TargetContextOperationExecutor('operator', {
-          execute: () => false,
-          evaluate: () => false,
-        }).queryTargets(query, context),
+        new TargetContextOperationExecutor(
+          'operator',
+          {
+            execute: () => false,
+            evaluate: () => false,
+          },
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+        ).queryTargets(query, context),
       delegate: { execute: () => false, evaluate: () => false },
     });
     const common = {
@@ -970,10 +979,18 @@ function healQueries(
   controlledId: string,
   casterId = 'operator',
 ): NonNullable<CombatOperationExecutorContext['queryTargets']> {
-  const queries = new TargetContextOperationExecutor(casterId, {
-    execute: () => false,
-    evaluate: () => false,
-  });
+  const queries = new TargetContextOperationExecutor(
+    casterId,
+    {
+      execute: () => false,
+      evaluate: () => false,
+    },
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+  );
   return (query, context) =>
     query.kind === 'mainCharacter'
       ? [{ kind: 'operator', operatorId: controlledId }]
@@ -1060,6 +1077,7 @@ function createEnvironment(
   randomMode?: 'expected' | 'sampled',
 ): StandardPlayerDamageEnvironment {
   return new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     criticalSamples: { nextCriticalSample: () => criticalSample },
     ...(randomMode === undefined ? {} : { randomMode }),
     resolveNonRandomRuntimeSnapshot: () => ({
@@ -1070,6 +1088,98 @@ function createEnvironment(
     enemyVitals: createEnemyCombatVitals(enemy),
   });
 }
+
+it('敌人实例独立持有生命和同名 Buff，切面恢复保留各自账本', () => {
+  const base = createEnvironment();
+  const environment = new StandardPlayerDamageEnvironment({
+    ...base.options,
+    additionalEnemies: new Map([
+      ['enemy:a', { program: testEnemy, vitals: createEnemyCombatVitals(testEnemy) }],
+      ['enemy:b', { program: testEnemy, vitals: createEnemyCombatVitals(testEnemy) }],
+    ]),
+  });
+  const damageContext: CombatOperationExecutorContext = {
+    ...createContext(),
+    queryTargets: (_query, context) =>
+      context.actionInputTargets?.[0] === undefined ? [] : [context.actionInputTargets?.[0]],
+  };
+  bindBattleWithoutProjectiles(environment, damageContext);
+  const a = environment.enemyInstance('enemy:a')!;
+  const b = environment.enemyInstance('enemy:b')!;
+  const originalMaximum = a.vitals.maxHealth;
+  const executor = environment.runtimeOptions.createOperationExecutor(damageContext);
+  const primaryHealth = environment.enemyVitals.health;
+  const bHealth = b.vitals.health;
+  const aHealth = a.vitals.health;
+  executor.execute(
+    { ...damageStep, parameters: { ...damageStep.parameters, target: 'actionInputTarget' } },
+    {
+      blackboard: new ActionBlackboard(),
+      actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy:a' }),
+    },
+  );
+  expect(a.vitals.health).toBeLessThan(aHealth);
+  const primaryPoise = environment.enemyVitals.poise;
+  const otherPoise = b.vitals.poise;
+  const targetPoise = a.vitals.poise;
+  executor.execute(
+    { kind: 'dealStagger', parameters: { value: 10, target: 'actionInputTarget' } },
+    {
+      blackboard: new ActionBlackboard(),
+      actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy:a' }),
+    },
+  );
+  expect(a.vitals.poise).toBeLessThan(targetPoise);
+  expect(b.vitals.poise).toBe(otherPoise);
+  expect(environment.enemyVitals.poise).toBe(primaryPoise);
+  expect(b.vitals.health).toBe(bHealth);
+  expect(environment.enemyVitals.health).toBe(primaryHealth);
+  const buff = (amount: number) => ({
+    id: 'same-buff',
+    stackingType: 'unlimited' as const,
+    attributeModifiers: [
+      {
+        attribute: 'MaxHp',
+        timing: 'runtime' as const,
+        values: attributeModifierValues('baseAddition', amount),
+      },
+    ],
+  });
+  a.buffs.add(buff(100), 'enemy:a');
+  b.buffs.add(buff(200), 'enemy:b');
+  a.vitals.takeDamage(30);
+  expect(a.vitals.maxHealth).toBe(originalMaximum + 100);
+  expect(b.vitals.maxHealth).toBe(originalMaximum + 200);
+  expect(
+    environment.runtimeOptions.readSourceAttributeValue!('enemy:b', {
+      useFloor: false,
+      divisor: { kind: 'constant', value: 1 },
+      multiplier: { kind: 'constant', value: 1 },
+      base: { kind: 'constant', value: 0 },
+      targetKey: 'hp',
+      attribute: { kind: 'specific', key: 'maxHealth' },
+      stage: 'finalNonConverted',
+    }),
+  ).toBe(originalMaximum + 200);
+  expect(environment.enemyVitals.maxHealth).toBe(originalMaximum);
+  const saved = structuredClone(environment.runtimeState);
+  const restored = new StandardPlayerDamageEnvironment({
+    ...environment.options,
+    enemyVitals: CombatVitals.bindRuntimeState(saved.enemyVitals),
+    restoredState: saved,
+  });
+  bindBattleWithoutProjectiles(restored, createContext());
+  const restoredA = restored.enemyInstance('enemy:a')!;
+  expect(restoredA.vitals.health).toBe(a.vitals.health);
+  expect(restoredA.vitals.maxHealth).toBe(a.vitals.maxHealth);
+  restoredA.vitals.takeDamage(50);
+  expect(restoredA.vitals.health).toBe(a.vitals.health - 50);
+  expect(restored.enemyInstance('enemy:b')!.vitals.health).toBe(b.vitals.health);
+  expect(restored.enemyVitals.health).toBe(environment.enemyVitals.health);
+  expect(restored.runtimeState.enemyInstances!.get('enemy:a')!.buffs).toBe(
+    restoredA.buffs.runtimeState,
+  );
+});
 
 it('显式攻击者使用所选干员的面板和事件端口，保留原技能身份', () => {
   const context = createContext();
@@ -1469,7 +1579,7 @@ it.each(['criticalRate', 'criticalDamageIncrease'] as const)(
         blackboard,
         actionOwnerId: 'operator',
         actionSourceId: 'operator',
-        actionInputTarget: { kind: 'enemy' },
+        actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' }),
       },
     );
     sequence.executeInstant({});
@@ -1500,6 +1610,7 @@ it.each(['burst', 'buff'] as const)(
         program: { ...base.program, statModifiers: { criticalRate: 0.8 } },
       };
       const environment = new StandardPlayerDamageEnvironment({
+        primaryEnemyId: 'enemy',
         criticalSamples: { nextCriticalSample },
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -1867,6 +1978,7 @@ function createInflictionEnvironment(): StandardPlayerDamageEnvironment {
     ],
   };
   return new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     criticalSamples: { nextCriticalSample: () => 1 },
     resolveNonRandomRuntimeSnapshot: () => ({
       runtimeExtensionMultiplier: 1,
@@ -1895,6 +2007,7 @@ function createAttachmentOnlyEnvironment(): StandardPlayerDamageEnvironment {
     ],
   };
   return new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     criticalSamples: { nextCriticalSample: () => 1 },
     resolveNonRandomRuntimeSnapshot: () => ({
       runtimeExtensionMultiplier: 1,
@@ -1934,6 +2047,7 @@ describe('StandardPlayerDamageEnvironment', () => {
       ] as const) {
         const context = createContext();
         const environment = new StandardPlayerDamageEnvironment({
+          primaryEnemyId: 'enemy',
           criticalSamples: { nextCriticalSample: () => 1 },
           resolveNonRandomRuntimeSnapshot: () => ({
             runtimeExtensionMultiplier: 1,
@@ -2030,8 +2144,8 @@ describe('StandardPlayerDamageEnvironment', () => {
           onPendingComboCondition: (ownerId, program, value) => {
             expect(ownerId).toBe('owner');
             expect(value).toMatchObject({
-              inputTarget: { kind: 'operator', operatorId: 'operator' },
-              triggerTarget: { kind: 'enemy' },
+              inputTargets: [{ kind: 'operator', operatorId: 'operator' }],
+              triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
               assignPairs: { consumed_type: 0, consumed_layer: 0 },
             });
             pending.push(program.key);
@@ -2067,6 +2181,7 @@ describe('StandardPlayerDamageEnvironment', () => {
     const element = 'heat';
     const context = createContext();
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -2130,7 +2245,9 @@ describe('StandardPlayerDamageEnvironment', () => {
         isOwnerSilenced: () => false,
         currentComboCooldown: () => ({ oneReady: true, maxPassedTime: 0, startCdFrame: 0 }),
         resolveTarget: id =>
-          id === 'enemy' ? { kind: 'enemy' } : { kind: 'operator', operatorId: id },
+          id === 'enemy'
+            ? { kind: 'enemy', enemyId: 'enemy' }
+            : { kind: 'operator', operatorId: id },
         onPending: p => {
           order.push(`${type}:combo`);
           pending.push(p);
@@ -2159,8 +2276,8 @@ describe('StandardPlayerDamageEnvironment', () => {
     );
     expect(pending).toHaveLength(4);
     expect(pending[1]).toMatchObject({
-      inputTarget: { kind: 'operator', operatorId: 'operator' },
-      triggerTarget: { kind: 'enemy' },
+      inputTargets: [{ kind: 'operator', operatorId: 'operator' }],
+      triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
       assignPairs: {},
     });
   });
@@ -2337,7 +2454,15 @@ describe('StandardPlayerDamageEnvironment', () => {
           resolveTarget: target =>
             target === 'enemy' ? environment.runtimeOptions.enemyBuffRuntime! : operatorBuffs,
           queryTargets: (query, context) =>
-            new TargetContextOperationExecutor('operator', executor).queryTargets(query, context),
+            new TargetContextOperationExecutor(
+              'operator',
+              executor,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+            ).queryTargets(query, context),
           resolveEventTarget: id =>
             id === 'enemy' ? environment.runtimeOptions.enemyBuffRuntime! : operatorBuffs,
           delegate: executor,
@@ -2589,7 +2714,15 @@ describe('StandardPlayerDamageEnvironment', () => {
         new CombatVitalsConditionExecutor({
           resolveTarget: target => environment.runtimeOptions.resolveVitals!(target, 'operator'),
           queryTargets: (query, context) =>
-            new TargetContextOperationExecutor('operator', executor).queryTargets(query, context),
+            new TargetContextOperationExecutor(
+              'operator',
+              executor,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+            ).queryTargets(query, context),
           resolveVitals: target =>
             environment.runtimeOptions.resolveVitals!(
               target.kind === 'enemy' ? 'enemy' : 'caster',
@@ -2664,6 +2797,7 @@ describe('StandardPlayerDamageEnvironment', () => {
   it('shares the scene-injected vitals instance across damage writes and poise', () => {
     const vitals = createEnemyCombatVitals(testEnemy);
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -2686,6 +2820,7 @@ describe('StandardPlayerDamageEnvironment', () => {
 
   it('creates full-health operator ledgers and resolves the controlled heal target', () => {
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -2752,6 +2887,7 @@ describe('StandardPlayerDamageEnvironment', () => {
 
   it('completes healer subscriptions before receiver publication and shares each original event', () => {
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -2849,7 +2985,15 @@ describe('StandardPlayerDamageEnvironment', () => {
     const conditions = new CombatVitalsConditionExecutor({
       resolveTarget: target => environment.runtimeOptions.resolveVitals!(target, 'operator'),
       queryTargets: (query, context) =>
-        new TargetContextOperationExecutor('operator', executor).queryTargets(query, context),
+        new TargetContextOperationExecutor(
+          'operator',
+          executor,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+        ).queryTargets(query, context),
       resolveVitals: target =>
         environment.runtimeOptions.resolveVitals!(
           target.kind === 'enemy' ? 'enemy' : 'caster',
@@ -3168,6 +3312,7 @@ describe('StandardPlayerDamageEnvironment', () => {
     const context = createContext();
     const receipt = context.receipt as CombatReceiptCollector;
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -3250,6 +3395,7 @@ describe('StandardPlayerDamageEnvironment', () => {
       receipt,
     };
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -3315,6 +3461,7 @@ describe('StandardPlayerDamageEnvironment', () => {
   it('fails explicitly when a burst triggers without SkillSetting data', () => {
     const context = createContext();
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -3932,7 +4079,7 @@ describe('StandardPlayerDamageEnvironment', () => {
       isOwnerSilenced: () => false,
       currentComboCooldown: () => ({ oneReady: true, maxPassedTime: 0, startCdFrame: 0 }),
       resolveTarget: id =>
-        id === 'enemy' ? { kind: 'enemy' } : { kind: 'operator', operatorId: id },
+        id === 'enemy' ? { kind: 'enemy', enemyId: 'enemy' } : { kind: 'operator', operatorId: id },
       onPending: pending,
     });
 
@@ -3944,8 +4091,8 @@ describe('StandardPlayerDamageEnvironment', () => {
     ).toBe(true);
     expect(pending).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({
-        inputTarget: { kind: 'operator', operatorId: 'operator' },
-        triggerTarget: { kind: 'enemy' },
+        inputTargets: [{ kind: 'operator', operatorId: 'operator' }],
+        triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
       }),
     );
   });
@@ -3984,19 +4131,27 @@ describe('StandardPlayerDamageEnvironment', () => {
           },
         },
       ),
-      operations: new TargetContextOperationExecutor('operator', {
-        execute: () => {
-          throw new Error('unexpected combo condition operation');
+      operations: new TargetContextOperationExecutor(
+        'operator',
+        {
+          execute: () => {
+            throw new Error('unexpected combo condition operation');
+          },
+          evaluate: () => {
+            throw new Error('unexpected delegated combo condition');
+          },
         },
-        evaluate: () => {
-          throw new Error('unexpected delegated combo condition');
-        },
-      }),
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+      ),
       isOwnerAlive: () => true,
       isOwnerSilenced: () => false,
       currentComboCooldown: () => ({ oneReady: true, maxPassedTime: 0, startCdFrame: 0 }),
       resolveTarget: id =>
-        id === 'enemy' ? { kind: 'enemy' } : { kind: 'operator', operatorId: id },
+        id === 'enemy' ? { kind: 'enemy', enemyId: 'enemy' } : { kind: 'operator', operatorId: id },
       onPending: pending,
     });
 
@@ -4014,8 +4169,8 @@ describe('StandardPlayerDamageEnvironment', () => {
 
     expect(pending).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({
-        inputTarget: { kind: 'operator', operatorId: 'operator' },
-        triggerTarget: { kind: 'enemy' },
+        inputTargets: [{ kind: 'operator', operatorId: 'operator' }],
+        triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
       }),
     );
   });
@@ -4069,7 +4224,7 @@ describe('StandardPlayerDamageEnvironment', () => {
       isOwnerSilenced: () => false,
       currentComboCooldown: () => ({ oneReady: true, maxPassedTime: 0, startCdFrame: 0 }),
       resolveTarget: id =>
-        id === 'enemy' ? { kind: 'enemy' } : { kind: 'operator', operatorId: id },
+        id === 'enemy' ? { kind: 'enemy', enemyId: 'enemy' } : { kind: 'operator', operatorId: id },
       onPending: pending,
     });
 
@@ -4090,8 +4245,8 @@ describe('StandardPlayerDamageEnvironment', () => {
     ).toBe(true);
     expect(pending).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({
-        inputTarget: { kind: 'operator', operatorId: 'operator' },
-        triggerTarget: { kind: 'enemy' },
+        inputTargets: [{ kind: 'operator', operatorId: 'operator' }],
+        triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
       }),
     );
   });
@@ -4213,7 +4368,7 @@ it.each([
         {
           ...actionContext,
           blackboard: new ActionBlackboard(),
-          actionInputTarget: { kind: 'spatialPoint', pointId: 1 },
+          actionInputTargets: singleTargetList({ kind: 'spatialPoint', pointId: 1 }),
         },
       ),
     ).not.toThrow();
@@ -4242,4 +4397,39 @@ it('输出事件携带实际技能身份而不是展示组，承伤方不携带�
   expect(outputs[0]).toHaveProperty('executingSkillId', 'unrelated-id');
   expect(targets).toHaveLength(1);
   expect(targets[0]).not.toHaveProperty('executingSkillId');
+});
+
+it('公共附着定义在额外敌人身上发布附着开始事件，不串到主敌人', () => {
+  const environment = new StandardPlayerDamageEnvironment({
+    ...createEnvironment().options,
+    additionalEnemies: new Map([
+      ['enemy:other', { program: testEnemy, vitals: createEnemyCombatVitals(testEnemy) }],
+    ]),
+    elementalInflictionDocument: {
+      schemaVersion: 1,
+      revision: 'target-event',
+      buffs: [
+        {
+          id: 'attachment.electric',
+          stackingType: 'enhanceAndRefresh',
+          maxStackCount: 4,
+          actions: { afterEnhance: [{ kind: 'emitElementalInflictionStarted' }] },
+          role: { kind: 'elementalAttachment', element: 'electric' },
+        },
+      ],
+    },
+  });
+  bindBattleWithoutProjectiles(environment, createContext());
+  const recipients: string[] = [];
+  for (const id of ['enemy', 'enemy:other']) {
+    environment.eventsFor(id).registerAction('elementalInflictionStarted', 0, () => {
+      recipients.push(id);
+    });
+  }
+  environment.enemyInstance('enemy:other')!.buffRuntime.applyScoped({
+    buffId: 'attachment.electric',
+    sourceId: 'operator',
+    blackboardValues: {},
+  });
+  expect(recipients).toEqual(['enemy:other']);
 });

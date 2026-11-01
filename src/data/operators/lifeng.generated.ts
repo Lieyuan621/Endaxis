@@ -11,10 +11,21 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const lifengChr_0015_lifeng_attack1ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -38,9 +49,11 @@ export const lifengChr_0015_lifeng_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.067 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -74,8 +87,6 @@ export const lifengChr_0015_lifeng_attack1ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_4',
@@ -144,8 +155,8 @@ export const lifengChr_0015_lifeng_attack1: SkillDefinition = {
   offsetRecordFrame: 9,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 17, endFrame: 18, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 0, endFrame: 32, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
@@ -160,10 +171,21 @@ export const lifengChr_0015_lifeng_attack1: SkillDefinition = {
 export const lifengChr_0015_lifeng_attack2ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -187,9 +209,11 @@ export const lifengChr_0015_lifeng_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyAttacker',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -223,8 +247,6 @@ export const lifengChr_0015_lifeng_attack2ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['caster'],
           },
         },
         next: 'changeResource_3',
@@ -293,7 +315,7 @@ export const lifengChr_0015_lifeng_attack2: SkillDefinition = {
   offsetRecordFrame: 4,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 4, endFrame: 5, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 0, endFrame: 24, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
     { startFrame: 18, endFrame: 24, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
@@ -307,10 +329,21 @@ export const lifengChr_0015_lifeng_attack2: SkillDefinition = {
 export const lifengChr_0015_lifeng_attack3ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -334,13 +367,13 @@ export const lifengChr_0015_lifeng_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.167 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_3',
@@ -409,7 +442,7 @@ export const lifengChr_0015_lifeng_attack3: SkillDefinition = {
   offsetRecordFrame: 11,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 11, endFrame: 12, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
     { startFrame: 14, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
@@ -423,23 +456,77 @@ export const lifengChr_0015_lifeng_attack3: SkillDefinition = {
 export const lifengChr_0015_lifeng_attack5ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
-      dealDamage_3: {
+      startTimeDilation_4: {
         action: {
-          kind: 'dealDamage',
+          kind: 'startTimeDilation',
           parameters: {
-            attacker: 'actionSource',
-            target: { kind: 'context', key: 'tar' },
-            damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['normalAttack'],
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: -1.778889,
+                  outTangent: -1.778889,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.5059338,
+                  value: 0.1,
+                  inTangent: 0.02136457,
+                  outTangent: 0.02136457,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 1.821618,
+                  outTangent: 1.821618,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+            },
           },
+        },
+        next: null,
+      },
+      ifElse_5: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
@@ -448,22 +535,35 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
-            target: { kind: 'inputTarget' },
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            tags: ['normalAttack'],
+          },
+        },
+        next: 'ifElse_5',
+      },
+      dealDamage_9: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
-            stagger: { kind: 'valueNode', nodeId: 'data_3' },
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
         next: null,
       },
-      changeResource_10: {
+      changeResource_13: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_4' },
+            amount: { kind: 'valueNode', nodeId: 'data_5' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -473,13 +573,15 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_11: {
+      startTimeDilation_14: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -522,37 +624,35 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'changeResource_10',
+        next: 'changeResource_13',
       },
-      checkCondition_8: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
-      checkCondition_9: {
+      checkCondition_11: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
-        next: 'checkCondition_8',
+        next: null,
       },
-      ifElse_12: {
+      checkCondition_12: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+        },
+        next: 'checkCondition_11',
+      },
+      ifElse_15: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'startTimeDilation_11' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          whenTrue: { $sequence: 'startTimeDilation_14' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_13: {
+      dealDamage_16: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -563,16 +663,16 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
             tags: [],
           },
         },
-        next: 'ifElse_12',
+        next: 'ifElse_15',
       },
-      overrideBasicAttackMapping_15: {
+      overrideBasicAttackMapping_18: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0015_lifeng_attack1'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_16: {
+      reachSkillOperableBoundary_19: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0015_lifeng_attack1'] },
@@ -583,27 +683,31 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: 'dealDamage_6' },
-          whenFalse: { $sequence: 'dealDamage_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+          whenTrue: { $sequence: 'dealDamage_9' },
+          whenFalse: { $sequence: 'dealDamage_9' },
         },
         next: null,
       },
       forEachContextTarget_opt2: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'tar' } },
           body: { $sequence: 'ifElse_opt1' },
         },
-        next: 'dealDamage_13',
+        next: 'dealDamage_16',
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_5: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -614,15 +718,15 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
           value: 1,
         },
       },
-      data_6: {
+      data_7: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
-      data_7: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_9' } },
-      },
       data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_12' } },
+      },
+      data_9: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
@@ -647,12 +751,12 @@ export const lifengChr_0015_lifeng_attack5: SkillDefinition = {
   offsetRecordFrame: 13,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_3' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 24, endFrame: 24, sequence: { $sequence: 'forEachContextTarget_opt2' } },
-    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'overrideBasicAttackMapping_15' } },
-    { startFrame: 35, endFrame: 46, sequence: { $sequence: 'reachSkillOperableBoundary_16' } },
+    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'overrideBasicAttackMapping_18' } },
+    { startFrame: 35, endFrame: 46, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -663,7 +767,22 @@ export const lifengChr_0015_lifeng_attack5: SkillDefinition = {
 export const lifengChr_0015_lifeng_power_attackActionGraph = {
   main: {
     nodes: {
-      dealDamage_1: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.367 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_2: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -676,9 +795,9 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_1',
       },
-      gainFinisherSp_2: {
+      gainFinisherSp_3: {
         action: {
           kind: 'gainFinisherSp',
           parameters: {
@@ -689,7 +808,7 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
         },
         next: null,
       },
-      dealDamage_3: {
+      dealDamage_4: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -702,15 +821,17 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'gainFinisherSp_2',
+        next: 'gainFinisherSp_3',
       },
-      startTimeDilation_5: {
+      startTimeDilation_6: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2667 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -753,23 +874,21 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      ifElse_6: {
+      ifElse_7: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'startTimeDilation_5' },
+          whenTrue: { $sequence: 'startTimeDilation_6' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      applyBuff_7: {
+      applyBuff_8: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -782,14 +901,14 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_8: {
+      reachSkillOperableBoundary_9: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0015_lifeng_normal_skill', 'chr_0015_lifeng_combo_skill'] },
         },
         next: null,
       },
-      applyBuff_9: {
+      applyBuff_10: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -833,12 +952,12 @@ export const lifengChr_0015_lifeng_power_attack: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 4,
   scheduledSequences: [
-    { startFrame: 6, endFrame: 6, sequence: { $sequence: 'dealDamage_1' } },
-    { startFrame: 33, endFrame: 33, sequence: { $sequence: 'dealDamage_3' } },
-    { startFrame: 34, endFrame: 34, sequence: { $sequence: 'ifElse_6' } },
-    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'applyBuff_7' } },
-    { startFrame: 33, endFrame: 68, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
-    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'applyBuff_9' } },
+    { startFrame: 6, endFrame: 6, sequence: { $sequence: 'dealDamage_2' } },
+    { startFrame: 33, endFrame: 33, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 34, endFrame: 34, sequence: { $sequence: 'ifElse_7' } },
+    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'applyBuff_8' } },
+    { startFrame: 33, endFrame: 68, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
+    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'applyBuff_10' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -849,10 +968,21 @@ export const lifengChr_0015_lifeng_power_attack: SkillDefinition = {
 export const lifengChr_0015_lifeng_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -922,7 +1052,7 @@ export const lifengChr_0015_lifeng_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
   ],
   defaultTarget: 'enemy',
@@ -934,10 +1064,21 @@ export const lifengChr_0015_lifeng_plunging_attack_end: SkillDefinition = {
 export const lifengChr_0015_lifeng_normal_skillActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_18: {
+      findTargets_18: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -971,7 +1112,7 @@ export const lifengChr_0015_lifeng_normal_skillActionGraph = {
       forEachContextTarget_25: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'tar' } },
           body: { $sequence: 'ifElse_24' },
         },
         next: null,
@@ -980,13 +1121,13 @@ export const lifengChr_0015_lifeng_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1098,10 +1239,10 @@ export const lifengChr_0015_lifeng_normal_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_18' } },
-    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_18' } },
-    { startFrame: 20, endFrame: 22, sequence: { $sequence: 'mergeContextTargets_18' } },
-    { startFrame: 54, endFrame: 56, sequence: { $sequence: 'mergeContextTargets_18' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_18' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_18' } },
+    { startFrame: 20, endFrame: 22, sequence: { $sequence: 'findTargets_18' } },
+    { startFrame: 54, endFrame: 56, sequence: { $sequence: 'findTargets_18' } },
     { startFrame: 54, endFrame: 56, sequence: { $sequence: 'forEachContextTarget_25' } },
     { startFrame: 7, endFrame: 9, sequence: { $sequence: 'dealDamage_27' } },
     { startFrame: 20, endFrame: 22, sequence: { $sequence: 'dealDamage_27' } },
@@ -1118,14 +1259,40 @@ export const lifengChr_0015_lifeng_normal_skill: SkillDefinition = {
 export const lifengChr_0015_lifeng_combo_skillActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_10: {
+      findTargets_11: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
-      dealDamage_11: {
+      startTimeDilation_12: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 1.333 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_13: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1137,9 +1304,9 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
             features: ['canBreakWeakness'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_12',
       },
-      changeResource_19: {
+      changeResource_21: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1152,7 +1319,7 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
         },
         next: null,
       },
-      dealDamage_20: {
+      dealDamage_22: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1165,9 +1332,9 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'changeResource_19',
+        next: 'changeResource_21',
       },
-      createGlobalBuff_22: {
+      createGlobalBuff_24: {
         action: {
           kind: 'createGlobalBuff',
           parameters: {
@@ -1190,7 +1357,7 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_23: {
+      startTimeDilation_25: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1200,13 +1367,20 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
       },
-      reachSkillOperableBoundary_24: {
+      reachSkillOperableBoundary_26: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0015_lifeng_normal_skill'] },
@@ -1218,8 +1392,8 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'mergeContextTargets_10' },
-          whenFalse: { $sequence: 'mergeContextTargets_10' },
+          whenTrue: { $sequence: 'findTargets_11' },
+          whenFalse: { $sequence: 'findTargets_11' },
         },
         next: null,
       },
@@ -1229,9 +1403,9 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'ifElse_opt1' },
-          whenFalse: { $sequence: 'mergeContextTargets_10' },
+          whenFalse: { $sequence: 'findTargets_11' },
         },
-        next: 'dealDamage_11',
+        next: 'dealDamage_13',
       },
       ifElse_opt3: {
         action: {
@@ -1239,9 +1413,9 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'ifElse_opt1' },
-          whenFalse: { $sequence: 'mergeContextTargets_10' },
+          whenFalse: { $sequence: 'findTargets_11' },
         },
-        next: 'dealDamage_20',
+        next: 'dealDamage_22',
       },
     },
     dataNodes: {
@@ -1288,9 +1462,9 @@ export const lifengChr_0015_lifeng_combo_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 19, endFrame: 20, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 48, endFrame: 49, sequence: { $sequence: 'ifElse_opt3' } },
-    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'createGlobalBuff_22' } },
-    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'startTimeDilation_23' } },
-    { startFrame: 50, endFrame: 89, sequence: { $sequence: 'reachSkillOperableBoundary_24' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'createGlobalBuff_24' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'startTimeDilation_25' } },
+    { startFrame: 50, endFrame: 89, sequence: { $sequence: 'reachSkillOperableBoundary_26' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'trigger',
@@ -1343,10 +1517,26 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_5: {
+      findTargets_5: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'abepos', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'context', key: 'mainpos' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 1,
+            },
+            saveToContextKey: 'abepos',
+          },
         },
         next: null,
       },
@@ -1359,7 +1549,7 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
             origin: { kind: 'source' },
           },
         },
-        next: 'mergeContextTargets_5',
+        next: 'findTargets_5',
       },
       modifyActionValue_8: {
         action: {
@@ -1410,10 +1600,14 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_12: {
+      createSpatialPointTargets_12: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'abepos', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'abepos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'abepos' },
+          },
         },
         next: 'spawnAbilityEntity_11',
       },
@@ -1422,7 +1616,7 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'mergeContextTargets_12' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_12' },
           whenFalse: { $sequence: 'spawnAbilityEntity_13' },
         },
         next: null,
@@ -2002,7 +2196,7 @@ const lifengBuff7ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             query: { kind: 'id', buffIds: ['buff_chr_0015_lifeng_potential_5_1'] },
             desiredKey: 'poise_potential5',
             outputKey: 'poise_potential5',
@@ -2014,7 +2208,7 @@ const lifengBuff7ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             query: { kind: 'id', buffIds: ['buff_chr_0015_lifeng_potential_5_1'] },
             desiredKey: 'interval',
             outputKey: 'interval',
@@ -2026,7 +2220,7 @@ const lifengBuff7ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             query: { kind: 'id', buffIds: ['buff_chr_0015_lifeng_potential_5_1'] },
             desiredKey: 'atk_scale_potential5',
             outputKey: 'atk_scale_potential5',
@@ -2301,12 +2495,20 @@ export const lifeng: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              mergeContextTargets_1: {
+              findTargets_1: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: null,
@@ -2327,7 +2529,19 @@ export const lifeng: OperatorDefinition = {
                 },
                 next: null,
               },
-              applyPhysicalInfliction_5: {
+              pull_5: {
+                action: {
+                  kind: 'pull',
+                  parameters: {
+                    targets: { kind: 'context', key: 'tar' },
+                    destination: { kind: 'owner' },
+                    targetType: 'Enemy',
+                    alwaysNext: true,
+                  },
+                },
+                next: 'dealDamage_4',
+              },
+              applyPhysicalInfliction_6: {
                 action: {
                   kind: 'applyPhysicalInfliction',
                   parameters: {
@@ -2341,9 +2555,9 @@ export const lifeng: OperatorDefinition = {
                     returnWhen: 'always',
                   },
                 },
-                next: 'dealDamage_4',
+                next: 'pull_5',
               },
-              dealDamage_6: {
+              dealDamage_7: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -2355,11 +2569,11 @@ export const lifeng: OperatorDefinition = {
                     features: ['canBreakWeakness'],
                     stagger: { kind: 'valueNode', nodeId: 'data_4' },
                   },
-                  key: 'abilityentity_chr_0015_lifeng_ultimate_skill:chr_0015_lifeng_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_6/action',
+                  key: 'abilityentity_chr_0015_lifeng_ultimate_skill:chr_0015_lifeng_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_7/action',
                 },
                 next: null,
               },
-              applyPhysicalInfliction_7: {
+              applyPhysicalInfliction_8: {
                 action: {
                   kind: 'applyPhysicalInfliction',
                   parameters: {
@@ -2373,9 +2587,9 @@ export const lifeng: OperatorDefinition = {
                     returnWhen: 'always',
                   },
                 },
-                next: 'dealDamage_6',
+                next: 'dealDamage_7',
               },
-              dealDamage_8: {
+              dealDamage_9: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -2387,11 +2601,11 @@ export const lifeng: OperatorDefinition = {
                     features: ['canBreakWeakness'],
                     stagger: { kind: 'valueNode', nodeId: 'data_6' },
                   },
-                  key: 'abilityentity_chr_0015_lifeng_ultimate_skill:chr_0015_lifeng_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_8/action',
+                  key: 'abilityentity_chr_0015_lifeng_ultimate_skill:chr_0015_lifeng_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_9/action',
                 },
                 next: null,
               },
-              modifyActionValue_11: {
+              modifyActionValue_12: {
                 action: {
                   kind: 'modifyActionValue',
                   parameters: {
@@ -2402,7 +2616,7 @@ export const lifeng: OperatorDefinition = {
                 },
                 next: null,
               },
-              jumpTimeline_10: {
+              jumpTimeline_11: {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 150 },
@@ -2410,13 +2624,13 @@ export const lifeng: OperatorDefinition = {
                 },
                 next: null,
               },
-              ifElse_12: {
+              ifElse_13: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
                   condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                  whenTrue: { $sequence: 'jumpTimeline_10' },
-                  whenFalse: { $sequence: 'modifyActionValue_11' },
+                  whenTrue: { $sequence: 'jumpTimeline_11' },
+                  whenFalse: { $sequence: 'modifyActionValue_12' },
                 },
                 next: null,
               },
@@ -2468,13 +2682,13 @@ export const lifeng: OperatorDefinition = {
           poise3: 0,
         },
         scheduledSequences: [
-          { startFrame: 6, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 66, endFrame: 67, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 121, endFrame: 122, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 6, endFrame: 7, sequence: { $sequence: 'applyPhysicalInfliction_5' } },
-          { startFrame: 66, endFrame: 67, sequence: { $sequence: 'applyPhysicalInfliction_7' } },
-          { startFrame: 121, endFrame: 122, sequence: { $sequence: 'dealDamage_8' } },
-          { startFrame: 67, endFrame: 68, sequence: { $sequence: 'ifElse_12' } },
+          { startFrame: 6, endFrame: 7, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 66, endFrame: 67, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 121, endFrame: 122, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 6, endFrame: 7, sequence: { $sequence: 'applyPhysicalInfliction_6' } },
+          { startFrame: 66, endFrame: 67, sequence: { $sequence: 'applyPhysicalInfliction_8' } },
+          { startFrame: 121, endFrame: 122, sequence: { $sequence: 'dealDamage_9' } },
+          { startFrame: 67, endFrame: 68, sequence: { $sequence: 'ifElse_13' } },
         ],
       },
     },

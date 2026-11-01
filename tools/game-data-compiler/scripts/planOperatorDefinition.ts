@@ -674,7 +674,7 @@ function createActiveSkillSlotReplacementProjection(skills: readonly { readonly 
     context: CombatActionProjectionContextSource,
   ) => {
     // GetTargetsView 仅在 Context 来源读取 targetGroupKey；Owner/Source 中
-    // 序列化残留的组键不改变接收者（见 combat-spec 的 selector-pipeline）。
+    // 序列化残留的组键不改变接收者。
     if (
       !['Owner', 'Source'].includes(action.skillSource.targetSource) ||
       action.skillSource.selectorOwner !== 'ActionOwner' ||

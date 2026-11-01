@@ -288,9 +288,9 @@ export interface SkillExecutionState {
   preparedProducer: CombatObjectRef | undefined;
   inheritedSkillCastInfo: CombatSkillCastInfo | undefined;
   preparedSkipApplyCost: boolean;
-  /** 下一次施放的目标与本次施放的目标分开保存，避免准备输入改变当前技能。 */
-  preparedInputTarget: RuntimeTargetRef | null | undefined;
-  inputTarget: RuntimeTargetRef | null | undefined;
+  /** 原生 SaveTarget 目标集合；准备输入不改变当前技能，开始施放后清空准备状态。 */
+  preparedInputTargets: readonly RuntimeTargetRef[] | undefined;
+  inputTargets: readonly RuntimeTargetRef[] | undefined;
   preparedForceTimelinePayment: boolean;
   forceTimelinePayment: boolean;
   preparationCast: boolean;
@@ -323,8 +323,8 @@ export function createSkillExecutionState(): SkillExecutionState {
     preparedProducer: undefined,
     inheritedSkillCastInfo: undefined,
     preparedSkipApplyCost: false,
-    preparedInputTarget: undefined,
-    inputTarget: undefined,
+    preparedInputTargets: undefined,
+    inputTargets: undefined,
     preparedForceTimelinePayment: false,
     forceTimelinePayment: false,
     preparationCast: false,

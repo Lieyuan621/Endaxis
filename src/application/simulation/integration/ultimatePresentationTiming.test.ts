@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
@@ -13,7 +14,7 @@ it.each([
   const operator = gameDataRepository.getOperator(slug)!;
   const scenario = createEmptyScenario(`hide-ui:${slug}`, '终结技演出时序');
   scenario.battle.durationFrames = 180;
-  scenario.enemy.editable.hp = 1_000_000_000;
+  firstScenarioEnemy(scenario).enemy.editable.hp = 1_000_000_000;
   scenario.battle.resourceRules = {
     maxSp: 1000,
     initialSp: 1000,

@@ -22,7 +22,7 @@ import type {
 } from '../game-data/equipmentDefinition';
 
 export const PROJECT_KIND = 'EndaxisProject' as const;
-export const PROJECT_SCHEMA_VERSION = 1 as const;
+export const PROJECT_SCHEMA_VERSION = 2 as const;
 export const PROJECT_FPS = 30 as const;
 
 /** 存档 JSON 相关结构定义 */
@@ -265,6 +265,27 @@ export interface EnemyDocument {
   /** 场景实例捕获的原生战斗等级；运行时不回查敌人定义。 */
   rank: EnemyRank;
   editable: EnemyEditableValues;
+  /** 省略时模拟开始即存在，全程在场，不设手动死亡时间。 */
+  lifecycle?: EnemyLifecycleDocument;
+}
+
+/** 关卡中的敌人实例，身份不随轨道顺序改变。 */
+export interface EnemyInstanceDocument {
+  id: string;
+  name: string;
+  enemy: EnemyDocument;
+}
+
+/** 关卡类型同时决定敌人配置与编辑视图。 */
+export type LevelDocument =
+  | { kind: 'singleEnemy'; enemy: EnemyInstanceDocument }
+  | { kind: 'multiEnemies'; enemies: EnemyInstanceDocument[] };
+
+/** 敌人时间线输入；手动死亡时间在自动死亡开启期间仍保存。 */
+export interface EnemyLifecycleDocument {
+  spawnFrame: number;
+  presenceChanges: { id: string; frame: number; present: boolean }[];
+  deathFrame?: number;
 }
 
 /** 循环分界线 */
@@ -311,6 +332,9 @@ export interface DodgeMarkerDocument {
 
 /** 一次模拟的时间范围、共享资源规则与控制事件。敌人失衡规则归敌人实例所有。 */
 export interface BattleDocument {
+  enemyTargetSwitches?: { id: string; frame: number; targetId: string }[];
+  /** 省略/关闭时维持木桩规则，死亡只能由敌人的手动死亡时间触发。 */
+  enemyAutomaticDeath?: boolean;
   /** 法术爆发、物理异常的逐次命中覆盖，与技能块本身的覆盖分开。 */
   reactionCriticalOverrides?: Record<string, boolean>;
   prepFrames: number;
@@ -399,7 +423,7 @@ export interface ScenarioDocument {
   inheritance?: ScenarioInheritanceDocument;
   tracks: TrackListDocument;
   connections: ConnectionDocument[];
-  enemy: EnemyDocument;
+  level: LevelDocument;
   battle: BattleDocument;
   mechanics: ScenarioMechanicsDocument;
   globalConfig: GlobalConfigDocument;

@@ -21,6 +21,7 @@ export const gilbertaChr_0013_aglina_attack1ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack1',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -204,6 +205,7 @@ export const gilbertaChr_0013_aglina_attack2ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack2',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -331,6 +333,7 @@ export const gilbertaChr_0013_aglina_attack3ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack3',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -605,6 +608,7 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack4',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -734,6 +738,7 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack4_2',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -752,6 +757,7 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0013_aglina_normal_attack4_1',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -921,10 +927,21 @@ export const gilbertaChr_0013_aglina_power_attack: SkillDefinition = {
 export const gilbertaChr_0013_aglina_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -954,7 +971,18 @@ export const gilbertaChr_0013_aglina_plunging_attack_endActionGraph = {
         },
         next: null,
       },
-      dealDamage_5: {
+      pushBack_5: {
+        action: {
+          kind: 'pushBack',
+          parameters: {
+            source: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            sourcePoint: { kind: 'source' },
+          },
+        },
+        next: 'ifElse_4',
+      },
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -965,7 +993,7 @@ export const gilbertaChr_0013_aglina_plunging_attack_endActionGraph = {
             tags: ['normalAttack', 'plungingAttack'],
           },
         },
-        next: 'ifElse_4',
+        next: 'pushBack_5',
       },
     },
     dataNodes: {
@@ -994,8 +1022,8 @@ export const gilbertaChr_0013_aglina_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'dealDamage_5' } },
+    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'dealDamage_6' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
@@ -1006,7 +1034,7 @@ export const gilbertaChr_0013_aglina_plunging_attack_end: SkillDefinition = {
 export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
   main: {
     nodes: {
-      createSpatialPointTargets_5: {
+      createSpatialPointTargets_9: {
         action: {
           kind: 'createSpatialPointTargets',
           parameters: {
@@ -1017,7 +1045,46 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
         },
         next: null,
       },
-      copyContextTargets_6: {
+      createSpatialPointTargets_10: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'targetPos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+          },
+        },
+        next: 'createSpatialPointTargets_9',
+      },
+      createSpatialPointTargets_7: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'targetPos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'main_char' },
+          },
+        },
+        next: 'createSpatialPointTargets_9',
+      },
+      findCharacterTeamTargets_8: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'main_char', selection: { kind: 'controlledOperator' } },
+        },
+        next: 'createSpatialPointTargets_7',
+      },
+      ifElse_14: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'findCharacterTeamTargets_8' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_10' },
+        },
+        next: null,
+      },
+      copyContextTargets_13: {
         action: {
           kind: 'copyContextTargets',
           parameters: {
@@ -1025,19 +1092,19 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
             saveToContextKey: 'targetPos',
           },
         },
-        next: 'createSpatialPointTargets_5',
+        next: 'createSpatialPointTargets_9',
       },
-      ifElse_7: {
+      ifElse_15: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'copyContextTargets_6' },
-          whenFalse: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'copyContextTargets_13' },
+          whenFalse: { $sequence: 'ifElse_14' },
         },
         next: null,
       },
-      spawnAbilityEntity_8: {
+      spawnAbilityEntity_16: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
@@ -1051,7 +1118,7 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_9: {
+      applyBuff_17: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1063,47 +1130,71 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
         },
         next: null,
       },
-      dealDamage_10: {
+      dealDamage_18: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalSkill'],
           },
         },
-        next: 'applyBuff_9',
+        next: 'applyBuff_17',
       },
-      mergeContextTargets_11: {
+      findTargets_19: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'context', key: 'targetPos' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
-        next: 'dealDamage_10',
+        next: 'dealDamage_18',
       },
-      dealDamage_12: {
+      dealDamage_20: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalSkill'],
           },
         },
         next: null,
       },
-      mergeContextTargets_13: {
+      findTargets_21: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'context', key: 'targetPos' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
-        next: 'dealDamage_12',
+        next: 'dealDamage_20',
       },
-      heal_20: {
+      heal_28: {
         action: {
           kind: 'heal',
           parameters: {
@@ -1112,13 +1203,13 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/NormalSkillHeal'],
             attribute: 'intellect',
-            multiplier: { kind: 'valueNode', nodeId: 'data_3' },
-            addition: { kind: 'valueNode', nodeId: 'data_4' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_4' },
+            addition: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
         next: null,
       },
-      heal_19: {
+      heal_27: {
         action: {
           kind: 'heal',
           parameters: {
@@ -1127,23 +1218,23 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/NormalSkillHeal'],
             attribute: 'intellect',
-            multiplier: { kind: 'valueNode', nodeId: 'data_3' },
-            addition: { kind: 'valueNode', nodeId: 'data_4' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_4' },
+            addition: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
         next: null,
       },
-      ifElse_23: {
+      ifElse_31: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'heal_19' },
-          whenFalse: { $sequence: 'heal_20' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'heal_27' },
+          whenFalse: { $sequence: 'heal_28' },
         },
         next: null,
       },
-      findCharacterTeamTargets_24: {
+      findCharacterTeamTargets_32: {
         action: {
           kind: 'findCharacterTeamTargets',
           parameters: {
@@ -1151,72 +1242,88 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
             selection: { kind: 'lowestHealthRatioOperator' },
           },
         },
-        next: 'ifElse_23',
+        next: 'ifElse_31',
       },
-      ifElse_27: {
+      ifElse_35: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'heal_20' },
-          whenFalse: { $sequence: 'findCharacterTeamTargets_24' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'heal_28' },
+          whenFalse: { $sequence: 'findCharacterTeamTargets_32' },
         },
         next: null,
       },
-      checkCondition_25: {
+      checkCondition_33: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: null,
       },
-      checkCondition_26: {
+      checkCondition_34: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
         },
-        next: 'checkCondition_25',
+        next: 'checkCondition_33',
       },
-      ifElse_28: {
+      ifElse_36: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'ifElse_27' },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'ifElse_35' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_29: {
+      dealDamage_37: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'context', key: 'explo' },
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_11' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_12' },
             tags: ['normalSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_12' },
+            stagger: { kind: 'valueNode', nodeId: 'data_13' },
           },
         },
-        next: 'ifElse_28',
+        next: 'ifElse_36',
       },
-      applyElementalInfliction_30: {
+      applyElementalInfliction_38: {
         action: {
           kind: 'applyElementalInfliction',
-          parameters: { element: 'nature', isExtra: false },
+          parameters: {
+            element: 'nature',
+            isExtra: false,
+            target: { kind: 'context', key: 'explo' },
+          },
         },
-        next: 'dealDamage_29',
+        next: 'dealDamage_37',
       },
-      mergeContextTargets_31: {
+      findTargets_39: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'explo', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'context', key: 'targetPos' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'explo',
+          },
         },
-        next: 'applyElementalInfliction_30',
+        next: 'applyElementalInfliction_38',
       },
-      reachSkillOperableBoundary_32: {
+      reachSkillOperableBoundary_40: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0013_aglina_combo_skill'] },
@@ -1227,12 +1334,30 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'mainCharacter' },
+          containsHittableTarget: false,
+          excludeDeadEntity: true,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_pull' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'heal_const' } },
-      data_5: {
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'mainTarget', owner: { kind: 'owner' } },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_pull' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'heal_const' } },
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
@@ -1242,7 +1367,7 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
           value: { kind: 'constant', value: 0.99 },
         },
       },
-      data_6: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
@@ -1252,7 +1377,7 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
           value: { kind: 'constant', value: 0.99 },
         },
       },
-      data_7: {
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1263,25 +1388,25 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
           value: 2,
         },
       },
-      data_8: {
+      data_9: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'heal_const', fallback: 0 },
       },
-      data_9: {
+      data_10: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_8' },
+          left: { kind: 'valueNode', nodeId: 'data_9' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_10: {
+      data_11: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_26' } },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_34' } },
       },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_explosion' } },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_explosion' } },
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   },
   macros: {},
@@ -1308,14 +1433,14 @@ export const gilbertaChr_0013_aglina_normal_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 12, endFrame: 12, sequence: { $sequence: 'ifElse_7' } },
-    { startFrame: 21, endFrame: 21, sequence: { $sequence: 'spawnAbilityEntity_8' } },
-    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'mergeContextTargets_11' } },
-    { startFrame: 46, endFrame: 46, sequence: { $sequence: 'mergeContextTargets_13' } },
-    { startFrame: 62, endFrame: 62, sequence: { $sequence: 'mergeContextTargets_13' } },
-    { startFrame: 78, endFrame: 78, sequence: { $sequence: 'mergeContextTargets_13' } },
-    { startFrame: 108, endFrame: 109, sequence: { $sequence: 'mergeContextTargets_31' } },
-    { startFrame: 123, endFrame: 148, sequence: { $sequence: 'reachSkillOperableBoundary_32' } },
+    { startFrame: 12, endFrame: 12, sequence: { $sequence: 'ifElse_15' } },
+    { startFrame: 21, endFrame: 21, sequence: { $sequence: 'spawnAbilityEntity_16' } },
+    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'findTargets_19' } },
+    { startFrame: 46, endFrame: 46, sequence: { $sequence: 'findTargets_21' } },
+    { startFrame: 62, endFrame: 62, sequence: { $sequence: 'findTargets_21' } },
+    { startFrame: 78, endFrame: 78, sequence: { $sequence: 'findTargets_21' } },
+    { startFrame: 108, endFrame: 109, sequence: { $sequence: 'findTargets_39' } },
+    { startFrame: 123, endFrame: 148, sequence: { $sequence: 'reachSkillOperableBoundary_40' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -1327,7 +1452,7 @@ export const gilbertaChr_0013_aglina_normal_skill: SkillDefinition = {
 export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
   main: {
     nodes: {
-      createSpatialPointTargets_1: {
+      createSpatialPointTargets_4: {
         action: {
           kind: 'createSpatialPointTargets',
           parameters: {
@@ -1338,7 +1463,25 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         },
         next: null,
       },
-      copyContextTargets_2: {
+      createSpatialPointTargets_5: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'triggerpos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'main_char' },
+          },
+        },
+        next: 'createSpatialPointTargets_4',
+      },
+      findCharacterTeamTargets_6: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'main_char', selection: { kind: 'controlledOperator' } },
+        },
+        next: 'createSpatialPointTargets_5',
+      },
+      copyContextTargets_3: {
         action: {
           kind: 'copyContextTargets',
           parameters: {
@@ -1346,19 +1489,19 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
             saveToContextKey: 'triggerpos',
           },
         },
-        next: 'createSpatialPointTargets_1',
+        next: 'createSpatialPointTargets_4',
       },
-      ifElse_3: {
+      ifElse_7: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'copyContextTargets_2' },
-          whenFalse: { $sequence: null },
+          whenTrue: { $sequence: 'copyContextTargets_3' },
+          whenFalse: { $sequence: 'findCharacterTeamTargets_6' },
         },
         next: null,
       },
-      heal_6: {
+      heal_10: {
         action: {
           kind: 'heal',
           parameters: {
@@ -1373,7 +1516,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         },
         next: null,
       },
-      heal_5: {
+      heal_9: {
         action: {
           kind: 'heal',
           parameters: {
@@ -1388,17 +1531,17 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_9: {
+      ifElse_13: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'heal_5' },
-          whenFalse: { $sequence: 'heal_6' },
+          whenTrue: { $sequence: 'heal_9' },
+          whenFalse: { $sequence: 'heal_10' },
         },
         next: null,
       },
-      findCharacterTeamTargets_10: {
+      findCharacterTeamTargets_14: {
         action: {
           kind: 'findCharacterTeamTargets',
           parameters: {
@@ -1406,33 +1549,33 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
             selection: { kind: 'lowestHealthRatioOperator' },
           },
         },
-        next: 'ifElse_9',
+        next: 'ifElse_13',
       },
-      ifElse_13: {
+      ifElse_17: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'heal_6' },
-          whenFalse: { $sequence: 'findCharacterTeamTargets_10' },
+          whenTrue: { $sequence: 'heal_10' },
+          whenFalse: { $sequence: 'findCharacterTeamTargets_14' },
         },
         next: null,
       },
-      checkCondition_11: {
+      checkCondition_15: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: null,
       },
-      checkCondition_12: {
+      checkCondition_16: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
-        next: 'checkCondition_11',
+        next: 'checkCondition_15',
       },
-      changeResource_14: {
+      changeResource_18: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1445,17 +1588,17 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_15: {
+      ifElse_19: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'ifElse_13' },
+          whenTrue: { $sequence: 'ifElse_17' },
           whenFalse: { $sequence: null },
         },
-        next: 'changeResource_14',
+        next: 'changeResource_18',
       },
-      dealDamage_16: {
+      dealDamage_20: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1468,9 +1611,9 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_12' },
           },
         },
-        next: 'ifElse_15',
+        next: 'ifElse_19',
       },
-      applyPhysicalInfliction_17: {
+      applyPhysicalInfliction_21: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
@@ -1486,16 +1629,28 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
             returnWhen: 'always',
           },
         },
-        next: 'dealDamage_16',
+        next: 'dealDamage_20',
       },
-      mergeContextTargets_18: {
+      findTargets_22: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'source' },
+            center: { kind: 'context', key: 'triggerpos' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'source' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
-        next: 'applyPhysicalInfliction_17',
+        next: 'applyPhysicalInfliction_21',
       },
-      startTimeDilation_19: {
+      startTimeDilation_23: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1505,20 +1660,27 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
       },
-      reachSkillOperableBoundary_20: {
+      reachSkillOperableBoundary_24: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0013_aglina_normal_skill'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_21: {
+      reachSkillOperableBoundary_25: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0013_aglina_ultimate_skill'] },
@@ -1529,7 +1691,14 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'mainTarget', owner: { kind: 'owner' } },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'heal_const' } },
@@ -1580,7 +1749,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
       data_9: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
       data_10: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_12' } },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_16' } },
       },
       data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_12: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
@@ -1607,11 +1776,11 @@ export const gilbertaChr_0013_aglina_combo_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_3' } },
-    { startFrame: 48, endFrame: 50, sequence: { $sequence: 'mergeContextTargets_18' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_19' } },
-    { startFrame: 53, endFrame: 72, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
-    { startFrame: 53, endFrame: 72, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_7' } },
+    { startFrame: 48, endFrame: 50, sequence: { $sequence: 'findTargets_22' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_23' } },
+    { startFrame: 53, endFrame: 72, sequence: { $sequence: 'reachSkillOperableBoundary_24' } },
+    { startFrame: 53, endFrame: 72, sequence: { $sequence: 'reachSkillOperableBoundary_25' } },
   ],
   defaultTarget: 'owner',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
@@ -1638,7 +1807,7 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      createSpatialPointTargets_2: {
+      createSpatialPointTargets_6: {
         action: {
           kind: 'createSpatialPointTargets',
           parameters: {
@@ -1649,7 +1818,46 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      copyContextTargets_3: {
+      createSpatialPointTargets_7: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'triggerpos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+          },
+        },
+        next: 'createSpatialPointTargets_6',
+      },
+      createSpatialPointTargets_4: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'triggerpos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'main_char' },
+          },
+        },
+        next: 'createSpatialPointTargets_6',
+      },
+      findCharacterTeamTargets_5: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'main_char', selection: { kind: 'controlledOperator' } },
+        },
+        next: 'createSpatialPointTargets_4',
+      },
+      ifElse_11: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'findCharacterTeamTargets_5' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_7' },
+        },
+        next: null,
+      },
+      copyContextTargets_10: {
         action: {
           kind: 'copyContextTargets',
           parameters: {
@@ -1657,20 +1865,20 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
             saveToContextKey: 'triggerpos',
           },
         },
-        next: 'createSpatialPointTargets_2',
+        next: 'createSpatialPointTargets_6',
       },
-      ifElse_4: {
+      ifElse_12: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'copyContextTargets_3' },
-          whenFalse: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'copyContextTargets_10' },
+          whenFalse: { $sequence: 'ifElse_11' },
         },
         next: null,
       },
-      hideUi_5: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_6: {
+      hideUi_13: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_14: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -1681,39 +1889,52 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      dealDamage_7: {
+      dealDamage_15: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'context', key: 'targets' },
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['ultimateSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_3' },
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
         next: null,
       },
-      applyElementalInfliction_8: {
+      applyElementalInfliction_16: {
         action: {
           kind: 'applyElementalInfliction',
-          parameters: { element: 'nature', isExtra: false },
-        },
-        next: 'dealDamage_7',
-      },
-      mergeContextTargets_9: {
-        action: {
-          kind: 'mergeContextTargets',
           parameters: {
-            saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
+            element: 'nature',
+            isExtra: false,
+            target: { kind: 'context', key: 'targets' },
           },
         },
-        next: 'applyElementalInfliction_8',
+        next: 'dealDamage_15',
       },
-      spawnAbilityEntity_10: {
+      findTargets_17: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'context', key: 'triggerpos' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'targets',
+          },
+        },
+        next: 'applyElementalInfliction_16',
+      },
+      spawnAbilityEntity_18: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
@@ -1723,12 +1944,12 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_4' },
+            overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
         next: null,
       },
-      storeSourceAttributeValue_11: {
+      storeSourceAttributeValue_19: {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
@@ -1737,14 +1958,14 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
             stage: 'finalNonConverted',
             useFloor: false,
             divisor: { kind: 'constant', value: 1 },
-            multiplier: { kind: 'valueNode', nodeId: 'data_5' },
-            base: { kind: 'valueNode', nodeId: 'data_6' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_6' },
+            base: { kind: 'valueNode', nodeId: 'data_7' },
             targetKey: 'final_resistance_scalar_inair',
           },
         },
-        next: 'spawnAbilityEntity_10',
+        next: 'spawnAbilityEntity_18',
       },
-      storeSourceAttributeValue_12: {
+      storeSourceAttributeValue_20: {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
@@ -1753,14 +1974,14 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
             stage: 'finalNonConverted',
             useFloor: false,
             divisor: { kind: 'constant', value: 1 },
-            multiplier: { kind: 'valueNode', nodeId: 'data_7' },
-            base: { kind: 'valueNode', nodeId: 'data_8' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_8' },
+            base: { kind: 'valueNode', nodeId: 'data_9' },
             targetKey: 'final_resistance_scalar',
           },
         },
-        next: 'storeSourceAttributeValue_11',
+        next: 'storeSourceAttributeValue_19',
       },
-      applyBuff_13: {
+      applyBuff_21: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1773,7 +1994,7 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_14: {
+      reachSkillOperableBoundary_22: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0013_aglina_normal_skill', 'chr_0013_aglina_combo_skill'] },
@@ -1784,18 +2005,36 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'mainCharacter' },
+          containsHittableTarget: false,
+          excludeDeadEntity: true,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'wisd_increase_inair' } },
-      data_6: {
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'mainTarget', owner: { kind: 'owner' } },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'wisd_increase_inair' } },
+      data_7: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'resistance_scalar_inair' },
       },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'wisd_increase' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'resistance_scalar' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'wisd_increase' } },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'resistance_scalar' } },
     },
   },
   macros: {},
@@ -1828,13 +2067,13 @@ export const gilbertaChr_0013_aglina_ultimate_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_4' } },
-    { startFrame: 0, endFrame: 53, sequence: { $sequence: 'hideUi_5' } },
-    { startFrame: 0, endFrame: 52, sequence: { $sequence: 'startUltimateTimeDilation_6' } },
-    { startFrame: 60, endFrame: 60, sequence: { $sequence: 'mergeContextTargets_9' } },
-    { startFrame: 60, endFrame: 65, sequence: { $sequence: 'storeSourceAttributeValue_12' } },
-    { startFrame: 0, endFrame: 85, sequence: { $sequence: 'applyBuff_13' } },
-    { startFrame: 64, endFrame: 91, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_12' } },
+    { startFrame: 0, endFrame: 53, sequence: { $sequence: 'hideUi_13' } },
+    { startFrame: 0, endFrame: 52, sequence: { $sequence: 'startUltimateTimeDilation_14' } },
+    { startFrame: 60, endFrame: 60, sequence: { $sequence: 'findTargets_17' } },
+    { startFrame: 60, endFrame: 65, sequence: { $sequence: 'storeSourceAttributeValue_20' } },
+    { startFrame: 0, endFrame: 85, sequence: { $sequence: 'applyBuff_21' } },
+    { startFrame: 64, endFrame: 91, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -2135,7 +2374,7 @@ const gilbertaBuff5ActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'inputTarget' },
             outputKey: 'BuffStack',
             query: {
               kind: 'tag',
@@ -2651,24 +2890,55 @@ export const gilberta: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              repeatEachTick_2: {
+              findTargets_1: {
+                action: {
+                  kind: 'findTargets',
+                  parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
+                    saveToContextKey: 'tar',
+                    continuousIntervalSeconds: 0.0333333351,
+                  },
+                },
+                next: null,
+              },
+              pull_2: {
+                action: {
+                  kind: 'pull',
+                  parameters: {
+                    targets: { kind: 'inputTarget' },
+                    destination: { kind: 'owner' },
+                    targetType: 'Enemy',
+                    alwaysNext: false,
+                  },
+                },
+                next: null,
+              },
+              repeatEachTick_3: {
                 action: {
                   kind: 'repeatEachTick',
                   parameters: {
                     nativeChanneling: {
                       catchUpMissedTicks: false,
-                      target: { kind: 'fixed', target: 'enemy' },
+                      target: { kind: 'context', key: 'tar' },
                       executeEachFrame: true,
                       triggerIntervalSeconds: 0.033,
                       maxCountPerTarget: -1,
                       targetTriggerIntervalSeconds: 0,
                     },
                   },
-                  body: { $sequence: null },
+                  body: { $sequence: 'pull_2' },
                 },
                 next: null,
               },
-              applyBuff_3: {
+              applyBuff_4: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -2696,8 +2966,9 @@ export const gilberta: OperatorDefinition = {
         },
         blackboard: {},
         scheduledSequences: [
-          { startFrame: 0, endFrame: 93, sequence: { $sequence: 'repeatEachTick_2' } },
-          { startFrame: 0, endFrame: 93, sequence: { $sequence: 'applyBuff_3' } },
+          { startFrame: 0, endFrame: 93, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 0, endFrame: 93, sequence: { $sequence: 'repeatEachTick_3' } },
+          { startFrame: 0, endFrame: 93, sequence: { $sequence: 'applyBuff_4' } },
         ],
       },
     },
@@ -2719,7 +2990,7 @@ export const gilberta: OperatorDefinition = {
                 action: {
                   kind: 'aura',
                   parameters: {
-                    targets: { kind: 'fixed', target: 'enemy' },
+                    targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [] },
                     source: { kind: 'source' },
                     inheritSourceSkillCastInfo: true,
                     buffs: [

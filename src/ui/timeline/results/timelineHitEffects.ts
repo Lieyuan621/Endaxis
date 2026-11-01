@@ -1,12 +1,13 @@
 /**
  * 把模拟日志里的伤害、附着，对应到具体技能块的命中点上。
  *
- * 伤害步骤带步骤键时按键精确对应；没有键就按"第几帧、谁打的"对应；
- * 附着按"第几帧、谁打的、哪个技能"对应。本模块只做对应，不做任何计算。
+ * 伤害按技能块、步骤键和执行帧对应；子技能未继承施放信息时沿对象产生链归属。
+ * 附着按技能块和执行帧对应。本模块只做对应，不计算伤害。
  */
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import {
   projectHitDamageReceipts,
+  projectHitDamageIdentity,
   projectHitInflictionReceipts,
 } from '../../../core/projection/hitEffectProjection';
 import {
@@ -22,6 +23,7 @@ import {
 
 /** 一个命中点上发生的伤害（保持日志顺序）。 */
 export interface TimelineHitDamageEffect {
+  readonly targetId: string;
   readonly value: number;
   readonly damageType: string;
   readonly isCritical: boolean;
@@ -29,6 +31,7 @@ export interface TimelineHitDamageEffect {
 
 /** 一个命中点上发生的元素附着。 */
 export interface TimelineHitInflictionEffect {
+  readonly targetId: string;
   readonly element: string;
   readonly outcomeKind: string;
   readonly currentLayers: number;
@@ -75,8 +78,16 @@ function excludeStandaloneEffectDamage(
 export function projectTimelineHitOccurrences(
   entries: readonly CombatReceiptEntry[],
   origins = new CombatObjectOrigins(entries),
+  targetId?: string,
 ) {
-  const receipts = projectTimelineHitReceipts(entries);
+  const projected = projectTimelineHitReceipts(entries, origins);
+  const receipts =
+    targetId === undefined
+      ? projected
+      : {
+          damages: projected.damages.filter(hit => hit.targetId === targetId),
+          inflictions: projected.inflictions.filter(hit => hit.targetId === targetId),
+        };
   const entriesBySequence = new Map(entries.map(entry => [entry.sequence, entry]));
   const byCast = new Map<
     string,
@@ -121,14 +132,16 @@ export function projectTimelineHitOccurrences(
       // main 只在该次命中实际吃到“连击”伤害 Buff 时染蓝；释放连携技本身不等于吃到 Buff。
       linkBuffed: occurrenceDamages.some(damage => receivedComboBuff(damage, entriesBySequence)),
       label: {
-        damage: occurrenceDamages.map(({ value, damageType, isCritical }) => ({
+        damage: occurrenceDamages.map(({ targetId, value, damageType, isCritical }) => ({
+          targetId,
           value,
           damageType,
           isCritical,
         })),
         infliction: receipts.inflictions
           .filter(item => item.castId === hit.castId && item.frame === hit.frame)
-          .map(({ element, outcomeKind, currentLayers }) => ({
+          .map(({ targetId, element, outcomeKind, currentLayers }) => ({
+            targetId,
             element,
             outcomeKind,
             currentLayers,
@@ -164,37 +177,35 @@ export function projectTimelineHitDetailEntries(
   castId: string,
   hitId: string,
   executionFrame?: number,
+  targetId?: string,
 ): readonly CombatReceiptEntry[] {
   const skillEntries = excludeStandaloneEffectDamage(entries);
-  const firstFrame = skillEntries.find(
-    entry =>
-      entry.event === 'DamageApplied' &&
-      entry.data?.castId === castId &&
-      entry.data?.hitId === hitId,
-  )?.frame;
-  const frame = executionFrame ?? firstFrame;
+  const origins = new CombatObjectOrigins(entries);
+  const damages = skillEntries.filter(entry => {
+    if (entry.event !== 'DamageApplied' || (targetId !== undefined && entry.targetId !== targetId))
+      return false;
+    const hit = projectHitDamageIdentity(entry, origins);
+    return hit.castId === castId && hit.hitId === hitId;
+  });
+  const frame = executionFrame ?? damages[0]?.frame;
   if (frame === undefined) return [];
-  if (
-    !skillEntries.some(
-      entry =>
-        entry.event === 'DamageApplied' &&
-        entry.frame === frame &&
-        entry.data?.castId === castId &&
-        entry.data.hitId === hitId,
-    )
-  )
-    return [];
+  const sequences = new Set(damages.filter(hit => hit.frame === frame).map(hit => hit.sequence));
+  if (!sequences.size) return [];
   return skillEntries.filter(entry => {
-    if (entry.frame !== frame || entry.data?.castId !== castId) return false;
-    if (entry.event === 'DamageApplied') return entry.data.hitId === hitId;
-    return entry.event === 'ElementalInflictionApplied';
+    if (entry.frame !== frame || (targetId !== undefined && entry.targetId !== targetId))
+      return false;
+    if (entry.event === 'DamageApplied') return sequences.has(entry.sequence);
+    return entry.event === 'ElementalInflictionApplied' && entry.data?.castId === castId;
   });
 }
 
 /** 把一次释放的命中标记与回执事实归因；键为 `hitId`。 */
-export function projectTimelineHitReceipts(entries: readonly CombatReceiptEntry[]) {
+export function projectTimelineHitReceipts(
+  entries: readonly CombatReceiptEntry[],
+  origins = new CombatObjectOrigins(entries),
+) {
   return {
-    damages: projectHitDamageReceipts(excludeStandaloneEffectDamage(entries)),
+    damages: projectHitDamageReceipts(excludeStandaloneEffectDamage(entries), origins),
     inflictions: projectHitInflictionReceipts(entries),
   };
 }

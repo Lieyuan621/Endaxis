@@ -61,12 +61,20 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_10: {
+      findTargets_10: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -163,7 +171,7 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
         },
         next: 'findCharacterTeamTargets_19',
       },
-      changeResource_21: {
+      changeResource_22: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -176,17 +184,17 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_22: {
+      ifElse_23: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'changeResource_21' },
+          whenTrue: { $sequence: 'changeResource_22' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      ifElse_23: {
+      ifElse_24: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
@@ -194,9 +202,9 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
           whenTrue: { $sequence: 'findCharacterTeamTargets_20' },
           whenFalse: { $sequence: null },
         },
-        next: 'ifElse_22',
+        next: 'ifElse_23',
       },
-      heal_24: {
+      heal_25: {
         action: {
           kind: 'heal',
           parameters: {
@@ -209,9 +217,9 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
             addition: { kind: 'valueNode', nodeId: 'data_10' },
           },
         },
-        next: 'ifElse_23',
+        next: 'ifElse_24',
       },
-      dealDamage_25: {
+      dealDamage_26: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -224,9 +232,9 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_17' },
           },
         },
-        next: 'heal_24',
+        next: 'heal_25',
       },
-      applyPhysicalInfliction_26: {
+      applyPhysicalInfliction_27: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
@@ -240,9 +248,9 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
             returnWhen: 'always',
           },
         },
-        next: 'dealDamage_25',
+        next: 'dealDamage_26',
       },
-      ifElse_27: {
+      ifElse_28: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
@@ -250,9 +258,9 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
           whenTrue: { $sequence: 'applyBuff_14' },
           whenFalse: { $sequence: null },
         },
-        next: 'applyPhysicalInfliction_26',
+        next: 'applyPhysicalInfliction_27',
       },
-      startTimeDilation_28: {
+      startTimeDilation_29: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -262,13 +270,20 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
       },
-      reachSkillOperableBoundary_29: {
+      reachSkillOperableBoundary_30: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0009_azrila_normal_skill'] },
@@ -336,7 +351,14 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
       data_12: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
       data_13: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'targets' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_14: {
         type: 'number',
@@ -388,10 +410,10 @@ export const emberChr_0009_azrila_combo_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 26, sequence: { $sequence: 'ifElse_6' } },
-    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'mergeContextTargets_10' } },
-    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'ifElse_27' } },
-    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'startTimeDilation_28' } },
-    { startFrame: 40, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_29' } },
+    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'findTargets_10' } },
+    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'ifElse_28' } },
+    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'startTimeDilation_29' } },
+    { startFrame: 40, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_30' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'input',
@@ -404,17 +426,35 @@ export const emberChr_0009_azrila_combo_skill: SkillDefinition = {
 export const emberChr_0009_azrila_attack1ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       startTimeDilation_7: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -448,7 +488,7 @@ export const emberChr_0009_azrila_attack1ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -498,6 +538,11 @@ export const emberChr_0009_azrila_attack1: SkillDefinition = {
   offsetRecordFrame: 13,
   costFrame: 15,
   scheduledSequences: [
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 13, endFrame: 18, sequence: { $sequence: 'repeatEachTick_10' } },
     { startFrame: 0, endFrame: 38, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
     { startFrame: 24, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
@@ -511,17 +556,35 @@ export const emberChr_0009_azrila_attack1: SkillDefinition = {
 export const emberChr_0009_azrila_attack2ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       startTimeDilation_8: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.26 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -555,7 +618,7 @@ export const emberChr_0009_azrila_attack2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -603,6 +666,12 @@ export const emberChr_0009_azrila_attack2: SkillDefinition = {
   offsetRecordFrame: 6,
   costFrame: 6,
   scheduledSequences: [
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 6, endFrame: 12, sequence: { $sequence: 'repeatEachTick_11' } },
     { startFrame: 0, endFrame: 41, sequence: { $sequence: 'overrideBasicAttackMapping_12' } },
     { startFrame: 18, endFrame: 41, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
@@ -616,17 +685,35 @@ export const emberChr_0009_azrila_attack2: SkillDefinition = {
 export const emberChr_0009_azrila_attack3ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       startTimeDilation_6: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.25 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -660,7 +747,7 @@ export const emberChr_0009_azrila_attack3ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -710,6 +797,10 @@ export const emberChr_0009_azrila_attack3: SkillDefinition = {
   offsetRecordFrame: 18,
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 18, endFrame: 22, sequence: { $sequence: 'repeatEachTick_9' } },
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'overrideBasicAttackMapping_10' } },
     { startFrame: 35, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
@@ -723,6 +814,24 @@ export const emberChr_0009_azrila_attack3: SkillDefinition = {
 export const emberChr_0009_azrila_attack4ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_4: {
         action: {
           kind: 'changeResource',
@@ -746,13 +855,13 @@ export const emberChr_0009_azrila_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'once_6',
@@ -788,7 +897,7 @@ export const emberChr_0009_azrila_attack4ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -828,6 +937,9 @@ export const emberChr_0009_azrila_attack4: SkillDefinition = {
   offsetRecordFrame: 26,
   costFrame: 12,
   scheduledSequences: [
+    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 28, endFrame: 29, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 26, endFrame: 29, sequence: { $sequence: 'repeatEachTick_10' } },
   ],
   defaultTarget: 'enemy',
@@ -839,6 +951,24 @@ export const emberChr_0009_azrila_attack4: SkillDefinition = {
 export const emberChr_0009_azrila_power_attackActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       gainFinisherSp_2: {
         action: {
           kind: 'gainFinisherSp',
@@ -869,13 +999,13 @@ export const emberChr_0009_azrila_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.5 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -890,17 +1020,36 @@ export const emberChr_0009_azrila_power_attackActionGraph = {
         },
         next: null,
       },
+      findTargets_7: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
       startTimeDilation_8: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -911,7 +1060,7 @@ export const emberChr_0009_azrila_power_attackActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -994,8 +1143,10 @@ export const emberChr_0009_azrila_power_attack: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 4,
   scheduledSequences: [
+    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 23, endFrame: 32, sequence: { $sequence: 'dealDamage_3' } },
     { startFrame: 23, endFrame: 26, sequence: { $sequence: 'ifElse_6' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_7' } },
     { startFrame: 9, endFrame: 13, sequence: { $sequence: 'dealDamage_10' } },
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_11' } },
     { startFrame: 28, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
@@ -1010,10 +1161,21 @@ export const emberChr_0009_azrila_power_attack: SkillDefinition = {
 export const emberChr_0009_azrila_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1090,7 +1252,7 @@ export const emberChr_0009_azrila_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 12, endFrame: 21, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
   ],
@@ -1189,17 +1351,35 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
         },
         next: null,
       },
+      findTargets_29: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       startTimeDilation_33: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.16 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1224,7 +1404,7 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1288,13 +1468,13 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1372,12 +1552,20 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
         },
         next: 'applyPhysicalInfliction_48',
       },
-      mergeContextTargets_50: {
+      findTargets_50: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'ifElse_49',
@@ -1523,8 +1711,12 @@ export const emberChr_0009_azrila_normal_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_opt1' } },
     { startFrame: 0, endFrame: 38, sequence: { $sequence: 'listenForCombatEvents_22' } },
     { startFrame: 0, endFrame: 38, sequence: { $sequence: 'ifElse_28' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_29' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_29' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_29' } },
+    { startFrame: 13, endFrame: 15, sequence: { $sequence: 'findTargets_29' } },
     { startFrame: 10, endFrame: 15, sequence: { $sequence: 'repeatEachTick_35' } },
-    { startFrame: 38, endFrame: 41, sequence: { $sequence: 'mergeContextTargets_50' } },
+    { startFrame: 38, endFrame: 41, sequence: { $sequence: 'findTargets_50' } },
     { startFrame: 51, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_57' } },
   ],
   defaultTarget: 'enemy',
@@ -1600,12 +1792,20 @@ export const emberChr_0009_azrila_ultimate_skillActionGraph = {
         },
         next: 'applyBuff_4',
       },
-      mergeContextTargets_6: {
+      findTargets_6: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'dealDamage_5',
@@ -1619,7 +1819,7 @@ export const emberChr_0009_azrila_ultimate_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'mergeContextTargets_6',
+        next: 'findTargets_6',
       },
       storeSourceAttributeValue_8: {
         action: {
@@ -1897,13 +2097,13 @@ const emberBuff1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 100,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,

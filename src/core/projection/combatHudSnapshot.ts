@@ -102,6 +102,7 @@ export interface CombatHudSnapshot {
 }
 
 export interface CombatHudSnapshotInput {
+  readonly enemyTargetId: string;
   readonly frame: number;
   readonly endFrame: number;
   readonly enemyHealthCurve: EnemyHealthCurve;
@@ -431,7 +432,10 @@ export function projectCombatHudSnapshot(input: CombatHudSnapshotInput): CombatH
                 poiseMaximumAt(input.poiseCurve, input.frame),
                 input.frame,
               ),
-              state: enemyPoiseState(input.receiptEntries, input.frame),
+              state: enemyPoiseState(
+                input.receiptEntries.filter(entry => entry.targetId === input.enemyTargetId),
+                input.frame,
+              ),
             },
     },
     operators: input.resourceCurves.ultimateEnergy.map(curve =>

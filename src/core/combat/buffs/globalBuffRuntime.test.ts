@@ -51,6 +51,36 @@ function target(ownerId: string) {
 }
 
 describe('GlobalBuffRuntime', () => {
+  it('enemy 来源通过目标查询绑定当前敌人，无目标时不创建全局 Buff', () => {
+    const member = target('member');
+    const runtime = new GlobalBuffRuntime(
+      () => [member.value],
+      () => childDefinition,
+    );
+    let enemyId: string | undefined = 'enemy:second';
+    const executor = new GlobalBuffOperationExecutor({
+      sourceId: 'operator',
+      runtime,
+      delegate: { execute: () => false, evaluate: () => false },
+      queryTargets: query => {
+        expect(query).toEqual({ kind: 'fixed', target: 'enemy' });
+        return enemyId === undefined ? [] : [{ kind: 'enemy', enemyId }];
+      },
+    });
+    const step = {
+      kind: 'createGlobalBuff' as const,
+      parameters: {
+        globalBuffId: 'from-enemy',
+        source: 'enemy' as const,
+        definition,
+      },
+    };
+    expect(executor.execute(step, { blackboard: new ActionBlackboard() })).toBe(true);
+    expect(member.requests[0]).toMatchObject({ sourceId: 'enemy:second' });
+    enemyId = undefined;
+    expect(executor.execute(step, { blackboard: new ActionBlackboard() })).toBe(false);
+    expect(member.requests).toHaveLength(1);
+  });
   it('keeps the contextual entity source separate from the definition owner', () => {
     const member = target('member');
     const runtime = new GlobalBuffRuntime(

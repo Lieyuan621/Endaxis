@@ -81,6 +81,11 @@ export function projectEnemyHealthCurveFromReceipt(
   initial: EnemyHealthCurveInitial,
   entries: readonly CombatReceiptEntry[],
   initialFrame = 0,
+  targetId: string,
 ): EnemyHealthCurve {
-  return projectEnemyHealthCurve(initial, projectEnemyHealthChangePoints(entries), initialFrame);
+  return projectEnemyHealthCurve(
+    initial,
+    projectEnemyHealthChangePoints(entries, targetId),
+    initialFrame,
+  );
 }

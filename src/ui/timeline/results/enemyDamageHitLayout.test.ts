@@ -1,8 +1,41 @@
 import { expect, it } from 'vitest';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import type { BuffTimelineSegment } from '../../../core/projection/buffTimelineViz';
-import { layoutEnemyDamageHits } from './enemyDamageHitLayout';
-import { projectBuffDamageDisplayOwners } from '../../../core/projection/enemyEffectViz';
+import { layoutEnemyDamageHits, layoutEnemyOverviewDamageHits } from './enemyDamageHitLayout';
+import {
+  projectBuffDamageDisplayOwners,
+  projectEnemyEffectViz,
+} from '../../../core/projection/enemyEffectViz';
+
+it('keeps unidentified damage clickable by receipt sequence without inventing skill identity', () => {
+  const unknown: CombatReceiptEntry = {
+    sequence: 1,
+    frame: 617,
+    time: 617 / 30,
+    event: 'DamageApplied',
+    sourceId: 'operator',
+    targetId: 'enemy',
+    data: { damageType: 'fixed', value: 50 },
+  };
+  const missingHit = { ...unknown, sequence: 2, data: { ...unknown.data, castId: 'cast' } };
+  const other = { ...unknown, sequence: 3, targetId: 'enemy:other' };
+  const audit = { ...unknown, sequence: 4, event: 'BuffDamageApplied' };
+  const entries = [unknown, missingHit, other, audit];
+  const viz = projectEnemyEffectViz(entries, 700, new Map(), 'enemy');
+  expect(viz.damageHits).toEqual([unknown, missingHit]);
+  const positions = layoutEnemyDamageHits(viz.damageHits!, [], [], new Set());
+  expect(positions).toHaveLength(1);
+  expect(positions[0]!.standalone).toBe(true);
+  expect(positions[0]!.group).toEqual([unknown, missingHit]);
+  // 详情同样按原回执定位，同帧多笔伤害都能查看。
+  expect(
+    layoutEnemyDamageHits(entries, [], [], new Set()).find(position =>
+      position.group.some(entry => entry.sequence === 1),
+    )?.group,
+  ).toEqual([unknown, missingHit]);
+  expect(unknown.data).not.toHaveProperty('castId');
+  expect(unknown.data).not.toHaveProperty('hitId');
+});
 
 it('places hidden child damage under its nearest live creation ancestor without changing receipts', () => {
   const birth = (instanceId: number, parent: number): CombatReceiptEntry => ({
@@ -48,7 +81,7 @@ it('places hidden child damage under its nearest live creation ancestor without 
   const unrelated: CombatReceiptEntry = {
     ...entries[2]!,
     producedBy: undefined,
-    runtimeSource: { kind: 'enemy' },
+    runtimeSource: { kind: 'enemy', enemyId: 'enemy' },
   };
   expect(
     projectBuffDamageDisplayOwners([...entries.slice(0, 2), unrelated, damage], [parent])[10],
@@ -163,4 +196,35 @@ it('shares a burst and an explicitly visible attachment hit without counting a r
   expect(positions).toHaveLength(2);
   expect(positions[0]!.group).toEqual([a, burst]);
   expect(positions[1]!.group).toEqual([other]);
+});
+
+it('总览保留法术爆发和隐藏状态伤害，无可见状态时落到独立行', () => {
+  const attachment = { ...buff(1, 0, 20), buffId: 'fire', lane: 0 };
+  const hidden = buff(2, 0, 20);
+  const burst = { ...hit(1, 1), data: { value: 10, spellBurstType: 'heat' } };
+  const hiddenHit = hit(2, 2);
+  const entityHit = {
+    ...hit(3, 3),
+    data: { value: 20, castId: 'cast', hitId: 'hit', stepKey: 'hit' },
+  };
+  const rows = layoutEnemyOverviewDamageHits(
+    [burst, hiddenHit, entityHit],
+    [attachment],
+    new Set(['fire']),
+    [attachment, hidden],
+    {},
+  );
+  expect(rows.find(row => row.group.includes(burst))?.row).toBe(0);
+  expect(rows.find(row => row.group.includes(hiddenHit))?.row).toBe(-1);
+  expect(rows.find(row => row.group.includes(entityHit))?.row).toBe(-1);
+  const empty = layoutEnemyOverviewDamageHits(
+    [burst, hiddenHit],
+    [],
+    new Set(['fire']),
+    [hidden],
+    {},
+  );
+  expect(empty).toHaveLength(1);
+  expect(empty[0]!.row).toBe(-1);
+  expect(empty[0]!.group).toEqual([burst, hiddenHit]);
 });

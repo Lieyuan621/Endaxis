@@ -102,3 +102,22 @@ describe('legacy enemy status density and dividers', () => {
     );
   });
 });
+
+it('总览只分配总览和技力两段高度，隐藏的失衡不占空间', () => {
+  const result = resolveMonitorSectionLayout(
+    300,
+    { affliction: false, poise: true, sp: false },
+    DEFAULT_MONITOR_SECTION_WEIGHTS,
+    ['affliction', 'sp'],
+  );
+  expect(result.rects.poise.shellHeight).toBe(0);
+  expect(result.rects.affliction.shellHeight + result.rects.sp.shellHeight).toBe(300);
+  const collapsed = resolveMonitorSectionLayout(
+    300,
+    { affliction: true, poise: false, sp: false },
+    DEFAULT_MONITOR_SECTION_WEIGHTS,
+    ['affliction', 'sp'],
+  );
+  expect(collapsed.rects.affliction.shellHeight).toBe(14);
+  expect(collapsed.rects.sp.shellHeight).toBe(286);
+});

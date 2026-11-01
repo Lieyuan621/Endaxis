@@ -11,28 +11,44 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
       applyElementalInfliction_9: {
         action: {
           kind: 'applyElementalInfliction',
-          parameters: { element: 'nature', isExtra: false },
+          parameters: {
+            element: 'nature',
+            isExtra: false,
+            target: { kind: 'context', key: 'smart_target' },
+          },
         },
         next: null,
       },
       applyElementalInfliction_8: {
         action: {
           kind: 'applyElementalInfliction',
-          parameters: { element: 'electric', isExtra: false },
+          parameters: {
+            element: 'electric',
+            isExtra: false,
+            target: { kind: 'context', key: 'smart_target' },
+          },
         },
         next: null,
       },
       applyElementalInfliction_7: {
         action: {
           kind: 'applyElementalInfliction',
-          parameters: { element: 'cryo', isExtra: false },
+          parameters: {
+            element: 'cryo',
+            isExtra: false,
+            target: { kind: 'context', key: 'smart_target' },
+          },
         },
         next: null,
       },
       applyElementalInfliction_6: {
         action: {
           kind: 'applyElementalInfliction',
-          parameters: { element: 'heat', isExtra: false },
+          parameters: {
+            element: 'heat',
+            isExtra: false,
+            target: { kind: 'context', key: 'smart_target' },
+          },
         },
         next: null,
       },
@@ -190,13 +206,13 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'smart_target' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -221,8 +237,15 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -292,6 +315,7 @@ export const antalChr_0023_antal_attack1ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_normal_attack1',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -463,6 +487,7 @@ export const antalChr_0023_antal_attack2ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_normal_attack2',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -634,6 +659,7 @@ export const antalChr_0023_antal_attack3ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_normal_attack3',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -961,6 +987,7 @@ export const antalChr_0023_antal_attack4ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_normal_attack4',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -979,6 +1006,7 @@ export const antalChr_0023_antal_attack4ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_normal_attack4',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -1055,6 +1083,7 @@ export const antalChr_0023_antal_power_attackActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_power_attack02',
+            faction: 'good',
             recycleDelaySeconds: 5,
             entityInitialValues: {},
             hit: {},
@@ -1183,6 +1212,7 @@ export const antalChr_0023_antal_power_attackActionGraph = {
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0023_antal_power_attack',
             syncTimeScale: true,
+            faction: 'good',
             recycleDelaySeconds: 5,
             entityInitialValues: {},
             hit: {},
@@ -1224,13 +1254,13 @@ export const antalChr_0023_antal_power_attackActionGraph = {
                         action: {
                           kind: 'startTimeDilation',
                           parameters: {
-                            scope: 'entity',
+                            scope: 'hitStop',
+                            attacker: { kind: 'source' },
+                            targets: { kind: 'inputTarget' },
+                            affectType: 'Both',
                             durationSeconds: { kind: 'constant', value: 0.3667 },
-                            slot: 'TimeDilation/Layer/Entity/HitStop',
                             priority: 10,
                             curve: { kind: 'named', key: 'char_normal_attack' },
-                            finishByAction: false,
-                            targets: ['enemy', 'caster'],
                           },
                         },
                         next: null,
@@ -1334,10 +1364,21 @@ export const antalChr_0023_antal_power_attack: SkillDefinition = {
 export const antalChr_0023_antal_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1393,7 +1434,7 @@ export const antalChr_0023_antal_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_3' } },
   ],
   defaultTarget: 'enemy',
@@ -1443,6 +1484,8 @@ export const antalChr_0023_antal_normal_skillActionGraph = {
                 copiedBlackboardAssignments: {
                   rate: 'rate',
                   duration: 'duration',
+                  potential_3: 'potential_3',
+                  potential_3_atb: 'potential_3_atb',
                   potential_5: 'potential_5',
                   delay_time: 'delay_time',
                   potential_5_rate: 'potential_5_rate',
@@ -1472,13 +1515,13 @@ export const antalChr_0023_antal_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1888,6 +1931,8 @@ const antalBuff3ActionGraph = {
                 copiedBlackboardAssignments: {
                   rate: 'rate',
                   duration: 'duration',
+                  potential_3: 'potential_3',
+                  potential_3_atb: 'potential_3_atb',
                   potential_5_rate: 'potential_5_rate',
                   potential_5: 'potential_5',
                   delay_time: 'delay_time',
@@ -1914,7 +1959,15 @@ const antalBuff3: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { delay_time: 0, duration: 60, potential_5: 0, potential_5_rate: 0, rate: 0.2 },
+  blackboard: {
+    delay_time: 0,
+    duration: 60,
+    potential_3: 0,
+    potential_3_atb: 0,
+    potential_5: 0,
+    potential_5_rate: 0,
+    rate: 0.2,
+  },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'applyBuff_1' }] },
   actionGraph: antalBuff3ActionGraph,
@@ -2012,6 +2065,28 @@ const antalBuff4ActionGraph = {
         },
         next: 'applyBuff_4',
       },
+      changeResource_6: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_6' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            spGainKind: 'refund',
+            spGainSource: 'skill',
+          },
+        },
+        next: null,
+      },
+      checkCondition_7: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+        },
+        next: 'changeResource_6',
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
@@ -2027,6 +2102,20 @@ const antalBuff4ActionGraph = {
           kind: 'actionValueCompare',
           left: { kind: 'valueNode', nodeId: 'data_4' },
           operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'potential_3_atb' } },
+      data_7: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_7' },
+          operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
@@ -2050,13 +2139,24 @@ const antalBuff4: SkillBuffDefinition = {
   },
   applyTags: [],
   extendTags: [],
-  blackboard: { delay_time: 0, duration: 0, potential_5: 0, potential_5_rate: 0, rate: 0 },
+  blackboard: {
+    delay_time: 0,
+    duration: 0,
+    potential_3: 0,
+    potential_3_atb: 0,
+    potential_5: 0,
+    potential_5_rate: 0,
+    rate: 0,
+  },
   attributeModifiers: [],
   lifecycleSequences: {
     start: [{ $sequence: 'applyBuff_2' }],
     trigger: [{ $sequence: 'checkCondition_5' }],
     finish: [{ $sequence: 'finishBuffsById_3' }],
   },
+  abilityEventResponses: [
+    { event: 'ownerDead', priority: 0, sequence: { $sequence: 'checkCondition_7' } },
+  ],
   actionGraph: antalBuff4ActionGraph,
 };
 

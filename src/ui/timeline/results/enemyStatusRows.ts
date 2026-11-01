@@ -82,12 +82,12 @@ export function layoutEnemyStatusRows<
       ends[lane] = runEnd(buff);
       assignLane(buff, offset + lane);
     }
-    // 空物理、附着、异常区也保留一行，与旧版分区顺序一致。
+    // 详情面板为物理、附着、异常分区各保留至少一行。
     offset += Math.max(group < 3 ? 1 : 0, ends.length);
   }
-  // 旧版同一分区同一时刻的瞬时图标横向错开，不另挤出垂直行。
+  // 同一分区同一时刻的瞬时图标横向错开，不增加垂直行。
   const slots = new Map<string, number>();
-  // 新版持续段与瞬时回执是独立展示身份。先为同帧开始的段保留第一个图标位，
+  // 持续段与瞬时回执是独立展示身份。先为同帧开始的段保留第一个图标位，
   // 只偏移瞬时图标；段起点、持续条终点和伤害入口仍使用真实帧坐标。
   for (const buff of buffs) {
     slots.set(`${lanes.get(buff)}:${buff.startFrame}`, 1);
@@ -108,8 +108,8 @@ export function layoutEnemyStatusRows<
     values.push(buff);
     physicalGroups.set(key, values);
   }
-  // main 会把同帧物理异常归一成一个代表图标，并隐藏同帧持续段的重复图标。
-  // v3 的回执投影仍保留全部真实 Buff 段，只在展示层选出相同的代表图标；
+  // 同帧物理异常使用一个代表图标，隐藏同帧持续段的重复图标。
+  // 回执投影保留全部真实 Buff 段，只在展示层选择代表图标；
   // 这样不会丢失伤害归属和详情数据，也不会把多个图标横向挤到时间轴末端之外。
   for (const values of physicalGroups.values()) {
     const representative = [...values].sort(
@@ -129,5 +129,40 @@ export function layoutEnemyStatusRows<
     markerPositions,
     attachmentRow,
     rowCount: offset,
+  };
+}
+
+/** 总览只显示关键状态，沿用详情分区并压掉空行；普通 Buff 留在实例详情。 */
+export function layoutEnemyOverviewStatuses<T extends BuffTimelineSegment>(
+  buffs: readonly T[],
+  attachmentIds: ReadonlySet<string>,
+  markers: readonly EnemyEffectMarker[] = [],
+) {
+  const selected = buffs.filter(
+    buff =>
+      isEnemyTimelineBuffVisible(buff) &&
+      (isPhysicalStatusRowBuff(buff) ||
+        attachmentIds.has(buff.buffId) ||
+        buff.iconStyleInSquad === 'SpellAbnormal'),
+  );
+  const layout = layoutEnemyStatusRows(selected, markers, attachmentIds);
+  const occupied = [
+    ...new Set([...layout.lanes.values(), ...layout.markerPositions.map(position => position.row)]),
+  ].sort((a, b) => a - b);
+  const segments = selected.map(buff => ({
+    ...buff,
+    lane: occupied.indexOf(layout.lanes.get(buff)!),
+  }));
+  const hiddenIcons = new Set(
+    segments.filter((_, index) => layout.hiddenIcons.has(selected[index]!)),
+  );
+  return {
+    segments,
+    hiddenIcons,
+    laneCount: occupied.length,
+    markerPositions: layout.markerPositions.map(position => ({
+      ...position,
+      row: occupied.indexOf(position.row),
+    })),
   };
 }

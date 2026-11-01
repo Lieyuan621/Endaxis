@@ -23,7 +23,14 @@ const TAG_FIELDS = new Set([
 const TERM_FIELDS = new Set(['blackboard', 'buffId', 'termType']);
 const BLACKBOARD_FIELDS = new Set(['key', 'value', 'valueStr']);
 const CONTRACT_FIELDS = new Set(['activityId', 'contractGroupMap']);
+const COLUMN_CONTRACT_FIELDS = new Set([
+  'activityId',
+  'contractColMap',
+  'contractGroupMap',
+  'contractMap',
+]);
 const GROUP_FIELDS = new Set(['contractMap']);
+const COLUMN_FIELDS = new Set(['contractRowMap']);
 const ENTRY_FIELDS = new Set([
   'canPreview',
   'conflictId',
@@ -34,6 +41,8 @@ const ENTRY_FIELDS = new Set([
   'unlockActivityStage',
   'unlockScore',
 ]);
+
+const COLUMN_ENTRY_FIELDS = new Set([...ENTRY_FIELDS, 'column', 'row']);
 
 /** `Beyond.GEnums.ContingencyContractTermType` recovered from the current game assembly. */
 export type ContingencyContractTermKind = 'enemyBuff' | 'selfGlobalBuff' | 'reduceChallengeTime';
@@ -209,21 +218,32 @@ export function parseContingencyContractCatalogSource(
     .map(([id, raw]) => {
       const path = `ContingencyContractTable.${id}`;
       const contract = requireRecord(raw, path);
-      requireExactFields(contract, CONTRACT_FIELDS, path);
+      // 新版按列/行提供布局；contractGroupMap 改为按逻辑分组索引，不能再充当列。
+      const columnLayout = Object.hasOwn(contract, 'contractColMap');
+      requireExactFields(contract, columnLayout ? COLUMN_CONTRACT_FIELDS : CONTRACT_FIELDS, path);
+      const columnsKey = columnLayout ? 'contractColMap' : 'contractGroupMap';
+      const rowsKey = columnLayout ? 'contractRowMap' : 'contractMap';
       const columns = orderedNumericEntries(
-        requireRecord(contract.contractGroupMap, `${path}.contractGroupMap`),
-        `${path}.contractGroupMap`,
+        requireRecord(contract[columnsKey], `${path}.${columnsKey}`),
+        `${path}.${columnsKey}`,
       ).map(([columnId, rawGroup]) => {
-        const groupPath = `${path}.contractGroupMap.${columnId}`;
+        const groupPath = `${path}.${columnsKey}.${columnId}`;
         const group = requireRecord(rawGroup, groupPath);
-        requireExactFields(group, GROUP_FIELDS, groupPath);
+        requireExactFields(group, columnLayout ? COLUMN_FIELDS : GROUP_FIELDS, groupPath);
         const entries = orderedNumericEntries(
-          requireRecord(group.contractMap, `${groupPath}.contractMap`),
-          `${groupPath}.contractMap`,
+          requireRecord(group[rowsKey], `${groupPath}.${rowsKey}`),
+          `${groupPath}.${rowsKey}`,
         ).map(([entryId, rawEntry]) => {
-          const entryPath = `${groupPath}.contractMap.${entryId}`;
+          const entryPath = `${groupPath}.${rowsKey}.${entryId}`;
           const entry = requireRecord(rawEntry, entryPath);
-          requireExactFields(entry, ENTRY_FIELDS, entryPath);
+          requireExactFields(entry, columnLayout ? COLUMN_ENTRY_FIELDS : ENTRY_FIELDS, entryPath);
+          if (
+            columnLayout &&
+            (requireInteger(entry.column, `${entryPath}.column`) !== Number(columnId) ||
+              requireInteger(entry.row, `${entryPath}.row`) !== Number(entryId))
+          ) {
+            throw new Error(`${entryPath}: column/row does not match layout position`);
+          }
           const tagId = requireInteger(entry.tagId, `${entryPath}.tagId`);
           if (!tagsById.has(tagId)) throw new Error(`${entryPath}.tagId: unknown tag ${tagId}`);
           referencedTags.add(tagId);

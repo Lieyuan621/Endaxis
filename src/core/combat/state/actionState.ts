@@ -241,7 +241,12 @@ export type ActionGraphNodeData =
     }
   | { readonly kind: 'graphOnce'; executed: boolean; body: ActionGraphExecutionState | null }
   | { readonly kind: 'channeling'; readonly channeling: ChannelingActionState }
-  | { readonly kind: 'graphAura'; active: boolean; readonly influences: AuraInfluenceState[] }
+  | {
+      readonly kind: 'graphAura';
+      active: boolean;
+      readonly influences: AuraInfluenceState[];
+      influenceCounts?: { target: RuntimeTargetRef; count: number }[];
+    }
   | { readonly kind: 'graphMacro'; body: ActionGraphExecutionState | null }
   | {
       readonly kind: 'graphListener';
@@ -287,13 +292,21 @@ export type OperationStepData =
   | { readonly kind: 'normalSkillRestriction'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'movementGait'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'skillAffix'; readonly activation: ActionRegistrationState }
+  | { readonly kind: 'typhoeaArchery'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'actionDurationBuffs'; readonly buffs: ActionBuffReferencesState }
   | { readonly kind: 'inheritedBuff'; readonly buffs: ActionBuffReferencesState }
   | { readonly kind: 'buffHold'; readonly buffs: ActionBuffReferencesState }
   | { readonly kind: 'stateless' };
 
 export type GraphLeafStepData =
-  OperationStepData | { readonly kind: 'healthFloor'; body: ActionGraphExecutionState | null };
+  | OperationStepData
+  | { readonly kind: 'healthFloor'; body: ActionGraphExecutionState | null }
+  | {
+      readonly kind: 'continuousTargetQuery';
+      timer: number;
+      lastFindTime: number;
+      inputTarget: RuntimeTargetRef | null;
+    };
 
 export type ActionStepData =
   | GraphLeafStepData

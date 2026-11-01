@@ -44,6 +44,9 @@ const props = defineProps<{
   appearance: 'light' | 'dark';
   randomMode: 'expected' | 'sampled';
   automaticControlSwitches: boolean;
+  multiEnemyEnabled: boolean;
+  multiEnemyRequired: boolean;
+  enemyAutomaticDeath: boolean;
   comboSkillPriorityEnabled: boolean;
   comboSkillPriorityOperators: readonly {
     id: string | null;
@@ -104,6 +107,8 @@ const emit = defineEmits<{
   setAppearance: [appearance: 'light' | 'dark'];
   setRandomMode: [mode: 'expected' | 'sampled'];
   toggleAutomaticControlSwitches: [];
+  toggleMultiEnemy: [];
+  toggleEnemyAutomaticDeath: [];
   toggleComboSkillPriority: [];
   setComboSkillPriorityOrder: [order: string[]];
   setGlobalRandomSeed: [seed: number];
@@ -736,6 +741,102 @@ onBeforeUnmount(() => {
                 >
                   <rect x="1" y="1" width="14" height="14" rx="2" />
                   <polyline v-if="automaticControlSwitches" points="3,8 6.5,11.5 13,4.5" />
+                </svg>
+              </EaButton>
+            </div>
+            <div class="header-more-checklist">
+              <EaButton
+                type="button"
+                class="header-more-check-row header-more-tool-row"
+                :title="
+                  multiEnemyRequired
+                    ? t('timeline.header.multiEnemyRequired')
+                    : t('timeline.header.multiEnemy')
+                "
+                :aria-pressed="multiEnemyEnabled"
+                :disabled="configurationReadOnly || multiEnemyRequired"
+                @click="$emit('toggleMultiEnemy')"
+              >
+                <svg
+                  class="header-more-tool-row__icon"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="9" cy="7" r="3" />
+                  <path d="M3 21v-3a6 6 0 0 1 12 0v3M17 4a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v3" />
+                </svg>
+                <span class="header-more-tool-row__label">{{
+                  t('timeline.header.multiEnemy')
+                }}</span>
+                <svg
+                  class="header-more-tool-row__check"
+                  viewBox="0 0 16 16"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  aria-hidden="true"
+                >
+                  <rect x="1" y="1" width="14" height="14" rx="2" />
+                  <polyline v-if="multiEnemyEnabled" points="3,8 6.5,11.5 13,4.5" />
+                </svg>
+              </EaButton>
+            </div>
+            <div v-if="multiEnemyEnabled" class="header-more-checklist">
+              <EaButton
+                type="button"
+                class="header-more-check-row header-more-tool-row"
+                :title="t('timeline.header.enemyAutomaticDeathHelp')"
+                :aria-pressed="enemyAutomaticDeath"
+                :disabled="configurationReadOnly"
+                @click="$emit('toggleEnemyAutomaticDeath')"
+              >
+                <svg
+                  class="header-more-tool-row__icon"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <g fill="currentColor" stroke="none">
+                    <path
+                      d="M7 10.5h10c1-3.5 5-2.5 3 1.5 2 4-2 5-3 1.5H7C6 17 2 16 4 12 2 8 6 7 7 10.5Z"
+                      transform="rotate(45 12 12)"
+                    />
+                    <path
+                      d="M7 10.5h10c1-3.5 5-2.5 3 1.5 2 4-2 5-3 1.5H7C6 17 2 16 4 12 2 8 6 7 7 10.5Z"
+                      transform="rotate(-45 12 12)"
+                    />
+                  </g>
+                </svg>
+                <span class="header-more-tool-row__label">{{
+                  t('timeline.header.enemyAutomaticDeath')
+                }}</span>
+                <svg
+                  class="header-more-tool-row__check"
+                  viewBox="0 0 16 16"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  aria-hidden="true"
+                >
+                  <rect x="1" y="1" width="14" height="14" rx="2" />
+                  <polyline v-if="enemyAutomaticDeath" points="3,8 6.5,11.5 13,4.5" />
                 </svg>
               </EaButton>
             </div>

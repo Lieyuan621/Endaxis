@@ -53,6 +53,7 @@ const environmentInput = {
 
 it('应用会话从检查点分叉并用同一状态图投影结果', () => {
   const environment = new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     ...environmentInput,
     enemyVitals: new CombatVitals({
       health: 100,

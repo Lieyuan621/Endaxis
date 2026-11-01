@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { StageEnemySelection } from '../../../application/editor/enemyEditorCommands';
 import type { StageEnemyIdentity } from '../../../core/project/schema';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -12,7 +13,10 @@ const props = defineProps<{
   enemies: readonly EnemyDefinition[];
   nameOf: (id: string) => string;
 }>();
-const emit = defineEmits<{ select: [id: string, level: number, source: StageEnemyIdentity] }>();
+const emit = defineEmits<{
+  select: [id: string, level: number, source: StageEnemyIdentity];
+  selectAll: [entries: StageEnemySelection[]];
+}>();
 const { t } = useI18n();
 const { t: stageName } = useI18n({
   useScope: 'local',
@@ -82,6 +86,20 @@ function select(entry: Entry) {
   if (!unavailable(entry) && entry.level !== null && entry.definitionId)
     emit('select', entry.definitionId, entry.level, entry.source);
 }
+function selectAll(entries: readonly Entry[]): void {
+  const selections: StageEnemySelection[] = [];
+  for (const entry of entries) {
+    if (unavailable(entry) || entry.level === null || !entry.definitionId) return;
+    selections.push({
+      count: entry.count ?? 1,
+      definitionId: entry.definitionId,
+      level: entry.level,
+      source: entry.source,
+      name: stageName(entry.nameKey) || props.nameOf(entry.source.templateId),
+    });
+  }
+  if (selections.length) emit('selectAll', selections);
+}
 </script>
 
 <template>
@@ -118,8 +136,25 @@ function select(entry: Entry) {
             :key="activeStage.id"
             class="stage-difficulty"
           >
-            <strong>{{ stageName(activeStage.nameKey) }}</strong>
-            <small v-if="difficulty(activeStage)">{{ difficulty(activeStage) }}</small>
+            <div class="stage-difficulty-heading">
+              <div>
+                <strong>{{ stageName(activeStage.nameKey) }}</strong>
+                <small v-if="difficulty(activeStage)">{{ difficulty(activeStage) }}</small>
+              </div>
+              <EaButton
+                size="sm"
+                :disabled="
+                  !activeStage.enemies.length ||
+                  activeStage.enemies.some(entry => unavailable(entry))
+                "
+                :title="
+                  activeStage.enemies.map(entry => unavailable(entry)).find(Boolean) ||
+                  t('resourceMonitor.enemy.applyStageAllHelp')
+                "
+                @click="selectAll(activeStage.enemies)"
+                >{{ t('resourceMonitor.enemy.applyStageAll') }}</EaButton
+              >
+            </div>
             <div
               v-for="(entry, index) in activeStage.enemies"
               :key="`${entry.source.enemyId}:${index}`"
@@ -130,6 +165,7 @@ function select(entry: Entry) {
                 :definition="definitions.get(entry.definitionId ?? entry.source.templateId)"
                 :display-name="stageName(entry.nameKey) || nameOf(entry.source.templateId)"
                 :level="entry.level"
+                :count="entry.count"
                 :unavailable="unavailable(entry)"
                 :select="() => select(entry)"
               />
@@ -144,6 +180,18 @@ function select(entry: Entry) {
 </template>
 
 <style scoped>
+.stage-difficulty-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.stage-difficulty-heading > div {
+  min-width: 0;
+}
+.stage-difficulty-heading > button {
+  flex-shrink: 0;
+}
 .stage-picker {
   flex: 1;
   min-height: 0;

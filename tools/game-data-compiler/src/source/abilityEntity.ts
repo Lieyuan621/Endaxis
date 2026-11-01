@@ -168,6 +168,8 @@ export interface NativeSoulAbilitySystemSource {
   readonly useMainBodyHp: boolean;
   readonly useMainBodyPoise: boolean;
   readonly canBeHitIndividually: boolean;
+  /** 原生部位阻挡半角，单位为度；180 表示全方向。 */
+  readonly halfBlockAngle: number;
   readonly onlyHitByNormalAttack: boolean;
   readonly canBeDirectlyBuffed: boolean;
   readonly asIndividualInExcludeTargetProcessor: boolean;
@@ -203,6 +205,7 @@ function parseSoulAbilitySystemSource(value: unknown, path: string): NativeSoulA
     useMainBodyHp: requireBoolean(data.useMainBodyHp, `${path}.useMainBodyHp`),
     useMainBodyPoise: requireBoolean(data.useMainBodyPoise, `${path}.useMainBodyPoise`),
     canBeHitIndividually: requireBoolean(data.canBeHitIndividually, `${path}.canBeHitIndividually`),
+    halfBlockAngle: requireNumber(data.halfBlockAngle, `${path}.halfBlockAngle`),
     onlyHitByNormalAttack: requireBoolean(
       data.onlyHitByNormalAttack,
       `${path}.onlyHitByNormalAttack`,

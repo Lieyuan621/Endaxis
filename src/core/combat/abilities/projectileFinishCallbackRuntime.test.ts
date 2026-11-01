@@ -769,7 +769,10 @@ describe('projectile callback action lifecycle', () => {
       targets.set(
         'selected',
         kind === 'entity'
-          ? [{ kind: 'enemy' }, { kind: 'operator', operatorId: 'ally' }]
+          ? [
+              { kind: 'enemy', enemyId: 'enemy' },
+              { kind: 'operator', operatorId: 'ally' },
+            ]
           : [
               { kind: 'spatialPoint', pointId: 1 },
               { kind: 'spatialPoint', pointId: 2 },

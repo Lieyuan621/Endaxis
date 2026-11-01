@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { skillFixture } from '../../../test/skillFixture';
 import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import type {
@@ -147,7 +148,8 @@ function createCrushProbe(): CombatStepForKind<'applyPhysicalInfliction'> {
       return {
         kind: 'applyPhysicalInfliction',
         parameters: {
-          target: { kind: 'fixed' as const, target: 'enemy' as const }, source: { kind: 'fixed' as const, target: 'caster' as const },
+          target: { kind: 'fixed' as const, target: 'enemy' as const },
+          source: { kind: 'fixed' as const, target: 'caster' as const },
           isExtra: false,
           type: 'crush',
           damageMultiplier,
@@ -266,7 +268,7 @@ async function simulate(slug: string, tier: number, sequences: readonly ProbeSeq
   };
   let scenario = createEmptyScenario('weapon-state', '武器目标状态生产回归');
   scenario.battle.durationFrames = 1100;
-  scenario.enemy.editable.hp = 1_000_000_000;
+  firstScenarioEnemy(scenario).enemy.editable.hp = 1_000_000_000;
   scenario.tracks[0] = {
     id: 'track:state-owner',
     operator: {

@@ -99,7 +99,7 @@ function configuration(scenario: ScenarioDocument) {
       const { skillCasts: _skills, consumableUses: _items, ...config } = track;
       return config;
     }),
-    enemy: scenario.enemy,
+    level: scenario.level,
     mechanics: scenario.mechanics,
     globalConfig: scenario.globalConfig,
     prepFrames: scenario.battle.prepFrames,

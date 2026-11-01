@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 /**
  * 已审计 Ability 事件的连携条件阶段。每条注册保留自己的 direct 板，共享 owner 的实体板。
  * 只产出 Pending 数据，不选择候选、不施法，也不把它降格为附着后的语义事件。
@@ -122,7 +123,7 @@ export class ComboSkillConditionRuntime {
       const runtime = new CombatActionSequenceRuntime(options.operations, {
         blackboard,
         targetContext: targets,
-        actionInputTarget: inputTarget,
+        actionInputTargets: singleTargetList(inputTarget),
         actionOwnerId: options.ownerId,
         actionSourceId: options.sourceId,
         event,
@@ -138,8 +139,8 @@ export class ComboSkillConditionRuntime {
         if (passed) {
           options.onPending({
             event,
-            inputTarget,
-            triggerTarget,
+            inputTargets: [inputTarget],
+            triggerTargets: triggerTarget === null ? null : [triggerTarget],
             assignPairs: captureBlackboard ? Object.freeze(blackboard.snapshot()) : null,
           });
         }

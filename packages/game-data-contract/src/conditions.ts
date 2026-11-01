@@ -1,3 +1,4 @@
+import type { CombatFaction } from './primitives.ts';
 export const BUFF_FINISH_REASONS = [
   'lifetime',
   'ignite',
@@ -71,6 +72,14 @@ export type BuffLookupQuery =
 /** 动作内部解析的目标配置，不增加图中的调用或临时目标组。 */
 export type ActionTargetQuery =
   | {
+      /** 原生 TargetContainsValidator；仅比较时归一化不能直接附加 Buff 的部位。 */
+      readonly kind: 'intersection';
+      readonly targets: ActionTargetQuery;
+      readonly parentTargets: ActionTargetQuery;
+    }
+  /** 保留候选顺序中的前 N 项；用于简化模型中优先级并列后的数量限制。 */
+  | { readonly kind: 'limit'; readonly targets: ActionTargetQuery; readonly count: number }
+  | {
       readonly kind: 'distanceFilter';
       readonly targets: ActionTargetQuery;
       readonly center: ActionTargetQuery;
@@ -87,14 +96,20 @@ export type ActionTargetQuery =
     }
   | ActionEntitySelection
   | { readonly kind: 'battleMainTarget' }
+  /** 读取提弗洛斯瞄准系统已选列表，不执行新的敌人搜索。 */
+  | { readonly kind: 'typhoeaArcherySelected' }
   /** 战斗全局机制对象，独立于主控和敌人。 */
   | { readonly kind: 'godEntity' }
   /** 零空间模型中已证明查询范围覆盖的未结束投射物。 */
   | { readonly kind: 'unfinishedProjectiles' }
   | { readonly kind: 'fixed'; readonly target: 'enemy' | 'caster' }
-  /** 固定单敌人候选经原生 TagValidator 筛选，空结果仍覆盖目标组。 */
+  /** 敌人候选经原生 TagValidator 筛选，空结果仍覆盖目标组。 */
   | {
       readonly kind: 'enemyByTags';
+      /** global 包括已出生且存活的范围外敌人；省略时仅取可命中范围。 */
+      readonly scope?: 'global';
+      /** 逆序遍历敌人目录，供原生 AllEnemy/InFight Finder 保留候选顺序。 */
+      readonly reverse?: boolean;
       readonly tagQueryType: GameplayTagQueryType;
       readonly tags: readonly GameplayTag[];
     }
@@ -117,6 +132,19 @@ export type ActionTargetQuery =
       readonly targets: ActionTargetQuery;
       readonly excludeTargets: ActionTargetQuery;
     }
+  /** 简化场景中按稳定目标顺序选首个标签匹配者；无匹配时回退主目标。 */
+  | {
+      readonly kind: 'smartTargetByTag';
+      readonly owner: ActionEntitySelection;
+      readonly tagQueryType: GameplayTagQueryType;
+      readonly tags: readonly GameplayTag[];
+    }
+  /** 原生 SelectByBuff：按稳定候选顺序找任一指定 Buff，未找到才回退主目标。 */
+  | {
+      readonly kind: 'smartTargetByBuff';
+      readonly owner: ActionEntitySelection;
+      readonly buffIds: readonly string[];
+    }
   | { readonly kind: 'mainTarget'; readonly owner: ActionEntitySelection }
   /** SourceFinder 只读取所选对象的一层 AbilitySystem.source，不递归追溯干员。 */
   | { readonly kind: 'abilitySystemSource'; readonly owner: ActionEntitySelection }
@@ -124,10 +152,14 @@ export type ActionTargetQuery =
   | { readonly kind: 'abilityEntityTarget'; readonly owner: ActionEntitySelection }
   /** 读取所选对象主体的 soulPart，不按来源干员枚举召唤物。 */
   | { readonly kind: 'ownerSoul'; readonly owner: ActionEntitySelection }
+  /** 原生部位 Buff/HitStop 归属：不可直接挂 Buff 的部位转交本体。 */
+  | { readonly kind: 'partBuffSource'; readonly targets: ActionTargetQuery }
   /** 零空间 Normal 命中盒的阵营候选；查询时读取实体当前状态。 */
   | {
       readonly kind: 'factionHitBox';
       readonly factionTarget: 'ally' | 'anti';
+      /** 原生显式阵营掩码；提供时不从宿主推导候选阵营。标签检查仍使用宿主阵营。 */
+      readonly targetFactions?: readonly CombatFaction[];
       readonly owner: ActionEntitySelection;
       readonly checkAlive: boolean;
       readonly containsUnmarkable: boolean;
@@ -209,11 +241,6 @@ export type CombatConditionExpression =
   | {
       /** 条件种类判别值。 */
       kind: 'combatActive';
-    }
-  /** Endaxis 固定单敌人场景中，表示原生智能目标数量检查已被模型保证。 */
-  | {
-      /** 条件种类判别值。 */
-      kind: 'singleEnemyPresent';
     }
   /** 原生 CheckMainCharacterCondition：查询指定对象是否为当前主控。 */
   | {
@@ -426,6 +453,8 @@ export type CombatConditionExpression =
   | {
       /** 查询目标实体当前持有的 GameplayTag；它与 Buff 身份、数量和层数无关。 */
       kind: 'entityTagMatch';
+      /** 原生 CheckPartTagMatch 直接检查部位；缺省按 CheckTagMatch 解析部位标签归属。 */
+      checkPartTags?: boolean;
       /** 要检查的对象。 */
       target: ActionTargetQuery;
       /** 标签集合匹配方式。 */
@@ -708,7 +737,6 @@ export const COMBAT_CONDITION_KINDS = [
   'constant',
   'combatActive',
   'skillHasHit',
-  'singleEnemyPresent',
   'checkMainCharacter',
   'characterTypeIn',
   'operatorRoleIn',

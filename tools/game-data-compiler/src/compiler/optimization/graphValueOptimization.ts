@@ -565,14 +565,12 @@ export function pruneGraphValues<Value>(
         observe(
           mergeDefinitionValueUsage([
             analyzeStepUsage(action, usageContext),
-            ...action.callbacks.flatMap(callback =>
-              callback.skill.scheduledSequences.map(item =>
-                analyzeGraphSequenceUsage(
-                  callback.skill.actionGraph.main,
-                  item.sequence,
-                  usageContext,
-                ),
-              ),
+            ...action.callbacks.flatMap(({ skill }) =>
+              '$skill' in skill
+                ? [{ ...EMPTY_USAGE, unknownAccess: true, mayThrow: true, observable: true }]
+                : skill.scheduledSequences.map(item =>
+                    analyzeGraphSequenceUsage(skill.actionGraph.main, item.sequence, usageContext),
+                  ),
             ),
           ]),
         );

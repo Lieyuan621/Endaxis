@@ -74,6 +74,11 @@ describe('GlobalBuff TypeTree source', () => {
       'utf8',
     );
     const parsed = parseGlobalBuffDumpSource(text, 'mute-evade');
+    const expanded = text.replace(
+      'ReferencedObjectData data',
+      'ReferencedObjectData data\n\t\t\t\t\t\tUInt8 isEnable = 1\n\t\t\t\t\t\tint priorityLevel = 0\n\t\t\t\t\t\tint priorityOffset = 0\n\t\t\t\t\t\tint serverActionIndex = 0\n\t\t\t\t\t\tstring textId = "ui_bat_cc_mute_evade_info"',
+    );
+    expect(parseGlobalBuffDumpSource(expanded, 'expanded').template).toEqual(parsed.template);
     expect(parsed.template).toMatchObject({
       globalEventCount: 1,
       presentationOnlyGlobalEventCount: 1,

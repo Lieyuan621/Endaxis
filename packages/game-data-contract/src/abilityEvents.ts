@@ -25,6 +25,7 @@ export const ABILITY_EVENTS = [
   'ownerSwitchToCenter',
   'ownerSwitchToGuard',
   'ownerHpZero',
+  'ownerDead',
   'hpChanged',
   'abilityEntitySpawned',
   'abilityEntityFinished',

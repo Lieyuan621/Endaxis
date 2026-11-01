@@ -36,25 +36,37 @@ function change(overrides: Partial<PoiseChangePoint> = {}): PoiseChangePoint {
 
 describe('projectPoiseCurve', () => {
   it('上限变化与恢复按回执顺序使用当时上限', () => {
-    const curve = projectPoiseCurveFromReceipt(INITIAL, [
-      {
-        frame: 0,
-        time: 0,
-        sequence: 1,
-        event: 'MaxPoiseChanged',
-        targetId: 'enemy',
-        data: { previousPoise: 300, currentPoise: 600, maxPoise: 600 },
-      },
-      { frame: 10, time: 1 / 3, sequence: 2, event: 'PoiseRecovered', data: { poise: 600 } },
-      {
-        frame: 20,
-        time: 2 / 3,
-        sequence: 3,
-        event: 'MaxPoiseChanged',
-        targetId: 'enemy',
-        data: { previousPoise: 600, currentPoise: 300, maxPoise: 300 },
-      },
-    ]);
+    const curve = projectPoiseCurveFromReceipt(
+      INITIAL,
+      [
+        {
+          frame: 0,
+          time: 0,
+          sequence: 1,
+          event: 'MaxPoiseChanged',
+          targetId: 'enemy',
+          data: { previousPoise: 300, currentPoise: 600, maxPoise: 600 },
+        },
+        {
+          targetId: 'enemy',
+          frame: 10,
+          time: 1 / 3,
+          sequence: 2,
+          event: 'PoiseRecovered',
+          data: { poise: 600 },
+        },
+        {
+          frame: 20,
+          time: 2 / 3,
+          sequence: 3,
+          event: 'MaxPoiseChanged',
+          targetId: 'enemy',
+          data: { previousPoise: 600, currentPoise: 300, maxPoise: 300 },
+        },
+      ],
+      0,
+      'enemy',
+    );
     expect(curve.points.map(point => point.value)).toEqual([300, 600, 600, 300]);
     expect(curve.maximumPoints?.map(point => point.value)).toEqual([300, 600, 300]);
   });
@@ -157,7 +169,7 @@ describe('projectPoiseCurve', () => {
       },
     ];
 
-    const curve = projectPoiseCurveFromReceipt(INITIAL, entries);
+    const curve = projectPoiseCurveFromReceipt(INITIAL, entries, 0, 'enemy');
     expect(curve.points).toEqual([
       { frame: 0, time: 0, sequence: null, value: 300 },
       { frame: 10, time: 1 / 3, sequence: 3, value: 0 },
@@ -168,16 +180,21 @@ describe('projectPoiseCurve', () => {
 
   it('拒绝与最大值不一致的失衡恢复事实', () => {
     expect(() =>
-      projectPoiseCurveFromReceipt(INITIAL, [
-        {
-          sequence: 1,
-          frame: 30,
-          time: 1,
-          event: 'PoiseRecovered',
-          targetId: 'enemy',
-          data: { poise: 250, hasPoiseBrokenTag: false },
-        },
-      ]),
+      projectPoiseCurveFromReceipt(
+        INITIAL,
+        [
+          {
+            sequence: 1,
+            frame: 30,
+            time: 1,
+            event: 'PoiseRecovered',
+            targetId: 'enemy',
+            data: { poise: 250, hasPoiseBrokenTag: false },
+          },
+        ],
+        0,
+        'enemy',
+      ),
     ).toThrow('restored to 250, expected 300');
   });
 });
@@ -220,17 +237,17 @@ describe('projectPoiseKnotSegments', () => {
       applied(30, 100, 0, true),
       applied(90, 300, 130),
     ];
-    expect(projectPoiseKnotSegments(entries, 300, [0.25, 0.5], 60, 100)).toEqual([
+    expect(projectPoiseKnotSegments(entries, 300, [0.25, 0.5], 60, 100, 'enemy')).toEqual([
       { startFrame: 20, endFrame: 80 },
       { startFrame: 90, endFrame: 100 },
     ]);
-    expect(projectPoiseKnotSegments(entries, 300, [0.25, 0.5], 60, 19)).toEqual([]);
+    expect(projectPoiseKnotSegments(entries, 300, [0.25, 0.5], 60, 19, 'enemy')).toEqual([]);
   });
 
   it('没有节点或节点时长时不显示条纹', () => {
     const entries = [applied(20, 300, 140)];
-    expect(projectPoiseKnotSegments(entries, 300, [], 60, 100)).toEqual([]);
-    expect(projectPoiseKnotSegments(entries, 300, [0.5], 0, 100)).toEqual([]);
+    expect(projectPoiseKnotSegments(entries, 300, [], 60, 100, 'enemy')).toEqual([]);
+    expect(projectPoiseKnotSegments(entries, 300, [0.5], 0, 100, 'enemy')).toEqual([]);
   });
 });
 
@@ -241,6 +258,7 @@ describe('projectPoiseBrokenSegments', () => {
       event: string,
       data: CombatReceiptEntry['data'],
     ): CombatReceiptEntry => ({
+      targetId: 'enemy',
       sequence: frame,
       frame,
       time: frame / 30,
@@ -255,11 +273,11 @@ describe('projectPoiseBrokenSegments', () => {
       fact(30, 'PoiseApplied', { brokePoise: true, hasPoiseBrokenTag: true }),
       fact(50, 'PoiseBrokenTagEnded', { hasPoiseBrokenTag: false }),
     ];
-    expect(projectPoiseBrokenSegments(entries, 40)).toEqual([
+    expect(projectPoiseBrokenSegments(entries, 40, 'enemy')).toEqual([
       { startFrame: 10, endFrame: 20 },
       { startFrame: 30, endFrame: 40 },
     ]);
-    expect(projectPoiseBrokenSegments(entries, 9)).toEqual([]);
+    expect(projectPoiseBrokenSegments(entries, 9, 'enemy')).toEqual([]);
   });
 
   it('preserves a same-frame tag end without inventing a visible duration', () => {
@@ -267,6 +285,7 @@ describe('projectPoiseBrokenSegments', () => {
       projectPoiseBrokenSegments(
         [
           {
+            targetId: 'enemy',
             sequence: 1,
             frame: 10,
             time: 1 / 3,
@@ -274,6 +293,7 @@ describe('projectPoiseBrokenSegments', () => {
             data: { brokePoise: true, hasPoiseBrokenTag: true },
           },
           {
+            targetId: 'enemy',
             sequence: 2,
             frame: 10,
             time: 1 / 3,
@@ -282,6 +302,7 @@ describe('projectPoiseBrokenSegments', () => {
           },
         ],
         20,
+        'enemy',
       ),
     ).toEqual([{ startFrame: 10, endFrame: 10 }]);
   });
@@ -289,6 +310,7 @@ describe('projectPoiseBrokenSegments', () => {
   it('keeps the stripe active until the broken tag actually ends', () => {
     const entries: CombatReceiptEntry[] = [
       {
+        targetId: 'enemy',
         sequence: 0,
         frame: 20,
         time: 20 / 30,
@@ -296,6 +318,7 @@ describe('projectPoiseBrokenSegments', () => {
         data: { brokePoise: true, hasPoiseBrokenTag: true },
       },
       {
+        targetId: 'enemy',
         sequence: 1,
         frame: 50,
         time: 50 / 30,
@@ -303,6 +326,7 @@ describe('projectPoiseBrokenSegments', () => {
         data: { hasPoiseBrokenTag: true },
       },
       {
+        targetId: 'enemy',
         sequence: 2,
         frame: 65,
         time: 65 / 30,
@@ -310,6 +334,44 @@ describe('projectPoiseBrokenSegments', () => {
         data: { hasPoiseBrokenTag: false },
       },
     ];
-    expect(projectPoiseBrokenSegments(entries, 90)).toEqual([{ startFrame: 20, endFrame: 65 }]);
+    expect(projectPoiseBrokenSegments(entries, 90, 'enemy')).toEqual([
+      { startFrame: 20, endFrame: 65 },
+    ]);
   });
+});
+
+it('多个敌人的失衡恢复互不结束彼此的失衡区段', () => {
+  const entries: CombatReceiptEntry[] = [
+    {
+      sequence: 0,
+      frame: 1,
+      time: 1 / 30,
+      targetId: 'enemy:a',
+      event: 'PoiseApplied',
+      data: { brokePoise: true, hasPoiseBrokenTag: true },
+    },
+    {
+      sequence: 1,
+      frame: 2,
+      time: 2 / 30,
+      targetId: 'enemy:b',
+      event: 'PoiseApplied',
+      data: { brokePoise: true, hasPoiseBrokenTag: true },
+    },
+    {
+      sequence: 2,
+      frame: 3,
+      time: 3 / 30,
+      targetId: 'enemy:b',
+      event: 'PoiseRecovered',
+      data: { hasPoiseBrokenTag: false },
+    },
+  ];
+  expect(projectPoiseBrokenSegments(entries, 10, 'enemy:a')).toEqual([
+    { startFrame: 1, endFrame: 10 },
+  ]);
+  expect(projectPoiseBrokenSegments(entries, 10, 'enemy:b')).toEqual([
+    { startFrame: 2, endFrame: 3 },
+  ]);
+  expect(projectPoiseBrokenSegments(entries, 10, 'enemy')).toEqual([]);
 });

@@ -138,6 +138,7 @@ export interface HealthDamageReceiptDetail {
 
 /** 在正确事件边界写入一次生命伤害所需的状态和端口。 */
 export interface ExecuteHealthDamageInput {
+  readonly targetCanDie?: boolean;
   readonly partTransferInfo?: EnemyPartTransferInfo;
   /** 原生 HP/Minus 的 PowerAttack 清理先于 BeforeTakeDamage。 */
   readonly consumeFinisherEligibility?: () => void;
@@ -207,7 +208,12 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
       ? input.result
       : { ...input.result, value: input.absorbDamage(input.damageType, input.result.value) };
   const payload: HealthDamageEventPayload = { ...beforePayload, result };
-  const stateChange = applyHealthDamageWithKillEvents(input.target, payload, input.emitSourceEvent);
+  const stateChange = applyHealthDamageWithKillEvents(
+    input.target,
+    payload,
+    input.emitSourceEvent,
+    input.targetCanDie,
+  );
   input.receipt.record({
     ...(input.producedBy === undefined ? {} : { producedBy: input.producedBy }),
     frame: input.clock.frame,
@@ -261,8 +267,9 @@ export function applyHealthDamageWithKillEvents(
   target: CombatVitals,
   payload: HealthDamageEventPayload,
   emitSourceEvent: ExecuteHealthDamageInput['emitSourceEvent'],
+  targetCanDie = true,
 ): HealthDamageResult {
-  const mayKillTarget = target.health > 0 && payload.result.value >= target.health;
+  const mayKillTarget = targetCanDie && target.health > 0 && payload.result.value >= target.health;
   if (mayKillTarget) emitSourceEvent('beforeKillEntity', payload);
   // takeDamage 同步触发生命观察者，包括能力实体的死亡与结束流程。
   const stateChange = target.takeDamage(payload.result.value);

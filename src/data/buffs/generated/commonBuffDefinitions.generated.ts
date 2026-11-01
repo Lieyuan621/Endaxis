@@ -46,7 +46,7 @@ const commonBuff_buff_common_affixes_combo_trigger$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'count',
             query: { kind: 'id', buffIds: ['buff_common_affixes_combo_trigger'] },
           },
@@ -1596,7 +1596,22 @@ const commonBuff_buff_common_cryst_cryst_triggered$actionGraph = {
         action: { kind: 'triggerSpellBurst', parameters: { burstType: 'Cryst' } },
         next: null,
       },
-      dealDamage_2: {
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'owner' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_3: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1607,9 +1622,9 @@ const commonBuff_buff_common_cryst_cryst_triggered$actionGraph = {
             tags: ['cryoBurst'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_2',
       },
-      readSkillSettingData_3: {
+      readSkillSettingData_4: {
         action: {
           kind: 'readSkillSettingData',
           parameters: {
@@ -1623,7 +1638,7 @@ const commonBuff_buff_common_cryst_cryst_triggered$actionGraph = {
             ],
           },
         },
-        next: 'dealDamage_2',
+        next: 'dealDamage_3',
       },
     },
     dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
@@ -1644,13 +1659,31 @@ const commonBuff_buff_common_cryst_cryst_triggered: SkillBuffDefinition = {
   blackboard: { atk_scale: 0, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: {
-    trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],
+    trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_4' }],
   },
   actionGraph: commonBuff_buff_common_cryst_cryst_triggered$actionGraph,
 };
 
 const commonBuff_buff_common_cryst_triggered_fx$actionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'owner' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -1666,6 +1699,7 @@ const commonBuff_buff_common_cryst_triggered_fx: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
+  lifecycleSequences: { start: [{ $sequence: 'startTimeDilation_1' }] },
   actionGraph: commonBuff_buff_common_cryst_triggered_fx$actionGraph,
 };
 
@@ -1836,8 +1870,9 @@ const commonBuff_buff_common_dash_behit_listener$actionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: { kind: 'stringNode', nodeId: 'data_1' },
-            target: 'enemy',
+            target: { kind: 'mainTarget', owner: { kind: 'owner' } },
             skipApplyCost: false,
             inheritSourceSkillCastInfo: false,
           },
@@ -1894,7 +1929,7 @@ const commonBuff_buff_common_dash_behit_listener$actionGraph = {
               ],
             },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: 'castSkillDuringAction_4',
@@ -1940,7 +1975,7 @@ const commonBuff_buff_common_dash_behit_listener$actionGraph = {
               ],
             },
             finishByAction: false,
-            ignoredTargets: ['caster'],
+            ignoredTargets: [{ kind: 'owner' }],
           },
         },
         next: 'startTimeDilation_5',
@@ -2050,8 +2085,9 @@ const commonBuff_buff_common_dash_behit_listener$actionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: { kind: 'stringNode', nodeId: 'data_1' },
-            target: 'enemy',
+            target: { kind: 'mainTarget', owner: { kind: 'owner' } },
             skipApplyCost: false,
             inheritSourceSkillCastInfo: false,
           },
@@ -2099,7 +2135,7 @@ const commonBuff_buff_common_dash_behit_listener$actionGraph = {
               ],
             },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: 'castSkillDuringAction_18',
@@ -2136,7 +2172,7 @@ const commonBuff_buff_common_dash_behit_listener$actionGraph = {
               ],
             },
             finishByAction: false,
-            ignoredTargets: ['caster'],
+            ignoredTargets: [{ kind: 'owner' }],
           },
         },
         next: 'startTimeDilation_19',
@@ -2394,7 +2430,7 @@ const commonBuff_buff_common_do_frozen$actionGraph = {
               ],
             },
             finishByAction: true,
-            targets: ['enemy'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -2521,7 +2557,22 @@ const commonBuff_buff_common_fire_fire_triggered$actionGraph = {
         action: { kind: 'triggerSpellBurst', parameters: { burstType: 'Fire' } },
         next: null,
       },
-      dealDamage_2: {
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'owner' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_3: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -2532,9 +2583,9 @@ const commonBuff_buff_common_fire_fire_triggered$actionGraph = {
             tags: ['fireBurst'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_2',
       },
-      readSkillSettingData_3: {
+      readSkillSettingData_4: {
         action: {
           kind: 'readSkillSettingData',
           parameters: {
@@ -2548,7 +2599,7 @@ const commonBuff_buff_common_fire_fire_triggered$actionGraph = {
             ],
           },
         },
-        next: 'dealDamage_2',
+        next: 'dealDamage_3',
       },
     },
     dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
@@ -2569,13 +2620,31 @@ const commonBuff_buff_common_fire_fire_triggered: SkillBuffDefinition = {
   blackboard: { atk_scale: 0, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: {
-    trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],
+    trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_4' }],
   },
   actionGraph: commonBuff_buff_common_fire_fire_triggered$actionGraph,
 };
 
 const commonBuff_buff_common_fire_triggered_fx$actionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'owner' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -2591,6 +2660,7 @@ const commonBuff_buff_common_fire_triggered_fx: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
+  lifecycleSequences: { start: [{ $sequence: 'startTimeDilation_1' }] },
   actionGraph: commonBuff_buff_common_fire_triggered_fx$actionGraph,
 };
 
@@ -2933,7 +3003,7 @@ const commonBuff_buff_common_natural_natural_corrupt_triggered$actionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'inputTarget' },
             query: {
               kind: 'tag',
               tagQueryType: 'hasAny',
@@ -3098,7 +3168,22 @@ const commonBuff_buff_common_natural_natural_triggered$actionGraph = {
         action: { kind: 'triggerSpellBurst', parameters: { burstType: 'Natural' } },
         next: null,
       },
-      dealDamage_2: {
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'owner' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_3: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -3109,9 +3194,9 @@ const commonBuff_buff_common_natural_natural_triggered$actionGraph = {
             tags: ['natureBurst'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_2',
       },
-      readSkillSettingData_3: {
+      readSkillSettingData_4: {
         action: {
           kind: 'readSkillSettingData',
           parameters: {
@@ -3125,7 +3210,7 @@ const commonBuff_buff_common_natural_natural_triggered$actionGraph = {
             ],
           },
         },
-        next: 'dealDamage_2',
+        next: 'dealDamage_3',
       },
     },
     dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
@@ -3146,7 +3231,7 @@ const commonBuff_buff_common_natural_natural_triggered: SkillBuffDefinition = {
   blackboard: { atk_scale: 0, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: {
-    trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],
+    trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_4' }],
   },
   actionGraph: commonBuff_buff_common_natural_natural_triggered$actionGraph,
 };
@@ -3158,7 +3243,22 @@ const commonBuff_buff_common_natural_natural_triggered_typhoea$actionGraph = {
         action: { kind: 'triggerSpellBurst', parameters: { burstType: 'Natural' } },
         next: null,
       },
-      dealDamage_2: {
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'owner' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_3: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -3169,9 +3269,9 @@ const commonBuff_buff_common_natural_natural_triggered_typhoea$actionGraph = {
             tags: ['natureBurst'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_2',
       },
-      calculateActionValue_3: {
+      calculateActionValue_4: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
@@ -3181,9 +3281,9 @@ const commonBuff_buff_common_natural_natural_triggered_typhoea$actionGraph = {
             right: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
-        next: 'dealDamage_2',
+        next: 'dealDamage_3',
       },
-      readSkillSettingData_4: {
+      readSkillSettingData_5: {
         action: {
           kind: 'readSkillSettingData',
           parameters: {
@@ -3197,7 +3297,7 @@ const commonBuff_buff_common_natural_natural_triggered_typhoea$actionGraph = {
             ],
           },
         },
-        next: 'calculateActionValue_3',
+        next: 'calculateActionValue_4',
       },
     },
     dataNodes: {
@@ -3221,7 +3321,7 @@ const commonBuff_buff_common_natural_natural_triggered_typhoea: SkillBuffDefinit
   blackboard: { atk_scale: 0, damage_enhence: 1, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: {
-    trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_4' }],
+    trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_5' }],
   },
   actionGraph: commonBuff_buff_common_natural_natural_triggered_typhoea$actionGraph,
 };
@@ -3347,7 +3447,7 @@ const commonBuff_buff_common_originum_frozen$actionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0003_endminf_potential2'] },
             desiredKey: 'ratio',
             outputKey: 'teammate_ratio',
@@ -3397,7 +3497,7 @@ const commonBuff_buff_common_originum_frozen$actionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0003_endminf_talent_1'] },
             desiredKey: 'duration',
             outputKey: 'duration_dynamic',
@@ -3409,7 +3509,7 @@ const commonBuff_buff_common_originum_frozen$actionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0003_endminf_talent_1'] },
             desiredKey: 'atk_up',
             outputKey: 'atk_up_dynamic',
@@ -3442,7 +3542,7 @@ const commonBuff_buff_common_originum_frozen$actionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'actionInputTarget',
+            target: { kind: 'inputTarget' },
             query: { kind: 'id', buffIds: ['buff_chr_0003_endminf_potential3'] },
             desiredKey: 'usp',
             outputKey: 'endmin_usp',
@@ -3611,7 +3711,7 @@ const commonBuff_buff_common_originum_frozen_inner$actionGraph = {
               ],
             },
             finishByAction: true,
-            targets: ['enemy'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -3976,7 +4076,22 @@ const commonBuff_buff_common_pulse_pulse_triggered$actionGraph = {
         action: { kind: 'triggerSpellBurst', parameters: { burstType: 'Pulse' } },
         next: null,
       },
-      dealDamage_2: {
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'owner' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_3: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -3987,9 +4102,9 @@ const commonBuff_buff_common_pulse_pulse_triggered$actionGraph = {
             tags: ['electricBurst'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_2',
       },
-      readSkillSettingData_3: {
+      readSkillSettingData_4: {
         action: {
           kind: 'readSkillSettingData',
           parameters: {
@@ -4003,7 +4118,7 @@ const commonBuff_buff_common_pulse_pulse_triggered$actionGraph = {
             ],
           },
         },
-        next: 'dealDamage_2',
+        next: 'dealDamage_3',
       },
     },
     dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
@@ -4024,13 +4139,31 @@ const commonBuff_buff_common_pulse_pulse_triggered: SkillBuffDefinition = {
   blackboard: { atk_scale: 0, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: {
-    trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],
+    trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_4' }],
   },
   actionGraph: commonBuff_buff_common_pulse_pulse_triggered$actionGraph,
 };
 
 const commonBuff_buff_common_pulse_triggered_fx$actionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'owner' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -4046,6 +4179,7 @@ const commonBuff_buff_common_pulse_triggered_fx: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
+  lifecycleSequences: { start: [{ $sequence: 'startTimeDilation_1' }] },
   actionGraph: commonBuff_buff_common_pulse_triggered_fx$actionGraph,
 };
 
@@ -4121,7 +4255,11 @@ const commonBuff_buff_physical_airborne$actionGraph = {
       igniteBuffs_5: {
         action: {
           kind: 'igniteBuffs',
-          parameters: { target: 'buffOwner', source: 'caster', igniteType: 'PhysicalStatus' },
+          parameters: {
+            target: { kind: 'owner' },
+            source: { kind: 'source' },
+            igniteType: 'PhysicalStatus',
+          },
         },
         next: null,
       },
@@ -4194,7 +4332,7 @@ const commonBuff_buff_physical_crushed$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'count',
             query: { kind: 'id', buffIds: ['buff_physical_no_guard'] },
           },
@@ -4300,7 +4438,11 @@ const commonBuff_buff_physical_do_crushed$actionGraph = {
       igniteBuffs_6: {
         action: {
           kind: 'igniteBuffs',
-          parameters: { target: 'buffOwner', source: 'caster', igniteType: 'PhysicalStatus' },
+          parameters: {
+            target: { kind: 'owner' },
+            source: { kind: 'source' },
+            igniteType: 'PhysicalStatus',
+          },
         },
         next: null,
       },
@@ -4314,7 +4456,7 @@ const commonBuff_buff_physical_do_crushed$actionGraph = {
             priority: 15,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4329,7 +4471,7 @@ const commonBuff_buff_physical_do_crushed$actionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4344,7 +4486,7 @@ const commonBuff_buff_physical_do_crushed$actionGraph = {
             priority: 20,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4359,7 +4501,7 @@ const commonBuff_buff_physical_do_crushed$actionGraph = {
             priority: 20,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4374,7 +4516,7 @@ const commonBuff_buff_physical_do_crushed$actionGraph = {
             priority: 20,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4525,7 +4667,11 @@ const commonBuff_buff_physical_do_fracture$actionGraph = {
       igniteBuffs_5: {
         action: {
           kind: 'igniteBuffs',
-          parameters: { target: 'buffOwner', source: 'caster', igniteType: 'PhysicalStatus' },
+          parameters: {
+            target: { kind: 'owner' },
+            source: { kind: 'source' },
+            igniteType: 'PhysicalStatus',
+          },
         },
         next: null,
       },
@@ -4565,7 +4711,7 @@ const commonBuff_buff_physical_do_fracture$actionGraph = {
             priority: 15,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4580,7 +4726,7 @@ const commonBuff_buff_physical_do_fracture$actionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4595,7 +4741,7 @@ const commonBuff_buff_physical_do_fracture$actionGraph = {
             priority: 20,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4610,7 +4756,7 @@ const commonBuff_buff_physical_do_fracture$actionGraph = {
             priority: 20,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4625,7 +4771,7 @@ const commonBuff_buff_physical_do_fracture$actionGraph = {
             priority: 20,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4764,7 +4910,7 @@ const commonBuff_buff_physical_fracture$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'count',
             query: { kind: 'id', buffIds: ['buff_physical_no_guard'] },
           },
@@ -4806,7 +4952,7 @@ const commonBuff_buff_physical_handle_cryst_break$actionGraph = {
             priority: 15,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4821,7 +4967,7 @@ const commonBuff_buff_physical_handle_cryst_break$actionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4836,7 +4982,7 @@ const commonBuff_buff_physical_handle_cryst_break$actionGraph = {
             priority: 20,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4851,7 +4997,7 @@ const commonBuff_buff_physical_handle_cryst_break$actionGraph = {
             priority: 20,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4866,7 +5012,7 @@ const commonBuff_buff_physical_handle_cryst_break$actionGraph = {
             priority: 20,
             curve: { kind: 'named', key: 'interrupt_weakness' },
             finishByAction: false,
-            targets: ['enemy', 'caster'],
+            targets: [{ kind: 'owner' }, { kind: 'source' }],
           },
         },
         next: null,
@@ -4950,7 +5096,7 @@ const commonBuff_buff_physical_handle_cryst_break$actionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             query: {
               kind: 'tag',
               tagQueryType: 'hasAny',
@@ -5056,7 +5202,11 @@ const commonBuff_buff_physical_knockdown$actionGraph = {
       igniteBuffs_5: {
         action: {
           kind: 'igniteBuffs',
-          parameters: { target: 'buffOwner', source: 'caster', igniteType: 'PhysicalStatus' },
+          parameters: {
+            target: { kind: 'owner' },
+            source: { kind: 'source' },
+            igniteType: 'PhysicalStatus',
+          },
         },
         next: null,
       },
@@ -5135,7 +5285,11 @@ const commonBuff_buff_physical_no_guard$actionGraph = {
       igniteBuffs_4: {
         action: {
           kind: 'igniteBuffs',
-          parameters: { target: 'buffOwner', source: 'buffOwner', igniteType: 'NoGuard' },
+          parameters: {
+            target: { kind: 'owner' },
+            source: { kind: 'inputTarget' },
+            igniteType: 'NoGuard',
+          },
         },
         next: null,
       },

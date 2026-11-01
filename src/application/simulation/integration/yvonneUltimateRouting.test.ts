@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { expect, it } from 'vitest';
 import { ExplicitCriticalSampleSource } from '../../../core/combat/random/criticalSampleSource';
 import { ExplicitProbabilitySampleSource } from '../../../core/combat/random/probabilitySampleSource';
@@ -10,7 +11,7 @@ import { runStandardPlayerDamageScenarioSimulation } from '../runStandardPlayerD
 function simulate(attacks: readonly { key: string; frame: number }[] = []) {
   let scenario = createEmptyScenario('yvonne-routing', '伊冯终结技收尾');
   scenario.battle.durationFrames = 1000;
-  scenario.enemy.editable.hp = 1e9;
+  firstScenarioEnemy(scenario).enemy.editable.hp = 1e9;
   scenario.tracks[0] = {
     id: 'yvonne',
     operator: {

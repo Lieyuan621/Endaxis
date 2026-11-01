@@ -190,6 +190,8 @@ function endReasonText(instance: BuffDetailInstance): string {
         </header>
 
         <dl class="buff-detail__facts buff-detail__summary">
+          <dt>{{ t('timeline.buffDetail.host') }}</dt>
+          <dd>{{ operatorLabel?.(target.targetId) ?? target.targetId }}</dd>
           <dt>{{ t('timeline.buffDetail.selectedPhase') }}</dt>
           <dd>{{ labels.frames(target.startFrame) }} – {{ labels.frames(target.endFrame) }}</dd>
           <dt>{{ t('timeline.buffDetail.effectiveCount') }}</dt>

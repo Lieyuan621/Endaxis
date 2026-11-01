@@ -108,3 +108,26 @@ describe('Contingency Contract native source', () => {
     ).toThrow('tags are not present');
   });
 });
+
+it('reads column/row layout instead of treating logical groups as columns', () => {
+  const tags = { 100201: tag(100201, 1, 'buff_enemy') };
+  const row = { ...entry(100201), column: 2, row: 3 };
+  const contract = {
+    activityId: 'activity',
+    contractColMap: { 2: { contractRowMap: { 3: row } } },
+    contractGroupMap: { 10: { contractMap: { 100201: row } } },
+    contractMap: { 100201: row },
+  };
+  const parsed = parseContingencyContractCatalogSource(tags, { contract });
+  const legacy = parseContingencyContractCatalogSource(tags, {
+    contract: {
+      activityId: 'activity',
+      contractGroupMap: { 2: { contractMap: { 3: entry(100201) } } },
+    },
+  });
+  expect(parsed).toEqual(legacy);
+  row.column = 10;
+  expect(() => parseContingencyContractCatalogSource(tags, { contract })).toThrow(
+    'column/row does not match',
+  );
+});

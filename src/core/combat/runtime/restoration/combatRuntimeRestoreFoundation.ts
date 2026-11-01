@@ -33,6 +33,7 @@ import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePrep
 
 type RestoredCombatEnvironmentBase = Omit<
   StandardPlayerDamageEnvironmentOptions,
+  | 'primaryEnemyId'
   | 'enemyVitals'
   | 'randomState'
   | 'restoredState'
@@ -136,6 +137,7 @@ export function bindRestoredCombatRuntimeFoundation(
       ? new StandardPlayerDamageEnvironment({
           ...(environmentInput as DirectRestoredCombatEnvironmentInput),
           ...restorationOptions,
+          primaryEnemyId: graph.enemy.id,
         })
       : new StandardPlayerDamageEnvironment({
           ...environmentInput,
@@ -145,6 +147,7 @@ export function bindRestoredCombatRuntimeFoundation(
           randomMode: simulationRandomSettings!.mode,
           randomState,
           ...restorationOptions,
+          primaryEnemyId: graph.enemy.id,
         });
   const boundEnvironment =
     environment.runtimeOptions.bindBattleRuntime?.({
@@ -153,6 +156,7 @@ export function bindRestoredCombatRuntimeFoundation(
       clock: shared.clock,
       resources: shared.resources,
       receipt: shared.receipt,
+      resolveCombatSemanticEvents: (): CombatSemanticEventRuntime => semanticEvents,
       resolveProjectileRuntimeDependencies: options.resolveProjectileRuntimeDependencies,
     }) ?? {};
   if (boundEnvironment.environmentState !== graph.environment) {

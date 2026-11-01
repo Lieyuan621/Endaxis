@@ -19,10 +19,18 @@ const interactionSession = useInteractionSession();
 const resizeHandleTop = `${-MONITOR_RESIZE_HANDLE_REACH}px`;
 const resizeHandleHeight = `${MONITOR_RESIZE_HANDLE_REACH * 2}px`;
 
-const COLLAPSE_STORAGE_KEY = 'endaxis:resource-monitor-section-collapse:v1';
+const COLLAPSE_STORAGE_KEY = computed(() =>
+  props.overview
+    ? 'endaxis:enemy-overview-collapse:v1'
+    : 'endaxis:resource-monitor-section-collapse:v1',
+);
 // 独立于 Main 的旧权重存档；v3 首次使用 3:1:2，此后保留手动拖动结果。
-const LAYOUT_STORAGE_KEY = 'endaxis:v3-resource-monitor-sections:v1';
-const sectionKeys: readonly SectionKey[] = ['affliction', 'poise', 'sp'];
+const LAYOUT_STORAGE_KEY = computed(() =>
+  props.overview ? 'endaxis:enemy-overview-layout:v1' : 'endaxis:v3-resource-monitor-sections:v1',
+);
+const sectionKeys = computed<readonly SectionKey[]>(() =>
+  props.overview ? ['affliction', 'sp'] : ['affliction', 'poise', 'sp'],
+);
 const compactBodyThresholds: Record<SectionKey, number> = {
   affliction: 72,
   poise: 46,
@@ -30,6 +38,7 @@ const compactBodyThresholds: Record<SectionKey, number> = {
 };
 
 const props = defineProps<{
+  overview?: boolean;
   labels: Record<SectionKey, string>;
   collapseLabel: string;
   expandLabel: string;
@@ -50,7 +59,7 @@ const collapsed = reactive<Record<SectionKey, boolean>>({
 });
 
 watch(
-  () => sectionKeys.filter(key => collapsed[key]).length,
+  () => sectionKeys.value.filter(key => collapsed[key]).length,
   count => emit('collapsedCountChange', count),
   { immediate: true },
 );
@@ -62,14 +71,14 @@ let stopResize: (() => void) | null = null;
 let resizeObserver: ResizeObserver | null = null;
 
 const sectionLayout = computed(() =>
-  resolveMonitorSectionLayout(rootHeight.value, collapsed, sectionWeights),
+  resolveMonitorSectionLayout(rootHeight.value, collapsed, sectionWeights, sectionKeys.value),
 );
 function isSectionCompact(key: SectionKey): boolean {
   return sectionLayout.value.rects[key].bodyHeight < compactBodyThresholds[key];
 }
 
 const resizePairs = computed(() => {
-  const expanded = sectionKeys.filter(key => !collapsed[key]);
+  const expanded = sectionKeys.value.filter(key => !collapsed[key]);
   return expanded.slice(1).map((lowerKey, index) => ({
     upperKey: expanded[index]!,
     lowerKey,
@@ -87,8 +96,8 @@ function toggle(key: SectionKey): void {
     sp: collapsed.sp,
     [key]: !collapsed[key],
   };
-  if (sectionKeys.every(sectionKey => next[sectionKey])) {
-    for (const sectionKey of sectionKeys) collapsed[sectionKey] = false;
+  if (sectionKeys.value.every(sectionKey => next[sectionKey])) {
+    for (const sectionKey of sectionKeys.value) collapsed[sectionKey] = false;
     emit('collapsePanel');
     return;
   }
@@ -99,7 +108,7 @@ function toggle(key: SectionKey): void {
 watch(
   () => props.expandAllToken,
   () => {
-    for (const key of sectionKeys) collapsed[key] = false;
+    for (const key of sectionKeys.value) collapsed[key] = false;
   },
 );
 
@@ -123,7 +132,7 @@ function beginSectionResize(lowerKey: SectionKey, event: PointerEvent): void {
   document.body.style.cursor = 'ns-resize';
   document.body.style.userSelect = 'none';
   const bodies: Partial<Record<SectionKey, number>> = {};
-  for (const key of sectionKeys) {
+  for (const key of sectionKeys.value) {
     if (collapsed[key]) continue;
     bodies[key] = sectionLayout.value.rects[key].bodyHeight;
   }
@@ -137,7 +146,7 @@ function beginSectionResize(lowerKey: SectionKey, event: PointerEvent): void {
       moveEvent.clientY - startY,
       minimumBodyHeight,
     );
-    for (const key of sectionKeys) {
+    for (const key of sectionKeys.value) {
       if (nextBodies[key] !== undefined) sectionWeights[key] = Math.max(0.1, nextBodies[key]);
     }
   };
@@ -161,25 +170,27 @@ function beginSectionResize(lowerKey: SectionKey, event: PointerEvent): void {
 onMounted(() => {
   try {
     const value = JSON.parse(
-      window.localStorage.getItem(COLLAPSE_STORAGE_KEY) ?? 'null',
+      window.localStorage.getItem(COLLAPSE_STORAGE_KEY.value) ?? 'null',
     ) as unknown;
     if (value !== null && typeof value === 'object') {
-      for (const key of sectionKeys) {
+      for (const key of sectionKeys.value) {
         if (typeof (value as Record<string, unknown>)[key] === 'boolean') {
           collapsed[key] = (value as Record<string, boolean>)[key]!;
         }
       }
-      if (sectionKeys.every(key => collapsed[key])) {
-        for (const key of sectionKeys) collapsed[key] = false;
+      if (sectionKeys.value.every(key => collapsed[key])) {
+        for (const key of sectionKeys.value) collapsed[key] = false;
       }
     }
   } catch {
     // Storage is optional; section controls remain available in memory.
   }
   try {
-    const value = JSON.parse(window.localStorage.getItem(LAYOUT_STORAGE_KEY) ?? 'null') as unknown;
+    const value = JSON.parse(
+      window.localStorage.getItem(LAYOUT_STORAGE_KEY.value) ?? 'null',
+    ) as unknown;
     if (value !== null && typeof value === 'object') {
-      for (const key of sectionKeys) {
+      for (const key of sectionKeys.value) {
         const weight = Number((value as Record<string, unknown>)[key]);
         if (Number.isFinite(weight) && weight >= 0.1) sectionWeights[key] = weight;
       }
@@ -208,7 +219,7 @@ watch(
   collapsed,
   value => {
     try {
-      window.localStorage.setItem(COLLAPSE_STORAGE_KEY, JSON.stringify(value));
+      window.localStorage.setItem(COLLAPSE_STORAGE_KEY.value, JSON.stringify(value));
     } catch {
       // Ignore disabled storage.
     }
@@ -220,7 +231,7 @@ watch(
   sectionWeights,
   value => {
     try {
-      window.localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(value));
+      window.localStorage.setItem(LAYOUT_STORAGE_KEY.value, JSON.stringify(value));
     } catch {
       // Ignore disabled storage.
     }

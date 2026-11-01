@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { describe, expect, it } from 'vitest';
 import { CombatSemanticEventRuntime } from './combatSemanticEventRuntime';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
@@ -84,7 +85,7 @@ describe('CombatSemanticEventRuntime', () => {
       AbilityEventPayloadMap
     >();
     const targets = {
-      inputTarget: { kind: 'enemy' as const },
+      inputTarget: { kind: 'enemy' as const, enemyId: 'enemy' },
       triggerTarget: { kind: 'operator' as const, operatorId: 'operator' },
     };
     const runtime = new CombatSemanticEventRuntime(
@@ -98,7 +99,7 @@ describe('CombatSemanticEventRuntime', () => {
       blackboard: new ActionBlackboard(),
       event: outer,
       targetContext,
-      actionInputTarget: { kind: 'enemy' as const },
+      actionInputTargets: singleTargetList({ kind: 'enemy' as const, enemyId: 'enemy' }),
     };
     const published = createKillEvent();
     const operations: CombatOperationExecutor = {
@@ -106,7 +107,7 @@ describe('CombatSemanticEventRuntime', () => {
       evaluate: (_condition, current) => {
         expect(current?.event).toBe(published);
         expect(current?.eventSkillCastInfo).toBeNull();
-        expect(current?.actionInputTarget).toBe(targets.inputTarget);
+        expect(current?.actionInputTargets?.[0]).toBe(targets.inputTarget);
         expect(current?.targetContext?.getOptional('trigger')).toEqual([targets.triggerTarget]);
         throw new Error('condition failed');
       },
@@ -650,7 +651,7 @@ describe('CombatSemanticEventRuntime', () => {
     const registrations = (['callback', 'dataAction', 'skill', 'combo'] as const).map(phase =>
       runtime.register({
         ownerOperatorId: 'operator',
-        trigger: { kind: 'enemyDefeated', scope: 'operator' },
+        trigger: { kind: 'abilityEvent', event: 'afterKillEntity' },
         phase,
         handle: context => {
           expect(context.event).toBe(event);

@@ -212,8 +212,8 @@ describe('ComboWindowRuntime', () => {
     const window = new ComboWindowRuntime(new CombatClock(), new CombatReceiptCollector(), 5);
     const pending = {
       skillSlotKey: 'comboSkill',
-      inputTarget: { kind: 'enemy' as const },
-      triggerTarget: { kind: 'operator' as const, operatorId: 'ally' },
+      inputTargets: [{ kind: 'enemy' as const, enemyId: 'enemy' }],
+      triggerTargets: [{ kind: 'operator' as const, operatorId: 'ally' }],
       assignPairs: { count: 2 },
       event: { event: 'addedBuff', payload: { buff: { onBuffFinished() {} } } },
     };
@@ -222,8 +222,8 @@ describe('ComboWindowRuntime', () => {
     const saved = structuredClone(window.runtimeState);
     expect(saved.records.get('owner')!.candidates[0]!.nativeCondition).toEqual({
       skillSlotKey: 'comboSkill',
-      inputTarget: { kind: 'enemy' },
-      triggerTarget: { kind: 'operator', operatorId: 'ally' },
+      inputTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
+      triggerTargets: [{ kind: 'operator', operatorId: 'ally' }],
       assignPairs: { count: 2 },
     });
     expect(window.consume('owner', 'comboSkill', result => result, 'comboSkill').consumed).toBe(

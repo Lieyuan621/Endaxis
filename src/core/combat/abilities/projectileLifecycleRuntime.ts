@@ -1,3 +1,4 @@
+import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 /**
  * 投射物生命周期数据与当前分支执行端口的绑定。
  * 数据只保存投射物、回调程序和 reset 订阅的稳定身份；恢复装配按这些身份重新连接宿主行为。
@@ -200,11 +201,7 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
       .filter(instance => {
         if (instance.phase === 'reset') return false;
         const source = instance.source;
-        return source?.kind === 'operator'
-          ? source.operatorId === ownerId
-          : source?.kind === 'enemy'
-            ? ownerId === 'enemy'
-            : source?.kind === 'abilityEntity' && ownerId === `ability-entity:${source.instanceId}`;
+        return source !== undefined && runtimeTargetEntityId(source) === ownerId;
       })
       .map(instance => ({ kind: 'abilityEntity', instanceId: instance.instanceId }));
   }

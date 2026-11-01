@@ -447,6 +447,7 @@ const CONDITION_ACTION_NAMES = new Set([
 
 /** 引用闭包需要严格读取的动作身份；集合与分派实现同属公共来源层，调用方不再复制 switch。 */
 const REFERENCE_CLOSURE_ACTION_NAMES = new Set([
+  'TyphoeaArcheryTargetSelect',
   'VulnerableAction',
   'WeakAction',
   'EnhancedAction',
@@ -1951,7 +1952,10 @@ export function tryParseKnownNativeActionLeafSource(
     case 'InterruptAction':
       return { family: 'interrupt', action: parseInterruptActionSource(value, path) };
     case 'EnemyHurtAnimAction':
-      return { family: 'stumpControl', action: parseEnemyHurtAnimationActionSource(value, path) };
+      return {
+        family: 'stumpControl',
+        action: parseEnemyHurtAnimationActionSource(value, path),
+      };
     case 'PullAction':
       return { family: 'stumpControl', action: parsePullActionSource(value, path) };
     case 'HitStopAction':

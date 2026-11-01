@@ -3,6 +3,9 @@ import { simplifyNativeSequences } from '../src/compiler/optimization/nativeSequ
 import { describe, expect, it } from 'vitest';
 
 import {
+  collectSkillActionReferences,
+  parseNativeSequenceSource,
+  parseReferenceAwareActionLeafSource,
   parseKnownNativeActionLeafSource,
   parseKnownNativeActionSequenceSource,
 } from '../src/index.ts';
@@ -1532,7 +1535,7 @@ describe('公共 Action 叶子分派', () => {
     });
   });
 
-  it('只把固定施法者、静态木桩目标和可解析技能 ID 投影为原生延迟施法槽', () => {
+  it('延迟施法保留来源、输入目标、主目标和命名集合的不同查询语义', () => {
     const makeCast = (overrides: Record<string, unknown> = {}) => ({
       ...META,
       $type: 'Example.CastSkill+Data, Example',
@@ -1559,8 +1562,9 @@ describe('公共 Action 叶子分派', () => {
         {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'source' },
             skillId: 'fixture_child',
-            target: 'enemy',
+            target: { kind: 'context', key: 'tar' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
           },
@@ -1572,8 +1576,9 @@ describe('公共 Action 叶子分派', () => {
         {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'source' },
             skillId: 'fixture_child',
-            target: 'enemy',
+            target: { kind: 'context', key: 'tar' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -1592,8 +1597,9 @@ describe('公共 Action 叶子分派', () => {
         {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'source' },
             skillId: { blackboardKey: 'child_skill' },
-            target: 'enemy',
+            target: { kind: 'context', key: 'tar' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
           },
@@ -1605,8 +1611,9 @@ describe('公共 Action 叶子分派', () => {
         {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'source' },
             skillId: 'fixture_child',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
           },
@@ -1627,8 +1634,9 @@ describe('公共 Action 叶子分派', () => {
         {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'source' },
             skillId: 'fixture_child',
-            target: 'enemy',
+            target: { kind: 'battleMainTarget' },
             skipApplyCost: false,
             inheritSourceSkillCastInfo: false,
           },
@@ -1715,7 +1723,6 @@ describe('公共 Action 叶子分派', () => {
           actionOwnerTarget: 'caster',
           actionSourceTarget: 'caster',
           actionTargetTarget: 'enemy',
-          staticEnemyTargetGroupKeys: new Set(['smart_target']),
         },
       ),
     ).toEqual({
@@ -3294,6 +3301,34 @@ describe('新版施法身份与移动轴动作', () => {
     expect(parsed.family).toBe('typhoeaArcherySelection');
     if (parsed.family !== 'typhoeaArcherySelection') throw new Error('unexpected family');
     expect(parsed.action.markBuffId).toBe('buff_chr_0034_typhoea_normal_skill_aimmedenemy');
+    expect(
+      collectSkillActionReferences({
+        skillId: 'archery',
+        level: 1,
+        durationFrame: 1,
+        declaredBlackboard: [],
+        actionGroup: {
+          timelineActions: [],
+          passiveEvents: [
+            {
+              abilityEvent: 'fixture',
+              actions: [
+                parseNativeSequenceSource(sequence([source]), 'archery', {}, (leaf, path) =>
+                  parseReferenceAwareActionLeafSource(leaf, path, {}),
+                ),
+              ],
+            },
+          ],
+        },
+      }),
+    ).toEqual([
+      expect.objectContaining({
+        kind: 'buff',
+        usage: 'apply',
+        state: 'active',
+        id: parsed.action.markBuffId,
+      }),
+    ]);
     expect(parsed.action.targetCount.value).toBe(2);
     expect(parsed.action.smartPrioritySelection.tagQuery.tagIds).toEqual([-1411846745]);
     expect(() =>

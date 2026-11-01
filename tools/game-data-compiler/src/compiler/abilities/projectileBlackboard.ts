@@ -33,11 +33,13 @@ export function compileProjectileBlackboardSource(input: {
     readonly entityBlackboard: readonly DeclaredBlackboardValueSource[];
   } | null;
   readonly invocations: readonly ProjectileCallbackInvocationSource[];
+  readonly referencedEntityKeys?: readonly string[];
   /** 仅限调用方已由完整 ProjectileData 证明不需要实体黑板的特殊回调。 */
   readonly allowMissingEntityBlackboardEvidence?: boolean;
 }): ProjectileBlackboardSource {
   const { sourcePath, launch, template, invocations } = input;
   const callbackEntityBlackboardKeys = new Set([
+    ...(input.referencedEntityKeys ?? []),
     ...invocations.flatMap(invocation => [
       ...invocation.declaredBlackboard
         .filter(value => value.key.startsWith('EntityBB_'))

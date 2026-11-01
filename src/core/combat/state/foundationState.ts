@@ -377,7 +377,7 @@ export interface AbilityOriginPayload extends AbilityEntityPair {
 export type AbilityResponseEventName = AbilityEvent;
 
 export interface SkillCastStartPreparation {
-  readonly trigger?: RuntimeTargetRef;
+  readonly trigger?: readonly RuntimeTargetRef[];
   readonly smartTarget?: RuntimeTargetRef;
   readonly assignPairs: Readonly<Record<string, ActionBlackboardValue>> | null;
 }

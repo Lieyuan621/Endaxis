@@ -6,6 +6,7 @@ import { deriveHitId } from '../../../core/combat/timeline/deriveHitId';
 export function projectPublishedHitDetail(
   published: PublishedScenarioSimulation | null,
   target: { castId: string; hitId: string; executionFrame?: number } | null,
+  enemyId?: string,
 ) {
   if (published === null || target === null) return null;
   for (const track of published.scenario.tracks) {
@@ -22,6 +23,7 @@ export function projectPublishedHitDetail(
         cast.id,
         target.hitId,
         target.executionFrame,
+        enemyId,
       ),
     };
   }

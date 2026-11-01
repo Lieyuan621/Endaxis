@@ -155,6 +155,52 @@ describe('enemy data generation', () => {
       expect(messages[stageNameKey]).toBe('Stage');
       expect(messages[result.stages[0]!.difficultyNameKey]).toBe('Level II');
     }
+    // 合约展示名单可遗漏敌人；以实际刷怪引用补齐，排除未使用的库条目。
+    const contract = {
+      dungeonCategory: 'dungeon_contract',
+      dungeonSeriesId: 'contract_series',
+      dungeonName: { text: 'Contract' },
+      sceneId: 'contract_scene',
+      enemyIds: ['eny_base'],
+      enemyLevels: [60],
+      sortId: 0,
+    };
+    const dungeonPathForContract = join(root, 'DungeonTable.json');
+    const originalDungeons = JSON.parse(await readFile(dungeonPathForContract, 'utf8'));
+    await writeJson(dungeonPathForContract, { ...originalDungeons, contract });
+    const spawnerDirectory = join(root, 'spawners');
+    await mkdir(join(spawnerDirectory, 'contract_scene'), { recursive: true });
+    const buffs = [{ buffId: 'hp', blackboard: [] }];
+    await writeJson(join(spawnerDirectory, 'contract_scene', 'spawn.json'), {
+      enemyLibrary: [
+        { key: 'used', enemyId: 'eny_variant', enemyLevel: 60, bornBuffList: buffs },
+        { key: 'unused', enemyId: 'eny_base', enemyLevel: 60, bornBuffList: [] },
+      ],
+      waveMap: {
+        0: { groupMap: { 0: { actionMap: { 0: { libraryKey: 'used', spawnCount: 2 } } } } },
+      },
+    });
+    const withContract = await generateEnemyStageCatalog({ ...args, spawnerDirectory });
+    const contractStage = withContract.stages.find(stage => stage.id === 'contract')!;
+    expect(contractStage.enemies).toHaveLength(1);
+    expect(contractStage.enemies[0]).toMatchObject({
+      source: { enemyId: 'eny_variant' },
+      level: 60,
+      count: 2,
+      usesBaseDefinition: false,
+    });
+    expect(withContract.stageAttributes).toContainEqual(
+      expect.objectContaining({
+        enemyId: 'eny_variant',
+        buffs,
+      }),
+    );
+    const contractMessages = JSON.parse(
+      await readFile(join(args.localeDirectory, 'zh', 'stages.json'), 'utf8'),
+    );
+    expect(contractMessages[contractStage.seriesNameKey]).toBe('Contract');
+    await writeJson(dungeonPathForContract, originalDungeons);
+    await generateEnemyStageCatalog(args);
     const dungeonPath = join(root, 'DungeonTable.json');
     const dungeons = JSON.parse(await readFile(dungeonPath, 'utf8'));
     await writeJson(dungeonPath, Object.fromEntries(Object.entries(dungeons).reverse()));

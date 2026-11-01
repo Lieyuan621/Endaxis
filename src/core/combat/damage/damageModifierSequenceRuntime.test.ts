@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { describe, expect, it, vi } from 'vitest';
 import type { ActionGraphNode } from '../../../../packages/game-data-contract/src/actionGraph';
 import { createActionGraphBuilder } from '../../../../tools/game-data-compiler/src/compiler/actions/actionGraphBuilder.ts';
@@ -426,7 +427,7 @@ describe('Buff 同步伤害条件程序', () => {
   it('防御方条件绑定攻击者 InputTarget，结束后不覆盖 Buff 原环境', () => {
     const original: CombatOperationContext = {
       blackboard: new ActionBlackboard(),
-      actionInputTarget: { kind: 'operator', operatorId: 'old' },
+      actionInputTargets: singleTargetList({ kind: 'operator', operatorId: 'old' }),
       event: {
         event: 'outputDamage' as const,
         payload: {
@@ -474,9 +475,9 @@ describe('Buff 同步伤害条件程序', () => {
         features: [],
       }),
     ).toBe(true);
-    expect(observed?.actionInputTarget).toEqual({ kind: 'operator', operatorId: 'attacker' });
+    expect(observed?.actionInputTargets?.[0]).toEqual({ kind: 'operator', operatorId: 'attacker' });
     expect(observed?.event).toBeUndefined();
-    expect(original.actionInputTarget).toEqual({ kind: 'operator', operatorId: 'old' });
+    expect(original.actionInputTargets?.[0]).toEqual({ kind: 'operator', operatorId: 'old' });
     expect(original.event).toMatchObject({ payload: { sourceId: 'old' } });
     expect(original.modifierContext).toBeUndefined();
   });

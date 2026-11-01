@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { akekuri } from '../../../data/operators/akekuri.generated';
@@ -5,8 +6,8 @@ import { createEditorSimulationService } from '../testSupport/editorSimulationSe
 
 it('秋栗在敌人跨过中间失衡节点时开窗，无需完全失衡', async () => {
   const scenario = createEmptyScenario('akekuri-knot', '秋栗节点连携');
-  scenario.enemy.editable.stagger.maximum = 20;
-  scenario.enemy.editable.stagger.knotThresholds = [0.25, 0.5];
+  firstScenarioEnemy(scenario).enemy.editable.stagger.maximum = 20;
+  firstScenarioEnemy(scenario).enemy.editable.stagger.knotThresholds = [0.25, 0.5];
   scenario.tracks[0] = {
     id: 'akekuri',
     operator: {

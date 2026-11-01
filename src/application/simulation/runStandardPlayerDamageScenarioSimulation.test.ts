@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../core/project/level';
 import { describe, expect, it } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -381,8 +382,8 @@ describe('标准入口普通倒地装配', () => {
 
 function placeGeneratedPerlicaFlow(operator: OperatorDefinition = perlicaGeneratedOperator) {
   const scenario = createPerlicaScenario();
-  scenario.enemy.editable.stagger = {
-    ...scenario.enemy.editable.stagger,
+  firstScenarioEnemy(scenario).enemy.editable.stagger = {
+    ...firstScenarioEnemy(scenario).enemy.editable.stagger,
     maximum: 30,
     finisherSpRecovery: 80,
   };
@@ -1411,8 +1412,8 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         '洛茜战技流血天赋',
       );
       scenario.battle.durationFrames = 1200;
-      scenario.enemy.editable.stagger = {
-        ...scenario.enemy.editable.stagger,
+      firstScenarioEnemy(scenario).enemy.editable.stagger = {
+        ...firstScenarioEnemy(scenario).enemy.editable.stagger,
         maximum: 1,
       };
       scenario.battle.resourceRules = {
@@ -3396,17 +3397,19 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       },
     });
 
-    expect(result.enemy.health).toBe(scenario.enemy.editable.hp);
-    expect(result.enemyVitals.initialHealth).toBe(scenario.enemy.editable.hp);
-    expect(result.enemyVitals.maxHealth).toBeCloseTo(scenario.enemy.editable.hp * 1.5);
+    expect(result.enemy.health).toBe(firstScenarioEnemy(scenario).enemy.editable.hp);
+    expect(result.enemyVitals.initialHealth).toBe(firstScenarioEnemy(scenario).enemy.editable.hp);
+    expect(result.enemyVitals.maxHealth).toBeCloseTo(
+      firstScenarioEnemy(scenario).enemy.editable.hp * 1.5,
+    );
     expect(result.finalEnemyHealth).toBe(result.enemyVitals.maxHealth);
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({
         event: 'MaxHealthChanged',
         targetId: 'enemy',
         data: expect.objectContaining({
-          previousMaxHealth: scenario.enemy.editable.hp,
-          maxHealth: scenario.enemy.editable.hp * 1.5,
+          previousMaxHealth: firstScenarioEnemy(scenario).enemy.editable.hp,
+          maxHealth: firstScenarioEnemy(scenario).enemy.editable.hp * 1.5,
         }),
       }),
     );

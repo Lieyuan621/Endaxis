@@ -88,6 +88,7 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
     operatorOrder: ['operator'],
   });
   const originalEnvironment = new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     ...environmentInput,
     enemyVitals: new CombatVitals({
       health: 1000,
@@ -149,10 +150,7 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
         },
       ],
     ]),
-    enemy: {
-      timedMarkers: createTimedMarkerState(),
-      buffs: saved.enemyBuffs,
-    },
+    enemy: { id: 'enemy', timedMarkers: createTimedMarkerState(), buffs: saved.enemyBuffs },
     instances: {
       projectiles: createProjectileLifecycleState(),
       abilityEntities: { instances: new Map(), deadSources: [], soulParts: new Map() },
@@ -516,6 +514,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     receipt: [],
   };
   const environment = new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     ...environmentInput,
     enemyVitals: new CombatVitals({
       health: 1000,

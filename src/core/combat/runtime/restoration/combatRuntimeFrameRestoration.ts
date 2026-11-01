@@ -14,6 +14,9 @@ import type { RestoredCombatRuntimeFoundation } from './combatRuntimeRestoreFoun
 import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePreparation';
 
 export interface RestoreCombatRuntimeFrameOptions {
+  readonly isEnemyAlive?: (ownerId: string) => boolean;
+  readonly enemyLifecycle?: FrameRuntime;
+  readonly typhoeaArchery?: FrameRuntime;
   /** 已绑定当前切面身份的主控运行时；此层只负责安排推进顺序。 */
   readonly control: OperatorControlRuntime;
   readonly preparation: CombatRuntimeRestorePreparation;
@@ -47,10 +50,15 @@ export function bindRestoredCombatRuntimeFrame(
   const cores = [...options.objects.operators.cores.values()];
   const multiDash = new PlayerMultiDashRuntime();
   bindCombatFramePipeline(simulation, {
+    primaryEnemyId: enemyBuffs.ownerId,
+    enemyLifecycle: options.enemyLifecycle,
+    typhoeaArchery: options.typhoeaArchery,
+    isEnemyAlive: options.isEnemyAlive,
     timeDilation: shared.timeDilation,
     frameEndEvents: options.foundation.boundEnvironment.frameEndEvents,
     control,
     enemyControl: options.foundation.boundEnvironment.enemyControlRuntime,
+    additionalEnemies: options.foundation.boundEnvironment.additionalEnemies,
     resources: new CombatResourceRuntime(shared.resources, shared.clock, shared.receipt),
     globalBuffs: options.objects.buffs.globalBuffs,
     abilityEntities: options.entities.runtime,

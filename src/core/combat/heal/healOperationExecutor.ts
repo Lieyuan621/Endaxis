@@ -1,5 +1,8 @@
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
-import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import {
+  firstRuntimeEntityTarget,
+  runtimeTargetEntityId,
+} from '../../game-data/logicalAbilityEntity';
 
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
@@ -35,6 +38,8 @@ export interface HealOperationDependencies {
     attribute: HealCalculationAttribute,
   ) => number;
   readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']>;
+  /** 原生 HealAction 检查 alive（死亡标记），不是 HP > 0 或是否在场。 */
+  readonly isTargetAlive: (entityId: string) => boolean;
   /** 只按实例身份取得账本，不在此处重新选择目标。 */
   readonly resolveEntity: (entityId: string) => ResolvedHealTarget;
   readonly applyHealModifiers?: (
@@ -63,10 +68,13 @@ export class HealOperationExecutor implements CombatOperationExecutor {
     for (const receiver of this.dependencies.queryTargets(step.parameters.target, context)) {
       const targetId = runtimeTargetEntityId(receiver);
       if (targetId === undefined) continue;
+      if (!this.dependencies.isTargetAlive(targetId)) continue;
       const healer =
         step.parameters.healer.kind === 'currentTarget'
           ? receiver
-          : this.dependencies.queryTargets(step.parameters.healer, context)[0];
+          : firstRuntimeEntityTarget(
+              this.dependencies.queryTargets(step.parameters.healer, context),
+            );
       const sourceId = healer === undefined ? undefined : runtimeTargetEntityId(healer);
       if (sourceId === undefined) continue;
       this.#heal(step, context, sourceId, this.dependencies.resolveEntity(targetId));

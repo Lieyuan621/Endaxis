@@ -53,7 +53,7 @@ export type PoiseCurveChange = PoiseChangePoint | PoiseRecoveredPoint | PoiseMax
 
 function projectPoiseMaximumChanges(entries: readonly CombatReceiptEntry[]): PoiseMaximumChange[] {
   return entries
-    .filter(entry => entry.event === 'MaxPoiseChanged' && entry.targetId === 'enemy')
+    .filter(entry => entry.event === 'MaxPoiseChanged')
     .map(entry => {
       if (entry.data === undefined) throw new Error('MaxPoiseChanged has no data');
       return {
@@ -124,7 +124,9 @@ export function projectPoiseCurveFromReceipt(
   initial: PoiseCurveInitial,
   entries: readonly CombatReceiptEntry[],
   initialFrame = 0,
+  targetId: string,
 ): PoiseCurve {
+  entries = entries.filter(entry => entry.targetId === targetId);
   const changes: PoiseCurveChange[] = [
     ...projectPoiseChangePoints(entries),
     ...projectPoiseRecoveredPoints(entries),
@@ -144,7 +146,9 @@ export function projectPoiseKnotSegments(
   knotThresholds: readonly number[],
   durationFrames: number,
   endFrame: number,
+  targetId: string,
 ): readonly PoiseKnotSegment[] {
+  entries = entries.filter(entry => entry.targetId === targetId);
   if (maxPoise <= 0 || durationFrames <= 0 || knotThresholds.length === 0) return [];
   const maxima = projectPoiseMaximumChanges(entries);
   return projectPoiseChangePoints(entries).flatMap(change => {
@@ -262,7 +266,9 @@ function optionalBoolean(
 export function projectPoiseBrokenSegments(
   entries: readonly CombatReceiptEntry[],
   endFrame: number,
+  targetId: string,
 ): readonly PoiseBrokenSegment[] {
+  entries = entries.filter(entry => entry.targetId === targetId);
   if (!Number.isInteger(endFrame) || endFrame < 0) {
     throw new RangeError('poise broken segment endFrame must be a non-negative integer');
   }

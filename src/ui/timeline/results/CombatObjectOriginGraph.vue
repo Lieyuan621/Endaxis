@@ -229,8 +229,9 @@ function description(node: CombatObjectNode): string {
     case 'spatialPoint':
       return String(object.pointId);
     case 'godEntity':
-    case 'enemy':
       return '—';
+    case 'enemy':
+      return props.operatorLabel?.(object.enemyId) ?? object.enemyId;
   }
 }
 

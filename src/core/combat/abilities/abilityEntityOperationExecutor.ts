@@ -1,5 +1,9 @@
 import type { CombatSkillCastInfo } from '../state/foundationState';
-import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import {
+  firstRuntimeEntityTarget,
+  runtimeTargetEntityId,
+  runtimeTargetFromEntityId,
+} from '../../game-data/logicalAbilityEntity';
 import type { TargetContextOperationExecutor } from './targetContextOperationExecutor';
 import {
   valueInputBlackboardKey,
@@ -169,8 +173,10 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
       if (context?.targetContext === undefined) {
         throw new Error('AbilityEntity query requires a combat target context');
       }
-      const owner = this.#delegate.queryTargets(step.parameters.owner, context)[0];
-      if (owner === undefined || owner.kind === 'spatialPoint') return false;
+      const owner = firstRuntimeEntityTarget(
+        this.#delegate.queryTargets(step.parameters.owner, context),
+      );
+      if (owner === undefined) return false;
       const sourceSkillCastId = step.parameters.sameSourceSkillCast
         ? context.skillCastInfo?.skillCastId
         : undefined;
@@ -230,13 +236,28 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     }
     if (step.kind === 'setAbilityEntityRemainingDuration') {
       if (!context) throw new Error('AbilityEntity duration assignment requires an action context');
-      const target = this.#delegate.queryTargets(step.parameters.target, context)[0];
+      const target = firstRuntimeEntityTarget(
+        this.#delegate.queryTargets(step.parameters.target, context),
+      );
       // 原生 _ApplyDurationToTarget 先检查目标及实体控制器，之后才读取数值。
       // 单目标模式不能越过首个非能力实体，继续寻找其他可赋值目标。
       if (target?.kind !== 'abilityEntity') return true;
       this.#entities.setRemainingDuration(
         target,
         resolveActionValueOperand(step.parameters.value, context.blackboard),
+      );
+      return true;
+    }
+    if (step.kind === 'setAbilityEntityTarget') {
+      if (!context) throw new Error('AbilityEntity target assignment requires an action context');
+      const owner =
+        context.actionOwnerId === undefined
+          ? undefined
+          : runtimeTargetFromEntityId(context.actionOwnerId);
+      if (owner?.kind !== 'abilityEntity' || !this.#entities.isActive(owner)) return false;
+      this.#entities.setTargets(
+        owner,
+        this.#delegate.queryTargets(step.parameters.targets, context),
       );
       return true;
     }
@@ -342,18 +363,20 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     if (childSkill !== undefined && this.#childRuntimeDependencies === undefined) {
       throw new Error('spawnAbilityEntity child skill runtime is not configured');
     }
-    const resolveTarget = () =>
+    const resolveTargets = (): readonly RuntimeTargetRef[] =>
       parameters.target === undefined
-        ? undefined
+        ? []
         : typeof parameters.target === 'object'
-          ? this.#delegate.queryTargets(parameters.target, context)[0]
+          ? this.#delegate.queryTargets(parameters.target, context)
           : parameters.target === 'enemy'
-            ? ({ kind: 'enemy' } as const)
+            ? this.#delegate.queryTargets({ kind: 'battleMainTarget' }, context)
             : parameters.target === 'actionInputTarget'
-              ? context.actionInputTarget
+              ? (context.actionInputTargets ?? [])
               : parameters.target === 'currentAbilityEntity'
                 ? context.currentTarget
-                : casterSource;
+                  ? [context.currentTarget]
+                  : []
+                : [casterSource];
     if (parameters.target === 'currentAbilityEntity' && context.currentTarget === undefined) {
       throw new Error('spawnAbilityEntity currentAbilityEntity target requires a current target');
     }
@@ -366,11 +389,12 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     for (let bornIndex = 0; bornIndex < bornTargets.length; bornIndex++) {
       const resolvedSource =
         typeof parameters.source === 'object'
-          ? this.#delegate.queryTargets(parameters.source, context)[0]
+          ? firstRuntimeEntityTarget(this.#delegate.queryTargets(parameters.source, context))
           : source;
-      if (resolvedSource === undefined || resolvedSource.kind === 'spatialPoint')
+      if (resolvedSource === undefined)
         throw new Error('spawnAbilityEntity requires a valid source ability system');
-      const target = resolveTarget();
+      const targets = resolveTargets();
+      const target = targets[0];
       let soul: LogicalAbilityEntitySpawnRequest['soul'];
       if (definition.soul !== undefined) {
         if (target === undefined) throw new Error('Soul spawn requires an explicit target');
@@ -421,6 +445,8 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
           ? {}
           : { sourceSkillCastId: context.skillCastInfo.skillCastId }),
         ...(target === undefined ? {} : { target }),
+        targets,
+        allowMultiInputTarget: parameters.allowMultiInputTarget ?? false,
         ...(overrideDurationSeconds === undefined ? {} : { overrideDurationSeconds }),
         dieWhenSourceDies: parameters.dieWhenSourceDies,
         ...(Object.keys(assignments).length === 0 ? {} : { blackboardAssignments: assignments }),
@@ -504,7 +530,9 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     if (condition.kind === 'abilityEntityRemainingDurationCompare') {
       if (context === undefined)
         throw new Error('AbilityEntity duration comparison requires a context');
-      const target = this.#delegate.queryTargets(condition.target, context)[0];
+      const target = firstRuntimeEntityTarget(
+        this.#delegate.queryTargets(condition.target, context),
+      );
       if (target === undefined || !this.#entities.isActive(target)) return false;
       const remaining = this.#entities.snapshot(target).remainingDurationSeconds;
       const seconds = Math.fround(remaining ?? -1);
@@ -558,6 +586,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
         ),
         source: this.#entities.snapshot(entity).source,
         target: this.#entities.snapshot(entity).target,
+        readCastTargets: () => this.#entities.snapshot(entity),
         skillHostGroup: this.#entities.childSkillHosts(entity),
         ownerOperatorId: this.#operatorId,
         ...(this.#childRuntimeDependencies.semanticEvents === undefined

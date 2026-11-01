@@ -6,8 +6,10 @@ import type { ProjectileLaunchSchedule } from '../../../../packages/game-data-co
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import { createActionBlackboardState, type ActionBlackboardState } from '../state/foundationState';
 import type { ProjectileLifecycleState } from '../state/instanceState';
+import type { CombatFaction } from '../../../../packages/game-data-contract/src/primitives';
 
 export interface ProjectileLaunchData {
+  readonly faction?: CombatFaction;
   readonly schedule: ProjectileLaunchSchedule;
   readonly originCastId?: string;
 
@@ -36,6 +38,7 @@ export function launchProjectile(
   if (state.instances.has(instanceId))
     throw new Error(`duplicate projectile AbilityEntity instance id '${instanceId}'`);
   state.instances.set(instanceId, {
+    faction: request.faction,
     schedule: createProjectileScheduleState(request.schedule),
     originCastId: request.originCastId,
     callbacks: request.callbacks ?? [],

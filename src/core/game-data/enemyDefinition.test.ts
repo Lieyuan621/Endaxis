@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../project/level';
 import { describe, expect, it, vi } from 'vitest';
 import { createEmptyProject } from '../project/createProject';
 import { validateProjectEnemyDefinitionReferences } from './enemyDefinitionValidation';
@@ -39,10 +40,14 @@ describe('enemyDefinition', () => {
 
   it('reports missing and mismatched index identities', () => {
     const project = createEmptyProject({ createdWith: 'test' });
-    project.scenarios[0]!.enemy.source = { kind: 'prefab', enemyId: 'enemy-1', level: 90 };
+    firstScenarioEnemy(project.scenarios[0]!).enemy.source = {
+      kind: 'prefab',
+      enemyId: 'enemy-1',
+      level: 90,
+    };
 
     expect(validateProjectEnemyDefinitionReferences(project, { getEnemy: () => null })).toEqual([
-      { path: '$.scenarios[0].enemy.source.enemyId', message: 'unknown enemy' },
+      { path: '$.scenarios[0].level.enemy.enemy.source.enemyId', message: 'unknown enemy' },
     ]);
     expect(
       validateProjectEnemyDefinitionReferences(project, {
@@ -50,7 +55,7 @@ describe('enemyDefinition', () => {
       }),
     ).toEqual([
       {
-        path: '$.scenarios[0].enemy.source.enemyId',
+        path: '$.scenarios[0].level.enemy.enemy.source.enemyId',
         message: 'enemy definition identity mismatch',
       },
     ]);

@@ -104,7 +104,7 @@ const definition = {
               action: {
                 kind: 'readBuffStackCount',
                 parameters: {
-                  target: 'eventTarget',
+                  target: { kind: 'inputTarget' },
                   outputKey: 'phy_dmg_up_final',
                   query: {
                     kind: 'tag',

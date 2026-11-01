@@ -1,4 +1,4 @@
-import type { ActionTargetQuery, CombatStepParameters } from '../intermediateDefinitions.ts';
+import type { CombatStepParameters } from '../intermediateDefinitions.ts';
 import { COMPILED_BUFF_TARGET_KINDS } from '../buffs/compiledBuffMetadata.ts';
 import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
 import type {
@@ -8,7 +8,9 @@ import type {
 import type { CompiledBuffStepSource } from './combatActionProjectionTypes.ts';
 import {
   actionValueOperand,
+  inferBuffTargetKind,
   type CombatActionProjectionContextSource,
+  type ProjectedTargetGroup,
 } from '../combatProjectionCommon.ts';
 
 /**
@@ -19,6 +21,7 @@ export function projectPhysicalInflictionAction(
   action: AirborneActionSource | PhysicalInflictionActionSource,
   path: string,
   context: CombatActionProjectionContextSource,
+  targetGroups: ReadonlyMap<string, ProjectedTargetGroup> = new Map(),
 ): Extract<CompiledBuffStepSource, { readonly kind: 'applyPhysicalInfliction' }> {
   const source = action.kind === 'airborne' ? action.source : action.attacker;
   if (action.kind === 'airborne') {
@@ -44,6 +47,7 @@ export function projectPhysicalInflictionAction(
           returnWhen: returnWhen[action.returnTrueWhen],
         },
         context,
+        targetGroups,
       ),
     };
   }
@@ -63,6 +67,7 @@ export function projectPhysicalInflictionAction(
           isExtra: action.isExtra,
         },
         context,
+        targetGroups,
       ),
     };
   }
@@ -78,6 +83,7 @@ export function projectPhysicalInflictionAction(
         ignoreHitEffect: action.ignoreHitEffect,
       },
       context,
+      targetGroups,
     ),
   };
 }
@@ -85,27 +91,18 @@ export function projectPhysicalInflictionAction(
 /** 查询身份留给运行时；闭包只使用可证明的宿主种类，未知来源不能默认成干员。 */
 export function physicalInflictionParameters<
   T extends CombatStepParameters['applyPhysicalInfliction'],
->(parameters: T, context: CombatActionProjectionContextSource): T {
-  const kind = (query: ActionTargetQuery): string => {
-    if (query.kind === 'fixed') return query.target;
-    if (query.kind === 'context' && context.staticEnemyTargetGroupKeys?.has(query.key))
-      return 'enemy';
-    if (query.kind === 'owner') return context.fixedBuffOwnerTarget ?? context.actionOwnerTarget;
-    if (query.kind === 'source') return context.fixedBuffSourceTarget ?? context.actionSourceTarget;
-    if (query.kind === 'inputTarget') return context.actionTargetTarget ?? 'unknown';
-    if (query.kind === 'characterTeam' || query.kind === 'mainCharacter') return 'caster';
-    if (query.kind === 'battleMainTarget' || query.kind === 'enemyByTags') return 'enemy';
-    if (query.kind === 'buffFilter' || query.kind === 'tagFilter' || query.kind === 'exclude')
-      return kind(query.targets);
-    return 'unknown';
-  };
-  const source = kind(parameters.source);
+>(
+  parameters: T,
+  context: CombatActionProjectionContextSource,
+  targetGroups: ReadonlyMap<string, ProjectedTargetGroup> = new Map(),
+): T {
+  const source = inferBuffTargetKind(parameters.source, context, targetGroups);
   return Object.assign(parameters, {
     [COMPILED_BUFF_TARGET_KINDS]: {
       target:
         parameters.type === 'crush' || parameters.type === 'fracture'
           ? 'enemy'
-          : kind(parameters.target),
+          : inferBuffTargetKind(parameters.target, context, targetGroups),
       ...(source === 'caster' ? {} : { source }),
     },
   });

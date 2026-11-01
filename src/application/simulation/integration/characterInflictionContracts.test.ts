@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { contingencyContractMechanicId } from '../../../data/contingencyContract/contingencyContractCatalog';
@@ -98,8 +99,10 @@ it('受控回血合约按敌人生命账本治疗，冻结后的切面保持治�
   expect(heals.length).toBeGreaterThan(1);
   for (const heal of heals) {
     expect(heal.sourceId).toBe('enemy');
-    expect(heal.data?.attributeValue).toBe(scenario.enemy.editable.hp);
-    expect(heal.data?.requestedHealing).toBeCloseTo(scenario.enemy.editable.hp * 0.05);
+    expect(heal.data?.attributeValue).toBe(firstScenarioEnemy(scenario).enemy.editable.hp);
+    expect(heal.data?.requestedHealing).toBeCloseTo(
+      firstScenarioEnemy(scenario).enemy.editable.hp * 0.05,
+    );
   }
   expect(heals.some(heal => Number(heal.data?.actualHealing) > 0)).toBe(true);
   const branch = session.fork(checkpoint);

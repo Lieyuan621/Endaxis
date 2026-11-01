@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from './level';
 import { describe, expect, it, vi } from 'vitest';
 import type { GameDataRepository } from '../game-data/gameDataRepository';
 import { ActionGraphDefinitionRepository } from '../compiler/actionGraphDefinitionRepository';
@@ -45,7 +46,11 @@ function createProjectWithDefinitionReferences() {
     enabled: true,
     parameters: {},
   });
-  scenario.enemy.source = { kind: 'prefab', enemyId: 'missing-enemy', level: 90 };
+  firstScenarioEnemy(scenario).enemy.source = {
+    kind: 'prefab',
+    enemyId: 'missing-enemy',
+    level: 90,
+  };
   return project;
 }
 
@@ -76,7 +81,7 @@ describe('validateProjectWithGameData', () => {
           message: 'unknown weapon',
         },
         {
-          path: '$.scenarios[0].enemy.source.enemyId',
+          path: '$.scenarios[0].level.enemy.enemy.source.enemyId',
           message: 'unknown enemy',
         },
         {

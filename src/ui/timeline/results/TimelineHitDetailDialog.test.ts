@@ -10,6 +10,7 @@ it('按旧版顺序展示独立乘区，失衡只从独立增伤中拆出一次'
     frame: 0,
     time: 0,
     event: 'DamageApplied',
+    targetId: 'enemy:second',
     data: {
       standardCalculation: true,
       attack: 100,
@@ -92,6 +93,8 @@ it('按旧版顺序展示独立乘区，失衡只从独立增伤中拆出一次'
             forceCritical: false,
             resultForceCritical: false,
             entries: [entry],
+            targetLabel: '伤害对象',
+            operatorLabel: (id: string) => (id === 'enemy:second' ? '第二目标' : id),
             contributionSourceLabel: () => '',
             damageTypeLabel: (s: string) => s,
             skillTypeLabel: (s: string) => s,
@@ -116,6 +119,10 @@ it('按旧版顺序展示独立乘区，失衡只从独立增伤中拆出一次'
     }),
   );
   const rows = state.damageDetails.value[0].multiplierRows;
+  expect(state.damageDetails.value[0].contextRows).toContainEqual({
+    label: '伤害对象',
+    value: '第二目标',
+  });
   expect(rows.map((row: any) => row.label)).toEqual([
     'bonus',
     'critical',

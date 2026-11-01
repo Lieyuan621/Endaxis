@@ -43,6 +43,7 @@ const props = defineProps<{
   allowForceCritical?: boolean;
   sourceDescription?: (entry: CombatReceiptEntry) => string | undefined;
   sourceLabel?: string;
+  targetLabel?: string;
   damageZoneLabel?: (zone: DamageScaleZone) => string;
   buffLabel?: (item: AppliedDamageModifier) => string;
   entries: readonly CombatReceiptEntry[];
@@ -666,6 +667,12 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
     const damageTakenMultiplier = finiteNumber(data.damageTakenMultiplier, 1);
     const resistanceMultiplier = finiteNumber(data.resistancePercentMultiplier, 1);
     const contextRows: DetailRow[] = [];
+    if (entry.targetId && props.targetLabel) {
+      contextRows.push({
+        label: props.targetLabel,
+        value: props.operatorLabel?.(entry.targetId) ?? entry.targetId,
+      });
+    }
     const sourceDescription = props.sourceDescription?.(entry);
     if (sourceDescription && props.sourceLabel) {
       contextRows.push({ label: props.sourceLabel, value: sourceDescription });

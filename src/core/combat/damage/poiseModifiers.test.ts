@@ -102,7 +102,10 @@ describe('poise modifiers', () => {
                 new CombatActionSequenceRuntime(
                   new OperatorControlConditionExecutor({
                     isOperatorControlled: () => controlled,
-                    queryTargets: () => [{ kind: 'operator', operatorId: 'caster' }],
+                    queryTargets: () => [
+                      { kind: 'spatialPoint', pointId: 1 },
+                      { kind: 'operator', operatorId: 'caster' },
+                    ],
                     delegate: new EventContextConditionExecutor({
                       execute: () => true,
                       evaluate: () => {
@@ -112,7 +115,10 @@ describe('poise modifiers', () => {
                   }),
                   { blackboard: buff.blackboard },
                 ),
-                input => ({ context: { kind: 'poise', input }, target: { kind: 'enemy' } }),
+                input => ({
+                  context: { kind: 'poise', input },
+                  target: { kind: 'enemy', enemyId: 'enemy' },
+                }),
                 state,
               ),
             processors: [

@@ -1157,7 +1157,7 @@ export const projectileSchedulePresets: Readonly<Record<string, ProjectileSchedu
   },
   // 噗切娜｜终结技「不许干坏事！」：礼盒开出的子投射物。
   // 发射来源：chr_0038_purrche_ultimate_skill。
-  // 取值依据：原生抛物线模式1，弧顶max(y0,y1)+0.5、参数总时长0.2秒；不以EntityBB_speed构造该模式轨迹。按3米敌人、朝向和镜头面向敌人、忽略挂点，保留各入口发射和目标偏移，用距离倍率及5秒归一化速度曲线换算时刻。原生Custom掩码193=Default(0)|Walkable(6)|Climbable(7)，层表证据见combat-spec launch-projectile-skill-routing.md的2026-09-25记录；本近似平地明确采用Walkable，而非未包含的Terrain(20)。球半径0.2，取首次到达/触地；36个入口单独配置。首入口106瞄准带偏移目标，12帧到达。
+  // 取值依据：原生抛物线模式1，弧顶max(y0,y1)+0.5、参数总时长0.2秒；不以EntityBB_speed构造该模式轨迹。按3米敌人、朝向和镜头面向敌人、忽略挂点，保留各入口发射和目标偏移，用距离倍率及5秒归一化速度曲线换算时刻。原生Custom掩码193=Default(0)|Walkable(6)|Climbable(7)；本近似平地明确采用Walkable，而非未包含的Terrain(20)。球半径0.2，取首次到达/触地；36个入口单独配置。首入口106瞄准带偏移目标，12帧到达。
   projectile_chr_0038_purrche_ult_skill_2: {
     endFrame: 12,
     callbacks: { block: [], reach: [12] },

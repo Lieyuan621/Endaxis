@@ -12,7 +12,10 @@ import type { CombatSkillCastInfo } from '../state/foundationState';
 import type { CombatOperationContext, CombatOperationExecutor } from './skillRuntime';
 import { operationProducer } from '../receipt/combatObjectIdentity';
 import type { CombatObjectRef } from '../receipt/combatReceipt';
-import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import {
+  firstRuntimeEntityTarget,
+  type RuntimeTargetRef,
+} from '../../game-data/logicalAbilityEntity';
 
 type CastStep = ResolvedCombatStepForKind<'castSkillDuringAction'>;
 
@@ -47,7 +50,7 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
       const { queryTargets, interruptCurrentSkill } = this.dependencies;
       if (!queryTargets || !interruptCurrentSkill || !context)
         throw new Error('skill interruption requires target bindings');
-      const target = queryTargets(step.parameters.targets, context)[0];
+      const target = firstRuntimeEntityTarget(queryTargets(step.parameters.targets, context));
       if (target !== undefined) interruptCurrentSkill(target);
       return true;
     }
@@ -71,36 +74,41 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
     if (step.parameters.caster !== undefined) {
       if (!context || !this.dependencies.queryTargets)
         throw new Error('deferred skill caster requires target bindings');
-      caster = this.dependencies.queryTargets(step.parameters.caster, context)[0];
+      // 原生 GetFirstTarget 读取首个实体；位置包装不占用施法者槽位。
+      caster = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(step.parameters.caster, context),
+      );
       if (caster === undefined) return false;
       if (caster.kind !== 'operator' && caster.kind !== 'abilityEntity')
         throw new Error('deferred skill caster requires a skill host');
     }
     let contextTarget: RuntimeTargetRef | null = null;
-    if (typeof step.parameters.target === 'object') {
+    if (typeof step.parameters.target === 'object' || step.parameters.target === 'enemy') {
       if (!context || !this.dependencies.queryTargets)
         throw new Error('deferred skill target requires target bindings');
-      const targets = this.dependencies.queryTargets(step.parameters.target, context);
-      if (targets.length > 1)
-        throw new Error('deferred skill cast does not yet support a multi-entity input target');
+      const targets = this.dependencies.queryTargets(
+        step.parameters.target === 'enemy'
+          ? { kind: 'fixed', target: 'enemy' }
+          : step.parameters.target,
+        context,
+      );
+      // 普通延迟施法没有开启 AllowMultiInputTarget，Skill.SaveTarget 保存首项。
       contextTarget = targets[0] ?? null;
     } else if (step.parameters.target === 'context') {
       const key = step.parameters.targetContextKey;
       if (!key || context?.targetContext === undefined)
         throw new Error('deferred skill cast requires its named target context');
       const targets = context.targetContext.get(key);
-      if (targets.length > 1)
-        throw new Error('deferred skill cast does not yet support a multi-entity input target');
       contextTarget = targets[0] ?? null;
     }
     const inputTarget =
-      step.parameters.target === 'context' || typeof step.parameters.target === 'object'
+      step.parameters.target === 'context' ||
+      step.parameters.target === 'enemy' ||
+      typeof step.parameters.target === 'object'
         ? contextTarget
         : step.parameters.target === 'actionInputTarget'
-          ? (context?.actionInputTarget ?? null)
-          : step.parameters.target === 'enemy'
-            ? { kind: 'enemy' as const }
-            : { kind: 'operator' as const, operatorId: this.dependencies.casterId };
+          ? (context?.actionInputTargets?.[0] ?? null)
+          : { kind: 'operator' as const, operatorId: this.dependencies.casterId };
     const inherited = step.parameters.inheritSourceSkillCastInfo
       ? context?.skillCastInfo
       : undefined;

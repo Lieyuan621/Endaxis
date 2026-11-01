@@ -147,12 +147,17 @@ export interface ResolvedCombatStepParameters {
   findTargets: CompiledStepParameters['findTargets'];
   mergeContextTargets: CompiledStepParameters['mergeContextTargets'];
   findCharacterTeamTargets: CompiledStepParameters['findCharacterTeamTargets'];
+  blowOffEnemy: CompiledStepParameters['blowOffEnemy'];
+  pushBack: CompiledStepParameters['pushBack'];
+  pull: CompiledStepParameters['pull'];
+  saveTargetDistance: CompiledStepParameters['saveTargetDistance'];
   createSpatialPointTargets: CompiledStepParameters['createSpatialPointTargets'];
   findOwnerSpawnedAbilityEntities: CompiledStepParameters['findOwnerSpawnedAbilityEntities'];
   pickContextTarget: CompiledStepParameters['pickContextTarget'];
   saveTransferredSource: CompiledStepParameters['saveTransferredSource'];
   forEachContextTarget: CompiledStepParameters['forEachContextTarget'];
   setAbilityEntityRemainingDuration: CompiledStepParameters['setAbilityEntityRemainingDuration'];
+  setAbilityEntityTarget: CompiledStepParameters['setAbilityEntityTarget'];
   finishOwner: CompiledStepParameters['finishOwner'];
   interruptCurrentSkill: CompiledStepParameters['interruptCurrentSkill'];
   startCurrentAbilityEntityChildSkillById: CompiledStepParameters['startCurrentAbilityEntityChildSkillById'];
@@ -324,6 +329,7 @@ export interface ResolvedCombatStepParameters {
   changeNativeSkillType: CompiledStepParameters['changeNativeSkillType'];
   setCharacterPassiveUiValue: CompiledStepParameters['setCharacterPassiveUiValue'];
   inheritSkillCastInfoForBasicAttack: CompiledStepParameters['inheritSkillCastInfoForBasicAttack'];
+  startTyphoeaArchery: CompiledStepParameters['startTyphoeaArchery'];
   castSkillDuringAction: CompiledStepParameters['castSkillDuringAction'];
   listenForCombatEvents: {
     responses: readonly {
@@ -410,12 +416,17 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   findTargets: 'operation',
   mergeContextTargets: 'operation',
   findCharacterTeamTargets: 'operation',
+  blowOffEnemy: 'operation',
+  pushBack: 'operation',
+  pull: 'operation',
+  saveTargetDistance: 'operation',
   createSpatialPointTargets: 'operation',
   findOwnerSpawnedAbilityEntities: 'operation',
   pickContextTarget: 'operation',
   saveTransferredSource: 'operation',
   forEachContextTarget: 'sequence',
   setAbilityEntityRemainingDuration: 'operation',
+  setAbilityEntityTarget: 'operation',
   finishOwner: 'operation',
   interruptCurrentSkill: 'operation',
   startCurrentAbilityEntityChildSkillById: 'operation',
@@ -516,6 +527,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   changeNativeSkillType: 'operation',
   setCharacterPassiveUiValue: 'operation',
   inheritSkillCastInfoForBasicAttack: 'operation',
+  startTyphoeaArchery: 'operation',
   listenForCombatEvents: 'sequence',
   listenForTagQuery: 'sequence',
 } as const satisfies Record<CombatStepKind, 'sequence' | 'operation'>;

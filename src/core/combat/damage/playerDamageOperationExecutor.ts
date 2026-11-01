@@ -2,7 +2,11 @@ import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import type { CombatAttributeSet } from '../attributes/combatAttributes';
 
 import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
-import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import {
+  singleTargetList,
+  runtimeTargetEntityId,
+  runtimeTargetFromEntityId,
+} from '../../game-data/logicalAbilityEntity';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import { valueInputBlackboardKey } from '../../compiler/compiledGraphData';
 import type { CompiledCondition, CompiledValueInput } from '../../compiler/compiledGraphData.ts';
@@ -140,7 +144,7 @@ export interface PlayerDamageOperationDependencies {
   readonly resolveTargetDependencies?: (
     targetId: string,
     current: PlayerDamageOperationDependencies,
-    step: DamageStep,
+    step: PoiseStep,
   ) => PlayerDamageOperationDependencies;
   /** 按真实攻击者绑定整套属性、修正器和事件端口，不改变当前动作的执行身份。 */
   readonly resolveAttackerDependencies?: (sourceId: string) => PlayerDamageOperationDependencies;
@@ -155,7 +159,7 @@ export interface PlayerDamageOperationDependencies {
     readonly absorbDamage: (entityId: string, value: number) => number;
   };
   /** 主动技能的默认命中选择；Buff 和显式目标不使用此策略。 */
-  readonly resolveDefaultDamageTarget?: () => RuntimeTargetRef;
+  readonly resolveDefaultDamageTarget?: () => RuntimeTargetRef | undefined;
   readonly resolveSharedDamageTransfer?: (
     target: RuntimeTargetRef,
   ) => SharedDamageTransfer | undefined;
@@ -173,6 +177,8 @@ export interface PlayerDamageOperationDependencies {
   readonly skillType?: SkillType;
   readonly targetId: string;
   readonly targetVitals: CombatVitals;
+  readonly isTargetAlive?: (targetId: string) => boolean;
+  readonly canTargetDie?: (targetId: string) => boolean;
   readonly clock: CombatClock;
   readonly receipt: CombatReceiptSink;
   readonly captureAttributeSnapshots: (
@@ -295,8 +301,10 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         // 原生只为可锁定的能力系统创建伤害包；空间命中不消费伤害操作数。
         if (runtimeTargetEntityId(target) === undefined) continue;
         succeeded =
-          this.#executeTarget(step, { ...operationContext, actionInputTarget: target }) ||
-          succeeded;
+          this.#executeTarget(step, {
+            ...operationContext,
+            actionInputTargets: singleTargetList(target),
+          }) || succeeded;
       }
       return step.parameters.alwaysNext !== false || succeeded;
     }
@@ -352,6 +360,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
   #executeTarget(step: RuntimeOperation, operationContext?: CombatOperationContext): boolean {
     if (step.kind === 'dealDamage' || step.kind === 'dealStagger') {
       const receiver = this.#resolveDamageTarget(step, operationContext);
+      if (receiver === undefined) return false;
       if (
         runtimeTargetEntityId(receiver) === undefined ||
         this.dependencies.targetExists?.(receiver) === false
@@ -359,21 +368,38 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         return step.parameters.alwaysNext !== false;
     }
     const target =
-      step.kind === 'dealDamage' ? this.#resolveDamageTarget(step, operationContext) : undefined;
+      step.kind === 'dealDamage' || step.kind === 'dealStagger'
+        ? this.#resolveDamageTarget(step, operationContext)
+        : undefined;
+    if ((step.kind === 'dealDamage' || step.kind === 'dealStagger') && target === undefined)
+      return false;
     const targetId = target === undefined ? undefined : runtimeTargetEntityId(target);
+    // 部位沿用其主体的伤害端口，而不是执行器最初绑定的敌人。
+    // 保留输入中的部位身份，让后续 SharedDamage 仍负责一次主体结算及转伤。
+    const damageReceiverId =
+      target?.kind === 'abilityEntity'
+        ? (this.dependencies.resolveSharedDamageTransfer?.(target)?.mainBodyId ?? targetId)
+        : targetId;
     if (
-      step.kind === 'dealDamage' &&
-      target?.kind === 'operator' &&
-      targetId !== undefined &&
-      targetId !== this.dependencies.targetId
+      (step.kind === 'dealDamage' || step.kind === 'dealStagger') &&
+      this.dependencies.isTargetAlive?.(targetId ?? this.dependencies.targetId) === false
+    )
+      return false;
+    if (
+      (step.kind === 'dealDamage' || step.kind === 'dealStagger') &&
+      (target?.kind === 'operator' ||
+        target?.kind === 'enemy' ||
+        (target?.kind === 'abilityEntity' && damageReceiverId !== targetId)) &&
+      damageReceiverId !== undefined &&
+      damageReceiverId !== this.dependencies.targetId
     ) {
       const bound = this.dependencies.resolveTargetDependencies?.(
-        targetId,
+        damageReceiverId,
         this.dependencies,
         step,
       );
-      if (bound === undefined || bound.targetId !== targetId)
-        throw new Error(`damage target '${targetId}' has no matching damage ports`);
+      if (bound === undefined || bound.targetId !== damageReceiverId)
+        throw new Error(`damage target '${damageReceiverId}' has no matching damage ports`);
       return new PlayerDamageOperationExecutor(bound).#executeTarget(step, operationContext);
     }
     const skillCastInfo = operationContext?.skillCastInfo ?? this.dependencies.skillCastInfo;
@@ -706,6 +732,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           : deriveHitId(castId, step.key));
       executeHealthDamage({
         partTransferInfo,
+        targetCanDie: this.dependencies.canTargetDie?.(this.dependencies.targetId),
         consumeFinisherEligibility: this.dependencies.consumeFinisherEligibility,
         ...(multiplierCalculation === undefined
           ? {}
@@ -929,6 +956,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     let succeeded = false;
     for (const target of targets) {
       const targetId = runtimeTargetEntityId(target);
+      if (targetId !== undefined && this.dependencies.isTargetAlive?.(targetId) === false) continue;
       // 与普通伤害共用原生实体锁定边界：空间目标不进入计算，也不读取操作数。
       if (targetId === undefined || this.dependencies.targetExists?.(target) === false) continue;
       const vitals = ports.resolveVitals(targetId);
@@ -974,6 +1002,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       if (operationContext.skillExecution !== undefined)
         operationContext.skillExecution.hasOutputDamageBattle = true;
       executeHealthDamage({
+        targetCanDie: this.dependencies.canTargetDie?.(targetId),
         producedBy: operationProducer(operationContext, {
           ownerId: sourceId,
           actionId: this.dependencies.sourceActionId,
@@ -1140,6 +1169,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     context: CombatOperationContext | undefined,
   ): SharedDamageTransfer | undefined {
     const target = this.#resolveDamageTarget(step, context);
+    if (target === undefined) return undefined;
     if (runtimeTargetEntityId(target) === this.dependencies.targetId) return undefined;
     if (target.kind === 'enemy') return undefined;
     const transfer = this.dependencies.resolveSharedDamageTransfer?.(target);
@@ -1151,13 +1181,22 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
   #resolveDamageTarget(
     step: PoiseStep,
     context: CombatOperationContext | undefined,
-  ): RuntimeTargetRef {
-    if (step.parameters.target === 'enemy') return { kind: 'enemy' };
+  ): RuntimeTargetRef | undefined {
+    if (step.parameters.target === 'enemy') {
+      if (context && this.dependencies.queryTargets)
+        return this.#queryTargets({ kind: 'fixed', target: 'enemy' }, context)[0];
+      return this.dependencies.resolveDefaultDamageTarget
+        ? this.dependencies.resolveDefaultDamageTarget()
+        : runtimeTargetFromEntityId(this.dependencies.targetId);
+    }
     const target =
       step.parameters.target === undefined
-        ? (this.dependencies.resolveDefaultDamageTarget?.() ?? { kind: 'enemy' as const })
-        : context?.actionInputTarget;
-    if (target === undefined) throw new Error('damage requires a current target');
+        ? this.dependencies.resolveDefaultDamageTarget === undefined
+          ? runtimeTargetFromEntityId(this.dependencies.targetId)
+          : this.dependencies.resolveDefaultDamageTarget()
+        : context?.actionInputTargets?.[0];
+    if (target === undefined && step.parameters.target !== undefined)
+      throw new Error('damage requires a current target');
     return target;
   }
 

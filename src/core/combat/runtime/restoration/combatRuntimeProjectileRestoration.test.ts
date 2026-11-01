@@ -118,10 +118,13 @@ it.each([
     host: null,
   };
   original.launch({
+    source: { kind: 'enemy', enemyId: 'enemy:second' },
     hitTargets: {
-      targets: mode === 'emptyHitTargets' ? [] : [{ kind: 'enemy' }],
+      targets: mode === 'emptyHitTargets' ? [] : [{ kind: 'enemy', enemyId: 'enemy' }],
       resolveOnHit: mode === 'dynamicHit' || mode === 'filteredDynamicHit',
-      ...(mode === 'filteredDynamicHit' ? { onlyHitTargets: [{ kind: 'enemy' as const }] } : {}),
+      ...(mode === 'filteredDynamicHit'
+        ? { onlyHitTargets: [{ kind: 'enemy' as const, enemyId: 'enemy' }] }
+        : {}),
       ...(mode === 'filteredHit'
         ? { hitTagFilter: { tagQueryType: 'exceptAny' as const, tags: ['Immune/Physical'] } }
         : {}),
@@ -146,6 +149,10 @@ it.each([
 
     beforeReset: () => {},
   });
+  expect(original.findOwnerSpawned('enemy')).toEqual([]);
+  expect(original.findOwnerSpawned('enemy:second')).toEqual([
+    { kind: 'abilityEntity', instanceId: 4 },
+  ]);
   const saved = structuredClone(original.runtimeState);
   const clock = new CombatClock();
   const receipt = new CombatReceiptCollector();
@@ -219,7 +226,7 @@ it.each([
     expect(createHost).not.toHaveBeenCalled();
     expect(restored.getUnfinishedTargets()).toEqual([{ kind: 'abilityEntity', instanceId: 4 }]);
     expect(matchesHitTags).toHaveBeenCalledWith(
-      { kind: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
       {
         tagQueryType: 'exceptAny',
         tags: ['Immune/Physical'],
@@ -235,13 +242,14 @@ it.each([
     return;
   }
   expect(createHost).toHaveBeenCalledOnce();
+  expect(createHost.mock.calls[0]![1].actionSourceId).toBe('enemy:second');
   expect(observedCandidates).toEqual([[{ kind: 'abilityEntity', instanceId: 4 }]]);
   expect(saved.instances.get(4)!.callbacks[0]!.host).not.toBeNull();
   const execution = saved.instances.get(4)!.callbacks[0]!.host!.skill.execution;
   if (mode === 'dynamicHit')
-    expect(execution.inputTarget).toEqual({ kind: 'abilityEntity', instanceId: 99 });
+    expect(execution.inputTargets?.[0]).toEqual({ kind: 'abilityEntity', instanceId: 99 });
   if (mode === 'reach')
-    expect(execution.inputTarget).toEqual({
+    expect(execution.inputTargets?.[0]).toEqual({
       kind: 'spatialPoint',
       pointId: 9,
     });

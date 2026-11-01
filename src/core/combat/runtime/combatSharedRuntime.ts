@@ -1,3 +1,4 @@
+import { TyphoeaArcheryRuntime } from '../abilities/typhoeaArcherySelection';
 /**
  * 战斗装配根的共享运行时对象。
  *
@@ -56,6 +57,7 @@ export class CombatSharedRuntime {
   readonly abilityEntityInstanceIds: AbilityEntityInstanceIdAllocator;
   readonly skillCastIds: SkillCastIdAllocator;
   readonly basicAttackInheritance: BasicAttackSkillCastInheritanceRegistry;
+  readonly typhoeaArchery: TyphoeaArcheryRuntime;
   readonly runtimeState: CombatSharedState;
 
   constructor(options: CombatSharedRuntimeOptions, restored?: RestoredCombatSharedRuntime) {
@@ -116,6 +118,7 @@ export class CombatSharedRuntime {
     this.basicAttackInheritance = new BasicAttackSkillCastInheritanceRegistry(
       state?.basicAttackInheritance,
     );
+    this.typhoeaArchery = new TyphoeaArcheryRuntime(state?.typhoeaArcherySelection);
     this.runtimeState = state ?? {
       clock: this.clock.runtimeState,
       resources: this.resources.runtimeState,
@@ -125,6 +128,7 @@ export class CombatSharedRuntime {
       ultimatePresentation: this.ultimatePresentation.runtimeState,
       globalCooldowns: this.globalCooldowns.runtimeState,
       basicAttackInheritance: this.basicAttackInheritance.runtimeState,
+      typhoeaArcherySelection: this.typhoeaArchery.runtimeState,
       reactiveOperationSources: new Map(),
       identities: {
         abilityEntities: this.abilityEntityInstanceIds.runtimeState,

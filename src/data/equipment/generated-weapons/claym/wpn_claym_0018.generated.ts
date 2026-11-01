@@ -363,7 +363,7 @@ const definition = {
               action: {
                 kind: 'readBuffStackCount',
                 parameters: {
-                  target: 'buffOwner',
+                  target: { kind: 'owner' },
                   outputKey: 'count',
                   query: { kind: 'id', buffIds: ['buff_wpn_claym_0018_normal_skill_trigger'] },
                 },

@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../src/core/project/level';
 import { equipmentFixture } from './sourceFixtures.ts';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -106,7 +107,7 @@ describe('重建单件装备候选与当前运行时兼容性（不证明新版�
   it.each(cases)('$gear.slug / $tier 单件装配、上轴普攻和实际伤害结算', async ({ gear, tier }) => {
     const scenario = createEmptyScenario(`gear-candidate:${gear.slug}:${tier}`, '隔离装备兼容性');
     scenario.battle.durationFrames = 300;
-    scenario.enemy.editable.hp = 1_000_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 1_000_000_000;
     const slot = gear.slotType === 'accessory' ? 'accessory1' : gear.slotType;
     scenario.tracks[0] = {
       id: 'gear-candidate-track',
@@ -158,7 +159,7 @@ describe('重建单件装备候选与当前运行时兼容性（不证明新版�
     });
     const result = await service.simulate(placed, 300);
     expect(Number.isFinite(result.finalEnemyHealth)).toBe(true);
-    expect(result.finalEnemyHealth).toBeLessThan(scenario.enemy.editable.hp);
+    expect(result.finalEnemyHealth).toBeLessThan(firstScenarioEnemy(scenario).enemy.editable.hp);
     expect(result.receiptEntries.some(entry => entry.event === 'DamageApplied')).toBe(true);
   });
 });

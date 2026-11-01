@@ -70,6 +70,7 @@ import {
 import { executeTimelineJump, resetTimelineJump, tickTimelineJump } from './sequenceControl';
 
 export interface ActionGraphExecutionHost {
+  readonly channelingCountTarget?: (target: RuntimeTargetRef) => RuntimeTargetRef;
   observeOwnerTags?(changed: () => void): () => void;
   ownerTagsMatch?(parameters: CompiledGraphStepForKind<'listenForTagQuery'>['parameters']): boolean;
   /** 只观察已经取得的结果，不参与求值或执行策略。 */
@@ -181,6 +182,7 @@ function wrapMacroHost(
       return host.inputTarget;
     },
     selectTargets: host.selectTargets,
+    channelingCountTarget: host.channelingCountTarget,
     executionPolicy: host.executionPolicy,
     requestTimelineJump: host.requestTimelineJump,
     ...(host.trace === undefined ? {} : { trace: host.trace }),
@@ -804,7 +806,13 @@ export class ActionGraphExecution
       };
     } else if (action.kind === 'aura') {
       if (saved && saved.kind !== 'graphAura') throw new Error(`expected Aura state: ${id}`);
-      const data = saved ?? { kind: 'graphAura' as const, active: false, influences: [] };
+      const data = saved ?? {
+        kind: 'graphAura' as const,
+        active: false,
+        influences: [],
+        influenceCounts: [],
+      };
+      const influenceCounts = (data.influenceCounts ??= []);
       const influence = this.host.aura?.(action.parameters);
       if (!influence) throw new Error('Aura runtime is not configured');
       const callbacks = new Map<
@@ -872,6 +880,13 @@ export class ActionGraphExecution
           if (!data.active) break;
           if (data.influences.some(item => item.active && sameRuntimeTarget(item.target, target)))
             continue;
+          const maximum = action.parameters.maxInfluenceCountPerTarget;
+          if (maximum !== undefined) {
+            const previous = influenceCounts.find(item => sameRuntimeTarget(item.target, target));
+            if (previous !== undefined && previous.count >= maximum) continue;
+            if (previous === undefined) influenceCounts.push({ target: { ...target }, count: 1 });
+            else previous.count++;
+          }
           const index = data.influences.length;
           const item: AuraInfluenceState = {
             target: { ...target },
@@ -893,6 +908,7 @@ export class ActionGraphExecution
       binding = {
         data,
         execute: context => {
+          influenceCounts.length = 0;
           data.active = true;
           synchronize(context);
           return true;
@@ -996,6 +1012,7 @@ export class ActionGraphExecution
           delta,
           () => this.host.selectTargets!(parameters.target, state.inputTarget),
           target => body(this.host.withTarget(target, true)).executeInstant(context),
+          this.host.channelingCountTarget,
         );
       };
       binding = {

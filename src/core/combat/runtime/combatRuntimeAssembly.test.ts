@@ -1,3 +1,4 @@
+import { EnemyLifecycle } from '../enemies/enemyLifecycle';
 import { describe, expect, it, vi } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -47,6 +48,7 @@ import { prepareCombatRuntimeRestore } from './restoration/combatRuntimeRestoreP
 const emptyEnemyBuffRuntime = {
   ownerId: 'enemy',
   advanceFrame: () => undefined,
+  releaseAll: () => {},
   getCountByIds: () => 0,
   finishByIds: () => 0,
   holdByIds: () => ({ release: () => undefined }),
@@ -99,6 +101,7 @@ const chainEntry = (
 };
 
 const testEnemy: CombatEnemyProgram = {
+  id: 'enemy',
   source: { kind: 'custom', level: 90 },
   rank: 'mob',
   health: 1000,
@@ -130,6 +133,7 @@ function asBuffRuntime(container: CombatBuffContainer<string>) {
     ownerId: container.ownerId,
     entityBlackboard: container.entityBlackboard,
     advanceFrame: () => container.tick(1 / 30),
+    releaseAll: () => container.releaseAll(),
     getCountByIds: (ids: readonly string[]) => container.getCountByIds(ids),
     findFirstByIds: (ids: readonly string[]) => container.findFirstByIds(ids),
     finishByIds: (ids: readonly string[], reason: 'early' | 'absorbed' | 'other') =>
@@ -242,6 +246,7 @@ function createAssembly(
   input:
     | readonly TestSkillProgram[]
     | {
+        enemyInstances?: ConstructorParameters<typeof CombatRuntimeAssembly>[0]['enemyInstances'];
         programs: readonly TestSkillProgram[];
         skillCasts?: ConstructorParameters<
           typeof CombatRuntimeAssembly
@@ -348,6 +353,7 @@ function createAssembly(
       ? { combatSkillPrograms: input.combatSkillPrograms }
       : {}),
     enemy,
+    ...('programs' in input ? { enemyInstances: input.enemyInstances } : {}),
     resources: {
       sp: 100,
       maxSp: 300,
@@ -1503,7 +1509,7 @@ describe('CombatRuntimeAssembly', () => {
     const before = emitAbilityEvent.mock.calls.filter(call => call[1] === 'beforeCastSkill');
     expect(
       assembly.stateGraph.operators.get('operator')!.skills.get('followup\u0000')!.execution
-        .inputTarget,
+        .inputTargets?.[0],
     ).toEqual({ kind: 'operator', operatorId: 'operator' });
     expect(before).toHaveLength(1);
     expect(before[0]![2]).toMatchObject({
@@ -2127,8 +2133,8 @@ describe('CombatRuntimeAssembly', () => {
       {},
       {
         skillSlotKey: 'comboSkill',
-        inputTarget: { kind: 'enemy' },
-        triggerTarget: null,
+        inputTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
+        triggerTargets: null,
         assignPairs: null,
       },
     );
@@ -2855,159 +2861,264 @@ describe('CombatRuntimeAssembly', () => {
     expect(launched?.producedBy).toEqual({ kind: 'abilityEntity', instanceId: 1 });
   });
 
-  it('initializes spawned Souls from body attributes and their own health blackboard', () => {
-    const body = new CombatVitals({
-      health: 100,
-      maxHealth: 1000,
-      poise: 25,
-      maxPoise: 100,
-      poiseRecoveryTime: 0,
-      poiseRecoveryTimeMultiplier: 1,
-      poiseBrokenEndTime: 0,
-      poiseImmune: false,
-    });
-    const attributes = new CombatAttributeSet<string>();
-    attributes.setRawValue('attack', 80);
-    const definitions = new CompiledCombatBuffDefinitions<string>(
-      'soul-test',
-      [
-        { id: 'ordinary', stackingType: 'unique' },
-        {
-          id: 'soul-only',
-          stackingType: 'unique',
-          applyTags: ['Skill/Character/chr_0036_jsspsi/soul/SoulBuff'],
-        },
-      ],
-      {
-        emitElementalInflictionStarted: () => {},
-      },
-    );
-    const applied = vi.fn();
-    const enemyRuntime = new BuffDefinitionOperationTarget(
-      new CombatBuffContainer('enemy', attributes),
-      definitions,
-      { kind: 'enemy' },
-      undefined,
-      applied,
-    );
-    const entityContainers: CombatBuffContainer<string>[] = [];
-    const entityTargets: BuffDefinitionOperationTarget<string>[] = [];
+  it.each([
+    { scope: undefined, reverse: false },
+    { scope: 'global', reverse: false },
+    { scope: 'global', reverse: true },
+  ] as const)('敌人查询范围 $scope，逆序 $reverse 保留顺序与生命周期过滤', ({ scope, reverse }) => {
     const program = skill({
       costs: [],
       costFrame: undefined,
       timelineActions: [
         {
           startFrame: 0,
-          sequence: chainEntry(
-            'spawn-souls',
-            [0, 200].map(health => ({
-              kind: 'spawnAbilityEntity',
+          sequence: chainEntry('notify-enemy', [
+            {
+              kind: 'setCharacterPassiveUiValue',
               parameters: {
-                bornAt: { kind: 'owner' },
-                target: 'enemy',
-                abilityEntityId: 'soul',
-                dieWhenSourceDies: false,
-                blackboardAssignments: { soulHp: { kind: 'constant', value: health } },
-                definition: {
-                  lifetime: { kind: 'infinite' },
-                  blackboard: { ratio: 1.5 },
-                  soul: {
-                    useMainBodyHp: false,
-                    useMainBodyPoise: true,
-                    canBeHitIndividually: false,
-                    onlyHitByNormalAttack: false,
-                    canBeDirectlyBuffed: false,
-                    damageTransferType: 'sharedDamage',
-                    damageRatio: 0,
-                    poiseRatio: 1,
-                    soulHpBlackboardKey: 'soulHp',
-                    soulDamageRatio: { blackboardKey: 'ratio', fallback: 1 },
-                    soulPoiseRatio: 1,
-                    asPrimaryTarget: false,
-                  },
+                target: {
+                  kind: 'enemyByTags',
+                  tags: [],
+                  tagQueryType: 'hasAll',
+                  ...(scope ? { scope } : {}),
+                  reverse,
                 },
+                value: { kind: 'constant', value: 1 },
               },
-            })),
-          ),
+            },
+          ]),
         },
       ],
     });
-    const assembly = createAssembly(
-      [program],
-      undefined,
-      () => body,
-      enemyRuntime,
-      undefined,
-      testEnemy,
-      undefined,
-      (id, blackboard, target) => {
-        const container = new CombatBuffContainer(
-          id,
-          new CombatAttributeSet<string>(),
-          undefined,
-          null,
-          blackboard,
-        );
-        entityContainers.push(container);
-        const runtime = new BuffDefinitionOperationTarget(container, definitions, target);
-        entityTargets.push(runtime);
-        return runtime;
-      },
-    );
-    expect(assembly.tryStartSkill('operator', 'skill')).toBe(true);
-    const first = { kind: 'abilityEntity', instanceId: 1 } as const;
-    const second = { kind: 'abilityEntity', instanceId: 2 } as const;
-    expect(assembly.abilityEntities.soulVitals(first)?.health).toBe(1000);
-    const routed = entityTargets[0]!.applyScoped({
-      buffId: 'ordinary',
-      sourceId: 'operator',
-      blackboardValues: {},
-      partTransferInfo: {
-        currentMainBodyId: 'previous',
-        mainBodyToPart: new Map([['previous', 'ability-entity:2']]),
-      },
+    const vitals = new CombatVitals({
+      health: 100,
+      maxHealth: 100,
+      poise: 0,
+      maxPoise: 100,
+      poiseRecoveryTime: 0,
+      poiseRecoveryTimeMultiplier: 1,
+      poiseBrokenEndTime: 0,
+      poiseImmune: false,
     });
-    const retained = entityTargets[0]!.applyScoped({
-      buffId: 'soul-only',
-      sourceId: 'operator',
-      blackboardValues: {},
+    const phases = ['unspawned', 'dead', 'absent', 'present'] as const;
+    const assembly = createAssembly({
+      programs: [program],
+      registerCombatAbilityEvent: nativeEventRuntimeOptions().registerCombatAbilityEvent,
+      enemyInstances: new Map(
+        phases.map(phase => {
+          const id = `enemy:${phase}`;
+          return [
+            id,
+            {
+              vitals,
+              buffRuntime: { ...emptyEnemyBuffRuntime, ownerId: id, matchesEntityTags: () => true },
+              lifecycle: new EnemyLifecycle(
+                {
+                  spawnFrame: phase === 'unspawned' ? 100 : 0,
+                  presenceChanges: [],
+                  deathFrame: null,
+                },
+                false,
+                {
+                  phase,
+                  nextPresenceChange: 0,
+                  deathFrame: phase === 'dead' ? 0 : null,
+                  lastFrame: 0,
+                },
+              ),
+            },
+          ];
+        }),
+      ),
     });
-    expect(routed?.reference.ownerId).toBe('enemy');
-    expect(applied.mock.calls[0]![0].partTransferInfo).toEqual({
-      currentMainBodyId: 'enemy',
-      mainBodyToPart: new Map([
-        ['previous', 'ability-entity:2'],
-        ['enemy', 'ability-entity:1'],
-      ]),
-    });
-    expect(retained?.reference.ownerId).toBe('ability-entity:1');
-    const instanceTransfer = enemyRuntime.container.buffs[0]!.runtimeState.partTransferInfo;
-    expect(instanceTransfer).toEqual(applied.mock.calls[0]![0].partTransferInfo);
-    expect(instanceTransfer).not.toBe(applied.mock.calls[0]![0].partTransferInfo);
+    assembly.tryStartSkill('operator', 'skill');
+    assembly.advanceFrame();
     expect(
-      structuredClone(enemyRuntime.runtimeState).instances.get(routed!.reference.instanceId)
-        ?.partTransferInfo,
-    ).toEqual(instanceTransfer);
-    expect(enemyRuntime.getCountByIds(['ordinary'])).toBe(1);
-    expect(entityTargets[0]!.getCountByIds(['ordinary'])).toBe(0);
-    expect(entityTargets[0]!.getCountByIds(['soul-only'])).toBe(1);
-    routed!.finish('early');
-    expect(enemyRuntime.getCountByIds(['ordinary'])).toBe(0);
-    expect(assembly.abilityEntities.soulVitals(second)?.health).toBe(200);
-    expect(assembly.abilityEntities.runtimeState.instances.get(2)?.soul).toMatchObject({
-      damageRatio: 1.5,
-      poiseRatio: 1,
-      useMainBodyPoise: true,
-    });
-    expect(
-      entityContainers.map(container => container.runtimeState.attributes.rawValues.get('attack')),
-    ).toEqual([80, 80]);
-    attributes.setRawValue('attack', 160);
-    expect(entityContainers[0]!.runtimeState.attributes.rawValues.get('attack')).toBe(80);
-    assembly.abilityEntities.soulVitals(second)!.takeDamage(50);
-    expect(body.health).toBe(100);
-    expect(assembly.abilityEntities.soulVitals(first)?.health).toBe(1000);
+      assembly.receipt.entries
+        .filter(entry => entry.event === 'CharacterPassiveUiValueChanged')
+        .map(entry => entry.targetId),
+    ).toEqual([scope === 'global' && !reverse ? 'enemy:absent' : 'enemy:present']);
   });
+
+  it.each(['enemy', 'enemy:secondary'])(
+    'initializes Souls from %s body attributes and their own health blackboard',
+    bodyId => {
+      const bodyTarget =
+        bodyId === 'enemy'
+          ? { kind: 'enemy' as const, enemyId: 'enemy' }
+          : { kind: 'enemy' as const, enemyId: 'enemy:secondary' };
+      const body = new CombatVitals({
+        health: 100,
+        maxHealth: 1000,
+        poise: 25,
+        maxPoise: 100,
+        poiseRecoveryTime: 0,
+        poiseRecoveryTimeMultiplier: 1,
+        poiseBrokenEndTime: 0,
+        poiseImmune: false,
+      });
+      const attributes = new CombatAttributeSet<string>();
+      attributes.setRawValue('attack', 80);
+      const definitions = new CompiledCombatBuffDefinitions<string>(
+        'soul-test',
+        [
+          { id: 'ordinary', stackingType: 'unique' },
+          {
+            id: 'soul-only',
+            stackingType: 'unique',
+            applyTags: ['Skill/Character/chr_0036_jsspsi/soul/SoulBuff'],
+          },
+        ],
+        {
+          emitElementalInflictionStarted: () => {},
+        },
+      );
+      const applied = vi.fn();
+      const enemyRuntime = new BuffDefinitionOperationTarget(
+        new CombatBuffContainer(bodyId, attributes),
+        definitions,
+        bodyTarget,
+        undefined,
+        applied,
+      );
+      const entityContainers: CombatBuffContainer<string>[] = [];
+      const entityTargets: BuffDefinitionOperationTarget<string>[] = [];
+      const program = skill({
+        costs: [],
+        costFrame: undefined,
+        timelineActions: [
+          {
+            startFrame: 0,
+            sequence: chainEntry(
+              'spawn-souls',
+              [0, 200].map(health => ({
+                kind: 'spawnAbilityEntity',
+                parameters: {
+                  bornAt: { kind: 'owner' },
+                  target: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [] },
+                  abilityEntityId: 'soul',
+                  dieWhenSourceDies: false,
+                  blackboardAssignments: { soulHp: { kind: 'constant', value: health } },
+                  definition: {
+                    lifetime: { kind: 'infinite' },
+                    blackboard: { ratio: 1.5 },
+                    soul: {
+                      useMainBodyHp: false,
+                      useMainBodyPoise: true,
+                      canBeHitIndividually: false,
+                      onlyHitByNormalAttack: false,
+                      canBeDirectlyBuffed: false,
+                      damageTransferType: 'sharedDamage',
+                      damageRatio: 0,
+                      poiseRatio: 1,
+                      soulHpBlackboardKey: 'soulHp',
+                      soulDamageRatio: { blackboardKey: 'ratio', fallback: 1 },
+                      soulPoiseRatio: 1,
+                      asPrimaryTarget: false,
+                    },
+                  },
+                },
+              })),
+            ),
+          },
+        ],
+      });
+      const assembly = createAssembly(
+        {
+          programs: [program],
+          registerCombatAbilityEvent: nativeEventRuntimeOptions().registerCombatAbilityEvent,
+          enemyInstances: new Map([
+            [
+              bodyId,
+              {
+                vitals: body,
+                buffRuntime: enemyRuntime,
+                lifecycle: new EnemyLifecycle(
+                  { spawnFrame: 0, presenceChanges: [], deathFrame: null },
+                  false,
+                  { phase: 'present', nextPresenceChange: 0, deathFrame: null, lastFrame: 0 },
+                ),
+              },
+            ],
+          ]),
+        },
+        undefined,
+        () => new CombatVitals({ ...body.runtimeState, maxHealth: 9999 }),
+        bodyId === 'enemy' ? enemyRuntime : emptyEnemyBuffRuntime,
+        undefined,
+        testEnemy,
+        undefined,
+        (id, blackboard, target) => {
+          const container = new CombatBuffContainer(
+            id,
+            new CombatAttributeSet<string>(),
+            undefined,
+            null,
+            blackboard,
+          );
+          entityContainers.push(container);
+          const runtime = new BuffDefinitionOperationTarget(container, definitions, target);
+          entityTargets.push(runtime);
+          return runtime;
+        },
+      );
+      expect(assembly.tryStartSkill('operator', 'skill')).toBe(true);
+      const first = { kind: 'abilityEntity', instanceId: 1 } as const;
+      const second = { kind: 'abilityEntity', instanceId: 2 } as const;
+      expect(assembly.abilityEntities.soulVitals(first)?.health).toBe(1000);
+      const routed = entityTargets[0]!.applyScoped({
+        buffId: 'ordinary',
+        sourceId: 'operator',
+        blackboardValues: {},
+        partTransferInfo: {
+          currentMainBodyId: 'previous',
+          mainBodyToPart: new Map([['previous', 'ability-entity:2']]),
+        },
+      });
+      const retained = entityTargets[0]!.applyScoped({
+        buffId: 'soul-only',
+        sourceId: 'operator',
+        blackboardValues: {},
+      });
+      expect(routed?.reference.ownerId).toBe(bodyId);
+      expect(applied.mock.calls[0]![0].partTransferInfo).toEqual({
+        currentMainBodyId: bodyId,
+        mainBodyToPart: new Map([
+          ['previous', 'ability-entity:2'],
+          [bodyId, 'ability-entity:1'],
+        ]),
+      });
+      expect(retained?.reference.ownerId).toBe('ability-entity:1');
+      const instanceTransfer = enemyRuntime.container.buffs[0]!.runtimeState.partTransferInfo;
+      expect(instanceTransfer).toEqual(applied.mock.calls[0]![0].partTransferInfo);
+      expect(instanceTransfer).not.toBe(applied.mock.calls[0]![0].partTransferInfo);
+      expect(
+        structuredClone(enemyRuntime.runtimeState).instances.get(routed!.reference.instanceId)
+          ?.partTransferInfo,
+      ).toEqual(instanceTransfer);
+      expect(enemyRuntime.getCountByIds(['ordinary'])).toBe(1);
+      expect(entityTargets[0]!.getCountByIds(['ordinary'])).toBe(0);
+      expect(entityTargets[0]!.getCountByIds(['soul-only'])).toBe(1);
+      routed!.finish('early');
+      expect(enemyRuntime.getCountByIds(['ordinary'])).toBe(0);
+      expect(assembly.abilityEntities.soulVitals(second)?.health).toBe(200);
+      expect(assembly.abilityEntities.runtimeState.instances.get(2)?.soul).toMatchObject({
+        damageRatio: 1.5,
+        poiseRatio: 1,
+        useMainBodyPoise: true,
+      });
+      expect(
+        entityContainers.map(container =>
+          container.runtimeState.attributes.rawValues.get('attack'),
+        ),
+      ).toEqual([80, 80]);
+      attributes.setRawValue('attack', 160);
+      expect(entityContainers[0]!.runtimeState.attributes.rawValues.get('attack')).toBe(80);
+      assembly.abilityEntities.soulVitals(second)!.takeDamage(50);
+      expect(body.health).toBe(100);
+      expect(assembly.abilityEntities.soulVitals(first)?.health).toBe(1000);
+    },
+  );
 
   it('lets an AbilityEntity Buff lifecycle finish its owning entity through the shared chain', () => {
     let entityBuffs: CombatBuffContainer<string> | undefined;
@@ -3246,7 +3357,11 @@ describe('CombatRuntimeAssembly', () => {
       poiseImmune: false,
     });
     const assembly = createAssembly(
-      [{ ...program, castId }],
+      {
+        programs: [{ ...program, castId }],
+        skillAvailabilityTags: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
+        registerCombatAbilityEvent: nativeEventRuntimeOptions().registerCombatAbilityEvent,
+      },
       undefined,
       () => operatorVitals,
       emptyEnemyBuffRuntime,
@@ -3687,113 +3802,121 @@ describe('CombatRuntimeAssembly', () => {
     ).toThrow("skill 'skill' of 'operator' has inconsistent cooldown configuration");
   });
 
-  it('routes time-dilation clocks without moving later actual-frame inputs', () => {
-    const casterDeltas: Array<{ selfScaledDeltaSeconds: number }> = [];
-    const otherDeltas: Array<{ selfScaledDeltaSeconds: number }> = [];
-    const makeBuffRuntime = (ownerId: string, sink: Array<{ selfScaledDeltaSeconds: number }>) => ({
-      ...emptyEnemyBuffRuntime,
-      ownerId,
-      advanceWithDeltas: (deltas: { selfScaledDeltaSeconds: number }) => sink.push(deltas),
-    });
-    const freeze = skill({
-      operatorId: 'caster',
-      skillId: 'freeze',
-      castId: 'freeze-cast',
-      costs: [],
-      costFrame: undefined,
-      timelineActions: [
-        {
-          startFrame: 0,
-          sequence: chainEntry('freeze-global-dilation', [
-            {
-              kind: 'startTimeDilation',
-              parameters: {
-                scope: 'global',
-                durationSeconds: { kind: 'constant', value: 1 },
-                slot: 'Test/TimeSlot1',
-                priority: 10,
-                curve: { kind: 'named', key: 'half' },
-                finishByAction: false,
-                ignoredTargets: ['controlled'],
+  it.each(['enemy', 'enemy:replacement'])(
+    'routes time-dilation clocks with enemy %s without moving later actual-frame inputs',
+    enemyId => {
+      const enemyDeltas: Array<{ selfScaledDeltaSeconds: number }> = [];
+      const casterDeltas: Array<{ selfScaledDeltaSeconds: number }> = [];
+      const otherDeltas: Array<{ selfScaledDeltaSeconds: number }> = [];
+      const makeBuffRuntime = (
+        ownerId: string,
+        sink: Array<{ selfScaledDeltaSeconds: number }>,
+      ) => ({
+        ...emptyEnemyBuffRuntime,
+        ownerId,
+        advanceWithDeltas: (deltas: { selfScaledDeltaSeconds: number }) => sink.push(deltas),
+      });
+      const freeze = skill({
+        operatorId: 'caster',
+        skillId: 'freeze',
+        castId: 'freeze-cast',
+        costs: [],
+        costFrame: undefined,
+        timelineActions: [
+          {
+            startFrame: 0,
+            sequence: chainEntry('freeze-global-dilation', [
+              {
+                kind: 'startTimeDilation',
+                parameters: {
+                  scope: 'global',
+                  durationSeconds: { kind: 'constant', value: 1 },
+                  slot: 'Test/TimeSlot1',
+                  priority: 10,
+                  curve: { kind: 'named', key: 'half' },
+                  finishByAction: false,
+                  ignoredTargets: ['controlled', 'enemy'],
+                },
               },
-            },
-          ]),
+            ]),
+          },
+        ],
+      });
+      const followUp = skill({ operatorId: 'other', skillId: 'follow-up' });
+      const assembly = new CombatRuntimeAssembly({
+        comboSkillPendingInterval: 5,
+        ...nativeEventRuntimeOptions(),
+        enemy: { ...testEnemy, id: enemyId },
+        resources: {
+          sp: 0,
+          maxSp: 300,
+          returnedSp: 0,
+          sharedSpGain: { baseGainEfficiency: 1 },
+          spRecovery: { valuePerSecond: 0, pauseDuration: 0, pauseRemaining: 0 },
+          ultimateEnergySystemUnlocked: true,
+          normalSkillUltimateEnergy: { selfGainPerSp: 0, otherGainPerSp: 0 },
+          squad: ['caster', 'other'].map(operatorId => ({
+            operatorId,
+            ultimateEnergy: 0,
+            maxUltimateEnergy: 100,
+            ultimateEnergyGainMultiplier: 1,
+            allowedUltimateEnergyRecoveryTags: null,
+          })),
         },
-      ],
-    });
-    const followUp = skill({ operatorId: 'other', skillId: 'follow-up' });
-    const assembly = new CombatRuntimeAssembly({
-      comboSkillPendingInterval: 5,
-      ...nativeEventRuntimeOptions(),
-      enemy: testEnemy,
-      resources: {
-        sp: 0,
-        maxSp: 300,
-        returnedSp: 0,
-        sharedSpGain: { baseGainEfficiency: 1 },
-        spRecovery: { valuePerSecond: 0, pauseDuration: 0, pauseRemaining: 0 },
-        ultimateEnergySystemUnlocked: true,
-        normalSkillUltimateEnergy: { selfGainPerSp: 0, otherGainPerSp: 0 },
-        squad: ['caster', 'other'].map(operatorId => ({
-          operatorId,
-          ultimateEnergy: 0,
-          maxUltimateEnergy: 100,
-          ultimateEnergyGainMultiplier: 1,
-          allowedUltimateEnergyRecoveryTags: null,
-        })),
-      },
-      enemyBuffRuntime: emptyEnemyBuffRuntime,
-      operators: [
-        {
-          operatorId: 'caster',
-          skills: [freeze],
-          buffRuntime: makeBuffRuntime('caster', casterDeltas),
+        enemyBuffRuntime: makeBuffRuntime(enemyId, enemyDeltas),
+        operators: [
+          {
+            operatorId: 'caster',
+            skills: [freeze],
+            buffRuntime: makeBuffRuntime('caster', casterDeltas),
+          },
+          {
+            operatorId: 'other',
+            skills: [followUp],
+            buffRuntime: makeBuffRuntime('other', otherDeltas),
+          },
+        ],
+        inputs: [{ frame: 1, operatorId: 'other', skillId: 'follow-up' }],
+        timeDilation: {
+          config: {
+            curves: new Map([['half', () => 0.5]]),
+          },
         },
-        {
-          operatorId: 'other',
-          skills: [followUp],
-          buffRuntime: makeBuffRuntime('other', otherDeltas),
-        },
-      ],
-      inputs: [{ frame: 1, operatorId: 'other', skillId: 'follow-up' }],
-      timeDilation: {
-        config: {
-          curves: new Map([['half', () => 0.5]]),
-        },
-      },
-      isOperatorControlled: operatorId => operatorId === 'other',
-      createOperationExecutor: () => rejectingExecutor,
-    });
+        isOperatorControlled: operatorId => operatorId === 'other',
+        createOperationExecutor: () => rejectingExecutor,
+      });
 
-    expect(assembly.tryStartSkill('caster', 'freeze', 'freeze-cast')).toBe(true);
-    expect(
-      assembly.receipt.entries.find(entry => entry.event === 'TimeDilationStarted'),
-    ).toMatchObject({
-      frame: 0,
-      sourceId: 'caster',
-      data: { kind: 'global', sourceActionId: 'freeze', currentScale: 0.5 },
-    });
-    assembly.advanceFrame();
+      expect(assembly.tryStartSkill('caster', 'freeze', 'freeze-cast')).toBe(true);
+      expect(
+        assembly.receipt.entries.find(entry => entry.event === 'TimeDilationStarted'),
+      ).toMatchObject({
+        frame: 0,
+        sourceId: 'caster',
+        data: { kind: 'global', sourceActionId: 'freeze', currentScale: 0.5 },
+      });
+      assembly.advanceFrame();
 
-    expect(casterDeltas[0]?.selfScaledDeltaSeconds).toBeCloseTo(1 / 60);
-    expect(otherDeltas[0]?.selfScaledDeltaSeconds).toBeCloseTo(1 / 30);
-    expect(
-      assembly.receipt.entries.find(entry => entry.event === 'SkillInputProcessed'),
-    ).toMatchObject({
-      frame: 1,
-      data: { scheduledActualFrame: 1 },
-    });
+      expect(enemyDeltas[0]?.selfScaledDeltaSeconds).toBeCloseTo(1 / 30);
+      expect(casterDeltas[0]?.selfScaledDeltaSeconds).toBeCloseTo(1 / 60);
+      expect(otherDeltas[0]?.selfScaledDeltaSeconds).toBeCloseTo(1 / 30);
+      expect(
+        assembly.receipt.entries.find(entry => entry.event === 'SkillInputProcessed'),
+      ).toMatchObject({
+        frame: 1,
+        data: { scheduledActualFrame: 1 },
+      });
 
-    assembly.advanceFrames(3);
+      assembly.advanceFrames(3);
 
-    expect(
-      assembly.receipt.entries.find(entry => entry.event === 'SkillOperableBoundaryReached'),
-    ).toMatchObject({
-      frame: 4,
-      sourceId: 'caster',
-      data: { castId: 'freeze-cast', durationFrames: 2 },
-    });
-  });
+      expect(
+        assembly.receipt.entries.find(entry => entry.event === 'SkillOperableBoundaryReached'),
+      ).toMatchObject({
+        frame: 4,
+        sourceId: 'caster',
+        data: { castId: 'freeze-cast', durationFrames: 2 },
+      });
+    },
+  );
 
   it('advances enemy Buff lifetime and periodic triggers with each native clock domain', () => {
     const triggerCounts = new Map([
@@ -5157,7 +5280,7 @@ describe('CombatRuntimeAssembly', () => {
         ...emptyEnemyBuffRuntime,
         ownerId: 'operator',
       }),
-    ).toThrow("enemy Buff runtime owner must be 'enemy'");
+    ).toThrow('enemy Buff runtime owner must match its program');
   });
 
   it('evaluates health conditions against the current combat vitals', () => {
@@ -6198,3 +6321,201 @@ it('顶层初始化覆盖只改本次实例，不修改定义或引入未声明�
   expect(state.blackboard.values.has('unknown')).toBe(false);
   expect(program.initialBlackboard).toEqual({ delay: 3 });
 });
+
+it('正式装配按瞄准列表施加标记，技能动作结束只清理自身标记', () => {
+  const container = new CombatBuffContainer('enemy', new CombatAttributeSet<string>());
+  const enemyRuntime = new BuffDefinitionOperationTarget(
+    container,
+    {
+      get: () => undefined,
+      compile: entry =>
+        new CompiledCombatBuffDefinitions('archery', [entry], {
+          emitElementalInflictionStarted: () => undefined,
+        }).get(entry.id)!,
+    },
+    { kind: 'enemy', enemyId: 'enemy' },
+  );
+  const candidates = ['enemy', 'enemy:b', 'enemy:c'].map(id => {
+    const buffs =
+      id === 'enemy' ? container : new CombatBuffContainer(id, new CombatAttributeSet<string>());
+    const buffRuntime =
+      id === 'enemy'
+        ? enemyRuntime
+        : new BuffDefinitionOperationTarget(buffs, enemyRuntime.definitions, {
+            kind: 'enemy',
+            enemyId: 'enemy:' + id.slice(6),
+          });
+    return {
+      id,
+      buffs,
+      buffRuntime,
+      lifecycle: new EnemyLifecycle(
+        { spawnFrame: 0, presenceChanges: [], deathFrame: null },
+        false,
+        { phase: 'present', nextPresenceChange: 0, deathFrame: null, lastFrame: 0 },
+      ),
+      vitals: new CombatVitals({
+        health: 1000,
+        maxHealth: 1000,
+        poise: 0,
+        maxPoise: 100,
+        poiseRecoveryTime: 0,
+        poiseRecoveryTimeMultiplier: 1,
+        poiseBrokenEndTime: 0,
+        poiseImmune: false,
+      }),
+    };
+  });
+  candidates[2]!.buffs.add(
+    { id: 'preferred', stackingType: 'unique', applyTags: ['Preferred'] },
+    'operator',
+  );
+  const program = skill({
+    costs: [],
+    costFrame: undefined,
+    timelineBlockFrames: 6,
+    naturalDurationFrames: 6,
+    timelineActions: [
+      {
+        startFrame: 0,
+        endFrame: 6,
+        sequence: chainEntry('register-archery', [
+          {
+            kind: 'startTyphoeaArchery',
+            parameters: {
+              targetCount: { kind: 'constant', value: 2 },
+              markBuffId: 'mark',
+              priorityTags: ['Preferred'],
+              priorityTagQueryType: 'hasAny',
+            },
+          },
+        ]),
+      },
+    ],
+  });
+  const assembly = createAssembly(
+    {
+      programs: [program],
+      registerCombatAbilityEvent: nativeEventRuntimeOptions().registerCombatAbilityEvent,
+      enemyInstances: new Map(candidates.map(candidate => [candidate.id, candidate])),
+    },
+    undefined,
+    undefined,
+    enemyRuntime,
+    undefined,
+    testEnemy,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    { mark: { stackingType: 'unique', applyTags: ['Locked'] } },
+  );
+  expect(assembly.tryStartSkill('operator', 'skill')).toBe(true);
+  assembly.advanceFrame();
+  expect(container.getCountById('mark')).toBe(1);
+  expect(assembly.sharedState.typhoeaArcherySelection.selected).toEqual([
+    { kind: 'enemy', enemyId: 'enemy:c' },
+    { kind: 'enemy', enemyId: 'enemy' },
+  ]);
+  expect(candidates.map(candidate => candidate.buffs.getCountById('mark'))).toEqual([1, 0, 1]);
+  candidates[0]!.lifecycle.runtimeState.phase = 'absent';
+  assembly.advanceFrame();
+  expect(candidates.map(candidate => candidate.buffs.getCountById('mark'))).toEqual([0, 1, 1]);
+  expect(assembly.sharedState.typhoeaArcherySelection.marks.size).toBe(2);
+  assembly.advanceFrames(10);
+  expect(candidates.map(candidate => candidate.buffs.getCountById('mark'))).toEqual([0, 0, 0]);
+  expect(candidates[2]!.buffs.getCountById('preferred')).toBe(1);
+  expect(assembly.sharedState.typhoeaArcherySelection.marks.size).toBe(0);
+});
+
+it.each([
+  ['Enemy', false, false, 7],
+  ['Character', false, false, 0],
+  ['Character', false, true, 7],
+  ['Enemy', true, false, 0],
+  ['Enemy', true, true, 7],
+] as const)(
+  'Pull 正式装配按处理结果截断后继：%s/空目的地=%s/继续=%s',
+  (targetType, missingDestination, alwaysNext, expected) => {
+    const program = skill({
+      costFrame: undefined,
+      costs: [],
+      timelineActions: [
+        {
+          startFrame: 0,
+          sequence: chainEntry('pull-result', [
+            {
+              kind: 'pull',
+              parameters: {
+                targets: { kind: 'fixed', target: 'enemy' },
+                destination: missingDestination
+                  ? { kind: 'context', key: 'missing' }
+                  : { kind: 'fixed', target: 'caster' },
+                targetType,
+                alwaysNext,
+              },
+            },
+            {
+              kind: 'changeResource',
+              parameters: {
+                resource: 'ultimateEnergy',
+                source: { kind: 'fixed', target: 'caster' },
+                targets: { kind: 'fixed', target: 'caster' },
+                amount: { kind: 'constant', value: 7 },
+              },
+            },
+          ]),
+        },
+      ],
+    });
+    const assembly = createAssembly([program]);
+    expect(assembly.tryStartSkill('operator', 'skill')).toBe(true);
+    expect(assembly.resources.getUltimateEnergy('operator')).toBe(expected);
+  },
+);
+
+it.each([
+  [false, false, 7],
+  [true, false, 0],
+  [false, true, 0],
+] as const)(
+  'PushBack 正式装配按来源与目标存在性截断后继：缺来源=%s/空目标=%s',
+  (missingSource, missingTargets, expected) => {
+    const program = skill({
+      costFrame: undefined,
+      costs: [],
+      timelineActions: [
+        {
+          startFrame: 0,
+          sequence: chainEntry('push-back-result', [
+            {
+              kind: 'pushBack',
+              parameters: {
+                source: missingSource
+                  ? { kind: 'context', key: 'missing' }
+                  : { kind: 'fixed', target: 'caster' },
+                targets: missingTargets
+                  ? { kind: 'context', key: 'missing' }
+                  : { kind: 'fixed', target: 'enemy' },
+                sourcePoint: { kind: 'context', key: 'missing-origin' },
+              },
+            },
+            {
+              kind: 'changeResource',
+              parameters: {
+                resource: 'ultimateEnergy',
+                source: { kind: 'fixed', target: 'caster' },
+                targets: { kind: 'fixed', target: 'caster' },
+                amount: { kind: 'constant', value: 7 },
+              },
+            },
+          ]),
+        },
+      ],
+    });
+    const assembly = createAssembly([program]);
+    expect(assembly.tryStartSkill('operator', 'skill')).toBe(true);
+    expect(assembly.resources.getUltimateEnergy('operator')).toBe(expected);
+  },
+);

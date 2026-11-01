@@ -1,7 +1,10 @@
 import { stringInputExpression, valueInputBlackboardKey } from '../../compiler/compiledGraphData';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import {
+  firstRuntimeEntityTarget,
+  runtimeTargetEntityId,
+} from '../../game-data/logicalAbilityEntity';
 import { spGainAbilityEvent } from '../events/combatAbilityEvent';
 import { healAbilityEvent } from '../events/combatAbilityEvent';
 /**
@@ -197,7 +200,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       if (!context || !step.parameters.outputKey) return false;
       const queryTargets = this.characterTypes?.queryTargets;
       if (!queryTargets) throw new Error('character identity read requires a target query runtime');
-      const target = queryTargets(step.parameters.target, context)[0];
+      const target = firstRuntimeEntityTarget(queryTargets(step.parameters.target, context));
       // 原生GetFirstTarget后要求角色实体；不跳到后面的角色，也不把敌人当作物理干员。
       if (target?.kind !== 'operator') return false;
       const code =
@@ -420,7 +423,9 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       if (step.parameters.target !== undefined) {
         if (this.sourceAttributes.queryTargets === undefined)
           throw new Error('storeSourceAttributeValue requires target queries');
-        const target = this.sourceAttributes.queryTargets(step.parameters.target, context)[0];
+        const target = firstRuntimeEntityTarget(
+          this.sourceAttributes.queryTargets(step.parameters.target, context),
+        );
         if (target === undefined) return false;
         const targetId = runtimeTargetEntityId(target);
         if (targetId === undefined) return false;
@@ -452,7 +457,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       else {
         if (this.entityProperties.queryTargets === undefined)
           throw new Error('storeEntityPropertyValue requires target queries');
-        const target = this.entityProperties.queryTargets(query, context)[0];
+        const target = firstRuntimeEntityTarget(this.entityProperties.queryTargets(query, context));
         if (target === undefined) return false;
         ownerId = runtimeTargetEntityId(target);
       }
@@ -623,7 +628,6 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
     if (condition.kind === 'skillHasHit')
       return context?.skillExecution?.hasOutputDamageBattle ?? false;
     if (condition.kind === 'combatActive') return true;
-    if (condition.kind === 'singleEnemyPresent') return true;
     if (condition.kind === 'characterTypeIn') {
       const entityId =
         condition.target === 'caster' ? this.characterTypes?.sourceId : context?.buffOwnerId;
@@ -641,7 +645,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       if (!identity?.readWeaponType)
         throw new Error('operatorWeaponTypeIn requires an operator weapon type registry');
       if (!context) throw new Error('operatorWeaponTypeIn requires an action context');
-      const target = identity.queryTargets(condition.target, context)[0];
+      const target = firstRuntimeEntityTarget(identity.queryTargets(condition.target, context));
       if (target?.kind !== 'operator') return false;
       const type = identity.readWeaponType(target.operatorId);
       return type !== undefined && condition.weaponTypes.includes(type);
@@ -651,7 +655,9 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         throw new Error('operatorRoleIn requires an operator registry');
       }
       if (!context) throw new Error('operatorRoleIn requires an action context');
-      const target = this.operatorIdentity.queryTargets(condition.target, context)[0];
+      const target = firstRuntimeEntityTarget(
+        this.operatorIdentity.queryTargets(condition.target, context),
+      );
       if (target?.kind !== 'operator') return false;
       const role = this.operatorIdentity.resolve(target.operatorId);
       return role !== undefined && condition.roles.includes(role);
@@ -678,7 +684,9 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         throw new Error('deckAttributeCompare requires an operator registry');
       }
       if (!context) throw new Error('deckAttributeCompare requires an action context');
-      const target = this.deckAttributes.queryTargets(condition.target, context)[0];
+      const target = firstRuntimeEntityTarget(
+        this.deckAttributes.queryTargets(condition.target, context),
+      );
       if (target?.kind !== 'operator') return false;
       const attributes = this.deckAttributes.resolve(target.operatorId);
       if (attributes === undefined) return false;

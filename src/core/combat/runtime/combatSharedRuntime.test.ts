@@ -61,6 +61,11 @@ it('binds every shared runtime to one copied graph without replaying business ev
     nonReturnedSpCost: 0,
   });
   original.timeDilation!.runtimeState.globalScaledTime = 2;
+  original.typhoeaArchery.register(2);
+  original.runtimeState.typhoeaArcherySelection.selected.push({
+    kind: 'enemy',
+    enemyId: 'enemy:second',
+  });
   const saved = structuredClone(original.runtimeState);
   const observer = { started: vi.fn(), rejected: vi.fn(), ended: vi.fn() };
 
@@ -76,6 +81,13 @@ it('binds every shared runtime to one copied graph without replaying business ev
   );
 
   expect(restored.runtimeState).toBe(saved);
+  expect(restored.typhoeaArchery.runtimeState).toBe(saved.typhoeaArcherySelection);
+  expect(restored.typhoeaArchery.runtimeState.registrations.size).toBe(1);
+  expect(restored.runtimeState.typhoeaArcherySelection.selected).toEqual([
+    { kind: 'enemy', enemyId: 'enemy:second' },
+  ]);
+  restored.runtimeState.typhoeaArcherySelection.selected.length = 0;
+  expect(original.runtimeState.typhoeaArcherySelection.selected).toHaveLength(1);
   expect(restored.clock.runtimeState).toBe(saved.clock);
   expect(restored.resources.runtimeState).toBe(saved.resources);
   expect(restored.receipt.entries).toEqual(original.receipt.entries);

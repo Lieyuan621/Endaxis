@@ -116,6 +116,7 @@ it.each([
   'ownerSwitchToCenter',
   'ownerSwitchToGuard',
   'ownerHpZero',
+  'ownerDead',
   'abilityEntitySpawned',
   'abilityEntityFinished',
 ] as const)('%s 生命周期响应保留同一对象与来源，异常后恢复宿主', event => {
@@ -168,15 +169,15 @@ it.each(['poiseZero', 'poiseKnotBreak', 'afterAddedShield'] as const)(
       eventSkillCastInfo: null,
     };
     const inputTarget = { kind: 'operator' as const, operatorId: 'owner' };
-    const triggerTarget = { kind: 'enemy' as const };
+    const triggerTarget = { kind: 'enemy' as const, enemyId: 'enemy' };
     withAbilityEventResponseContext(context, published, { inputTarget, triggerTarget }, () => {
       expect(context.event).toBe(published);
-      expect(context.actionInputTarget).toBe(inputTarget);
+      expect(context.actionInputTargets?.[0]).toBe(inputTarget);
       expect(context.targetContext?.get('trigger')).toEqual([triggerTarget]);
       expect(context.eventSkillCastInfo).toBeUndefined();
     });
     expect(context.event).toBeUndefined();
-    expect(context.actionInputTarget).toBeUndefined();
+    expect(context.actionInputTargets?.[0]).toBeUndefined();
     expect(context.targetContext).toBeUndefined();
     expect(context.eventSkillCastInfo).toBeNull();
   },
@@ -207,7 +208,7 @@ it('Buff 层数变化直接消费原对象，不生成自身目标或继承外�
     expect(context.eventSkillCastInfo).toBeUndefined();
     expect(abilityEventSourceId(published)).toBe('owner');
     expect(abilityEventTargetId(published)).toBeUndefined();
-    expect(context.actionInputTarget).toBeUndefined();
+    expect(context.actionInputTargets?.[0]).toBeUndefined();
     expect(context.targetContext?.getOptional('trigger')).toBeUndefined();
   });
   expect(context.eventSkillCastInfo).toBeNull();
@@ -343,6 +344,7 @@ it('嵌套事件及异常恢复外层 Trigger、Input 与事件，保留宿主�
     targetContext,
     actionOwnerId: 'owner',
     actionSourceId: 'source',
+    actionInputTargets: [saved, inner],
   };
   withAbilityEventResponseContext(
     context,
@@ -351,6 +353,7 @@ it('嵌套事件及异常恢复外层 Trigger、Input 与事件，保留宿主�
     () => {
       const event = context.event;
       expect(targetContext.get('trigger')).toEqual([outer]);
+      expect(context.actionInputTargets).toEqual([outer]);
       expect(() =>
         withAbilityEventResponseContext(
           context,
@@ -364,14 +367,14 @@ it('嵌套事件及异常恢复外层 Trigger、Input 与事件，保留宿主�
         ),
       ).toThrow('nested');
       expect(context.event).toBe(event);
-      expect(context.actionInputTarget).toBe(outer);
+      expect(context.actionInputTargets?.[0]).toBe(outer);
       expect(targetContext.get('trigger')).toEqual([outer]);
     },
   );
   expect(context.event).toBeUndefined();
-  expect(context.actionInputTarget).toBeUndefined();
   expect(targetContext.get('trigger')).toEqual([saved]);
   expect(targetContext.get('saved')).toEqual([saved]);
+  expect(context.actionInputTargets).toEqual([saved, inner]);
   expect(context.blackboard.getNumber('count')).toBe(1);
   expect(context.actionSourceId).toBe('source');
 });

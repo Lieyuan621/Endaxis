@@ -4,7 +4,8 @@ import { resolveImage } from '../../imageResources';
 import EnemyStagePicker from './EnemyStagePicker.vue';
 import zhCategories from '../../../i18n/game-locales/zh/enemies.json';
 import enCategories from '../../../i18n/game-locales/en/enemies.json';
-import { ElIcon } from 'element-plus';
+import type { StageEnemySelection } from '../../../application/editor/enemyEditorCommands';
+import { ElIcon, ElMessageBox } from 'element-plus';
 /**
  * 敌人实例的选择与属性编辑界面。
  * 组件复用旧版布局语言，但只处理草稿和展示；定义解析、默认值捕获与事务提交由外层协调器负责。
@@ -60,6 +61,7 @@ const enemyOrder = new Map<string, number>(
 
 const props = defineProps<{
   readOnly?: boolean;
+  multiEnemyEnabled?: boolean;
   enemy: EnemyDocument;
   definition: EnemyDefinition | null;
   enemies: readonly EnemyDefinition[];
@@ -97,10 +99,31 @@ const props = defineProps<{
 const emit = defineEmits<{
   selectDefinition: [enemyId: string, level: number, stage?: StageEnemyIdentity];
   selectCustom: [level: number];
+  selectStage: [entries: StageEnemySelection[]];
   save: [values: EnemyEditableValues];
 }>();
 
 const selectorVisible = ref(false);
+async function applyStage(entries: StageEnemySelection[]): Promise<void> {
+  if (props.readOnly) return;
+  if (!props.multiEnemyEnabled) {
+    try {
+      await ElMessageBox.confirm(
+        t('resourceMonitor.enemy.enableMultiForStage'),
+        t('timeline.header.multiEnemy'),
+        {
+          confirmButtonText: t('resourceMonitor.enemy.enableAndApply'),
+          cancelButtonText: t('common.cancel'),
+          type: 'warning',
+        },
+      );
+    } catch {
+      return;
+    }
+  }
+  emit('selectStage', entries);
+  selectorVisible.value = false;
+}
 const selectionMode = ref<'enemy' | 'stage'>('enemy');
 const statsVisible = ref(false);
 const searchQuery = ref('');
@@ -316,6 +339,7 @@ function removeKnotThreshold(index: number): void {
           v-if="selectionMode === 'stage'"
           :enemies="enemies"
           :name-of="nameOf"
+          @select-all="applyStage"
           @select="
             (id, level, stage) => {
               emit('selectDefinition', id, level, stage);
@@ -323,7 +347,9 @@ function removeKnotThreshold(index: number): void {
             }
           "
         >
-          <template #enemy="{ definition: candidate, displayName, level, unavailable, select }">
+          <template
+            #enemy="{ definition: candidate, displayName, level, count, unavailable, select }"
+          >
             <EaButton
               type="button"
               class="enemy-card enemy-card--stage"
@@ -343,7 +369,16 @@ function removeKnotThreshold(index: number): void {
               </span>
               <span class="card-info">
                 <strong>{{ displayName }}</strong>
-                <small>Lv{{ level ?? '?' }}</small>
+                <small
+                  >Lv{{ level ?? '?' }} ·
+                  <span
+                    class="stage-enemy-count"
+                    :title="
+                      count === null ? t('resourceMonitor.enemy.stageCountUnknown') : undefined
+                    "
+                    >{{ `×${count ?? 1}` }}</span
+                  ></small
+                >
               </span>
             </EaButton>
           </template>

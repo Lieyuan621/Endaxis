@@ -15,6 +15,7 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
             schedule: { endFrame: 4, callbacks: [{ event: 'block', triggerFrames: [4] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0012_avywen_combo_skill_lance_out',
+            faction: 'good',
             recycleDelaySeconds: 30,
             targets: { kind: 'context', contextKey: 'lance_land_pos' },
             entityInitialValues: {},
@@ -110,10 +111,21 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
         },
         next: 'createSpatialPointTargets_4',
       },
-      mergeContextTargets_6: {
+      findTargets_6: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -133,7 +145,7 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
       forEachContextTarget_8: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'tar' } },
           body: { $sequence: 'changeResource_7' },
         },
         next: null,
@@ -145,7 +157,22 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
         },
         next: 'forEachContextTarget_8',
       },
-      dealDamage_10: {
+      startTimeDilation_10: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.067 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: 'checkCondition_9',
+      },
+      dealDamage_11: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -158,9 +185,9 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'checkCondition_9',
+        next: 'startTimeDilation_10',
       },
-      startTimeDilation_11: {
+      startTimeDilation_12: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -170,13 +197,20 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
       },
-      reachSkillOperableBoundary_12: {
+      reachSkillOperableBoundary_13: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0012_avywen_normal_skill'] },
@@ -222,10 +256,10 @@ export const avywennaChr_0012_avywen_combo_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 14, endFrame: 15, sequence: { $sequence: 'createSpatialPointTargets_5' } },
-    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_6' } },
-    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'startTimeDilation_11' } },
-    { startFrame: 21, endFrame: 68, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'dealDamage_11' } },
+    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'startTimeDilation_12' } },
+    { startFrame: 21, endFrame: 68, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
   ],
   defaultTarget: 'owner',
   cooldownFrames: [390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 360],
@@ -237,10 +271,21 @@ export const avywennaChr_0012_avywen_combo_skill: SkillDefinition = {
 export const avywennaChr_0012_avywen_attack1ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -264,13 +309,13 @@ export const avywennaChr_0012_avywen_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_3',
@@ -339,7 +384,7 @@ export const avywennaChr_0012_avywen_attack1: SkillDefinition = {
   offsetRecordFrame: 7,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 0, endFrame: 27, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
     { startFrame: 8, endFrame: 27, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
@@ -353,10 +398,21 @@ export const avywennaChr_0012_avywen_attack1: SkillDefinition = {
 export const avywennaChr_0012_avywen_attack2ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -380,13 +436,13 @@ export const avywennaChr_0012_avywen_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.07 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_3',
@@ -455,7 +511,7 @@ export const avywennaChr_0012_avywen_attack2: SkillDefinition = {
   offsetRecordFrame: 7,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 0, endFrame: 25, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
     { startFrame: 14, endFrame: 25, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
@@ -469,10 +525,21 @@ export const avywennaChr_0012_avywen_attack2: SkillDefinition = {
 export const avywennaChr_0012_avywen_attack3ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -556,7 +623,7 @@ export const avywennaChr_0012_avywen_attack3: SkillDefinition = {
   offsetRecordFrame: 7,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 0, endFrame: 25, sequence: { $sequence: 'overrideBasicAttackMapping_6' } },
     { startFrame: 10, endFrame: 25, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
@@ -570,10 +637,21 @@ export const avywennaChr_0012_avywen_attack3: SkillDefinition = {
 export const avywennaChr_0012_avywen_attack4ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -597,13 +675,13 @@ export const avywennaChr_0012_avywen_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.05 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_4',
@@ -635,13 +713,13 @@ export const avywennaChr_0012_avywen_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.22 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_4',
@@ -716,8 +794,8 @@ export const avywennaChr_0012_avywen_attack4: SkillDefinition = {
   offsetRecordFrame: 5,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 5, endFrame: 6, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 18, endFrame: 19, sequence: { $sequence: 'dealDamage_12' } },
     { startFrame: 0, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
@@ -732,14 +810,25 @@ export const avywennaChr_0012_avywen_attack4: SkillDefinition = {
 export const avywennaChr_0012_avywen_attack5ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
-      changeResource_2: {
+      changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -754,42 +843,42 @@ export const avywennaChr_0012_avywen_attack5ActionGraph = {
         },
         next: null,
       },
-      ifElse_4: {
+      ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'changeResource_2' },
+          whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_5: {
+      startTimeDilation_6: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'ifElse_4',
+        next: 'ifElse_5',
       },
-      ifElse_6: {
+      ifElse_7: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'startTimeDilation_5' },
+          whenTrue: { $sequence: 'startTimeDilation_6' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_7: {
+      dealDamage_8: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -802,16 +891,16 @@ export const avywennaChr_0012_avywen_attack5ActionGraph = {
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'ifElse_6',
+        next: 'ifElse_7',
       },
-      overrideBasicAttackMapping_8: {
+      overrideBasicAttackMapping_9: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0012_avywen_attack1'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_9: {
+      reachSkillOperableBoundary_10: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0012_avywen_attack1'] },
@@ -823,7 +912,14 @@ export const avywennaChr_0012_avywen_attack5ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_3: {
         type: 'boolean',
@@ -851,10 +947,10 @@ export const avywennaChr_0012_avywen_attack5: SkillDefinition = {
   offsetRecordFrame: 24,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 0, endFrame: 55, sequence: { $sequence: 'overrideBasicAttackMapping_8' } },
-    { startFrame: 45, endFrame: 55, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'dealDamage_8' } },
+    { startFrame: 0, endFrame: 55, sequence: { $sequence: 'overrideBasicAttackMapping_9' } },
+    { startFrame: 45, endFrame: 55, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -865,6 +961,25 @@ export const avywennaChr_0012_avywen_attack5: SkillDefinition = {
 export const avywennaChr_0012_avywen_power_attackActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
       gainFinisherSp_3: {
         action: {
           kind: 'gainFinisherSp',
@@ -920,13 +1035,13 @@ export const avywennaChr_0012_avywen_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_7',
@@ -941,7 +1056,18 @@ export const avywennaChr_0012_avywen_power_attackActionGraph = {
         },
         next: null,
       },
-      dealDamage_10: {
+      pushBack_10: {
+        action: {
+          kind: 'pushBack',
+          parameters: {
+            source: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            sourcePoint: { kind: 'source' },
+          },
+        },
+        next: 'ifElse_9',
+      },
+      dealDamage_11: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -954,34 +1080,34 @@ export const avywennaChr_0012_avywen_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'ifElse_9',
+        next: 'pushBack_10',
       },
-      startTimeDilation_13: {
+      startTimeDilation_14: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.5 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_7',
       },
-      ifElse_14: {
+      ifElse_15: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'startTimeDilation_13' },
+          whenTrue: { $sequence: 'startTimeDilation_14' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_15: {
+      dealDamage_16: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -994,9 +1120,9 @@ export const avywennaChr_0012_avywen_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'ifElse_14',
+        next: 'ifElse_15',
       },
-      applyBuff_16: {
+      applyBuff_17: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1009,7 +1135,7 @@ export const avywennaChr_0012_avywen_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_17: {
+      applyBuff_18: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1022,7 +1148,7 @@ export const avywennaChr_0012_avywen_power_attackActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_18: {
+      reachSkillOperableBoundary_19: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0012_avywen_normal_skill', 'chr_0012_avywen_combo_skill'] },
@@ -1061,12 +1187,13 @@ export const avywennaChr_0012_avywen_power_attack: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 25, endFrame: 30, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 27, endFrame: 28, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 28, endFrame: 29, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'dealDamage_15' } },
-    { startFrame: 0, endFrame: 44, sequence: { $sequence: 'applyBuff_16' } },
-    { startFrame: 0, endFrame: 29, sequence: { $sequence: 'applyBuff_17' } },
-    { startFrame: 29, endFrame: 49, sequence: { $sequence: 'reachSkillOperableBoundary_18' } },
+    { startFrame: 28, endFrame: 29, sequence: { $sequence: 'dealDamage_11' } },
+    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'dealDamage_16' } },
+    { startFrame: 0, endFrame: 44, sequence: { $sequence: 'applyBuff_17' } },
+    { startFrame: 0, endFrame: 29, sequence: { $sequence: 'applyBuff_18' } },
+    { startFrame: 29, endFrame: 49, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -1077,10 +1204,21 @@ export const avywennaChr_0012_avywen_power_attack: SkillDefinition = {
 export const avywennaChr_0012_avywen_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1157,7 +1295,7 @@ export const avywennaChr_0012_avywen_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 11, endFrame: 15, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
   ],
@@ -1212,7 +1350,7 @@ const avywennaChr_0012_avywen_normal_skillActionGraphCallback2 = {
                 ],
               },
               finishByAction: false,
-              ignoredTargets: ['controlled'],
+              ignoredTargets: [{ kind: 'mainCharacter' }],
             },
           },
           next: null,
@@ -1327,12 +1465,20 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
         },
         next: 'applyBuff_4',
       },
-      mergeContextTargets_6: {
+      findTargets_6: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -1341,18 +1487,18 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      ifElse_9: {
+      ifElse_10: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
@@ -1362,17 +1508,17 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_10: {
+      ifElse_11: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'ifElse_9' },
+          whenTrue: { $sequence: 'ifElse_10' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_11: {
+      dealDamage_12: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1385,9 +1531,9 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'ifElse_10',
+        next: 'ifElse_11',
       },
-      forEachContextTarget_15: {
+      forEachContextTarget_16: {
         action: {
           kind: 'forEachContextTarget',
           parameters: { targets: { kind: 'context', key: 'lances' } },
@@ -1395,14 +1541,14 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_17: {
+      checkCondition_18: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
-        next: 'forEachContextTarget_15',
+        next: 'forEachContextTarget_16',
       },
-      findOwnerSpawnedAbilityEntities_18: {
+      findOwnerSpawnedAbilityEntities_19: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
@@ -1411,9 +1557,9 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             owner: { kind: 'owner' },
           },
         },
-        next: 'checkCondition_17',
+        next: 'checkCondition_18',
       },
-      launchProjectile_19: {
+      launchProjectile_20: {
         action: {
           kind: 'launchProjectile',
           parameters: {
@@ -1426,6 +1572,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0012_avywen_combo_skill_lance_back',
+            faction: 'good',
             recycleDelaySeconds: 0.5,
             entityInitialValues: { EntityBB_talent0: 0 },
             hit: {},
@@ -1437,7 +1584,34 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      dealDamage_5: {
+                      startTimeDilation_7: {
+                        action: {
+                          kind: 'startTimeDilation',
+                          parameters: {
+                            scope: 'hitStop',
+                            attacker: { kind: 'source' },
+                            targets: { kind: 'inputTarget' },
+                            affectType: 'OnlyTarget',
+                            durationSeconds: { kind: 'constant', value: 0.2 },
+                            priority: 10,
+                            curve: { kind: 'named', key: 'char_hard_stop' },
+                          },
+                        },
+                        next: null,
+                      },
+                      pull_8: {
+                        action: {
+                          kind: 'pull',
+                          parameters: {
+                            targets: { kind: 'inputTarget' },
+                            destination: { kind: 'source' },
+                            targetType: 'Enemy',
+                            alwaysNext: false,
+                          },
+                        },
+                        next: 'startTimeDilation_7',
+                      },
+                      dealDamage_9: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -1450,9 +1624,9 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                           },
                         },
-                        next: null,
+                        next: 'pull_8',
                       },
-                      modifyActionValue_4: {
+                      modifyActionValue_6: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
@@ -1461,7 +1635,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                             value: { kind: 'valueNode', nodeId: 'data_3' },
                           },
                         },
-                        next: 'dealDamage_5',
+                        next: 'dealDamage_9',
                       },
                       checkCondition_1: {
                         action: {
@@ -1477,17 +1651,17 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                         },
                         next: 'checkCondition_1',
                       },
-                      ifElse_6: {
+                      ifElse_10: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
                           condition: { kind: 'conditionNode', nodeId: 'data_7' },
-                          whenTrue: { $sequence: 'modifyActionValue_4' },
-                          whenFalse: { $sequence: 'dealDamage_5' },
+                          whenTrue: { $sequence: 'modifyActionValue_6' },
+                          whenFalse: { $sequence: 'dealDamage_9' },
                         },
                         next: null,
                       },
-                      modifyActionValue_7: {
+                      modifyActionValue_11: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
@@ -1496,14 +1670,14 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                             value: { kind: 'valueNode', nodeId: 'data_8' },
                           },
                         },
-                        next: 'ifElse_6',
+                        next: 'ifElse_10',
                       },
-                      checkCondition_8: {
+                      checkCondition_12: {
                         action: {
                           kind: 'checkCondition',
                           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                         },
-                        next: 'modifyActionValue_7',
+                        next: 'modifyActionValue_11',
                       },
                     },
                     dataNodes: {
@@ -1586,7 +1760,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                   talent0_usp: 0,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'checkCondition_8' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'checkCondition_12' } },
                 ],
               },
             },
@@ -1595,7 +1769,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
         },
         next: null,
       },
-      createSpatialPointTargets_20: {
+      createSpatialPointTargets_21: {
         action: {
           kind: 'createSpatialPointTargets',
           parameters: {
@@ -1604,9 +1778,9 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             origin: { kind: 'inputTarget' },
           },
         },
-        next: 'launchProjectile_19',
+        next: 'launchProjectile_20',
       },
-      applyBuff_21: {
+      applyBuff_22: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1616,31 +1790,31 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'createSpatialPointTargets_20',
+        next: 'createSpatialPointTargets_21',
       },
-      checkCondition_22: {
+      checkCondition_23: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
-        next: 'applyBuff_21',
+        next: 'applyBuff_22',
       },
-      forEachContextTarget_23: {
+      forEachContextTarget_24: {
         action: {
           kind: 'forEachContextTarget',
           parameters: { targets: { kind: 'context', key: 'ComboLances' } },
-          body: { $sequence: 'checkCondition_22' },
+          body: { $sequence: 'checkCondition_23' },
         },
         next: null,
       },
-      checkCondition_25: {
+      checkCondition_26: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
-        next: 'forEachContextTarget_23',
+        next: 'forEachContextTarget_24',
       },
-      findOwnerSpawnedAbilityEntities_26: {
+      findOwnerSpawnedAbilityEntities_27: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
@@ -1651,9 +1825,9 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             owner: { kind: 'owner' },
           },
         },
-        next: 'checkCondition_25',
+        next: 'checkCondition_26',
       },
-      launchProjectile_27: {
+      launchProjectile_28: {
         action: {
           kind: 'launchProjectile',
           parameters: {
@@ -1666,6 +1840,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0012_avywen_ultimate_skill_lance_back',
+            faction: 'good',
             recycleDelaySeconds: 0.5,
             entityInitialValues: { EntityBB_talent0: 0 },
             hit: {},
@@ -1677,7 +1852,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      startTimeDilation_6: {
+                      startTimeDilation_7: {
                         action: {
                           kind: 'startTimeDilation',
                           parameters: {
@@ -1687,12 +1862,24 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                             priority: 10,
                             curve: { kind: 'named', key: 'interrupt_weakness' },
                             finishByAction: false,
-                            targets: ['enemy', 'caster'],
+                            targets: [{ kind: 'inputTarget' }, { kind: 'source' }],
                           },
                         },
                         next: null,
                       },
-                      dealDamage_7: {
+                      pull_8: {
+                        action: {
+                          kind: 'pull',
+                          parameters: {
+                            targets: { kind: 'inputTarget' },
+                            destination: { kind: 'source' },
+                            targetType: 'Enemy',
+                            alwaysNext: false,
+                          },
+                        },
+                        next: 'startTimeDilation_7',
+                      },
+                      dealDamage_9: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -1705,9 +1892,9 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                           },
                         },
-                        next: 'startTimeDilation_6',
+                        next: 'pull_8',
                       },
-                      modifyActionValue_5: {
+                      modifyActionValue_6: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
@@ -1716,7 +1903,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                             value: { kind: 'valueNode', nodeId: 'data_3' },
                           },
                         },
-                        next: 'dealDamage_7',
+                        next: 'dealDamage_9',
                       },
                       checkCondition_1: {
                         action: {
@@ -1732,17 +1919,17 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                         },
                         next: 'checkCondition_1',
                       },
-                      ifElse_8: {
+                      ifElse_10: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
                           condition: { kind: 'conditionNode', nodeId: 'data_7' },
-                          whenTrue: { $sequence: 'modifyActionValue_5' },
-                          whenFalse: { $sequence: 'dealDamage_7' },
+                          whenTrue: { $sequence: 'modifyActionValue_6' },
+                          whenFalse: { $sequence: 'dealDamage_9' },
                         },
                         next: null,
                       },
-                      modifyActionValue_9: {
+                      modifyActionValue_11: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
@@ -1751,9 +1938,9 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                             value: { kind: 'valueNode', nodeId: 'data_8' },
                           },
                         },
-                        next: 'ifElse_8',
+                        next: 'ifElse_10',
                       },
-                      applyBuff_10: {
+                      applyBuff_12: {
                         action: {
                           kind: 'applyBuff',
                           parameters: {
@@ -1763,14 +1950,14 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                             inheritSourceSkillCastInfo: true,
                           },
                         },
-                        next: 'modifyActionValue_9',
+                        next: 'modifyActionValue_11',
                       },
-                      checkCondition_11: {
+                      checkCondition_13: {
                         action: {
                           kind: 'checkCondition',
                           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                         },
-                        next: 'applyBuff_10',
+                        next: 'applyBuff_12',
                       },
                     },
                     dataNodes: {
@@ -1853,7 +2040,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                   talent0_usp: 0,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_11' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_13' } },
                 ],
               },
             },
@@ -1862,7 +2049,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
         },
         next: null,
       },
-      createSpatialPointTargets_28: {
+      createSpatialPointTargets_29: {
         action: {
           kind: 'createSpatialPointTargets',
           parameters: {
@@ -1871,9 +2058,9 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             origin: { kind: 'inputTarget' },
           },
         },
-        next: 'launchProjectile_27',
+        next: 'launchProjectile_28',
       },
-      applyBuff_29: {
+      applyBuff_30: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1883,31 +2070,31 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'createSpatialPointTargets_28',
+        next: 'createSpatialPointTargets_29',
       },
-      checkCondition_30: {
+      checkCondition_31: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
-        next: 'applyBuff_29',
+        next: 'applyBuff_30',
       },
-      forEachContextTarget_31: {
+      forEachContextTarget_32: {
         action: {
           kind: 'forEachContextTarget',
           parameters: { targets: { kind: 'context', key: 'UltiLances' } },
-          body: { $sequence: 'checkCondition_30' },
+          body: { $sequence: 'checkCondition_31' },
         },
         next: null,
       },
-      checkCondition_33: {
+      checkCondition_34: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
         },
-        next: 'forEachContextTarget_31',
+        next: 'forEachContextTarget_32',
       },
-      findOwnerSpawnedAbilityEntities_34: {
+      findOwnerSpawnedAbilityEntities_35: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
@@ -1918,9 +2105,9 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
             owner: { kind: 'owner' },
           },
         },
-        next: 'checkCondition_33',
+        next: 'checkCondition_34',
       },
-      reachSkillOperableBoundary_35: {
+      reachSkillOperableBoundary_36: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0012_avywen_normal_skill'] },
@@ -1946,7 +2133,14 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
       },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'targets' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
@@ -2035,12 +2229,12 @@ export const avywennaChr_0012_avywen_normal_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt1' } },
     { startFrame: 18, endFrame: 21, sequence: { $sequence: 'checkCondition_5' } },
-    { startFrame: 18, endFrame: 21, sequence: { $sequence: 'mergeContextTargets_6' } },
-    { startFrame: 18, endFrame: 21, sequence: { $sequence: 'dealDamage_11' } },
-    { startFrame: 0, endFrame: 6, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_18' } },
-    { startFrame: 7, endFrame: 10, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_26' } },
-    { startFrame: 7, endFrame: 10, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_34' } },
-    { startFrame: 34, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_35' } },
+    { startFrame: 18, endFrame: 21, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 18, endFrame: 21, sequence: { $sequence: 'dealDamage_12' } },
+    { startFrame: 0, endFrame: 6, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_19' } },
+    { startFrame: 7, endFrame: 10, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_27' } },
+    { startFrame: 7, endFrame: 10, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_35' } },
+    { startFrame: 34, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_36' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -2132,6 +2326,7 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
             schedule: { endFrame: 4, callbacks: [{ event: 'block', triggerFrames: [4] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0012_avywen_ultimate_skill_lance_out',
+            faction: 'good',
             recycleDelaySeconds: 30,
             targets: { kind: 'context', contextKey: 'UltiLancePos' },
             entityInitialValues: {},
@@ -2191,10 +2386,21 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
         },
         next: 'launchProjectile_10',
       },
-      mergeContextTargets_12: {
+      findTargets_12: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -2234,7 +2440,7 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
       forEachContextTarget_16: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'tar' } },
           body: { $sequence: 'changeResource_15' },
         },
         next: null,
@@ -2352,7 +2558,7 @@ export const avywennaChr_0012_avywen_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 45, sequence: { $sequence: 'hideUi_8' } },
     { startFrame: 0, endFrame: 45, sequence: { $sequence: 'startUltimateTimeDilation_9' } },
     { startFrame: 45, endFrame: 48, sequence: { $sequence: 'createSpatialPointTargets_11' } },
-    { startFrame: 51, endFrame: 54, sequence: { $sequence: 'mergeContextTargets_12' } },
+    { startFrame: 51, endFrame: 54, sequence: { $sequence: 'findTargets_12' } },
     { startFrame: 51, endFrame: 54, sequence: { $sequence: 'ifElse_19' } },
     { startFrame: 57, endFrame: 73, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
     { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_21' } },

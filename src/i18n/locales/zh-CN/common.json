@@ -463,6 +463,28 @@
     "zhCNShort": "中"
   },
   "timeline": {
+    "enemies": {
+      "mainTarget": "主攻击目标",
+      "setMainTarget": "设为主攻击目标",
+      "reorder": "拖动调整敌人顺序",
+      "backToOverview": "返回敌人总览",
+      "name": "敌人名称",
+      "spawn": "出生",
+      "enter": "切入",
+      "exit": "切出",
+      "timeSeconds": "时间（秒）",
+      "spawnFrame": "出生（帧）",
+      "manualDeath": "手动死亡",
+      "deathFrame": "死亡（帧）",
+      "enterFrame": "切入（帧）",
+      "exitFrame": "切出（帧）",
+      "addPresence": "添加切入 / 切出",
+      "title": "敌人总览",
+      "add": "添加敌人",
+      "present": "在场",
+      "absent": "离场",
+      "death": "死亡"
+    },
     "legacyConversion": {
       "title": "转换旧版本存档",
       "question": "检测到旧版本存档，是否转换？",
@@ -628,6 +650,10 @@
       "sectionScenarioSettings": "方案设置",
       "sectionPrefs": "用户偏好",
       "automaticControlSwitches": "自动切换主控",
+      "multiEnemy": "多敌人模式",
+      "multiEnemyRequired": "存在多个敌人或非默认生命周期，无法关闭多敌人模式。",
+      "enemyAutomaticDeath": "敌人自动死亡",
+      "enemyAutomaticDeathHelp": "开启后，敌人生命值降至 0 时死亡；手动设置的死亡时间始终生效，以先发生者为准。",
       "comboSkillPriority": "连携技优先级设置",
       "automaticControlSwitchesHelp": "普攻、强化普攻、下落攻击或处决时，按需切换到对应干员",
       "sectionViewLayers": "显示内容",
@@ -1391,7 +1417,6 @@
         "eventBuffIdMatch": "事件 Buff ID 匹配",
         "currentSkillTypeIn": "当前技能类型匹配",
         "combatActive": "处于战斗中",
-        "singleEnemyPresent": "存在单个敌人",
         "checkMainCharacter": "指定目标为主控",
         "enemySuperArmorCompare": "敌人霸体值比较",
         "targetStaggered": "目标已失衡",
@@ -1692,6 +1717,7 @@
         "pickContextTarget": "按稳定索引从已有 Context 目标组中选取一个实例，并保存为新的 Context 目标组。",
         "forEachContextTarget": "对施法上下文中已经固定的目标句柄逐一同步执行同一个步骤序列。",
         "setAbilityEntityRemainingDuration": "设置首个目标能力实体的剩余时长，限制在零到出生时实际周期之间。无限寿命不受影响。",
+        "setAbilityEntityTarget": "替换动作宿主能力实体的目标集合。空查询清除旧目标；没有能力实体控制器时返回失败。",
         "startCurrentAbilityEntityChildSkillById": "按稳定子技能 ID，在当前 Context 迭代目标所指向的能力实体上启动其已有子时间线。",
         "spawnAbilityEntity": "按当前步骤内联定义生成能力实体，保留原生身份、目标、生命周期、对象变量和可选的实体局部子时间线。",
         "applyElementalInfliction": "向敌人施加元素附着。附着本身不是伤害，但可参与后续元素反应。",
@@ -1766,7 +1792,11 @@
         "finishOwner": "结束所选召唤物或投射物；结束飞行不会触发投射物的超时技能。",
         "queueComboLock": "在队尾插入限时锁。此前已打开的窗口仍可释放，之后的窗口须等待锁结束。",
         "disableNormalSkill": "在动作生效期间添加战技禁用标签，可允许追加战技继续释放。",
-        "limitMovementGait": "写入宿主共用步态限制，全部限制动作结束后清除。最大步态低于冲刺时影响闪避准入。"
+        "limitMovementGait": "写入宿主共用步态限制，全部限制动作结束后清除。最大步态低于冲刺时影响闪避准入。",
+        "pushBack": "击退目标",
+        "pull": "保留目标查询与拉拽处理结果，不模拟位移。未处理目标时按继续策略返回。",
+        "saveTargetDistance": "双方目标存在时将距离写入变量；模拟距离为零。任一目标缺失时保留变量原值。",
+        "blowOffEnemy": "吹飞敌人"
       },
       "damageType": "伤害类型",
       "eventListenerWindowHint": "监听窗口由当前调度序列的开始帧和结束帧决定；事件响应在触发帧同步执行。",
@@ -1831,6 +1861,7 @@
         "pickContextTarget": "选取 Context 目标",
         "forEachContextTarget": "遍历 Context 目标",
         "setAbilityEntityRemainingDuration": "修改能力实体剩余时间",
+        "setAbilityEntityTarget": "设置能力实体目标",
         "startCurrentAbilityEntityChildSkillById": "按 ID 启动能力实体子技能",
         "castSkillDuringAction": "动作中施放技能",
         "readBuffRemainingDuration": "读取 Buff 剩余时间",
@@ -1900,7 +1931,11 @@
         "finishOwner": "结束目标实体",
         "queueComboLock": "锁定连携队列",
         "disableNormalSkill": "禁用战技",
-        "limitMovementGait": "限制步态"
+        "limitMovementGait": "限制步态",
+        "pushBack": "击退目标",
+        "pull": "拉拽目标",
+        "saveTargetDistance": "保存目标距离",
+        "blowOffEnemy": "吹飞敌人"
       }
     },
     "inspector": {
@@ -2039,6 +2074,7 @@
     },
     "buffDetail": {
       "title": "状态详情",
+      "host": "状态宿主",
       "source": "来源",
       "effect": "效果摘要",
       "layers": "层数",
@@ -2093,6 +2129,7 @@
       "suppressedHint": "此候选仍保留记录，但在该窗口内不提供有效层数或效果。"
     },
     "hitDetail": {
+      "target": "伤害对象",
       "previousHit": "上一笔伤害",
       "nextHit": "下一笔伤害",
       "frame": "帧",
@@ -2704,6 +2741,11 @@
       "searchPlaceholder": "搜索敌人...",
       "level": "等级",
       "byEnemy": "基础敌人",
+      "stageCountUnknown": "数量待核实，暂按 1 个应用",
+      "applyStageAll": "应用全部敌人",
+      "applyStageAllHelp": "用此难度的敌人清单替换方案中的敌人，可撤销。",
+      "enableMultiForStage": "应用关卡敌人需要开启多敌人模式，并替换当前敌人清单。是否开启并应用？",
+      "enableAndApply": "开启并应用",
       "byStage": "关卡变种",
       "allStages": "全部关卡系列",
       "searchStage": "搜索关卡或敌人",

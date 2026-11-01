@@ -23,7 +23,10 @@ describe('ElementalInflictionOperationExecutor', () => {
     const queryTargets = vi.fn((query: { kind: string }) =>
       query.kind === 'source'
         ? sourcePresent
-          ? [{ kind: 'operator' as const, operatorId: 'actual-source' }]
+          ? [
+              { kind: 'spatialPoint' as const, pointId: 1 },
+              { kind: 'operator' as const, operatorId: 'actual-source' },
+            ]
           : []
         : [
             { kind: 'abilityEntity' as const, instanceId: 1 },
@@ -37,7 +40,7 @@ describe('ElementalInflictionOperationExecutor', () => {
       clock: new CombatClock(),
       receipt: { record },
       queryTargets,
-      resolveInflictionTarget: () => ({ kind: 'enemy' }),
+      resolveInflictionTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }),
       getExistingAttachment: () => null,
       applyOperation,
       emitSourceEvent: vi.fn(),
@@ -106,7 +109,7 @@ describe('ElementalInflictionOperationExecutor', () => {
         });
     },
   );
-  it('把 Buff 触发的法术爆发保留来源与施放身份交给统一爆发运行时', () => {
+  it.each(['enemy', 'enemy:a'])('Buff 法术爆发保留目标 %s、来源与施放身份', targetId => {
     const triggerSpellBurst = vi.fn();
     const skillCastInfo = {
       skillCastId: 9,
@@ -134,11 +137,13 @@ describe('ElementalInflictionOperationExecutor', () => {
         {
           blackboard: new ActionBlackboard(),
           buffSourceId: 'operator:buff-source',
+          buffOwnerId: targetId,
           skillCastInfo,
         },
       ),
     ).toBe(true);
     expect(triggerSpellBurst).toHaveBeenCalledWith({
+      targetId,
       burstType: 'Cryst',
       sourceId: 'operator:buff-source',
       skillCastInfo,

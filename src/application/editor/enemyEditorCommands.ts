@@ -1,3 +1,4 @@
+import { firstScenarioEnemy, levelEnemies, mapLevelEnemies } from '../../core/project/level';
 /**
  * 将敌人预制体默认值转换为项目实例，并提供不可变的敌人覆盖命令。
  * 切换定义会重新捕获完整默认值；单项编辑只修改实例数值，不修改定义。
@@ -9,6 +10,15 @@ import type {
   EnemyEditableValues,
   ScenarioDocument,
 } from '../../core/project/schema';
+
+/** 关卡选择中的一个已具备完整属性数据的敌人条目。 */
+export interface StageEnemySelection {
+  count: number;
+  definitionId: string;
+  level: number;
+  source: StageEnemyIdentity;
+  name: string;
+}
 
 function secondsToFrames(seconds: number, fps: number): number {
   if (!Number.isInteger(fps) || fps <= 0) throw new Error('project FPS must be a positive integer');
@@ -51,9 +61,15 @@ export function createDefinitionEnemyDocument(
 export function setScenarioEnemy(
   scenario: ScenarioDocument,
   enemy: EnemyDocument,
+  instanceId?: string,
 ): ScenarioDocument {
-  if (scenario.enemy === enemy) return scenario;
-  return { ...scenario, enemy };
+  const id = instanceId ?? firstScenarioEnemy(scenario).id;
+  if (!levelEnemies(scenario.level).some(item => item.id === id))
+    throw new Error('unknown enemy instance: ' + id);
+  return {
+    ...scenario,
+    level: mapLevelEnemies(scenario.level, item => (item.id === id ? { ...item, enemy } : item)),
+  };
 }
 
 /** 创建一个带明确项目默认值的自定义敌人；这些值本来就由用户决定，因此不标记为预制体覆盖。 */
@@ -83,8 +99,14 @@ export function createCustomEnemyDocument(level = 90): EnemyDocument {
 export function replaceEnemyEditableValues(
   scenario: ScenarioDocument,
   values: EnemyEditableValues,
+  instanceId?: string,
 ): ScenarioDocument {
-  const current = scenario.enemy.editable;
+  const enemy =
+    instanceId === undefined
+      ? firstScenarioEnemy(scenario).enemy
+      : levelEnemies(scenario.level).find(item => item.id === instanceId)?.enemy;
+  if (!enemy) throw new Error('unknown enemy instance: ' + instanceId);
+  const current = enemy.editable;
   let changed = false;
   for (const field of ['hp', 'defense', 'superArmor', 'finisherMultiplier'] as const) {
     if (current[field] !== values[field]) changed = true;
@@ -116,10 +138,10 @@ export function replaceEnemyEditableValues(
   }
   if (!changed) return scenario;
 
-  return {
-    ...scenario,
-    enemy: {
-      ...scenario.enemy,
+  return setScenarioEnemy(
+    scenario,
+    {
+      ...enemy,
       editable: {
         ...values,
         resistances: { ...values.resistances },
@@ -129,5 +151,6 @@ export function replaceEnemyEditableValues(
         },
       },
     },
-  };
+    instanceId,
+  );
 }

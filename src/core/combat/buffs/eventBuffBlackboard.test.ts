@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { expect, it } from 'vitest';
 import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
 import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
@@ -68,7 +69,11 @@ it.each([
           outputKey: 'result',
         },
       },
-      { blackboard, event, actionInputTarget: { kind: 'enemy' } },
+      {
+        blackboard,
+        event,
+        actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' }),
+      },
     ),
   ).toBe(false);
   expect(blackboard.getNumber('result')).toBe(9);
@@ -108,7 +113,7 @@ it.each(['finishedBuff', 'buffEndsEarly', 'buffConsumed', 'buffAbsorbed'] as con
       withAbilityEventResponseContext(
         context,
         published,
-        { inputTarget: { kind: 'enemy' }, triggerTarget: null },
+        { inputTarget: { kind: 'enemy', enemyId: 'enemy' }, triggerTarget: null },
         () => {
           executor.execute(
             {

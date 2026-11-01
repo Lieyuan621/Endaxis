@@ -4,7 +4,9 @@ import { pathToFileURL } from 'node:url';
 import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 import { createHash } from 'node:crypto';
 import {
+  collectSpawnerEnemies,
   findSpawnerBuffs,
+  findSpawnerCount,
   loadSceneSpawners,
   type StageEnemyAttributes,
 } from '../src/domains/enemy/spawnerAttributes.ts';
@@ -134,6 +136,15 @@ export async function generateEnemyStageCatalog(args: {
       ),
     ),
   );
+  // 合约展示表省略了部分实际刷怪种类；补齐后沿用统一的属性与数量解析。
+  for (const stage of Object.values(dungeons)) {
+    if (stage.dungeonCategory !== 'dungeon_contract') continue;
+    const roster = collectSpawnerEnemies(sceneSpawners.get(stage.sceneId ?? '') ?? []);
+    if (roster.length) {
+      stage.enemyIds = roster.map(entry => entry.enemyId);
+      stage.enemyLevels = roster.map(entry => entry.level);
+    }
+  }
   const stageAttributes: StageEnemyAttributes[] = [];
   const stages = Object.entries(dungeons)
     .flatMap(([id, stage]) => {
@@ -145,6 +156,7 @@ export async function generateEnemyStageCatalog(args: {
           'dungeon_resource',
           'dungeon_ss',
           'dungeon_bossrush',
+          'dungeon_contract',
         ].includes(stage.dungeonCategory)
       )
         return [];
@@ -160,7 +172,7 @@ export async function generateEnemyStageCatalog(args: {
           difficultyNameKey: name(`difficulty_${id}`, stage.dungeonLevelDesc, ''),
           seriesNameKey: name(
             `series_${stage.dungeonSeriesId}`,
-            group?.name,
+            group?.name?.id || group?.name?.text ? group.name : stage.dungeonName,
             stage.dungeonSeriesId,
           ),
           sort: stage.sortId,
@@ -196,6 +208,14 @@ export async function generateEnemyStageCatalog(args: {
                   templateId: enemy.templateId.replaceAll('_', '-'),
                 },
                 level: stage.enemyLevels[index] ?? null,
+                count: findSpawnerCount(
+                  sceneSpawners.get(stage.sceneId ?? '') ?? [],
+                  stage.enemyIds,
+                  stage.enemyLevels,
+                  enemyId,
+                  stage.enemyLevels[index] ?? 0,
+                  buffs,
+                ),
                 nameKey: name(`enemy_${enemyId}`, displays[enemyId]?.name, ''),
                 // 保留变体身份；第一阶段仅模拟其属性差异，不执行出生 Buff 的机制。
                 usesBaseDefinition: equivalent && !scopedId,

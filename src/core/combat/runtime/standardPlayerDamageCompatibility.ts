@@ -99,7 +99,6 @@ function inspectCondition(
     case 'constant':
     case 'skillHasHit':
     case 'combatActive':
-    case 'singleEnemyPresent':
     case 'stringEquals':
     case 'actionValueCompare':
     case 'deckAttributeCompare':
@@ -179,7 +178,27 @@ function inspectCondition(
   }
 }
 
+const activeSequenceInspections = new WeakMap<IssueCollector, Set<ResolvedActionSequence>>();
 function inspectSequence(
+  sequence: ResolvedActionSequence,
+  path: string,
+  collect: IssueCollector,
+  flags: CompatibilityFlags,
+  source: 'skill' | 'equipment' = 'skill',
+): void {
+  let active = activeSequenceInspections.get(collect);
+  if (active?.has(sequence)) return;
+  if (!active) activeSequenceInspections.set(collect, (active = new Set()));
+  active.add(sequence);
+  try {
+    inspectSequenceBody(sequence, path, collect, flags, source);
+  } finally {
+    active.delete(sequence);
+    if (active.size === 0) activeSequenceInspections.delete(collect);
+  }
+}
+
+function inspectSequenceBody(
   sequence: ResolvedActionSequence,
   path: string,
   collect: IssueCollector,
@@ -199,9 +218,14 @@ function inspectSequence(
       case 'mergeContextTargets':
       case 'findCharacterTeamTargets':
       case 'findTargets':
+      case 'blowOffEnemy':
+      case 'pushBack':
+      case 'pull':
+      case 'saveTargetDistance':
       case 'createSpatialPointTargets':
       case 'findOwnerSpawnedAbilityEntities':
       case 'setAbilityEntityRemainingDuration':
+      case 'setAbilityEntityTarget':
       case 'finishOwner':
       case 'startCurrentAbilityEntityChildSkillById':
         return;

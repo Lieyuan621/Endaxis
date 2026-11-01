@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../../src/core/game-data/logicalAbilityEntity.ts';
 /** 验证目标组读写保留：动态查询可为空，分支内静态查询不能丢失后续读取需要的写入。 */
 import { describe, expect, it } from 'vitest';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
@@ -125,10 +126,104 @@ function project(
 }
 
 describe('动态敌人集合的投影', () => {
-  it('不能把动态持续查询静默转换为单次查询', () => {
-    expect(() => project('applyBuff', 'filtered', false, 0.5)).toThrow(
-      'continuous target query requires a runtime lifecycle',
-    );
+  it.each(['Normal', 'NoInteractive'])(
+    '命中盒 %s 的包含与排除查询不受固定首敌推断影响',
+    targetObjectType => {
+      for (const contains of [true, false]) {
+        const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+        const query = {
+          ...ownerSpawnedAbilityEntityFindTargetActionFixture(),
+          targetGroupKey: 'selected',
+          selectorData: {
+            finderData: {
+              $type: 'Example.Selector+HitBoxFinder+Data, Example',
+              factionTarget: 'Anti',
+              targetObjectType,
+              checkAlive: true,
+              containsUnMarkable: false,
+              autoSetTargetFaction: true,
+              targetFactionType: 0,
+            },
+            validatorData: contains
+              ? [
+                  {
+                    $type: 'Example.Selector+TargetContainsValidator+Data, Example',
+                    parentTargetSettings: targetFixture('Context', undefined, 'parents'),
+                  },
+                ]
+              : [],
+            postProcessorData: contains
+              ? []
+              : [
+                  {
+                    $type: 'Example.Selector+ExcludeTarget+Data, Example',
+                    excludedTargetSettings: targetFixture('Target'),
+                  },
+                ],
+          },
+        };
+        const entry = compileCombatActionSequenceSource(
+          parseKnownNativeActionSequenceSource(sequence([query]), 'hitbox', {}),
+          {
+            graph: builder,
+            actionOwnerTarget: 'caster',
+            actionSourceTarget: 'caster',
+            actionTargetTarget: 'enemy',
+            staticEnemyTargetGroupKeys: new Set(['selected']),
+            materializedTargetGroupKeys: new Set(['selected']),
+          },
+        );
+        const graph = builder.finish();
+        expect(readActionGraphChain(graph, entry)[0]).toMatchObject({
+          kind: 'findTargets',
+          parameters: { query: { kind: contains ? 'intersection' : 'exclude' } },
+        });
+        const targets = new RuntimeTargetContext();
+        const primary = { kind: 'enemy', enemyId: 'enemy' } as const;
+        const second = { kind: 'enemy', enemyId: 'enemy:secondary' } as const;
+        targets.set('parents', [second]);
+        const executor = new TargetContextOperationExecutor(
+          'caster',
+          { execute: () => false, evaluate: () => false },
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          {
+            mainTarget: () => primary,
+            ownerSpawned: () => [],
+            factionHitBox: () => [primary, second],
+            partBuffSource: target => target,
+            exclusionTarget: target => target,
+          },
+        );
+        const run = () =>
+          new CombatActionSequenceRuntime(executor, {
+            blackboard: new ActionBlackboard(),
+            targetContext: targets,
+            actionOwnerId: 'caster',
+            actionInputTargets: singleTargetList(primary),
+          })
+            .createSequence(compileGraphSequence(entry, graph))
+            .executeInstant({});
+        expect(run()).toBe(true);
+        expect(targets.get('selected')).toEqual([second]);
+        if (contains) {
+          targets.set('parents', []);
+          expect(run()).toBe(true);
+          expect(targets.get('selected')).toEqual([]);
+        }
+      }
+    },
+  );
+  it('持续查询保留原生间隔和动态筛选', () => {
+    expect(project('applyBuff', 'filtered', false, 0.5).steps[0]).toMatchObject({
+      kind: 'findTargets',
+      parameters: {
+        continuousIntervalSeconds: 0.5,
+        query: { kind: 'enemyByTags' },
+      },
+    });
   });
 
   it('智能选择未命中仍回退主目标，缺宿主不覆盖旧组，空结果覆盖旧组', () => {
@@ -171,10 +266,14 @@ describe('动态敌人集合的投影', () => {
     expect(readActionGraphChain(graph, entry)).toMatchObject([
       {
         kind: 'findTargets',
-        parameters: { owner: { kind: 'source' }, query: { kind: 'mainTarget' } },
+        parameters: {
+          owner: { kind: 'source' },
+          query: { kind: 'smartTargetByBuff', buffIds: ['absent_buff'] },
+        },
       },
     ]);
     let hasTarget = true;
+    let marked = false;
     const targets = new RuntimeTargetContext();
     targets.set('selected', [{ kind: 'operator', operatorId: 'old' }]);
     const executor = new TargetContextOperationExecutor(
@@ -191,7 +290,16 @@ describe('动态敌人集合的投影', () => {
       undefined,
       undefined,
       undefined,
-      { mainTarget: () => (hasTarget ? { kind: 'enemy' } : undefined), ownerSpawned: () => [] },
+      {
+        mainTarget: () => (hasTarget ? { kind: 'enemy', enemyId: 'enemy' } : undefined),
+        ownerSpawned: () => [],
+        enemiesByTags: () => [
+          { kind: 'enemy', enemyId: 'enemy' },
+          { kind: 'enemy', enemyId: 'enemy:secondary' },
+        ],
+        hasMatchingBuff: target =>
+          marked && target.kind === 'enemy' && target.enemyId === 'enemy:secondary',
+      },
     );
     const run = (actionSourceId?: string) =>
       new CombatActionSequenceRuntime(executor, {
@@ -204,7 +312,11 @@ describe('动态敌人集合的投影', () => {
     expect(run()).toBe(false);
     expect(targets.get('selected')).toEqual([{ kind: 'operator', operatorId: 'old' }]);
     expect(run('operator')).toBe(true);
-    expect(targets.get('selected')).toEqual([{ kind: 'enemy' }]);
+    expect(targets.get('selected')).toEqual([{ kind: 'enemy', enemyId: 'enemy' }]);
+    marked = true;
+    expect(run('operator')).toBe(true);
+    expect(targets.get('selected')).toEqual([{ kind: 'enemy', enemyId: 'enemy:secondary' }]);
+    marked = false;
     hasTarget = false;
     expect(run('operator')).toBe(true);
     expect(targets.get('selected')).toEqual([]);
@@ -256,13 +368,15 @@ describe('动态敌人集合的投影', () => {
       {
         mainTarget: () => undefined,
         ownerSpawned: () => [],
-        enemyMatchesTags: query => {
+        enemiesByTags: query => {
           expect(query).toEqual({
             kind: 'enemyByTags',
+            scope: 'global',
+            reverse: true,
             tagQueryType: 'hasAny',
             tags: ['Test/Tag123'],
           });
-          return matchesTag;
+          return matchesTag ? [{ kind: 'enemy', enemyId: 'enemy' }] : [];
         },
       },
     );
@@ -279,7 +393,7 @@ describe('动态敌人集合的投影', () => {
       matchesTag = expectedMatch;
       applications.length = 0;
       compiled.executeInstant({});
-      const expectedTargets = expectedMatch ? [{ kind: 'enemy' }] : [];
+      const expectedTargets = expectedMatch ? [{ kind: 'enemy', enemyId: 'enemy' }] : [];
       expect(targets.get(group)).toEqual(expectedTargets);
       expect(applications).toEqual(expectedTargets);
     }
@@ -397,6 +511,7 @@ describe('跨时间段的目标组读写', () => {
           undefined,
           {
             entityLifeState: () => 'alive',
+            enemiesByTags: () => [{ kind: 'enemy', enemyId: 'enemy' }],
             mainTarget: () => undefined,
             ownerSpawned: () => [],
           },
@@ -404,7 +519,7 @@ describe('跨时间段的目标组读写', () => {
         {
           blackboard: new ActionBlackboard(),
           targetContext: targets,
-          actionInputTarget: { kind: 'enemy' },
+          actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' }),
           actionOwnerId: 'operator',
           actionSourceId: 'operator',
         },
@@ -416,7 +531,7 @@ describe('跨时间段的目标组读写', () => {
       }
       expect(applications).toEqual([controlled ? 'caster' : 'enemy']);
       if (controlled) expect(() => targets.get(group)).toThrow('target context group');
-      else expect(targets.get(group)).toEqual([{ kind: 'enemy' }]);
+      else expect(targets.get(group)).toEqual([{ kind: 'enemy', enemyId: 'enemy' }]);
     },
   );
 });
@@ -473,14 +588,243 @@ describe('目标转换保留运行时写入', () => {
       new CombatActionSequenceRuntime(executor, {
         blackboard,
         targetContext: targets,
-        actionInputTarget,
+        actionInputTargets: singleTargetList(actionInputTarget),
       })
         .createSequence(compileGraphSequence(entry, graph))
         .executeInstant({});
-    targets.set('selected', [{ kind: 'enemy' }]);
+    targets.set('selected', [{ kind: 'enemy', enemyId: 'enemy' }]);
     expect(run({ kind: 'abilityEntity', instanceId: 7 })).toBe(true);
     expect(targets.get('selected')).toEqual([{ kind: 'abilityEntity', instanceId: 7 }]);
     expect(run()).toBe(true);
     expect(targets.get('selected')).toEqual([]);
   });
 });
+
+it('未知成员种类的 Context 循环保留空组及多个真实输入目标', () => {
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(
+    parseKnownNativeActionSequenceSource(
+      sequence([
+        {
+          ...meta,
+          $type: 'Example.ForEachAction+Data, Example',
+          target: targetFixture('Context', undefined, 'external'),
+          action: sequence([applyBuff('Target')]),
+        },
+      ]),
+      'test.externalContextLoop',
+      {},
+    ),
+    {
+      graph: builder,
+      gameplayTagRegistry: fixtureGameplayTagRegistry,
+      actionOwnerTarget: 'caster',
+      actionSourceTarget: 'caster',
+      actionTargetTarget: 'enemy',
+    },
+  );
+  const targets = new RuntimeTargetContext();
+  const applications: unknown[] = [];
+  const executor = new TargetContextOperationExecutor('operator', {
+    evaluate: () => {
+      throw new Error('unexpected condition');
+    },
+    execute: (step, context) => {
+      if (step.kind !== 'applyBuff') throw new Error(`unexpected ${step.kind}`);
+      applications.push(
+        ...resolveDirectActionTargets(step.parameters.targets, context!, 'operator')!,
+      );
+      return true;
+    },
+  });
+  const runtime = new CombatActionSequenceRuntime(executor, {
+    blackboard: new ActionBlackboard(),
+    targetContext: targets,
+    actionOwnerId: 'operator',
+    actionSourceId: 'operator',
+  });
+  const compiled = runtime.createSequence(compileGraphSequence(entry, builder.finish()));
+  for (const selected of [
+    [],
+    [
+      { kind: 'enemy', enemyId: 'enemy:a' },
+      { kind: 'enemy', enemyId: 'enemy:b' },
+    ],
+    [],
+  ] as const) {
+    targets.set('external', selected);
+    applications.length = 0;
+    compiled.executeInstant({});
+    expect(applications).toEqual(selected);
+  }
+});
+
+it('跨时间段的限数敌人查询保留宿主类型，但不把集合折叠成唯一敌人', () => {
+  const query = {
+    ...ownerSpawnedAbilityEntityFindTargetActionFixture(),
+    targetGroupKey: 'enemies',
+    selectorData: {
+      finderData: { $type: 'Example.Selector+AllEnemyFinder+Data, Example' },
+      validatorData: [],
+      postProcessorData: [
+        {
+          $type: 'Example.Selector+PriorityFilter+Data, Example',
+          filterType: 'DistanceFromCenterDes',
+          onlyReserveMaxPriorityTargets: false,
+          limitMaxNum: true,
+          maxNum: 2,
+          processTargetType: 'Targets',
+          buffFilterSettings: {
+            buffSettings: {
+              checkType: 'Id',
+              buffIdList: [],
+              tagQuery: { queryType: 'HasAny', tags: [] },
+            },
+            buffStackNumType: 'BuffCount',
+          },
+        },
+      ],
+    },
+  };
+  const loop = {
+    ...meta,
+    $type: 'Example.ForEachAction+Data, Example',
+    target: targetFixture('Context', undefined, 'enemies'),
+    action: sequence([applyBuff('Target')]),
+  };
+  const skill = activeSkillFixture('test_enemy_members');
+  skill.actionGroupData = {
+    passiveEventActions: [],
+    timelineActions: [query, loop].map((action, index) => ({
+      _startFrame: index * 2,
+      _endFrame: index * 2 + 1,
+      _sequenceActionData: sequence([action]),
+      forceSyncAnimData: { forceSync: false, montageName: '', targetFrame: 0, playbackSpeed: 1 },
+    })),
+  };
+  const projected = compileActiveSkillRuntimeProjectionSource({
+    value: skill,
+    sourcePath: 'test.enemyMembers',
+    patch: null,
+    context: {
+      gameplayTagRegistry: fixtureGameplayTagRegistry,
+      actionOwnerTarget: 'caster',
+      actionSourceTarget: 'caster',
+      actionTargetTarget: 'enemy',
+    },
+  });
+  expect(collectCompiledBuffApplications(projected.actionGraph.main)).toEqual([
+    { buffId: 'test_buff', target: 'enemy' },
+  ]);
+  const targets = new RuntimeTargetContext();
+  const applications: unknown[] = [];
+  const enemies = [
+    { kind: 'enemy', enemyId: 'enemy:a' },
+    { kind: 'enemy', enemyId: 'enemy:b' },
+    { kind: 'enemy', enemyId: 'enemy:c' },
+  ] as const;
+  let present = true;
+  const executor = new TargetContextOperationExecutor(
+    'operator',
+    {
+      evaluate: () => {
+        throw new Error('unexpected condition');
+      },
+      execute: (step, context) => {
+        if (step.kind !== 'applyBuff') throw new Error(`unexpected ${step.kind}`);
+        applications.push(
+          ...resolveDirectActionTargets(step.parameters.targets, context!, 'operator')!,
+        );
+        return true;
+      },
+    },
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      mainTarget: () => undefined,
+      ownerSpawned: () => [],
+      enemiesByTags: () => (present ? enemies : []),
+    },
+  );
+  const runtime = new CombatActionSequenceRuntime(executor, {
+    blackboard: new ActionBlackboard(),
+    targetContext: targets,
+    actionOwnerId: 'operator',
+    actionSourceId: 'operator',
+  });
+  for (const hasEnemies of [true, false]) {
+    present = hasEnemies;
+    applications.length = 0;
+    for (const scheduled of projected.scheduledSequences)
+      runtime
+        .createSequence(compileGraphSequence(scheduled.sequence, projected.actionGraph))
+        .executeInstant({});
+    expect(applications).toEqual(present ? enemies.slice(0, 2) : []);
+  }
+});
+
+it.each(['Target', 'Context'] as const)(
+  '敌人 ForEach 保留 %s 中的实际身份、顺序与空集合',
+  targetSource => {
+    const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+    const entry = compileCombatActionSequenceSource(
+      parseKnownNativeActionSequenceSource(
+        sequence([
+          {
+            ...meta,
+            $type: 'Example.ForEachAction+Data, Example',
+            target: targetFixture(
+              targetSource,
+              undefined,
+              targetSource === 'Context' ? 'enemies' : '',
+            ),
+            action: sequence([applyBuff('Target')]),
+          },
+        ]),
+        'test.enemyLoop',
+        {},
+      ),
+      {
+        graph: builder,
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+        staticEnemyTargetGroupKeys: new Set(['enemies']),
+      },
+    );
+    const graph = builder.finish();
+    const applications: unknown[] = [];
+    const executor = new TargetContextOperationExecutor('operator', {
+      evaluate: () => {
+        throw new Error('unexpected condition');
+      },
+      execute: (step, context) => {
+        if (step.kind !== 'applyBuff') throw new Error(`unexpected ${step.kind}`);
+        applications.push(
+          ...resolveDirectActionTargets(step.parameters.targets, context!, 'operator')!,
+        );
+        return true;
+      },
+    });
+    const enemies = [
+      { kind: 'enemy', enemyId: 'enemy:second' },
+      { kind: 'enemy', enemyId: 'enemy:third' },
+    ] as const;
+    for (const selected of [enemies, enemies.slice(1), []]) {
+      const targets = new RuntimeTargetContext();
+      targets.set('enemies', selected);
+      applications.length = 0;
+      const runtime = new CombatActionSequenceRuntime(executor, {
+        blackboard: new ActionBlackboard(),
+        targetContext: targets,
+        actionInputTargets: singleTargetList(selected[0]),
+        actionOwnerId: 'operator',
+        actionSourceId: 'operator',
+      });
+      runtime.createSequence(compileGraphSequence(entry, graph)).executeInstant({});
+      expect(applications).toEqual(targetSource === 'Target' ? selected.slice(0, 1) : selected);
+    }
+  },
+);

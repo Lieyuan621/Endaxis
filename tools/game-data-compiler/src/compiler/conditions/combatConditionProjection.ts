@@ -13,7 +13,6 @@ import type {
 import {
   isPartyInstantSearch,
   isPartyExceptOwnerInstantSearch,
-  isUniqueEnemyHitBoxInstantSearch,
   projectGameplayTags,
 } from '../combatProjectionCommon.ts';
 import { projectSpGainKind, projectSpGainSource } from '../../source/spGainEnums.ts';
@@ -761,6 +760,7 @@ function compileConditionLeaf(
   if (condition.kind === 'entityTag') {
     return {
       kind: 'entityTagMatch',
+      ...(condition.sourceType === 'CheckPartTagMatch' ? { checkPartTags: true } : {}),
       target: projectActionTargetQuery(condition.target, context, `${sourcePath}.checkTarget`),
       tagQueryType: condition.tagQueryType,
       tags: projectGameplayTags(condition.tagIds, context, sourcePath),
@@ -932,7 +932,6 @@ export function projectActionTargetQuery(
   }
   if (isPartyInstantSearch(target)) return { kind: 'characterTeam', excludeOwner: false };
   if (isPartyExceptOwnerInstantSearch(target)) return { kind: 'characterTeam', excludeOwner: true };
-  if (isUniqueEnemyHitBoxInstantSearch(target)) return { kind: 'fixed', target: 'enemy' };
   if (target.targetSource !== 'InstantSearch') {
     switch (target.targetSource) {
       case 'Owner':
@@ -968,7 +967,10 @@ export function projectActionTargetQuery(
     target.finderCheckAlive !== undefined &&
     target.finderContainsUnMarkable !== undefined &&
     target.validatorTypes.length === 0 &&
-    target.postProcessorTypes.length === 0
+    target.postProcessorTypes.length === 0 &&
+    target.priorityFilters.length === 0 &&
+    target.shuffleTargets.length === 0 &&
+    target.distanceValidators.length === 0
   )
     return {
       kind: 'factionHitBox',
@@ -1042,11 +1044,17 @@ export function projectActionTargetQuery(
     return { kind: 'mainCharacter' };
   if (
     target.finderType === 'OwnerSpawnedEntityFinder' &&
-    target.finderSpawnedObjectType === 'All' &&
+    (target.finderSpawnedObjectType === 'All' ||
+      target.finderSpawnedObjectType === 'AbilityEntity') &&
     target.validatorTypes.length === 0 &&
     target.postProcessorTypes.length === 0
   ) {
-    return { kind: 'ownerSpawned', owner: owner(), objectType: 'all', sameSourceSkillCast: false };
+    return {
+      kind: 'ownerSpawned',
+      owner: owner(),
+      objectType: target.finderSpawnedObjectType === 'All' ? 'all' : 'abilityEntity',
+      sameSourceSkillCast: false,
+    };
   }
   if (target.finderType === 'OwnerSpawnedEntityFinder' && context.abilityEntityQueries) {
     const query = compileTargetReferenceAbilityEntityQuerySource(

@@ -1,6 +1,9 @@
 import { compileActionNode } from '../src/compiler/actions/combatActionLeafProjection.ts';
 import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
-import { collectCompiledBuffIds } from '../src/compiler/references/compiledReferences.ts';
+import {
+  collectCompiledBuffIds,
+  collectCompiledBuffApplications,
+} from '../src/compiler/references/compiledReferences.ts';
 import { describe, expect, it } from 'vitest';
 import { parseConditionLeafSource } from '../src/source/condition.ts';
 import { parseForcedElementalStatusActionSource } from '../src/source/elementalInflictionActions.ts';
@@ -86,11 +89,12 @@ describe('ForceSpellStatus 精确读取 EnergyShardType', () => {
         actionTargetTarget: 'enemy',
       },
     );
-    expect(steps).toEqual([
+    expect(steps).toMatchObject([
       {
         kind: 'forceSpellStatus',
         parameters: {
-          target: 'enemy',
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
           element: 'heat',
           consumedElement: 'cryo',
           consumedLayers: { kind: 'constant', value: 2 },
@@ -100,6 +104,9 @@ describe('ForceSpellStatus 精确读取 EnergyShardType', () => {
       },
     ]);
     expect([...collectCompiledBuffIds(steps)]).toEqual(['buff_common_fire_fire_burning_triggered']);
+    expect(collectCompiledBuffApplications(steps)).toEqual([
+      { buffId: 'buff_common_fire_fire_burning_triggered', target: 'enemy', source: 'caster' },
+    ]);
   });
   it.each([
     [0, 'Fire'],

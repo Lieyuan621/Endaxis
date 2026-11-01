@@ -32,7 +32,7 @@ export function compareKnownNumbers(
   }
 }
 
-/** 固定木桩模型中不依赖运行时几何、每次严格产生一个零空间点的写入。 */
+/** 固定木桩模型中不依赖运行时几何、成功时产生一个零空间点的写入；不保证中心存在或调用成功。 */
 export function isStaticZeroSpacePointWrite(write: TargetGroupActionSource): boolean {
   return (
     (write.producerType === 'FindTargetAction' ||
@@ -117,6 +117,22 @@ export function propagateGuaranteedSingletonZeroSpaceFacts(
     if (body.kind === 'leaf') {
       if (body.value.family !== 'targetGroup') continue;
       const write = body.value.action;
+      if (isStaticZeroSpacePointWrite(write)) {
+        // FindTargetAction 无法解析中心/宿主时保留旧组；成功则恰写入一个位置。
+        // “最多一个位置”不能证明首次调用一定成功，也不能借用单敌人数量假设。
+        const ownerExists =
+          write.selectorOwner === 'ActionOwner' || write.selectorOwner === 'ActionSource';
+        const centerExists =
+          write.center === 'ActionOwner' ||
+          write.center === 'ActionSource' ||
+          (write.center === 'ContextTarget' && state.has(write.centerContextKey));
+        if (
+          state.has(write.targetGroupKey) ||
+          (write.producerType === 'FindTargetAction' && ownerExists && centerExists)
+        )
+          state.add(write.targetGroupKey);
+        continue;
+      }
       if (options.writeProducesSingleton(write, state)) state.add(write.targetGroupKey);
       else state.delete(write.targetGroupKey);
       continue;

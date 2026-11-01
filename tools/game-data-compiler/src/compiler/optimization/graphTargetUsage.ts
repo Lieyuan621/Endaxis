@@ -46,6 +46,7 @@ export function collectUnobservedGraphTargetGroups(
     )[COMPILED_BUFF_CAPTURED_TARGET_GROUPS];
     captured?.enemyKeys.forEach(key => reads.add(key));
     captured?.zeroSpaceKeys.forEach(key => reads.add(key));
+    captured?.enemyOrSpatialKeys?.forEach(key => reads.add(key));
     for (const [field, child] of Object.entries(record)) {
       if (record.kind === 'spawnAbilityEntity' && field === 'parameters' && child) {
         const { definition: _definition, ...parameters } = child as Record<string, unknown>;

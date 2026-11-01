@@ -34,6 +34,7 @@ import type { GameplayTag } from '../tags/gameplayTags';
 import { COMBAT_FRAME_INTERVAL } from '../time/combatClock';
 import { AbilityEntityInstanceIdAllocator } from './abilityEntityInstanceIdAllocator';
 import { EntitySkillHostGroup } from './callbackSkillHost';
+import { sameRuntimeTarget } from './runtimeTargetContext';
 import {
   advanceAbilityEntityLifetime,
   advanceAbilityEntityRelease,
@@ -43,6 +44,9 @@ import {
 export interface LogicalAbilityEntitySpawnRequest {
   /** 已按原生 OnStart 初始化的生命属性；目录不猜测 HP 默认值或再次求值黑板。 */
   readonly soul?: {
+    readonly canBeHitIndividually?: boolean;
+    readonly onlyHitByNormalAttack?: boolean;
+    readonly halfBlockAngle?: number;
     readonly canBeDirectlyBuffed: boolean;
     readonly damageTransferType: 'sharedDamage';
     readonly useMainBodyPoise?: boolean;
@@ -61,6 +65,8 @@ export interface LogicalAbilityEntitySpawnRequest {
   readonly ownerId: string;
   readonly source: RuntimeTargetRef;
   readonly target?: RuntimeTargetRef;
+  readonly targets?: readonly RuntimeTargetRef[];
+  readonly allowMultiInputTarget?: boolean;
   readonly overrideDurationSeconds?: number;
   readonly dieWhenSourceDies?: boolean;
   readonly blackboardAssignments?: Readonly<Record<string, ActionBlackboardValue>>;
@@ -91,6 +97,8 @@ export interface LogicalAbilityEntitySnapshot {
   readonly source: RuntimeTargetRef;
   readonly sourceSkillCastId?: number;
   readonly target?: RuntimeTargetRef;
+  readonly targets?: readonly RuntimeTargetRef[];
+  readonly allowMultiInputTarget?: boolean;
   readonly childSkillId?: string;
   readonly remainingDurationSeconds: number | null;
   readonly elapsedDurationSeconds: number;
@@ -321,6 +329,9 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
           ? {}
           : {
               soul: {
+                canBeHitIndividually: request.soul.canBeHitIndividually ?? false,
+                onlyHitByNormalAttack: request.soul.onlyHitByNormalAttack ?? false,
+                halfBlockAngle: request.soul.halfBlockAngle ?? 0,
                 canBeDirectlyBuffed: request.soul.canBeDirectlyBuffed,
                 damageTransferType: request.soul.damageTransferType,
                 useMainBodyPoise: request.soul.useMainBodyPoise ?? false,
@@ -351,6 +362,12 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
           ? {}
           : { sourceSkillCastId: request.sourceSkillCastId }),
         ...(request.target === undefined ? {} : { target: request.target }),
+        ...(request.targets === undefined
+          ? {}
+          : { targets: request.targets.map(target => ({ ...target })) }),
+        ...(request.allowMultiInputTarget === undefined
+          ? {}
+          : { allowMultiInputTarget: request.allowMultiInputTarget }),
         dieWhenSourceDies: request.dieWhenSourceDies ?? false,
         blackboard: blackboard.runtimeState,
         durationPeriodSeconds: remainingDurationSeconds,
@@ -502,11 +519,24 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
   }
 
   setTarget(entity: RuntimeTargetRef, target: RuntimeTargetRef): void {
-    this.#requireInstance(entity).state.target = target;
+    this.setTargets(entity, [target]);
+  }
+
+  setTargets(entity: RuntimeTargetRef, targets: readonly RuntimeTargetRef[]): void {
+    const state = this.#requireInstance(entity).state;
+    state.targets = targets.map(target => ({ ...target }));
+    state.target = state.targets[0];
+  }
+
+  targets(entity: RuntimeTargetRef): readonly RuntimeTargetRef[] {
+    const state = this.#requireInstance(entity).state;
+    return (state.targets ?? (state.target === undefined ? [] : [state.target])).map(target => ({
+      ...target,
+    }));
   }
 
   isMarkedDead(target: RuntimeTargetRef): boolean {
-    return this.runtimeState.deadSources.some(dead => this.#sameTarget(dead, target));
+    return this.runtimeState.deadSources.some(dead => sameRuntimeTarget(dead, target));
   }
 
   /** SetAbilityEntityDuration.Assign 限制到出生周期；不改变独立的实体局部时钟。 */
@@ -601,10 +631,12 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
         instance.state.soul.mainBody,
       );
     this.#hooks.killed?.(this.#snapshot(instance), reason);
+    // 能力实体同样可以作为来源；原生 OnDie 会触发其子实体登记的来源死亡回调。
+    this.notifySourceDied(entity);
   }
 
   notifySourceDied(source: RuntimeTargetRef): number {
-    if (!this.runtimeState.deadSources.some(dead => this.#sameTarget(dead, source))) {
+    if (!this.runtimeState.deadSources.some(dead => sameRuntimeTarget(dead, source))) {
       this.runtimeState.deadSources.push(source);
     }
     const targets = [...this.#instances.values()]
@@ -612,14 +644,14 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
         instance =>
           instance.state.isAlive &&
           ((instance.state.soul !== undefined &&
-            this.#sameTarget(instance.state.soul.mainBody, source)) ||
-            (instance.state.dieWhenSourceDies && this.#sameTarget(instance.state.source, source))),
+            sameRuntimeTarget(instance.state.soul.mainBody, source)) ||
+            (instance.state.dieWhenSourceDies && sameRuntimeTarget(instance.state.source, source))),
       )
       .map(instance => ({
         target: { kind: 'abilityEntity' as const, instanceId: instance.state.instanceId },
         reason:
           instance.state.soul !== undefined &&
-          this.#sameTarget(instance.state.soul.mainBody, source)
+          sameRuntimeTarget(instance.state.soul.mainBody, source)
             ? ('soulMainBodyDied' as const)
             : ('sourceDied' as const),
       }));
@@ -675,6 +707,60 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     return target.kind === 'abilityEntity'
       ? (this.#instances.get(target.instanceId)?.state.soul?.mainBody ?? target)
       : target;
+  }
+
+  /**
+   * FilterEnemyPartBlockAngle 的木桩投影：范围查询已假定目标处于有效范围内，
+   * 不模拟方位，主体与部位同点（方向夹角为零）。独立受击部位不参与互斥。
+   * 同组优先选择输入中符合条件的部位，其次唯一阻挡部位；距离平局保留原生组顺序。
+   */
+  filterHitBoxParts(
+    targets: readonly RuntimeTargetRef[],
+    inputTarget: RuntimeTargetRef | undefined,
+    normalAttack: boolean,
+  ): readonly RuntimeTargetRef[] {
+    const groups = new Map<string, RuntimeTargetRef[]>();
+    for (const target of targets) {
+      if (target.kind !== 'abilityEntity') continue;
+      const instance = this.#instances.get(target.instanceId);
+      if (!instance?.state.soul || instance.state.soul.canBeHitIndividually) continue;
+      const body = instance.state.soul.mainBody;
+      const key = runtimeTargetEntityId(body)!;
+      let group = groups.get(key);
+      if (!group) groups.set(key, (group = []));
+      group.push(target);
+      if (!group.some(item => sameRuntimeTarget(item, body))) {
+        const candidate = targets.find(item => sameRuntimeTarget(item, body));
+        if (candidate) group.push(candidate);
+      }
+    }
+    const removed: RuntimeTargetRef[] = [];
+    for (const group of groups.values()) {
+      const blocking = group.filter(target => {
+        if (target.kind !== 'abilityEntity') return false;
+        const soul = this.#instances.get(target.instanceId)?.state.soul;
+        return (
+          soul !== undefined &&
+          (soul.halfBlockAngle ?? 0) >= 0 &&
+          (!soul.onlyHitByNormalAttack || normalAttack)
+        );
+      });
+      // 原生倒序扫描阻挡部位；输入目标优先终止扫描。
+      const selected =
+        blocking
+          .reverse()
+          .find(target => inputTarget !== undefined && sameRuntimeTarget(target, inputTarget)) ??
+        (blocking.length === 1 ? blocking[0]! : group[0]!);
+      removed.push(...group.filter(target => !sameRuntimeTarget(target, selected)));
+    }
+    return targets.filter(target => !removed.some(item => sameRuntimeTarget(item, target)));
+  }
+
+  /** ChannelingAction.OnTick 对非独立部位使用主体记录次数，但不替换子动作输入。 */
+  channelingCountTarget(target: RuntimeTargetRef): RuntimeTargetRef {
+    if (target.kind !== 'abilityEntity') return target;
+    const soul = this.#instances.get(target.instanceId)?.state.soul;
+    return soul && !soul.canBeHitIndividually ? soul.mainBody : target;
   }
 
   /** ResolvePartBuffSource 查询实际实例的原生配置，不从来源干员或模板名称推断。 */
@@ -788,6 +874,12 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
         ? {}
         : { sourceSkillCastId: instance.state.sourceSkillCastId }),
       ...(instance.state.target === undefined ? {} : { target: instance.state.target }),
+      ...(instance.state.targets === undefined
+        ? {}
+        : { targets: instance.state.targets.map(target => ({ ...target })) }),
+      ...(instance.state.allowMultiInputTarget === undefined
+        ? {}
+        : { allowMultiInputTarget: instance.state.allowMultiInputTarget }),
       ...(instance.state.definition.childSkill === undefined
         ? {}
         : { childSkillId: instance.state.definition.childSkill.skillId }),
@@ -797,18 +889,5 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       isAlive: instance.state.isAlive,
       blackboard: instance.blackboard.snapshot(),
     });
-  }
-
-  #sameTarget(left: RuntimeTargetRef, right: RuntimeTargetRef): boolean {
-    if (left.kind !== right.kind) return false;
-    if (left.kind === 'enemy') return true;
-    if (left.kind === 'operator' && right.kind === 'operator') {
-      return left.operatorId === right.operatorId;
-    }
-    return (
-      left.kind === 'abilityEntity' &&
-      right.kind === 'abilityEntity' &&
-      left.instanceId === right.instanceId
-    );
   }
 }

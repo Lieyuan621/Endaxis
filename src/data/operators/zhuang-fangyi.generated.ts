@@ -21,6 +21,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack1',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -176,6 +177,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_2',
+            faction: 'good',
             recycleDelaySeconds: 0.100000001490116,
             entityInitialValues: {},
             hit: {},
@@ -196,6 +198,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_1',
+            faction: 'good',
             recycleDelaySeconds: 0.100000001490116,
             entityInitialValues: {},
             hit: {},
@@ -397,6 +400,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_2',
+            faction: 'good',
             recycleDelaySeconds: 0.100000001490116,
             entityInitialValues: {},
             hit: {},
@@ -417,6 +421,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_1',
+            faction: 'good',
             recycleDelaySeconds: 0.100000001490116,
             entityInitialValues: {},
             hit: {},
@@ -437,6 +442,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_1',
+            faction: 'good',
             recycleDelaySeconds: 0.100000001490116,
             entityInitialValues: {},
             hit: {},
@@ -457,6 +463,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_attack_sword_2',
+            faction: 'good',
             recycleDelaySeconds: 0.100000001490116,
             entityInitialValues: {},
             hit: {},
@@ -656,7 +663,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack5ActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
           },
         },
         next: null,
@@ -833,7 +840,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -849,7 +856,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -900,7 +907,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -916,7 +923,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -967,7 +974,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -983,7 +990,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -1034,7 +1041,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -1050,7 +1057,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -1275,7 +1282,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -1291,7 +1298,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -1342,7 +1349,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -1358,7 +1365,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -1409,7 +1416,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -1425,7 +1432,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -1476,7 +1483,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -1492,7 +1499,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             stringBlackboardAssignments: { EntityBB_hitedMark: 'attack1UltHitMark' },
           },
         },
@@ -1713,7 +1720,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'thunder',
           },
         },
@@ -1729,7 +1736,7 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3_ultActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'thunder',
           },
         },
@@ -1864,7 +1871,22 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3_ult: SkillDefinition = {
 export const zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph = {
   main: {
     nodes: {
-      dealDamage_1: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 1.2 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_2: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1878,24 +1900,24 @@ export const zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_1',
       },
-      startTimeDilation_2: {
+      startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      gainFinisherSp_3: {
+      gainFinisherSp_4: {
         action: {
           kind: 'gainFinisherSp',
           parameters: {
@@ -1904,9 +1926,9 @@ export const zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph = {
             factor: { kind: 'constant', value: 1 },
           },
         },
-        next: 'startTimeDilation_2',
+        next: 'startTimeDilation_3',
       },
-      dealDamage_4: {
+      dealDamage_5: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1919,9 +1941,9 @@ export const zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'gainFinisherSp_3',
+        next: 'gainFinisherSp_4',
       },
-      reachSkillOperableBoundary_5: {
+      reachSkillOperableBoundary_6: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -1934,7 +1956,7 @@ export const zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_6: {
+      applyBuff_7: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1947,7 +1969,7 @@ export const zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_7: {
+      applyBuff_8: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1978,11 +2000,11 @@ export const zhuangFangyiChr_0030_zhuangfy_power_attack: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 11, endFrame: 14, sequence: { $sequence: 'dealDamage_1' } },
-    { startFrame: 40, endFrame: 43, sequence: { $sequence: 'dealDamage_4' } },
-    { startFrame: 41, endFrame: 45, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
-    { startFrame: 0, endFrame: 45, sequence: { $sequence: 'applyBuff_6' } },
-    { startFrame: 0, endFrame: 41, sequence: { $sequence: 'applyBuff_7' } },
+    { startFrame: 11, endFrame: 14, sequence: { $sequence: 'dealDamage_2' } },
+    { startFrame: 40, endFrame: 43, sequence: { $sequence: 'dealDamage_5' } },
+    { startFrame: 41, endFrame: 45, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 0, endFrame: 45, sequence: { $sequence: 'applyBuff_7' } },
+    { startFrame: 0, endFrame: 41, sequence: { $sequence: 'applyBuff_8' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -2007,10 +2029,21 @@ export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_endActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_8: {
+      findTargets_8: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -2132,7 +2165,7 @@ export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_end: SkillDefinition 
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 125, endFrame: 128, sequence: { $sequence: 'ifElse_5' } },
-    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_8' } },
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_8' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_10' } },
     { startFrame: 0, endFrame: 5, sequence: { $sequence: 'ifElse_14' } },
     { startFrame: 0, endFrame: 6, sequence: { $sequence: 'inheritBuffById_15' } },
@@ -2236,6 +2269,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
             schedule: { endFrame: 2, callbacks: [{ event: 'reach', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'swordPos' },
             entityInitialValues: {},
@@ -2502,7 +2536,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'context', key: 'smart_target' },
             query: {
               kind: 'tag',
               tagQueryType: 'hasAny',
@@ -2642,9 +2676,11 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'smart_target' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.25 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -2678,8 +2714,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -2698,7 +2732,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
         },
         next: 'checkCondition_50',
       },
-      applyBuff_52: {
+      applyBuff_53: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2710,27 +2744,27 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_55: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_22' },
-          whenTrue: { $sequence: 'applyBuff_52' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
       ifElse_56: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'constant', value: true },
-          whenTrue: { $sequence: 'applyBuff_52' },
-          whenFalse: { $sequence: 'ifElse_55' },
+          condition: { kind: 'conditionNode', nodeId: 'data_22' },
+          whenTrue: { $sequence: 'applyBuff_53' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      anyCondition_65: {
+      ifElse_57: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'constant', value: true },
+          whenTrue: { $sequence: 'applyBuff_53' },
+          whenFalse: { $sequence: 'ifElse_56' },
+        },
+        next: null,
+      },
+      anyCondition_66: {
         action: {
           kind: 'anyCondition',
           parameters: {},
@@ -2741,7 +2775,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
         },
         next: null,
       },
-      jumpTimeline_66: {
+      jumpTimeline_67: {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 116 },
@@ -2749,7 +2783,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_67: {
+      reachSkillOperableBoundary_68: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -2889,7 +2923,14 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
       },
       data_22: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'smart_target' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_23: {
         type: 'boolean',
@@ -2911,7 +2952,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
       },
       data_25: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'anyCondition_65' } },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'anyCondition_66' } },
       },
     },
   },
@@ -2949,11 +2990,11 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill: SkillDefinition = {
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'ifElse_41' } },
     { startFrame: 13, endFrame: 16, sequence: { $sequence: 'ifElse_48' } },
     { startFrame: 123, endFrame: 126, sequence: { $sequence: 'checkCondition_51' } },
-    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'ifElse_56' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'ifElse_57' } },
     { startFrame: 123, endFrame: 126, sequence: { $sequence: 'checkCondition_51' } },
-    { startFrame: 16, endFrame: 116, sequence: { $sequence: 'jumpTimeline_66' } },
-    { startFrame: 45, endFrame: 116, sequence: { $sequence: 'reachSkillOperableBoundary_67' } },
-    { startFrame: 120, endFrame: 147, sequence: { $sequence: 'reachSkillOperableBoundary_67' } },
+    { startFrame: 16, endFrame: 116, sequence: { $sequence: 'jumpTimeline_67' } },
+    { startFrame: 45, endFrame: 116, sequence: { $sequence: 'reachSkillOperableBoundary_68' } },
+    { startFrame: 120, endFrame: 147, sequence: { $sequence: 'reachSkillOperableBoundary_68' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'enemy',
@@ -3180,6 +3221,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
             schedule: { endFrame: 2, callbacks: [{ event: 'reach', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'swordPos' },
             entityInitialValues: {},
@@ -3299,7 +3341,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'context', key: 'smart_target' },
             query: {
               kind: 'tag',
               tagQueryType: 'hasAny',
@@ -3340,6 +3382,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
             schedule: { endFrame: 2, callbacks: [{ event: 'reach', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'swordPos' },
             entityInitialValues: {},
@@ -3417,7 +3460,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
         },
         next: null,
       },
-      applyBuff_49: {
+      applyBuff_50: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -3429,27 +3472,27 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
         },
         next: null,
       },
-      ifElse_52: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_17' },
-          whenTrue: { $sequence: 'applyBuff_49' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
       ifElse_53: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'constant', value: true },
-          whenTrue: { $sequence: 'applyBuff_49' },
-          whenFalse: { $sequence: 'ifElse_52' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
+          whenTrue: { $sequence: 'applyBuff_50' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      spawnAbilityEntity_54: {
+      ifElse_54: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'constant', value: true },
+          whenTrue: { $sequence: 'applyBuff_50' },
+          whenFalse: { $sequence: 'ifElse_53' },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_55: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
@@ -3464,7 +3507,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
         },
         next: null,
       },
-      createSpatialPointTargets_55: {
+      createSpatialPointTargets_56: {
         action: {
           kind: 'createSpatialPointTargets',
           parameters: {
@@ -3473,9 +3516,9 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
             origin: { kind: 'context', key: 'smart_target' },
           },
         },
-        next: 'spawnAbilityEntity_54',
+        next: 'spawnAbilityEntity_55',
       },
-      calculateActionValue_56: {
+      calculateActionValue_57: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
@@ -3485,16 +3528,16 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
             right: { kind: 'valueNode', nodeId: 'data_19' },
           },
         },
-        next: 'createSpatialPointTargets_55',
+        next: 'createSpatialPointTargets_56',
       },
-      checkCondition_58: {
+      checkCondition_59: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
         },
         next: 'finishBuffsById_14',
       },
-      anyCondition_61: {
+      anyCondition_62: {
         action: {
           kind: 'anyCondition',
           parameters: {},
@@ -3505,7 +3548,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
         },
         next: null,
       },
-      jumpTimeline_62: {
+      jumpTimeline_63: {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 100 },
@@ -3513,14 +3556,14 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
         },
         next: null,
       },
-      holdBuffsById_70: {
+      holdBuffsById_71: {
         action: {
           kind: 'holdBuffsById',
           parameters: { target: 'caster', buffIds: ['buff_chr_0030_zhuangfy_ult_base'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_71: {
+      reachSkillOperableBoundary_72: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -3641,7 +3684,14 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
       },
       data_17: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'smart_target' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_18: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_SwordNum' } },
       data_19: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up_per_conduct' } },
@@ -3676,7 +3726,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
       },
       data_23: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'anyCondition_61' } },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'anyCondition_62' } },
       },
     },
   },
@@ -3710,12 +3760,12 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ult: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_9' } },
     { startFrame: 5, endFrame: 6, sequence: { $sequence: 'ifElse_48' } },
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'ifElse_53' } },
-    { startFrame: 15, endFrame: 18, sequence: { $sequence: 'calculateActionValue_56' } },
-    { startFrame: 100, endFrame: 103, sequence: { $sequence: 'checkCondition_58' } },
-    { startFrame: 16, endFrame: 100, sequence: { $sequence: 'jumpTimeline_62' } },
-    { startFrame: 0, endFrame: 18, sequence: { $sequence: 'holdBuffsById_70' } },
-    { startFrame: 30, endFrame: 143, sequence: { $sequence: 'reachSkillOperableBoundary_71' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'ifElse_54' } },
+    { startFrame: 15, endFrame: 18, sequence: { $sequence: 'calculateActionValue_57' } },
+    { startFrame: 100, endFrame: 103, sequence: { $sequence: 'checkCondition_59' } },
+    { startFrame: 16, endFrame: 100, sequence: { $sequence: 'jumpTimeline_63' } },
+    { startFrame: 0, endFrame: 18, sequence: { $sequence: 'holdBuffsById_71' } },
+    { startFrame: 30, endFrame: 143, sequence: { $sequence: 'reachSkillOperableBoundary_72' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'enemy',
@@ -3738,8 +3788,15 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -3818,7 +3875,7 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'context', key: 'smart_target' },
             outputKey: 'inflictCnt',
             query: {
               kind: 'tag',
@@ -3839,7 +3896,7 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
         },
         next: null,
       },
-      changeResource_13: {
+      changeResource_14: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -3852,7 +3909,7 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
         },
         next: null,
       },
-      calculateActionValue_14: {
+      calculateActionValue_15: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
@@ -3862,9 +3919,9 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
             right: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'changeResource_13',
+        next: 'changeResource_14',
       },
-      changeResource_15: {
+      changeResource_16: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -3875,34 +3932,34 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
             targets: { kind: 'source' },
           },
         },
-        next: 'calculateActionValue_14',
+        next: 'calculateActionValue_15',
       },
-      ifElse_16: {
+      ifElse_17: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: 'changeResource_15' },
+          whenTrue: { $sequence: 'changeResource_16' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_17: {
+      startTimeDilation_18: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'smart_target' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'ifElse_16',
+        next: 'ifElse_17',
       },
-      finishBuffsByTag_18: {
+      finishBuffsByTag_19: {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
@@ -3913,9 +3970,9 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
             reason: 'early',
           },
         },
-        next: 'startTimeDilation_17',
+        next: 'startTimeDilation_18',
       },
-      dealDamage_19: {
+      dealDamage_20: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -3928,9 +3985,9 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_10' },
           },
         },
-        next: 'finishBuffsByTag_18',
+        next: 'finishBuffsByTag_19',
       },
-      reachSkillOperableBoundary_20: {
+      reachSkillOperableBoundary_21: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -3991,7 +4048,14 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
       data_8: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'smart_target' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_10: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
@@ -4021,8 +4085,8 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_1' } },
     { startFrame: 24, endFrame: 27, sequence: { $sequence: 'ifElse_12' } },
-    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'dealDamage_19' } },
-    { startFrame: 25, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
+    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'dealDamage_20' } },
+    { startFrame: 25, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'enemy',
@@ -4045,8 +4109,15 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -4125,7 +4196,7 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'context', key: 'smart_target' },
             outputKey: 'inflictCnt',
             query: {
               kind: 'tag',
@@ -4163,13 +4234,13 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'smart_target' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'createTimedMarker_13',
@@ -4212,6 +4283,7 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0030_zhuangfy_combo_skill_ring',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -4254,7 +4326,7 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph = {
                       forEachContextTarget_3: {
                         action: {
                           kind: 'forEachContextTarget',
-                          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                          parameters: { targets: { kind: 'inputTarget' } },
                           body: { $sequence: 'checkCondition_2' },
                         },
                         next: null,
@@ -4513,10 +4585,9 @@ export const zhuangFangyiChr_0030_zhuangfy_ultimate_skillActionGraph = {
           parameters: {
             priority: 100,
             targetScale: { kind: 'constant', value: 0 },
-            ignoredTargets: [],
-            ignoredAbilityEntityTargets: [
-              { kind: 'context', contextKey: 'ult_postmodel_mirror' },
-              { kind: 'context', contextKey: 'ult_postmodel' },
+            ignoredTargets: [
+              { kind: 'context', key: 'ult_postmodel_mirror' },
+              { kind: 'context', key: 'ult_postmodel' },
             ],
           },
         },
@@ -5119,7 +5190,7 @@ const zhuangFangyiBuff3ActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'inflictCnt',
             query: {
               kind: 'tag',
@@ -5144,13 +5215,13 @@ const zhuangFangyiBuff3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'owner' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -5286,12 +5357,18 @@ const zhuangFangyiBuff4ActionGraph = {
         },
         next: 'findOwnerSpawnedAbilityEntities_3',
       },
-      mergeContextTargets_5: {
+      findTargets_5: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByTag',
+              owner: { kind: 'owner' },
+              tags: ['Skill/Character/chr_0030_zhuangfy/SwordTar'],
+              tagQueryType: 'hasAny',
+            },
             saveToContextKey: 'swordTar',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'ifElse_4',
@@ -5306,7 +5383,7 @@ const zhuangFangyiBuff4ActionGraph = {
             right: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
-        next: 'mergeContextTargets_5',
+        next: 'findTargets_5',
       },
       modifyActionValue_7: {
         action: {
@@ -5375,12 +5452,18 @@ const zhuangFangyiBuff4ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_12: {
+      findTargets_12: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'smartTargetByTag',
+              owner: { kind: 'owner' },
+              tags: ['Skill/Character/chr_0030_zhuangfy/SwordTar'],
+              tagQueryType: 'hasAny',
+            },
             saveToContextKey: 'thunderTar',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'finishBuffsByTag_11',
@@ -5447,7 +5530,7 @@ const zhuangFangyiBuff4: SkillBuffDefinition = {
   lifecycleSequences: {
     start: [{ $sequence: 'calculateActionValue_6' }],
     trigger: [{ $sequence: 'checkCondition_10' }],
-    finish: [{ $sequence: 'mergeContextTargets_12' }],
+    finish: [{ $sequence: 'findTargets_12' }],
   },
   actionGraph: zhuangFangyiBuff4ActionGraph,
 };
@@ -5479,6 +5562,61 @@ const zhuangFangyiBuff5ActionGraph = {
         },
         next: 'spawnAbilityEntity_1',
       },
+      applyBuff_4: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_normal_skill_trigger_sword_tar' }],
+            targets: { kind: 'context', key: 'nextTar' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'applyBuff_4' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_2' },
+        },
+        next: null,
+      },
+      findTargets_8: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'source' },
+            query: {
+              kind: 'exclude',
+              targets: {
+                kind: 'smartTargetByTag',
+                owner: { kind: 'source' },
+                tagQueryType: 'hasAny',
+                tags: ['Skill/Character/Common/SpellStatus/Conduct'],
+              },
+              excludeTargets: { kind: 'owner' },
+            },
+            saveToContextKey: 'nextTar',
+          },
+        },
+        next: 'ifElse_7',
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'nextTar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: true,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
     },
   },
   macros: {},
@@ -5494,6 +5632,9 @@ const zhuangFangyiBuff5: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'createSpatialPointTargets_2' }] },
+  abilityEventResponses: [
+    { event: 'ownerHpZero', priority: 0, sequence: { $sequence: 'findTargets_8' } },
+  ],
   actionGraph: zhuangFangyiBuff5ActionGraph,
 };
 
@@ -5514,7 +5655,7 @@ const zhuangFangyiBuff6ActionGraph = {
       setCharacterPassiveUiValue_2: {
         action: {
           kind: 'setCharacterPassiveUiValue',
-          parameters: { target: 'caster', value: { kind: 'valueNode', nodeId: 'data_1' } },
+          parameters: { target: { kind: 'owner' }, value: { kind: 'valueNode', nodeId: 'data_1' } },
         },
         next: 'modifyActionValue_1',
       },
@@ -5757,12 +5898,18 @@ const zhuangFangyiBuff11ActionGraph = {
         },
         next: 'modifyActionValue_3',
       },
-      mergeContextTargets_5: {
+      findTargets_5: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'source' },
+            query: {
+              kind: 'smartTargetByTag',
+              owner: { kind: 'source' },
+              tagQueryType: 'hasAny',
+              tags: ['Skill/Character/chr_0030_zhuangfy/SwordTar'],
+            },
             saveToContextKey: 'thunderTar',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'ifElse_4',
@@ -5806,12 +5953,21 @@ const zhuangFangyiBuff11ActionGraph = {
         },
         next: 'finishBuffsById_8',
       },
-      mergeContextTargets_10: {
+      findTargets_10: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'context', key: 'thunderTar' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'thunderTarDmg',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -5906,13 +6062,13 @@ const zhuangFangyiBuff11ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'thunderTarDmg' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -6147,12 +6303,12 @@ const zhuangFangyiBuff11: SkillBuffDefinition = {
   },
   attributeModifiers: [],
   scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_5' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_5' } },
     { startFrame: 3, endFrame: 6, sequence: { $sequence: 'checkCondition_7' } },
     { startFrame: 9, endFrame: 12, sequence: { $sequence: 'checkCondition_9' } },
-    { startFrame: 3, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_10' } },
+    { startFrame: 3, endFrame: 6, sequence: { $sequence: 'findTargets_10' } },
     { startFrame: 3, endFrame: 6, sequence: { $sequence: 'checkCondition_23' } },
-    { startFrame: 6, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_10' } },
+    { startFrame: 6, endFrame: 9, sequence: { $sequence: 'findTargets_10' } },
     { startFrame: 6, endFrame: 9, sequence: { $sequence: 'checkCondition_35' } },
   ],
   actionGraph: zhuangFangyiBuff11ActionGraph,
@@ -6324,8 +6480,9 @@ const zhuangFangyiBuff15ActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0030_zhuangfy_ultimate_skill_end',
-            target: 'caster',
+            target: { kind: 'owner' },
             skipApplyCost: false,
             inheritSourceSkillCastInfo: false,
           },
@@ -6737,12 +6894,20 @@ export const zhuangFangyi: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              mergeContextTargets_2: {
+              findTargets_2: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: null,
@@ -6775,12 +6940,20 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              mergeContextTargets_10: {
+              findTargets_10: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'source' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'source' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_9',
@@ -6799,12 +6972,20 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              mergeContextTargets_7: {
+              findTargets_7: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'source' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'source' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_6',
@@ -6821,8 +7002,8 @@ export const zhuangFangyi: OperatorDefinition = {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
                   condition: { kind: 'conditionNode', nodeId: 'data_3' },
-                  whenTrue: { $sequence: 'mergeContextTargets_7' },
-                  whenFalse: { $sequence: 'mergeContextTargets_10' },
+                  whenTrue: { $sequence: 'findTargets_7' },
+                  whenFalse: { $sequence: 'findTargets_10' },
                 },
                 next: null,
               },
@@ -6869,7 +7050,7 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         blackboard: { atk_scale: 0.2 },
         scheduledSequences: [
-          { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_2' } },
+          { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_2' } },
           { startFrame: 0, endFrame: 1, sequence: { $sequence: 'dealDamage_3' } },
           { startFrame: 9, endFrame: 16, sequence: { $sequence: 'repeatEachTick_12' } },
           { startFrame: 897, endFrame: 900, sequence: { $sequence: 'finishOwner_13' } },
@@ -6889,12 +7070,21 @@ export const zhuangFangyi: OperatorDefinition = {
                 action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                 next: null,
               },
-              mergeContextTargets_7: {
+              findTargets_7: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                    continuousIntervalSeconds: 0.0333333351,
                   },
                 },
                 next: null,
@@ -6903,14 +7093,13 @@ export const zhuangFangyi: OperatorDefinition = {
                 action: {
                   kind: 'startTimeDilation',
                   parameters: {
-                    scope: 'entity',
+                    scope: 'hitStop',
+                    attacker: { kind: 'owner' },
+                    targets: { kind: 'inputTarget' },
+                    affectType: 'Both',
                     durationSeconds: { kind: 'constant', value: 0.1 },
-                    slot: 'TimeDilation/Layer/Entity/HitStop',
                     priority: 10,
                     curve: { kind: 'named', key: 'char_hard_stop' },
-                    finishByAction: false,
-                    targets: ['enemy'],
-                    abilityEntityTargets: [{ kind: 'current' }],
                   },
                 },
                 next: null,
@@ -6945,7 +7134,7 @@ export const zhuangFangyi: OperatorDefinition = {
                   parameters: {
                     nativeChanneling: {
                       catchUpMissedTicks: false,
-                      target: { kind: 'fixed', target: 'enemy' },
+                      target: { kind: 'context', key: 'tar' },
                       executeEachFrame: true,
                       triggerIntervalSeconds: 0.033,
                       maxCountPerTarget: 1,
@@ -7046,9 +7235,9 @@ export const zhuangFangyi: OperatorDefinition = {
         blackboard: { atb: 20, atk_scale: 0.2, hasGainAtb: 0, poise: 15 },
         scheduledSequences: [
           { startFrame: 897, endFrame: 900, sequence: { $sequence: 'finishOwner_6' } },
-          { startFrame: 0, endFrame: 2, sequence: { $sequence: 'mergeContextTargets_7' } },
-          { startFrame: 4, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_7' } },
-          { startFrame: 8, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_7' } },
+          { startFrame: 0, endFrame: 2, sequence: { $sequence: 'findTargets_7' } },
+          { startFrame: 4, endFrame: 6, sequence: { $sequence: 'findTargets_7' } },
+          { startFrame: 8, endFrame: 10, sequence: { $sequence: 'findTargets_7' } },
           { startFrame: 897, endFrame: 900, sequence: { $sequence: 'finishOwner_6' } },
           { startFrame: 0, endFrame: 12, sequence: { $sequence: 'repeatEachTick_14' } },
           { startFrame: 0, endFrame: 2, sequence: { $sequence: 'checkCondition_18' } },
@@ -7067,6 +7256,24 @@ export const zhuangFangyi: OperatorDefinition = {
           actionGraph: {
             main: {
               nodes: {
+                findTargets_2: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar',
+                    },
+                  },
+                  next: null,
+                },
                 createTimedMarker_3: {
                   action: {
                     kind: 'createTimedMarker',
@@ -7104,7 +7311,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 forEachContextTarget_6: {
                   action: {
                     kind: 'forEachContextTarget',
-                    parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                    parameters: { targets: { kind: 'context', key: 'tar' } },
                     body: { $sequence: 'checkCondition_5' },
                   },
                   next: null,
@@ -7141,6 +7348,7 @@ export const zhuangFangyi: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.2 },
           scheduledSequences: [
+            { startFrame: 3, endFrame: 4, sequence: { $sequence: 'findTargets_2' } },
             { startFrame: 3, endFrame: 4, sequence: { $sequence: 'forEachContextTarget_6' } },
             { startFrame: 897, endFrame: 900, sequence: { $sequence: 'finishOwner_7' } },
           ],
@@ -7149,6 +7357,24 @@ export const zhuangFangyi: OperatorDefinition = {
           actionGraph: {
             main: {
               nodes: {
+                findTargets_2: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar',
+                    },
+                  },
+                  next: null,
+                },
                 createTimedMarker_3: {
                   action: {
                     kind: 'createTimedMarker',
@@ -7186,7 +7412,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 forEachContextTarget_6: {
                   action: {
                     kind: 'forEachContextTarget',
-                    parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                    parameters: { targets: { kind: 'context', key: 'tar' } },
                     body: { $sequence: 'checkCondition_5' },
                   },
                   next: null,
@@ -7223,6 +7449,7 @@ export const zhuangFangyi: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.2 },
           scheduledSequences: [
+            { startFrame: 3, endFrame: 4, sequence: { $sequence: 'findTargets_2' } },
             { startFrame: 3, endFrame: 4, sequence: { $sequence: 'forEachContextTarget_6' } },
             { startFrame: 897, endFrame: 900, sequence: { $sequence: 'finishOwner_7' } },
           ],
@@ -7231,6 +7458,24 @@ export const zhuangFangyi: OperatorDefinition = {
           actionGraph: {
             main: {
               nodes: {
+                findTargets_2: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar',
+                    },
+                  },
+                  next: null,
+                },
                 createTimedMarker_3: {
                   action: {
                     kind: 'createTimedMarker',
@@ -7268,7 +7513,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 forEachContextTarget_6: {
                   action: {
                     kind: 'forEachContextTarget',
-                    parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                    parameters: { targets: { kind: 'context', key: 'tar' } },
                     body: { $sequence: 'checkCondition_5' },
                   },
                   next: null,
@@ -7305,6 +7550,7 @@ export const zhuangFangyi: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.2 },
           scheduledSequences: [
+            { startFrame: 3, endFrame: 4, sequence: { $sequence: 'findTargets_2' } },
             { startFrame: 3, endFrame: 4, sequence: { $sequence: 'forEachContextTarget_6' } },
             { startFrame: 897, endFrame: 900, sequence: { $sequence: 'finishOwner_7' } },
           ],
@@ -7313,6 +7559,24 @@ export const zhuangFangyi: OperatorDefinition = {
           actionGraph: {
             main: {
               nodes: {
+                findTargets_2: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar',
+                    },
+                  },
+                  next: null,
+                },
                 createTimedMarker_3: {
                   action: {
                     kind: 'createTimedMarker',
@@ -7350,7 +7614,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 forEachContextTarget_6: {
                   action: {
                     kind: 'forEachContextTarget',
-                    parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                    parameters: { targets: { kind: 'context', key: 'tar' } },
                     body: { $sequence: 'checkCondition_5' },
                   },
                   next: null,
@@ -7387,6 +7651,7 @@ export const zhuangFangyi: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.2 },
           scheduledSequences: [
+            { startFrame: 3, endFrame: 4, sequence: { $sequence: 'findTargets_2' } },
             { startFrame: 3, endFrame: 4, sequence: { $sequence: 'forEachContextTarget_6' } },
             { startFrame: 897, endFrame: 900, sequence: { $sequence: 'finishOwner_7' } },
           ],
@@ -7401,12 +7666,21 @@ export const zhuangFangyi: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              mergeContextTargets_1: {
+              findTargets_1: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                    continuousIntervalSeconds: 0.0333333351,
                   },
                 },
                 next: null,
@@ -7456,7 +7730,7 @@ export const zhuangFangyi: OperatorDefinition = {
                   parameters: {
                     nativeChanneling: {
                       catchUpMissedTicks: false,
-                      target: { kind: 'fixed', target: 'enemy' },
+                      target: { kind: 'context', key: 'tar' },
                       executeEachFrame: true,
                       triggerIntervalSeconds: 0.033,
                       maxCountPerTarget: 1,
@@ -7498,7 +7772,7 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         blackboard: { atb: 0, atk_scale: 0.2, poise: 0 },
         scheduledSequences: [
-          { startFrame: 30, endFrame: 33, sequence: { $sequence: 'mergeContextTargets_1' } },
+          { startFrame: 30, endFrame: 33, sequence: { $sequence: 'findTargets_1' } },
           { startFrame: 30, endFrame: 33, sequence: { $sequence: 'repeatEachTick_5' } },
         ],
       },
@@ -7593,7 +7867,12 @@ export const zhuangFangyi: OperatorDefinition = {
                   kind: 'findTargets',
                   parameters: {
                     owner: { kind: 'owner' },
-                    query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+                    query: {
+                      kind: 'smartTargetByTag',
+                      owner: { kind: 'owner' },
+                      tags: ['Skill/Character/chr_0030_zhuangfy/SwordTar'],
+                      tagQueryType: 'hasAny',
+                    },
                     saveToContextKey: 'thunderTar',
                   },
                 },
@@ -7625,12 +7904,21 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              mergeContextTargets_6: {
+              findTargets_6: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                    continuousIntervalSeconds: 0.0333333351,
                   },
                 },
                 next: null,
@@ -7729,14 +8017,13 @@ export const zhuangFangyi: OperatorDefinition = {
                 action: {
                   kind: 'startTimeDilation',
                   parameters: {
-                    scope: 'entity',
+                    scope: 'hitStop',
+                    attacker: { kind: 'owner' },
+                    targets: { kind: 'context', key: 'tar' },
+                    affectType: 'Both',
                     durationSeconds: { kind: 'constant', value: 0.4 },
-                    slot: 'TimeDilation/Layer/Entity/HitStop',
                     priority: 10,
                     curve: { kind: 'named', key: 'char_hard_stop' },
-                    finishByAction: false,
-                    targets: ['enemy'],
-                    abilityEntityTargets: [{ kind: 'current' }],
                   },
                 },
                 next: null,
@@ -7760,7 +8047,11 @@ export const zhuangFangyi: OperatorDefinition = {
               applyElementalInfliction_20: {
                 action: {
                   kind: 'applyElementalInfliction',
-                  parameters: { element: 'electric', isExtra: false },
+                  parameters: {
+                    element: 'electric',
+                    isExtra: false,
+                    target: { kind: 'context', key: 'tar' },
+                  },
                 },
                 next: 'dealDamage_19',
               },
@@ -7947,8 +8238,8 @@ export const zhuangFangyi: OperatorDefinition = {
         scheduledSequences: [
           { startFrame: 0, endFrame: 12, sequence: { $sequence: 'calculateActionValue_2' } },
           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_5' } },
-          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'mergeContextTargets_6' } },
-          { startFrame: 69, endFrame: 70, sequence: { $sequence: 'mergeContextTargets_6' } },
+          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'findTargets_6' } },
+          { startFrame: 69, endFrame: 70, sequence: { $sequence: 'findTargets_6' } },
           { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_17' } },
           { startFrame: 69, endFrame: 70, sequence: { $sequence: 'checkCondition_23' } },
           { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_24' } },

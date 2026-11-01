@@ -11,6 +11,7 @@ import {
 } from '../src/compiler/actions/actionGraphBuilder.ts';
 import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
 import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
+import type { DeclaredBlackboardValueSource } from '../src/source/blackboard.ts';
 import type { KnownNativeActionLeafSource } from '../src/source/actionLeaf.ts';
 import type { NativeActionNodeSource } from '../src/source/controlFlow.ts';
 import { gameplayTagIdFromPath } from '../src/source/nativeGameplayTags.ts';
@@ -29,7 +30,7 @@ type ProjectileFixture = {
   callbackContext: typeof returnProjectionContext;
   projectionContext: Omit<CombatActionProjectionContextSource, 'graph'>;
   reachGraph: SkillActionGraphSource<KnownNativeActionLeafSource>;
-  template: { projectileId: string; entityBlackboard: [] };
+  template: { projectileId: string; entityBlackboard: readonly DeclaredBlackboardValueSource[] };
   launch: ProjectileLaunchActionSource;
   runtime: ProjectileRuntimeSource;
 };
@@ -56,6 +57,9 @@ function projectFixture(
       ]),
     },
     callbackContext: input.callbackContext,
+    callbackExtensions: {
+      compileProjectileLaunch: (launch, path, context) => project(launch, path, context),
+    },
   });
   const hostGraph = createActionGraphBuilder<CompiledBuffStepSource>();
   const result = project(input.launch, input.sourcePath, {
@@ -292,20 +296,19 @@ describe('独立到达回调的编译', () => {
     const action = scope.steps[0]!;
     expect(action.kind).toBe('launchProjectile');
     if (action.kind !== 'launchProjectile') throw new Error('unexpected action');
-    expect(action.callbacks[0]!.skill.blackboard).toEqual({ value: 1 });
-    expect(
-      action.callbacks[0]!.skill.scheduledSequences.map(t => [t.startFrame, t.endFrame]),
-    ).toEqual([
+    const skill = action.callbacks[0]!.skill;
+    if ('$skill' in skill) throw new Error('expected an inline callback');
+    expect(skill.blackboard).toEqual({ value: 1 });
+    expect(skill.scheduledSequences.map(t => [t.startFrame, t.endFrame])).toEqual([
       [0, 0],
       [2, 3],
     ]);
     expect(
-      action.callbacks[0]!.skill.scheduledSequences.every(
-        t =>
-          readActionGraphChain(action.callbacks[0]!.skill.actionGraph.main, t.sequence).length > 0,
+      skill.scheduledSequences.every(
+        t => readActionGraphChain(skill.actionGraph.main, t.sequence).length > 0,
       ),
     ).toBe(true);
-    expect(action.callbacks[0]!.skill.naturalDurationFrames).toBe(30);
+    expect(skill.naturalDurationFrames).toBe(30);
   });
 
   it('显式时间表保留与到达并存的阻挡回调', () => {
@@ -408,10 +411,10 @@ it.each([false, true])('命中回调保留目标标签过滤：%s', filtered => 
         : {}),
     },
   });
-  expect(action.callbacks[0]!.skill.blackboard).toEqual({ value: 1 });
-  expect(
-    action.callbacks[0]!.skill.scheduledSequences.map(t => [t.startFrame, t.endFrame]),
-  ).toEqual([
+  const skill = action.callbacks[0]!.skill;
+  if ('$skill' in skill) throw new Error('expected an inline callback');
+  expect(skill.blackboard).toEqual({ value: 1 });
+  expect(skill.scheduledSequences.map(t => [t.startFrame, t.endFrame])).toEqual([
     [0, 0],
     [2, 3],
   ]);
@@ -733,4 +736,62 @@ it('碰撞与到达路径并存时由时间表明确命中方式', () => {
       hitKind,
     );
   }
+});
+
+it('递归发射保留外层技能引用和新实体终止标记，不继续内嵌展开', () => {
+  const input = reachInput();
+  const recursiveLaunch: ProjectileLaunchActionSource = {
+    ...input.launch,
+    assignEntityBlackboard: true,
+    assignments: [
+      {
+        targetKey: 'EntityBB_bounced',
+        useDirectValue: true,
+        valueType: 'Numeric',
+        numericValue: 1,
+        stringValue: '',
+        inputValueKey: '',
+      },
+    ],
+  };
+  const timeline = input.reachGraph.actionGroup.timelineActions[0]!;
+  input.reachGraph = {
+    ...input.reachGraph,
+    actionGroup: {
+      passiveEvents: [],
+      timelineActions: [
+        {
+          ...timeline,
+          sequence: {
+            ...timeline.sequence,
+            actions: [
+              callbackNode({
+                kind: 'leaf',
+                value: {
+                  family: 'projectile',
+                  action: recursiveLaunch,
+                },
+              }),
+            ],
+          },
+        },
+      ],
+    },
+  };
+  input.template = {
+    ...input.template,
+    entityBlackboard: [{ key: 'EntityBB_bounced', value: 0, isDynamic: true }],
+  };
+  const result = projectFixture(input).steps[0]!;
+  const skill = result.callbacks[0]!.skill;
+  if ('$skill' in skill) throw new Error('expected initial callback definition');
+  const bounce = Object.values(skill.actionGraph.main.nodes).find(
+    node => node.action.kind === 'launchProjectile',
+  )?.action;
+  if (!bounce || bounce.kind !== 'launchProjectile') throw new Error('expected recursive launch');
+  expect(bounce.callbacks[0]!.skill).toEqual({ $skill: skill.skillId });
+  expect(bounce.parameters.entityAssignments).toEqual({
+    EntityBB_bounced: { kind: 'constant', value: 1 },
+  });
+  expect(() => JSON.stringify(result)).not.toThrow();
 });

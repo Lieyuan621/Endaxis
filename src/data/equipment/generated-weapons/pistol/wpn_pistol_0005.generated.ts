@@ -115,7 +115,12 @@ const definition = {
               action: {
                 kind: 'aura',
                 parameters: {
-                  targets: { kind: 'fixed', target: 'enemy' },
+                  targets: {
+                    kind: 'enemyByTags',
+                    tagQueryType: 'hasAll',
+                    tags: [],
+                    scope: 'global',
+                  },
                   source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   buffs: [

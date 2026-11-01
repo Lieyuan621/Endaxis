@@ -1059,6 +1059,7 @@ describe('跨技能黑板用途', () => {
     )!.action;
     if (launch.kind !== 'launchProjectile') throw new Error('missing projectile');
     const child = launch.callbacks[0]!.skill;
+    if ('$skill' in child) throw new Error('expected an inline callback');
     expect(Object.values(child.actionGraph.main.nodes).map(node => node.action.kind)).toEqual([
       'changeResource',
     ]);

@@ -15,6 +15,7 @@ import type {
 } from '../../compiler/combatProgram';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import {
+  firstRuntimeEntityTarget,
   runtimeTargetEntityId,
   runtimeTargetFromEntityId,
 } from '../../game-data/logicalAbilityEntity';
@@ -39,17 +40,15 @@ export function resolveDirectActionTargets(
   context: CombatOperationContext,
   casterId?: string,
 ): readonly RuntimeTargetRef[] | undefined {
-  if (query.kind === 'battleMainTarget') return [{ kind: 'enemy' }];
   if (query.kind === 'godEntity') return [{ kind: 'godEntity' }];
   if (query.kind === 'context') return context.targetContext?.getOptional(query.key) ?? [];
-  if (query.kind === 'inputTarget')
-    return context.actionInputTarget ? [context.actionInputTarget] : [];
+  if (query.kind === 'inputTarget') return context.actionInputTargets ?? [];
   if (query.kind === 'owner' || query.kind === 'source') {
     const id = query.kind === 'owner' ? context.actionOwnerId : context.actionSourceId;
     return id === undefined ? [] : [runtimeTargetFromEntityId(id)];
   }
   if (query.kind === 'fixed') {
-    if (query.target === 'enemy') return [{ kind: 'enemy' }];
+    if (query.target === 'enemy') return undefined;
     if (casterId === undefined) throw new Error('caster target requires an operator');
     return [{ kind: 'operator', operatorId: casterId }];
   }
@@ -74,17 +73,26 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       ): boolean | undefined;
       /** 实体当前的离地高度；无法提供高度的目标返回 undefined。 */
       height?(target: RuntimeTargetRef): number | undefined;
+      /** 查询句柄能否解析位置；与目标生命值或是否位于可命中区无关。 */
+      hasPosition?(target: RuntimeTargetRef): boolean;
+      /** 已通过类型筛选的目标是否进入原生 Pull 处理路径，不代表位移成功。 */
+      processPullTarget?(target: RuntimeTargetRef): boolean;
       mainBody?(target: RuntimeTargetRef): RuntimeTargetRef;
       exclusionTarget?(target: RuntimeTargetRef): RuntimeTargetRef;
       factionHitBox?(
         owner: RuntimeTargetRef,
         query: Extract<CompiledTargetQuery, { kind: 'factionHitBox' }>,
+        context: CombatOperationContext,
       ): readonly RuntimeTargetRef[];
-      abilityEntityTarget?(owner: RuntimeTargetRef): RuntimeTargetRef | undefined;
+      abilityEntityTarget?(owner: RuntimeTargetRef): readonly RuntimeTargetRef[];
       ownerSoul?(owner: RuntimeTargetRef): RuntimeTargetRef | undefined;
-      enemyMatchesTags?(query: Extract<CompiledTargetQuery, { kind: 'enemyByTags' }>): boolean;
+      partBuffSource?(target: RuntimeTargetRef): RuntimeTargetRef;
+      enemiesByTags?(
+        query: Extract<CompiledTargetQuery, { kind: 'enemyByTags' }>,
+      ): readonly RuntimeTargetRef[];
       hasMatchingBuff?(target: RuntimeTargetRef, query: BuffLookupQuery): boolean | undefined;
       entityLifeState?(target: RuntimeTargetRef): 'alive' | 'dead' | 'unknown' | undefined;
+      typhoeaArcherySelected?(): readonly RuntimeTargetRef[];
       mainTarget(): RuntimeTargetRef | undefined;
       ownerSpawned(query: OwnerSpawnedAbilityEntityQuery): readonly RuntimeTargetRef[];
       ownerSpawnedProjectiles?(ownerId: string): readonly RuntimeTargetRef[];
@@ -93,6 +101,63 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
   ) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'blowOffEnemy') {
+      if (!context || !this.targetQueries?.entityLifeState)
+        throw new Error('blowOffEnemy requires action context and entity life-state queries');
+      const source = this.queryTargets(step.parameters.source, context).find(
+        target => target.kind !== 'spatialPoint',
+      );
+      if (!source || this.targetQueries.entityLifeState(source) !== 'alive') return false;
+      // 当前模型没有独立 hit-reaction 通道。OnlyDead 原生不处理实体，
+      // 非空普通目标表仍返回成功，不能按过滤后的死亡目标数量判断。
+      return this.queryTargets(step.parameters.targets, context).length > 0;
+    }
+    if (step.kind === 'pushBack') {
+      if (!context || !this.targetQueries?.entityLifeState)
+        throw new Error('pushBack requires action context and entity life-state queries');
+      // 原生 firstTarget 跳过位置包装，但不跳过失效的首个实体。
+      const source = this.queryTargets(step.parameters.source, context).find(
+        target => target.kind !== 'spatialPoint',
+      );
+      if (!source || this.targetQueries.entityLifeState(source) !== 'alive') return false;
+      if (this.queryTargets(step.parameters.targets, context).length === 0) return false;
+      // 来源点查询在非空候选表之后执行；是否能移动不影响动作返回值。
+      this.queryTargets(step.parameters.sourcePoint, context);
+      return true;
+    }
+    if (step.kind === 'pull') {
+      const { hasPosition, processPullTarget } = this.targetQueries ?? {};
+      if (!context || !hasPosition || !processPullTarget)
+        throw new Error('pull requires action context, position and component queries');
+      // 原生先获取候选快照，再查询目的地；后者不得改变本次候选。
+      const targets = [...this.queryTargets(step.parameters.targets, context)];
+      const destination = this.queryTargets(step.parameters.destination, context);
+      // 仅复刻是否找到位置；不移动目标，故无需选取或计算具体坐标。
+      if (!destination.some(hasPosition)) return step.parameters.alwaysNext;
+      let result = step.parameters.alwaysNext;
+      for (const target of targets) {
+        if (!hasPosition(target)) continue;
+        const type = resolveCombatObjectType(target, this.resolveAbilityEntityObjectType);
+        if (
+          step.parameters.targetType === 'Enemy'
+            ? type !== 'enemy' && type !== 'enemyPart'
+            : type !== 'character'
+        )
+          continue;
+        // 不短路：即使已有一项成功，仍处理其余候选。
+        if (processPullTarget(target)) result = true;
+      }
+      return result;
+    }
+    if (step.kind === 'saveTargetDistance') {
+      if (context === undefined) throw new Error('saveTargetDistance requires an action context');
+      const source = firstRuntimeEntityTarget(this.queryTargets(step.parameters.source, context));
+      const target = firstRuntimeEntityTarget(this.queryTargets(step.parameters.target, context));
+      // 原生解析失败保持成功且不覆盖黑板；零空间只替代距离，不替代目标存在性。
+      if (source !== undefined && target !== undefined)
+        context.blackboard.assignDynamicUnconditionally(step.parameters.outputKey, 0);
+      return true;
+    }
     if (step.kind === 'pickContextTarget') {
       if (context?.targetContext === undefined) {
         throw new Error('Context target selection requires a combat target context');
@@ -109,7 +174,7 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     if (step.kind === 'physicsCast') {
       if (!context?.targetContext || !this.targetQueries?.height)
         throw new Error('physicsCast requires target context and ground height query');
-      const source = this.queryTargets(step.parameters.source, context)[0];
+      const source = firstRuntimeEntityTarget(this.queryTargets(step.parameters.source, context));
       const height = source && this.targetQueries.height(source);
       const distance =
         height === undefined ? undefined : height + step.parameters.startHeightOffset;
@@ -133,7 +198,7 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       if (step.parameters.saveToContextKey === '') return true;
       if (!context?.targetContext)
         throw new Error('saveTransferredSource requires a target context');
-      const source = this.queryTargets(step.parameters.source, context)[0];
+      const source = firstRuntimeEntityTarget(this.queryTargets(step.parameters.source, context));
       const sourceId = source && runtimeTargetEntityId(source);
       const partId =
         sourceId === undefined
@@ -186,8 +251,13 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     }
     if (step.kind === 'findTargets') {
       if (!context?.targetContext) throw new Error('findTargets requires a target context');
-      const owner = this.queryTargets(step.parameters.owner, context)[0];
-      if (!owner || owner.kind === 'spatialPoint') return false;
+      const owner = firstRuntimeEntityTarget(this.queryTargets(step.parameters.owner, context));
+      if (!owner) return false;
+      if (
+        step.parameters.center !== undefined &&
+        this.queryTargets(step.parameters.center, context).length === 0
+      )
+        return false;
       context.targetContext.set(
         step.parameters.saveToContextKey,
         this.queryTargets(step.parameters.query, context),
@@ -206,10 +276,17 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       const replace = step.parameters.replacePartsWithMainBodies;
       if (replace && this.targetQueries?.mainBody === undefined)
         throw new Error('part replacement requires the ability entity directory');
-      context.targetContext.set(
-        step.parameters.saveToContextKey,
-        replace ? targets.map(target => this.targetQueries!.mainBody!(target)) : targets,
-      );
+      if (replace) targets = targets.map(target => this.targetQueries!.mainBody!(target));
+      if (step.parameters.convertEntitiesToPositions)
+        targets = targets.map(target =>
+          target.kind === 'spatialPoint'
+            ? target
+            : {
+                kind: 'spatialPoint',
+                pointId: this.runtimeState.nextSpatialPointId++,
+              },
+        );
+      context.targetContext.set(step.parameters.saveToContextKey, targets);
       return true;
     }
     if (step.kind === 'findCharacterTeamTargets') {
@@ -431,6 +508,16 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     query: CompiledTargetQuery,
     context: CombatOperationContext,
   ): readonly RuntimeTargetRef[] {
+    if (query.kind === 'typhoeaArcherySelected') {
+      if (!this.targetQueries?.typhoeaArcherySelected)
+        throw new Error('archery selected target directory is unavailable');
+      return [...this.targetQueries.typhoeaArcherySelected()];
+    }
+    if (query.kind === 'battleMainTarget' || (query.kind === 'fixed' && query.target === 'enemy')) {
+      if (!this.targetQueries) throw new Error('main target requires an entity directory');
+      const target = this.targetQueries.mainTarget();
+      return target === undefined ? [] : [target];
+    }
     const direct = resolveDirectActionTargets(query, context, this.operatorId);
     if (direct !== undefined) return direct;
     if (query.kind === 'distanceFilter') {
@@ -439,7 +526,9 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       if (!center) return [];
       const threshold = resolveActionValueOperand(query.threshold, context.blackboard);
       // 范围筛选保留既有近似，不随投射物飞行距离改变。
-      return compareCombatNumbers(0, Math.fround(threshold), query.operator) ? targets : [];
+      return compareCombatNumbers(0, Math.fround(threshold), query.operator)
+        ? targets
+        : targets.filter(target => target.kind === 'spatialPoint');
     }
     if (query.kind === 'tagFilter') {
       return this.filterTargetsByTags(this.queryTargets(query.targets, context), [
@@ -458,7 +547,7 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       });
     }
     if (query.kind === 'abilitySystemSource') {
-      const owner = this.queryTargets(query.owner, context)[0];
+      const owner = firstRuntimeEntityTarget(this.queryTargets(query.owner, context));
       const id = owner === undefined ? undefined : runtimeTargetEntityId(owner);
       if (id === undefined) return [];
       if (!this.findAbilitySystemSource)
@@ -466,15 +555,20 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       return [this.findAbilitySystemSource(id)];
     }
     if (query.kind === 'factionHitBox') {
-      const owner = this.queryTargets(query.owner, context)[0];
-      if (!owner || owner.kind === 'spatialPoint') return [];
+      const owner = firstRuntimeEntityTarget(this.queryTargets(query.owner, context));
+      if (!owner) return [];
       if (!this.targetQueries?.factionHitBox)
         throw new Error('ally hit-box query requires scene targets');
-      return this.targetQueries.factionHitBox(owner, query);
+      return this.targetQueries.factionHitBox(owner, query, context);
+    }
+    if (query.kind === 'partBuffSource') {
+      const resolve = this.targetQueries?.partBuffSource;
+      if (!resolve) throw new Error('part Buff source query requires an entity directory');
+      return this.queryTargets(query.targets, context).map(resolve);
     }
     if (query.kind === 'ownerSoul') {
-      const owner = this.queryTargets(query.owner, context)[0];
-      if (!owner || owner.kind === 'spatialPoint') return [];
+      const owner = firstRuntimeEntityTarget(this.queryTargets(query.owner, context));
+      if (!owner) return [];
       if (!this.targetQueries?.ownerSoul)
         throw new Error('owner soul query requires an entity directory');
       const target = this.targetQueries.ownerSoul(owner);
@@ -483,21 +577,64 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     if (query.kind === 'abilityEntityTarget') {
       if (!this.targetQueries?.abilityEntityTarget)
         throw new Error('ability entity target query requires an entity directory');
-      const owner = this.queryTargets(query.owner, context)[0];
+      const owner = firstRuntimeEntityTarget(this.queryTargets(query.owner, context));
       if (owner?.kind !== 'abilityEntity') return [];
-      const target = this.targetQueries.abilityEntityTarget(owner);
-      return target === undefined ? [] : [target];
+      return this.targetQueries.abilityEntityTarget(owner).map(target => ({ ...target }));
+    }
+    if (query.kind === 'limit') {
+      if (!Number.isSafeInteger(query.count) || query.count < 0)
+        throw new Error('target limit must be a non-negative safe integer');
+      return this.queryTargets(query.targets, context).slice(0, query.count);
     }
     if (query.kind === 'exclude') {
       const targets = this.queryTargets(query.targets, context);
       const excluded = this.queryTargets(query.excludeTargets, context);
       return this.#excludeTargets(targets, excluded);
     }
+    if (query.kind === 'intersection') {
+      const targets = this.queryTargets(query.targets, context);
+      const parents = this.queryTargets(query.parentTargets, context);
+      const normalize = this.targetQueries?.partBuffSource;
+      if (!normalize) throw new Error('target containment requires the ability entity directory');
+      const normalizedParents = parents.map(normalize);
+      return targets.filter(target =>
+        normalizedParents.some(parent => sameTarget(parent, normalize(target))),
+      );
+    }
+    if (query.kind === 'smartTargetByBuff') {
+      const queries = this.targetQueries;
+      if (!queries?.enemiesByTags || !queries.hasMatchingBuff)
+        throw new Error('smart Buff query requires enemy and Buff readers');
+      const owner = firstRuntimeEntityTarget(this.queryTargets(query.owner, context));
+      if (owner === undefined) return [];
+      const candidates = queries.enemiesByTags({
+        kind: 'enemyByTags',
+        tags: [],
+        tagQueryType: 'hasAll',
+      });
+      const target =
+        candidates.find(candidate =>
+          queries.hasMatchingBuff!(candidate, { kind: 'id', buffIds: query.buffIds }),
+        ) ?? queries.mainTarget();
+      return target === undefined ? [] : [target];
+    }
+    if (query.kind === 'smartTargetByTag') {
+      if (!this.targetQueries?.enemiesByTags)
+        throw new Error('smart target query requires enemy tags');
+      const owner = firstRuntimeEntityTarget(this.queryTargets(query.owner, context));
+      if (owner === undefined) return [];
+      const target =
+        this.targetQueries.enemiesByTags({
+          kind: 'enemyByTags',
+          tagQueryType: query.tagQueryType,
+          tags: query.tags,
+        })[0] ?? this.targetQueries.mainTarget();
+      return target === undefined ? [] : [target];
+    }
     if (query.kind === 'enemyByTags') {
-      if (!this.targetQueries?.enemyMatchesTags)
+      if (!this.targetQueries?.enemiesByTags)
         throw new Error('enemy tag query requires a target tag reader');
-      const matches = this.targetQueries.enemyMatchesTags(query);
-      return matches ? [{ kind: 'enemy' }] : [];
+      return this.targetQueries.enemiesByTags(query);
     }
     if (query.kind === 'unfinishedProjectiles') {
       if (!this.listUnfinishedProjectiles) throw new Error('projectile query requires a directory');
@@ -506,7 +643,7 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     if (query.kind === 'characterTeam') {
       if (!this.characterTeam) throw new Error('team query requires a character team');
       const selectedOwner = query.excludeOwner
-        ? this.queryTargets(query.owner ?? { kind: 'owner' }, context)[0]
+        ? firstRuntimeEntityTarget(this.queryTargets(query.owner ?? { kind: 'owner' }, context))
         : undefined;
       const owner = selectedOwner === undefined ? undefined : runtimeTargetEntityId(selectedOwner);
       return [...this.characterTeam.listOperatorIds()]
@@ -520,8 +657,8 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       return id === undefined ? [] : [{ kind: 'operator', operatorId: id }];
     }
     if (query.kind === 'fixedPoint') {
-      const owner = this.queryTargets(query.owner, context)[0];
-      if (!owner || owner.kind === 'spatialPoint') return [];
+      const owner = firstRuntimeEntityTarget(this.queryTargets(query.owner, context));
+      if (!owner) return [];
       this.queryTargets(query.directionTarget, context);
       this.queryTargets(query.center, context);
       // 零空间模型保留一个位置目标及其身份，不执行几何偏移。
@@ -529,8 +666,8 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     }
     if (query.kind === 'mainTarget' || query.kind === 'ownerSpawned') {
       if (!this.targetQueries) throw new Error('target query requires an entity directory');
-      const owner = this.queryTargets(query.owner, context)[0];
-      if (!owner || owner.kind === 'spatialPoint') return [];
+      const owner = firstRuntimeEntityTarget(this.queryTargets(query.owner, context));
+      if (!owner) return [];
       if (query.kind === 'mainTarget') {
         const target = this.targetQueries.mainTarget();
         return target === undefined ? [] : [target];

@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { expect, it } from 'vitest';
 import { ExplicitCriticalSampleSource } from '../../../core/combat/random/criticalSampleSource';
 import { createEmptyScenario } from '../../../core/project/createProject';
@@ -10,7 +11,7 @@ import { createEditorSimulationService } from '../testSupport/editorSimulationSe
 it.each([false, true])('伊冯正式战技 SkillAffix 生命周期 interruption=%s', interrupted => {
   const scenario = createEmptyScenario('affix:yvonne', '伊冯 SkillAffix 生命周期');
   scenario.battle.durationFrames = 300;
-  scenario.enemy.editable.hp = 1e9;
+  firstScenarioEnemy(scenario).enemy.editable.hp = 1e9;
   scenario.tracks[0] = {
     id: 'track:yvonne',
     operator: {

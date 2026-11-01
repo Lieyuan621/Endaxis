@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { resolveImage } from '../../imageResources';
 import type { BuffDisplayName } from './buffDisplayName';
-/** 旧版 TimelineBuffLayer 的 Next 只读版本：18px 图标、层数角标和条纹持续条。 */
+/** 已定位的 Buff 展示段；不决定面板的状态筛选和行分配。 */
 import { computed } from 'vue';
 import { useDurationBarColor } from './durationBarColorContext';
-import { resolveDurationBarColor } from './durationBarColor';
+import type { DurationColorSurface } from './durationBarColor';
+import type { AttachmentConversion } from '../../../core/projection/enemyEffectViz';
+import { projectBuffTimelineColors } from './buffTimelineColors';
 import { useI18n } from 'vue-i18n';
 import type { PositionedDisplayBuffTimelineSegment } from '../../../core/projection/buffTimelineViz';
 import { resolveBuffDisplayName } from './buffDisplayName';
@@ -16,7 +18,11 @@ import { timelineLowerBuffTop, timelineUpperBuffTop } from './timelineTrackEffec
 import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
 
 const props = defineProps<{
+  rowSize?: number;
+  colorSurface?: DurationColorSurface;
+  attachmentConversions?: readonly AttachmentConversion[];
   segments: readonly PositionedDisplayBuffTimelineSegment[];
+  hiddenIcons?: ReadonlySet<PositionedDisplayBuffTimelineSegment>;
   prepFrames: number;
   pxPerFrame: number;
   prepEndFrame?: number;
@@ -43,8 +49,16 @@ const emit = defineEmits<{
   'open-detail': [target: BuffDetailTarget];
 }>();
 
-const ICON_SIZE = 18;
+const iconSize = computed(() => props.rowSize ?? 18);
 const durationBarColor = useDurationBarColor();
+const colors = computed(() =>
+  projectBuffTimelineColors(
+    props.segments,
+    props.attachmentConversions ?? [],
+    durationBarColor.value,
+    props.colorSurface ?? 'track',
+  ),
+);
 const BAR_GAP = 2;
 const ACTION_TOP_FALLBACK = 55;
 const attachmentBuffIds = new Set([
@@ -89,14 +103,17 @@ const items = computed(() =>
       ...segment,
       title,
       tooltip: modifierSummary ? `${title}\n${modifierSummary}` : title,
-      color: resolveDurationBarColor(durationBarColor.value, 'track', segment),
+      ...colors.value.get(segment)!,
       key: `${segment.targetId}:${segment.buffId}:${segment.instanceId}:${segment.startFrame}:${segment.startSequence ?? ''}`,
-      left,
+      left: left + (props.hiddenIcons?.has(segment) ? iconSize.value : 0),
+      hideIcon: props.hiddenIcons?.has(segment) ?? false,
       top:
-        props.placement === 'upper'
-          ? timelineUpperBuffTop(segment.lane)
-          : timelineLowerBuffTop(props.actionTop ?? ACTION_TOP_FALLBACK, segment.lane),
-      width: Math.max(0, right - left - ICON_SIZE - BAR_GAP * 2),
+        props.rowSize !== undefined
+          ? 2 + segment.lane * (props.rowSize + 4)
+          : props.placement === 'upper'
+            ? timelineUpperBuffTop(segment.lane)
+            : timelineLowerBuffTop(props.actionTop ?? ACTION_TOP_FALLBACK, segment.lane),
+      width: Math.max(0, right - left - iconSize.value - BAR_GAP * 2),
       icon,
       detail: {
         title,
@@ -155,22 +172,24 @@ const items = computed(() =>
     aria-label="Buff timeline"
   >
     <TimelineStatusSegment
+      :icon-width="iconSize"
+      :icon-height="iconSize"
       v-for="item in items"
       :key="item.key"
       :left="item.left"
       :top="item.top"
       :width="item.width"
       :title="item.tooltip"
+      :icon="item.icon"
+      fallback="+"
+      :hide-icon="item.hideIcon"
       :duration-color="item.color"
+      :end-color="item.endColor"
       :attachment="attachmentBuffIds.has(item.buffId)"
       :count="showBuffLayerBadge(item) ? item.layers : undefined"
       interactive
       @activate="emit('open-detail', item.detail)"
     >
-      <template #content>
-        <img v-if="item.icon" :src="item.icon" class="timeline-buff-icon" alt="" />
-        <span v-else class="timeline-buff-fallback">+</span>
-      </template>
     </TimelineStatusSegment>
   </div>
 </template>
@@ -190,17 +209,5 @@ const items = computed(() =>
 
 .timeline-buff-bands.is-lower {
   clip-path: inset(calc(var(--buff-action-top) + 50px) 0 2px 0);
-}
-
-.timeline-buff-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.timeline-buff-fallback {
-  color: #eef6ff;
-  font-size: 10px;
-  font-weight: 700;
 }
 </style>

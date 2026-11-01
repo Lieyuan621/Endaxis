@@ -13,6 +13,8 @@ export interface MonitorSectionLayout {
   readonly rects: Record<MonitorSectionKey, MonitorSectionRect>;
 }
 
+export const ENEMY_STATUS_CONTENT_TOP = 2;
+
 export const MONITOR_RESIZE_HANDLE_REACH = 6;
 export const MONITOR_COLLAPSED_STRIP_HEIGHT = 14;
 export const MONITOR_MINIMUM_HEIGHT = 116;
@@ -82,12 +84,13 @@ export function resolveMonitorSectionLayout(
   measuredHeight: number,
   collapsed: Record<MonitorSectionKey, boolean>,
   weights: MonitorSectionValues,
+  visibleKeys: readonly MonitorSectionKey[] = monitorSectionKeys,
 ): MonitorSectionLayout {
-  const expanded = monitorSectionKeys.filter(key => !collapsed[key]);
+  const expanded = visibleKeys.filter(key => !collapsed[key]);
   const minimums = monitorSectionBodyMinimums();
   const minimumBodySpace = expanded.reduce((sum, key) => sum + minimums[key], 0);
   const collapsedStripSpace =
-    MONITOR_COLLAPSED_STRIP_HEIGHT * (monitorSectionKeys.length - expanded.length);
+    MONITOR_COLLAPSED_STRIP_HEIGHT * (visibleKeys.length - expanded.length);
   const totalHeight = Math.min(
     MONITOR_MAXIMUM_HEIGHT,
     Math.max(
@@ -149,7 +152,7 @@ export function resolveMonitorSectionLayout(
 
   const rects = Object.fromEntries(
     monitorSectionKeys.map(key => {
-      const isCollapsed = collapsed[key];
+      const isCollapsed = visibleKeys.includes(key) && collapsed[key];
       const bodyHeight = isCollapsed ? 0 : bodies[key];
       const stripHeight = isCollapsed ? MONITOR_COLLAPSED_STRIP_HEIGHT : 0;
       return [

@@ -9,7 +9,7 @@
 使用 Node.js 22.12 或更高版本，在仓库根目录执行：
 
 ```sh
-npm run convert:legacy-timeline -- '<旧轴JSON路径>' tmp/converted-axis --mappings src/application/legacyTimeline/mappings.json
+npm run convert:legacy-timeline -- '<旧轴JSON路径>' '<输出目录>' --mappings src/application/legacyTimeline/mappings.json
 ```
 
 输出目录必须不存在，父目录需要存在。工具只创建新目录，不覆盖原文件。输出 `report.json`，转换可发布时另写 `project.json`；没有可用项目时以非零状态结束。
@@ -39,18 +39,18 @@ npm run convert:legacy-timeline -- '<旧轴JSON路径>' tmp/converted-axis --map
 ## 审计伤害
 
 ```sh
-node --experimental-strip-types tools/legacy-timeline/auditSimulation.ts tmp/converted-axis/project.json
+node --experimental-strip-types tools/legacy-timeline/auditSimulation.ts '<转换后的 project.json 路径>'
 ```
 
 审计只读项目，分别按存档结束线和完整时长重算，输出文件摘要、截止帧、命中数、期望伤害、来源分账及诊断。没有 `castId` 的公共伤害仍计入，不能因来源施法为空判断漏伤害。
 
 比较前统一定义版本、配装、随机模式和统计截止帧。公开旧轴通常表达可行的先后顺序，绝对时刻可能精度不足；输入告警不直接证明作者排错。发现差异后按命中、状态和原生顺序定位，不能把结果改成与旧版一样作为目标。
 
-## 验证与文件保管
+## 验证
 
 ```sh
 npx vitest run src/application/legacyTimeline tools/legacy-timeline --maxWorkers=1
 npx tsc -p tools/legacy-timeline/tsconfig.json
 ```
 
-保留原始输入，转换结果和审计放在 `tmp/`。私人存档、整批下载轴和临时结果不提交。可公开的回归只保留必要输入与预期行为，不以单个总伤数字替代完整验收。
+私人存档、整批下载轴和临时结果不提交。可公开的回归只保留必要输入与预期行为，不以单个总伤数字替代完整验收。

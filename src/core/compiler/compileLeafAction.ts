@@ -11,11 +11,16 @@ const LEAF_ACTION_KINDS = [
   'findTargets',
   'mergeContextTargets',
   'findCharacterTeamTargets',
+  'blowOffEnemy',
+  'pushBack',
+  'pull',
+  'saveTargetDistance',
   'createSpatialPointTargets',
   'findOwnerSpawnedAbilityEntities',
   'pickContextTarget',
   'saveTransferredSource',
   'setAbilityEntityRemainingDuration',
+  'setAbilityEntityTarget',
   'finishOwner',
   'interruptCurrentSkill',
   'startCurrentAbilityEntityChildSkillById',
@@ -98,6 +103,7 @@ const LEAF_ACTION_KINDS = [
   'changeNativeSkillType',
   'setCharacterPassiveUiValue',
   'inheritSkillCastInfoForBasicAttack',
+  'startTyphoeaArchery',
   'adjustSkillCooldown',
 ] as const;
 type LeafAction = CompiledStepForKind<(typeof LEAF_ACTION_KINDS)[number]>;
@@ -123,6 +129,14 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'findCharacterTeamTargets':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'blowOffEnemy':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'pushBack':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'pull':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'saveTargetDistance':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'createSpatialPointTargets':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'findOwnerSpawnedAbilityEntities':
@@ -132,6 +146,8 @@ export function compileLeafAction(
     case 'saveTransferredSource':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'setAbilityEntityRemainingDuration':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'setAbilityEntityTarget':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'interruptCurrentSkill':
     case 'finishOwner':
@@ -503,6 +519,7 @@ export function compileLeafAction(
     case 'changePlayerActionMode':
     case 'changeNativeSkillType':
     case 'setCharacterPassiveUiValue':
+    case 'startTyphoeaArchery':
     case 'inheritSkillCastInfoForBasicAttack':
     case 'adjustSkillCooldown':
       return { ...keyed, kind: step.kind, parameters: step.parameters } as ResolvedLeafAction;

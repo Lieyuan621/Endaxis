@@ -6,6 +6,7 @@
  */
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
 import { CombatObjectOrigins } from './combatObjectOrigins';
+import { isUnattributedDamageReceipt } from './hitEffectProjection';
 import {
   findBuffTimelineSegmentForDamage,
   projectBuffIconTimelineMetadata,
@@ -194,6 +195,7 @@ export function projectEnemyEffectViz(
   entries: readonly CombatReceiptEntry[],
   endFrame: number,
   entityBuffs: ReadonlyMap<string, string> = new Map(),
+  targetId?: string,
 ): EnemyEffectViz {
   if (!Number.isInteger(endFrame) || endFrame < 0) {
     throw new RangeError('endFrame must be a non-negative integer');
@@ -203,7 +205,9 @@ export function projectEnemyEffectViz(
   const attachmentConversions: AttachmentConversion[] = [];
   const buffSegments = projectBuffIconTimelineMetadata(entries, endFrame);
   const damageDisplayOwners = projectBuffDamageDisplayOwners(entries, buffSegments, entityBuffs);
+  const origins = new CombatObjectOrigins(entries);
   for (const entry of entries) {
+    if (targetId !== undefined && entry.targetId !== targetId) continue;
     const enemyBuffDamage =
       isBuffDamageReceipt(entry) &&
       entry.targetId === entry.data?.buffOwnerId &&
@@ -211,7 +215,8 @@ export function projectEnemyEffectViz(
     if (
       (entry.event === 'DamageApplied' && typeof entry.data?.spellBurstType === 'string') ||
       enemyBuffDamage ||
-      damageDisplayOwners[entry.sequence] !== undefined
+      damageDisplayOwners[entry.sequence] !== undefined ||
+      isUnattributedDamageReceipt(entry, origins)
     ) {
       damageHits.push(entry);
       if (typeof entry.data?.spellBurstType === 'string') {

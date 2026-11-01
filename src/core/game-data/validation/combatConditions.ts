@@ -1,3 +1,4 @@
+import { COMBAT_FACTIONS } from '../../../../packages/game-data-contract/src/primitives';
 import {
   BUFF_FINISH_REASONS,
   SKILL_INTERRUPT_REASONS,
@@ -92,7 +93,6 @@ export function validateCombatCondition(
       break;
     case 'skillHasHit':
     case 'combatActive':
-    case 'singleEnemyPresent':
     case 'eventDamageSkillCastRecorded':
     case 'eventSkillCastMatchesBuffSource':
       break;
@@ -490,11 +490,16 @@ export function validateTargetQuery(
       'mainCharacter',
       'battleMainTarget',
       'godEntity',
+      'typhoeaArcherySelected',
       'unfinishedProjectiles',
       'enemyByTags',
+      'smartTargetByTag',
+      'smartTargetByBuff',
       'fixed',
       'characterTeam',
       'exclude',
+      'intersection',
+      'limit',
       'buffFilter',
       'tagFilter',
       'distanceFilter',
@@ -502,6 +507,7 @@ export function validateTargetQuery(
       'abilitySystemSource',
       'abilityEntityTarget',
       'ownerSoul',
+      'partBuffSource',
       'factionHitBox',
       'fixedPoint',
       'ownerSpawned',
@@ -510,19 +516,45 @@ export function validateTargetQuery(
     out,
   );
   if (query.kind === 'context') requireString(query, 'key', path, out);
-  if (query.kind === 'enemyByTags') {
+  if (query.kind === 'smartTargetByTag') validateTargetQuery(query.owner, `${path}.owner`, out);
+  if (query.kind === 'smartTargetByBuff') {
+    validateTargetQuery(query.owner, `${path}.owner`, out);
+    if (
+      !Array.isArray(query.buffIds) ||
+      query.buffIds.some(id => typeof id !== 'string' || id.length === 0)
+    )
+      push(out, `${path}.buffIds`, 'expected non-empty Buff identifiers');
+  }
+  if (query.kind === 'enemyByTags' || query.kind === 'smartTargetByTag') {
     requireEnum(query, 'tagQueryType', TAG_QUERY_TYPES_SET, path, out);
     validateGameplayTags(query.tags, `${path}.tags`, out);
   }
+  if (query.kind === 'enemyByTags' && query.scope !== undefined && query.scope !== 'global')
+    push(out, `${path}.scope`, 'expected global');
+  if (
+    query.kind === 'enemyByTags' &&
+    query.reverse !== undefined &&
+    typeof query.reverse !== 'boolean'
+  )
+    push(out, `${path}.reverse`, 'expected boolean');
   if (query.kind === 'tagFilter') {
     validateTargetQuery(query.targets, `${path}.targets`, out);
     requireEnum(query, 'tagQueryType', TAG_QUERY_TYPES_SET, path, out);
     validateGameplayTags(query.tags, `${path}.tags`, out);
   }
   if (query.kind === 'fixed') requireEnum(query, 'target', new Set(['enemy', 'caster']), path, out);
+  if (query.kind === 'limit') {
+    validateTargetQuery(query.targets, `${path}.targets`, out);
+    if (typeof query.count !== 'number' || !Number.isSafeInteger(query.count) || query.count < 0)
+      out.push({ path: `${path}.count`, message: 'expected a non-negative safe integer' });
+  }
   if (query.kind === 'exclude') {
     validateTargetQuery(query.targets, `${path}.targets`, out);
     validateTargetQuery(query.excludeTargets, `${path}.excludeTargets`, out);
+  }
+  if (query.kind === 'intersection') {
+    validateTargetQuery(query.targets, `${path}.targets`, out);
+    validateTargetQuery(query.parentTargets, `${path}.parentTargets`, out);
   }
   if (query.kind === 'distanceFilter') {
     validateTargetQuery(query.targets, `${path}.targets`, out);
@@ -546,6 +578,7 @@ export function validateTargetQuery(
       }
     }
   }
+  if (query.kind === 'partBuffSource') validateTargetQuery(query.targets, `${path}.targets`, out);
   if (query.kind === 'characterTeam') {
     requireBoolean(query, 'excludeOwner', path, out);
     if (query.owner !== undefined) validateTargetQuery(query.owner, `${path}.owner`, out);
@@ -565,6 +598,14 @@ export function validateTargetQuery(
     validateTargetQuery(query.directionTarget, `${path}.directionTarget`, out);
   }
   if (query.kind === 'factionHitBox') {
+    if (
+      query.targetFactions !== undefined &&
+      (!Array.isArray(query.targetFactions) ||
+        query.targetFactions.some(
+          value => typeof value !== 'string' || !COMBAT_FACTIONS.some(faction => faction === value),
+        ))
+    )
+      push(out, `${path}.targetFactions`, 'expected an array of combat factions');
     if (query.factionTarget !== 'ally' && query.factionTarget !== 'anti')
       push(out, `${path}.factionTarget`, 'expected ally or anti');
     requireBoolean(query, 'checkAlive', path, out);

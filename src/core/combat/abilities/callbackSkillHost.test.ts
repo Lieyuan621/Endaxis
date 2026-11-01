@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 /** 回调技能从中途恢复后继续走同一时间轴，不重放施放、支付与已有命中。 */
 import { expect, it, vi } from 'vitest';
 import { createCallbackSkillHostFactory } from './callbackSkillHost';
@@ -149,7 +150,7 @@ it('多目标命中复用回调宿主，并逐次传递各自的输入目标', (
         expect(input?.skillCastInfo?.originSkillId).toBe('source');
       },
       execute: (_step, input) => {
-        seen.push(input?.actionInputTarget);
+        seen.push(input?.actionInputTargets?.[0]);
         return true;
       },
       evaluate: () => true,
@@ -202,7 +203,10 @@ it('恢复回调宿主后逐帧状态和回执一致，绑定不分配编号或�
     ],
   };
   const context = {
-    actionInputTarget: { kind: 'operator' as const, operatorId: 'original-controlled' },
+    actionInputTargets: singleTargetList({
+      kind: 'operator' as const,
+      operatorId: 'original-controlled',
+    }),
     blackboard: new ActionBlackboard(),
     actionOwnerAbilityEntity: { kind: 'abilityEntity' as const, instanceId: 12 },
     skillCastInfo: {
@@ -233,7 +237,9 @@ it('恢复回调宿主后逐帧状态和回执一致，绑定不分配编号或�
     programs.resolveDamageSnapshots(programs.register(program)),
   );
   original.start();
-  expect(original.runtimeState.skill.execution.inputTarget).toEqual(context.actionInputTarget);
+  expect(original.runtimeState.skill.execution.inputTargets?.[0]).toEqual(
+    context.actionInputTargets?.[0],
+  );
   original.advance(COMBAT_FRAME_INTERVAL);
   clock.advanceFrame();
   const saved = structuredClone({

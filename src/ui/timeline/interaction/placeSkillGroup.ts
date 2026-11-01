@@ -19,6 +19,9 @@ import type { RecursiveSkillChain } from '../../../application/simulation/recurs
 
 /** 放置命令生成稳定文档身份所需的端口。 */
 export type TimelineDocumentIdKind =
+  | 'enemyTarget'
+  | 'enemy'
+  | 'enemyPresence'
   | 'track'
   | 'skillCast'
   | 'scheduledSequence'

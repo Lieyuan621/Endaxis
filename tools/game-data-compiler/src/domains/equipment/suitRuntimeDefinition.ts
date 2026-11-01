@@ -8,7 +8,6 @@ import {
   buffRuntimeReadsBlackboardKey,
   collectBuffRuntimePresentationActionPaths,
   compileBuffRuntimeDefinitionSource,
-  isAfterEnemyDefeatedOnlyBuffRuntime,
   isPresentationOnlyBuffStackEffect,
 } from '../../compiler/buffs/buffRuntimeProjection.ts';
 import type { ActionGraphResourceDefinition } from '../../compiler/intermediateDefinitions.ts';
@@ -16,7 +15,6 @@ import {
   evaluateStandardStumpFullHealthComparison,
   standardStumpBuffAbilityEventOmissionReason,
 } from '../../compiler/scenario/standardStumpScenarioPolicy.ts';
-import { parseBuffRuntimeSource } from '../../source/buffRuntime.ts';
 import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
 import { requireRecord } from '../../source/primitives.ts';
 import type { EquipmentDefinitionDiagnosticSource } from './formalDefinition.ts';
@@ -95,16 +93,6 @@ export function compileEquipmentSuitRuntimeBatchSource(
         const raw = buffData[installation.buffId];
         if (raw === undefined)
           throw new Error(`BuffData: missing toggle Buff ${JSON.stringify(installation.buffId)}`);
-        const source = parseBuffRuntimeSource(raw, `BuffData.${installation.buffId}`);
-        if (isAfterEnemyDefeatedOnlyBuffRuntime(source)) {
-          diagnostics.push({
-            status: 'scenario-omitted',
-            sourcePath: `BuffData.${installation.buffId}.abilityEventAction`,
-            reason:
-              'enemy-defeated response occurs after the fixed single target simulation has ended',
-          });
-          continue;
-        }
         activeToggleInstallations.push(installation);
       }
     }

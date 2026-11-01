@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { describe, expect, it } from 'vitest';
 import { numberInput } from '../../../test/compiledGraphInputs';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
@@ -56,7 +57,7 @@ function fixture(
     targetContext,
     actionSourceId: 'healer',
     actionOwnerId: 'owner',
-    actionInputTarget: { kind: 'operator' as const, operatorId: 'input' },
+    actionInputTargets: singleTargetList({ kind: 'operator' as const, operatorId: 'input' }),
     buffSourceId: 'unrelated-buff-source',
     buffOwnerId: 'unrelated-buff-owner',
   };
@@ -65,6 +66,7 @@ function fixture(
     receipt,
     queryTargets: queries.queryTargets.bind(queries),
     resolveEntity: entityId => ({ entityId, vitals: vitals.get(entityId)! }),
+    isTargetAlive: () => true,
     resolveSourceAttribute: () => 100,
     delegate: terminal,
     ...overrides,
@@ -73,6 +75,29 @@ function fixture(
 }
 
 describe('原生治疗目标和结算', () => {
+  it('保存的死亡目标不接受治疗或发布事件，零血量但存活的木桩仍可治疗', () => {
+    const events: string[] = [];
+    const f = fixture(
+      { dead: 0, alive: 0 },
+      {
+        isTargetAlive: id => id !== 'dead',
+        emitSuccessfulHeal: event => events.push(`${event.event}:${event.payload.targetId}`),
+      },
+    );
+    expect(f.executor.execute(definite, f.context)).toBe(true);
+    expect(f.vitals.get('dead')!.health).toBe(0);
+    expect(f.vitals.get('alive')!.health).toBe(100);
+    expect(events).toEqual(['outputHeal:alive', 'receiveHeal:alive']);
+    expect(f.receipt.entries.map(entry => entry.targetId)).toEqual(['alive']);
+    f.targetContext.set('receivers', [{ kind: 'operator', operatorId: 'dead' }]);
+    expect(f.executor.execute(definite, f.context)).toBe(false);
+    expect(
+      f.executor.execute(
+        { ...definite, parameters: { ...definite.parameters, alwaysNext: true } },
+        f.context,
+      ),
+    ).toBe(true);
+  });
   it('逐目标治疗，保留重复项和查询顺序，跳过空间点', () => {
     const events: string[] = [];
     const f = fixture(
@@ -119,6 +144,10 @@ describe('原生治疗目标和结算', () => {
       { kind: 'spatialPoint', pointId: 1 },
       { kind: 'operator', operatorId: 'healer' },
     ]);
+    expect(() => f.executor.execute(step, f.context)).toThrow(
+      "action blackboard value 'missing' is missing",
+    );
+    f.targetContext.set('healers', [{ kind: 'spatialPoint', pointId: 1 }]);
     expect(f.executor.execute(step, f.context)).toBe(false);
     expect(
       f.executor.execute(
@@ -140,6 +169,7 @@ describe('原生治疗目标和结算', () => {
   ])('治疗者按独立 ActionTarget 解析 %j', (healer, expected) => {
     const f = fixture({ receiver: 500 });
     f.targetContext.set('healers', [
+      { kind: 'spatialPoint', pointId: 1 },
       { kind: 'operator', operatorId: 'selected' },
       { kind: 'operator', operatorId: 'ignored' },
     ]);

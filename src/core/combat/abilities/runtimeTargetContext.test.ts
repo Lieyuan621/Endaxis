@@ -4,10 +4,26 @@ import {
   RuntimeTargetContext,
   setRuntimeTargetGroup,
   resolveOperationPartTransferInfo,
+  sameRuntimeTarget,
 } from './runtimeTargetContext';
+import {
+  runtimeTargetEntityId,
+  runtimeTargetFromEntityId,
+} from '../../game-data/logicalAbilityEntity';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { createSkillExecutionState } from '../state/abilityState';
 import { createStateTestSession } from '../../../test/stateTestSession';
+
+it('敌人实例经事件实体 ID 往返仍是敌人，不能被当成干员或另一名敌人', () => {
+  const a = runtimeTargetFromEntityId('enemy:a');
+  const b = runtimeTargetFromEntityId('enemy:b');
+  expect(a).toEqual({ kind: 'enemy', enemyId: 'enemy:a' });
+  expect(runtimeTargetEntityId(a)).toBe('enemy:a');
+  expect(sameRuntimeTarget(a, b)).toBe(false);
+  expect(sameRuntimeTarget(a, { ...a })).toBe(true);
+  expect(sameRuntimeTarget(a, { kind: 'enemy', enemyId: 'enemy' })).toBe(false);
+  expect(runtimeTargetEntityId(runtimeTargetFromEntityId('enemy'))).toBe('enemy');
+});
 
 it('转交上下文由事件覆盖同主体项，保留 Buff 的其他项且不共享可变映射', () => {
   const environment = {

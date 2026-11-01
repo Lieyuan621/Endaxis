@@ -1,3 +1,4 @@
+import type { ActionTargetQuery } from './intermediateDefinitions.ts';
 import type { ComparisonOperator } from '../../../../packages/game-data-contract/src/primitives.ts';
 import type { BuffApplicationActionSource } from '../source/buffActions.ts';
 import type { GlobalBuffActionSource } from '../source/globalBuffActions.ts';
@@ -150,6 +151,10 @@ export interface CombatActionProjectionContextSource {
   readonly staticEmptyTargetGroupKeys?: ReadonlySet<string>;
   /** 运行时可为空、但任一成员都已证明只能是唯一木桩的命名目标组。 */
   readonly singleEnemyTargetGroupKeys?: ReadonlySet<string>;
+  /** 仅证明成员是敌人；集合可为空或包含多个目标，不能用于数量或恒真折叠。 */
+  readonly enemyTargetGroupKeys?: ReadonlySet<string>;
+  /** 只含敌人或空间点；仅用于需实体宿主的 Buff 闭包，不能替代真实目标查询或数量判断。 */
+  readonly enemyOrSpatialTargetGroupKeys?: ReadonlySet<string>;
   /** 当前时间线之前的写入仅产生干员；数量和具体成员仍从运行时 Context 读取。 */
   readonly operatorTargetGroupKeys?: ReadonlySet<string>;
   /** 跨时间段可证明只含固定敌人或固定空间点的 Context；仅用于零空间锚点，不代表实体身份。 */
@@ -260,7 +265,6 @@ export function requireActionOwnerProjection(
  * 过滤和后处理必须已证明不改变这个单元素集合；未解析的原生字段不能视为通过。
  */
 export function isStaticSingleEnemyTargetGroup(write: TargetGroupActionSource): boolean {
-  if (isSingleEnemyArcherySelection(write)) return true;
   const hasDistanceValidator = write.validatorTypes.includes('DistanceValidator');
   const fixedModelValidatorsPass =
     write.validatorTypes.every(
@@ -332,7 +336,6 @@ export function isCurrentTargetRestrictedSingleEnemyTargetGroup(
  * 但是否为空必须在动作执行时读取敌人当前 GameplayTag，不能升级成静态敌人证明。
  */
 export function isDynamicSingleEnemyTagTargetGroup(write: TargetGroupActionSource): boolean {
-  if (isSingleEnemyArcherySelection(write)) return false;
   // AllEnemyFinder / InFightEnemyFinder 只遍历敌人目录，不包含 Soul 能力实体。木桩正生命门禁恒通过，
   // 但标签仍动态读取；其他生命阈值及可选中墨影的 Finder 不得套用该简化。
   const hpValidators = write.hpRatioValidators ?? [];
@@ -421,24 +424,6 @@ export function zeroDistanceValidatorsAlwaysPass(write: TargetGroupActionSource)
   });
 }
 
-/** 单敌人模型默认瞄准敌人；仅省略弓箭选敌的 Locked 标签，不省略战斗标签筛选。 */
-function isSingleEnemyArcherySelection(write: TargetGroupActionSource): boolean {
-  if (write.finderType !== 'TyphoeaArcherySelectedFinder' || write.validatorTypes.length !== 1)
-    return false;
-  const query = write.validatorTagQueries[0];
-  return (
-    write.producerType === 'FindTargetAction' &&
-    write.finderType === 'TyphoeaArcherySelectedFinder' &&
-    write.validatorTypes.length === 1 &&
-    write.validatorTypes[0] === 'TagValidator' &&
-    write.validatorTagQueries.length === 1 &&
-    query?.[0] === 'HasAny' &&
-    query[1].length === 1 &&
-    query[1][0] === -980923073 && // Skill/Character/chr_0034_typhoea/Locked
-    postProcessingKeepsSingleEnemy(write)
-  );
-}
-
 function isSingleEnemyFinder(write: TargetGroupActionSource): boolean {
   return (
     (write.producerType === 'FindTargetAction' ||
@@ -446,7 +431,6 @@ function isSingleEnemyFinder(write: TargetGroupActionSource): boolean {
       write.producerType === 'ConvertToTargetContext') &&
     (write.finderType === 'AllEnemyFinder' ||
       write.finderType === 'InFightEnemyFinder' ||
-      write.finderType === 'TyphoeaArcherySelectedFinder' ||
       write.finderType === 'MainTargetFinder' ||
       (write.finderType === 'HitBoxFinder' &&
         write.finderFactionTarget === 'Anti' &&
@@ -457,30 +441,19 @@ function isSingleEnemyFinder(write: TargetGroupActionSource): boolean {
 }
 
 function postProcessingKeepsSingleEnemy(write: TargetGroupActionSource): boolean {
-  const priority = write.priorityFilters?.[0];
-  return (
-    write.postProcessorTypes.length === 0 ||
-    (write.postProcessorTypes.length === 1 &&
-      write.postProcessorTypes[0] === 'PriorityFilter' &&
-      write.priorityFilters.length === 1 &&
-      priority?.buffFilter.checkType === 'Id' &&
-      priority.buffFilter.buffIds.length === 0 &&
-      priority.buffFilter.tagQuery.queryType === 'hasAny' &&
-      priority.buffFilter.tagQuery.tagIds.length === 0 &&
-      (!priority.limitMaxNum || priority.maxNum >= 1))
-  );
+  // 距离评分并列也不意味着限数无效；后处理必须由查询投影显式保留。
+  return write.postProcessorTypes.length === 0;
 }
 
-/**
- * 唯一敌人已作为当前 Target 进入动作时，命中盒“搜索敌人 → 排除当前 Target”必定为空。
- * 只接受萤石反弹分支观测到的完整后处理形状；未知排序或 Buff 过滤不在这里被吞掉。
- */
-export function isEmptyStaticEnemyExclusionTargetGroup(write: TargetGroupActionSource): boolean {
+/** 原生反弹选敌：排除当前输入目标，再按中心距离取一个；同位置模型保留候选顺序。 */
+export function isSingleRemainingEnemyTargetGroup(write: TargetGroupActionSource): boolean {
   const priority = write.priorityFilters[0];
   return (
     write.producerType === 'FindTargetAction' &&
     write.finderType === 'HitBoxFinder' &&
     write.finderFactionTarget === 'Anti' &&
+    (write.finderAutoSetTargetFaction === true ||
+      (write.finderAutoSetTargetFaction === false && write.finderTargetFactionType === 'Bad')) &&
     write.finderTargetObjectType === 'Normal' &&
     write.finderCheckAlive === true &&
     write.finderOwnerPartsQuery === null &&
@@ -714,4 +687,33 @@ export function projectGameplayTags(
       throw new Error(sourcePath + '[' + index + ']: 转换 GameplayTag 缺少来源标签目录');
     return registry.resolve(id, sourcePath + '[' + index + ']');
   });
+}
+
+export function inferBuffTargetKind(
+  query: ActionTargetQuery,
+  context: CombatActionProjectionContextSource,
+  targetGroups: ReadonlyMap<string, ProjectedTargetGroup> = new Map(),
+): string {
+  if (query.kind === 'fixed') return query.target;
+  if (
+    query.kind === 'context' &&
+    (targetGroups.get(query.key) === 'enemy' ||
+      targetGroups.get(query.key) === 'dynamicEnemy' ||
+      (!targetGroups.has(query.key) && context.staticEnemyTargetGroupKeys?.has(query.key)))
+  )
+    return 'enemy';
+  if (query.kind === 'owner') return context.fixedBuffOwnerTarget ?? context.actionOwnerTarget;
+  if (query.kind === 'source') return context.fixedBuffSourceTarget ?? context.actionSourceTarget;
+  if (query.kind === 'inputTarget') return context.actionTargetTarget ?? 'unknown';
+  if (query.kind === 'characterTeam' || query.kind === 'mainCharacter') return 'caster';
+  if (query.kind === 'battleMainTarget' || query.kind === 'enemyByTags') return 'enemy';
+  if (
+    query.kind === 'buffFilter' ||
+    query.kind === 'tagFilter' ||
+    query.kind === 'exclude' ||
+    query.kind === 'intersection' ||
+    query.kind === 'limit'
+  )
+    return inferBuffTargetKind(query.targets, context, targetGroups);
+  return 'unknown';
 }

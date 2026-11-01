@@ -1,3 +1,4 @@
+import { levelEnemies } from '../../core/project/level';
 /**
  * 后台模拟当前场景所需的最小游戏数据包。
  *
@@ -62,8 +63,7 @@ export function scenarioSimulationGameDataSelectionKey(scenario: ScenarioDocumen
       if (instance !== null) identities.add(`gear:${instance.gearSlug}`);
     }
   }
-  const enemyId = getEnemySourceDefinitionId(scenario.enemy.source);
-  if (enemyId !== null) identities.add(`enemy:${enemyId}`);
+  for (const enemyId of referencedEnemyDefinitionIds(scenario)) identities.add(`enemy:${enemyId}`);
   for (const selection of scenario.mechanics.selections)
     identities.add(`mechanic:${selection.mechanicId}`);
   for (const effect of scenario.globalConfig.effects ?? [])
@@ -109,9 +109,7 @@ export function captureScenarioSimulationGameData(
     }
   }
 
-  const enemyId = getEnemySourceDefinitionId(scenario.enemy.source);
-  if (enemyId !== null) {
-    const id = enemyId;
+  for (const id of referencedEnemyDefinitionIds(scenario)) {
     addDefinition(enemies, id, requireDefinition(repository.getEnemy(id), 'enemy', id));
   }
   for (const selection of scenario.mechanics.selections) {
@@ -154,6 +152,15 @@ export function captureScenarioSimulationGameData(
     consumables: repository.getConsumables(),
     globalEffects: [...globalEffects.values()],
   };
+}
+
+function referencedEnemyDefinitionIds(scenario: ScenarioDocument): ReadonlySet<string> {
+  const ids = new Set<string>();
+  for (const enemy of levelEnemies(scenario.level).map(item => item.enemy)) {
+    const id = getEnemySourceDefinitionId(enemy.source);
+    if (id !== null) ids.add(id);
+  }
+  return ids;
 }
 
 /** 在 Worker 内把纯数据包恢复成编译器使用的查询端口。 */

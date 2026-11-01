@@ -1,4 +1,5 @@
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
+import { runtimeTargetFromEntityId } from '../../../core/game-data/logicalAbilityEntity';
 import type { DamageType } from '../../../core/game-data/operatorDefinition';
 import type { ScenarioDocument, TrackIndex } from '../../../core/project/schema';
 import type { PublishedScenarioSimulation } from '../useScenarioSimulation';
@@ -95,7 +96,12 @@ export function projectTimelineDamageAnalysis(
   let lastDamageFrame = startFrame;
 
   for (const receipt of history) {
-    if (receipt.event !== 'DamageApplied' || receipt.targetId !== 'enemy') continue;
+    if (
+      receipt.event !== 'DamageApplied' ||
+      receipt.targetId === undefined ||
+      runtimeTargetFromEntityId(receipt.targetId).kind !== 'enemy'
+    )
+      continue;
     if (receipt.frame < startFrame) continue;
     const value = finiteNumber(receipt.data?.value);
     const damageType = receipt.data?.damageType;

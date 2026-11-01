@@ -12,13 +12,6 @@ export const COMBO_CAMERA_ALPHA_SETTINGS = ['Default', 'Strong', 'Weak'] as cons
 
 /** 仅供用途分析；必须在正式化前消除，不能发布为运行节点。 */
 interface AnalysisStepParameters {
-  /** 保存两个首目标的位置距离；任一目标不存在时不写入。 */
-  saveTargetDistance: {
-    source: Contract.ActionTargetQuery;
-    target: Contract.ActionTargetQuery;
-    outputKey: string;
-  };
-
   /** 按输入值读取曲线，结果显著变化时写入动作变量。 */
   evaluateCurve: {
     /** 保存曲线结果的动作变量。 */

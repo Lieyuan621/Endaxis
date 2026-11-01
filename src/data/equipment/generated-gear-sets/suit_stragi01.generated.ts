@@ -6,6 +6,115 @@ const definition = {
   icon: 'endaxis:equipment/stragi01/item_equip_t1_suit_stragi01_edc_01',
   modifiers: [{ kind: 'panelStat', stat: 'healthFlat', value: 500 }],
   skillId: 'passive_equipsuit_stragi_01',
+  buffDefinitions: {
+    buff_equipsuit_stragi_01: {
+      stackingType: 'unlimited',
+      priority: 0,
+      maxStackCount: 0,
+      triggerIntervalSeconds: 0,
+      waitFirstTriggerInterval: true,
+      maxTriggerCount: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { cd: 5, hp_add: 100 },
+      attributeModifiers: [],
+      abilityEventResponses: [
+        { event: 'afterKillEntity', priority: 0, sequence: { $sequence: 'checkCondition_4' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            setGlobalCooldown_1: {
+              action: {
+                kind: 'setGlobalCooldown',
+                parameters: {
+                  target: { kind: 'owner' },
+                  markerId: 'buff_equipsuit_stragi_01',
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
+                },
+              },
+              next: null,
+            },
+            heal_2: {
+              action: {
+                kind: 'heal',
+                parameters: {
+                  target: { kind: 'owner' },
+                  healer: { kind: 'owner' },
+                  alwaysNext: true,
+                  tags: ['Skill/Character/Common/Heal/EquipmentHeal'],
+                  amount: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+              },
+              next: 'setGlobalCooldown_1',
+            },
+            checkCondition_3: {
+              action: {
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+              },
+              next: 'heal_2',
+            },
+            checkCondition_4: {
+              action: {
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+              },
+              next: 'checkCondition_3',
+            },
+          },
+          dataNodes: {
+            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+            data_2: { type: 'number', expression: { kind: 'blackboard', key: 'hp_add' } },
+            data_3: {
+              type: 'boolean',
+              expression: {
+                kind: 'globalCooldownPresent',
+                target: { kind: 'owner' },
+                returnTrueIfNotExists: true,
+                markerId: 'buff_equipsuit_stragi_01',
+              },
+            },
+            data_4: {
+              type: 'boolean',
+              expression: {
+                kind: 'targetObjectTypeMatch',
+                target: { kind: 'inputTarget' },
+                objectTypes: ['enemy'],
+              },
+            },
+          },
+        },
+        macros: {},
+      },
+    },
+  },
+  initializationSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_stragi_01',
+                  blackboardAssignments: {
+                    hp_add: { kind: 'constant', value: 100 },
+                    cd: { kind: 'constant', value: 5 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

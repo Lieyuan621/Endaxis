@@ -520,7 +520,9 @@ function sameObservableResult(left: unknown, right: unknown): boolean {
 
 function configureBattle(scenario: RuntimeScenario, endFrame: number): void {
   scenario.battle.durationFrames = endFrame;
-  scenario.enemy.editable.hp = 1_000_000_000;
+  if (scenario.level.kind !== 'singleEnemy')
+    throw new Error('candidate audit requires a single enemy level');
+  scenario.level.enemy.enemy.editable.hp = 1_000_000_000;
   scenario.battle.resourceRules = {
     maxSp: 1000,
     initialSp: 1000,

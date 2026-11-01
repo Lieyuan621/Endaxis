@@ -60,7 +60,8 @@ export default defineConfig({
       'tmp/**',
       '.local/**',
       'tests/browser/**',
-      'tools/editor/generateActionNodeSchema.test.ts',
+      // 编辑器测试由 node:test 执行，统一交给 test:editor-schema。
+      'tools/editor/**/*.test.ts',
     ],
   },
 });

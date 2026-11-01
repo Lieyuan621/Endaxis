@@ -42,6 +42,9 @@ export interface GlobalPartyAuraBuffInputSource {
 /** 已取证的 GlobalAura + 存活友方 Character 分支。 */
 export interface GlobalPartyAuraActionSource<TLeaf> {
   readonly kind: 'globalPartyAura';
+  readonly global?: boolean;
+  readonly excludeOwner?: boolean;
+  readonly maxInfluenceCountPerTarget?: number;
   readonly debugName: string;
   readonly fixedWhenStart: boolean;
   readonly target: 'party' | 'partyExceptOwner' | 'enemy';
@@ -70,15 +73,18 @@ export interface AuraReferenceActionSource {
 }
 
 /**
- * 固定零空间木桩下可证明为“唯一敌人立即进入一次”的 RangedAura 窄分支。
+ * 简化空间下由可命中集合驱动进入/退出的 RangedAura 分支。
  * 内部进入动作仍保留完整公共动作树；空间形状只作严格来源校验，不进入运行协议。
  */
 export interface DirectRangedAuraActionSource<TLeaf> {
   readonly kind: 'directRangedAura';
+  readonly global?: boolean;
+  readonly excludeOwner?: boolean;
+  readonly maxInfluenceCountPerTarget?: number;
   readonly target: 'enemy' | 'party';
   /** 原生是否在动作开始时固定 Aura 中心；零空间投影仍保留该来源事实。 */
   readonly fixedWhenStart: boolean;
-  /** 敌方进入动作中已证明的唯一木桩 Context；队伍 Aura 不使用此快捷身份。 */
+  /** 敌方进入动作写入的目标 Context；每次回调绑定本次进入对象。 */
   readonly targetGroupKey?: string;
   readonly actionOnEnter: NativeSequenceSource<TLeaf>;
 }
@@ -203,10 +209,7 @@ export function parseGlobalPartyAuraActionSource<TLeaf>(
   }
   const excludeOwner = requireBoolean(action.excludeOwner, `${path}.excludeOwner`);
   requireExpected(action.includeUnmarkable, false, `${path}.includeUnmarkable`);
-  // 固定零距离且没有移动/重入：同一 Aura 生命周期内每个目标只会进入一次，因而“不限”与
-  // max=1 的限次在可见 Buff/治疗结果上等价；字段仍严格要求为布尔值。
-  requireBoolean(action.limitInfluenceCountPerTarget, `${path}.limitInfluenceCountPerTarget`);
-  requireExpected(action.maxInfluenceCountPerTarget, 1, `${path}.maxInfluenceCountPerTarget`);
+  const influenceLimit = parseInfluenceLimit(action, path);
   const buffSource = readAuraBuffSource(action.buffSource, `${path}.buffSource`);
   if (buffSource !== 'ActionOwner' && buffSource !== 'ActionSource') {
     throw new Error(`${path}.buffSource: unsupported value ${JSON.stringify(buffSource)}`);
@@ -222,8 +225,11 @@ export function parseGlobalPartyAuraActionSource<TLeaf>(
   const actionOnExit = parseSequence(action.actionWhenExitAura, `${path}.actionWhenExitAura`);
   return {
     kind: 'globalPartyAura',
+    global: true,
+    excludeOwner,
     debugName: requireString(action.auraDebugName, `${path}.auraDebugName`),
     fixedWhenStart,
+    ...influenceLimit,
     target: target === 'party' && excludeOwner ? 'partyExceptOwner' : target,
     buffSource,
     inheritSourceSkillCastInfo,
@@ -280,9 +286,7 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
     } else parseFixedEnemyFilter(filter, `${path}.targetFilter`);
     const excludeOwner = requireBoolean(action.excludeOwner, `${path}.excludeOwner`);
     requireExpected(action.includeUnmarkable, false, `${path}.includeUnmarkable`);
-    // 固定零距离且没有移动/重入：每个目标只触发一次进入，max=1 的限次不会再截断结果。
-    requireBoolean(action.limitInfluenceCountPerTarget, `${path}.limitInfluenceCountPerTarget`);
-    requireExpected(action.maxInfluenceCountPerTarget, 1, `${path}.maxInfluenceCountPerTarget`);
+    const influenceLimit = parseInfluenceLimit(action, path);
     const buffSource = requireNonEmptyString(action.buffSource, `${path}.buffSource`);
     if (buffSource !== 'ActionOwner' && buffSource !== 'ActionSource') {
       throw new Error(`${path}.buffSource: unsupported value ${JSON.stringify(buffSource)}`);
@@ -305,8 +309,10 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
     const actionOnExit = parseSequence(action.actionWhenExitAura, `${path}.actionWhenExitAura`);
     return {
       kind: 'globalPartyAura',
+      excludeOwner,
       debugName: requireString(action.auraDebugName, `${path}.auraDebugName`),
       fixedWhenStart,
+      ...influenceLimit,
       target: target === 'enemy' ? 'enemy' : excludeOwner ? 'partyExceptOwner' : 'party',
       buffSource,
       inheritSourceSkillCastInfo,
@@ -326,8 +332,7 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
   parseGlobalFilter(filter, `${path}.targetFilter`, directTarget === 'enemy' ? 'Anti' : 'Ally');
   requireExpected(action.excludeOwner, true, `${path}.excludeOwner`);
   requireExpected(action.includeUnmarkable, false, `${path}.includeUnmarkable`);
-  requireBoolean(action.limitInfluenceCountPerTarget, `${path}.limitInfluenceCountPerTarget`);
-  requireExpected(action.maxInfluenceCountPerTarget, 1, `${path}.maxInfluenceCountPerTarget`);
+  const influenceLimit = parseInfluenceLimit(action, path);
   requireExpected(action.buffSource, 'ActionSource', `${path}.buffSource`);
   if (parseAuraBuffInputs(action.buffInput, `${path}.buffInput`, false).length !== 0) {
     throw new Error(`${path}.buffInput: expected empty array`);
@@ -345,8 +350,10 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
   }
   return {
     kind: 'directRangedAura',
+    excludeOwner: true,
     target: directTarget,
     fixedWhenStart,
+    ...influenceLimit,
     ...(directTarget === 'enemy' ? { targetGroupKey: [...targetGroupKeys][0]! } : {}),
     actionOnEnter,
   };
@@ -826,4 +833,20 @@ function requireExpected(value: unknown, expected: string | number | boolean, pa
           ? requireInteger(value, path)
           : requireNumber(value, path);
   if (actual !== expected) throw new Error(`${path}: expected ${JSON.stringify(expected)}`);
+}
+
+/** 原生只在启用时保存和检查次数；无记录时首次进入仍放行。 */
+function parseInfluenceLimit(
+  action: Record<string, unknown>,
+  path: string,
+): { maxInfluenceCountPerTarget?: number } {
+  const enabled = requireBoolean(
+    action.limitInfluenceCountPerTarget,
+    `${path}.limitInfluenceCountPerTarget`,
+  );
+  const maximum = requireInteger(
+    action.maxInfluenceCountPerTarget,
+    `${path}.maxInfluenceCountPerTarget`,
+  );
+  return enabled ? { maxInfluenceCountPerTarget: maximum } : {};
 }

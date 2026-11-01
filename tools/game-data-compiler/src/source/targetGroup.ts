@@ -70,10 +70,7 @@ export interface TargetGroupInputSource extends TargetReferenceSource {
   readonly buffValidators?: readonly BuffValidatorSource[];
   readonly finderSpawnedObjectType: string | null;
   readonly validatorTagQueries: ReadonlyArray<readonly [string, readonly number[]]>;
-  readonly targetContainsParents?: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
+  readonly targetContainsParents?: readonly TargetReferenceSource[];
   readonly excludeTargets?: readonly TargetReferenceSource[];
 }
 
@@ -114,10 +111,7 @@ export interface TargetGroupWriteSource {
   readonly finderSpawnedObjectType: string | null;
   readonly validatorTagQueries: ReadonlyArray<readonly [string, readonly number[]]>;
   /** TargetContainsValidator 的父集合来源；缺失等同没有该验证器。 */
-  readonly targetContainsParents?: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
+  readonly targetContainsParents?: readonly TargetReferenceSource[];
   readonly excludeTargets?: readonly TargetReferenceSource[];
   readonly finderFixedPointSnapToNavmesh: boolean | null;
   readonly finderFixedPoint?: FixedPointFinderSource;

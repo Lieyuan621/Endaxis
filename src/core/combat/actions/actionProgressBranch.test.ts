@@ -89,7 +89,14 @@ describe('action progress branches', () => {
         const body = () => {
           state.hits += 1;
         };
-        tickChanneling(state.progress, parameters, 0, delta ?? 0, () => [{ kind: 'enemy' }], body);
+        tickChanneling(
+          state.progress,
+          parameters,
+          0,
+          delta ?? 0,
+          () => [{ kind: 'enemy', enemyId: 'enemy' }],
+          body,
+        );
       },
     );
     session.step(null);

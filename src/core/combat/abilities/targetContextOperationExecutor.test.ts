@@ -1,10 +1,15 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import { describe, expect, it, vi } from 'vitest';
 import { numberInput } from '../../../test/compiledGraphInputs';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatVitals } from '../resources/combatVitals';
 import { RuntimeTargetContext } from './runtimeTargetContext';
-import { TargetContextOperationExecutor } from './targetContextOperationExecutor';
+import {
+  TargetContextOperationExecutor,
+  resolveDirectActionTargets,
+} from './targetContextOperationExecutor';
 import { ProjectileLifecycleRuntime } from './projectileLifecycleRuntime';
 import { createKillEvent } from '../events/killEventTestFixture';
 import { CombatBuffContainer } from '../buffs/combatBuffs';
@@ -32,6 +37,149 @@ function vitals(health: number): CombatVitals {
 }
 
 describe('TargetContextOperationExecutor', () => {
+  it('InputTarget 保留技能输入集合，空集合不回退到旧首目标', () => {
+    const executor = new TargetContextOperationExecutor('owner', terminal);
+    const first = { kind: 'enemy' as const, enemyId: 'enemy:first' };
+    const second = { kind: 'enemy' as const, enemyId: 'enemy:second' };
+    const context = {
+      blackboard: new ActionBlackboard(),
+      actionInputTargets: [first, second],
+    };
+    expect(executor.queryTargets({ kind: 'inputTarget' }, context)).toEqual([first, second]);
+    expect(
+      executor.queryTargets({ kind: 'inputTarget' }, { ...context, actionInputTargets: [] }),
+    ).toEqual([]);
+    expect(
+      executor.queryTargets(
+        { kind: 'inputTarget' },
+        { ...context, actionInputTargets: singleTargetList(second) },
+      ),
+    ).toEqual([second]);
+  });
+  it('包含过滤比较归一化部位身份，但保留原始目标、顺序和重复项', () => {
+    const enemy: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:secondary' };
+    const part: RuntimeTargetRef = { kind: 'abilityEntity', instanceId: 7 };
+    const executor = new TargetContextOperationExecutor(
+      'caster',
+      terminal,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        mainTarget: () => enemy,
+        ownerSpawned: () => [],
+        partBuffSource: target =>
+          target.kind === 'abilityEntity' && target.instanceId === 7 ? enemy : target,
+      },
+    );
+    const context = {
+      blackboard: new ActionBlackboard(),
+      targetContext: new RuntimeTargetContext(),
+    };
+    context.targetContext.set('candidates', [
+      { kind: 'enemy', enemyId: 'enemy' },
+      part,
+      enemy,
+      part,
+    ]);
+    context.targetContext.set('parents', [part]);
+    const query = {
+      kind: 'intersection',
+      targets: { kind: 'context', key: 'candidates' },
+      parentTargets: { kind: 'context', key: 'parents' },
+    } as const;
+    expect(executor.queryTargets(query, context)).toEqual([part, enemy, part]);
+    context.targetContext.set('parents', []);
+    expect(executor.queryTargets(query, context)).toEqual([]);
+  });
+
+  it('实体转位置逐个转换、保留已有位置，空组不凭空创建位置', () => {
+    const executor = new TargetContextOperationExecutor('caster', terminal);
+    const context = {
+      blackboard: new ActionBlackboard(),
+      targetContext: new RuntimeTargetContext(),
+    };
+    const point: RuntimeTargetRef = { kind: 'spatialPoint', pointId: 99 };
+    context.targetContext.set('targets', [
+      { kind: 'enemy', enemyId: 'enemy' },
+      point,
+      { kind: 'enemy', enemyId: 'enemy:secondary' },
+    ]);
+    const step = {
+      kind: 'copyContextTargets',
+      parameters: {
+        source: { kind: 'context', key: 'targets' },
+        saveToContextKey: 'points',
+        convertEntitiesToPositions: true,
+      },
+    } as const;
+    expect(executor.execute(step, context)).toBe(true);
+    expect(context.targetContext.get('points')).toEqual([
+      { kind: 'spatialPoint', pointId: 1 },
+      point,
+      { kind: 'spatialPoint', pointId: 2 },
+    ]);
+    const resumed = new TargetContextOperationExecutor(
+      'caster',
+      terminal,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { ...executor.runtimeState },
+    );
+    resumed.execute(step, context);
+    expect(context.targetContext.get('points')).toEqual([
+      { kind: 'spatialPoint', pointId: 3 },
+      point,
+      { kind: 'spatialPoint', pointId: 4 },
+    ]);
+    context.targetContext.set('targets', []);
+    resumed.execute(step, context);
+    expect(context.targetContext.get('points')).toEqual([]);
+  });
+  it('反弹先排除当前敌人再限数，后续目标组变化仍动态求值', () => {
+    const executor = new TargetContextOperationExecutor(
+      'caster',
+      terminal,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }),
+        ownerSpawned: () => [],
+        exclusionTarget: target => target,
+      },
+    );
+    const targetContext = new RuntimeTargetContext();
+    const primary: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy' };
+    const second: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:second' };
+    const third: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:third' };
+    const context = {
+      blackboard: new ActionBlackboard(),
+      targetContext,
+      actionInputTargets: singleTargetList(primary),
+    };
+    const query: CompiledTargetQuery = {
+      kind: 'limit',
+      count: 1,
+      targets: {
+        kind: 'exclude',
+        targets: { kind: 'context', key: 'candidates' },
+        excludeTargets: { kind: 'inputTarget' },
+      },
+    };
+    targetContext.set('candidates', [primary, second, third]);
+    expect(executor.queryTargets(query, context)).toEqual([second]);
+    targetContext.set('candidates', [primary, third]);
+    expect(executor.queryTargets(query, context)).toEqual([third]);
+    targetContext.set('candidates', [primary]);
+    expect(executor.queryTargets(query, context)).toEqual([]);
+  });
+
   it('距离筛选保留范围近似，标签筛选保留不能锁定的目标', () => {
     let marked = false;
     const executor = new TargetContextOperationExecutor(
@@ -42,7 +190,7 @@ describe('TargetContextOperationExecutor', () => {
       undefined,
       undefined,
       {
-        mainTarget: () => ({ kind: 'enemy' }),
+        mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }),
         ownerSpawned: () => [],
         matchesTags: target => (target.kind === 'enemy' ? marked : undefined),
       },
@@ -51,7 +199,7 @@ describe('TargetContextOperationExecutor', () => {
       blackboard: new ActionBlackboard(),
       targetContext: new RuntimeTargetContext(),
     };
-    const enemy = { kind: 'enemy' } as const;
+    const enemy = { kind: 'enemy', enemyId: 'enemy' } as const;
     const point = { kind: 'spatialPoint', pointId: 1 } as const;
     context.targetContext.set('targets', [enemy, point]);
     const distanceQuery: CompiledTargetQuery = {
@@ -83,7 +231,7 @@ describe('TargetContextOperationExecutor', () => {
       { kind: 'abilityEntity', instanceId: 4 },
       { kind: 'abilityEntity', instanceId: 7 },
     ]);
-    targetContext.setSingle('swordInst', { kind: 'enemy' });
+    targetContext.setSingle('swordInst', { kind: 'enemy', enemyId: 'enemy' });
 
     expect(
       executor.execute(
@@ -171,7 +319,7 @@ describe('TargetContextOperationExecutor', () => {
     };
     const targets = [
       { kind: 'operator' as const, operatorId: 'caster' },
-      { kind: 'enemy' as const },
+      { kind: 'enemy' as const, enemyId: 'enemy' },
       { kind: 'spatialPoint' as const, pointId: 1 },
     ];
     context.targetContext.set('candidates', targets);
@@ -239,9 +387,28 @@ describe('TargetContextOperationExecutor', () => {
       { kind: 'abilityEntity', instanceId: 8 },
     ]);
     executor.execute(step, { ...context, partTransferInfo: undefined });
-    expect(context.targetContext.getOptional('saved')).toEqual([{ kind: 'enemy' }]);
+    expect(context.targetContext.getOptional('saved')).toEqual([
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
     executor.execute(step, { ...context, actionOwnerId: undefined });
     expect(context.targetContext.getOptional('saved')).toEqual([]);
+    context.targetContext.set('mixed', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
+    executor.execute(
+      {
+        ...step,
+        parameters: {
+          ...step.parameters,
+          source: { kind: 'context', key: 'mixed' },
+        },
+      },
+      context,
+    );
+    expect(context.targetContext.getOptional('saved')).toEqual([
+      { kind: 'abilityEntity', instanceId: 7 },
+    ]);
   });
   it('排除按归一化身份比较，原位覆盖时保留其余目标的身份、顺序和重复项', () => {
     const executor = new TargetContextOperationExecutor(
@@ -252,19 +419,26 @@ describe('TargetContextOperationExecutor', () => {
       undefined,
       undefined,
       {
-        mainTarget: () => ({ kind: 'enemy' }),
+        mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }),
         ownerSpawned: () => [],
         exclusionTarget: target =>
-          target.kind === 'abilityEntity' && target.instanceId === 7 ? { kind: 'enemy' } : target,
+          target.kind === 'abilityEntity' && target.instanceId === 7
+            ? { kind: 'enemy', enemyId: 'enemy' }
+            : target,
       },
     );
     const context = {
       blackboard: new ActionBlackboard(),
       targetContext: new RuntimeTargetContext(),
-      actionInputTarget: { kind: 'abilityEntity' as const, instanceId: 7 },
+      actionInputTargets: singleTargetList({ kind: 'abilityEntity' as const, instanceId: 7 }),
     };
     const other = { kind: 'abilityEntity' as const, instanceId: 8 };
-    context.targetContext.set('tar', [{ kind: 'enemy' }, other, context.actionInputTarget, other]);
+    context.targetContext.set('tar', [
+      { kind: 'enemy', enemyId: 'enemy' },
+      other,
+      ...context.actionInputTargets,
+      other,
+    ]);
     const step = {
       kind: 'copyContextTargets',
       parameters: {
@@ -275,14 +449,14 @@ describe('TargetContextOperationExecutor', () => {
     } as const;
     executor.execute(step, context);
     expect(context.targetContext.get('tar')).toEqual([other, other]);
-    executor.execute(step, { ...context, actionInputTarget: undefined });
+    executor.execute(step, { ...context, actionInputTargets: [] });
     expect(context.targetContext.get('tar')).toEqual([other, other]);
   });
   it('能力实体目标查询读取控制器的新目标，保留墨影身份并覆盖旧目标组', () => {
-    let target: { kind: 'abilityEntity'; instanceId: number } | undefined = {
-      kind: 'abilityEntity',
-      instanceId: 19,
-    };
+    let targets: RuntimeTargetRef[] = [
+      { kind: 'abilityEntity', instanceId: 19 },
+      { kind: 'enemy', enemyId: 'enemy:second' },
+    ];
     const executor = new TargetContextOperationExecutor(
       'caster',
       terminal,
@@ -291,11 +465,11 @@ describe('TargetContextOperationExecutor', () => {
       undefined,
       undefined,
       {
-        mainTarget: () => ({ kind: 'enemy' }),
+        mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }),
         ownerSpawned: () => [],
         abilityEntityTarget: owner => {
           expect(owner).toEqual({ kind: 'abilityEntity', instanceId: 7 });
-          return target;
+          return targets;
         },
       },
     );
@@ -303,7 +477,7 @@ describe('TargetContextOperationExecutor', () => {
       blackboard: new ActionBlackboard(),
       targetContext: new RuntimeTargetContext(),
       actionOwnerId: 'ability-entity:7',
-      actionInputTarget: { kind: 'enemy' as const },
+      actionInputTargets: singleTargetList({ kind: 'enemy' as const, enemyId: 'enemy' }),
     };
     const step = {
       kind: 'findTargets',
@@ -314,11 +488,16 @@ describe('TargetContextOperationExecutor', () => {
       },
     } as const;
     executor.execute(step, context);
-    expect(context.targetContext.get('victim')).toEqual([target]);
-    target = { kind: 'abilityEntity', instanceId: 20 };
+    expect(context.targetContext.get('victim')).toEqual(targets);
+    targets[0] = { kind: 'abilityEntity', instanceId: 20 };
+    targets.pop();
+    expect(context.targetContext.get('victim')).toEqual([
+      { kind: 'abilityEntity', instanceId: 19 },
+      { kind: 'enemy', enemyId: 'enemy:second' },
+    ]);
     executor.execute(step, context);
-    expect(context.targetContext.get('victim')).toEqual([target]);
-    target = undefined;
+    expect(context.targetContext.get('victim')).toEqual(targets);
+    targets = [];
     executor.execute(step, context);
     expect(context.targetContext.get('victim')).toEqual([]);
   });
@@ -339,7 +518,7 @@ describe('TargetContextOperationExecutor', () => {
       undefined,
       undefined,
       {
-        mainTarget: () => ({ kind: 'enemy' }),
+        mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }),
         ownerSpawned: () => [],
         entityLifeState: target =>
           target.kind === 'operator' && alive.has(target.operatorId) ? 'alive' : 'dead',
@@ -376,17 +555,19 @@ describe('TargetContextOperationExecutor', () => {
       undefined,
       undefined,
       {
-        mainTarget: () => ({ kind: 'enemy' }),
+        mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }),
         ownerSpawned: () => [],
         exclusionTarget: target =>
-          target.kind === 'abilityEntity' && target.instanceId === 7 ? { kind: 'enemy' } : target,
+          target.kind === 'abilityEntity' && target.instanceId === 7
+            ? { kind: 'enemy', enemyId: 'enemy' }
+            : target,
       },
     );
     const targetContext = new RuntimeTargetContext();
     const part = { kind: 'abilityEntity', instanceId: 7 } as const;
     const other = { kind: 'operator', operatorId: 'other' } as const;
-    targetContext.set('candidates', [part, other, { kind: 'enemy' }, other]);
-    targetContext.set('excluded', [{ kind: 'enemy' }]);
+    targetContext.set('candidates', [part, other, { kind: 'enemy', enemyId: 'enemy' }, other]);
+    targetContext.set('excluded', [{ kind: 'enemy', enemyId: 'enemy' }]);
     const query = {
       kind: 'exclude',
       targets: { kind: 'context', key: 'candidates' },
@@ -395,8 +576,16 @@ describe('TargetContextOperationExecutor', () => {
     const context = { blackboard: new ActionBlackboard(), targetContext };
     expect(executor.queryTargets(query, context)).toEqual([other, other]);
     targetContext.set('excluded', [other]);
-    expect(executor.queryTargets(query, context)).toEqual([part, { kind: 'enemy' }]);
-    expect(targetContext.get('candidates')).toEqual([part, other, { kind: 'enemy' }, other]);
+    expect(executor.queryTargets(query, context)).toEqual([
+      part,
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
+    expect(targetContext.get('candidates')).toEqual([
+      part,
+      other,
+      { kind: 'enemy', enemyId: 'enemy' },
+      other,
+    ]);
   });
 
   it('固定槽位不跳过空槽，失败保留原目标组', () => {
@@ -434,7 +623,7 @@ describe('TargetContextOperationExecutor', () => {
       {
         blackboard: new ActionBlackboard(),
         targetContext,
-        actionInputTarget: { kind: 'abilityEntity', instanceId: 7 },
+        actionInputTargets: singleTargetList({ kind: 'abilityEntity', instanceId: 7 }),
         event: { event: 'hpChanged', payload: { sourceId: 'ability-entity:7', targetId: 'enemy' } },
       },
     );
@@ -454,7 +643,7 @@ describe('TargetContextOperationExecutor', () => {
             targetContext,
             buffSourceId: id,
             actionSourceId: id,
-            actionInputTarget: expected,
+            actionInputTargets: singleTargetList(expected),
             event: { event: 'hpChanged', payload: { sourceId: 'caster', targetId: id } },
           },
         );
@@ -481,9 +670,12 @@ describe('TargetContextOperationExecutor', () => {
     targetContext.set('left', []);
     targetContext.set('right', []);
     expect(executor.evaluate(equals, context)).toBe(true);
-    targetContext.setSingle('left', { kind: 'enemy' });
+    targetContext.setSingle('left', { kind: 'enemy', enemyId: 'enemy' });
     expect(executor.evaluate(equals, context)).toBe(false);
-    targetContext.set('right', [{ kind: 'enemy' }, { kind: 'enemy' }]);
+    targetContext.set('right', [
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
     expect(executor.evaluate(equals, context)).toBe(true);
     // 动作绑定决定 Owner/Source，不偷用外层 Buff 或事件的身份。
     expect(
@@ -653,6 +845,18 @@ describe('TargetContextOperationExecutor', () => {
       ['operator:recipient'],
     ]);
     expect(context.buffSourceId).toBe('ability-entity:3');
+    targetContext.set('mixedOwner', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'abilityEntity', instanceId: 2 },
+      { kind: 'operator', operatorId: 'unrelated' },
+    ]);
+    expect(
+      executor.queryTargets(
+        { kind: 'abilitySystemSource', owner: { kind: 'context', key: 'mixedOwner' } },
+        context,
+      ),
+    ).toEqual([{ kind: 'abilityEntity', instanceId: 1 }]);
+    expect(query).toHaveBeenLastCalledWith('ability-entity:2');
   });
 
   it('未装配单层来源端口时明确失败，不能偷用递归解析器或原样返回', () => {
@@ -841,7 +1045,10 @@ describe('TargetContextOperationExecutor', () => {
         blackboard: new ActionBlackboard(),
         targetContext,
         currentTarget: { kind: 'operator', operatorId: 'operator:controlled' },
-        actionInputTarget: { kind: 'operator', operatorId: 'operator:controlled' },
+        actionInputTargets: singleTargetList({
+          kind: 'operator',
+          operatorId: 'operator:controlled',
+        }),
       },
     );
     expect(targetContext.get('healTarget')).toEqual([
@@ -855,7 +1062,7 @@ describe('TargetContextOperationExecutor', () => {
     const context = {
       blackboard: new ActionBlackboard(),
       targetContext,
-      actionInputTarget: { kind: 'enemy' as const },
+      actionInputTargets: singleTargetList({ kind: 'enemy' as const, enemyId: 'enemy' }),
       event: {
         event: 'beforeTakeInfliction' as const,
         payload: {
@@ -902,7 +1109,7 @@ describe('TargetContextOperationExecutor', () => {
     };
     executor.execute(merge, context);
     executor.execute(merge, context);
-    expect(targetContext.get('seen')).toEqual([{ kind: 'enemy' }]);
+    expect(targetContext.get('seen')).toEqual([{ kind: 'enemy', enemyId: 'enemy' }]);
     const containsGroup = {
       kind: 'targetContains' as const,
       parent: { kind: 'context' as const, key: 'seen' },
@@ -910,11 +1117,14 @@ describe('TargetContextOperationExecutor', () => {
     };
     expect(executor.evaluate(containsGroup, context)).toBe(true);
     targetContext.set('children', [
-      { kind: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
       { kind: 'operator', operatorId: 'operator' },
     ]);
     expect(executor.evaluate(containsGroup, context)).toBe(false);
-    targetContext.set('children', [{ kind: 'enemy' }, { kind: 'enemy' }]);
+    targetContext.set('children', [
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
     expect(executor.evaluate(containsGroup, context)).toBe(true);
     expect(
       executor.evaluate(
@@ -938,12 +1148,12 @@ it('距离过滤每次读取阈值，空结果覆盖旧目标且缺少中心不�
     undefined,
     undefined,
     {
-      mainTarget: () => ({ kind: 'enemy' }),
+      mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }),
       ownerSpawned: () => [],
     },
   );
   const targetContext = new RuntimeTargetContext();
-  targetContext.setSingle('center', { kind: 'enemy' });
+  targetContext.setSingle('center', { kind: 'enemy', enemyId: 'enemy' });
   const blackboard = new ActionBlackboard({ threshold: -1 });
   const query: CompiledTargetQuery = {
     kind: 'distanceFilter',
@@ -963,12 +1173,449 @@ it('距离过滤每次读取阈值，空结果覆盖旧目标且缺少中心不�
   };
   const context = { blackboard, targetContext, actionOwnerId: 'enemy' };
   executor.execute(step, context);
-  expect(targetContext.get('result')).toEqual([{ kind: 'enemy' }]);
+  expect(targetContext.get('result')).toEqual([{ kind: 'enemy', enemyId: 'enemy' }]);
   blackboard.assignDynamicUnconditionally('threshold', 5);
   executor.execute(step, context);
   expect(targetContext.get('result')).toEqual([]);
+  targetContext.set('mixedDistanceTargets', [
+    { kind: 'enemy', enemyId: 'enemy' },
+    { kind: 'spatialPoint', pointId: 1 },
+  ]);
+  expect(
+    executor.queryTargets(
+      {
+        ...query,
+        targets: { kind: 'context', key: 'mixedDistanceTargets' },
+      },
+      context,
+    ),
+  ).toEqual([{ kind: 'spatialPoint', pointId: 1 }]);
   blackboard.assignDynamicUnconditionally('threshold', -1);
   targetContext.set('center', []);
   executor.execute(step, context);
   expect(targetContext.get('result')).toEqual([]);
+});
+
+it('智能目标先选标签匹配者、否则回退；后处理排除不会重新选人', () => {
+  const main: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy' };
+  const extra: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:a' };
+  let candidates: readonly RuntimeTargetRef[] = [extra];
+  let fallback: RuntimeTargetRef | undefined = main;
+  const executor = new TargetContextOperationExecutor(
+    'caster',
+    terminal,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      mainTarget: () => fallback,
+      ownerSpawned: () => [],
+      enemiesByTags: () => candidates,
+      exclusionTarget: target => target,
+    },
+  );
+  const context = {
+    blackboard: new ActionBlackboard(),
+    actionOwnerId: 'enemy:a',
+    actionSourceId: 'caster',
+  };
+  const query: CompiledTargetQuery = {
+    kind: 'smartTargetByTag',
+    owner: { kind: 'source' },
+    tags: ['Test/Target'],
+    tagQueryType: 'hasAny',
+  };
+  expect(executor.queryTargets(query, context)).toEqual([extra]);
+  expect(
+    executor.queryTargets(
+      { kind: 'exclude', targets: query, excludeTargets: { kind: 'owner' } },
+      context,
+    ),
+  ).toEqual([]);
+  expect(executor.queryTargets({ kind: 'battleMainTarget' }, context)).toEqual([main]);
+  candidates = [];
+  expect(executor.queryTargets(query, context)).toEqual([main]);
+  fallback = extra;
+  expect(executor.queryTargets({ kind: 'battleMainTarget' }, context)).toEqual([extra]);
+  fallback = undefined;
+  expect(executor.queryTargets({ kind: 'battleMainTarget' }, context)).toEqual([]);
+  expect(executor.queryTargets(query, context)).toEqual([]);
+});
+
+it('范围查询缺少中心时保留旧组，保存的位置中心允许在没有实体目标时继续查找', () => {
+  const executor = new TargetContextOperationExecutor('caster', terminal);
+  const targetContext = new RuntimeTargetContext();
+  targetContext.set('result', [{ kind: 'enemy', enemyId: 'enemy:old' }]);
+  const context = { blackboard: new ActionBlackboard(), targetContext, actionOwnerId: 'caster' };
+  const step = {
+    kind: 'findTargets',
+    parameters: {
+      owner: { kind: 'owner' },
+      center: { kind: 'context', key: 'center' },
+      query: { kind: 'context', key: 'candidates' },
+      saveToContextKey: 'result',
+    },
+  } as const;
+  expect(executor.execute(step, context)).toBe(false);
+  expect(targetContext.get('result')).toEqual([{ kind: 'enemy', enemyId: 'enemy:old' }]);
+  targetContext.set('center', [{ kind: 'spatialPoint', pointId: 1 }]);
+  targetContext.set('candidates', [{ kind: 'enemy', enemyId: 'enemy:new' }]);
+  expect(executor.execute(step, context)).toBe(true);
+  expect(targetContext.get('result')).toEqual([{ kind: 'enemy', enemyId: 'enemy:new' }]);
+  targetContext.set('candidates', []);
+  expect(executor.execute(step, context)).toBe(true);
+  expect(targetContext.get('result')).toEqual([]);
+});
+
+it('瞄准 Finder 只复制已选列表，不重新查找敌人或回退主目标', () => {
+  const selected: RuntimeTargetRef[] = [];
+  const mainTarget = vi.fn(() => ({ kind: 'enemy' as const, enemyId: 'enemy' }));
+  const enemiesByTags = vi.fn(() => [{ kind: 'enemy' as const, enemyId: 'enemy:unselected' }]);
+  const executor = new TargetContextOperationExecutor(
+    'caster',
+    terminal,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      mainTarget,
+      ownerSpawned: () => [],
+      enemiesByTags,
+      typhoeaArcherySelected: () => selected,
+    },
+  );
+  const context = { blackboard: new ActionBlackboard() };
+  expect(executor.queryTargets({ kind: 'typhoeaArcherySelected' }, context)).toEqual([]);
+  selected.push({ kind: 'enemy', enemyId: 'enemy:second' });
+  const result = executor.queryTargets({ kind: 'typhoeaArcherySelected' }, context);
+  expect(result).toEqual(selected);
+  expect(result).not.toBe(selected);
+  selected.length = 0;
+  expect(result).toHaveLength(1);
+  expect(executor.queryTargets({ kind: 'typhoeaArcherySelected' }, context)).toEqual([]);
+  expect(mainTarget).not.toHaveBeenCalled();
+  expect(enemiesByTags).not.toHaveBeenCalled();
+});
+
+it('按 Buff 智能选敌动态读取次要敌人，失去标记后才回退主目标', () => {
+  const main: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy' };
+  const secondary: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:b' };
+  let marked = true;
+  let fallback: RuntimeTargetRef | undefined = main;
+  const executor = new TargetContextOperationExecutor(
+    'caster',
+    terminal,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      mainTarget: () => fallback,
+      ownerSpawned: () => [],
+      enemiesByTags: () => [main, secondary],
+      hasMatchingBuff: (target, lookup) =>
+        marked && target === secondary && lookup.kind === 'id' && lookup.buffIds.includes('mark'),
+    },
+  );
+  const query: CompiledTargetQuery = {
+    kind: 'smartTargetByBuff',
+    owner: { kind: 'source' },
+    buffIds: ['mark'],
+  };
+  const context = { blackboard: new ActionBlackboard(), actionSourceId: 'caster' };
+  expect(executor.queryTargets(query, context)).toEqual([secondary]);
+  marked = false;
+  expect(executor.queryTargets(query, context)).toEqual([main]);
+  fallback = undefined;
+  expect(executor.queryTargets(query, context)).toEqual([]);
+});
+
+it('距离写入动态解析双方目标，空组保留旧值且不截断后续动作', () => {
+  const executor = new TargetContextOperationExecutor('caster', {
+    execute: () => true,
+    evaluate: () => true,
+  });
+  const targetContext = new RuntimeTargetContext();
+  const blackboard = new ActionBlackboard();
+  const context = { targetContext, blackboard };
+  const step = {
+    kind: 'saveTargetDistance',
+    parameters: {
+      source: { kind: 'context', key: 'source' },
+      target: { kind: 'context', key: 'target' },
+      outputKey: 'distance',
+    },
+  } as const;
+  for (const missing of ['source', 'target']) {
+    blackboard.assign({ distance: 7 });
+    targetContext.set('source', [{ kind: 'operator', operatorId: 'caster' }]);
+    targetContext.set('target', [{ kind: 'enemy', enemyId: 'enemy:second' }]);
+    targetContext.set(missing, []);
+    expect(executor.execute(step, context)).toBe(true);
+    expect(blackboard.getValue('distance')).toBe(7);
+  }
+  targetContext.set('source', [{ kind: 'spatialPoint', pointId: 3 }]);
+  targetContext.set('target', [{ kind: 'enemy', enemyId: 'enemy:second' }]);
+  expect(executor.execute(step, context)).toBe(true);
+  expect(blackboard.getValue('distance')).toBe(7);
+  targetContext.set('source', [
+    { kind: 'spatialPoint', pointId: 3 },
+    { kind: 'operator', operatorId: 'caster' },
+  ]);
+  expect(executor.execute(step, context)).toBe(true);
+  expect(blackboard.getValue('distance')).toBe(0);
+  blackboard.assign({ distance: 9 });
+  targetContext.set('target', []);
+  expect(executor.execute(step, context)).toBe(true);
+  expect(blackboard.getValue('distance')).toBe(9);
+});
+
+it('部位 Buff 来源查询保留普通查询身份，只按显式包装解析本体', () => {
+  const part: RuntimeTargetRef = { kind: 'abilityEntity', instanceId: 7 };
+  const main: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:second' };
+  const targetContext = new RuntimeTargetContext();
+  targetContext.set('hit', [part, main]);
+  const executor = new TargetContextOperationExecutor(
+    'caster',
+    terminal,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      mainTarget: () => main,
+      ownerSpawned: () => [],
+      partBuffSource: target =>
+        target.kind === 'abilityEntity' && target.instanceId === 7 ? main : target,
+    },
+  );
+  const context = { blackboard: new ActionBlackboard(), targetContext };
+  expect(executor.queryTargets({ kind: 'context', key: 'hit' }, context)).toEqual([part, main]);
+  expect(
+    executor.queryTargets(
+      { kind: 'partBuffSource', targets: { kind: 'context', key: 'hit' } },
+      context,
+    ),
+  ).toEqual([main, main]);
+  targetContext.set('hit', []);
+  expect(
+    executor.queryTargets(
+      { kind: 'partBuffSource', targets: { kind: 'context', key: 'hit' } },
+      context,
+    ),
+  ).toEqual([]);
+});
+
+it('PushBack 保留来源存活、首实体和原始目标表规则，并按原生顺序短路查询', () => {
+  const alive: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:alive' };
+  const dead: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:dead' };
+  const missing: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:missing' };
+  const point: RuntimeTargetRef = { kind: 'spatialPoint', pointId: 1 };
+  const executor = new TargetContextOperationExecutor(
+    'caster',
+    terminal,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      mainTarget: () => alive,
+      ownerSpawned: () => [],
+      entityLifeState: target =>
+        target.kind !== 'enemy'
+          ? undefined
+          : target.enemyId === 'enemy:alive'
+            ? 'alive'
+            : target.enemyId === 'enemy:dead'
+              ? 'dead'
+              : undefined,
+    },
+  );
+  const targetContext = new RuntimeTargetContext();
+  const context = { blackboard: new ActionBlackboard(), targetContext };
+  const step = {
+    kind: 'pushBack',
+    parameters: {
+      source: { kind: 'context', key: 'source' },
+      targets: { kind: 'context', key: 'targets' },
+      sourcePoint: { kind: 'context', key: 'origin' },
+    },
+  } as const;
+  const query = vi.spyOn(executor, 'queryTargets');
+  for (const source of [[], [point], [dead, alive], [missing, alive]]) {
+    targetContext.set('source', source);
+    query.mockClear();
+    expect(executor.execute(step, context)).toBe(false);
+    expect(query.mock.calls.map(([input]) => input)).toEqual([step.parameters.source]);
+  }
+  targetContext.set('source', [point, alive]);
+  targetContext.set('targets', []);
+  query.mockClear();
+  expect(executor.execute(step, context)).toBe(false);
+  expect(query.mock.calls.map(([input]) => input)).toEqual([
+    step.parameters.source,
+    step.parameters.targets,
+  ]);
+  // 非空表即成功，即使候选无法产生位移、来源点为空；不要求存在活敌人。
+  for (const targets of [[point], [missing], [dead], [alive, dead]]) {
+    targetContext.set('targets', targets);
+    query.mockClear();
+    expect(executor.execute(step, context)).toBe(true);
+    expect(query.mock.calls.map(([input]) => input)).toEqual([
+      step.parameters.source,
+      step.parameters.targets,
+      step.parameters.sourcePoint,
+    ]);
+  }
+});
+
+it('Pull 处理全部匹配目标，目的地可取后项；不按主目标或生命状态替代查询', () => {
+  const first: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:first' };
+  const second: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:second' };
+  const missing: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:unspawned' };
+  const operator: RuntimeTargetRef = { kind: 'operator', operatorId: 'caster' };
+  const point: RuntimeTargetRef = { kind: 'spatialPoint', pointId: 1 };
+  const processPullTarget = vi.fn((_target: RuntimeTargetRef) => true);
+  const executor = new TargetContextOperationExecutor(
+    'caster',
+    terminal,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      mainTarget: () => first,
+      ownerSpawned: () => [],
+      hasPosition: target => target.kind !== 'enemy' || target.enemyId !== 'enemy:unspawned',
+      processPullTarget,
+    },
+  );
+  const targetContext = new RuntimeTargetContext();
+  const context = { blackboard: new ActionBlackboard(), targetContext };
+  const step = {
+    kind: 'pull',
+    parameters: {
+      targets: { kind: 'context', key: 'targets' },
+      destination: { kind: 'context', key: 'destination' },
+      targetType: 'Enemy',
+      alwaysNext: false,
+    },
+  } as const;
+  targetContext.set('targets', [missing, first, second, operator]);
+  targetContext.set('destination', [missing, point]);
+  expect(executor.execute(step, context)).toBe(true);
+  expect(processPullTarget.mock.calls).toEqual([[first], [second]]);
+  processPullTarget.mockClear();
+  expect(
+    executor.execute(
+      { ...step, parameters: { ...step.parameters, targetType: 'Character' } },
+      context,
+    ),
+  ).toBe(true);
+  expect(processPullTarget.mock.calls).toEqual([[operator]]);
+
+  for (const alwaysNext of [false, true]) {
+    processPullTarget.mockClear();
+    targetContext.set('destination', [missing]);
+    expect(
+      executor.execute({ ...step, parameters: { ...step.parameters, alwaysNext } }, context),
+    ).toBe(alwaysNext);
+    expect(processPullTarget).not.toHaveBeenCalled();
+    targetContext.set('destination', [point]);
+    processPullTarget.mockReturnValue(false);
+    expect(
+      executor.execute({ ...step, parameters: { ...step.parameters, alwaysNext } }, context),
+    ).toBe(alwaysNext);
+  }
+});
+
+it('BlowOffEnemy OnlyDead 不处理目标但保留来源和空表返回', () => {
+  const alive: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:alive' };
+  const dead: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:dead' };
+  const missing: RuntimeTargetRef = { kind: 'enemy', enemyId: 'enemy:missing' };
+  const point: RuntimeTargetRef = { kind: 'spatialPoint', pointId: 1 };
+  const executor = new TargetContextOperationExecutor(
+    'caster',
+    terminal,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      mainTarget: () => alive,
+      ownerSpawned: () => [],
+      entityLifeState: target =>
+        target.kind !== 'enemy'
+          ? undefined
+          : target.enemyId === 'enemy:alive'
+            ? 'alive'
+            : target.enemyId === 'enemy:dead'
+              ? 'dead'
+              : undefined,
+    },
+  );
+  const targetContext = new RuntimeTargetContext();
+  const context = { blackboard: new ActionBlackboard(), targetContext };
+  const step = {
+    kind: 'blowOffEnemy',
+    parameters: {
+      source: { kind: 'context', key: 'source' },
+      targets: { kind: 'context', key: 'targets' },
+      deadOption: 'OnlyDead',
+    },
+  } as const;
+  const query = vi.spyOn(executor, 'queryTargets');
+  for (const source of [[], [point], [dead, alive], [missing, alive]]) {
+    targetContext.set('source', source);
+    query.mockClear();
+    expect(executor.execute(step, context)).toBe(false);
+    expect(query.mock.calls.map(([input]) => input)).toEqual([step.parameters.source]);
+  }
+  targetContext.set('source', [point, alive]);
+  targetContext.set('targets', []);
+  query.mockClear();
+  expect(executor.execute(step, context)).toBe(false);
+  expect(query.mock.calls.map(([input]) => input)).toEqual([
+    step.parameters.source,
+    step.parameters.targets,
+  ]);
+  // 非空表即成功，即使候选无法产生位移、来源点为空；不要求存在活敌人。
+  for (const targets of [[point], [missing], [dead], [alive, dead]]) {
+    targetContext.set('targets', targets);
+    query.mockClear();
+    expect(executor.execute(step, context)).toBe(true);
+    expect(query.mock.calls.map(([input]) => input)).toEqual([
+      step.parameters.source,
+      step.parameters.targets,
+    ]);
+  }
+});
+
+it('默认敌方查询读取当前主目标，来源句柄不随主目标切换，空目录不补造敌人', () => {
+  let selected: RuntimeTargetRef | undefined = { kind: 'enemy', enemyId: 'enemy:second' };
+  const executor = new TargetContextOperationExecutor(
+    'caster',
+    terminal,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      mainTarget: () => selected,
+      ownerSpawned: () => [],
+    },
+  );
+  const query = { kind: 'fixed', target: 'enemy' } as const;
+  const context = { blackboard: new ActionBlackboard(), actionSourceId: 'enemy:first' };
+  expect(resolveDirectActionTargets(query, context)).toBeUndefined();
+  expect(executor.queryTargets(query, context)).toEqual([selected]);
+  selected = { kind: 'enemy', enemyId: 'enemy:third' };
+  expect(executor.queryTargets(query, context)).toEqual([selected]);
+  expect(executor.queryTargets({ kind: 'source' }, context)).toEqual([
+    { kind: 'enemy', enemyId: 'enemy:first' },
+  ]);
+  selected = undefined;
+  expect(executor.queryTargets(query, context)).toEqual([]);
 });

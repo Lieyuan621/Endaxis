@@ -18,6 +18,7 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_combo_skill',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'bomb' },
             entityInitialValues: {},
@@ -88,8 +89,15 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -147,6 +155,7 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -251,6 +260,7 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -402,6 +412,7 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack_2',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -553,6 +564,7 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack_3',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -705,6 +717,7 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_attack_4',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             entityInitialValues: {},
             hit: {},
@@ -756,6 +769,24 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
                         },
                         next: 'ifElse_3',
                       },
+                      findTargets_5: {
+                        action: {
+                          kind: 'findTargets',
+                          parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
+                            saveToContextKey: 'tar',
+                          },
+                        },
+                        next: 'dealDamage_4',
+                      },
                     },
                     dataNodes: {
                       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
@@ -783,7 +814,7 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
                 },
                 blackboard: { atb: 0, atk_scale: 0, poise: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_5' } },
                 ],
               },
             },
@@ -873,13 +904,13 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.07 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -970,10 +1001,21 @@ export const wulfgardChr_0006_wolfgd_power_attack: SkillDefinition = {
 export const wulfgardChr_0006_wolfgd_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1014,7 +1056,7 @@ export const wulfgardChr_0006_wolfgd_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 2, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 2, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 2, endFrame: 6, sequence: { $sequence: 'dealDamage_2' } },
     { startFrame: 8, endFrame: 20, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
   ],
@@ -1037,6 +1079,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -1107,6 +1150,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -1137,7 +1181,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                       applyElementalInfliction_2: {
                         action: {
                           kind: 'applyElementalInfliction',
-                          parameters: { element: 'heat', isExtra: false },
+                          parameters: {
+                            element: 'heat',
+                            isExtra: false,
+                            target: { kind: 'inputTarget' },
+                          },
                         },
                         next: 'dealDamage_1',
                       },
@@ -1188,6 +1236,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -1337,7 +1386,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0006_wolfgd_talent_0'] },
             desiredKey: 'duration',
             outputKey: 'duration',
@@ -1349,7 +1398,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0006_wolfgd_talent_0'] },
             desiredKey: 'add',
             outputKey: 'add',
@@ -1391,6 +1440,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0006_wolfgd_normal_skill_plus',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'smart_target' },
             entityInitialValues: {},
@@ -1421,7 +1471,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                       applyElementalInfliction_10: {
                         action: {
                           kind: 'applyElementalInfliction',
-                          parameters: { element: 'heat', isExtra: false },
+                          parameters: {
+                            element: 'heat',
+                            isExtra: false,
+                            target: { kind: 'inputTarget' },
+                          },
                         },
                         next: 'dealDamage_9',
                       },
@@ -1895,12 +1949,20 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_12: {
+      findTargets_12: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'target1',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'dealDamage_11',
@@ -1920,12 +1982,20 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_14: {
+      findTargets_14: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'target2',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'dealDamage_13',
@@ -1945,12 +2015,20 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_16: {
+      findTargets_16: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'target3',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'dealDamage_15',
@@ -1970,12 +2048,20 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_18: {
+      findTargets_18: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'target4',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'dealDamage_17',
@@ -1995,12 +2081,20 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_20: {
+      findTargets_20: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'target5',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'dealDamage_19',
@@ -2023,7 +2117,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'target' },
               executeEachFrame: false,
               triggerIntervalSeconds: 0.2,
               maxCountPerTarget: 1,
@@ -2034,10 +2128,21 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_23: {
+      findTargets_23: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'target', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'target',
+          },
         },
         next: 'repeatEachTick_22',
       },
@@ -2112,12 +2217,12 @@ export const wulfgardChr_0006_wolfgd_ultimate_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 14, sequence: { $sequence: 'ifElse_3' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_4' } },
-    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'mergeContextTargets_12' } },
-    { startFrame: 52, endFrame: 55, sequence: { $sequence: 'mergeContextTargets_14' } },
-    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'mergeContextTargets_16' } },
-    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'mergeContextTargets_18' } },
-    { startFrame: 69, endFrame: 72, sequence: { $sequence: 'mergeContextTargets_20' } },
-    { startFrame: 45, endFrame: 72, sequence: { $sequence: 'mergeContextTargets_23' } },
+    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'findTargets_12' } },
+    { startFrame: 52, endFrame: 55, sequence: { $sequence: 'findTargets_14' } },
+    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'findTargets_16' } },
+    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'findTargets_18' } },
+    { startFrame: 69, endFrame: 72, sequence: { $sequence: 'findTargets_20' } },
+    { startFrame: 45, endFrame: 72, sequence: { $sequence: 'findTargets_23' } },
     { startFrame: 75, endFrame: 89, sequence: { $sequence: 'reachSkillOperableBoundary_24' } },
     { startFrame: 0, endFrame: 46, sequence: { $sequence: 'hideUi_25' } },
     { startFrame: 0, endFrame: 46, sequence: { $sequence: 'startUltimateTimeDilation_26' } },
@@ -2554,16 +2659,28 @@ export const wulfgard: OperatorDefinition = {
               applyElementalInfliction_3: {
                 action: {
                   kind: 'applyElementalInfliction',
-                  parameters: { element: 'heat', isExtra: false },
+                  parameters: {
+                    element: 'heat',
+                    isExtra: false,
+                    target: { kind: 'context', key: 'tar' },
+                  },
                 },
                 next: 'dealDamage_2',
               },
-              mergeContextTargets_4: {
+              findTargets_4: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'applyElementalInfliction_3',
@@ -2588,7 +2705,7 @@ export const wulfgard: OperatorDefinition = {
         },
         blackboard: { atk_scale: 5, poise: 0, usp: 0 },
         scheduledSequences: [
-          { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_4' } },
+          { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_4' } },
         ],
       },
     },

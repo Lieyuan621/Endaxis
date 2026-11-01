@@ -1,7 +1,10 @@
 import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 
-import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import {
+  firstRuntimeEntityTarget,
+  type RuntimeTargetRef,
+} from '../../game-data/logicalAbilityEntity';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { CombatOperationContext, CombatOperationExecutor } from './skillRuntime';
 
@@ -35,7 +38,9 @@ export class OperatorControlConditionExecutor implements CombatOperationExecutor
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'checkMainCharacter') {
       if (context === undefined) throw new Error('checkMainCharacter requires an action context');
-      const target = this.dependencies.queryTargets(condition.target, context)[0];
+      const target = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(condition.target, context),
+      );
       return (
         target?.kind === 'operator' && this.dependencies.isOperatorControlled(target.operatorId)
       );

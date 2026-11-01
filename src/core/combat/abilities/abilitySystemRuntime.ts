@@ -96,6 +96,8 @@ export interface AbilitySkillRuntime extends FrameRuntime {
   prepareCastInput?(input: {
     readonly skipApplyCost: boolean;
     readonly inputTarget?: RuntimeTargetRef | null;
+    readonly inputTargets?: readonly RuntimeTargetRef[];
+    readonly allowMultiInputTarget?: boolean;
     readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
     readonly producedBy?: CombatObjectRef;
   }): void;
@@ -991,6 +993,8 @@ export class AbilitySystemRuntime implements FrameRuntime {
     input: {
       readonly skipApplyCost: boolean;
       readonly inputTarget?: RuntimeTargetRef | null;
+      readonly inputTargets?: readonly RuntimeTargetRef[];
+      readonly allowMultiInputTarget?: boolean;
       readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
       readonly producedBy?: CombatObjectRef;
     },
@@ -1083,6 +1087,10 @@ export class AbilitySystemRuntime implements FrameRuntime {
     inputTarget?: RuntimeTargetRef,
     interruptCurrentSkill = false,
     prepareStart?: () => CombatSkillCastInfo,
+    targetOptions?: {
+      readonly inputTargets?: readonly RuntimeTargetRef[];
+      readonly allowMultiInputTarget?: boolean;
+    },
   ): boolean {
     if (interruptCurrentSkill) this.interruptCurrentSkill();
     const skill = this.#skillsById.get(abilitySkillKey({ skillId }));
@@ -1095,6 +1103,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
       skipApplyCost: false,
       ...(castInfo === undefined ? {} : { inheritedSkillCastInfo: Object.freeze({ ...castInfo }) }),
       inputTarget,
+      ...targetOptions,
     });
     return this.#startAvailableSkill(skill, false);
   }

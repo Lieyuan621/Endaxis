@@ -112,6 +112,8 @@ export interface AbilityEntityDefinition {
     readonly useMainBodyHp: boolean;
     readonly useMainBodyPoise: boolean;
     readonly canBeHitIndividually: boolean;
+    /** 部位阻挡半角（度），缺省为 0；木桩投影的方向夹角为 0。 */
+    readonly halfBlockAngle?: number;
     readonly onlyHitByNormalAttack: boolean;
     readonly canBeDirectlyBuffed: boolean;
     /** 排除目标时保留部位自身身份；缺省为原生 false。 */

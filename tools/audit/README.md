@@ -7,7 +7,7 @@
 保存完整明细：
 
 ```sh
-npm run audit:size -- --json tmp/code-size-audit.json
+npm run audit:size -- --json '<报告路径.json>'
 ```
 
 统计当前工作树中 Git 跟踪的文件及未忽略的新文件。删除的文件和符号链接不计入；不扫描被忽略的依赖、临时文件、离线数据。`dist` 单独统计，不计入仓库总量，也不会自动构建。

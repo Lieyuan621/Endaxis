@@ -823,7 +823,7 @@ export function parseConditionLeafSource(
       return parseTagBuffStack(condition, path, sourceType, inheritedBlackboard);
     case 'CheckTagMatch':
     // CheckPartTagMatch 直接检查句柄指向的实体；保留 sourceType，不能在来源层
-    // 将其改成主体查询。当前 entityTag 投影检查实际目标自身的标签。
+    // 将其改成主体查询；投影用 checkPartTags 区分普通标签查询的部位转发。
     case 'CheckPartTagMatch':
       return parseEntityTag(condition, path, sourceType);
     case 'CheckTimedMarkerCondition':

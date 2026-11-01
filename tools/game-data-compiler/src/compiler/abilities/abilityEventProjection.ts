@@ -9,6 +9,7 @@ import type { AbilityEvent } from '../../../../../packages/game-data-contract/sr
  */
 const NATIVE_ABILITY_EVENT_NAMES = {
   OnOwnerHpZero: 'ownerHpZero',
+  OnOwnerDead: 'ownerDead',
   OnHpChange: 'hpChanged',
   OnCustomAbilityEvent: 'customAbilityEvent',
   OnEnterFight: 'enterFight',
@@ -155,8 +156,9 @@ export function projectAbilityEvent(event: string | number, sourcePath: string):
 
 /** 已核准的无 Buff 句柄事件；未知事件不能据此省略 Context 查询。 */
 export function nativeAbilityEventHasNoBuffContext(event: string | number | undefined): boolean {
-  const name = typeof event === 'number'
-    ? Object.entries(NATIVE_ABILITY_EVENT_IDS).find(([id]) => Number(id) === event)?.[1]
-    : event;
+  const name =
+    typeof event === 'number'
+      ? Object.entries(NATIVE_ABILITY_EVENT_IDS).find(([id]) => Number(id) === event)?.[1]
+      : event;
   return name === 'OnPoiseZero' || name === 'OnPoiseKnotBreak' || name === 'OnSkillInterrupted';
 }

@@ -146,12 +146,20 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_13: {
+      findTargets_13: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -160,9 +168,11 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -196,8 +206,6 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -227,9 +235,11 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -254,8 +264,6 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -285,9 +293,11 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -321,8 +331,6 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -443,7 +451,31 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         },
         next: 'modifyActionValue_37',
       },
-      startTimeDilation_39: {
+      pull_39: {
+        action: {
+          kind: 'pull',
+          parameters: {
+            targets: { kind: 'context', key: 'targets' },
+            destination: { kind: 'owner' },
+            targetType: 'Enemy',
+            alwaysNext: false,
+          },
+        },
+        next: null,
+      },
+      pull_40: {
+        action: {
+          kind: 'pull',
+          parameters: {
+            targets: { kind: 'context', key: 'targets' },
+            destination: { kind: 'context', key: 'pos' },
+            targetType: 'Enemy',
+            alwaysNext: false,
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_41: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -453,27 +485,34 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
       },
-      reachSkillOperableBoundary_40: {
+      reachSkillOperableBoundary_42: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_powerattack'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_41: {
+      reachSkillOperableBoundary_43: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_normalskill_2', 'chr_0031_mifu_normalskill_3'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_42: {
+      reachSkillOperableBoundary_44: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -617,18 +656,20 @@ export const mifuChr_0031_mifu_combo_skill: SkillDefinition = {
     { startFrame: 27, endFrame: 28, sequence: { $sequence: 'applyBuff_1' } },
     { startFrame: 35, endFrame: 73, sequence: { $sequence: 'applyBuff_2' } },
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_12' } },
-    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_13' } },
-    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'mergeContextTargets_13' } },
-    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'mergeContextTargets_13' } },
-    { startFrame: 31, endFrame: 32, sequence: { $sequence: 'mergeContextTargets_13' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_13' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_13' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'findTargets_13' } },
+    { startFrame: 31, endFrame: 32, sequence: { $sequence: 'findTargets_13' } },
     { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_22' } },
     { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_25' } },
     { startFrame: 27, endFrame: 28, sequence: { $sequence: 'checkCondition_27' } },
     { startFrame: 31, endFrame: 32, sequence: { $sequence: 'modifyActionValue_38' } },
-    { startFrame: 0, endFrame: 8, sequence: { $sequence: 'startTimeDilation_39' } },
-    { startFrame: 35, endFrame: 73, sequence: { $sequence: 'reachSkillOperableBoundary_40' } },
-    { startFrame: 35, endFrame: 73, sequence: { $sequence: 'reachSkillOperableBoundary_41' } },
+    { startFrame: 8, endFrame: 13, sequence: { $sequence: 'pull_39' } },
+    { startFrame: 28, endFrame: 30, sequence: { $sequence: 'pull_40' } },
+    { startFrame: 0, endFrame: 8, sequence: { $sequence: 'startTimeDilation_41' } },
     { startFrame: 35, endFrame: 73, sequence: { $sequence: 'reachSkillOperableBoundary_42' } },
+    { startFrame: 35, endFrame: 73, sequence: { $sequence: 'reachSkillOperableBoundary_43' } },
+    { startFrame: 35, endFrame: 73, sequence: { $sequence: 'reachSkillOperableBoundary_44' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'trigger',
@@ -641,17 +682,35 @@ export const mifuChr_0031_mifu_combo_skill: SkillDefinition = {
 export const mifuChr_0031_mifu_attack1ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'targets',
+          },
+        },
+        next: null,
+      },
       startTimeDilation_8: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -660,13 +719,13 @@ export const mifuChr_0031_mifu_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -740,7 +799,7 @@ export const mifuChr_0031_mifu_attack1ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'targets' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -860,6 +919,9 @@ export const mifuChr_0031_mifu_attack1: SkillDefinition = {
   offsetRecordFrame: 11,
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 9, endFrame: 12, sequence: { $sequence: 'modifyActionValue_16' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'ifElse_20' } },
     { startFrame: 10, endFrame: 11, sequence: { $sequence: 'ifElse_20' } },
@@ -876,13 +938,52 @@ export const mifuChr_0031_mifu_attack1: SkillDefinition = {
 export const mifuChr_0031_mifu_attack2ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'targets',
+          },
+        },
+        next: null,
+      },
+      findTargets_2: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'targets',
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
       startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.03 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -907,8 +1008,6 @@ export const mifuChr_0031_mifu_attack2ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -942,7 +1041,7 @@ export const mifuChr_0031_mifu_attack2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'targets' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -957,13 +1056,13 @@ export const mifuChr_0031_mifu_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -997,7 +1096,7 @@ export const mifuChr_0031_mifu_attack2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'targets' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1053,6 +1152,8 @@ export const mifuChr_0031_mifu_attack2: SkillDefinition = {
   offsetRecordFrame: 9,
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 16, endFrame: 19, sequence: { $sequence: 'findTargets_2' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'repeatEachTick_7' } },
     { startFrame: 16, endFrame: 19, sequence: { $sequence: 'repeatEachTick_12' } },
     { startFrame: 0, endFrame: 67, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
@@ -1067,6 +1168,24 @@ export const mifuChr_0031_mifu_attack2: SkillDefinition = {
 export const mifuChr_0031_mifu_attack3ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'targets',
+          },
+        },
+        next: null,
+      },
       dealDamage_11: {
         action: {
           kind: 'dealDamage',
@@ -1086,7 +1205,7 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'targets' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1123,13 +1242,13 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1138,13 +1257,13 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.03 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1218,7 +1337,7 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'targets' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1255,13 +1374,13 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1270,13 +1389,13 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1346,7 +1465,7 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'targets' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1472,6 +1591,16 @@ export const mifuChr_0031_mifu_attack3: SkillDefinition = {
   offsetRecordFrame: 16,
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 30, endFrame: 31, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 31, endFrame: 32, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 32, endFrame: 33, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 10, endFrame: 13, sequence: { $sequence: 'modifyActionValue_14' } },
     { startFrame: 16, endFrame: 20, sequence: { $sequence: 'modifyActionValue_27' } },
     { startFrame: 30, endFrame: 33, sequence: { $sequence: 'modifyActionValue_39' } },
@@ -1497,12 +1626,20 @@ export const mifuChr_0031_mifu_attack3: SkillDefinition = {
 export const mifuChr_0031_mifu_attack4ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -1511,13 +1648,13 @@ export const mifuChr_0031_mifu_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.03 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1551,7 +1688,7 @@ export const mifuChr_0031_mifu_attack4ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'targets' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -1581,9 +1718,11 @@ export const mifuChr_0031_mifu_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -1608,8 +1747,6 @@ export const mifuChr_0031_mifu_attack4ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_9',
@@ -1688,8 +1825,8 @@ export const mifuChr_0031_mifu_attack4: SkillDefinition = {
   offsetRecordFrame: 30,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 30, endFrame: 30, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 7, endFrame: 7, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 30, endFrame: 30, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 7, endFrame: 7, sequence: { $sequence: 'repeatEachTick_7' } },
     { startFrame: 30, endFrame: 30, sequence: { $sequence: 'dealDamage_12' } },
     { startFrame: 0, endFrame: 99, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
@@ -1704,10 +1841,21 @@ export const mifuChr_0031_mifu_attack4: SkillDefinition = {
 export const mifuChr_0031_mifu_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1784,7 +1932,7 @@ export const mifuChr_0031_mifu_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 2, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 2, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 2, endFrame: 7, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 12, endFrame: 21, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
   ],
@@ -1797,12 +1945,24 @@ export const mifuChr_0031_mifu_plunging_attack_end: SkillDefinition = {
 export const mifuChr_0031_mifu_powerattackActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'intersection',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              parentTargets: { kind: 'inputTarget' },
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -1811,9 +1971,11 @@ export const mifuChr_0031_mifu_powerattackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -1847,8 +2009,6 @@ export const mifuChr_0031_mifu_powerattackActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1912,9 +2072,11 @@ export const mifuChr_0031_mifu_powerattackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.03 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -1948,8 +2110,6 @@ export const mifuChr_0031_mifu_powerattackActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1998,9 +2158,11 @@ export const mifuChr_0031_mifu_powerattackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.23 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -2034,8 +2196,6 @@ export const mifuChr_0031_mifu_powerattackActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -2173,10 +2333,10 @@ export const mifuChr_0031_mifu_powerattack: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 6, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 37, endFrame: 37, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 5, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 6, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 37, endFrame: 37, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 5, endFrame: 5, sequence: { $sequence: 'startTimeDilation_5' } },
     { startFrame: 6, endFrame: 6, sequence: { $sequence: 'ifElse_9' } },
     { startFrame: 17, endFrame: 17, sequence: { $sequence: 'ifElse_14' } },
@@ -2209,12 +2369,20 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_17: {
+      findTargets_17: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -2234,57 +2402,88 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         },
         next: null,
       },
-      forEachContextTarget_22: {
+      pull_19: {
         action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: null },
-        },
-        next: null,
-      },
-      jumpTimeline_21: {
-        action: {
-          kind: 'jumpTimeline',
-          parameters: { destinationFrame: 105 },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-        },
-        next: null,
-      },
-      checkCondition_19: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          kind: 'pull',
+          parameters: {
+            targets: { kind: 'context', key: 'targets' },
+            destination: { kind: 'context', key: 'targetpos' },
+            targetType: 'Enemy',
+            alwaysNext: false,
+          },
         },
         next: null,
       },
       checkCondition_20: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
-        next: 'checkCondition_19',
+        next: 'pull_19',
       },
-      ifElse_23: {
+      pull_21: {
         action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'jumpTimeline_21' },
-          whenFalse: { $sequence: 'forEachContextTarget_22' },
+          kind: 'pull',
+          parameters: {
+            targets: { kind: 'inputTarget' },
+            destination: { kind: 'context', key: 'pos' },
+            targetType: 'Enemy',
+            alwaysNext: false,
+          },
         },
         next: null,
       },
-      ifElse_24: {
+      forEachContextTarget_25: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'targets' } },
+          body: { $sequence: 'pull_21' },
+        },
+        next: null,
+      },
+      jumpTimeline_24: {
+        action: {
+          kind: 'jumpTimeline',
+          parameters: { destinationFrame: 105 },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+        },
+        next: null,
+      },
+      checkCondition_22: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: null,
+      },
+      checkCondition_23: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'checkCondition_22',
+      },
+      ifElse_27: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'ifElse_23' },
+          whenTrue: { $sequence: 'jumpTimeline_24' },
+          whenFalse: { $sequence: 'forEachContextTarget_25' },
+        },
+        next: null,
+      },
+      ifElse_28: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'ifElse_27' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      applyBuff_25: {
+      applyBuff_29: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2294,41 +2493,113 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'ifElse_24',
+        next: 'ifElse_28',
       },
-      dealDamage_26: {
+      dealDamage_30: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'context', key: 'targets' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['normalSkill'],
             features: ['canBreakWeakness'],
           },
         },
-        next: 'applyBuff_25',
+        next: 'applyBuff_29',
       },
-      checkCondition_27: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: 'dealDamage_26',
-      },
-      checkCondition_28: {
+      checkCondition_31: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
-        next: 'checkCondition_27',
+        next: 'dealDamage_30',
       },
-      markCurrentSkillCanInterrupt_29: {
+      checkCondition_32: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+        },
+        next: 'checkCondition_31',
+      },
+      markCurrentSkillCanInterrupt_33: {
         action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
         next: null,
       },
-      applyBuff_38: {
+      createSpatialPointTargets_35: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'targetpos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'inputTarget' },
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_36: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'effect_z_scale',
+            operation: 'divide',
+            value: { kind: 'constant', value: 8 },
+          },
+        },
+        next: null,
+      },
+      saveTargetDistance_37: {
+        action: {
+          kind: 'saveTargetDistance',
+          parameters: {
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'targetpos' },
+            outputKey: 'effect_z_scale',
+          },
+        },
+        next: 'modifyActionValue_36',
+      },
+      ifElse_38: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_35' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'saveTargetDistance_37',
+      },
+      saveTargetDistance_39: {
+        action: {
+          kind: 'saveTargetDistance',
+          parameters: {
+            source: { kind: 'owner' },
+            target: { kind: 'inputTarget' },
+            outputKey: 'effect_z_scale',
+          },
+        },
+        next: 'ifElse_38',
+      },
+      checkCondition_40: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+        },
+        next: 'saveTargetDistance_39',
+      },
+      createSpatialPointTargets_41: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'targetpos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+          },
+        },
+        next: 'checkCondition_40',
+      },
+      applyBuff_42: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2340,43 +2611,43 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         },
         next: null,
       },
-      jumpTimeline_39: {
+      jumpTimeline_43: {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 204 },
-          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
         },
         next: null,
       },
-      overrideBasicAttackMapping_40: {
+      overrideBasicAttackMapping_44: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0031_mifu_attack2'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_41: {
+      reachSkillOperableBoundary_45: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_normalskill_2'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_43: {
+      reachSkillOperableBoundary_47: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_attack2'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_45: {
+      reachSkillOperableBoundary_49: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_powerattack'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_47: {
+      reachSkillOperableBoundary_51: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_combo_skill'] },
@@ -2398,9 +2669,20 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'inputTarget' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'enemySuperArmorCompare',
@@ -2409,7 +2691,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
           value: { kind: 'constant', value: 30 },
         },
       },
-      data_3: {
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -2420,16 +2702,11 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
           value: 1,
         },
       },
-      data_4: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_20' } },
-      },
       data_5: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_23' } },
       },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_7: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -2440,7 +2717,19 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
           value: 1,
         },
       },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'targets' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_9: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -2451,7 +2740,31 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
           value: 1,
         },
       },
-      data_9: {
+      data_10: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'effect_z_scale', fallback: 0 },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_10' },
+          operator: 'lessOrEqual',
+          right: { kind: 'constant', value: 8 },
+        },
+      },
+      data_12: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'inputTarget' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_13: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
@@ -2464,7 +2777,10 @@ export const mifuChr_0031_mifu_normalskill_1: SkillDefinition = {
   actionGraph: mifuChr_0031_mifu_normalskill_1ActionGraph,
   key: 'chr_0031_mifu_normalskill_1',
   element: 'physical',
-  blackboard: { atk_scale: [0.67, 0.73, 0.8, 0.87, 0.93, 1, 1.07, 1.13, 1.2, 1.28, 1.38, 1.5] },
+  blackboard: {
+    atk_scale: [0.67, 0.73, 0.8, 0.87, 0.93, 1, 1.07, 1.13, 1.2, 1.28, 1.38, 1.5],
+    effect_z_scale: 1,
+  },
   timelineBlockFrames: 11,
   naturalDurationFrames: 203,
   exclusiveFrame: 125,
@@ -2475,21 +2791,23 @@ export const mifuChr_0031_mifu_normalskill_1: SkillDefinition = {
     { startFrame: 11, endFrame: 38, sequence: { $sequence: 'applyBuff_6' } },
     { startFrame: 105, endFrame: 156, sequence: { $sequence: 'applyBuff_6' } },
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_opt1' } },
-    { startFrame: 4, endFrame: 4, sequence: { $sequence: 'mergeContextTargets_17' } },
+    { startFrame: 4, endFrame: 4, sequence: { $sequence: 'findTargets_17' } },
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'changeResource_18' } },
-    { startFrame: 7, endFrame: 12, sequence: { $sequence: 'checkCondition_28' } },
-    { startFrame: 25, endFrame: 31, sequence: { $sequence: 'markCurrentSkillCanInterrupt_29' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'applyBuff_38' } },
-    { startFrame: 104, endFrame: 104, sequence: { $sequence: 'jumpTimeline_39' } },
-    { startFrame: 0, endFrame: 131, sequence: { $sequence: 'overrideBasicAttackMapping_40' } },
-    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_41' } },
-    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_41' } },
-    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_43' } },
-    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_43' } },
+    { startFrame: 4, endFrame: 7, sequence: { $sequence: 'checkCondition_20' } },
+    { startFrame: 7, endFrame: 12, sequence: { $sequence: 'checkCondition_32' } },
+    { startFrame: 25, endFrame: 31, sequence: { $sequence: 'markCurrentSkillCanInterrupt_33' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'createSpatialPointTargets_41' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'applyBuff_42' } },
+    { startFrame: 104, endFrame: 104, sequence: { $sequence: 'jumpTimeline_43' } },
+    { startFrame: 0, endFrame: 131, sequence: { $sequence: 'overrideBasicAttackMapping_44' } },
     { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_45' } },
     { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_45' } },
     { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_47' } },
     { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_47' } },
+    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_49' } },
+    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_49' } },
+    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_51' } },
+    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_51' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -2539,12 +2857,20 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_15: {
+      findTargets_15: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -2553,9 +2879,11 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'owner' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.03 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -2598,8 +2926,6 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -2629,7 +2955,7 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             outputKey: 'stack',
             query: {
               kind: 'tag',
@@ -2656,9 +2982,11 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'owner' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.12 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -2701,8 +3029,6 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'applyBuff_25',
@@ -2739,7 +3065,7 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
       forEachContextTarget_29: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'targets' } },
           body: { $sequence: 'readBuffStackCount_24' },
         },
         next: 'applyPhysicalInfliction_28',
@@ -2935,9 +3261,9 @@ export const mifuChr_0031_mifu_normalskill_2: SkillDefinition = {
     { startFrame: 24, endFrame: 24, sequence: { $sequence: 'finishBuffsById_6' } },
     { startFrame: 28, endFrame: 129, sequence: { $sequence: 'applyBuff_7' } },
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_opt3' } },
-    { startFrame: 3, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_15' } },
-    { startFrame: 10, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_15' } },
-    { startFrame: 24, endFrame: 24, sequence: { $sequence: 'mergeContextTargets_15' } },
+    { startFrame: 3, endFrame: 3, sequence: { $sequence: 'findTargets_15' } },
+    { startFrame: 10, endFrame: 10, sequence: { $sequence: 'findTargets_15' } },
+    { startFrame: 24, endFrame: 24, sequence: { $sequence: 'findTargets_15' } },
     { startFrame: 3, endFrame: 3, sequence: { $sequence: 'checkCondition_20' } },
     { startFrame: 10, endFrame: 10, sequence: { $sequence: 'checkCondition_20' } },
     { startFrame: 24, endFrame: 24, sequence: { $sequence: 'checkCondition_30' } },
@@ -2972,12 +3298,20 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_8: {
+      findTargets_8: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -2998,9 +3332,11 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.16 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -3025,8 +3361,6 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -3035,9 +3369,11 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -3062,8 +3398,6 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -3101,9 +3435,11 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06666 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -3137,8 +3473,6 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -3147,9 +3481,11 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.08888 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -3183,8 +3519,6 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -3349,7 +3683,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
       forEachContextTarget_37: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'targets' } },
           body: { $sequence: 'modifyActionValue_35' },
         },
         next: 'applyBuff_36',
@@ -3505,9 +3839,9 @@ export const mifuChr_0031_mifu_normalskill_3: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_opt3' } },
-    { startFrame: 23, endFrame: 23, sequence: { $sequence: 'mergeContextTargets_8' } },
-    { startFrame: 25, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_8' } },
-    { startFrame: 26, endFrame: 26, sequence: { $sequence: 'mergeContextTargets_8' } },
+    { startFrame: 23, endFrame: 23, sequence: { $sequence: 'findTargets_8' } },
+    { startFrame: 25, endFrame: 25, sequence: { $sequence: 'findTargets_8' } },
+    { startFrame: 26, endFrame: 26, sequence: { $sequence: 'findTargets_8' } },
     { startFrame: 21, endFrame: 21, sequence: { $sequence: 'finishBuffsById_11' } },
     { startFrame: 23, endFrame: 23, sequence: { $sequence: 'checkCondition_17' } },
     { startFrame: 25, endFrame: 25, sequence: { $sequence: 'ifElse_22' } },
@@ -3550,12 +3884,20 @@ export const mifuChr_0031_mifu_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_3: {
+      findTargets_3: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: null,
@@ -3564,9 +3906,11 @@ export const mifuChr_0031_mifu_ultimate_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'owner' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.12 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -3609,8 +3953,6 @@ export const mifuChr_0031_mifu_ultimate_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -3658,9 +4000,11 @@ export const mifuChr_0031_mifu_ultimate_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'owner' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -3703,8 +4047,6 @@ export const mifuChr_0031_mifu_ultimate_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -3734,9 +4076,11 @@ export const mifuChr_0031_mifu_ultimate_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'owner' },
+            targets: { kind: 'context', key: 'targets' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -3779,8 +4123,6 @@ export const mifuChr_0031_mifu_ultimate_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -3800,7 +4142,19 @@ export const mifuChr_0031_mifu_ultimate_skillActionGraph = {
         },
         next: 'startTimeDilation_13',
       },
-      applyBuff_15: {
+      pull_15: {
+        action: {
+          kind: 'pull',
+          parameters: {
+            targets: { kind: 'inputTarget' },
+            destination: { kind: 'owner' },
+            targetType: 'Enemy',
+            alwaysNext: false,
+          },
+        },
+        next: null,
+      },
+      applyBuff_16: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -3813,8 +4167,8 @@ export const mifuChr_0031_mifu_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      hideUi_16: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_17: {
+      hideUi_17: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_18: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -3825,35 +4179,35 @@ export const mifuChr_0031_mifu_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_18: {
+      reachSkillOperableBoundary_19: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_powerattack'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_19: {
+      reachSkillOperableBoundary_20: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_normalskill_2'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_20: {
+      reachSkillOperableBoundary_21: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_normalskill_3'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_21: {
+      reachSkillOperableBoundary_22: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_combo_skill'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_22: {
+      reachSkillOperableBoundary_23: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -3916,20 +4270,21 @@ export const mifuChr_0031_mifu_ultimate_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 105, sequence: { $sequence: 'applyBuff_1' } },
     { startFrame: 102, endFrame: 102, sequence: { $sequence: 'applyBuff_2' } },
-    { startFrame: 75, endFrame: 75, sequence: { $sequence: 'mergeContextTargets_3' } },
-    { startFrame: 98, endFrame: 98, sequence: { $sequence: 'mergeContextTargets_3' } },
-    { startFrame: 102, endFrame: 102, sequence: { $sequence: 'mergeContextTargets_3' } },
+    { startFrame: 75, endFrame: 75, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 98, endFrame: 98, sequence: { $sequence: 'findTargets_3' } },
+    { startFrame: 102, endFrame: 102, sequence: { $sequence: 'findTargets_3' } },
     { startFrame: 75, endFrame: 75, sequence: { $sequence: 'checkCondition_9' } },
     { startFrame: 98, endFrame: 98, sequence: { $sequence: 'checkCondition_12' } },
     { startFrame: 102, endFrame: 102, sequence: { $sequence: 'dealDamage_14' } },
-    { startFrame: 0, endFrame: 118, sequence: { $sequence: 'applyBuff_15' } },
-    { startFrame: 0, endFrame: 71, sequence: { $sequence: 'hideUi_16' } },
-    { startFrame: 0, endFrame: 71, sequence: { $sequence: 'startUltimateTimeDilation_17' } },
-    { startFrame: 113, endFrame: 124, sequence: { $sequence: 'reachSkillOperableBoundary_18' } },
+    { startFrame: 75, endFrame: 80, sequence: { $sequence: 'pull_15' } },
+    { startFrame: 0, endFrame: 118, sequence: { $sequence: 'applyBuff_16' } },
+    { startFrame: 0, endFrame: 71, sequence: { $sequence: 'hideUi_17' } },
+    { startFrame: 0, endFrame: 71, sequence: { $sequence: 'startUltimateTimeDilation_18' } },
     { startFrame: 113, endFrame: 124, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
     { startFrame: 113, endFrame: 124, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
     { startFrame: 113, endFrame: 124, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
     { startFrame: 113, endFrame: 124, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
+    { startFrame: 113, endFrame: 124, sequence: { $sequence: 'reachSkillOperableBoundary_23' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 450,

@@ -13,8 +13,8 @@ export function beginSkillCast(
 ): void {
   state.passedFrames = 0;
   state.hasOutputDamageBattle = false;
-  state.inputTarget = state.preparedInputTarget;
-  state.preparedInputTarget = undefined;
+  state.inputTargets = state.preparedInputTargets;
+  state.preparedInputTargets = undefined;
   state.castStartFrame = frame;
   state.appliedCost = state.preparedSkipApplyCost;
   state.attemptedCost = state.preparedSkipApplyCost;

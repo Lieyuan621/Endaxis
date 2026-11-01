@@ -79,7 +79,7 @@ describe('Context 条件查询', () => {
       ),
     ).toBe(true);
     const controlled = { kind: 'operator', operatorId: 'source' } as const;
-    const enemy = { kind: 'enemy' } as const;
+    const enemy = { kind: 'enemy', enemyId: 'enemy' } as const;
     for (const [targets, allMatch] of [
       [[], false],
       [[controlled], true],
@@ -110,8 +110,8 @@ describe('Context 条件查询', () => {
       [[], false],
       [[source], true],
       [[source, source], true],
-      [[source, { kind: 'enemy' }], false],
-      [[{ kind: 'enemy' }, source], false],
+      [[source, { kind: 'enemy', enemyId: 'enemy' }], false],
+      [[{ kind: 'enemy', enemyId: 'enemy' }, source], false],
     ] as const) {
       targetContext.set('targets', targets);
       expect(executor.evaluate(condition, context)).toBe(expected);
@@ -126,12 +126,12 @@ describe('Context 条件查询', () => {
   });
 
   it.each([
-    [['enemy'], { kind: 'enemy' }, true],
+    [['enemy'], { kind: 'enemy', enemyId: 'enemy' }, true],
     [['enemy'], { kind: 'operator', operatorId: 'ally' }, false],
     [['character'], { kind: 'operator', operatorId: 'ally' }, true],
     [['abilityEntity'], { kind: 'abilityEntity', instanceId: 1 }, true],
-    [[], { kind: 'enemy' }, false],
-    ['all', { kind: 'enemy' }, true],
+    [[], { kind: 'enemy', enemyId: 'enemy' }, false],
+    ['all', { kind: 'enemy', enemyId: 'enemy' }, true],
   ] as const)('mask=%s 查询 %j → %s', (mask, target, expected) => {
     const context = {
       blackboard: new ActionBlackboard(),
@@ -171,7 +171,7 @@ describe('Context 条件查询', () => {
     expect(executor.evaluate(condition, context)).toBe(false);
     context.targetContext.set('trigger', [
       { kind: 'operator', operatorId: 'ally' },
-      { kind: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
     ]);
     expect(executor.evaluate(condition, context)).toBe(true);
   });
@@ -223,7 +223,7 @@ describe('Context 条件查询', () => {
     ).toBe(true);
     context.targetContext.set('trigger', [
       { kind: 'operator', operatorId: 'ally' },
-      { kind: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
     ]);
     expect(() => executor.evaluate(condition, context)).toThrow('threshold');
     context.blackboard.assign({ threshold: 3 });
@@ -312,8 +312,8 @@ describe('Context 条件查询', () => {
 it('复制Context保留重复目标及顺序，独立保存输出，空来源覆盖旧组', () => {
   const targets = new RuntimeTargetContext();
   targets.set('source', [
-    { kind: 'enemy' },
-    { kind: 'enemy' },
+    { kind: 'enemy', enemyId: 'enemy' },
+    { kind: 'enemy', enemyId: 'enemy' },
     { kind: 'operator', operatorId: 'a' },
   ]);
   const executor = new TargetContextOperationExecutor('a', terminal);
@@ -347,9 +347,9 @@ it('实体计数排除位置点、保留重复项，仅比较成功后写回已�
   );
   const targetContext = new RuntimeTargetContext();
   targetContext.set('targets', [
-    { kind: 'enemy' },
+    { kind: 'enemy', enemyId: 'enemy' },
     { kind: 'spatialPoint', pointId: 1 },
-    { kind: 'enemy' },
+    { kind: 'enemy', enemyId: 'enemy' },
   ]);
   const blackboard = new ActionBlackboard({ count: 9 });
   const condition = {

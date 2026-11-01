@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../core/project/level';
 import { describe, expect, it, vi } from 'vitest';
 import type { GameDataRepository } from '../core/game-data/gameDataRepository';
 import { ActionGraphDefinitionRepository } from '../core/compiler/actionGraphDefinitionRepository';
@@ -89,7 +90,7 @@ describe('openProject', () => {
 
   it('reports references missing from the current library', () => {
     const project = createProject();
-    project.scenarios[0]!.enemy.source = {
+    firstScenarioEnemy(project.scenarios[0]!).enemy.source = {
       kind: 'prefab',
       enemyId: 'enemy:removed',
       level: 90,
@@ -103,7 +104,7 @@ describe('openProject', () => {
         kind: 'definition-validation-failed',
         issues: [
           {
-            path: '$.scenarios[0].enemy.source.enemyId',
+            path: '$.scenarios[0].level.enemy.enemy.source.enemyId',
             message: 'unknown enemy',
           },
         ],

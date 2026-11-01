@@ -136,16 +136,32 @@ export function collectCompiledBuffApplications(
     }
     if (item === null || typeof item !== 'object') return;
     const record = item as Record<string, unknown>;
+    if (record.kind === 'startTyphoeaArchery') {
+      const parameters = record.parameters;
+      if (
+        parameters === null ||
+        typeof parameters !== 'object' ||
+        !('markBuffId' in parameters) ||
+        typeof parameters.markBuffId !== 'string' ||
+        parameters.markBuffId.length === 0
+      )
+        throw new Error('compiled archery registration is missing its mark Buff');
+      // 专用瞄准系统只标记敌人；来源依赖注册动作环境，不能擅自认定为干员。
+      applications.push({ buffId: parameters.markBuffId, target: 'enemy', source: 'unknown' });
+    }
     if (record.kind === 'applyPhysicalInfliction') {
       const parameters = record.parameters as Record<string, unknown>;
       const type = parameters.type;
       if (type !== 'fracture' && type !== 'crush' && type !== 'airborne' && type !== 'knockDown')
         throw new Error('compiled physical infliction step has invalid type');
-      const kinds = (parameters as {
-        readonly [COMPILED_BUFF_TARGET_KINDS]?: { target: string; source?: string };
-      })[COMPILED_BUFF_TARGET_KINDS];
+      const kinds = (
+        parameters as {
+          readonly [COMPILED_BUFF_TARGET_KINDS]?: { target: string; source?: string };
+        }
+      )[COMPILED_BUFF_TARGET_KINDS];
       const query = parameters.target as { kind?: string; target?: string };
-      const target = kinds?.target ?? (query.kind === 'fixed' ? query.target : 'unknown') ?? 'unknown';
+      const target =
+        kinds?.target ?? (query.kind === 'fixed' ? query.target : 'unknown') ?? 'unknown';
       const source = kinds?.source;
       const binding = { target, ...(source === undefined ? {} : { source }) };
       const controlled = type === 'airborne' || type === 'knockDown';
@@ -158,11 +174,23 @@ export function collectCompiledBuffApplications(
     if (record.kind === 'forceSpellStatus') {
       const parameters = record.parameters as {
         element: keyof typeof FORCED_SPELL_STATUS_BUFFS;
-        target: string;
+        target: string | { kind?: string; target?: string };
+        readonly [COMPILED_BUFF_TARGET_KINDS]?: { target: string; source?: string };
       };
       const buffId = FORCED_SPELL_STATUS_BUFFS[parameters.element];
       if (buffId === undefined) throw new Error('compiled forceSpellStatus has invalid element');
-      applications.push({ buffId, target: parameters.target });
+      const kinds = parameters[COMPILED_BUFF_TARGET_KINDS];
+      applications.push({
+        buffId,
+        target:
+          kinds?.target ??
+          (typeof parameters.target === 'string'
+            ? parameters.target
+            : parameters.target.kind === 'fixed'
+              ? (parameters.target.target ?? 'unknown')
+              : 'unknown'),
+        ...(kinds?.source === undefined ? {} : { source: kinds.source }),
+      });
     }
     if (record.kind === 'applyBuff' || record.kind === 'aura') {
       const parameters = record.parameters;
@@ -234,6 +262,15 @@ export function collectCompiledBuffCapturedTargetGroups(
       const captured = rest.reduce<CompiledBuffCapturedTargetGroupsSource>(
         (current, next) => ({
           enemyKeys: current.enemyKeys.filter(key => next.enemyKeys.includes(key)),
+          ...(current.enemyOrSpatialKeys || next.enemyOrSpatialKeys
+            ? {
+                enemyOrSpatialKeys: [
+                  ...new Set([...current.enemyKeys, ...(current.enemyOrSpatialKeys ?? [])]),
+                ].filter(
+                  key => next.enemyKeys.includes(key) || next.enemyOrSpatialKeys?.includes(key),
+                ),
+              }
+            : {}),
           zeroSpaceKeys: current.zeroSpaceKeys.filter(key => next.zeroSpaceKeys.includes(key)),
         }),
         first!,
@@ -258,7 +295,9 @@ export function collectCompiledBuffIdentityReadIds(value: unknown): ReadonlySet<
     if (item === null || typeof item !== 'object') return;
     const record = item as Record<string, unknown>;
     if (
-      (record.kind === 'buffIdStackCompare' || record.kind === 'eventBuffIdMatch') &&
+      (record.kind === 'buffIdStackCompare' ||
+        record.kind === 'eventBuffIdMatch' ||
+        record.kind === 'smartTargetByBuff') &&
       Array.isArray(record.buffIds)
     ) {
       addIds(record.buffIds);

@@ -8,10 +8,21 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const arclightChr_0007_ikut_attack1ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -30,17 +41,32 @@ export const arclightChr_0007_ikut_attack1ActionGraph = {
         },
         next: null,
       },
-      ifElse_4: {
+      startTimeDilation_4: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.067 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: 'changeResource_3',
+      },
+      ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'changeResource_3' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_5: {
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -51,16 +77,16 @@ export const arclightChr_0007_ikut_attack1ActionGraph = {
             tags: ['normalAttack'],
           },
         },
-        next: 'ifElse_4',
+        next: 'ifElse_5',
       },
-      overrideBasicAttackMapping_6: {
+      overrideBasicAttackMapping_7: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0007_ikut_attack2'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_7: {
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_attack2'] },
@@ -94,10 +120,10 @@ export const arclightChr_0007_ikut_attack1: SkillDefinition = {
   offsetRecordFrame: 5,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 0, endFrame: 26, sequence: { $sequence: 'overrideBasicAttackMapping_6' } },
-    { startFrame: 9, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'dealDamage_6' } },
+    { startFrame: 0, endFrame: 26, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 9, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -108,10 +134,21 @@ export const arclightChr_0007_ikut_attack1: SkillDefinition = {
 export const arclightChr_0007_ikut_attack2ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -130,17 +167,32 @@ export const arclightChr_0007_ikut_attack2ActionGraph = {
         },
         next: null,
       },
-      ifElse_4: {
+      startTimeDilation_4: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.067 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: 'changeResource_3',
+      },
+      ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'changeResource_3' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_5: {
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -151,16 +203,16 @@ export const arclightChr_0007_ikut_attack2ActionGraph = {
             tags: ['normalAttack'],
           },
         },
-        next: 'ifElse_4',
+        next: 'ifElse_5',
       },
-      overrideBasicAttackMapping_6: {
+      overrideBasicAttackMapping_7: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0007_ikut_attack3'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_7: {
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_attack3'] },
@@ -194,10 +246,10 @@ export const arclightChr_0007_ikut_attack2: SkillDefinition = {
   offsetRecordFrame: 5,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 0, endFrame: 26, sequence: { $sequence: 'overrideBasicAttackMapping_6' } },
-    { startFrame: 10, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'dealDamage_6' } },
+    { startFrame: 0, endFrame: 26, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 10, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -208,10 +260,21 @@ export const arclightChr_0007_ikut_attack2: SkillDefinition = {
 export const arclightChr_0007_ikut_attack3ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -231,17 +294,32 @@ export const arclightChr_0007_ikut_attack3ActionGraph = {
         },
         next: null,
       },
-      ifElse_5: {
+      startTimeDilation_5: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.067 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: 'changeResource_4',
+      },
+      ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'changeResource_4' },
+          whenTrue: { $sequence: 'startTimeDilation_5' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_6: {
+      dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -252,16 +330,16 @@ export const arclightChr_0007_ikut_attack3ActionGraph = {
             tags: ['normalAttack'],
           },
         },
-        next: 'ifElse_5',
+        next: 'ifElse_6',
       },
-      overrideBasicAttackMapping_11: {
+      overrideBasicAttackMapping_13: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0007_ikut_attack4'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_12: {
+      reachSkillOperableBoundary_14: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_attack4'] },
@@ -295,12 +373,12 @@ export const arclightChr_0007_ikut_attack3: SkillDefinition = {
   offsetRecordFrame: 7,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
-    { startFrame: 20, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
+    { startFrame: 20, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -311,6 +389,24 @@ export const arclightChr_0007_ikut_attack3: SkillDefinition = {
 export const arclightChr_0007_ikut_attack4ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_17: {
         action: {
           kind: 'changeResource',
@@ -327,17 +423,32 @@ export const arclightChr_0007_ikut_attack4ActionGraph = {
         },
         next: null,
       },
-      ifElse_18: {
+      startTimeDilation_18: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.066 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: 'changeResource_17',
+      },
+      ifElse_19: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'changeResource_17' },
+          whenTrue: { $sequence: 'startTimeDilation_18' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_19: {
+      dealDamage_20: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -348,33 +459,33 @@ export const arclightChr_0007_ikut_attack4ActionGraph = {
             tags: ['normalAttack'],
           },
         },
-        next: 'ifElse_18',
+        next: 'ifElse_19',
       },
-      repeatEachTick_20: {
+      repeatEachTick_21: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 3,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'dealDamage_19' },
+          body: { $sequence: 'dealDamage_20' },
         },
         next: null,
       },
-      overrideBasicAttackMapping_21: {
+      overrideBasicAttackMapping_22: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0007_ikut_attack5'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_22: {
+      reachSkillOperableBoundary_23: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_attack5'] },
@@ -408,9 +519,24 @@ export const arclightChr_0007_ikut_attack4: SkillDefinition = {
   offsetRecordFrame: 5,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 20, sequence: { $sequence: 'repeatEachTick_20' } },
-    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_21' } },
-    { startFrame: 27, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 5, endFrame: 20, sequence: { $sequence: 'repeatEachTick_21' } },
+    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_22' } },
+    { startFrame: 27, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_23' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -421,10 +547,21 @@ export const arclightChr_0007_ikut_attack4: SkillDefinition = {
 export const arclightChr_0007_ikut_attack5ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -472,18 +609,18 @@ export const arclightChr_0007_ikut_attack5ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.167 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      ifElse_8: {
+      ifElse_9: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
@@ -493,24 +630,24 @@ export const arclightChr_0007_ikut_attack5ActionGraph = {
         },
         next: null,
       },
-      ifElse_9: {
+      ifElse_10: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'ifElse_8' },
+          whenTrue: { $sequence: 'ifElse_9' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      overrideBasicAttackMapping_10: {
+      overrideBasicAttackMapping_11: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0007_ikut_attack1'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_11: {
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_attack1'] },
@@ -532,7 +669,14 @@ export const arclightChr_0007_ikut_attack5ActionGraph = {
       },
       data_6: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
     },
   },
@@ -554,11 +698,11 @@ export const arclightChr_0007_ikut_attack5: SkillDefinition = {
   offsetRecordFrame: 12,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'ifElse_9' } },
-    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_10' } },
-    { startFrame: 29, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'ifElse_10' } },
+    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
+    { startFrame: 29, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -569,7 +713,32 @@ export const arclightChr_0007_ikut_attack5: SkillDefinition = {
 export const arclightChr_0007_ikut_power_attackActionGraph = {
   main: {
     nodes: {
-      dealDamage_1: {
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.2667 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'startTimeDilation_2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_4: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -577,15 +746,56 @@ export const arclightChr_0007_ikut_power_attackActionGraph = {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.05,
             tags: ['normalAttack', 'powerAttack'],
           },
         },
+        next: 'ifElse_3',
+      },
+      startTimeDilation_6: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.7 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
         next: null,
       },
-      gainFinisherSp_3: {
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'startTimeDilation_6' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_8: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            alwaysNext: false,
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            calculation: 'breakingAttack',
+            calculationMultiplier: 0.05,
+            tags: ['normalAttack', 'powerAttack'],
+          },
+        },
+        next: 'ifElse_7',
+      },
+      gainFinisherSp_9: {
         action: {
           kind: 'gainFinisherSp',
           parameters: {
@@ -596,44 +806,44 @@ export const arclightChr_0007_ikut_power_attackActionGraph = {
         },
         next: null,
       },
-      dealDamage_4: {
+      dealDamage_10: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.9,
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'gainFinisherSp_3',
+        next: 'gainFinisherSp_9',
       },
-      startTimeDilation_5: {
+      startTimeDilation_11: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2667 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      reachSkillOperableBoundary_6: {
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_normal_skill', 'chr_0007_ikut_combo_skill'] },
         },
         next: null,
       },
-      applyBuff_7: {
+      applyBuff_13: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -646,7 +856,7 @@ export const arclightChr_0007_ikut_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_8: {
+      applyBuff_14: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -660,7 +870,17 @@ export const arclightChr_0007_ikut_power_attackActionGraph = {
         next: null,
       },
     },
-    dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+    },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
@@ -677,13 +897,13 @@ export const arclightChr_0007_ikut_power_attack: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 4,
   scheduledSequences: [
-    { startFrame: 15, endFrame: 15, sequence: { $sequence: 'dealDamage_1' } },
-    { startFrame: 23, endFrame: 23, sequence: { $sequence: 'dealDamage_1' } },
-    { startFrame: 38, endFrame: 38, sequence: { $sequence: 'dealDamage_4' } },
-    { startFrame: 39, endFrame: 39, sequence: { $sequence: 'startTimeDilation_5' } },
-    { startFrame: 40, endFrame: 68, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
-    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'applyBuff_7' } },
-    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'applyBuff_8' } },
+    { startFrame: 15, endFrame: 15, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 23, endFrame: 23, sequence: { $sequence: 'dealDamage_8' } },
+    { startFrame: 38, endFrame: 38, sequence: { $sequence: 'dealDamage_10' } },
+    { startFrame: 39, endFrame: 39, sequence: { $sequence: 'startTimeDilation_11' } },
+    { startFrame: 40, endFrame: 68, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
+    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'applyBuff_13' } },
+    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'applyBuff_14' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -694,10 +914,21 @@ export const arclightChr_0007_ikut_power_attack: SkillDefinition = {
 export const arclightChr_0007_ikut_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -767,7 +998,7 @@ export const arclightChr_0007_ikut_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
   ],
   defaultTarget: 'enemy',
@@ -779,10 +1010,21 @@ export const arclightChr_0007_ikut_plunging_attack_end: SkillDefinition = {
 export const arclightChr_0007_ikut_normal_skillActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -790,13 +1032,13 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.066 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -832,13 +1074,13 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'applyBuff_7',
@@ -874,7 +1116,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         },
         next: 'startTimeDilation_5',
       },
-      dealDamage_25: {
+      dealDamage_30: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -901,7 +1143,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
-        next: 'dealDamage_25',
+        next: 'dealDamage_30',
       },
       applyBuff_15: {
         action: {
@@ -1014,7 +1256,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         },
         next: 'changeResource_22',
       },
-      ifElse_27: {
+      ifElse_28: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
@@ -1024,30 +1266,47 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_28: {
+      ifElse_31: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_9' },
-          whenTrue: { $sequence: 'ifElse_27' },
-          whenFalse: { $sequence: null },
+          whenTrue: { $sequence: 'ifElse_28' },
+          whenFalse: { $sequence: 'dealDamage_30' },
         },
         next: null,
       },
-      mergeContextTargets_29: {
+      findTargets_32: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'exclude',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              excludeTargets: { kind: 'context', key: 'smart_target' },
+            },
+            saveToContextKey: 'tar',
+          },
         },
-        next: 'ifElse_28',
+        next: 'ifElse_31',
       },
-      startTimeDilation_31: {
+      startTimeDilation_34: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.6 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -1099,27 +1358,25 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      ifElse_32: {
+      ifElse_35: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_11' },
-          whenTrue: { $sequence: 'startTimeDilation_31' },
+          whenTrue: { $sequence: 'startTimeDilation_34' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      markCurrentSkillCanInterrupt_33: {
+      markCurrentSkillCanInterrupt_36: {
         action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
         next: null,
       },
-      modifyActionValue_35: {
+      modifyActionValue_38: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1130,17 +1387,17 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_36: {
+      ifElse_39: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_12' },
-          whenTrue: { $sequence: 'modifyActionValue_35' },
+          whenTrue: { $sequence: 'modifyActionValue_38' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      jumpTimeline_38: {
+      jumpTimeline_41: {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 96 },
@@ -1148,7 +1405,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         },
         next: null,
       },
-      jumpTimeline_39: {
+      jumpTimeline_42: {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 204 },
@@ -1156,7 +1413,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_57: {
+      reachSkillOperableBoundary_60: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_normal_skill'] },
@@ -1191,7 +1448,15 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
       },
       data_9: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'context', key: 'smart_target' },
+          distance: 5,
+          lessThan: true,
+          includeTargetRadius: true,
+          containsHittableObject: false,
+        },
       },
       data_10: { type: 'number', expression: { kind: 'blackboard', key: 'thirdhit', fallback: 0 } },
       data_11: {
@@ -1258,22 +1523,22 @@ export const arclightChr_0007_ikut_normal_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 112, endFrame: 112, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 118, endFrame: 118, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 112, endFrame: 112, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 118, endFrame: 118, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 19, endFrame: 19, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 24, endFrame: 24, sequence: { $sequence: 'dealDamage_9' } },
     { startFrame: 112, endFrame: 112, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 118, endFrame: 118, sequence: { $sequence: 'dealDamage_13' } },
-    { startFrame: 136, endFrame: 136, sequence: { $sequence: 'mergeContextTargets_29' } },
-    { startFrame: 137, endFrame: 137, sequence: { $sequence: 'ifElse_32' } },
-    { startFrame: 34, endFrame: 35, sequence: { $sequence: 'markCurrentSkillCanInterrupt_33' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_36' } },
-    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'jumpTimeline_38' } },
-    { startFrame: 95, endFrame: 95, sequence: { $sequence: 'jumpTimeline_39' } },
-    { startFrame: 36, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_57' } },
-    { startFrame: 162, endFrame: 188, sequence: { $sequence: 'reachSkillOperableBoundary_57' } },
+    { startFrame: 136, endFrame: 136, sequence: { $sequence: 'findTargets_32' } },
+    { startFrame: 137, endFrame: 137, sequence: { $sequence: 'ifElse_35' } },
+    { startFrame: 34, endFrame: 35, sequence: { $sequence: 'markCurrentSkillCanInterrupt_36' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_39' } },
+    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'jumpTimeline_41' } },
+    { startFrame: 95, endFrame: 95, sequence: { $sequence: 'jumpTimeline_42' } },
+    { startFrame: 36, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_60' } },
+    { startFrame: 162, endFrame: 188, sequence: { $sequence: 'reachSkillOperableBoundary_60' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'enemy',
@@ -1317,8 +1582,15 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
             influenceSkillCooldownSeconds: { kind: 'constant', value: 0.4 },
           },
         },
@@ -1336,10 +1608,21 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_7: {
+      findTargets_7: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'target', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'target',
+          },
         },
         next: null,
       },
@@ -1360,13 +1643,13 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'target' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.133 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_10',
@@ -1405,13 +1688,13 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'target' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.133 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1430,7 +1713,22 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
         },
         next: 'startTimeDilation_14',
       },
-      dealDamage_16: {
+      startTimeDilation_16: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'target' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.333 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_17: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1442,9 +1740,9 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
             features: ['canBreakWeakness'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_16',
       },
-      reachSkillOperableBoundary_23: {
+      reachSkillOperableBoundary_24: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_normal_skill'] },
@@ -1486,13 +1784,13 @@ export const arclightChr_0007_ikut_combo_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 0, endFrame: 12, sequence: { $sequence: 'startTimeDilation_5' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_6' } },
-    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'mergeContextTargets_7' } },
-    { startFrame: 21, endFrame: 21, sequence: { $sequence: 'mergeContextTargets_7' } },
-    { startFrame: 25, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_7' } },
+    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'findTargets_7' } },
+    { startFrame: 21, endFrame: 21, sequence: { $sequence: 'findTargets_7' } },
+    { startFrame: 25, endFrame: 25, sequence: { $sequence: 'findTargets_7' } },
     { startFrame: 17, endFrame: 17, sequence: { $sequence: 'changeResource_13' } },
     { startFrame: 21, endFrame: 21, sequence: { $sequence: 'dealDamage_15' } },
-    { startFrame: 25, endFrame: 25, sequence: { $sequence: 'dealDamage_16' } },
-    { startFrame: 27, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_23' } },
+    { startFrame: 25, endFrame: 25, sequence: { $sequence: 'dealDamage_17' } },
+    { startFrame: 27, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_24' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'input',
@@ -2171,12 +2469,20 @@ export const arclight: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              mergeContextTargets_1: {
+              findTargets_1: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: null,
@@ -2200,53 +2506,80 @@ export const arclight: OperatorDefinition = {
               applyElementalInfliction_3: {
                 action: {
                   kind: 'applyElementalInfliction',
-                  parameters: { element: 'electric', isExtra: false },
+                  parameters: {
+                    element: 'electric',
+                    isExtra: false,
+                    target: { kind: 'context', key: 'tar' },
+                  },
                 },
                 next: 'dealDamage_2',
               },
-              forEachContextTarget_5: {
+              startTimeDilation_5: {
                 action: {
-                  kind: 'forEachContextTarget',
-                  parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-                  body: { $sequence: null },
+                  kind: 'startTimeDilation',
+                  parameters: {
+                    scope: 'hitStop',
+                    attacker: { kind: 'source' },
+                    targets: { kind: 'inputTarget' },
+                    affectType: 'OnlyTarget',
+                    durationSeconds: { kind: 'constant', value: 3 },
+                    priority: 10,
+                    curve: { kind: 'named', key: 'char_hard_stop' },
+                  },
                 },
                 next: null,
               },
-              dealDamage_6: {
+              checkCondition_6: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                },
+                next: 'startTimeDilation_5',
+              },
+              forEachContextTarget_7: {
+                action: {
+                  kind: 'forEachContextTarget',
+                  parameters: { targets: { kind: 'context', key: 'tar' } },
+                  body: { $sequence: 'checkCondition_6' },
+                },
+                next: null,
+              },
+              dealDamage_8: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
                     attacker: 'actionSource',
                     target: { kind: 'context', key: 'tar' },
                     damageType: 'electric',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+                    attackScale: { kind: 'valueNode', nodeId: 'data_4' },
                     tags: ['ultimateSkill'],
                     features: ['canBreakWeakness'],
-                    stagger: { kind: 'valueNode', nodeId: 'data_4' },
+                    stagger: { kind: 'valueNode', nodeId: 'data_5' },
                   },
-                  key: 'abilityentity_chr_0007_ikut_ultimate_skill:chr_0007_ikut_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_6/action',
+                  key: 'abilityentity_chr_0007_ikut_ultimate_skill:chr_0007_ikut_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_8/action',
                 },
                 next: null,
               },
-              forceSpellStatus_8: {
+              forceSpellStatus_10: {
                 action: {
                   kind: 'forceSpellStatus',
                   parameters: {
-                    target: 'enemy',
+                    source: { kind: 'source' },
+                    target: { kind: 'inputTarget' },
                     element: 'electric',
                     consumedElement: 'electric',
-                    consumedLayers: { kind: 'valueNode', nodeId: 'data_5' },
-                    count: { kind: 'valueNode', nodeId: 'data_5' },
+                    consumedLayers: { kind: 'valueNode', nodeId: 'data_6' },
+                    count: { kind: 'valueNode', nodeId: 'data_6' },
                     isExtra: false,
                   },
                 },
                 next: null,
               },
-              readBuffStackCount_9: {
+              readBuffStackCount_11: {
                 action: {
                   kind: 'readBuffStackCount',
                   parameters: {
-                    target: 'enemy',
+                    target: { kind: 'inputTarget' },
                     outputKey: 'count',
                     query: {
                       kind: 'tag',
@@ -2255,23 +2588,23 @@ export const arclight: OperatorDefinition = {
                     },
                   },
                 },
-                next: 'forceSpellStatus_8',
+                next: 'forceSpellStatus_10',
               },
-              ifElse_10: {
+              ifElse_12: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                  whenTrue: { $sequence: 'readBuffStackCount_9' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_7' },
+                  whenTrue: { $sequence: 'readBuffStackCount_11' },
                   whenFalse: { $sequence: null },
                 },
                 next: null,
               },
-              forEachContextTarget_11: {
+              forEachContextTarget_13: {
                 action: {
                   kind: 'forEachContextTarget',
-                  parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-                  body: { $sequence: 'ifElse_10' },
+                  parameters: { targets: { kind: 'context', key: 'tar' } },
+                  body: { $sequence: 'ifElse_12' },
                 },
                 next: null,
               },
@@ -2279,10 +2612,19 @@ export const arclight: OperatorDefinition = {
             dataNodes: {
               data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
               data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise1' } },
-              data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-              data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise2' } },
-              data_5: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
-              data_6: {
+              data_3: {
+                type: 'boolean',
+                expression: {
+                  kind: 'enemySuperArmorCompare',
+                  target: { kind: 'inputTarget' },
+                  operator: 'lessOrEqual',
+                  value: { kind: 'constant', value: 10 },
+                },
+              },
+              data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+              data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise2' } },
+              data_6: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+              data_7: {
                 type: 'boolean',
                 expression: {
                   kind: 'entityTagMatch',
@@ -2306,12 +2648,12 @@ export const arclight: OperatorDefinition = {
         },
         blackboard: { atk_scale1: 0.2, atk_scale2: 0, count: 0, poise1: 0, poise2: 0 },
         scheduledSequences: [
-          { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
+          { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
           { startFrame: 7, endFrame: 8, sequence: { $sequence: 'applyElementalInfliction_3' } },
-          { startFrame: 63, endFrame: 64, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 7, endFrame: 8, sequence: { $sequence: 'forEachContextTarget_5' } },
-          { startFrame: 63, endFrame: 64, sequence: { $sequence: 'dealDamage_6' } },
-          { startFrame: 63, endFrame: 64, sequence: { $sequence: 'forEachContextTarget_11' } },
+          { startFrame: 63, endFrame: 64, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 7, endFrame: 8, sequence: { $sequence: 'forEachContextTarget_7' } },
+          { startFrame: 63, endFrame: 64, sequence: { $sequence: 'dealDamage_8' } },
+          { startFrame: 63, endFrame: 64, sequence: { $sequence: 'forEachContextTarget_13' } },
         ],
       },
     },

@@ -68,6 +68,8 @@ export interface CombatStateGraph {
   };
   readonly operators: Map<string, CombatOperatorState>;
   readonly enemy: {
+    readonly id: string;
+    readonly additionalTimedMarkers?: Map<string, TimedMarkerState>;
     readonly timedMarkers: TimedMarkerState;
     readonly buffs: BuffContainerState | null;
   };

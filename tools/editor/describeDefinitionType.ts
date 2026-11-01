@@ -223,109 +223,146 @@ export function describeDefinitionType(
   return Object.keys(references).length ? { ...schema, references } : schema;
 }
 
+/** 引用表可共享很大的子树，结构指纹不能先将整棵树序列化。 */
+function createSchemaFingerprint(): (value: unknown) => string {
+  const cache = new WeakMap<object, string>();
+  const fingerprint = (value: unknown): string => {
+    if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'undefined';
+    const cached = cache.get(value);
+    if (cached) return cached;
+    const entries = Array.isArray(value)
+      ? ['array', value.map(fingerprint)]
+      : [
+          'object',
+          Object.entries(value)
+            .filter(([, child]) => child !== undefined)
+            .map(([key, child]) => [key, fingerprint(child)]),
+        ];
+    const result = createHash('sha256').update(JSON.stringify(entries)).digest('hex');
+    cache.set(value, result);
+    return result;
+  };
+  return fingerprint;
+}
+
 /** Merge equivalent declaration shapes without discarding any branch's metadata. */
 function composeShapes(values: readonly DefinitionFieldSchema[]): DefinitionFieldSchema {
-  if (!values.length) throw new Error('no present field variants');
-  if (values.length === 1) return values[0]!;
-  const shapeKey = (value: DefinitionFieldSchema, nested = false): unknown => ({
-    ...(nested ? { optional: value.optional === true } : {}),
-    kind: value.kind,
-    ...(value.kind === 'ref' ? { ref: value.ref } : {}),
-    declaration: value.declaration,
-    referenceKind: value.referenceKind,
-    readonlyDeclaration: value.readonlyDeclaration,
-    nativeId: value.nativeId,
-    blackboardOrigin: value.blackboardOrigin,
-    semantics: value.semantics ?? {},
-    fallback: value.fallback,
-    ...(value.kind === 'enum' ? { options: value.options } : {}),
-    ...(value.kind === 'object'
-      ? {
-          fields: Object.fromEntries(
-            Object.entries(value.fields).map(([key, child]) => [key, shapeKey(child, true)]),
-          ),
-        }
-      : {}),
-    ...(value.kind === 'array' ? { element: shapeKey(value.element, true) } : {}),
-    ...(value.kind === 'record' ? { value: shapeKey(value.value, true) } : {}),
-    ...(value.kind === 'tuple'
-      ? {
-          elements: value.elements.map(child => shapeKey(child, true)),
-          minLength: value.minLength,
-        }
-      : {}),
-    ...(value.kind === 'union'
-      ? { variants: value.variants.map(child => shapeKey(child, true)) }
-      : {}),
-  });
-  const key = (value: DefinitionFieldSchema) =>
-    JSON.stringify({ shape: shapeKey(value), references: value.references });
-  const groups = new Map<string, DefinitionFieldSchema[]>();
-  for (const value of values) {
-    const group = groups.get(key(value)) ?? [];
-    group.push(value);
-    groups.set(key(value), group);
-  }
-  const merged = [...groups.values()].map(group => {
-    const first = group[0]!;
-    if (group.length === 1) return first;
-    const metadata = {
-      ...(group.some(value => value.optional) ? { optional: true } : {}),
-    };
-    if (first.kind === 'object')
-      return {
-        ...first,
-        ...metadata,
-        fields: Object.fromEntries(
-          Object.keys(first.fields).map(name => [
-            name,
-            composeShapes(
-              group.map(value =>
-                value.kind === 'object' ? value.fields[name]! : first.fields[name]!,
+  const fingerprint = createSchemaFingerprint();
+  const composed = new Map<string, DefinitionFieldSchema>();
+  function compose(values: readonly DefinitionFieldSchema[]): DefinitionFieldSchema {
+    if (!values.length) throw new Error('no present field variants');
+    if (values.length === 1) return values[0]!;
+    const compositionKey = JSON.stringify(values.map(fingerprint));
+    const cached = composed.get(compositionKey);
+    if (cached) return cached;
+
+    const shapes = new WeakMap<DefinitionFieldSchema, Map<boolean, string>>();
+    const shapeKey = (value: DefinitionFieldSchema, nested = false): string => {
+      let cache = shapes.get(value);
+      if (!cache) shapes.set(value, (cache = new Map()));
+      const existing = cache.get(nested);
+      if (existing) return existing;
+      const result = fingerprint({
+        ...(nested ? { optional: value.optional === true } : {}),
+        kind: value.kind,
+        ...(value.kind === 'ref' ? { ref: value.ref } : {}),
+        declaration: value.declaration,
+        referenceKind: value.referenceKind,
+        readonlyDeclaration: value.readonlyDeclaration,
+        nativeId: value.nativeId,
+        blackboardOrigin: value.blackboardOrigin,
+        semantics: value.semantics ?? {},
+        fallback: value.fallback,
+        ...(value.kind === 'enum' ? { options: value.options } : {}),
+        ...(value.kind === 'object'
+          ? {
+              fields: Object.fromEntries(
+                Object.entries(value.fields).map(([key, child]) => [key, shapeKey(child, true)]),
               ),
-            ),
-          ]),
-        ),
+            }
+          : {}),
+        ...(value.kind === 'array' ? { element: shapeKey(value.element, true) } : {}),
+        ...(value.kind === 'record' ? { value: shapeKey(value.value, true) } : {}),
+        ...(value.kind === 'tuple'
+          ? {
+              elements: value.elements.map(child => shapeKey(child, true)),
+              minLength: value.minLength,
+            }
+          : {}),
+        ...(value.kind === 'union'
+          ? { variants: value.variants.map(child => shapeKey(child, true)) }
+          : {}),
+      });
+      cache.set(nested, result);
+      return result;
+    };
+    const key = (value: DefinitionFieldSchema) =>
+      JSON.stringify({ shape: shapeKey(value), references: fingerprint(value.references) });
+    const groups = new Map<string, DefinitionFieldSchema[]>();
+    for (const value of values) {
+      const group = groups.get(key(value)) ?? [];
+      group.push(value);
+      groups.set(key(value), group);
+    }
+    const merged = [...groups.values()].map(group => {
+      const first = group[0]!;
+      if (group.length === 1) return first;
+      const metadata = {
+        ...(group.some(value => value.optional) ? { optional: true } : {}),
       };
-    if (first.kind === 'array')
-      return {
-        ...first,
-        ...metadata,
-        element: composeShapes(
-          group.map(value => (value.kind === 'array' ? value.element : first.element)),
-        ),
-      };
-    if (first.kind === 'record')
-      return {
-        ...first,
-        ...metadata,
-        value: composeShapes(
-          group.map(value => (value.kind === 'record' ? value.value : first.value)),
-        ),
-      };
-    if (first.kind === 'tuple')
-      return {
-        ...first,
-        ...metadata,
-        elements: first.elements.map((child, index) =>
-          composeShapes(
-            group.map(value => (value.kind === 'tuple' ? value.elements[index]! : child)),
+      if (first.kind === 'object')
+        return {
+          ...first,
+          ...metadata,
+          fields: Object.fromEntries(
+            Object.keys(first.fields).map(name => [
+              name,
+              compose(
+                group.map(value =>
+                  value.kind === 'object' ? value.fields[name]! : first.fields[name]!,
+                ),
+              ),
+            ]),
           ),
-        ),
-      };
-    if (first.kind === 'union')
-      return {
-        ...first,
-        ...metadata,
-        variants: first.variants.map((child, index) =>
-          composeShapes(
-            group.map(value => (value.kind === 'union' ? value.variants[index]! : child)),
+        };
+      if (first.kind === 'array')
+        return {
+          ...first,
+          ...metadata,
+          element: compose(
+            group.map(value => (value.kind === 'array' ? value.element : first.element)),
           ),
-        ),
-      };
-    return { ...first, ...metadata };
-  });
-  return merged.length === 1 ? merged[0]! : { kind: 'union', variants: merged };
+        };
+      if (first.kind === 'record')
+        return {
+          ...first,
+          ...metadata,
+          value: compose(group.map(value => (value.kind === 'record' ? value.value : first.value))),
+        };
+      if (first.kind === 'tuple')
+        return {
+          ...first,
+          ...metadata,
+          elements: first.elements.map((child, index) =>
+            compose(group.map(value => (value.kind === 'tuple' ? value.elements[index]! : child))),
+          ),
+        };
+      if (first.kind === 'union')
+        return {
+          ...first,
+          ...metadata,
+          variants: first.variants.map((child, index) =>
+            compose(group.map(value => (value.kind === 'union' ? value.variants[index]! : child))),
+          ),
+        };
+      return { ...first, ...metadata };
+    });
+    const result: DefinitionFieldSchema =
+      merged.length === 1 ? merged[0]! : { kind: 'union', variants: merged };
+    composed.set(compositionKey, result);
+    return result;
+  }
+  return compose(values);
 }
 
 /** Compose independent root contexts without allowing equal reference labels from different
@@ -333,14 +370,22 @@ function composeShapes(values: readonly DefinitionFieldSchema[]): DefinitionFiel
 export function composeDefinitionSchemas(
   values: readonly DefinitionFieldSchema[],
 ): DefinitionFieldSchema {
+  // 单个声明没有引用命名冲突；保留已经共享的子结构，不能为重命名而展开递归树。
+  if (values.length === 1) return values[0]!;
   const references: Record<string, DefinitionFieldSchema> = {};
+  const fingerprint = createSchemaFingerprint();
   const normalized = values.map(value => {
     if (!value.references) return value;
-    const prefix = createHash('sha256')
-      .update(JSON.stringify(value.references))
-      .digest('hex')
-      .slice(0, 20);
+    const prefix = fingerprint(value.references).slice(0, 20);
+    const renamed = new Map<DefinitionFieldSchema, DefinitionFieldSchema>();
     function rename(schema: DefinitionFieldSchema): DefinitionFieldSchema {
+      const existing = renamed.get(schema);
+      if (existing) return existing;
+      const result = renameValue(schema);
+      renamed.set(schema, result);
+      return result;
+    }
+    function renameValue(schema: DefinitionFieldSchema): DefinitionFieldSchema {
       const { references: _references, ...base } = schema;
       switch (base.kind) {
         case 'ref':

@@ -1,3 +1,4 @@
+import type { RuntimeTargetRef } from '../../../game-data/logicalAbilityEntity';
 /**
  * 建立投射物纯数据目录，并在回调宿主和对象 reset 处理函数齐备后提交关系。
  *
@@ -6,7 +7,10 @@
  */
 import type { CallbackSkillHostFactory } from '../../abilities/callbackSkillHost';
 
-import { logicalAbilityEntityRuntimeId } from '../../../game-data/logicalAbilityEntity';
+import {
+  logicalAbilityEntityRuntimeId,
+  runtimeTargetEntityId,
+} from '../../../game-data/logicalAbilityEntity';
 import type { ProjectileCallbackPrograms } from '../../abilities/projectileCallbackPrograms';
 import {
   bindProjectileCallbackLifecycle,
@@ -60,6 +64,7 @@ export function createRestoredCombatProjectileDirectory(options: {
 }
 
 export function bindRestoredCombatProjectileRelations(options: {
+  readonly canHit?: (target: RuntimeTargetRef) => boolean;
   readonly resolveHitTargets?: NonNullable<
     Parameters<typeof bindProjectileCallbackLifecycle>[2]
   >['resolveTargets'];
@@ -104,13 +109,7 @@ export function bindRestoredCombatProjectileRelations(options: {
           bindings.operations,
           bindings,
           resolveAttachedBuff,
-          state.source?.kind === 'operator'
-            ? state.source.operatorId
-            : state.source?.kind === 'enemy'
-              ? 'enemy'
-              : state.source?.kind === 'abilityEntity'
-                ? logicalAbilityEntityRuntimeId(state.source.instanceId)
-                : undefined,
+          state.source === undefined ? undefined : runtimeTargetEntityId(state.source),
         );
       });
       return {
@@ -126,6 +125,7 @@ export function bindRestoredCombatProjectileRelations(options: {
                 resolveTargets: options.resolveHitTargets,
                 targetExists: options.hitTargetExists,
                 matchesTags: options.matchesHitTags,
+                canHit: options.canHit,
               },
         ),
         released: () =>

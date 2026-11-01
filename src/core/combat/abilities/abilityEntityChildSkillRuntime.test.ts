@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import { describe, expect, it, vi } from 'vitest';
 import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
@@ -77,6 +78,18 @@ function dependencies(
 const baseProgram = program;
 
 describe('AbilityEntityChildSkillRuntime restore', () => {
+  it('第二敌人创建的能力实体保留子技能动作来源', () => {
+    const execute = vi.fn(() => true);
+    const child = new AbilityEntityChildSkillRuntime(program, {
+      ...dependencies(new ActionBlackboard(), execute),
+      source: { kind: 'enemy', enemyId: 'enemy:second' },
+    });
+    child.start();
+    expect(execute).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ actionSourceId: 'enemy:second' }),
+    );
+  });
   it('子技能复制实体倍率时保留来源，但不改变倍率', () => {
     const entity = new ActionBlackboard({ atk_scale_laser2: 2.6 });
     entity.setValueCalculation('atk_scale_laser2', {
@@ -135,7 +148,7 @@ describe('AbilityEntityChildSkillRuntime restore', () => {
       expect.objectContaining({
         actionOwnerId: 'ability-entity:7',
         actionSourceId: 'launcher',
-        actionInputTarget: { kind: 'abilityEntity', instanceId: 19 },
+        actionInputTargets: singleTargetList({ kind: 'abilityEntity', instanceId: 19 }),
       }),
     );
     clock.advanceFrame();
@@ -175,7 +188,7 @@ describe('AbilityEntityChildSkillRuntime restore', () => {
       expect.objectContaining({
         actionOwnerId: 'ability-entity:7',
         actionSourceId: 'launcher',
-        actionInputTarget: { kind: 'abilityEntity', instanceId: 19 },
+        actionInputTargets: singleTargetList({ kind: 'abilityEntity', instanceId: 19 }),
       }),
     );
     expect(restored.runtimeState).toEqual(original.runtimeState);

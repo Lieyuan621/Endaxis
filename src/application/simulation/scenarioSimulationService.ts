@@ -38,11 +38,6 @@ import {
   type ComboWindowDiagnostic,
 } from '../../core/projection/comboWindowDiagnostics';
 import {
-  projectEnemyHealthCurveFromReceipt,
-  type EnemyHealthCurve,
-} from '../../core/projection/enemyHealthCurves';
-import { projectPoiseCurveFromReceipt, type PoiseCurve } from '../../core/projection/poiseCurves';
-import {
   projectSkillAvailabilityDiagnostics,
   type SkillAvailabilityDiagnostic,
 } from '../../core/projection/skillAvailabilityDiagnostics';
@@ -124,10 +119,6 @@ export type ScenarioSimulationPerformanceSubscriber = (
 ) => void;
 
 export interface ScenarioSimulationRun extends StandardPlayerDamageScenarioResult {
-  /** 与本次模拟同一份回执投影的敌人生命曲线。 */
-  readonly enemyHealthCurve: EnemyHealthCurve;
-  /** 与本次模拟同一份回执投影的敌人失衡曲线。 */
-  readonly poiseCurve: PoiseCurve;
   readonly availabilityDiagnostics: readonly SkillAvailabilityDiagnostic[];
   readonly executionDiagnostics: readonly SkillExecutionDiagnostic[];
   readonly comboWindowDiagnostics: readonly ComboWindowDiagnostic[];
@@ -460,23 +451,6 @@ export class ScenarioSimulationService {
 
       const run = Object.freeze({
         ...result,
-        enemyHealthCurve: projectEnemyHealthCurveFromReceipt(
-          {
-            health: result.enemyVitals.initialHealth,
-            maxHealth: result.enemyVitals.maxHealth,
-          },
-          result.receiptEntries,
-          -scenario.battle.prepFrames,
-        ),
-        // 失衡曲线初始值同样来自本次模拟唯一的敌人账本，而不是重新从静态敌人推导。
-        poiseCurve: projectPoiseCurveFromReceipt(
-          {
-            poise: result.enemyVitals.initialPoise,
-            maxPoise: result.enemyVitals.maxPoise,
-          },
-          result.receiptEntries,
-          -scenario.battle.prepFrames,
-        ),
         availabilityDiagnostics: freezeDiagnostics(
           projectSkillAvailabilityDiagnostics(result.receiptEntries),
         ),

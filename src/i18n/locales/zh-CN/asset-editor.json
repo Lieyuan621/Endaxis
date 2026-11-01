@@ -669,6 +669,7 @@
       "sword": "@:enumTerms.weaponType.sword",
       "buffFilter": "Buff 筛选",
       "exclude": "排除目标",
+      "intersection": "目标集合交集",
       "ignite": "点燃结束",
       "dispelled": "被驱散",
       "fixed": "固定伤害",
@@ -800,6 +801,10 @@
       "global": "全局",
       "self": "自身",
       "entity": "对象自身时间",
+      "hitStop": "命中停顿",
+      "OnlyAttacker": "仅攻击者",
+      "OnlyTarget": "仅受击目标",
+      "Both": "双方",
       "current": "当前值",
       "gained": "新增值",
       "divide": "相除",
@@ -855,7 +860,15 @@
       "dash": "闪避",
       "castNextSkill": "施放下一技能",
       "collision": "碰撞命中",
-      "arrival": "到达命中"
+      "arrival": "到达命中",
+      "invalid": "无效",
+      "unknown": "未知",
+      "good": "我方",
+      "bad": "敌方",
+      "neutral": "中立",
+      "Enemy": "敌人",
+      "Character": "干员",
+      "OnlyDead": "仅死亡目标"
     },
     "optional": "可选",
     "unset": "未设置",
@@ -890,6 +903,10 @@
     "scopeUnknown": "尚未连接，作用域未确定",
     "searchNodes": "搜索节点",
     "fields": {
+      "continuousIntervalSeconds": {
+        "name": "持续查询间隔（秒）",
+        "help": "留空时仅查询一次。设置后首次立即查询，累计时间严格超过间隔时再查询，每次更新最多查询一次。"
+      },
       "useDirectValue": {
         "name": "使用直接值",
         "help": "直接赋值，或按当前值乘倍率再加增量计算。"
@@ -911,8 +928,17 @@
       "attacker": {
         "name": "攻击来源"
       },
+      "affectType": {
+        "name": "影响范围"
+      },
       "replacePartsWithMainBodies": {
         "name": "将部件替换为本体"
+      },
+      "convertEntitiesToPositions": {
+        "name": "实体转为位置"
+      },
+      "parentTargets": {
+        "name": "包含目标集合"
       },
       "excludeTargets": {
         "name": "排除目标"
@@ -1097,6 +1123,10 @@
       "inheritActionBlackboard": {
         "name": "复制当前变量",
         "help": "生成时将当前变量复制给新对象；后续修改不会自动同步。"
+      },
+      "allowMultiInputTarget": {
+        "name": "保留多个输入目标",
+        "help": "实体子技能保存全部输入目标；关闭时只保存首个目标，不改变生成实体的数量。"
       },
       "inheritSourceSkillCastInfo": {
         "name": "保留来源技能",
@@ -1359,6 +1389,9 @@
       "tagQueryType": {
         "name": "标签匹配方式",
         "help": "选择任一、全部或排除匹配。"
+      },
+      "checkPartTags": {
+        "name": "直接检查部位标签"
       },
       "buffTags": {
         "name": "Buff 标签",
@@ -1852,6 +1885,14 @@
         "name": "仅正常结束时执行",
         "help": "启用后，提前中断动画不执行结束回调。"
       },
+      "targetFactions": {
+        "name": "指定目标阵营",
+        "help": "配置后按指定阵营筛选，不再从宿主推导；留空数组表示不匹配任何阵营。"
+      },
+      "center": {
+        "name": "查询中心",
+        "help": "中心无法解析时查询失败，并保留原目标组。"
+      },
       "owner": {
         "name": "持有者"
       },
@@ -1933,6 +1974,46 @@
       "hitKind": {
         "name": "命中方式",
         "help": "碰撞命中在触发时选择目标；到达命中使用发射时的目标。"
+      },
+      "faction": {
+        "name": "阵营",
+        "help": "投射物模板声明的阵营，用于范围目标查询。"
+      },
+      "targetCount": {
+        "name": "目标数量"
+      },
+      "markBuffId": {
+        "name": "标记状态"
+      },
+      "priorityTags": {
+        "name": "优先目标标签"
+      },
+      "priorityTagQueryType": {
+        "name": "优先标签匹配方式"
+      },
+      "maxInfluenceCountPerTarget": {
+        "name": "每目标影响次数上限",
+        "help": "省略表示不限次数。退出后保留计数，重新执行光环时清零。"
+      },
+      "reverse": {
+        "name": "逆序遍历"
+      },
+      "sourcePoint": {
+        "name": "击退来源点"
+      },
+      "destination": {
+        "name": "目的地"
+      },
+      "targetType": {
+        "name": "目标类型"
+      },
+      "deadOption": {
+        "name": "存活筛选",
+        "help": "按原生受控动作的存活筛选规则处理目标。"
+      },
+      "successTargetContextKey": {
+        "name": "成功目标组",
+        "help": "执行结束后替换为触发成功的目标；留空则不保存。"
       }
     },
     "help": "查看说明",
@@ -2014,6 +2095,10 @@
       "setAbilityEntityRemainingDuration": {
         "name": "设置召唤物剩余时间",
         "help": "设置首个目标召唤物的剩余秒数，不超过出生时的持续时间。"
+      },
+      "setAbilityEntityTarget": {
+        "name": "设置召唤物目标",
+        "help": "用查询结果替换当前宿主召唤物的完整目标集合；空结果清除旧目标。"
       },
       "startCurrentAbilityEntityChildSkillById": {
         "name": "启动召唤物指定技能",
@@ -2399,10 +2484,6 @@
         "name": "正在战斗？",
         "help": "检查是否处于战斗中。"
       },
-      "singleEnemyPresent": {
-        "name": "只有一个敌人？",
-        "help": "检查是否存在单个敌人。"
-      },
       "checkMainCharacter": {
         "name": "检查主控干员",
         "help": "检查指定目标是否为当前主控干员。"
@@ -2686,6 +2767,26 @@
       "limitMovementGait": {
         "name": "限制步态",
         "help": "写入宿主共用步态限制；最大步态低于冲刺时，闪避输入会标为强制执行。全部限制动作结束后清除。"
+      },
+      "pushBack": {
+        "name": "击退目标",
+        "help": "保留攻击者存活检查和目标查询；目标表非空时成功，不模拟位移。"
+      },
+      "pull": {
+        "name": "拉拽目标",
+        "help": "保留目标查询与拉拽处理结果，不模拟位移。未处理目标时按继续策略返回。"
+      },
+      "saveTargetDistance": {
+        "name": "保存目标距离",
+        "help": "双方目标存在时将距离写入变量；模拟距离为零。任一目标缺失时保留变量原值。"
+      },
+      "startTyphoeaArchery": {
+        "name": "注册弓术选靶",
+        "help": "持续选择并标记指定数量的敌人，优先选择符合标签的目标。"
+      },
+      "blowOffEnemy": {
+        "name": "吹飞敌人",
+        "help": "保留来源存活、目标查询和流程返回；当前支持原生不处理实体的 OnlyDead 分支。"
       }
     },
     "open": "编辑技能图（Dev）",

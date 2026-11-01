@@ -8,10 +8,21 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const chenQianyuChr_0005_chen_attack1ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -137,8 +148,8 @@ export const chenQianyuChr_0005_chen_attack1: SkillDefinition = {
   offsetRecordFrame: 8,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 11, endFrame: 12, sequence: { $sequence: 'dealDamage_10' } },
     { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
@@ -153,10 +164,21 @@ export const chenQianyuChr_0005_chen_attack1: SkillDefinition = {
 export const chenQianyuChr_0005_chen_attack2ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -239,7 +261,7 @@ export const chenQianyuChr_0005_chen_attack2: SkillDefinition = {
   offsetRecordFrame: 7,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 7, endFrame: 9, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 0, endFrame: 26, sequence: { $sequence: 'overrideBasicAttackMapping_6' } },
     { startFrame: 10, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
@@ -253,10 +275,21 @@ export const chenQianyuChr_0005_chen_attack2: SkillDefinition = {
 export const chenQianyuChr_0005_chen_attack3ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -382,8 +415,8 @@ export const chenQianyuChr_0005_chen_attack3: SkillDefinition = {
   offsetRecordFrame: 9,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_10' } },
     { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
@@ -398,10 +431,21 @@ export const chenQianyuChr_0005_chen_attack3: SkillDefinition = {
 export const chenQianyuChr_0005_chen_attack4ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -527,8 +571,8 @@ export const chenQianyuChr_0005_chen_attack4: SkillDefinition = {
   offsetRecordFrame: 4,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 4, endFrame: 5, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_10' } },
     { startFrame: 0, endFrame: 31, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
@@ -543,6 +587,24 @@ export const chenQianyuChr_0005_chen_attack4: SkillDefinition = {
 export const chenQianyuChr_0005_chen_attack5ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       modifyActionValue_7: {
         action: {
           kind: 'modifyActionValue',
@@ -576,13 +638,13 @@ export const chenQianyuChr_0005_chen_attack5ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'checkCondition_9',
@@ -618,7 +680,7 @@ export const chenQianyuChr_0005_chen_attack5ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -683,6 +745,11 @@ export const chenQianyuChr_0005_chen_attack5: SkillDefinition = {
   offsetRecordFrame: 16,
   costFrame: 12,
   scheduledSequences: [
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 16, endFrame: 21, sequence: { $sequence: 'repeatEachTick_13' } },
     { startFrame: 0, endFrame: 42, sequence: { $sequence: 'overrideBasicAttackMapping_14' } },
     { startFrame: 32, endFrame: 42, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
@@ -736,13 +803,13 @@ export const chenQianyuChr_0005_chen_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'common' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -776,13 +843,13 @@ export const chenQianyuChr_0005_chen_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'common' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -879,10 +946,21 @@ export const chenQianyuChr_0005_chen_power_attack: SkillDefinition = {
 export const chenQianyuChr_0005_chen_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -938,7 +1016,7 @@ export const chenQianyuChr_0005_chen_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_3' } },
   ],
   defaultTarget: 'enemy',
@@ -995,13 +1073,13 @@ export const chenQianyuChr_0005_chen_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'applyPhysicalInfliction_20',
@@ -1055,10 +1133,21 @@ export const chenQianyuChr_0005_chen_normal_skillActionGraph = {
         },
         next: 'applyPhysicalInfliction_23',
       },
-      mergeContextTargets_25: {
+      findTargets_25: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: 'storeSourceAttributeValue_24',
       },
@@ -1100,7 +1189,7 @@ export const chenQianyuChr_0005_chen_normal_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_18' } },
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_25' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_25' } },
     { startFrame: 25, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_26' } },
   ],
   defaultTarget: 'enemy',
@@ -1137,13 +1226,13 @@ export const chenQianyuChr_0005_chen_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'modifyActionValue_5',
@@ -1193,7 +1282,15 @@ export const chenQianyuChr_0005_chen_combo_skillActionGraph = {
       aura_10: {
         action: {
           kind: 'aura',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' }, buffs: [] },
+          parameters: {
+            maxInfluenceCountPerTarget: 1,
+            targets: {
+              kind: 'exclude',
+              targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [] },
+              excludeTargets: { kind: 'owner' },
+            },
+            buffs: [],
+          },
           onEnter: { $sequence: 'applyPhysicalInfliction_9' },
           onExit: { $sequence: null },
         },
@@ -1216,8 +1313,15 @@ export const chenQianyuChr_0005_chen_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -1355,13 +1459,13 @@ export const chenQianyuChr_0005_chen_ultimate_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,

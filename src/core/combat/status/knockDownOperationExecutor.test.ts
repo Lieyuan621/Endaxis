@@ -97,7 +97,15 @@ function setup() {
     prepare: vi.fn(),
     end: vi.fn(),
   };
-  const queries = new TargetContextOperationExecutor('ember', delegate);
+  const queries = new TargetContextOperationExecutor(
+    'ember',
+    delegate,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+  );
   const executor = new KnockDownOperationExecutor({
     queryTargets: queries.queryTargets.bind(queries),
     resolveTarget: selected =>
@@ -402,14 +410,15 @@ describe('普通根倒地：复用真实 Buff 目标与控制标签', () => {
       returnWhen: 'successAndInterrupted',
     });
     const context = { ...s.context, targetContext };
-    targetContext.set('receivers', [{ kind: 'enemy' }, { kind: 'abilityEntity', instanceId: 2 }]);
-    targetContext.set('sources', [
-      { kind: 'spatialPoint', pointId: 1 },
-      { kind: 'operator', operatorId: 'selected-source' },
+    targetContext.set('receivers', [
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'abilityEntity', instanceId: 2 },
     ]);
+    targetContext.set('sources', [{ kind: 'spatialPoint', pointId: 1 }]);
     expect(executor.execute(action, context)).toBe(false);
     expect(events).toHaveLength(0);
     targetContext.set('sources', [
+      { kind: 'spatialPoint', pointId: 1 },
       { kind: 'operator', operatorId: 'selected-source' },
       { kind: 'operator', operatorId: 'ignored-source' },
     ]);

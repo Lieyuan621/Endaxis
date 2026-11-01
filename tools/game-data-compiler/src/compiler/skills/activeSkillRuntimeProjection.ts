@@ -25,7 +25,6 @@ import {
   isDynamicSingleEnemyTagTargetGroup,
   isPartyHitBoxTargetGroup,
   isStaticSingleEnemyTargetGroup,
-  isUniqueEnemyMainTargetInstantSearch,
   isZeroSpaceSingleEnemySmartTargetGroup,
 } from '../combatProjectionCommon.ts';
 import { evaluateFixedScenarioCondition } from '../conditions/combatConditionProjection.ts';
@@ -322,8 +321,6 @@ function collectGuardedProjectilePaths(
  */
 function evaluateStaticStumpConditionSequence(
   sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
-  staticEnemyTargetGroupKeys: ReadonlySet<string>,
-  context?: CombatActionProjectionContextSource,
 ): boolean | undefined {
   if (sequence.onlyExecuteWhenSourceIsMainCharacter || sequence.onlyExecuteWhenSourceIsGuard)
     return undefined;
@@ -335,49 +332,7 @@ function evaluateStaticStumpConditionSequence(
     const fixedResult = evaluateFixedScenarioCondition(condition);
     if (fixedResult === false) return false;
     if (fixedResult === true) continue;
-    if (condition.kind === 'entityCount') {
-      const knownSingleton =
-        (condition.targetSource === 'Context' &&
-          staticEnemyTargetGroupKeys.has(condition.targetGroupKey)) ||
-        (condition.target !== undefined && isUniqueEnemyMainTargetInstantSearch(condition.target));
-      if (
-        !knownSingleton ||
-        condition.containsHittableTarget ||
-        condition.excludeDeadEntity ||
-        condition.storeKey !== ''
-      )
-        return undefined;
-      const result = compareKnownNumbers(1, condition.comparison, condition.minimumCount);
-      if (result === undefined) return undefined;
-      if (!result) return false;
-      continue;
-    }
-    if (condition.kind === 'distance') {
-      const isKnownOperator = (target: TargetReferenceSource) =>
-        target.targetSource === 'MainCharacter' ||
-        (target.targetSource === 'Owner' && context?.actionOwnerTarget === 'caster') ||
-        (target.targetSource === 'Source' && context?.actionSourceTarget === 'caster');
-      const sourceIsMainCharacter = isKnownOperator(condition.source);
-      const targetIsMainCharacter = isKnownOperator(condition.target);
-      const sourceIsStaticEnemy =
-        condition.source.targetSource === 'Context' &&
-        staticEnemyTargetGroupKeys.has(condition.source.targetGroupKey);
-      const targetIsStaticEnemy =
-        condition.target.targetSource === 'Context' &&
-        staticEnemyTargetGroupKeys.has(condition.target.targetGroupKey);
-      if (
-        condition.containsHittableObject ||
-        !(
-          (sourceIsMainCharacter && targetIsStaticEnemy) ||
-          (targetIsMainCharacter && sourceIsStaticEnemy)
-        )
-      )
-        return undefined;
-      // lessThan=true 的原生语义是 <=。纳入非负目标半径只会让
-      // MainCharacter 到唯一木桩的有效距离更小；因此这里只证明 <= 非负阈值的真值。
-      if (!condition.lessThan || condition.distance < 0) return undefined;
-      continue;
-    }
+    // 目标类型不能证明目标存在或数量；即便坐标重合，空目标的距离判断也须运行时求值。
     return undefined;
   }
   return true;
@@ -385,7 +340,6 @@ function evaluateStaticStumpConditionSequence(
 
 function collectReachableTargetGroupActions(
   sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
-  staticEnemyTargetGroupKeys: ReadonlySet<string>,
 ): TargetGroupActionSource[] {
   const result: TargetGroupActionSource[] = [];
   const visit = (current: NativeSequenceSource<KnownNativeActionLeafSource>): void => {
@@ -398,10 +352,7 @@ function collectReachableTargetGroupActions(
       }
       switch (body.kind) {
         case 'ifElse': {
-          const value = evaluateStaticStumpConditionSequence(
-            body.condition,
-            staticEnemyTargetGroupKeys,
-          );
+          const value = evaluateStaticStumpConditionSequence(body.condition);
           visit(body.condition);
           if (value === true) visit(body.whenTrue);
           else if (value === false) visit(body.whenFalse);
@@ -881,7 +832,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   while (enemyClosureChanged) {
     enemyClosureChanged = false;
     const reachableWrites = graph.actionGroup.timelineActions.flatMap(timeline =>
-      collectReachableTargetGroupActions(timeline.sequence, staticEnemyTargetGroupKeys),
+      collectReachableTargetGroupActions(timeline.sequence),
     );
     const reachableWritesByKey = Map.groupBy(reachableWrites, write => write.targetGroupKey);
     for (const [key, writes] of reachableWritesByKey) {
@@ -922,6 +873,68 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
       ) {
         singleEnemyTargetGroupKeys.add(key);
         singleEnemyClosureChanged = true;
+      }
+    }
+  }
+  // 成员类型与数量分别传播。标签、优先级及限数只过滤成员，不把敌人变成其他对象。
+  const enemyTargetGroupKeys = new Set(singleEnemyTargetGroupKeys);
+  let enemyTypeChanged = true;
+  while (enemyTypeChanged) {
+    enemyTypeChanged = false;
+    for (const [key, writes] of writesByKey) {
+      if (enemyTargetGroupKeys.has(key) || writes.length === 0) continue;
+      if (
+        !writes.every(write => {
+          const enemyFinder =
+            input.context.actionOwnerTarget === 'caster' &&
+            write.producerType === 'FindTargetAction' &&
+            write.selectorOwner === 'ActionOwner' &&
+            (write.finderType === 'AllEnemyFinder' ||
+              write.finderType === 'InFightEnemyFinder' ||
+              (write.finderType === 'HitBoxFinder' &&
+                write.finderFactionTarget === 'Anti' &&
+                write.finderAutoSetTargetFaction !== false &&
+                (write.finderTargetObjectType === 'Normal' ||
+                  write.finderTargetObjectType === 'NoInteractive'))) &&
+            write.postProcessorTypes.every(type =>
+              [
+                'PriorityFilter',
+                'ExcludeTarget',
+                'ShuffleTarget',
+                'ReplacePartWithMainBody',
+              ].includes(type),
+            );
+          return (
+            enemyFinder ||
+            isAtMostSingleEnemyMerge(write, enemyTargetGroupKeys) ||
+            isAtMostSingleEnemyConversion(write, enemyTargetGroupKeys)
+          );
+        })
+      )
+        continue;
+      enemyTargetGroupKeys.add(key);
+      enemyTypeChanged = true;
+    }
+  }
+  // 原生无目标分支可能写入位置；CreateBuff 会跳过位置，实体宿主仍只能是敌人。
+  // 单独保留此证明，不能把位置目标纳入 enemyTargetGroupKeys。
+  const enemyOrSpatialTargetGroupKeys = new Set(enemyTargetGroupKeys);
+  let enemyOrSpatialChanged = true;
+  while (enemyOrSpatialChanged) {
+    enemyOrSpatialChanged = false;
+    for (const [key, writes] of writesByKey) {
+      if (enemyOrSpatialTargetGroupKeys.has(key) || writes.length === 0) continue;
+      if (
+        writes.every(
+          write =>
+            isStaticActiveSkillEnemyTargetGroup(write) ||
+            isStaticZeroSpacePointWrite(write) ||
+            isAtMostSingleEnemyMerge(write, enemyOrSpatialTargetGroupKeys) ||
+            isAtMostSingleEnemyConversion(write, enemyOrSpatialTargetGroupKeys),
+        )
+      ) {
+        enemyOrSpatialTargetGroupKeys.add(key);
+        enemyOrSpatialChanged = true;
       }
     }
   }
@@ -1114,6 +1127,8 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     graph: program,
     staticEnemyTargetGroupKeys,
     singleEnemyTargetGroupKeys,
+    enemyTargetGroupKeys,
+    enemyOrSpatialTargetGroupKeys,
     staticZeroSpaceTargetGroupKeys,
     atMostOneZeroSpaceTargetGroupKeys,
     provenOnlyHitProjectilePaths: guardedProjectilePaths.onlyHit,
@@ -1146,20 +1161,12 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     const activeMainCharacterSequence = timeline.sequence.onlyExecuteWhenSourceIsMainCharacter
       ? { ...timeline.sequence, onlyExecuteWhenSourceIsMainCharacter: false }
       : timeline.sequence;
-    // 入口存在性与全资源写入保持身份必须同时成立；“写入时是敌人”不证明组已创建。
-    const guaranteedEnemyGroups = new Set(
-      [...guaranteedSingletonZeroSpaceTargetGroupKeysByTimeline[timelineIndex]!].filter(
-        key =>
-          staticEnemyTargetGroupKeys.has(key) &&
-          (writesByKey.get(key) ?? []).every(isStaticActiveSkillEnemyTargetGroup),
-      ),
-    );
     const executableSequence = pruneKnownNativeBranches(
       unwrapComboQtePrototypeGuard(
         activeMainCharacterSequence,
         input.context.comboQteTriggerBlackboardKeys,
       ),
-      condition => evaluateStaticStumpConditionSequence(condition, guaranteedEnemyGroups, context),
+      condition => evaluateStaticStumpConditionSequence(condition),
     );
     const writesRuntimeTargetGroup = collectNativeActionNodes(executableSequence).some(
       node =>

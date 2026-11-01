@@ -131,7 +131,7 @@ function options(overrides: Partial<ComboConditionRegistration> = {}): ComboCond
     isOwnerSilenced: () => false,
     currentComboCooldown: () => ({ oneReady: true, maxPassedTime: 0, startCdFrame: 30 }),
     resolveTarget: id => {
-      if (id === 'enemy') return { kind: 'enemy' };
+      if (id === 'enemy') return { kind: 'enemy', enemyId: 'enemy' };
       if (id === 'ally') return { kind: 'operator', operatorId: id };
       throw new Error(`unknown target '${id}'`);
     },
@@ -182,7 +182,7 @@ describe('原生连携条件注册环境', () => {
         event: 'weaknessSet',
         sequence: emptySequence,
         resolveTarget: id => {
-          if (id === 'enemy') return { kind: 'enemy' };
+          if (id === 'enemy') return { kind: 'enemy', enemyId: 'enemy' };
           throw new Error(`unknown target '${id}'`);
         },
         onPending: pending,
@@ -196,8 +196,8 @@ describe('原生连携条件注册环境', () => {
 
     expect(pending).toHaveBeenCalledWith(
       expect.objectContaining({
-        inputTarget: { kind: 'enemy' },
-        triggerTarget: null,
+        inputTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
+        triggerTargets: null,
       }),
     );
   });
@@ -278,8 +278,8 @@ describe('原生连携条件注册环境', () => {
 
     expect(pending).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({
-        inputTarget: { kind: 'enemy' },
-        triggerTarget: { kind: 'operator', operatorId: 'ally' },
+        inputTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
+        triggerTargets: [{ kind: 'operator', operatorId: 'ally' }],
       }),
     );
   });
@@ -306,15 +306,19 @@ describe('原生连携条件注册环境', () => {
     const published = event(type);
     runtime.onAbilityEvent(published);
     const output = type.includes('Output');
-    const inputTarget = output ? { kind: 'enemy' } : { kind: 'operator', operatorId: 'ally' };
-    const triggerTarget = output ? { kind: 'operator', operatorId: 'ally' } : { kind: 'enemy' };
+    const inputTarget = output
+      ? { kind: 'enemy', enemyId: 'enemy' }
+      : { kind: 'operator', operatorId: 'ally' };
+    const triggerTarget = output
+      ? { kind: 'operator', operatorId: 'ally' }
+      : { kind: 'enemy', enemyId: 'enemy' };
     expect(pending).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ inputTarget, triggerTarget }),
+      expect.objectContaining({ inputTargets: [inputTarget], triggerTargets: [triggerTarget] }),
     );
     expect(context).toMatchObject({
       actionOwnerId: 'owner',
       actionSourceId: 'source',
-      actionInputTarget: inputTarget,
+      actionInputTargets: [inputTarget],
       event: { event: type, payload: { sourceId: 'ally', targetId: 'enemy' } },
       eventSkillCastInfo: null,
     });
@@ -372,8 +376,8 @@ describe('原生连携条件注册环境', () => {
     runtime.onAbilityEvent(physicalEvent());
     expect(pending).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({
-        inputTarget: { kind: 'operator', operatorId: 'ally' },
-        triggerTarget: { kind: 'enemy' },
+        inputTargets: [{ kind: 'operator', operatorId: 'ally' }],
+        triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
         assignPairs: { physicalType: 1 },
         event: expect.objectContaining({
           payload: expect.objectContaining({ skillCastInfo: expect.any(Object) }),
@@ -430,8 +434,8 @@ describe('原生连携条件注册环境', () => {
 
     expect(pending).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({
-        inputTarget: { kind: 'operator', operatorId: 'ally' },
-        triggerTarget: { kind: 'enemy' },
+        inputTargets: [{ kind: 'operator', operatorId: 'ally' }],
+        triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
       }),
     );
   });
@@ -577,14 +581,16 @@ describe('原生连携条件注册环境', () => {
           execute: () => true,
           evaluate: (_condition, ctx) => {
             context = ctx;
-            expect(ctx!.targetContext!.get('trigger')).toEqual([{ kind: 'enemy' }]);
+            expect(ctx!.targetContext!.get('trigger')).toEqual([
+              { kind: 'enemy', enemyId: 'enemy' },
+            ]);
             if (first) {
               first = false;
-              ctx!.targetContext!.setSingle('saved', { kind: 'enemy' });
+              ctx!.targetContext!.setSingle('saved', { kind: 'enemy', enemyId: 'enemy' });
               ctx!.blackboard.assignDynamic('value', 7);
               throw new Error('condition failed');
             }
-            expect(ctx!.targetContext!.get('saved')).toEqual([{ kind: 'enemy' }]);
+            expect(ctx!.targetContext!.get('saved')).toEqual([{ kind: 'enemy', enemyId: 'enemy' }]);
             expect(ctx!.blackboard.getNumber('value')).toBe(7);
             return true;
           },

@@ -89,7 +89,13 @@ export interface CallbackSkillHost {
   readonly runtimeState: CallbackSkillHostState;
   readonly skill: SkillRuntime;
   readonly ability: AbilitySystemRuntime;
-  start(inputTarget?: RuntimeTargetRef): void;
+  start(
+    inputTarget?: RuntimeTargetRef,
+    targetOptions?: {
+      readonly inputTargets?: readonly RuntimeTargetRef[];
+      readonly allowMultiInputTarget?: boolean;
+    },
+  ): void;
   end(): void;
   advance(deltaSeconds: number): void;
 }
@@ -260,7 +266,7 @@ export function createCallbackSkillHostFactory(dependencies: {
       get ability() {
         return group.ability;
       },
-      start: (inputTarget = context.actionInputTarget) => {
+      start: (inputTarget = context.actionInputTargets?.[0], targetOptions) => {
         const ability = group.ability;
         ability.tryStartEntitySkill(
           program.skillId,
@@ -268,6 +274,7 @@ export function createCallbackSkillHostFactory(dependencies: {
           inputTarget,
           binding?.interruptCurrentSkill ?? true,
           () => prepareStart(source),
+          targetOptions,
         );
       },
       end: () => skill.interrupt('default'),

@@ -652,6 +652,7 @@
       "sword": "@:enumTerms.weaponType.sword",
       "buffFilter": "Buff Filter",
       "exclude": "Exclude targets",
+      "intersection": "Target set intersection",
       "ignite": "Ignited",
       "dispelled": "Dispelled",
       "fixed": "Fixed damage",
@@ -783,6 +784,10 @@
       "global": "Global",
       "self": "Self",
       "entity": "Entity time",
+      "hitStop": "Hit stop",
+      "OnlyAttacker": "Attacker only",
+      "OnlyTarget": "Targets only",
+      "Both": "Both",
       "current": "Current value",
       "gained": "Added value",
       "divide": "Divide",
@@ -838,7 +843,15 @@
       "dash": "Dodge",
       "castNextSkill": "Cast next skill",
       "collision": "Collision hit",
-      "arrival": "Arrival hit"
+      "arrival": "Arrival hit",
+      "invalid": "Invalid",
+      "unknown": "Unknown",
+      "good": "Friendly",
+      "bad": "Hostile",
+      "neutral": "Neutral",
+      "Enemy": "Enemy",
+      "Character": "Character",
+      "OnlyDead": "Dead targets only"
     },
     "optional": "Optional",
     "unset": "Not set",
@@ -873,6 +886,10 @@
     "scopeUnknown": "Not connected; scope unknown",
     "searchNodes": "Search nodes",
     "fields": {
+      "continuousIntervalSeconds": {
+        "name": "Continuous query interval (seconds)",
+        "help": "Leave unset to query once. Otherwise query immediately, then again when elapsed time strictly exceeds the interval, at most once per update."
+      },
       "useDirectValue": {
         "name": "Use direct value",
         "help": "Assign a direct value instead of multiplying the current value and adding an offset."
@@ -894,8 +911,17 @@
       "attacker": {
         "name": "Damage attacker"
       },
+      "affectType": {
+        "name": "Affected side"
+      },
       "replacePartsWithMainBodies": {
         "name": "Replace parts with main bodies"
+      },
+      "convertEntitiesToPositions": {
+        "name": "Convert entities to positions"
+      },
+      "parentTargets": {
+        "name": "Containing target set"
       },
       "excludeTargets": {
         "name": "Excluded targets"
@@ -1080,6 +1106,10 @@
       "inheritActionBlackboard": {
         "name": "Copy Current Variables",
         "help": "Copy current variables into the new object. Later changes are not synchronized."
+      },
+      "allowMultiInputTarget": {
+        "name": "Keep Multiple Input Targets",
+        "help": "Entity skills retain all input targets. When disabled, only the first target is saved. This does not change the number of spawned entities."
       },
       "inheritSourceSkillCastInfo": {
         "name": "Keep Source Cast",
@@ -1342,6 +1372,9 @@
       "tagQueryType": {
         "name": "Tag Match Mode",
         "help": "Choose any, all or exclusion matching."
+      },
+      "checkPartTags": {
+        "name": "Check part tags directly"
       },
       "buffTags": {
         "name": "Buff Tags",
@@ -1835,6 +1868,14 @@
         "name": "Normal End Only",
         "help": "Skip the end callback when the animation is interrupted."
       },
+      "targetFactions": {
+        "name": "Explicit target factions",
+        "help": "Overrides faction selection derived from the owner. An empty array matches no factions."
+      },
+      "center": {
+        "name": "Query center",
+        "help": "If the center cannot be resolved, the query fails and preserves the previous target group."
+      },
       "owner": {
         "name": "Owner"
       },
@@ -1916,6 +1957,46 @@
       "hitKind": {
         "name": "Hit trigger",
         "help": "Collision selects a target when triggered; arrival uses the launch target."
+      },
+      "faction": {
+        "name": "Faction",
+        "help": "The projectile template faction, used by area target queries."
+      },
+      "targetCount": {
+        "name": "Target count"
+      },
+      "markBuffId": {
+        "name": "Mark Buff"
+      },
+      "priorityTags": {
+        "name": "Preferred target tags"
+      },
+      "priorityTagQueryType": {
+        "name": "Preferred tag matching"
+      },
+      "maxInfluenceCountPerTarget": {
+        "name": "Maximum influences per target",
+        "help": "Omit for unlimited influences. Counts survive exit and reset when the aura executes again."
+      },
+      "reverse": {
+        "name": "Reverse traversal"
+      },
+      "sourcePoint": {
+        "name": "Push origin"
+      },
+      "destination": {
+        "name": "Destination"
+      },
+      "targetType": {
+        "name": "Target Type"
+      },
+      "deadOption": {
+        "name": "Alive/dead filter",
+        "help": "Apply the native controlled-action alive/dead filter."
+      },
+      "successTargetContextKey": {
+        "name": "Successful target group",
+        "help": "Replace this group with successfully triggered targets after execution; leave empty to skip saving."
       }
     },
     "help": "Help",
@@ -1997,6 +2078,10 @@
       "setAbilityEntityRemainingDuration": {
         "name": "Set Entity Time Remaining",
         "help": "Set the first target entity's remaining seconds, capped at its spawn duration."
+      },
+      "setAbilityEntityTarget": {
+        "name": "Set Summon Targets",
+        "help": "Replace the current owner's summon target collection with the query results. Empty results clear previous targets."
       },
       "startCurrentAbilityEntityChildSkillById": {
         "name": "Start Named Entity Skill",
@@ -2382,10 +2467,6 @@
         "name": "In Combat?",
         "help": "Check whether combat is active."
       },
-      "singleEnemyPresent": {
-        "name": "Single Enemy?",
-        "help": "Check whether a single enemy is present."
-      },
       "checkMainCharacter": {
         "name": "Check Main Character",
         "help": "Check whether the specified target is the currently controlled operator."
@@ -2669,6 +2750,26 @@
       "limitMovementGait": {
         "name": "Limit movement gait",
         "help": "Write the owner's shared gait limit. A maximum below Sprint marks dodge inputs as forced. The limit clears after all gait actions end."
+      },
+      "pushBack": {
+        "name": "Push targets back",
+        "help": "Preserves attacker life-state checks and target queries. A nonempty target list succeeds without simulating movement."
+      },
+      "pull": {
+        "name": "Pull targets",
+        "help": "Preserves target queries and pull processing results without moving targets. Uses the continuation flag when no target is processed."
+      },
+      "saveTargetDistance": {
+        "name": "Save target distance",
+        "help": "Writes distance when both targets exist; simulated distance is zero. Leaves the variable unchanged if either target is missing."
+      },
+      "startTyphoeaArchery": {
+        "name": "Register archery selection",
+        "help": "Continuously selects and marks enemies up to the configured count, prioritizing matching tags."
+      },
+      "blowOffEnemy": {
+        "name": "Blow off enemies",
+        "help": "Preserves source life-state checks, target queries and action results. Currently supports the native OnlyDead branch, which processes no entities."
       }
     },
     "open": "Edit skill graph (Dev)",

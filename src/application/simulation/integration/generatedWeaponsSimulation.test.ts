@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { describe, expect, it } from 'vitest';
 
 import type { WeaponDefinition } from '../../../core/game-data/equipmentDefinition';
@@ -553,7 +554,7 @@ async function simulateWeapon(
   if (teammates.length > teammateTrackIndices.length) throw new Error('at most three teammates');
   let scenario = createEmptyScenario(`audit:generated:${weapon.slug}`, '生成武器生产验证');
   scenario.battle.durationFrames = 1800;
-  scenario.enemy.editable.hp = 1_000_000_000;
+  firstScenarioEnemy(scenario).enemy.editable.hp = 1_000_000_000;
   scenario.battle.resourceRules = {
     maxSp: 1000,
     initialSp: 1000,

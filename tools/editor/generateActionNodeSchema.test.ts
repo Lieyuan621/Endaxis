@@ -27,7 +27,10 @@ test('covers every contract action and graph-only call without using data instan
     Object.keys(schemas).sort(),
     [...COMBAT_STEP_KINDS, 'callMacro', 'callResource'].sort(),
   );
-  assert.deepEqual(schemas, actionNodeSchemas);
+  assert.deepEqual(
+    renderSharedSchemaValues([schemas]),
+    renderSharedSchemaValues([actionNodeSchemas]),
+  );
   for (const [kind, schema] of Object.entries(schemas)) {
     assert.deepEqual(Object.keys(schema), ['fields']);
     const paths = schema.fields.map(item => item.path.join('.'));
@@ -84,7 +87,10 @@ test('distinguishes operand, primitive and complex data without guessing values'
 test('derives the string data family from the actual contract operand without a second expression shape', () => {
   const generated: Record<string, NodeSchema> = {};
   generateActionNodeSchemas(generated);
-  assert.deepEqual(generated, dataNodeSchemas);
+  assert.deepEqual(
+    renderSharedSchemaValues([generated]),
+    renderSharedSchemaValues([dataNodeSchemas]),
+  );
   for (const schema of Object.values(generated)) assert.deepEqual(Object.keys(schema), ['fields']);
   const expression = generated['string:stringOperand']!.fields[0]!;
   assert.deepEqual(expression.path, ['expression']);
@@ -135,6 +141,24 @@ test('shared values preserve complete catalogs, field order and distinct source/
     '',
     'single-use values stay inline',
   );
+});
+
+test('shared recursive schemas never expand the complete tree before deduplication', () => {
+  let value: unknown = { label: 'leaf', absent: undefined, values: [undefined, NaN, Infinity] };
+  for (let depth = 0; depth < 32; depth++) value = { left: value, right: value };
+  const rendered = renderSharedSchemaValues([value]);
+  const source = `${rendered.declarations}\n(${rendered.expressions[0]});`;
+  assert.ok(source.length < 20_000);
+  let expanded = runInNewContext(
+    ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText,
+  );
+  for (let depth = 0; depth < 32; depth++) {
+    assert.deepEqual(Object.keys(expanded), ['left', 'right']);
+    if (depth === 31)
+      assert.equal(JSON.stringify(expanded.right), '{"label":"leaf","values":[null,null,null]}');
+    expanded = expanded.left;
+  }
+  assert.equal(JSON.stringify(expanded), '{"label":"leaf","values":[null,null,null]}');
 });
 
 test('recognizes role labels and controls by formal declarations, including erased aliases', () => {

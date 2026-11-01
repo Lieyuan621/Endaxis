@@ -1,3 +1,5 @@
+import type { EnemyPartTransferInfo } from '../state/foundationState';
+import type { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
 import type { BuffLookupQuery } from '../../../../packages/game-data-contract/src/conditions';
 import { publishBeforeBuffImmunity, type BeforeBuffImmunityEvents } from './buffApplicationEvents';
 /**
@@ -79,6 +81,7 @@ export class BuffDefinitionOperationTarget<Key extends string>
       definitionOwnerId: string,
     ) => ProjectileRuntimeDependencies,
     bindRestoredSkillAffixObjectReference?: BindRestoredSkillAffixObjectReference,
+    readonly resolveCombatSemanticEvents?: () => CombatSemanticEventRuntime | undefined,
   ) {
     this.#bindRestoredSkillAffixObjectReference = bindRestoredSkillAffixObjectReference;
   }
@@ -455,6 +458,7 @@ export class BuffDefinitionOperationTarget<Key extends string>
             this.registerPostSkillCastRequest,
             this.resolveProjectileRuntimeDependencies,
             this.#bindRestoredSkillAffixObjectReference,
+            this.resolveCombatSemanticEvents?.(),
           );
     this.#inlineDefinitions.set(source, definition);
     return definition;
@@ -558,8 +562,13 @@ export class BuffDefinitionOperationTarget<Key extends string>
     return this.container.finishCountByIds(ids, count, reason, sourceId, finishSkillCastInfo);
   }
 
-  ignite(igniteType: string, sourceId: string, skillCastInfo?: CombatSkillCastInfo): number {
-    return this.container.ignite(igniteType, sourceId, skillCastInfo);
+  ignite(
+    igniteType: string,
+    sourceId: string,
+    skillCastInfo?: CombatSkillCastInfo,
+    partTransferInfo?: EnemyPartTransferInfo,
+  ): number {
+    return this.container.ignite(igniteType, sourceId, skillCastInfo, partTransferInfo);
   }
 
   holdByIds(ids: readonly string[]): {

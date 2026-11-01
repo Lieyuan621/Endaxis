@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../core/project/level';
 import { skillFixture } from '../../test/skillFixture';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it, vi } from 'vitest';
@@ -1081,7 +1082,7 @@ describe('ScenarioSimulationService', () => {
     },
   );
 
-  it('在同一份回执上投影资源、敌人生命、失衡和技能诊断', async () => {
+  it('在同一份回执上投影资源和技能诊断', async () => {
     const scenario = createPerlicaScenario();
     const placed = placeSkillGroup({
       scenario,
@@ -1096,10 +1097,6 @@ describe('ScenarioSimulationService', () => {
 
     const damage = run.receiptEntries.find(entry => entry.event === 'DamageApplied');
     expect(damage).toBeDefined();
-    expect(run.enemyHealthCurve.points.at(-1)?.value).toBe(run.finalEnemyHealth);
-    // 单节点失衡账本以敌人帧制失衡规则为初始值。
-    expect(run.poiseCurve.maxValue).toBe(300);
-    expect(run.poiseCurve.points[0]).toMatchObject({ value: 300 });
     // 一次下落攻击输入完成起跳与落地，不应被当成地面的普通攻击路由。
     expect(run.availabilityDiagnostics).toEqual([]);
     expect(run.executionDiagnostics).toEqual([]);
@@ -1317,7 +1314,7 @@ describe('ScenarioSimulationService', () => {
     const firstScenario = createPerlicaScenario();
     const first = await service.simulate(firstScenario, 30);
     const secondScenario = createPerlicaScenario();
-    secondScenario.enemy.editable.hp = 200000;
+    firstScenarioEnemy(secondScenario).enemy.editable.hp = 200000;
     const second = await service.simulate(secondScenario, 30);
 
     expect(second).not.toBe(first);

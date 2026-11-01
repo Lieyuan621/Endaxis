@@ -1,3 +1,7 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
+import { TyphoeaArcheryRuntime } from '../abilities/typhoeaArcherySelection';
+import { TyphoeaArcheryOperationExecutor } from '../abilities/typhoeaArcheryOperationExecutor';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { CombatSkillCastInfo } from '../state/foundationState';
 import { CombatBuffContainer } from '../buffs/combatBuffs';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
@@ -18,7 +22,7 @@ import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
 import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
 import { createKillEvent } from '../events/killEventTestFixture';
 import { createNativeEventFixture } from '../events/nativeEventTestFixture';
-import type { CombatOperationExecutor } from '../skills/skillRuntime';
+import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import { SkillSlotOperationExecutor } from '../skills/skillSlotOperationExecutor';
 import { ActionBlackboard } from './actionBlackboard';
 import { ActionBlackboardOperationExecutor } from './actionBlackboardOperationExecutor';
@@ -36,7 +40,7 @@ it('来源替换写回宿主，循环内外读取新施法且快照保留，非�
     nonReturnedSpCost: 25,
   };
   const targetContext = new RuntimeTargetContext();
-  targetContext.setSingle('items', { kind: 'enemy' });
+  targetContext.setSingle('items', { kind: 'enemy', enemyId: 'enemy' });
   const context = {
     blackboard: new ActionBlackboard(),
     targetContext,
@@ -161,7 +165,7 @@ it.each([
     const runtime = new CombatActionSequenceRuntime(
       {
         frame: () => frame,
-        queryTargets: () => [{ kind: 'enemy' }],
+        queryTargets: () => [{ kind: 'enemy', enemyId: 'enemy' }],
         execute: () => {
           hits++;
           return true;
@@ -518,69 +522,71 @@ function createFixture(conditionResult = true) {
 }
 
 describe('CombatActionSequenceRuntime', () => {
-  it('Channeling 每轮查询目标，按身份限次，切面恢复不重放且 Reset 不清空记录', () => {
-    let frame = 10;
-    const seen: unknown[] = [];
-    const targets = new RuntimeTargetContext();
-    targets.set('targets', [{ kind: 'operator', operatorId: 'a' }]);
-    const context = { blackboard: new ActionBlackboard(), targetContext: targets };
-    const runtime = new CombatActionSequenceRuntime(
-      {
-        frame: () => frame,
-        execute: (_step, context) => {
-          seen.push(context?.actionInputTarget);
-          return false;
-        },
-        evaluate: () => true,
-      },
-      context,
-    );
-    const program = compileGraphEntry('channeling-targets', 'channel', {
-      channel: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              catchUpMissedTicks: false,
-              target: { kind: 'context', key: 'targets' },
-              executeEachFrame: true,
-              triggerIntervalSeconds: 0.1,
-              maxCountPerTarget: 1,
-              targetTriggerIntervalSeconds: -1,
-            },
+  it.each(['operator', 'enemy'] as const)(
+    'Channeling %s 每轮查询目标，按身份限次，切面恢复不重放且 Reset 不清空记录',
+    kind => {
+      const target = (id: string): RuntimeTargetRef =>
+        kind === 'operator' ? { kind, operatorId: id } : { kind, enemyId: 'enemy:' + id };
+      let frame = 10;
+      const seen: unknown[] = [];
+      const targets = new RuntimeTargetContext();
+      targets.set('targets', [target('a')]);
+      const context = { blackboard: new ActionBlackboard(), targetContext: targets };
+      const runtime = new CombatActionSequenceRuntime(
+        {
+          frame: () => frame,
+          execute: (_step, context) => {
+            seen.push(context?.actionInputTargets?.[0]);
+            return false;
           },
-          body: { $sequence: 'body' },
+          evaluate: () => true,
         },
-        next: null,
-      },
-      body: { action: operation('hit'), next: null },
-    });
-    const action = runtime.createSequence(program);
-    action.execute({});
-    targets.set('targets', [
-      { kind: 'operator', operatorId: 'a' },
-      { kind: 'operator', operatorId: 'b' },
-    ]);
-    action.tick(0, {});
-    expect(seen).toEqual([{ kind: 'operator', operatorId: 'a' }]);
-    // 同帧仍检查周期；不能无条件跳过。
-    action.tick(0.1, {});
-    expect(seen).toHaveLength(2);
-    const saved = structuredClone(action.runtimeState);
-    const restored = runtime.createSequence(program, context, saved);
-    expect(seen).toHaveLength(2);
-    frame++;
-    restored.tick(0, {});
-    expect(seen).toHaveLength(2);
-    const state = saved.nodes.get('channel')!.data;
-    if (state.kind !== 'channeling') throw new Error('expected channeling');
-    restored.reset({});
-    expect(state.channeling.targets.size).toBe(2);
-    restored.execute({});
-    expect(seen).toHaveLength(4);
-    restored.end({});
-    expect(state.channeling.targets.size).toBe(0);
-  });
+        context,
+      );
+      const program = compileGraphEntry('channeling-targets', 'channel', {
+        channel: {
+          action: {
+            kind: 'repeatEachTick',
+            parameters: {
+              nativeChanneling: {
+                catchUpMissedTicks: false,
+                target: { kind: 'context', key: 'targets' },
+                executeEachFrame: true,
+                triggerIntervalSeconds: 0.1,
+                maxCountPerTarget: 1,
+                targetTriggerIntervalSeconds: -1,
+              },
+            },
+            body: { $sequence: 'body' },
+          },
+          next: null,
+        },
+        body: { action: operation('hit'), next: null },
+      });
+      const action = runtime.createSequence(program);
+      action.execute({});
+      targets.set('targets', [target('a'), target('b')]);
+      action.tick(0, {});
+      expect(seen).toEqual([target('a')]);
+      // 同帧仍检查周期；不能无条件跳过。
+      action.tick(0.1, {});
+      expect(seen).toHaveLength(2);
+      const saved = structuredClone(action.runtimeState);
+      const restored = runtime.createSequence(program, context, saved);
+      expect(seen).toHaveLength(2);
+      frame++;
+      restored.tick(0, {});
+      expect(seen).toHaveLength(2);
+      const state = saved.nodes.get('channel')!.data;
+      if (state.kind !== 'channeling') throw new Error('expected channeling');
+      restored.reset({});
+      expect(state.channeling.targets.size).toBe(2);
+      restored.execute({});
+      expect(seen).toHaveLength(4);
+      restored.end({});
+      expect(state.channeling.targets.size).toBe(0);
+    },
+  );
 
   it('ExecuteInterval 保留子动作到下一周期，切面恢复后仍能结束原登记', () => {
     const bind = () => {
@@ -775,6 +781,72 @@ describe('CombatActionSequenceRuntime', () => {
     expect(second.context).not.toHaveProperty('actionRegistrationState');
     action.end({});
     expect(original.runtimeState.activePlayerActionModeByLayer.get('mode')).toBe('base');
+  });
+
+  it('同一瞄准节点的并行调用独立注册，切面恢复后只结束对应调用', () => {
+    const definition = chainEntry('archery-activation', [
+      {
+        kind: 'startTyphoeaArchery',
+        parameters: {
+          targetCount: { kind: 'constant', value: 2 },
+          markBuffId: 'mark',
+          priorityTags: [],
+          priorityTagQueryType: 'hasAny',
+        },
+      },
+    ]);
+    const create = (registry: TyphoeaArcheryRuntime) => {
+      const context = { blackboard: new ActionBlackboard() };
+      const register = vi.fn((request: { targetCount: number }) =>
+        registry.register(request.targetCount),
+      );
+      return {
+        context,
+        register,
+        runtime: new CombatActionSequenceRuntime(
+          new TyphoeaArcheryOperationExecutor(
+            { execute: () => false, evaluate: () => false },
+            register,
+            id => {
+              registry.unregister(id);
+            },
+          ),
+          context,
+        ),
+      };
+    };
+    const registry = new TyphoeaArcheryRuntime();
+    const original = create(registry);
+    const first = original.runtime.createSequence(definition);
+    const second = original.runtime.createSequence(definition);
+    first.execute({});
+    second.execute({});
+    expect([...registry.runtimeState.registrations]).toEqual([1, 2]);
+    const snapshot = structuredClone({
+      registry: registry.runtimeState,
+      first: first.runtimeState,
+      second: second.runtimeState,
+    });
+    const restoredRegistry = new TyphoeaArcheryRuntime(snapshot.registry);
+    const restored = create(restoredRegistry);
+    const restoredFirst = restored.runtime.createSequence(
+      definition,
+      restored.context,
+      snapshot.first,
+    );
+    const restoredSecond = restored.runtime.createSequence(
+      definition,
+      restored.context,
+      snapshot.second,
+    );
+    restoredFirst.end({});
+    restoredFirst.end({});
+    expect([...restoredRegistry.runtimeState.registrations]).toEqual([2]);
+    restoredSecond.end({});
+    expect(restoredRegistry.runtimeState.registrations.size).toBe(0);
+    expect(restored.register).not.toHaveBeenCalled();
+    expect([...registry.runtimeState.registrations]).toEqual([1, 2]);
+    expect(original.context).not.toHaveProperty('actionRegistrationState');
   });
 
   it('恢复 SkillAffix 动作后按保存编号结束且不重新安装', () => {
@@ -1738,6 +1810,7 @@ describe('CombatActionSequenceRuntime', () => {
     const seen: unknown[] = [];
     const runtime = new CombatActionSequenceRuntime(
       {
+        queryTargets: () => [{ kind: 'enemy', enemyId: 'enemy' }],
         execute: (step, context) => {
           if (step.kind !== 'triggerCustomAbilityEvent')
             throw new Error('unexpected test operation');
@@ -1794,6 +1867,10 @@ describe('CombatActionSequenceRuntime', () => {
   });
 
   it('逐项失败只跳过本项后继；保留目标快照与共享黑板，循环后继续', () => {
+    const inputTargets = [
+      { kind: 'enemy' as const, enemyId: 'enemy' },
+      { kind: 'enemy' as const, enemyId: 'enemy:second' },
+    ];
     const targetContext = new RuntimeTargetContext();
     targetContext.set('items', [
       { kind: 'abilityEntity', instanceId: 1 },
@@ -1808,9 +1885,15 @@ describe('CombatActionSequenceRuntime', () => {
             throw new Error('unexpected test operation');
           seen.push([step.parameters.eventName, context?.currentTarget]);
           expect(context?.blackboard).toBe(blackboard);
+          if (step.parameters.eventName === 'after') {
+            expect(context?.actionInputTargets).toBe(inputTargets);
+            expect(context?.actionInputTargets?.[0]).toBe(inputTargets[0]);
+          }
           return true;
         },
         evaluate: (_condition, context) => {
+          expect(context?.actionInputTargets).toEqual([context?.currentTarget]);
+          expect(context?.actionInputTargets?.[0]).toEqual(context?.currentTarget);
           targetContext.set('items', []);
           context!.blackboard.assignDynamic('count', context!.blackboard.getNumber('count')! + 1);
           return (
@@ -1819,7 +1902,11 @@ describe('CombatActionSequenceRuntime', () => {
           );
         },
       },
-      { blackboard, targetContext },
+      {
+        blackboard,
+        targetContext,
+        actionInputTargets: inputTargets,
+      },
     );
     expect(
       runtime
@@ -1900,6 +1987,7 @@ describe('CombatActionSequenceRuntime', () => {
     const end = vi.fn();
     const runtime = new CombatActionSequenceRuntime(
       {
+        queryTargets: () => [{ kind: 'enemy', enemyId: 'enemy' }],
         execute: () => true,
         end,
         evaluate: () => true,
@@ -2520,7 +2608,7 @@ it('循环查询一次并捕获列表，子序列失败不阻止后继', () => {
         const id = target?.kind === 'operator' ? target.operatorId : 'outside';
         calls.push(`execute:${step.parameters.eventName}:${id}`);
         expect(context?.blackboard).toBe(board);
-        if (id !== 'outside') expect(context?.actionInputTarget).toEqual(target);
+        if (id !== 'outside') expect(context?.actionInputTargets?.[0]).toEqual(target);
         team.pop();
         return id !== 'first';
       },
@@ -2623,7 +2711,7 @@ it('生命下限在回调前安装，回调不继承事件且失败不截断父�
         return true;
       }
       expect(context?.event).toBeUndefined();
-      expect(context?.actionInputTarget).toEqual({ kind: 'enemy' });
+      expect(context?.actionInputTargets?.[0]).toEqual({ kind: 'enemy', enemyId: 'enemy' });
       expect(vitals.takeDamage(1000).currentHealth).toBe(400);
       calls++;
       return false;
@@ -2647,7 +2735,7 @@ it('生命下限在回调前安装，回调不继承事件且失败不截断父�
   const context = {
     blackboard: new ActionBlackboard(),
     actionOwnerId: 'owner',
-    actionInputTarget: { kind: 'enemy' } as const,
+    actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' } as const),
     event: createKillEvent(),
   };
   const runtime = new CombatActionSequenceRuntime(operations, context);
@@ -2700,4 +2788,59 @@ it('生命下限在回调前安装，回调不继承事件且失败不截断父�
   restored.end({});
   expect(copiedVitals.takeDamage(1000).currentHealth).toBe(0);
   expect(vitals.takeDamage(1000).currentHealth).toBe(400);
+});
+
+it('持续目标查询遵循严格间隔，保存输入身份，恢复后不补跑，结束保留查询结果', () => {
+  const context = {
+    blackboard: new ActionBlackboard(),
+    targetContext: new RuntimeTargetContext(),
+    actionInputTargets: singleTargetList({
+      kind: 'enemy',
+      enemyId: 'enemy:second',
+    } as RuntimeTargetRef),
+  };
+  const seen: (RuntimeTargetRef | undefined)[] = [];
+  const operations = {
+    evaluate: () => false,
+    execute: (_step: unknown, input: CombatOperationContext | undefined) => {
+      seen.push(input?.actionInputTargets?.[0]);
+      context.targetContext.set(
+        'found',
+        input?.actionInputTargets?.[0] ? [input.actionInputTargets?.[0]] : [],
+      );
+      return false;
+    },
+  };
+  const runtime = new CombatActionSequenceRuntime(operations, context);
+  const program = chainEntry('continuous-query', [
+    {
+      kind: 'findTargets',
+      parameters: {
+        owner: { kind: 'owner' },
+        query: { kind: 'inputTarget' },
+        saveToContextKey: 'found',
+        continuousIntervalSeconds: 0.5,
+      },
+    },
+  ]);
+  const action = runtime.createSequence(program);
+  expect(action.tryExecute({})).toBe(true);
+  action.tick(0.5, {});
+  expect(seen).toHaveLength(1);
+  const saved = structuredClone(action.runtimeState);
+  context.actionInputTargets = [{ kind: 'enemy', enemyId: 'enemy:third' }];
+  const resumed = runtime.createSequence(program, context, saved);
+  resumed.tick(0.125, {});
+  expect(seen).toEqual([
+    { kind: 'enemy', enemyId: 'enemy:second' },
+    { kind: 'enemy', enemyId: 'enemy:second' },
+  ]);
+  resumed.tick(2, {});
+  expect(seen).toHaveLength(3);
+  resumed.tick(0.5, {});
+  expect(seen).toHaveLength(3);
+  resumed.end({});
+  resumed.tick(1, {});
+  expect(seen).toHaveLength(3);
+  expect(context.targetContext.get('found')).toEqual([{ kind: 'enemy', enemyId: 'enemy:second' }]);
 });

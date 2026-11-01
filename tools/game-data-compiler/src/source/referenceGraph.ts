@@ -202,6 +202,11 @@ function collectLeafReferences(
 ): void {
   if (leaf.family === 'untracked') return;
   switch (leaf.family) {
+    case 'typhoeaArcherySelection':
+      output.push(
+        referenceFromIdentity('buff', 'apply', enabled, leaf.action.markBuffId, null, sourcePath),
+      );
+      return;
     case 'physicalInfliction': {
       // 原生 OnlyDead 分支直接跳过目标；保留无效引用用于审计，不伪装成活动闭包。
       const active = enabled && leaf.action.deadOption !== 'OnlyDead';

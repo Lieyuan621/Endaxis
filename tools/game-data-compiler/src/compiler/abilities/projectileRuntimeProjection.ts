@@ -110,6 +110,7 @@ export function createProjectileProjectionExtensionSource(input: {
   readonly visualOnlyIds?: ReadonlySet<string>;
   readonly callbackExtensions?: CombatActionProjectionExtensionsSource;
 }): NonNullable<CombatActionProjectionExtensionsSource['compileProjectileLaunch']> {
+  const compilingCallbacks: { skillId: string; launchEvent: boolean }[] = [];
   return (launch, sourcePath, projectionContext) => {
     if (input.shouldOmitLaunch?.(launch)) return [];
     let callbackContext: CombatActionProjectionContextSource = {
@@ -224,26 +225,39 @@ export function createProjectileProjectionExtensionSource(input: {
       : undefined;
     const callbacks = routes.map(route => {
       const graph = callback(route.event);
-      const compiled = compileProjectileCallbackSkillSource({
-        graph,
-        context:
-          route.event === 'launch'
-            ? {
-                ...callbackContext,
-                actionTargetTarget: 'currentAbilityEntity',
-                actionInputIsOperator: false,
-              }
-            : callbackContext,
-        visualOnlyIds: input.visualOnlyIds,
-        extensions: input.callbackExtensions,
-        castResource: input.catalog.callbackCastResources?.get(graph.skillId),
-      });
+      const outer = compilingCallbacks.findLast(item => item.skillId === graph.skillId);
+      if (outer) {
+        if (outer.launchEvent !== (route.event === 'launch'))
+          throw new Error(`${sourcePath}: recursive callback changes its native input-target role`);
+        return { kind: 'reference' as const, route, reference: { $skill: graph.skillId }, graph };
+      }
+      let compiled: ProjectileCallbackSkillSource;
+      compilingCallbacks.push({ skillId: graph.skillId, launchEvent: route.event === 'launch' });
+      try {
+        compiled = compileProjectileCallbackSkillSource({
+          graph,
+          context:
+            route.event === 'launch'
+              ? {
+                  ...callbackContext,
+                  actionTargetTarget: 'currentAbilityEntity',
+                  actionInputIsOperator: false,
+                }
+              : callbackContext,
+          visualOnlyIds: input.visualOnlyIds,
+          extensions: input.callbackExtensions,
+          castResource: input.catalog.callbackCastResources?.get(graph.skillId),
+        });
+      } finally {
+        compilingCallbacks.pop();
+      }
       const nativeSkillType = runtime.activeSkills?.initialNativeSkillTypeById[graph.skillId];
       if (compiled.castResource === undefined || nativeSkillType === undefined)
         throw new Error(
           `${sourcePath}: missing projectile callback skill registration or resource metadata for ${graph.skillId}`,
         );
       return {
+        kind: 'definition' as const,
         route,
         compiled,
         skill: {
@@ -260,9 +274,10 @@ export function createProjectileProjectionExtensionSource(input: {
       };
     });
     // 裁剪必须作用于真正发射的程序，依赖收集随后读取同一份程序。
-    callbacks.forEach((callback, callbackIndex) => {
+    const inlineCallbacks = callbacks.filter(callback => callback.kind === 'definition');
+    inlineCallbacks.forEach((callback, callbackIndex) => {
       const timelines = callback.skill.scheduledSequences;
-      const otherCallbacks = callbacks.flatMap((other, index) =>
+      const otherCallbacks = inlineCallbacks.flatMap((other, index) =>
         index === callbackIndex
           ? []
           : other.skill.scheduledSequences.flatMap(timeline =>
@@ -299,7 +314,10 @@ export function createProjectileProjectionExtensionSource(input: {
       sourcePath,
       launch,
       template,
-      invocations: callbacks.map(({ route, compiled, skill }) => ({
+      referencedEntityKeys: callbacks.flatMap(callback =>
+        callback.kind === 'reference' ? collectNativeEntityKeys(callback.graph) : [],
+      ),
+      invocations: inlineCallbacks.map(({ route, compiled, skill }) => ({
         program: compiled.program,
         event: route.event,
         skillId: compiled.skillId,
@@ -338,6 +356,7 @@ export function createProjectileProjectionExtensionSource(input: {
             ? { source: 'actionOwner' as const }
             : {}),
           ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
+          ...(runtime.faction === undefined ? {} : { faction: runtime.faction }),
           recycleDelaySeconds: resolveProjectileRecycleDelaySource(
             launch,
             input.catalog.callbackGraphs,
@@ -347,12 +366,15 @@ export function createProjectileProjectionExtensionSource(input: {
         },
         callbacks: schedule.callbacks
           .map(entry => callbacks.find(callback => callback.route.event === entry.event)!)
-          .map(({ route, skill, compiled }) => ({
-            event: route.event,
-            skill: {
-              actionGraph: { main: compiled.program.finish(), macros: {} },
-              ...skill,
-            },
+          .map(callback => ({
+            event: callback.route.event,
+            skill:
+              callback.kind === 'reference'
+                ? callback.reference
+                : {
+                    actionGraph: { main: callback.compiled.program.finish(), macros: {} },
+                    ...callback.skill,
+                  },
           })),
       },
     ];
@@ -509,4 +531,11 @@ function targetReferenceSelectsUniqueEnemy(
     target.targetGroupKey !== '' &&
     context.staticEnemyTargetGroupKeys?.has(target.targetGroupKey) === true
   );
+}
+
+/** 尚未完成编译的递归回调保守保留其实体板键，不能误删发射时的终止标记赋值。 */
+function collectNativeEntityKeys(value: unknown): string[] {
+  if (typeof value === 'string') return value.startsWith('EntityBB_') ? [value] : [];
+  if (value === null || typeof value !== 'object') return [];
+  return Object.values(value).flatMap(collectNativeEntityKeys);
 }

@@ -260,7 +260,7 @@ it('生命下限同步回调的Buff依赖及Owner身份进入同一编译闭包'
   expect(Object.keys(result.definitions).sort()).toEqual(['child', 'root']);
 });
 
-it('场景省略的事件不保活子链，但共享创建路径和独立根仍保留', () => {
+it('省略的干员死亡不保活子链，可发生的敌人死亡、共享创建路径和独立根仍保留', () => {
   const original = rootBuff();
   const events = requireArray(original.buffEventAction, 'events');
   const event = requireRecord(events[0], 'event');
@@ -283,17 +283,46 @@ it('场景省略的事件不保活子链，但共享创建路径和独立根仍�
   expect(collect(['root'])).toEqual(['root']);
   expect(collect(['root', 'active'])).toEqual(['active', 'child', 'root']);
   expect(collect(['root', 'child'])).toEqual(['child', 'root']);
+  for (const owner of ['caster', 'enemy'] as const) {
+    const result = compileStandardStumpBuffClosure(
+      ['root'],
+      buffs,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new Map([['root', owner]]),
+      new Set(['root']),
+    );
+    expect(result.diagnostics.filter(item => item.status === 'blocked')).toEqual([]);
+    expect(result.definitions.child !== undefined).toBe(owner === 'enemy');
+    expect(result.omittedBuffIds.has('child')).toBe(owner === 'caster');
+  }
+});
+
+it('纯击杀监听 Buff 及其创建的子 Buff 不再按单木桩结束裁剪', () => {
+  const event = requireRecord(requireArray(rootBuff().buffEventAction, 'events')[0], 'event');
+  const root = buffFixture({
+    id: 'root',
+    applyTags: [],
+    buffEventAction: [],
+    abilityEventAction: [{ abilityEvent: 'OnAfterKillEntity', actions: event.actions }],
+  });
   const result = compileStandardStumpBuffClosure(
     ['root'],
-    buffs,
+    {
+      root,
+      child: buffFixture({ id: 'child', applyTags: [] }),
+    },
     undefined,
     undefined,
     undefined,
     undefined,
-    new Map([['root', 'enemy']]),
-    new Set(['root']),
+    new Map([['root', 'caster']]),
+    new Set(['root', 'child']),
   );
   expect(result.diagnostics.filter(item => item.status === 'blocked')).toEqual([]);
-  expect(result.definitions.child).toBeUndefined();
-  expect(result.omittedBuffIds.has('child')).toBe(true);
+  expect(result.omittedBuffIds.has('root')).toBe(false);
+  expect(Object.keys(result.definitions).sort()).toEqual(['child', 'root']);
+  expect(JSON.stringify(result.definitions.root)).toContain('afterKillEntity');
 });

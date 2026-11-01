@@ -1,7 +1,8 @@
 /** 能力实体子技能的装配与生命周期适配；执行、冷却和清理由普通技能宿主负责。 */
 import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
 import {
-  logicalAbilityEntityRuntimeId,
+  singleTargetList,
+  runtimeTargetEntityId,
   type AbilityEntityTargetRef,
   type RuntimeTargetRef,
 } from '../../game-data/logicalAbilityEntity';
@@ -23,6 +24,13 @@ import type { LogicalAbilityEntityChildRuntime } from './logicalAbilityEntityRun
 export class AbilityEntityChildSkillRuntime implements LogicalAbilityEntityChildRuntime {
   readonly runtimeState: AbilityEntityChildSkillState;
   readonly #host: CallbackSkillHost;
+  readonly #readCastTargets:
+    | (() => {
+        readonly target?: RuntimeTargetRef;
+        readonly targets?: readonly RuntimeTargetRef[];
+        readonly allowMultiInputTarget?: boolean;
+      })
+    | undefined;
   readonly skillId: string;
 
   constructor(
@@ -31,6 +39,11 @@ export class AbilityEntityChildSkillRuntime implements LogicalAbilityEntityChild
       readonly entity: AbilityEntityTargetRef;
       /** 控制器传入的施法目标，与技能宿主实体身份分开。恢复时沿用技能状态中的输入目标。 */
       readonly target?: RuntimeTargetRef;
+      readonly readCastTargets?: () => {
+        readonly target?: RuntimeTargetRef;
+        readonly targets?: readonly RuntimeTargetRef[];
+        readonly allowMultiInputTarget?: boolean;
+      };
       readonly source?: RuntimeTargetRef;
       readonly entityBlackboard: ActionBlackboard;
       readonly operations: CombatOperationExecutor;
@@ -87,21 +100,18 @@ export class AbilityEntityChildSkillRuntime implements LogicalAbilityEntityChild
       }
     }
     this.skillId = program.skillId;
+    this.#readCastTargets = dependencies.readCastTargets;
     this.#host = dependencies.createCallbackSkillHost(
       program,
       {
         blackboard,
         currentTarget: dependencies.entity,
-        actionInputTarget: dependencies.target,
+        actionInputTargets: singleTargetList(dependencies.target),
         actionOwnerAbilityEntity: dependencies.entity,
         actionSourceId:
-          dependencies.source?.kind === 'operator'
-            ? dependencies.source.operatorId
-            : dependencies.source?.kind === 'enemy'
-              ? 'enemy'
-              : dependencies.source?.kind === 'abilityEntity'
-                ? logicalAbilityEntityRuntimeId(dependencies.source.instanceId)
-                : undefined,
+          dependencies.source === undefined
+            ? undefined
+            : runtimeTargetEntityId(dependencies.source),
         skillCastInfo: dependencies.inheritedSkillCastInfo,
         launchProjectile: dependencies.launchProjectile,
       },
@@ -137,7 +147,14 @@ export class AbilityEntityChildSkillRuntime implements LogicalAbilityEntityChild
   }
 
   start(): void {
-    this.#host.start();
+    if (this.#readCastTargets === undefined) this.#host.start();
+    else {
+      const input = this.#readCastTargets();
+      this.#host.start(input.target, {
+        inputTargets: input.targets,
+        allowMultiInputTarget: input.allowMultiInputTarget,
+      });
+    }
   }
   advance(deltaSeconds: number): void {
     this.#host.advance(deltaSeconds);

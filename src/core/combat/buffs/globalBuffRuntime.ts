@@ -6,7 +6,10 @@ import type {
 import type { CompiledGlobalBuffDefinition } from '../../compiler/combatProgram.ts';
 import { compareCombatNumbers } from '../../math/combatNumbers';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
-import { logicalAbilityEntityRuntimeId } from '../../game-data/logicalAbilityEntity';
+import {
+  logicalAbilityEntityRuntimeId,
+  runtimeTargetEntityId,
+} from '../../game-data/logicalAbilityEntity';
 import type { BuffApplicationSource } from '../../game-data/operatorDefinition';
 import { ActionBlackboard, resolveActionValueOperand } from '../actions/actionBlackboard';
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
@@ -355,6 +358,7 @@ function resolveGlobalDuration(
 }
 
 export interface GlobalBuffOperationDependencies {
+  readonly queryTargets?: CombatOperationExecutor['queryTargets'];
   readonly sourceId: string;
   readonly sourceActionId?: string;
   readonly runtime: GlobalBuffRuntime;
@@ -404,12 +408,22 @@ export class GlobalBuffOperationExecutor implements CombatOperationExecutor {
         ? 1
         : resolveActionValueOperand(step.parameters.count, context.blackboard);
     if (!Number.isFinite(count)) throw new RangeError('createGlobalBuff count must be finite');
-    const sourceId =
-      step.parameters.source === 'battle'
-        ? 'battle'
-        : step.parameters.source === undefined
-          ? this.dependencies.sourceId
-          : resolveGlobalBuffSource(step.parameters.source, this.dependencies.sourceId, context);
+    let sourceId: string;
+    if (step.parameters.source === 'enemy') {
+      const query = this.dependencies.queryTargets;
+      if (!query) throw new Error('enemy GlobalBuff source requires an action target query');
+      const target = query({ kind: 'fixed', target: 'enemy' }, context)[0];
+      if (target === undefined) return false;
+      const id = runtimeTargetEntityId(target);
+      if (id === undefined) throw new Error('GlobalBuff source must be an entity');
+      sourceId = id;
+    } else
+      sourceId =
+        step.parameters.source === 'battle'
+          ? 'battle'
+          : step.parameters.source === undefined
+            ? this.dependencies.sourceId
+            : resolveGlobalBuffSource(step.parameters.source, this.dependencies.sourceId, context);
     const created: GlobalBuffInstance[] = [];
     for (let index = 0; index < count; index += 1) {
       created.push(
@@ -499,7 +513,6 @@ function resolveGlobalBuffSource(
   context?: CombatOperationContext,
 ): string {
   if (source === 'caster') return operatorId;
-  if (source === 'enemy') return 'enemy';
   if (source === 'buffOwner') {
     if (context?.buffOwnerId === undefined)
       throw new Error('buffOwner GlobalBuff source requires a Buff lifecycle context');

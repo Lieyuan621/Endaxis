@@ -70,3 +70,13 @@ describe('observed Buff identities survive presentation pruning', () => {
     ]).toEqual(['stack-marker', 'value-marker', 'duration-marker']);
   });
 });
+
+it('智能选敌观察的 Buff ID 不能作为空表现 Buff 裁剪', () => {
+  expect([
+    ...collectCompiledBuffIdentityReadIds({
+      kind: 'smartTargetByBuff',
+      owner: { kind: 'source' },
+      buffIds: ['mark'],
+    }),
+  ]).toEqual(['mark']);
+});

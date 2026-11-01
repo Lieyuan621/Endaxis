@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { skillFixture } from '../../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 
@@ -276,7 +277,7 @@ async function simulatePair(slug: string, tier: number, plans: readonly ActorPla
   const run = async (definition: WeaponDefinition) => {
     let scenario = createEmptyScenario('reaction-lifecycle', '受控反应时序边界');
     scenario.battle.durationFrames = 1100;
-    scenario.enemy.editable.hp = 1_000_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 1_000_000_000;
     const operators = plans.map((plan, index) => fixtureOperator(definition, plan, index));
     let nextId = 0;
     for (const [index, operator] of operators.entries()) {

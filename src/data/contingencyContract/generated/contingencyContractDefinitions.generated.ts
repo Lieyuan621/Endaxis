@@ -229,7 +229,7 @@ const commonBuff_buff_cc_chr_combo_lock$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'stack',
             query: { kind: 'id', buffIds: ['buff_cc_chr_combo_lock_stack'] },
           },
@@ -1539,7 +1539,7 @@ const commonBuff_buff_cc_chr_heal_reflect_to_eny_heal$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'heal_times',
             query: { kind: 'id', buffIds: ['buff_cc_chr_heal_reflect_to_eny_stack_heal'] },
           },
@@ -1797,7 +1797,7 @@ const commonBuff_buff_cc_chr_heal_reflect_to_eny_shield$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'heal_times',
             query: { kind: 'id', buffIds: ['buff_cc_chr_heal_reflect_to_eny_stack_shield'] },
           },
@@ -2028,15 +2028,26 @@ const commonBuff_buff_cc_chr_heal_reflect_to_eny_stack_heal$actionGraph = {
       forEachContextTarget_2: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'tar' } },
           body: { $sequence: 'applyBuff_1' },
         },
         next: null,
       },
-      mergeContextTargets_3: {
+      findTargets_3: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'source' },
+            query: {
+              kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
+              tagQueryType: 'hasAll',
+              tags: [],
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: 'forEachContextTarget_2',
       },
@@ -2053,7 +2064,7 @@ const commonBuff_buff_cc_chr_heal_reflect_to_eny_stack_heal: SkillBuffDefinition
   extendTags: [],
   blackboard: { eny_heal_ratio: 0.05 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: [{ $sequence: 'mergeContextTargets_3' }] },
+  lifecycleSequences: { enable: [{ $sequence: 'findTargets_3' }] },
   actionGraph: commonBuff_buff_cc_chr_heal_reflect_to_eny_stack_heal$actionGraph,
 };
 
@@ -2120,15 +2131,26 @@ const commonBuff_buff_cc_chr_heal_reflect_to_eny_stack_shield$actionGraph = {
       forEachContextTarget_2: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'tar' } },
           body: { $sequence: 'applyBuff_1' },
         },
         next: null,
       },
-      mergeContextTargets_3: {
+      findTargets_3: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'source' },
+            query: {
+              kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
+              tagQueryType: 'hasAll',
+              tags: [],
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: 'forEachContextTarget_2',
       },
@@ -2145,7 +2167,7 @@ const commonBuff_buff_cc_chr_heal_reflect_to_eny_stack_shield: SkillBuffDefiniti
   extendTags: [],
   blackboard: { eny_heal_ratio: 0.05 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: [{ $sequence: 'mergeContextTargets_3' }] },
+  lifecycleSequences: { enable: [{ $sequence: 'findTargets_3' }] },
   actionGraph: commonBuff_buff_cc_chr_heal_reflect_to_eny_stack_shield$actionGraph,
 };
 
@@ -3436,7 +3458,7 @@ const commonBuff_buff_cc_chr_ult_dmg_down_gradual_instance$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'layer',
             query: { kind: 'id', buffIds: ['buff_cc_chr_ult_dmg_down_gradual_stack'] },
           },
@@ -4575,7 +4597,7 @@ const commonBuff_buff_cc_enemy_inflict_stack_resist_add_listener$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'stack',
             query: {
               kind: 'tag',
@@ -4650,7 +4672,7 @@ const commonBuff_buff_cc_enemy_inflict_stack_resist_add_listener$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'stack',
             query: {
               kind: 'tag',
@@ -4725,7 +4747,7 @@ const commonBuff_buff_cc_enemy_inflict_stack_resist_add_listener$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'stack',
             query: {
               kind: 'tag',
@@ -4800,7 +4822,7 @@ const commonBuff_buff_cc_enemy_inflict_stack_resist_add_listener$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'stack',
             query: {
               kind: 'tag',
@@ -4875,7 +4897,7 @@ const commonBuff_buff_cc_enemy_inflict_stack_resist_add_listener$actionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'stack',
             query: {
               kind: 'tag',
@@ -6059,7 +6081,7 @@ const commonBuff_buff_cc_eny_numshield_instance$actionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             query: { kind: 'id', buffIds: ['buff_eny_0128_babyents_numshield'] },
             desiredKey: 'shield_num_max',
             outputKey: 'shield_num_max',
@@ -6071,7 +6093,7 @@ const commonBuff_buff_cc_eny_numshield_instance$actionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             query: { kind: 'id', buffIds: ['buff_eny_0128_babyents_numshield'] },
             desiredKey: 'shield_num',
             outputKey: 'shield_num',
@@ -8215,4 +8237,4 @@ export const contingencyContractOmittedTagReasons = Object.freeze({
   '102201': 'changes stage wave enemy composition rather than the selected fixed target',
   '102202': 'changes stage wave enemy composition rather than the selected fixed target',
 }) as Readonly<Record<number, string>>;
-export const contingencyContractDefinitionRevision = 'local-vfs-20261021';
+export const contingencyContractDefinitionRevision = 'local-index-20261030';

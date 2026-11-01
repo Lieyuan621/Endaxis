@@ -11,12 +11,85 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const endministratorChr_0003_endminf_combo_skillActionGraph = {
   main: {
     nodes: {
-      changeResource_1: {
+      findTargets_2: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'smart_target',
+          },
+        },
+        next: null,
+      },
+      ifElse_5: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'findTargets_2' },
+        },
+        next: null,
+      },
+      saveTargetDistance_6: {
+        action: {
+          kind: 'saveTargetDistance',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'battleMainTarget' },
+            outputKey: 'main_distance',
+          },
+        },
+        next: 'ifElse_5',
+      },
+      saveTargetDistance_7: {
+        action: {
+          kind: 'saveTargetDistance',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'context', key: 'smart_target' },
+            outputKey: 'smart_distance',
+          },
+        },
+        next: 'saveTargetDistance_6',
+      },
+      ifElse_9: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          whenTrue: { $sequence: 'findTargets_2' },
+          whenFalse: { $sequence: 'saveTargetDistance_7' },
+        },
+        next: null,
+      },
+      ifElse_11: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'ifElse_9' },
+        },
+        next: null,
+      },
+      ifElse_12: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'ifElse_11' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      changeResource_14: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_7' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -24,47 +97,47 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_2: {
+      ifElse_16: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'changeResource_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          whenTrue: { $sequence: 'changeResource_14' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_3: {
+      startTimeDilation_17: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'smart_target' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'ifElse_2',
+        next: 'ifElse_16',
       },
-      dealDamage_4: {
+      dealDamage_18: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'context', key: 'smart_target' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_9' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+            stagger: { kind: 'valueNode', nodeId: 'data_10' },
           },
         },
-        next: 'startTimeDilation_3',
+        next: 'startTimeDilation_17',
       },
-      applyBuff_5: {
+      applyBuff_19: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -83,9 +156,9 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'dealDamage_4',
+        next: 'dealDamage_18',
       },
-      dealDamage_6: {
+      dealDamage_20: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -97,19 +170,19 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
             features: ['canBreakWeakness'],
           },
         },
-        next: 'applyBuff_5',
+        next: 'applyBuff_19',
       },
-      ifElse_7: {
+      ifElse_21: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'dealDamage_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'dealDamage_20' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_8: {
+      startTimeDilation_22: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -119,13 +192,20 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
       },
-      startTimeDilation_10: {
+      startTimeDilation_24: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -171,17 +251,17 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_11: {
+      ifElse_25: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
           whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'startTimeDilation_10' },
+          whenFalse: { $sequence: 'startTimeDilation_24' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_12: {
+      reachSkillOperableBoundary_26: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0003_endminf_normal_skill'] },
@@ -190,18 +270,78 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_2: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      data_1: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'smart_distance', fallback: 0 },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_2: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'main_distance', fallback: 0 },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'lessOrEqual',
+          right: { kind: 'valueNode', nodeId: 'data_2' },
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'battleMainTarget' },
+          distance: 9,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
+      },
       data_5: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'context', key: 'smart_target' },
+          distance: 9,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
       },
       data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'smart_target' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'context', key: 'smart_target' },
+          distance: 5,
+          lessThan: true,
+          includeTargetRadius: true,
+          containsHittableObject: false,
+        },
+      },
+      data_12: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
@@ -218,8 +358,10 @@ export const endministratorChr_0003_endminf_combo_skill: SkillDefinition = {
     atk_scale: [0.45, 0.49, 0.54, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.93, 1],
     atk_scale_trigger: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.84, 3.02, 3.2, 3.42, 3.69, 4],
     duration: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4.5, 4.5, 5],
+    main_distance: 0,
     originum_ult_break_scale: [2.67, 2.94, 3.2, 3.47, 3.74, 4, 4.27, 4.54, 4.8, 5.14, 5.54, 6],
     poise: 10,
+    smart_distance: 0,
     usp: 10,
   },
   timelineBlockFrames: 31,
@@ -229,10 +371,11 @@ export const endministratorChr_0003_endminf_combo_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'ifElse_7' } },
-    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'startTimeDilation_8' } },
-    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'ifElse_11' } },
-    { startFrame: 23, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
+    { startFrame: 0, endFrame: 88, sequence: { $sequence: 'ifElse_12' } },
+    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'ifElse_21' } },
+    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'startTimeDilation_22' } },
+    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'ifElse_25' } },
+    { startFrame: 23, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_26' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'input',
@@ -245,10 +388,21 @@ export const endministratorChr_0003_endminf_combo_skill: SkillDefinition = {
 export const endministratorChr_0003_endminf_attack1ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -256,13 +410,13 @@ export const endministratorChr_0003_endminf_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -346,7 +500,7 @@ export const endministratorChr_0003_endminf_attack1: SkillDefinition = {
   offsetRecordFrame: 6,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 5, endFrame: 24, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
     { startFrame: 9, endFrame: 24, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
@@ -360,10 +514,21 @@ export const endministratorChr_0003_endminf_attack1: SkillDefinition = {
 export const endministratorChr_0003_endminf_attack2ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -371,13 +536,13 @@ export const endministratorChr_0003_endminf_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -461,7 +626,7 @@ export const endministratorChr_0003_endminf_attack2: SkillDefinition = {
   offsetRecordFrame: 5,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 5, endFrame: 11, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 4, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
     { startFrame: 12, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
@@ -475,10 +640,21 @@ export const endministratorChr_0003_endminf_attack2: SkillDefinition = {
 export const endministratorChr_0003_endminf_attack3ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -486,13 +662,13 @@ export const endministratorChr_0003_endminf_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.04 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -541,13 +717,13 @@ export const endministratorChr_0003_endminf_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -639,8 +815,8 @@ export const endministratorChr_0003_endminf_attack3: SkillDefinition = {
   offsetRecordFrame: 5,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 5, endFrame: 6, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_12' } },
     { startFrame: 12, endFrame: 35, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
@@ -655,10 +831,21 @@ export const endministratorChr_0003_endminf_attack3: SkillDefinition = {
 export const endministratorChr_0003_endminf_attack4ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -666,13 +853,13 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.03 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -719,13 +906,13 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -772,13 +959,13 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.02 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'endminf_stone' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -870,13 +1057,13 @@ export const endministratorChr_0003_endminf_attack4: SkillDefinition = {
   offsetRecordFrame: 7,
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 19, endFrame: 20, sequence: { $sequence: 'dealDamage_18' } },
-    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 18, endFrame: 19, sequence: { $sequence: 'dealDamage_24' } },
     { startFrame: 18, endFrame: 45, sequence: { $sequence: 'overrideBasicAttackMapping_25' } },
     { startFrame: 32, endFrame: 45, sequence: { $sequence: 'reachSkillOperableBoundary_26' } },
@@ -890,10 +1077,21 @@ export const endministratorChr_0003_endminf_attack4: SkillDefinition = {
 export const endministratorChr_0003_endminf_attack5ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -958,17 +1156,28 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
         },
         next: 'ifElse_7',
       },
+      copyContextTargets_9: {
+        action: {
+          kind: 'copyContextTargets',
+          parameters: {
+            source: { kind: 'context', key: 'tar' },
+            excludeTargets: { kind: 'inputTarget' },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       startTimeDilation_11: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -1063,9 +1272,9 @@ export const endministratorChr_0003_endminf_attack5: SkillDefinition = {
   offsetRecordFrame: 18,
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 16, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 16, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 18, endFrame: 19, sequence: { $sequence: 'dealDamage_8' } },
-    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'copyContextTargets_9' } },
     { startFrame: 19, endFrame: 21, sequence: { $sequence: 'ifElse_12' } },
     { startFrame: 18, endFrame: 21, sequence: { $sequence: 'finishBuffsById_13' } },
     { startFrame: 15, endFrame: 32, sequence: { $sequence: 'overrideBasicAttackMapping_14' } },
@@ -1131,17 +1340,28 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
         },
         next: null,
       },
-      ifElse_7: {
+      blowOffEnemy_7: {
+        action: {
+          kind: 'blowOffEnemy',
+          parameters: {
+            source: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            deadOption: 'OnlyDead',
+          },
+        },
+        next: 'gainFinisherSp_6',
+      },
+      ifElse_8: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'gainFinisherSp_6' },
+          whenTrue: { $sequence: 'blowOffEnemy_7' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_8: {
+      dealDamage_9: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1154,67 +1374,82 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'ifElse_7',
+        next: 'ifElse_8',
       },
-      startTimeDilation_9: {
+      startTimeDilation_10: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
-      },
-      checkCondition_10: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: 'startTimeDilation_9',
       },
       checkCondition_11: {
         action: {
           kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'startTimeDilation_10',
+      },
+      checkCondition_12: {
+        action: {
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
-        next: 'checkCondition_10',
+        next: 'checkCondition_11',
       },
-      startTimeDilation_12: {
+      startTimeDilation_13: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.12 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.7 },
             priority: 10,
-            curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['caster'],
+            curve: { kind: 'named', key: 'char_hard_stop' },
           },
         },
         next: null,
       },
-      checkCondition_13: {
+      startTimeDilation_14: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyAttacker',
+            durationSeconds: { kind: 'constant', value: 0.12 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: 'startTimeDilation_13',
+      },
+      checkCondition_15: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
-        next: 'startTimeDilation_12',
+        next: 'startTimeDilation_14',
       },
-      checkCondition_14: {
+      checkCondition_16: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
-        next: 'checkCondition_13',
+        next: 'checkCondition_15',
       },
-      applyBuff_15: {
+      applyBuff_17: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1227,7 +1462,7 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
         },
         next: null,
       },
-      applyBuff_16: {
+      applyBuff_18: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1240,7 +1475,7 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_17: {
+      reachSkillOperableBoundary_19: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -1308,12 +1543,12 @@ export const endministratorChr_0003_endminf_power_attack2: SkillDefinition = {
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 9, endFrame: 15, sequence: { $sequence: 'dealDamage_4' } },
-    { startFrame: 27, endFrame: 29, sequence: { $sequence: 'dealDamage_8' } },
-    { startFrame: 30, endFrame: 32, sequence: { $sequence: 'checkCondition_11' } },
-    { startFrame: 11, endFrame: 29, sequence: { $sequence: 'checkCondition_14' } },
-    { startFrame: 0, endFrame: 47, sequence: { $sequence: 'applyBuff_15' } },
-    { startFrame: 0, endFrame: 27, sequence: { $sequence: 'applyBuff_16' } },
-    { startFrame: 27, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_17' } },
+    { startFrame: 27, endFrame: 29, sequence: { $sequence: 'dealDamage_9' } },
+    { startFrame: 30, endFrame: 32, sequence: { $sequence: 'checkCondition_12' } },
+    { startFrame: 11, endFrame: 29, sequence: { $sequence: 'checkCondition_16' } },
+    { startFrame: 0, endFrame: 47, sequence: { $sequence: 'applyBuff_17' } },
+    { startFrame: 0, endFrame: 27, sequence: { $sequence: 'applyBuff_18' } },
+    { startFrame: 27, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -1324,10 +1559,21 @@ export const endministratorChr_0003_endminf_power_attack2: SkillDefinition = {
 export const endministratorChr_0003_endminf_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1396,7 +1642,7 @@ export const endministratorChr_0003_endminf_plunging_attack_end: SkillDefinition
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
   ],
   defaultTarget: 'enemy',
@@ -1419,27 +1665,33 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_20: {
+      findTargets_20: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
-      modifyActionValue_25: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: { key: 'trigger', operation: 'add', value: { kind: 'constant', value: 1 } },
-        },
-        next: null,
-      },
-      startTimeDilation_26: {
+      startTimeDilation_28: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
             durationSeconds: { kind: 'constant', value: 0.36 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: {
               kind: 'inline',
@@ -1482,23 +1734,83 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'modifyActionValue_25',
+        next: null,
       },
-      ifElse_37: {
+      modifyActionValue_26: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: { key: 'trigger', operation: 'add', value: { kind: 'constant', value: 1 } },
+        },
+        next: null,
+      },
+      startTimeDilation_27: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
+            durationSeconds: { kind: 'constant', value: 0.36 },
+            priority: 10,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: 0,
+                  value: 0.4,
+                  inTangent: -4.16987,
+                  outTangent: -4.16987,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.15,
+                  value: 0.05,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.4844323,
+                  value: 0.07220779,
+                  inTangent: 0.1940728,
+                  outTangent: 0.1940728,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 3.032697,
+                  outTangent: 3.032697,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+            },
+          },
+        },
+        next: 'modifyActionValue_26',
+      },
+      ifElse_39: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'startTimeDilation_26' },
-          whenFalse: { $sequence: null },
+          whenTrue: { $sequence: 'startTimeDilation_27' },
+          whenFalse: { $sequence: 'startTimeDilation_28' },
         },
         next: null,
       },
-      dealDamage_38: {
+      dealDamage_40: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1511,9 +1823,9 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'ifElse_37',
+        next: 'ifElse_39',
       },
-      applyPhysicalInfliction_39: {
+      applyPhysicalInfliction_41: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
@@ -1525,9 +1837,9 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
             ignoreHitEffect: false,
           },
         },
-        next: 'dealDamage_38',
+        next: 'dealDamage_40',
       },
-      modifyActionValue_32: {
+      modifyActionValue_34: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1536,9 +1848,9 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
             value: { kind: 'constant', value: 1 },
           },
         },
-        next: 'dealDamage_38',
+        next: 'dealDamage_40',
       },
-      changeResource_33: {
+      changeResource_35: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1551,9 +1863,9 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
             spGainSource: 'skill',
           },
         },
-        next: 'modifyActionValue_32',
+        next: 'modifyActionValue_34',
       },
-      applyPhysicalInfliction_34: {
+      applyPhysicalInfliction_36: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
@@ -1565,76 +1877,76 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
             ignoreHitEffect: false,
           },
         },
-        next: 'changeResource_33',
+        next: 'changeResource_35',
       },
-      readBuffBlackboard_35: {
+      readBuffBlackboard_37: {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0003_endminf_potential1'] },
             desiredKey: 'atb_return',
             outputKey: 'atb_return',
           },
         },
-        next: 'applyPhysicalInfliction_34',
+        next: 'applyPhysicalInfliction_36',
       },
-      checkCondition_36: {
+      checkCondition_38: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
-        next: 'readBuffBlackboard_35',
+        next: 'readBuffBlackboard_37',
       },
-      checkCondition_27: {
+      checkCondition_29: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: null,
       },
-      checkCondition_28: {
+      checkCondition_30: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
         },
-        next: 'checkCondition_27',
+        next: 'checkCondition_29',
       },
-      checkCondition_29: {
+      checkCondition_31: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
         },
-        next: 'checkCondition_28',
+        next: 'checkCondition_30',
       },
-      ifElse_40: {
+      ifElse_42: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_11' },
-          whenTrue: { $sequence: 'checkCondition_36' },
-          whenFalse: { $sequence: 'applyPhysicalInfliction_39' },
+          whenTrue: { $sequence: 'checkCondition_38' },
+          whenFalse: { $sequence: 'applyPhysicalInfliction_41' },
         },
         next: null,
       },
-      repeatEachTick_41: {
+      repeatEachTick_43: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'ifElse_40' },
+          body: { $sequence: 'ifElse_42' },
         },
         next: null,
       },
-      applyBuff_42: {
+      applyBuff_45: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1646,17 +1958,17 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_43: {
+      ifElse_46: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_12' },
-          whenTrue: { $sequence: 'applyBuff_42' },
+          whenTrue: { $sequence: 'applyBuff_45' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      applyBuff_46: {
+      applyBuff_49: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1668,38 +1980,38 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_44: {
+      checkCondition_47: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
         },
         next: null,
       },
-      checkCondition_45: {
+      checkCondition_48: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
         },
-        next: 'checkCondition_44',
+        next: 'checkCondition_47',
       },
-      ifElse_47: {
+      ifElse_50: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'applyBuff_46' },
+          whenTrue: { $sequence: 'applyBuff_49' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      checkCondition_48: {
+      checkCondition_51: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
         },
-        next: 'ifElse_47',
+        next: 'ifElse_50',
       },
-      reachSkillOperableBoundary_49: {
+      reachSkillOperableBoundary_52: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0003_endminf_normal_skill'] },
@@ -1769,11 +2081,18 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
       },
       data_11: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_29' } },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_31' } },
       },
       data_12: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_13: {
         type: 'boolean',
@@ -1799,7 +2118,7 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
       },
       data_15: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_45' } },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_48' } },
       },
       data_16: {
         type: 'boolean',
@@ -1837,11 +2156,11 @@ export const endministratorChr_0003_endminf_normal_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 0, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
-    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'mergeContextTargets_20' } },
-    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'repeatEachTick_41' } },
-    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'ifElse_43' } },
-    { startFrame: 11, endFrame: 14, sequence: { $sequence: 'checkCondition_48' } },
-    { startFrame: 24, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_49' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_20' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'repeatEachTick_43' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'ifElse_46' } },
+    { startFrame: 11, endFrame: 14, sequence: { $sequence: 'checkCondition_51' } },
+    { startFrame: 24, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_52' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -1871,7 +2190,11 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
       igniteBuffs_3: {
         action: {
           kind: 'igniteBuffs',
-          parameters: { target: 'enemy', source: 'caster', igniteType: 'EndminUlt' },
+          parameters: {
+            target: { kind: 'inputTarget' },
+            source: { kind: 'owner' },
+            igniteType: 'EndminUlt',
+          },
         },
         next: null,
       },
@@ -1901,7 +2224,7 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
       forEachContextTarget_6: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'targets' } },
           body: { $sequence: 'ifElse_5' },
         },
         next: null,
@@ -1921,12 +2244,20 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         },
         next: 'forEachContextTarget_6',
       },
-      mergeContextTargets_8: {
+      findTargets_8: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'targets',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'dealDamage_7',
@@ -2076,7 +2407,7 @@ export const endministratorChr_0003_endminf_ultimate_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 50, endFrame: 53, sequence: { $sequence: 'mergeContextTargets_8' } },
+    { startFrame: 50, endFrame: 53, sequence: { $sequence: 'findTargets_8' } },
     { startFrame: 50, endFrame: 53, sequence: { $sequence: 'checkCondition_13' } },
     { startFrame: 0, endFrame: 55, sequence: { $sequence: 'applyBuff_14' } },
     { startFrame: 0, endFrame: 44, sequence: { $sequence: 'hideUi_15' } },

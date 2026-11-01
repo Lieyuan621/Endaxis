@@ -255,7 +255,21 @@ function hasOnlySquadTipsEvents(events: string, registry: string, sourcePath: st
       return false;
     const payload = '\t\t\t\t\tReferencedObjectData data';
     const offset = block.indexOf(payload);
-    if (offset < 0 || block.slice(offset + payload.length).trim() !== '') return false;
+    if (offset < 0) return false;
+    // 新版 TypeTree 会展开提示动作的基础字段及文案；它们不改变战斗状态。
+    const fields = block
+      .slice(offset + payload.length)
+      .split(/\r?\n/)
+      .filter(line => line.trim() !== '');
+    if (
+      fields.some(
+        line =>
+          !/^\t{6}(?:UInt8 isEnable = [01]|int (?:priorityLevel|priorityOffset|serverActionIndex) = -?\d+|string textId = "[^"]*")$/.test(
+            line,
+          ),
+      )
+    )
+      return false;
     ids.add(id);
   }
   const calls = [...events.matchAll(/^\t+SInt64 rid = (-?\d+)\r?$/gm)];

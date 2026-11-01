@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../core/project/level';
 import { expect, it } from 'vitest';
 
 import type {
@@ -12,11 +13,60 @@ import { createEmptyScenario } from '../../core/project/createProject';
 import type { GlobalEffectDefinition } from '../../core/game-data/globalEffectDefinition';
 import { createGameDataRepository } from '../../data/createGameDataRepository';
 import { perlica } from '../../data/operators/perlica.generated';
+import { generatedEnemyDefinitions } from '../../data/enemies/generated/index.generated';
 import { placeSkillGroup } from '../../ui/timeline/interaction/placeSkillGroup';
 import {
   captureScenarioSimulationGameData,
   restoreScenarioSimulationGameData,
+  scenarioSimulationGameDataSelectionKey,
 } from './scenarioSimulationGameData';
+
+it('Worker 携带附加敌人的基础定义，定义变化使选择缓存失效，同模板重复敌人只传一次', () => {
+  const [first, second] = generatedEnemyDefinitions;
+  const scenario = createEmptyScenario('enemies-transfer', 'enemies-transfer');
+  firstScenarioEnemy(scenario).enemy.source = { kind: 'prefab', enemyId: first.id, level: 90 };
+  const initialKey = scenarioSimulationGameDataSelectionKey(scenario);
+  const additional = structuredClone(firstScenarioEnemy(scenario).enemy);
+  additional.source = {
+    kind: 'stage',
+    stageId: 'stage',
+    enemyId: 'variant',
+    templateId: second.id,
+    level: 90,
+  };
+  scenario.level = {
+    kind: 'multiEnemies',
+    enemies: [
+      firstScenarioEnemy(scenario),
+      ...[{ id: 'second', name: 'Second', enemy: additional }].map(item => ({
+        ...item,
+        id: 'enemy:' + item.id,
+      })),
+    ],
+  };
+  expect(scenarioSimulationGameDataSelectionKey(scenario)).not.toBe(initialKey);
+  const repository = createGameDataRepository({
+    revision: 'enemy-transfer',
+    enemies: [first, second],
+  });
+  const packet = captureScenarioSimulationGameData(scenario, repository);
+  expect(packet.enemies.map(enemy => enemy.id)).toEqual([first.id, second.id]);
+  const restored = restoreScenarioSimulationGameData(structuredClone(packet));
+  expect(restored.getEnemy(second.id)).toEqual(second);
+  scenario.level.enemies.push({
+    id: 'third',
+    name: 'Third',
+    enemy: structuredClone(additional),
+  });
+  expect(captureScenarioSimulationGameData(scenario, repository).enemies).toHaveLength(2);
+  expect(scenarioSimulationGameDataSelectionKey(scenario)).toBe(packet.selectionKey);
+  expect(() =>
+    captureScenarioSimulationGameData(
+      scenario,
+      createGameDataRepository({ revision: 'enemy-transfer', enemies: [first] }),
+    ),
+  ).toThrow(second.id);
+});
 
 it('后台数据包只携带一次公共定义，并在恢复后保留其来源', () => {
   const repository = createGameDataRepository({

@@ -1,3 +1,4 @@
+import type { CompiledAbilityEntityChildSkillProgram } from './combatProgram';
 import type { CompiledStepForKind } from './compiledGraphData.ts';
 /** 携带内联宿主的动作编译；入口绑定由调用方提供，不依赖树编译器。 */
 import type { CombatStepKind, LevelValues } from '../game-data/operatorDefinition';
@@ -30,8 +31,14 @@ export function compileNestedAction(
   compileEntry: (source: ActionGraphReference, path: string) => CompiledGraphEntry,
   resolveEntity: (id: string, path: string) => void,
   bindResource: BindProgramResource,
+  callbackSkills: ReadonlyMap<string, CompiledAbilityEntityChildSkillProgram> = new Map(),
 ): ResolvedCombatStepForKind<NestedActionKind> {
-  const definitions = createProgramDefinitionCompiler(skillLevel, compileEntry, bindResource);
+  const definitions = createProgramDefinitionCompiler(
+    skillLevel,
+    compileEntry,
+    bindResource,
+    callbackSkills,
+  );
   const keyed = step.key === undefined ? {} : { key: step.key };
   switch (step.kind) {
     case 'setHealthFloor':

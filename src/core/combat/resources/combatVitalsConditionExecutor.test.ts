@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
@@ -26,7 +27,10 @@ describe('CombatVitalsConditionExecutor', () => {
       poiseImmune: false,
     });
     const executor = new CombatVitalsConditionExecutor({
-      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
+      queryTargets: (query, context) =>
+        query.kind === 'fixed' && query.target === 'enemy'
+          ? [{ kind: 'enemy', enemyId: 'enemy' }]
+          : (resolveDirectActionTargets(query, context) ?? []),
       resolveTarget: () => vitals,
       resolveVitals: () => vitals,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
@@ -72,7 +76,10 @@ describe('CombatVitalsConditionExecutor', () => {
     });
     const resolveTarget = vi.fn(() => vitals);
     const executor = new CombatVitalsConditionExecutor({
-      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
+      queryTargets: (query, context) =>
+        query.kind === 'fixed' && query.target === 'enemy'
+          ? [{ kind: 'enemy', enemyId: 'enemy' }]
+          : (resolveDirectActionTargets(query, context) ?? []),
       resolveTarget,
       resolveVitals: resolveTarget,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
@@ -109,13 +116,20 @@ describe('CombatVitalsConditionExecutor', () => {
     });
     const resolveContextTarget = vi.fn(() => vitals);
     const executor = new CombatVitalsConditionExecutor({
-      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
+      queryTargets: (query, context) =>
+        query.kind === 'fixed' && query.target === 'enemy'
+          ? [{ kind: 'enemy', enemyId: 'enemy' }]
+          : (resolveDirectActionTargets(query, context) ?? []),
       resolveTarget: vi.fn(),
       resolveVitals: resolveContextTarget,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
     });
     const targetContext = new RuntimeTargetContext();
-    targetContext.set('CureTarget', [{ kind: 'operator', operatorId: 'ally' }, { kind: 'enemy' }]);
+    targetContext.set('CureTarget', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'ally' },
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
 
     expect(
       executor.evaluate(
@@ -168,13 +182,16 @@ describe('CombatVitalsConditionExecutor', () => {
     });
     const resolveTarget = vi.fn(() => enemyVitals);
     const executor = new CombatVitalsConditionExecutor({
-      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
+      queryTargets: (query, context) =>
+        query.kind === 'fixed' && query.target === 'enemy'
+          ? [{ kind: 'enemy', enemyId: 'enemy' }]
+          : (resolveDirectActionTargets(query, context) ?? []),
       resolveTarget,
       resolveVitals: resolveTarget,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
     });
     const targetContext = new RuntimeTargetContext();
-    targetContext.setSingle('smart_target', { kind: 'enemy' });
+    targetContext.setSingle('smart_target', { kind: 'enemy', enemyId: 'enemy' });
 
     expect(
       executor.evaluate(
@@ -188,7 +205,10 @@ describe('CombatVitalsConditionExecutor', () => {
         { blackboard: new ActionBlackboard(), targetContext },
       ),
     ).toBe(false);
-    expect(resolveTarget).toHaveBeenCalledWith({ kind: 'enemy' }, 'currentHealth');
+    expect(resolveTarget).toHaveBeenCalledWith(
+      { kind: 'enemy', enemyId: 'enemy' },
+      'currentHealth',
+    );
     const positiveHealthCondition = {
       kind: 'healthCompare' as const,
       target: { kind: 'context' as const, key: 'smart_target' },
@@ -225,7 +245,10 @@ describe('CombatVitalsConditionExecutor', () => {
     });
     const resolveContextTarget = vi.fn(() => vitals);
     const executor = new CombatVitalsConditionExecutor({
-      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
+      queryTargets: (query, context) =>
+        query.kind === 'fixed' && query.target === 'enemy'
+          ? [{ kind: 'enemy', enemyId: 'enemy' }]
+          : (resolveDirectActionTargets(query, context) ?? []),
       resolveTarget: vi.fn(),
       resolveVitals: resolveContextTarget,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
@@ -242,7 +265,7 @@ describe('CombatVitalsConditionExecutor', () => {
         },
         {
           blackboard: new ActionBlackboard(),
-          actionInputTarget: { kind: 'operator', operatorId: 'controlled' },
+          actionInputTargets: singleTargetList({ kind: 'operator', operatorId: 'controlled' }),
         },
       ),
     ).toBe(true);
@@ -275,7 +298,10 @@ describe('CombatVitalsConditionExecutor', () => {
     });
     let current = withPoise;
     const executor = new CombatVitalsConditionExecutor({
-      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
+      queryTargets: (query, context) =>
+        query.kind === 'fixed' && query.target === 'enemy'
+          ? [{ kind: 'enemy', enemyId: 'enemy' }]
+          : (resolveDirectActionTargets(query, context) ?? []),
       resolveTarget: () => current,
       resolveVitals: target => (target.kind === 'enemy' ? current : withoutPoise),
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
@@ -295,7 +321,7 @@ describe('CombatVitalsConditionExecutor', () => {
         { ...condition, target: { kind: 'inputTarget' } },
         {
           blackboard: new ActionBlackboard(),
-          actionInputTarget: { kind: 'operator', operatorId: 'attacker' },
+          actionInputTargets: singleTargetList({ kind: 'operator', operatorId: 'attacker' }),
         },
       ),
     ).toBe(false);
@@ -304,7 +330,7 @@ describe('CombatVitalsConditionExecutor', () => {
         { ...condition, target: { kind: 'inputTarget' } },
         {
           blackboard: new ActionBlackboard(),
-          actionInputTarget: { kind: 'enemy' },
+          actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' }),
         },
       ),
     ).toBe(true);
@@ -313,7 +339,7 @@ describe('CombatVitalsConditionExecutor', () => {
         { ...condition, target: { kind: 'inputTarget' } },
         {
           blackboard: new ActionBlackboard(),
-          actionInputTarget: { kind: 'operator', operatorId: 'attacker' },
+          actionInputTargets: singleTargetList({ kind: 'operator', operatorId: 'attacker' }),
         },
       ),
     ).toBe(false);
@@ -347,7 +373,10 @@ describe('CombatVitalsConditionExecutor', () => {
       poiseImmune: false,
     });
     const executor = new CombatVitalsConditionExecutor({
-      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
+      queryTargets: (query, context) =>
+        query.kind === 'fixed' && query.target === 'enemy'
+          ? [{ kind: 'enemy', enemyId: 'enemy' }]
+          : (resolveDirectActionTargets(query, context) ?? []),
       resolveTarget: () => vitals,
       resolveVitals: () => vitals,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
@@ -376,7 +405,10 @@ function zeroHealthFixture(health = 0) {
   const execute = vi.fn((_step: ResolvedCombatOperationStep) => true);
   const resolveVitals = vi.fn((): CombatVitals | undefined => vitals);
   const executor = new CombatVitalsConditionExecutor({
-    queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
+    queryTargets: (query, context) =>
+      query.kind === 'fixed' && query.target === 'enemy'
+        ? [{ kind: 'enemy', enemyId: 'enemy' }]
+        : (resolveDirectActionTargets(query, context) ?? []),
     resolveTarget: () => vitals,
     resolveVitals,
     delegate: {
@@ -387,11 +419,11 @@ function zeroHealthFixture(health = 0) {
     },
   });
   const targetContext = new RuntimeTargetContext();
-  targetContext.setSingle('smart_target', { kind: 'enemy' });
+  targetContext.setSingle('smart_target', { kind: 'enemy', enemyId: 'enemy' });
   const context = {
     blackboard: new ActionBlackboard({ threshold: 0, recover_usp: 0, usp: 15, infliction_num: 1 }),
     targetContext,
-    actionInputTarget: { kind: 'enemy' } as RuntimeTargetRef,
+    actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' } as RuntimeTargetRef),
     requestTimelineJump: vi.fn(),
   };
   return { vitals, executor, execute, resolveVitals, context };
@@ -418,10 +450,10 @@ it.each(['current', 'ratio'] as const)(
       { kind: 'operator', operatorId: 'ally' },
       { kind: 'abilityEntity', instanceId: 1 },
     ] as const) {
-      f.context.actionInputTarget = target;
+      f.context.actionInputTargets = [target];
       expect(f.executor.evaluate(condition, f.context)).toBe(true);
     }
-    f.context.actionInputTarget = { kind: 'enemy' };
+    f.context.actionInputTargets = [{ kind: 'enemy', enemyId: 'enemy' }];
     expect(
       f.executor.evaluate({ ...condition, value: { kind: 'constant', value: 0.5 } }, f.context),
     ).toBe(true);
@@ -447,9 +479,12 @@ it('runs both generated Last Rite zero-health branches on the living side while 
     1,
     'last-rite-zero-health',
   );
-  for (const target of [{ kind: 'enemy' }, { kind: 'operator', operatorId: 'control' }] as const) {
+  for (const target of [
+    { kind: 'enemy', enemyId: 'enemy' },
+    { kind: 'operator', operatorId: 'control' },
+  ] as const) {
     const f = zeroHealthFixture();
-    f.context.actionInputTarget = target;
+    f.context.actionInputTargets = [target];
     f.context.targetContext.setSingle('smart_target', target);
     const runtime = new CombatActionSequenceRuntime(
       new ActionBlackboardOperationExecutor(f.executor),
@@ -477,12 +512,21 @@ it('keeps the generated Fluorite bomb timeline when its ordinary enemy reaches z
   const skill =
     fluorite.abilityEntityDefinitions!.abilityentity_chr_0022_bounda_normal_skill!.childSkill!;
   const compilation = createActionGraphCompilation(skill.actionGraph!, 1, 'fluorite-zero-health');
-  for (const target of [{ kind: 'enemy' }, { kind: 'abilityEntity', instanceId: 1 }] as const) {
+  const bombEntries = Object.entries(skill.actionGraph!.main.nodes).filter(
+    ([, node]) =>
+      node.action.kind === 'jumpTimeline' && node.action.parameters.destinationFrame === 89,
+  );
+  expect(bombEntries).toHaveLength(1);
+  const bombEntry = bombEntries[0]![0];
+  for (const target of [
+    { kind: 'enemy', enemyId: 'enemy' },
+    { kind: 'abilityEntity', instanceId: 1 },
+  ] as const) {
     const f = zeroHealthFixture();
-    f.context.actionInputTarget = target;
+    f.context.actionInputTargets = [target];
     const runtime = new CombatActionSequenceRuntime(f.executor, f.context);
     runtime
-      .createSequence(compilation.compileEntry({ $sequence: 'jumpTimeline_25' }, 'bomb'))
+      .createSequence(compilation.compileEntry({ $sequence: bombEntry }, 'bomb'))
       .executeInstant({});
     if (target.kind === 'enemy') expect(f.context.requestTimelineJump).not.toHaveBeenCalled();
     else expect(f.context.requestTimelineJump).toHaveBeenCalledWith(89);

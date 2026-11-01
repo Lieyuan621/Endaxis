@@ -468,7 +468,6 @@ export {
   compileBuffRuntimeDefinitionSource,
   compileCombatActionSequenceSource,
   compileCombatConditionSequenceSource,
-  isAfterEnemyDefeatedOnlyBuffRuntime,
   isPresentationOnlyBuffStackEffect,
 } from './compiler/buffs/buffRuntimeProjection.ts';
 export { collectBuffRuntimeClosure } from './compiler/buffs/buffReferenceClosure.ts';

@@ -1,3 +1,5 @@
+import { firstScenarioEnemy, levelEnemies } from '../../core/project/level';
+import { compileScenarioEnemyInstances } from '../../core/compiler/compileScenarioEnemyInstances';
 import type { RangeSampleSource } from '../../core/combat/random/simulationRandom';
 import type { ActionExecutionTrace } from '../../core/combat/actions/actionExecutionTrace';
 import type { CombatReceiptView } from '../../core/combat/receipt/combatReceiptHistory';
@@ -82,7 +84,7 @@ export interface RunStandardPlayerDamageScenarioInput {
   readonly continuationPlanMode?: 'continuation' | 'compact';
 }
 
-/** 本次模拟唯一敌人生命账本的初始与最终快照；投影和结果收集读取同一实例。 */
+/** 本次模拟敌人生命账本的初始与最终快照；投影和结果收集读取同一实例。 */
 export interface EnemyVitalsSimulationResult {
   readonly initialHealth: number;
   readonly maxHealth: number;
@@ -94,6 +96,7 @@ export interface EnemyVitalsSimulationResult {
 export interface StandardPlayerDamageScenarioResult extends ScenarioSimulationResult {
   readonly finalEnemyHealth: number;
   readonly enemyVitals: EnemyVitalsSimulationResult;
+  readonly enemyVitalsById: Readonly<Record<string, EnemyVitalsSimulationResult>>;
 }
 
 export interface PreparedStandardPlayerDamageScenarioRuntime {
@@ -131,14 +134,25 @@ export function prepareStandardPlayerDamageScenarioRuntime(
   input: RunStandardPlayerDamageScenarioInput,
 ): PreparedStandardPlayerDamageScenarioRuntime {
   assertScenarioSimulationEndFrame(input.scenario, input.endFrame);
-  const enemy = compileScenarioEnemy(input.scenario.enemy);
+  const enemy = compileScenarioEnemy(firstScenarioEnemy(input.scenario).enemy);
   const enemyVitals = createEnemyCombatVitals(enemy);
   const controlTimeline = resolveControlTimeline(
     input.scenario.tracks,
     input.options.liveInputInitialFrame === undefined ? input.scenario.battle.controlSwitches : [],
     input.options.liveInputInitialFrame ?? -input.scenario.battle.prepFrames,
   );
+  const additionalEnemies = new Map(
+    [
+      ...compileScenarioEnemyInstances(
+        levelEnemies(input.scenario.level).slice(1),
+        input.options.liveInputInitialFrame ?? -input.scenario.battle.prepFrames,
+      ),
+    ].map(([id, program]) => [id, { program, vitals: createEnemyCombatVitals(program) }]),
+  );
   const restoredEnvironmentBase = {
+    primaryEnemyId: firstScenarioEnemy(input.scenario).id,
+    enemyAutomaticDeath: input.scenario.battle.enemyAutomaticDeath ?? false,
+    additionalEnemies,
     reactionCriticalOverrides: input.scenario.battle.reactionCriticalOverrides,
     resolveNonRandomRuntimeSnapshot: input.resolveNonRandomRuntimeSnapshot,
     tagRegistry: gameplayTagRegistry,
@@ -261,6 +275,20 @@ export function collectStandardPlayerDamageStateGraphResult(
   return Object.freeze({
     ...result,
     finalEnemyHealth: vitals.health,
+    enemyVitalsById: Object.freeze(
+      Object.fromEntries(
+        [...(environmentState.enemyInstances ?? [])].map(([id, enemy]) => [
+          id,
+          Object.freeze({
+            initialHealth: enemy.initialVitals.health,
+            maxHealth: enemy.initialVitals.maxHealth,
+            initialPoise: enemy.initialVitals.poise,
+            maxPoise: enemy.initialVitals.maxPoise,
+            finalPoise: enemy.vitals.poise,
+          }),
+        ]),
+      ),
+    ),
     enemyVitals: Object.freeze({
       initialHealth: compiled.enemy.health,
       maxHealth: vitals.maxHealth,

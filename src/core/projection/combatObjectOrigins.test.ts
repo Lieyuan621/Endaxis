@@ -8,6 +8,18 @@ const action: CombatObjectRef = { kind: 'action', ownerId: 'caster', actionId: '
 const buff: CombatObjectRef = { kind: 'buff', ownerId: 'caster', instanceId: 1 };
 const entity = (instanceId: number): CombatObjectRef => ({ kind: 'abilityEntity', instanceId });
 const hasBuff = (node: { ref: CombatObjectRef }) => node.ref.kind === 'buff';
+it('同号 Buff 在不同敌人上的归属节点保持独立', () => {
+  const q = new CombatObjectOrigins([]);
+  const first = q
+    .relations(q.get({ kind: 'buff', ownerId: 'enemy', instanceId: 1 }))
+    .find(link => link.relation === 'ownedBy')!.target;
+  const second = q
+    .relations(q.get({ kind: 'buff', ownerId: 'enemy:second', instanceId: 1 }))
+    .find(link => link.relation === 'ownedBy')!.target;
+  expect(first.ref).toEqual({ kind: 'enemy', enemyId: 'enemy' });
+  expect(second.ref).toEqual({ kind: 'enemy', enemyId: 'enemy:second' });
+  expect(second).not.toBe(first);
+});
 it('connects stack and consumption facts to exact instances and casts without changing birth or damage provenance', () => {
   const c = new CombatReceiptCollector();
   c.record({
@@ -70,7 +82,7 @@ it('reads the executing Buff or entity without borrowing event targets or inheri
   const context = {
     actionOwnerAbilityEntity: { kind: 'abilityEntity' as const, instanceId: 3 },
     executingBuff: { buffId: 'definition', buffOwnerId: 'caster', buffInstanceId: 1 },
-    currentTarget: { kind: 'enemy' as const },
+    currentTarget: { kind: 'enemy' as const, enemyId: 'enemy' },
     actionOwnerId: 'caster',
   };
   expect(operationProducer(context)).toEqual(buff);

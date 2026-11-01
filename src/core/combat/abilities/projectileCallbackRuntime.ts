@@ -1,5 +1,5 @@
 import type { ProjectileCallbackSchedule } from '../../../../packages/game-data-contract/src/projectileSchedule';
-import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import { singleTargetList, runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { ProjectileHitTargets } from '../state/instanceState';
 import { ActionBlackboard } from '../actions/actionBlackboard';
@@ -18,6 +18,7 @@ import type { ProjectileHostPorts } from './projectileLifecycleRuntime';
 export interface ProjectileHitBinding {
   readonly kind?: ProjectileCallbackSchedule['hitKind'];
   readonly state: ProjectileHitTargets;
+  readonly canHit?: (target: RuntimeTargetRef) => boolean;
   readonly resolveTargets?: () => readonly RuntimeTargetRef[];
   readonly targetExists?: (target: RuntimeTargetRef) => boolean;
   readonly matchesTags?: (
@@ -45,6 +46,7 @@ export function bindProjectileCallbackLifecycle(
       const targets = hit.state.resolveOnHit ? hit.resolveTargets?.() : hit.state.targets;
       if (!targets) throw new Error('projectile collision requires target resolution');
       for (const target of targets) {
+        if (target.kind !== 'spatialPoint' && hit.canHit?.(target) === false) continue;
         if (target.kind !== 'spatialPoint' && hit.targetExists?.(target) === false) continue;
         if (
           hit.kind !== 'arrival' &&
@@ -92,7 +94,7 @@ export function restoreProjectileCallback(
   if (!Number.isSafeInteger(instanceId) || instanceId <= 0)
     throw new Error('invalid projectile identity');
   const context = {
-    actionInputTarget: state.inputTarget,
+    actionInputTargets: singleTargetList(state.inputTarget),
     blackboard: ActionBlackboard.bindRuntimeState(state.blackboard),
     skillCastInfo: state.skillCastInfo ?? undefined,
     actionOwnerAbilityEntity: { kind: 'abilityEntity' as const, instanceId },

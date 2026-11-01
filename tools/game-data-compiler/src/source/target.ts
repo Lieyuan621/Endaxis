@@ -149,10 +149,7 @@ export interface SelectorSummarySource {
   readonly shuffleTargets: readonly ShuffleTargetSource[];
   readonly distanceValidators: readonly DistanceValidatorSource[];
   /** TargetContainsValidator 解析的父集合来源；顺序与 validatorData 一致。 */
-  readonly targetContainsParents: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
+  readonly targetContainsParents: readonly TargetReferenceSource[];
   /** ExcludeTarget 后处理器引用的排除集合；顺序与 postProcessorData 一致。 */
   readonly excludeTargets: readonly TargetReferenceSource[];
 }
@@ -617,7 +614,7 @@ export function parseSelectorSummarySource(
       validator.parentTargetSettings,
       `${validatorPath}.parentTargetSettings`,
     );
-    return [{ targetSource: parent.targetSource, targetGroupKey: parent.targetGroupKey }];
+    return [parent];
   });
   const excludeTargets = requireArray(
     selector.postProcessorData,

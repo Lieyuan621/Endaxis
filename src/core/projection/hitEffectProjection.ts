@@ -1,9 +1,11 @@
 /**
  * 把模拟日志里的伤害、附着事件整理成固定格式，供命中点提示和详情使用。
- * 只搬运日志里的字段，不计算任何伤害。
+ * 保留伤害事实，必要时沿对象产生链补齐展示归属，不计算任何伤害。
  */
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
 import type { DamageType } from '../game-data/operatorDefinition';
+import { deriveHitId } from '../combat/timeline/deriveHitId';
+import { CombatObjectOrigins } from './combatObjectOrigins';
 
 /** 一次落到目标身上的生命伤害事实。 */
 export interface HitDamageReceipt {
@@ -76,7 +78,49 @@ function readOptionalString(
   return value;
 }
 
-function readDamagePoint(entry: CombatReceiptEntry): HitDamageReceipt {
+/** 展示身份与数值解析分离，标记和详情选择使用同一归属规则。 */
+export function projectHitDamageIdentity(
+  entry: CombatReceiptEntry,
+  origins: CombatObjectOrigins,
+): Pick<HitDamageReceipt, 'stepKey' | 'castId' | 'hitId'> {
+  const data = requireData(entry);
+  const stepKey = readOptionalString(entry, data, 'stepKey');
+  let castId = readOptionalString(entry, data, 'castId');
+  let hitId = readOptionalString(entry, data, 'hitId');
+  // 子技能可以不继承原生施放信息，展示归属仍由对象的产生链确定。
+  // 这里只补展示身份，不修改回执，也不沿增益提供者或当前主控猜测来源。
+  if (castId === undefined && stepKey !== undefined) {
+    const origin = origins.findAncestor(
+      origins.get({ kind: 'receipt', sequence: entry.sequence }),
+      node => node.ref.kind === 'action',
+      { relations: ['producedBy', 'originCast'], throughSequence: entry.sequence },
+    );
+    if (origin.status === 'found' && origin.node.ref.kind === 'action') {
+      castId = origin.node.ref.actionId;
+      hitId ??= deriveHitId(castId, stepKey);
+    }
+  }
+  return {
+    ...(stepKey === undefined ? {} : { stepKey }),
+    ...(castId === undefined ? {} : { castId }),
+    ...(hitId === undefined ? {} : { hitId }),
+  };
+}
+
+/** 无法定位到技能命中点的伤害仍须保留独立的回执入口。 */
+export function isUnattributedDamageReceipt(
+  entry: CombatReceiptEntry,
+  origins: CombatObjectOrigins,
+): boolean {
+  if (entry.event !== 'DamageApplied') return false;
+  const identity = projectHitDamageIdentity(entry, origins);
+  return !identity.castId || !identity.hitId || !identity.stepKey;
+}
+
+function readDamagePoint(
+  entry: CombatReceiptEntry,
+  origins: CombatObjectOrigins,
+): HitDamageReceipt {
   const data = requireData(entry);
   const damageType = data.damageType;
   if (typeof damageType !== 'string' || damageType.length === 0) {
@@ -85,9 +129,6 @@ function readDamagePoint(entry: CombatReceiptEntry): HitDamageReceipt {
   if (typeof data.isCritical !== 'boolean') {
     throw new Error(`receipt ${entry.sequence} 'DamageApplied' has no boolean isCritical`);
   }
-  const stepKey = readOptionalString(entry, data, 'stepKey');
-  const castId = readOptionalString(entry, data, 'castId');
-  const hitId = readOptionalString(entry, data, 'hitId');
   return {
     frame: entry.frame,
     time: entry.time,
@@ -98,9 +139,7 @@ function readDamagePoint(entry: CombatReceiptEntry): HitDamageReceipt {
     value: requireNumber(entry, data, 'value'),
     actualDamage: requireNumber(entry, data, 'actualDamage'),
     isCritical: data.isCritical,
-    ...(stepKey === undefined ? {} : { stepKey }),
-    ...(castId === undefined ? {} : { castId }),
-    ...(hitId === undefined ? {} : { hitId }),
+    ...projectHitDamageIdentity(entry, origins),
   };
 }
 
@@ -132,10 +171,12 @@ function readInflictionPoint(entry: CombatReceiptEntry): HitInflictionReceipt {
 /** 按回执原始顺序输出全部生命伤害事实。 */
 export function projectHitDamageReceipts(
   entries: readonly CombatReceiptEntry[],
+  origins = new CombatObjectOrigins(entries),
 ): readonly HitDamageReceipt[] {
   const points: HitDamageReceipt[] = [];
   for (const entry of entries) {
-    if (entry.event === 'DamageApplied') points.push(readDamagePoint(entry));
+    if (entry.event !== 'DamageApplied') continue;
+    points.push(readDamagePoint(entry, origins));
   }
   return points;
 }

@@ -8,6 +8,25 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const siChr_0036_jsspsi_attack1ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
       modifyActionValue_4: {
         action: {
           kind: 'modifyActionValue',
@@ -23,13 +42,13 @@ export const siChr_0036_jsspsi_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.033 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'modifyActionValue_4',
@@ -73,7 +92,7 @@ export const siChr_0036_jsspsi_attack1ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -99,13 +118,13 @@ export const siChr_0036_jsspsi_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.05 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'modifyActionValue_12',
@@ -149,7 +168,7 @@ export const siChr_0036_jsspsi_attack1ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -233,6 +252,8 @@ export const siChr_0036_jsspsi_attack1: SkillDefinition = {
   offsetRecordFrame: 15,
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 6, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 15, endFrame: 18, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 6, endFrame: 9, sequence: { $sequence: 'repeatEachTick_10' } },
     { startFrame: 15, endFrame: 18, sequence: { $sequence: 'repeatEachTick_18' } },
     { startFrame: 0, endFrame: 25, sequence: { $sequence: 'overrideBasicAttackMapping_19' } },
@@ -247,6 +268,24 @@ export const siChr_0036_jsspsi_attack1: SkillDefinition = {
 export const siChr_0036_jsspsi_attack2ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       modifyActionValue_6: {
         action: {
           kind: 'modifyActionValue',
@@ -262,13 +301,13 @@ export const siChr_0036_jsspsi_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.067 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'modifyActionValue_6',
@@ -312,7 +351,7 @@ export const siChr_0036_jsspsi_attack2ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -376,6 +415,10 @@ export const siChr_0036_jsspsi_attack2: SkillDefinition = {
   offsetRecordFrame: 5,
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 5, endFrame: 9, sequence: { $sequence: 'repeatEachTick_12' } },
     { startFrame: 0, endFrame: 28, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
     { startFrame: 13, endFrame: 28, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
@@ -389,6 +432,24 @@ export const siChr_0036_jsspsi_attack2: SkillDefinition = {
 export const siChr_0036_jsspsi_attack3ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       modifyActionValue_5: {
         action: {
           kind: 'modifyActionValue',
@@ -404,13 +465,13 @@ export const siChr_0036_jsspsi_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'modifyActionValue_5',
@@ -454,7 +515,7 @@ export const siChr_0036_jsspsi_attack3ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -518,6 +579,9 @@ export const siChr_0036_jsspsi_attack3: SkillDefinition = {
   offsetRecordFrame: 9,
   costFrame: 12,
   scheduledSequences: [
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 9, endFrame: 12, sequence: { $sequence: 'repeatEachTick_11' } },
     { startFrame: 0, endFrame: 33, sequence: { $sequence: 'overrideBasicAttackMapping_12' } },
     { startFrame: 12, endFrame: 33, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
@@ -531,6 +595,25 @@ export const siChr_0036_jsspsi_attack3: SkillDefinition = {
 export const siChr_0036_jsspsi_attack4ActionGraph = {
   main: {
     nodes: {
+      findTargets_5: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
       dealDamage_6: {
         action: {
           kind: 'dealDamage',
@@ -550,7 +633,7 @@ export const siChr_0036_jsspsi_attack4ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 6,
@@ -594,6 +677,7 @@ export const siChr_0036_jsspsi_attack4: SkillDefinition = {
   offsetRecordFrame: 26,
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 5, endFrame: 40, sequence: { $sequence: 'findTargets_5' } },
     { startFrame: 5, endFrame: 40, sequence: { $sequence: 'repeatEachTick_7' } },
     { startFrame: 0, endFrame: 34, sequence: { $sequence: 'overrideBasicAttackMapping_8' } },
     { startFrame: 26, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
@@ -626,13 +710,13 @@ export const siChr_0036_jsspsi_attack5ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_9',
@@ -672,12 +756,52 @@ export const siChr_0036_jsspsi_attack5ActionGraph = {
         },
         next: 'ifElse_17',
       },
-      mergeContextTargets_19: {
+      findTargets_19: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: 'dealDamage_18',
+      },
+      findTargets_16: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'inputTarget' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: 'dealDamage_18',
+      },
+      ifElse_20: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'findTargets_16' },
+          whenFalse: { $sequence: 'findTargets_19' },
+        },
+        next: null,
       },
       overrideBasicAttackMapping_21: {
         action: {
@@ -690,16 +814,6 @@ export const siChr_0036_jsspsi_attack5ActionGraph = {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0036_jsspsi_attack1'] },
-        },
-        next: null,
-      },
-      ifElse_opt1: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'mergeContextTargets_19' },
-          whenFalse: { $sequence: 'mergeContextTargets_19' },
         },
         next: null,
       },
@@ -727,7 +841,14 @@ export const siChr_0036_jsspsi_attack5ActionGraph = {
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_7: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'inputTarget' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
     },
   },
@@ -750,7 +871,7 @@ export const siChr_0036_jsspsi_attack5: SkillDefinition = {
   offsetRecordFrame: 25,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 25, endFrame: 28, sequence: { $sequence: 'ifElse_opt1' } },
+    { startFrame: 25, endFrame: 28, sequence: { $sequence: 'ifElse_20' } },
     { startFrame: 0, endFrame: 52, sequence: { $sequence: 'overrideBasicAttackMapping_21' } },
     { startFrame: 31, endFrame: 52, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
   ],
@@ -763,52 +884,102 @@ export const siChr_0036_jsspsi_attack5: SkillDefinition = {
 export const siChr_0036_jsspsi_power_attackActionGraph = {
   main: {
     nodes: {
-      dealDamage_1: {
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.05 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: null,
+      },
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'startTimeDilation_2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_4: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.07,
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: null,
+        next: 'ifElse_3',
       },
-      dealDamage_2: {
+      dealDamage_8: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.1,
             tags: ['normalAttack', 'powerAttack'],
           },
         },
+        next: 'ifElse_3',
+      },
+      startTimeDilation_10: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.05 },
+            priority: 10,
+            curve: { kind: 'named', key: 'common' },
+          },
+        },
         next: null,
       },
-      dealDamage_3: {
+      ifElse_11: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'startTimeDilation_10' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_12: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.13,
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: null,
+        next: 'ifElse_11',
       },
-      gainFinisherSp_5: {
+      gainFinisherSp_14: {
         action: {
           kind: 'gainFinisherSp',
           parameters: {
@@ -819,47 +990,47 @@ export const siChr_0036_jsspsi_power_attackActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_6: {
+      startTimeDilation_15: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'endmin_powerattack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'gainFinisherSp_5',
+        next: 'gainFinisherSp_14',
       },
-      ifElse_7: {
+      ifElse_16: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'startTimeDilation_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          whenTrue: { $sequence: 'startTimeDilation_15' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_8: {
+      dealDamage_17: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.7,
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'ifElse_7',
+        next: 'ifElse_16',
       },
-      applyBuff_9: {
+      applyBuff_18: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -872,7 +1043,7 @@ export const siChr_0036_jsspsi_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_10: {
+      applyBuff_19: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -885,7 +1056,7 @@ export const siChr_0036_jsspsi_power_attackActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_11: {
+      reachSkillOperableBoundary_20: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0036_jsspsi_normal_skill', 'chr_0036_jsspsi_combo_skill'] },
@@ -894,8 +1065,16 @@ export const siChr_0036_jsspsi_power_attackActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_2: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_4: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
@@ -916,13 +1095,13 @@ export const siChr_0036_jsspsi_power_attack: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 4,
   scheduledSequences: [
-    { startFrame: 3, endFrame: 5, sequence: { $sequence: 'dealDamage_1' } },
-    { startFrame: 12, endFrame: 14, sequence: { $sequence: 'dealDamage_2' } },
-    { startFrame: 21, endFrame: 23, sequence: { $sequence: 'dealDamage_3' } },
-    { startFrame: 37, endFrame: 39, sequence: { $sequence: 'dealDamage_8' } },
-    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_9' } },
-    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_10' } },
-    { startFrame: 39, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 3, endFrame: 5, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 12, endFrame: 14, sequence: { $sequence: 'dealDamage_8' } },
+    { startFrame: 21, endFrame: 23, sequence: { $sequence: 'dealDamage_12' } },
+    { startFrame: 37, endFrame: 39, sequence: { $sequence: 'dealDamage_17' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_18' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_19' } },
+    { startFrame: 39, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -933,10 +1112,21 @@ export const siChr_0036_jsspsi_power_attack: SkillDefinition = {
 export const siChr_0036_jsspsi_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1059,7 +1249,7 @@ export const siChr_0036_jsspsi_plunging_attack_endActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: false,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'ayao3',
           },
         },
@@ -1074,7 +1264,7 @@ export const siChr_0036_jsspsi_plunging_attack_endActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: false,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'ayao2',
           },
         },
@@ -1089,7 +1279,7 @@ export const siChr_0036_jsspsi_plunging_attack_endActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: false,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'ayao1',
           },
         },
@@ -1173,7 +1363,7 @@ export const siChr_0036_jsspsi_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_3' } },
     { startFrame: 1, endFrame: 4, sequence: { $sequence: 'createSpatialPointTargets_34' } },
     { startFrame: 9, endFrame: 20, sequence: { $sequence: 'reachSkillOperableBoundary_35' } },
@@ -1263,7 +1453,7 @@ export const siChr_0036_jsspsi_normal_skillActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: false,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'normal',
             blackboardAssignments: {
               EntityBB_atk_scale: { kind: 'valueNode', nodeId: 'data_4' },
@@ -1369,8 +1559,11 @@ export const siChr_0036_jsspsi_normal_skill_1ActionGraph = {
           kind: 'findTargets',
           parameters: {
             owner: { kind: 'mainCharacter' },
+            center: { kind: 'mainCharacter' },
             query: {
               kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
               tagQueryType: 'hasAny',
               tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
             },
@@ -1458,8 +1651,11 @@ export const siChr_0036_jsspsi_normal_skill_1ActionGraph = {
           kind: 'findTargets',
           parameters: {
             owner: { kind: 'mainCharacter' },
+            center: { kind: 'mainCharacter' },
             query: {
               kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
               tagQueryType: 'hasAny',
               tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
             },
@@ -1558,8 +1754,11 @@ export const siChr_0036_jsspsi_normal_skill_2ActionGraph = {
           kind: 'findTargets',
           parameters: {
             owner: { kind: 'owner' },
+            center: { kind: 'source' },
             query: {
               kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
               tagQueryType: 'hasAny',
               tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
             },
@@ -1733,15 +1932,47 @@ export const siChr_0036_jsspsi_combo_skillActionGraph = {
         },
         next: 'spawnAbilityEntity_13',
       },
-      mergeContextTargets_15: {
+      createSpatialPointTargets_15: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'createSpatialPointTargets',
           parameters: {
             saveToContextKey: 'smart_target',
-            sources: [{ kind: 'fixed', target: 'enemy' }],
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'mainCharacter' },
           },
         },
         next: 'createSpatialPointTargets_14',
+      },
+      createSpatialPointTargets_8: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'smart_target',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
+        },
+        next: 'createSpatialPointTargets_14',
+      },
+      ifElse_23: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_8' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_15' },
+        },
+        next: null,
+      },
+      ifElse_24: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_14' },
+          whenFalse: { $sequence: 'ifElse_23' },
+        },
+        next: null,
       },
       applyBuff_26: {
         action: {
@@ -1777,8 +2008,15 @@ export const siChr_0036_jsspsi_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -1789,26 +2027,6 @@ export const siChr_0036_jsspsi_combo_skillActionGraph = {
           parameters: {
             skillIds: ['chr_0036_jsspsi_normal_skill', 'chr_0036_jsspsi_normal_skill_1'],
           },
-        },
-        next: null,
-      },
-      ifElse_opt1: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_11' },
-          whenTrue: { $sequence: 'mergeContextTargets_15' },
-          whenFalse: { $sequence: 'mergeContextTargets_15' },
-        },
-        next: null,
-      },
-      ifElse_opt2: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_12' },
-          whenTrue: { $sequence: 'createSpatialPointTargets_14' },
-          whenFalse: { $sequence: 'ifElse_opt1' },
         },
         next: null,
       },
@@ -1826,7 +2044,7 @@ export const siChr_0036_jsspsi_combo_skillActionGraph = {
       data_10: { type: 'number', expression: { kind: 'blackboard', key: 'potential2_duration' } },
       data_11: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
       },
       data_12: {
         type: 'boolean',
@@ -1869,7 +2087,7 @@ export const siChr_0036_jsspsi_combo_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_opt2' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_24' } },
     { startFrame: 0, endFrame: 5, sequence: { $sequence: 'checkCondition_27' } },
     { startFrame: 0, endFrame: 21, sequence: { $sequence: 'startTimeDilation_28' } },
     { startFrame: 20, endFrame: 81, sequence: { $sequence: 'reachSkillOperableBoundary_29' } },
@@ -1895,7 +2113,7 @@ export const siChr_0036_jsspsi_ultimate_skillActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: false,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'dazhao',
             blackboardAssignments: {
               EntityBB_enhance_final: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1919,7 +2137,7 @@ export const siChr_0036_jsspsi_ultimate_skillActionGraph = {
             source: { kind: 'source' },
             inheritActionBlackboard: false,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             saveToContextKey: 'dazhao',
             blackboardAssignments: {
               EntityBB_enhance_final: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1949,8 +2167,7 @@ export const siChr_0036_jsspsi_ultimate_skillActionGraph = {
           parameters: {
             priority: 100,
             targetScale: { kind: 'constant', value: 0 },
-            ignoredTargets: [],
-            ignoredAbilityEntityTargets: [{ kind: 'context', contextKey: 'dazhao' }],
+            ignoredTargets: [{ kind: 'context', key: 'dazhao' }],
           },
         },
         next: null,
@@ -2681,7 +2898,7 @@ const siBuff6ActionGraph = {
       setCharacterPassiveUiValue_6: {
         action: {
           kind: 'setCharacterPassiveUiValue',
-          parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+          parameters: { target: { kind: 'owner' }, value: { kind: 'constant', value: 0 } },
         },
         next: 'finishBuffsById_5',
       },
@@ -2722,8 +2939,11 @@ const siBuff6ActionGraph = {
           kind: 'findTargets',
           parameters: {
             owner: { kind: 'source' },
+            center: { kind: 'source' },
             query: {
               kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
               tagQueryType: 'hasAny',
               tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
             },
@@ -2866,7 +3086,7 @@ const siBuff6ActionGraph = {
       setCharacterPassiveUiValue_23: {
         action: {
           kind: 'setCharacterPassiveUiValue',
-          parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+          parameters: { target: { kind: 'owner' }, value: { kind: 'constant', value: 0 } },
         },
         next: 'findTargets_22',
       },
@@ -2988,8 +3208,11 @@ const siBuff6ActionGraph = {
           kind: 'findTargets',
           parameters: {
             owner: { kind: 'owner' },
+            center: { kind: 'source' },
             query: {
               kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
               tagQueryType: 'hasAny',
               tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
             },
@@ -3637,6 +3860,7 @@ const siBuff23ActionGraph = {
             targets: { kind: 'context', contextKey: 'soul_display' },
             onlyHitTargets: { kind: 'context', key: 'benti' },
             source: 'actionOwner',
+            faction: 'good',
             recycleDelaySeconds: 4.06666660308838,
             entityInitialValues: { EntityBB_ink_boom_poise: 0, EntityBB_ink_damage: 0 },
           },
@@ -3647,12 +3871,20 @@ const siBuff23ActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      mergeContextTargets_1: {
+                      findTargets_1: {
                         action: {
-                          kind: 'mergeContextTargets',
+                          kind: 'findTargets',
                           parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'fixed', target: 'enemy' }],
                           },
                         },
                         next: null,
@@ -3661,13 +3893,13 @@ const siBuff23ActionGraph = {
                         action: {
                           kind: 'startTimeDilation',
                           parameters: {
-                            scope: 'entity',
+                            scope: 'hitStop',
+                            attacker: { kind: 'source' },
+                            targets: { kind: 'context', key: 'tar' },
+                            affectType: 'Both',
                             durationSeconds: { kind: 'constant', value: 0.25 },
-                            slot: 'TimeDilation/Layer/Entity/HitStop',
                             priority: 10,
                             curve: { kind: 'named', key: 'char_normal_attack' },
-                            finishByAction: false,
-                            targets: ['enemy', 'caster'],
                           },
                         },
                         next: null,
@@ -3713,16 +3945,27 @@ const siBuff23ActionGraph = {
                       setCharacterPassiveUiValue_28: {
                         action: {
                           kind: 'setCharacterPassiveUiValue',
-                          parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                          parameters: {
+                            target: { kind: 'source' },
+                            value: { kind: 'constant', value: 0 },
+                          },
                         },
                         next: 'dealDamage_27',
                       },
-                      mergeContextTargets_29: {
+                      findTargets_29: {
                         action: {
-                          kind: 'mergeContextTargets',
+                          kind: 'findTargets',
                           parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'fixed', target: 'enemy' }],
                           },
                         },
                         next: 'setCharacterPassiveUiValue_28',
@@ -3732,8 +3975,8 @@ const siBuff23ActionGraph = {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
                           condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                          whenTrue: { $sequence: 'mergeContextTargets_29' },
-                          whenFalse: { $sequence: 'mergeContextTargets_29' },
+                          whenTrue: { $sequence: 'findTargets_29' },
+                          whenFalse: { $sequence: 'findTargets_29' },
                         },
                         next: null,
                       },
@@ -3804,7 +4047,7 @@ const siBuff23ActionGraph = {
                 },
                 blackboard: {},
                 scheduledSequences: [
-                  { startFrame: 1, endFrame: 2, sequence: { $sequence: 'mergeContextTargets_1' } },
+                  { startFrame: 1, endFrame: 2, sequence: { $sequence: 'findTargets_1' } },
                   { startFrame: 1, endFrame: 2, sequence: { $sequence: 'ifElse_34' } },
                 ],
               },
@@ -3861,7 +4104,7 @@ const siBuff23ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent1_2'] },
             desiredKey: 'duration_speedup',
             outputKey: 'duration_speedup',
@@ -3873,7 +4116,7 @@ const siBuff23ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent1_2'] },
             desiredKey: 'ratio_speed',
             outputKey: 'ratio_speed',
@@ -3895,7 +4138,7 @@ const siBuff23ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent1_1'] },
             desiredKey: 'duration_speedup',
             outputKey: 'duration_speedup',
@@ -3907,7 +4150,7 @@ const siBuff23ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent1_1'] },
             desiredKey: 'ratio_speed',
             outputKey: 'ratio_speed',
@@ -3989,8 +4232,7 @@ const siBuff23ActionGraph = {
           parameters: {
             caster: { kind: 'context', key: 'soulback' },
             skillId: 'chr_0036_jsspsi_normal_skill_inkmove_2',
-            targetContextKey: 'benti',
-            target: 'context',
+            target: { kind: 'context', key: 'benti' },
             skipApplyCost: false,
             inheritSourceSkillCastInfo: true,
           },
@@ -4032,8 +4274,11 @@ const siBuff23ActionGraph = {
           kind: 'findTargets',
           parameters: {
             owner: { kind: 'owner' },
+            center: { kind: 'owner' },
             query: {
               kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
               tagQueryType: 'hasAny',
               tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
             },
@@ -4058,8 +4303,11 @@ const siBuff23ActionGraph = {
           kind: 'findTargets',
           parameters: {
             owner: { kind: 'owner' },
+            center: { kind: 'owner' },
             query: {
               kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
               tagQueryType: 'hasAny',
               tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
             },
@@ -4159,8 +4407,11 @@ const siBuff24ActionGraph = {
           kind: 'findTargets',
           parameters: {
             owner: { kind: 'owner' },
+            center: { kind: 'owner' },
             query: {
               kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
               tagQueryType: 'hasAny',
               tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
             },
@@ -4293,7 +4544,10 @@ const siBuff25ActionGraph = {
       setCharacterPassiveUiValue_21: {
         action: {
           kind: 'setCharacterPassiveUiValue',
-          parameters: { target: 'caster', value: { kind: 'valueNode', nodeId: 'data_1' } },
+          parameters: {
+            target: { kind: 'source' },
+            value: { kind: 'valueNode', nodeId: 'data_1' },
+          },
         },
         next: null,
       },
@@ -4310,7 +4564,7 @@ const siBuff25ActionGraph = {
       setCharacterPassiveUiValue_20: {
         action: {
           kind: 'setCharacterPassiveUiValue',
-          parameters: { target: 'caster', value: { kind: 'constant', value: 1000 } },
+          parameters: { target: { kind: 'source' }, value: { kind: 'constant', value: 1000 } },
         },
         next: null,
       },
@@ -4421,6 +4675,7 @@ const siBuff25ActionGraph = {
               EntityBB_ink_boom_poise: { kind: 'valueNode', nodeId: 'data_6' },
             },
             projectileId: 'projectile_chr_0036_jsspsi_normal_skill_inkboom',
+            faction: 'good',
             recycleDelaySeconds: 1.06666672229767,
             targets: { kind: 'context', contextKey: 'pos1' },
             entityInitialValues: { EntityBB_ink_boom_poise: 0, EntityBB_ink_damage: 0 },
@@ -4436,13 +4691,13 @@ const siBuff25ActionGraph = {
                         action: {
                           kind: 'startTimeDilation',
                           parameters: {
-                            scope: 'entity',
+                            scope: 'hitStop',
+                            attacker: { kind: 'source' },
+                            targets: { kind: 'context', key: 'tar' },
+                            affectType: 'Both',
                             durationSeconds: { kind: 'constant', value: 0.25 },
-                            slot: 'TimeDilation/Layer/Entity/HitStop',
                             priority: 10,
                             curve: { kind: 'named', key: 'char_normal_attack' },
-                            finishByAction: false,
-                            targets: ['enemy', 'caster'],
                           },
                         },
                         next: null,
@@ -4488,16 +4743,27 @@ const siBuff25ActionGraph = {
                       setCharacterPassiveUiValue_27: {
                         action: {
                           kind: 'setCharacterPassiveUiValue',
-                          parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                          parameters: {
+                            target: { kind: 'source' },
+                            value: { kind: 'constant', value: 0 },
+                          },
                         },
                         next: 'dealDamage_26',
                       },
-                      mergeContextTargets_28: {
+                      findTargets_28: {
                         action: {
-                          kind: 'mergeContextTargets',
+                          kind: 'findTargets',
                           parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'fixed', target: 'enemy' }],
                           },
                         },
                         next: 'setCharacterPassiveUiValue_27',
@@ -4507,8 +4773,8 @@ const siBuff25ActionGraph = {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
                           condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                          whenTrue: { $sequence: 'mergeContextTargets_28' },
-                          whenFalse: { $sequence: 'mergeContextTargets_28' },
+                          whenTrue: { $sequence: 'findTargets_28' },
+                          whenFalse: { $sequence: 'findTargets_28' },
                         },
                         next: null,
                       },
@@ -5655,10 +5921,17 @@ const siBuff27ActionGraph = {
           kind: 'findTargets',
           parameters: {
             owner: { kind: 'mainCharacter' },
+            center: { kind: 'mainCharacter' },
             query: {
-              kind: 'enemyByTags',
-              tagQueryType: 'exceptAny',
-              tags: ['SelectCategory/Unmarkable'],
+              kind: 'limit',
+              targets: {
+                kind: 'enemyByTags',
+                scope: 'global',
+                reverse: true,
+                tagQueryType: 'exceptAny',
+                tags: ['SelectCategory/Unmarkable'],
+              },
+              count: 1,
             },
             saveToContextKey: 'soul_target1',
           },
@@ -5720,7 +5993,7 @@ const siBuff27ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent1_2'] },
             desiredKey: 'duration_speedup',
             outputKey: 'duration_speedup',
@@ -5732,7 +6005,7 @@ const siBuff27ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent1_2'] },
             desiredKey: 'ratio_speed',
             outputKey: 'ratio_speed',
@@ -5754,7 +6027,7 @@ const siBuff27ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent1_1'] },
             desiredKey: 'duration_speedup',
             outputKey: 'duration_speedup',
@@ -5766,7 +6039,7 @@ const siBuff27ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent1_1'] },
             desiredKey: 'ratio_speed',
             outputKey: 'ratio_speed',
@@ -5865,8 +6138,7 @@ const siBuff27ActionGraph = {
           parameters: {
             caster: { kind: 'context', key: 'soulback' },
             skillId: 'chr_0036_jsspsi_normal_skill_inkmove_2',
-            targetContextKey: 'soul_target1',
-            target: 'context',
+            target: { kind: 'context', key: 'soul_target1' },
             skipApplyCost: false,
             inheritSourceSkillCastInfo: false,
           },
@@ -5933,8 +6205,11 @@ const siBuff27ActionGraph = {
           kind: 'findTargets',
           parameters: {
             owner: { kind: 'owner' },
+            center: { kind: 'owner' },
             query: {
               kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
               tagQueryType: 'hasAny',
               tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
             },
@@ -5957,7 +6232,7 @@ const siBuff27ActionGraph = {
       setCharacterPassiveUiValue_32: {
         action: {
           kind: 'setCharacterPassiveUiValue',
-          parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+          parameters: { target: { kind: 'source' }, value: { kind: 'constant', value: 0 } },
         },
         next: 'finishOwner_31',
       },
@@ -6279,10 +6554,17 @@ const siBuff27ActionGraph = {
           kind: 'findTargets',
           parameters: {
             owner: { kind: 'mainCharacter' },
+            center: { kind: 'mainCharacter' },
             query: {
-              kind: 'enemyByTags',
-              tagQueryType: 'exceptAny',
-              tags: ['SelectCategory/Unmarkable'],
+              kind: 'limit',
+              targets: {
+                kind: 'enemyByTags',
+                scope: 'global',
+                reverse: true,
+                tagQueryType: 'exceptAny',
+                tags: ['SelectCategory/Unmarkable'],
+              },
+              count: 1,
             },
             saveToContextKey: 'soul_target1',
           },
@@ -7067,11 +7349,7 @@ export const si: OperatorDefinition = {
               setIgnoreGlobalTimeScale_1: {
                 action: {
                   kind: 'setIgnoreGlobalTimeScale',
-                  parameters: {
-                    abilityEntityTargets: [{ kind: 'current' }],
-                    ignore: true,
-                    revertOnEnd: true,
-                  },
+                  parameters: { targets: { kind: 'owner' }, ignore: true, revertOnEnd: true },
                 },
                 next: null,
               },
@@ -7189,13 +7467,13 @@ export const si: OperatorDefinition = {
                 action: {
                   kind: 'startTimeDilation',
                   parameters: {
-                    scope: 'entity',
+                    scope: 'hitStop',
+                    attacker: { kind: 'context', key: 'chr_jsspsi' },
+                    targets: { kind: 'inputTarget' },
+                    affectType: 'OnlyAttacker',
                     durationSeconds: { kind: 'constant', value: 0.1 },
-                    slot: 'TimeDilation/Layer/Entity/HitStop',
                     priority: 10,
                     curve: { kind: 'named', key: 'char_normal_attack' },
-                    finishByAction: false,
-                    targets: [{ kind: 'context', key: 'chr_jsspsi' }],
                   },
                 },
                 next: 'applyBuff_17',
@@ -7430,11 +7708,7 @@ export const si: OperatorDefinition = {
               setIgnoreGlobalTimeScale_1: {
                 action: {
                   kind: 'setIgnoreGlobalTimeScale',
-                  parameters: {
-                    abilityEntityTargets: [{ kind: 'current' }],
-                    ignore: true,
-                    revertOnEnd: true,
-                  },
+                  parameters: { targets: { kind: 'owner' }, ignore: true, revertOnEnd: true },
                 },
                 next: null,
               },
@@ -7620,8 +7894,11 @@ export const si: OperatorDefinition = {
                   kind: 'findTargets',
                   parameters: {
                     owner: { kind: 'mainCharacter' },
+                    center: { kind: 'mainCharacter' },
                     query: {
                       kind: 'enemyByTags',
+                      scope: 'global',
+                      reverse: true,
                       tagQueryType: 'hasAny',
                       tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
                     },
@@ -7641,7 +7918,7 @@ export const si: OperatorDefinition = {
                 action: {
                   kind: 'readBuffBlackboard',
                   parameters: {
-                    target: 'caster',
+                    target: { kind: 'source' },
                     query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_normal_skill_check'] },
                     desiredKey: 'EntityBB_havesoul',
                     outputKey: 'havesoul',
@@ -7681,7 +7958,7 @@ export const si: OperatorDefinition = {
                   parameters: {
                     caster: { kind: 'context', key: 'moying1' },
                     skillId: 'chr_0036_jsspsi_normal_skill_born',
-                    target: 'caster',
+                    target: { kind: 'source' },
                     skipApplyCost: false,
                     inheritSourceSkillCastInfo: false,
                   },
@@ -7897,12 +8174,20 @@ export const si: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              mergeContextTargets_1: {
+              findTargets_1: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: null,
@@ -7997,7 +8282,22 @@ export const si: OperatorDefinition = {
                 },
                 next: null,
               },
-              changeResource_23: {
+              startTimeDilation_24: {
+                action: {
+                  kind: 'startTimeDilation',
+                  parameters: {
+                    scope: 'hitStop',
+                    attacker: { kind: 'source' },
+                    targets: { kind: 'inputTarget' },
+                    affectType: 'OnlyTarget',
+                    durationSeconds: { kind: 'constant', value: 0.1 },
+                    priority: 10,
+                    curve: { kind: 'named', key: 'char_normal_attack' },
+                  },
+                },
+                next: null,
+              },
+              changeResource_25: {
                 action: {
                   kind: 'changeResource',
                   parameters: {
@@ -8010,50 +8310,15 @@ export const si: OperatorDefinition = {
                 },
                 next: null,
               },
-              dealDamage_24: {
+              ifElse_26: {
                 action: {
-                  kind: 'dealDamage',
-                  parameters: {
-                    attacker: 'actionSource',
-                    target: { kind: 'context', key: 'tar' },
-                    damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_10' },
-                    tags: ['comboSkill'],
-                    features: ['canBreakWeakness'],
-                  },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_24/action',
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { kind: 'conditionNode', nodeId: 'data_10' },
+                  whenTrue: { $sequence: 'startTimeDilation_24' },
+                  whenFalse: { $sequence: null },
                 },
-                next: 'changeResource_23',
-              },
-              dealDamage_25: {
-                action: {
-                  kind: 'dealDamage',
-                  parameters: {
-                    attacker: 'actionSource',
-                    target: { kind: 'context', key: 'tar' },
-                    damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_10' },
-                    tags: ['comboSkill'],
-                    features: ['canBreakWeakness'],
-                  },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_25/action',
-                },
-                next: null,
-              },
-              dealDamage_26: {
-                action: {
-                  kind: 'dealDamage',
-                  parameters: {
-                    attacker: 'actionSource',
-                    target: { kind: 'context', key: 'tar' },
-                    damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_10' },
-                    tags: ['comboSkill'],
-                    features: ['canBreakWeakness'],
-                  },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_26/action',
-                },
-                next: null,
+                next: 'changeResource_25',
               },
               dealDamage_27: {
                 action: {
@@ -8062,56 +8327,21 @@ export const si: OperatorDefinition = {
                     attacker: 'actionSource',
                     target: { kind: 'context', key: 'tar' },
                     damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_10' },
+                    attackScale: { kind: 'valueNode', nodeId: 'data_11' },
                     tags: ['comboSkill'],
                     features: ['canBreakWeakness'],
                   },
                   key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_27/action',
                 },
-                next: null,
+                next: 'ifElse_26',
               },
-              dealDamage_28: {
+              ifElse_30: {
                 action: {
-                  kind: 'dealDamage',
-                  parameters: {
-                    attacker: 'actionSource',
-                    target: { kind: 'context', key: 'tar' },
-                    damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_10' },
-                    tags: ['comboSkill'],
-                    features: ['canBreakWeakness'],
-                  },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_28/action',
-                },
-                next: null,
-              },
-              dealDamage_29: {
-                action: {
-                  kind: 'dealDamage',
-                  parameters: {
-                    attacker: 'actionSource',
-                    target: { kind: 'context', key: 'tar' },
-                    damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_10' },
-                    tags: ['comboSkill'],
-                    features: ['canBreakWeakness'],
-                  },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_29/action',
-                },
-                next: null,
-              },
-              dealDamage_30: {
-                action: {
-                  kind: 'dealDamage',
-                  parameters: {
-                    attacker: 'actionSource',
-                    target: { kind: 'context', key: 'tar' },
-                    damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_10' },
-                    tags: ['comboSkill'],
-                    features: ['canBreakWeakness'],
-                  },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_30/action',
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { kind: 'conditionNode', nodeId: 'data_12' },
+                  whenTrue: { $sequence: 'startTimeDilation_24' },
+                  whenFalse: { $sequence: null },
                 },
                 next: null,
               },
@@ -8122,110 +8352,200 @@ export const si: OperatorDefinition = {
                     attacker: 'actionSource',
                     target: { kind: 'context', key: 'tar' },
                     damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_10' },
+                    attackScale: { kind: 'valueNode', nodeId: 'data_11' },
                     tags: ['comboSkill'],
                     features: ['canBreakWeakness'],
                   },
                   key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_31/action',
                 },
-                next: null,
+                next: 'ifElse_30',
               },
-              dealDamage_32: {
+              dealDamage_35: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
                     attacker: 'actionSource',
                     target: { kind: 'context', key: 'tar' },
                     damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_10' },
+                    attackScale: { kind: 'valueNode', nodeId: 'data_11' },
                     tags: ['comboSkill'],
                     features: ['canBreakWeakness'],
                   },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_32/action',
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_35/action',
                 },
-                next: null,
+                next: 'ifElse_30',
               },
-              dealDamage_33: {
+              dealDamage_39: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
                     attacker: 'actionSource',
                     target: { kind: 'context', key: 'tar' },
                     damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_10' },
+                    attackScale: { kind: 'valueNode', nodeId: 'data_11' },
                     tags: ['comboSkill'],
                     features: ['canBreakWeakness'],
                   },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_33/action',
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_39/action',
                 },
-                next: null,
+                next: 'ifElse_30',
               },
-              startTimeDilation_37: {
+              dealDamage_43: {
+                action: {
+                  kind: 'dealDamage',
+                  parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
+                    damageType: 'cryo',
+                    attackScale: { kind: 'valueNode', nodeId: 'data_11' },
+                    tags: ['comboSkill'],
+                    features: ['canBreakWeakness'],
+                  },
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_43/action',
+                },
+                next: 'ifElse_30',
+              },
+              dealDamage_47: {
+                action: {
+                  kind: 'dealDamage',
+                  parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
+                    damageType: 'cryo',
+                    attackScale: { kind: 'valueNode', nodeId: 'data_11' },
+                    tags: ['comboSkill'],
+                    features: ['canBreakWeakness'],
+                  },
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_47/action',
+                },
+                next: 'ifElse_30',
+              },
+              dealDamage_51: {
+                action: {
+                  kind: 'dealDamage',
+                  parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
+                    damageType: 'cryo',
+                    attackScale: { kind: 'valueNode', nodeId: 'data_11' },
+                    tags: ['comboSkill'],
+                    features: ['canBreakWeakness'],
+                  },
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_51/action',
+                },
+                next: 'ifElse_30',
+              },
+              dealDamage_55: {
+                action: {
+                  kind: 'dealDamage',
+                  parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
+                    damageType: 'cryo',
+                    attackScale: { kind: 'valueNode', nodeId: 'data_11' },
+                    tags: ['comboSkill'],
+                    features: ['canBreakWeakness'],
+                  },
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_55/action',
+                },
+                next: 'ifElse_30',
+              },
+              dealDamage_59: {
+                action: {
+                  kind: 'dealDamage',
+                  parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
+                    damageType: 'cryo',
+                    attackScale: { kind: 'valueNode', nodeId: 'data_11' },
+                    tags: ['comboSkill'],
+                    features: ['canBreakWeakness'],
+                  },
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_59/action',
+                },
+                next: 'ifElse_30',
+              },
+              dealDamage_63: {
+                action: {
+                  kind: 'dealDamage',
+                  parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
+                    damageType: 'cryo',
+                    attackScale: { kind: 'valueNode', nodeId: 'data_11' },
+                    tags: ['comboSkill'],
+                    features: ['canBreakWeakness'],
+                  },
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_63/action',
+                },
+                next: 'ifElse_30',
+              },
+              startTimeDilation_67: {
                 action: {
                   kind: 'startTimeDilation',
                   parameters: {
-                    scope: 'entity',
+                    scope: 'hitStop',
+                    attacker: { kind: 'source' },
+                    targets: { kind: 'inputTarget' },
+                    affectType: 'Both',
                     durationSeconds: { kind: 'constant', value: 0.1 },
-                    slot: 'TimeDilation/Layer/Entity/HitStop',
                     priority: 10,
                     curve: { kind: 'named', key: 'char_normal_attack' },
-                    finishByAction: false,
-                    targets: ['enemy', 'caster'],
                   },
                 },
                 next: null,
               },
-              ifElse_45: {
+              ifElse_75: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_11' },
-                  whenTrue: { $sequence: 'startTimeDilation_37' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_13' },
+                  whenTrue: { $sequence: 'startTimeDilation_67' },
                   whenFalse: { $sequence: null },
                 },
                 next: null,
               },
-              dealDamage_46: {
+              dealDamage_76: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
                     attacker: 'actionSource',
                     target: { kind: 'context', key: 'tar' },
                     damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_12' },
+                    attackScale: { kind: 'valueNode', nodeId: 'data_14' },
                     tags: ['comboSkill'],
                     features: ['canBreakWeakness'],
-                    stagger: { kind: 'valueNode', nodeId: 'data_13' },
+                    stagger: { kind: 'valueNode', nodeId: 'data_15' },
                   },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_46/action',
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_76/action',
                 },
-                next: 'ifElse_45',
+                next: 'ifElse_75',
               },
-              calculateActionValue_47: {
+              calculateActionValue_77: {
                 action: {
                   kind: 'calculateActionValue',
                   parameters: {
                     key: 'atk_scale_count',
                     operation: 'add',
-                    left: { kind: 'valueNode', nodeId: 'data_12' },
-                    right: { kind: 'valueNode', nodeId: 'data_14' },
+                    left: { kind: 'valueNode', nodeId: 'data_14' },
+                    right: { kind: 'valueNode', nodeId: 'data_16' },
                   },
                 },
-                next: 'dealDamage_46',
+                next: 'dealDamage_76',
               },
-              calculateActionValue_48: {
+              calculateActionValue_78: {
                 action: {
                   kind: 'calculateActionValue',
                   parameters: {
                     key: 'atk_scale_count',
                     operation: 'multiply',
                     left: { kind: 'valueNode', nodeId: 'data_1' },
-                    right: { kind: 'valueNode', nodeId: 'data_15' },
+                    right: { kind: 'valueNode', nodeId: 'data_17' },
                   },
                 },
-                next: 'calculateActionValue_47',
+                next: 'calculateActionValue_77',
               },
-              calculateActionValue_49: {
+              calculateActionValue_79: {
                 action: {
                   kind: 'calculateActionValue',
                   parameters: {
@@ -8235,49 +8555,49 @@ export const si: OperatorDefinition = {
                     right: { kind: 'constant', value: 0 },
                   },
                 },
-                next: 'calculateActionValue_48',
+                next: 'calculateActionValue_78',
               },
-              dealDamage_40: {
+              dealDamage_70: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
                     attacker: 'actionSource',
                     target: { kind: 'context', key: 'tar' },
                     damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_12' },
+                    attackScale: { kind: 'valueNode', nodeId: 'data_14' },
                     tags: ['comboSkill'],
                     features: ['canBreakWeakness'],
-                    stagger: { kind: 'valueNode', nodeId: 'data_13' },
+                    stagger: { kind: 'valueNode', nodeId: 'data_15' },
                   },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_40/action',
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill:chr_0036_jsspsi_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_70/action',
                 },
-                next: 'ifElse_45',
+                next: 'ifElse_75',
               },
-              calculateActionValue_41: {
+              calculateActionValue_71: {
                 action: {
                   kind: 'calculateActionValue',
                   parameters: {
                     key: 'atk_scale_count',
                     operation: 'add',
-                    left: { kind: 'valueNode', nodeId: 'data_12' },
-                    right: { kind: 'valueNode', nodeId: 'data_14' },
+                    left: { kind: 'valueNode', nodeId: 'data_14' },
+                    right: { kind: 'valueNode', nodeId: 'data_16' },
                   },
                 },
-                next: 'dealDamage_40',
+                next: 'dealDamage_70',
               },
-              calculateActionValue_42: {
+              calculateActionValue_72: {
                 action: {
                   kind: 'calculateActionValue',
                   parameters: {
                     key: 'atk_scale_count',
                     operation: 'multiply',
                     left: { kind: 'valueNode', nodeId: 'data_1' },
-                    right: { kind: 'valueNode', nodeId: 'data_15' },
+                    right: { kind: 'valueNode', nodeId: 'data_17' },
                   },
                 },
-                next: 'calculateActionValue_41',
+                next: 'calculateActionValue_71',
               },
-              calculateActionValue_43: {
+              calculateActionValue_73: {
                 action: {
                   kind: 'calculateActionValue',
                   parameters: {
@@ -8287,9 +8607,9 @@ export const si: OperatorDefinition = {
                     right: { kind: 'constant', value: 0 },
                   },
                 },
-                next: 'calculateActionValue_42',
+                next: 'calculateActionValue_72',
               },
-              modifyActionValue_44: {
+              modifyActionValue_74: {
                 action: {
                   kind: 'modifyActionValue',
                   parameters: {
@@ -8298,15 +8618,15 @@ export const si: OperatorDefinition = {
                     value: { kind: 'constant', value: 1 },
                   },
                 },
-                next: 'calculateActionValue_43',
+                next: 'calculateActionValue_73',
               },
-              ifElse_50: {
+              ifElse_80: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_16' },
-                  whenTrue: { $sequence: 'modifyActionValue_44' },
-                  whenFalse: { $sequence: 'calculateActionValue_49' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_18' },
+                  whenTrue: { $sequence: 'modifyActionValue_74' },
+                  whenFalse: { $sequence: 'calculateActionValue_79' },
                 },
                 next: null,
               },
@@ -8360,30 +8680,38 @@ export const si: OperatorDefinition = {
               },
               data_9: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_usp' } },
               data_10: {
-                type: 'number',
-                expression: { kind: 'blackboard', key: 'EntityBB_atk_scale' },
-              },
-              data_11: {
                 type: 'boolean',
                 expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
               },
-              data_12: {
+              data_11: {
                 type: 'number',
-                expression: { kind: 'blackboard', key: 'atk_scale_count' },
+                expression: { kind: 'blackboard', key: 'EntityBB_atk_scale' },
+              },
+              data_12: {
+                type: 'boolean',
+                expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
               },
               data_13: {
-                type: 'number',
-                expression: { kind: 'blackboard', key: 'EntityBB_poise' },
+                type: 'boolean',
+                expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
               },
               data_14: {
                 type: 'number',
-                expression: { kind: 'blackboard', key: 'EntityBB_atk_scale2' },
+                expression: { kind: 'blackboard', key: 'atk_scale_count' },
               },
               data_15: {
                 type: 'number',
-                expression: { kind: 'blackboard', key: 'EntityBB_atk_scale2_1' },
+                expression: { kind: 'blackboard', key: 'EntityBB_poise' },
               },
               data_16: {
+                type: 'number',
+                expression: { kind: 'blackboard', key: 'EntityBB_atk_scale2' },
+              },
+              data_17: {
+                type: 'number',
+                expression: { kind: 'blackboard', key: 'EntityBB_atk_scale2_1' },
+              },
+              data_18: {
                 type: 'boolean',
                 expression: {
                   kind: 'actionValueCompare',
@@ -8407,29 +8735,29 @@ export const si: OperatorDefinition = {
         },
         blackboard: { atk_scale_count: 0, combolayer_count: 0 },
         scheduledSequences: [
-          { startFrame: 14, endFrame: 16, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 17, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 20, endFrame: 22, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 23, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 26, endFrame: 28, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 29, endFrame: 31, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 32, endFrame: 34, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 35, endFrame: 37, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 38, endFrame: 40, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 41, endFrame: 43, sequence: { $sequence: 'mergeContextTargets_1' } },
-          { startFrame: 49, endFrame: 51, sequence: { $sequence: 'mergeContextTargets_1' } },
+          { startFrame: 14, endFrame: 16, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 17, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 20, endFrame: 22, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 23, endFrame: 25, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 26, endFrame: 28, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 29, endFrame: 31, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 32, endFrame: 34, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 35, endFrame: 37, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 38, endFrame: 40, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 41, endFrame: 43, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 49, endFrame: 51, sequence: { $sequence: 'findTargets_1' } },
           { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_22' } },
-          { startFrame: 14, endFrame: 16, sequence: { $sequence: 'dealDamage_24' } },
-          { startFrame: 17, endFrame: 19, sequence: { $sequence: 'dealDamage_25' } },
-          { startFrame: 20, endFrame: 22, sequence: { $sequence: 'dealDamage_26' } },
-          { startFrame: 23, endFrame: 25, sequence: { $sequence: 'dealDamage_27' } },
-          { startFrame: 26, endFrame: 28, sequence: { $sequence: 'dealDamage_28' } },
-          { startFrame: 29, endFrame: 31, sequence: { $sequence: 'dealDamage_29' } },
-          { startFrame: 32, endFrame: 34, sequence: { $sequence: 'dealDamage_30' } },
-          { startFrame: 35, endFrame: 37, sequence: { $sequence: 'dealDamage_31' } },
-          { startFrame: 38, endFrame: 40, sequence: { $sequence: 'dealDamage_32' } },
-          { startFrame: 41, endFrame: 43, sequence: { $sequence: 'dealDamage_33' } },
-          { startFrame: 49, endFrame: 51, sequence: { $sequence: 'ifElse_50' } },
+          { startFrame: 14, endFrame: 16, sequence: { $sequence: 'dealDamage_27' } },
+          { startFrame: 17, endFrame: 19, sequence: { $sequence: 'dealDamage_31' } },
+          { startFrame: 20, endFrame: 22, sequence: { $sequence: 'dealDamage_35' } },
+          { startFrame: 23, endFrame: 25, sequence: { $sequence: 'dealDamage_39' } },
+          { startFrame: 26, endFrame: 28, sequence: { $sequence: 'dealDamage_43' } },
+          { startFrame: 29, endFrame: 31, sequence: { $sequence: 'dealDamage_47' } },
+          { startFrame: 32, endFrame: 34, sequence: { $sequence: 'dealDamage_51' } },
+          { startFrame: 35, endFrame: 37, sequence: { $sequence: 'dealDamage_55' } },
+          { startFrame: 38, endFrame: 40, sequence: { $sequence: 'dealDamage_59' } },
+          { startFrame: 41, endFrame: 43, sequence: { $sequence: 'dealDamage_63' } },
+          { startFrame: 49, endFrame: 51, sequence: { $sequence: 'ifElse_80' } },
         ],
       },
     },
@@ -8481,7 +8809,7 @@ export const si: OperatorDefinition = {
                       source: { kind: 'source' },
                       inheritActionBlackboard: false,
                       dieWhenSourceDies: false,
-                      target: 'actionInputTarget',
+                      target: { kind: 'inputTarget' },
                       saveToContextKey: 'long2',
                     },
                   },
@@ -8507,7 +8835,7 @@ export const si: OperatorDefinition = {
                       source: { kind: 'source' },
                       inheritActionBlackboard: false,
                       dieWhenSourceDies: false,
-                      target: 'actionInputTarget',
+                      target: { kind: 'inputTarget' },
                       saveToContextKey: 'long1',
                     },
                   },
@@ -8538,61 +8866,46 @@ export const si: OperatorDefinition = {
                   },
                   next: null,
                 },
-                mergeContextTargets_7: {
+                findTargets_7: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'source' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'source' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: null,
                 },
-                dealDamage_16: {
+                startTimeDilation_17: {
                   action: {
-                    kind: 'dealDamage',
+                    kind: 'startTimeDilation',
                     parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      scope: 'hitStop',
+                      attacker: { kind: 'source' },
+                      targets: { kind: 'context', key: 'tar' },
+                      affectType: 'OnlyTarget',
+                      durationSeconds: { kind: 'constant', value: 0.05 },
+                      priority: 10,
+                      curve: { kind: 'named', key: 'char_normal_attack' },
                     },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_16/action',
                   },
                   next: null,
                 },
-                dealDamage_17: {
+                ifElse_18: {
                   action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_17/action',
-                  },
-                  next: null,
-                },
-                dealDamage_18: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_18/action',
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { kind: 'conditionNode', nodeId: 'data_1' },
+                    whenTrue: { $sequence: 'startTimeDilation_17' },
+                    whenFalse: { $sequence: null },
                   },
                   next: null,
                 },
@@ -8603,62 +8916,14 @@ export const si: OperatorDefinition = {
                       attacker: 'actionSource',
                       target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['ultimateSkill'],
                       features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_19/action',
                   },
-                  next: null,
-                },
-                dealDamage_20: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_20/action',
-                  },
-                  next: null,
-                },
-                dealDamage_21: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_21/action',
-                  },
-                  next: null,
-                },
-                dealDamage_22: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_22/action',
-                  },
-                  next: null,
+                  next: 'ifElse_18',
                 },
                 dealDamage_23: {
                   action: {
@@ -8667,32 +8932,153 @@ export const si: OperatorDefinition = {
                       attacker: 'actionSource',
                       target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['ultimateSkill'],
                       features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_23/action',
                   },
-                  next: null,
+                  next: 'ifElse_18',
                 },
-                dealDamage_24: {
+                dealDamage_27: {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
                       attacker: 'actionSource',
                       target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['ultimateSkill'],
                       features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_4' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_24/action',
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_27/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                dealDamage_31: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_31/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                dealDamage_35: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_35/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                dealDamage_39: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_39/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                dealDamage_43: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_43/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                dealDamage_47: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_47/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                startTimeDilation_49: {
+                  action: {
+                    kind: 'startTimeDilation',
+                    parameters: {
+                      scope: 'hitStop',
+                      attacker: { kind: 'source' },
+                      targets: { kind: 'context', key: 'tar' },
+                      affectType: 'OnlyTarget',
+                      durationSeconds: { kind: 'constant', value: 0.15 },
+                      priority: 10,
+                      curve: { kind: 'named', key: 'char_normal_attack' },
+                    },
                   },
                   next: null,
                 },
-                applyBuff_31: {
+                ifElse_50: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { kind: 'conditionNode', nodeId: 'data_4' },
+                    whenTrue: { $sequence: 'startTimeDilation_49' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: null,
+                },
+                dealDamage_51: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_6' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange/actionGraph/main/nodes/dealDamage_51/action',
+                  },
+                  next: 'ifElse_50',
+                },
+                applyBuff_58: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
@@ -8712,7 +9098,7 @@ export const si: OperatorDefinition = {
                   },
                   next: null,
                 },
-                findTargets_32: {
+                findTargets_59: {
                   action: {
                     kind: 'findTargets',
                     parameters: {
@@ -8725,9 +9111,9 @@ export const si: OperatorDefinition = {
                       saveToContextKey: 'tar1',
                     },
                   },
-                  next: 'applyBuff_31',
+                  next: 'applyBuff_58',
                 },
-                adjustSkillCooldown_28: {
+                adjustSkillCooldown_55: {
                   action: {
                     kind: 'adjustSkillCooldown',
                     parameters: {
@@ -8735,68 +9121,68 @@ export const si: OperatorDefinition = {
                       skill: { kind: 'type', skillType: 'comboSkill' },
                       operation: 'reduce',
                       basis: 'absoluteSeconds',
-                      value: { kind: 'valueNode', nodeId: 'data_5' },
+                      value: { kind: 'valueNode', nodeId: 'data_7' },
                     },
                   },
-                  next: 'findTargets_32',
+                  next: 'findTargets_59',
                 },
-                calculateActionValue_29: {
+                calculateActionValue_56: {
                   action: {
                     kind: 'calculateActionValue',
                     parameters: {
                       key: 'talent_combo_reduce',
                       operation: 'multiply',
-                      left: { kind: 'valueNode', nodeId: 'data_5' },
+                      left: { kind: 'valueNode', nodeId: 'data_7' },
                       right: { kind: 'constant', value: -1 },
                     },
                   },
-                  next: 'adjustSkillCooldown_28',
+                  next: 'adjustSkillCooldown_55',
                 },
-                readBuffBlackboard_30: {
+                readBuffBlackboard_57: {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent2_2'] },
                       desiredKey: 'coolDown',
                       outputKey: 'talent_combo_reduce',
                     },
                   },
-                  next: 'calculateActionValue_29',
+                  next: 'calculateActionValue_56',
                 },
-                ifElse_39: {
+                ifElse_66: {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                    whenTrue: { $sequence: 'readBuffBlackboard_30' },
-                    whenFalse: { $sequence: 'findTargets_32' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_8' },
+                    whenTrue: { $sequence: 'readBuffBlackboard_57' },
+                    whenFalse: { $sequence: 'findTargets_59' },
                   },
                   next: null,
                 },
-                readBuffBlackboard_38: {
+                readBuffBlackboard_65: {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent2_1'] },
                       desiredKey: 'coolDown',
                       outputKey: 'talent_combo_reduce',
                     },
                   },
-                  next: 'calculateActionValue_29',
+                  next: 'calculateActionValue_56',
                 },
-                ifElse_40: {
+                ifElse_67: {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { kind: 'conditionNode', nodeId: 'data_7' },
-                    whenTrue: { $sequence: 'readBuffBlackboard_38' },
-                    whenFalse: { $sequence: 'ifElse_39' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_9' },
+                    whenTrue: { $sequence: 'readBuffBlackboard_65' },
+                    whenFalse: { $sequence: 'ifElse_66' },
                   },
                   next: null,
                 },
-                findCharacterBySquadSlot_41: {
+                findCharacterBySquadSlot_68: {
                   action: {
                     kind: 'findCharacterBySquadSlot',
                     parameters: {
@@ -8804,67 +9190,75 @@ export const si: OperatorDefinition = {
                       saveToContextKey: 'chr1',
                     },
                   },
-                  next: 'ifElse_40',
+                  next: 'ifElse_67',
                 },
-                calculateActionValue_42: {
+                calculateActionValue_69: {
                   action: {
                     kind: 'calculateActionValue',
                     parameters: {
                       key: 'bufftime3',
                       operation: 'add',
                       left: { kind: 'constant', value: 1 },
-                      right: { kind: 'valueNode', nodeId: 'data_8' },
+                      right: { kind: 'valueNode', nodeId: 'data_10' },
                     },
                   },
                   next: null,
                 },
-                calculateActionValue_43: {
+                calculateActionValue_70: {
                   action: {
                     kind: 'calculateActionValue',
                     parameters: {
                       key: 'bufftime2',
                       operation: 'add',
                       left: { kind: 'constant', value: 0.5 },
-                      right: { kind: 'valueNode', nodeId: 'data_8' },
+                      right: { kind: 'valueNode', nodeId: 'data_10' },
                     },
                   },
-                  next: 'calculateActionValue_42',
+                  next: 'calculateActionValue_69',
                 },
-                calculateActionValue_44: {
+                calculateActionValue_71: {
                   action: {
                     kind: 'calculateActionValue',
                     parameters: {
                       key: 'bufftime1',
                       operation: 'add',
                       left: { kind: 'constant', value: 0 },
-                      right: { kind: 'valueNode', nodeId: 'data_8' },
+                      right: { kind: 'valueNode', nodeId: 'data_10' },
                     },
                   },
-                  next: 'calculateActionValue_43',
+                  next: 'calculateActionValue_70',
                 },
               },
               dataNodes: {
                 data_1: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'EntityBB_atk_scale' },
+                  type: 'boolean',
+                  expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
                 },
                 data_2: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'EntityBB_poise' },
+                  expression: { kind: 'blackboard', key: 'EntityBB_atk_scale' },
                 },
                 data_3: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'EntityBB_atk_scale_2' },
+                  expression: { kind: 'blackboard', key: 'EntityBB_poise' },
                 },
                 data_4: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'EntityBB_poise_2' },
+                  type: 'boolean',
+                  expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
                 },
                 data_5: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'talent_combo_reduce' },
+                  expression: { kind: 'blackboard', key: 'EntityBB_atk_scale_2' },
                 },
                 data_6: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'EntityBB_poise_2' },
+                },
+                data_7: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'talent_combo_reduce' },
+                },
+                data_8: {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
@@ -8875,7 +9269,7 @@ export const si: OperatorDefinition = {
                     buffIds: ['buff_chr_0036_jsspsi_talent2_2'],
                   },
                 },
-                data_7: {
+                data_9: {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
@@ -8886,7 +9280,7 @@ export const si: OperatorDefinition = {
                     buffIds: ['buff_chr_0036_jsspsi_talent2_1'],
                   },
                 },
-                data_8: {
+                data_10: {
                   type: 'number',
                   expression: { kind: 'blackboard', key: 'EntityBB_enhance_duration' },
                 },
@@ -8917,30 +9311,30 @@ export const si: OperatorDefinition = {
             },
             { startFrame: 81, endFrame: 82, sequence: { $sequence: 'finishOwner_5' } },
             { startFrame: 59, endFrame: 60, sequence: { $sequence: 'finishOwner_6' } },
-            { startFrame: 63, endFrame: 64, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 66, endFrame: 67, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 70, endFrame: 71, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 73, endFrame: 74, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 77, endFrame: 78, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 80, endFrame: 81, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 84, endFrame: 85, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 88, endFrame: 89, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 100, endFrame: 101, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 63, endFrame: 64, sequence: { $sequence: 'dealDamage_16' } },
-            { startFrame: 66, endFrame: 67, sequence: { $sequence: 'dealDamage_17' } },
-            { startFrame: 70, endFrame: 71, sequence: { $sequence: 'dealDamage_18' } },
-            { startFrame: 73, endFrame: 74, sequence: { $sequence: 'dealDamage_19' } },
-            { startFrame: 77, endFrame: 78, sequence: { $sequence: 'dealDamage_20' } },
-            { startFrame: 80, endFrame: 81, sequence: { $sequence: 'dealDamage_21' } },
-            { startFrame: 84, endFrame: 85, sequence: { $sequence: 'dealDamage_22' } },
-            { startFrame: 88, endFrame: 89, sequence: { $sequence: 'dealDamage_23' } },
-            { startFrame: 100, endFrame: 101, sequence: { $sequence: 'dealDamage_24' } },
+            { startFrame: 63, endFrame: 64, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 66, endFrame: 67, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 70, endFrame: 71, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 73, endFrame: 74, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 77, endFrame: 78, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 80, endFrame: 81, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 84, endFrame: 85, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 88, endFrame: 89, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 100, endFrame: 101, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 63, endFrame: 64, sequence: { $sequence: 'dealDamage_19' } },
+            { startFrame: 66, endFrame: 67, sequence: { $sequence: 'dealDamage_23' } },
+            { startFrame: 70, endFrame: 71, sequence: { $sequence: 'dealDamage_27' } },
+            { startFrame: 73, endFrame: 74, sequence: { $sequence: 'dealDamage_31' } },
+            { startFrame: 77, endFrame: 78, sequence: { $sequence: 'dealDamage_35' } },
+            { startFrame: 80, endFrame: 81, sequence: { $sequence: 'dealDamage_39' } },
+            { startFrame: 84, endFrame: 85, sequence: { $sequence: 'dealDamage_43' } },
+            { startFrame: 88, endFrame: 89, sequence: { $sequence: 'dealDamage_47' } },
+            { startFrame: 100, endFrame: 101, sequence: { $sequence: 'dealDamage_51' } },
             {
               startFrame: 62,
               endFrame: 63,
-              sequence: { $sequence: 'findCharacterBySquadSlot_41' },
+              sequence: { $sequence: 'findCharacterBySquadSlot_68' },
             },
-            { startFrame: 97, endFrame: 100, sequence: { $sequence: 'calculateActionValue_44' } },
+            { startFrame: 97, endFrame: 100, sequence: { $sequence: 'calculateActionValue_71' } },
           ],
         },
         chr_0036_jsspsi_ultimate_skill_abilityrange_1: {
@@ -8956,7 +9350,7 @@ export const si: OperatorDefinition = {
                       source: { kind: 'source' },
                       inheritActionBlackboard: false,
                       dieWhenSourceDies: false,
-                      target: 'actionInputTarget',
+                      target: { kind: 'inputTarget' },
                       saveToContextKey: 'long2',
                     },
                   },
@@ -8982,7 +9376,7 @@ export const si: OperatorDefinition = {
                       source: { kind: 'source' },
                       inheritActionBlackboard: false,
                       dieWhenSourceDies: false,
-                      target: 'actionInputTarget',
+                      target: { kind: 'inputTarget' },
                       saveToContextKey: 'long1',
                     },
                   },
@@ -9013,61 +9407,46 @@ export const si: OperatorDefinition = {
                   },
                   next: null,
                 },
-                mergeContextTargets_7: {
+                findTargets_7: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'source' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'source' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: null,
                 },
-                dealDamage_16: {
+                startTimeDilation_17: {
                   action: {
-                    kind: 'dealDamage',
+                    kind: 'startTimeDilation',
                     parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      scope: 'hitStop',
+                      attacker: { kind: 'source' },
+                      targets: { kind: 'context', key: 'tar' },
+                      affectType: 'OnlyTarget',
+                      durationSeconds: { kind: 'constant', value: 0.05 },
+                      priority: 10,
+                      curve: { kind: 'named', key: 'char_normal_attack' },
                     },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_16/action',
                   },
                   next: null,
                 },
-                dealDamage_17: {
+                ifElse_18: {
                   action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_17/action',
-                  },
-                  next: null,
-                },
-                dealDamage_18: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_18/action',
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { kind: 'conditionNode', nodeId: 'data_1' },
+                    whenTrue: { $sequence: 'startTimeDilation_17' },
+                    whenFalse: { $sequence: null },
                   },
                   next: null,
                 },
@@ -9078,62 +9457,14 @@ export const si: OperatorDefinition = {
                       attacker: 'actionSource',
                       target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['ultimateSkill'],
                       features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_19/action',
                   },
-                  next: null,
-                },
-                dealDamage_20: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_20/action',
-                  },
-                  next: null,
-                },
-                dealDamage_21: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_21/action',
-                  },
-                  next: null,
-                },
-                dealDamage_22: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      attacker: 'actionSource',
-                      target: { kind: 'context', key: 'tar' },
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_22/action',
-                  },
-                  next: null,
+                  next: 'ifElse_18',
                 },
                 dealDamage_23: {
                   action: {
@@ -9142,32 +9473,153 @@ export const si: OperatorDefinition = {
                       attacker: 'actionSource',
                       target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['ultimateSkill'],
                       features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_23/action',
                   },
-                  next: null,
+                  next: 'ifElse_18',
                 },
-                dealDamage_24: {
+                dealDamage_27: {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
                       attacker: 'actionSource',
                       target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['ultimateSkill'],
                       features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_4' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
-                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_24/action',
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_27/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                dealDamage_31: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_31/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                dealDamage_35: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_35/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                dealDamage_39: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_39/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                dealDamage_43: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_43/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                dealDamage_47: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_47/action',
+                  },
+                  next: 'ifElse_18',
+                },
+                startTimeDilation_49: {
+                  action: {
+                    kind: 'startTimeDilation',
+                    parameters: {
+                      scope: 'hitStop',
+                      attacker: { kind: 'source' },
+                      targets: { kind: 'context', key: 'tar' },
+                      affectType: 'OnlyTarget',
+                      durationSeconds: { kind: 'constant', value: 0.15 },
+                      priority: 10,
+                      curve: { kind: 'named', key: 'char_normal_attack' },
+                    },
                   },
                   next: null,
                 },
-                applyBuff_31: {
+                ifElse_50: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { kind: 'conditionNode', nodeId: 'data_4' },
+                    whenTrue: { $sequence: 'startTimeDilation_49' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: null,
+                },
+                dealDamage_51: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_6' },
+                    },
+                    key: 'abilityentity_chr_0036_jsspsi_ultimate_skill:chr_0036_jsspsi_ultimate_skill_abilityrange|chr_0036_jsspsi_ultimate_skill_abilityrange_1:/childSkills/chr_0036_jsspsi_ultimate_skill_abilityrange_1/actionGraph/main/nodes/dealDamage_51/action',
+                  },
+                  next: 'ifElse_50',
+                },
+                applyBuff_58: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
@@ -9187,7 +9639,7 @@ export const si: OperatorDefinition = {
                   },
                   next: null,
                 },
-                findTargets_32: {
+                findTargets_59: {
                   action: {
                     kind: 'findTargets',
                     parameters: {
@@ -9200,9 +9652,9 @@ export const si: OperatorDefinition = {
                       saveToContextKey: 'tar1',
                     },
                   },
-                  next: 'applyBuff_31',
+                  next: 'applyBuff_58',
                 },
-                adjustSkillCooldown_28: {
+                adjustSkillCooldown_55: {
                   action: {
                     kind: 'adjustSkillCooldown',
                     parameters: {
@@ -9210,68 +9662,68 @@ export const si: OperatorDefinition = {
                       skill: { kind: 'type', skillType: 'comboSkill' },
                       operation: 'reduce',
                       basis: 'absoluteSeconds',
-                      value: { kind: 'valueNode', nodeId: 'data_5' },
+                      value: { kind: 'valueNode', nodeId: 'data_7' },
                     },
                   },
-                  next: 'findTargets_32',
+                  next: 'findTargets_59',
                 },
-                calculateActionValue_29: {
+                calculateActionValue_56: {
                   action: {
                     kind: 'calculateActionValue',
                     parameters: {
                       key: 'talent_combo_reduce',
                       operation: 'multiply',
-                      left: { kind: 'valueNode', nodeId: 'data_5' },
+                      left: { kind: 'valueNode', nodeId: 'data_7' },
                       right: { kind: 'constant', value: -1 },
                     },
                   },
-                  next: 'adjustSkillCooldown_28',
+                  next: 'adjustSkillCooldown_55',
                 },
-                readBuffBlackboard_30: {
+                readBuffBlackboard_57: {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent2_2'] },
                       desiredKey: 'coolDown',
                       outputKey: 'talent_combo_reduce',
                     },
                   },
-                  next: 'calculateActionValue_29',
+                  next: 'calculateActionValue_56',
                 },
-                ifElse_39: {
+                ifElse_66: {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                    whenTrue: { $sequence: 'readBuffBlackboard_30' },
-                    whenFalse: { $sequence: 'findTargets_32' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_8' },
+                    whenTrue: { $sequence: 'readBuffBlackboard_57' },
+                    whenFalse: { $sequence: 'findTargets_59' },
                   },
                   next: null,
                 },
-                readBuffBlackboard_38: {
+                readBuffBlackboard_65: {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_talent2_1'] },
                       desiredKey: 'coolDown',
                       outputKey: 'talent_combo_reduce',
                     },
                   },
-                  next: 'calculateActionValue_29',
+                  next: 'calculateActionValue_56',
                 },
-                ifElse_40: {
+                ifElse_67: {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { kind: 'conditionNode', nodeId: 'data_7' },
-                    whenTrue: { $sequence: 'readBuffBlackboard_38' },
-                    whenFalse: { $sequence: 'ifElse_39' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_9' },
+                    whenTrue: { $sequence: 'readBuffBlackboard_65' },
+                    whenFalse: { $sequence: 'ifElse_66' },
                   },
                   next: null,
                 },
-                findCharacterBySquadSlot_41: {
+                findCharacterBySquadSlot_68: {
                   action: {
                     kind: 'findCharacterBySquadSlot',
                     parameters: {
@@ -9279,67 +9731,75 @@ export const si: OperatorDefinition = {
                       saveToContextKey: 'chr1',
                     },
                   },
-                  next: 'ifElse_40',
+                  next: 'ifElse_67',
                 },
-                calculateActionValue_42: {
+                calculateActionValue_69: {
                   action: {
                     kind: 'calculateActionValue',
                     parameters: {
                       key: 'bufftime3',
                       operation: 'add',
                       left: { kind: 'constant', value: 1 },
-                      right: { kind: 'valueNode', nodeId: 'data_8' },
+                      right: { kind: 'valueNode', nodeId: 'data_10' },
                     },
                   },
                   next: null,
                 },
-                calculateActionValue_43: {
+                calculateActionValue_70: {
                   action: {
                     kind: 'calculateActionValue',
                     parameters: {
                       key: 'bufftime2',
                       operation: 'add',
                       left: { kind: 'constant', value: 0.5 },
-                      right: { kind: 'valueNode', nodeId: 'data_8' },
+                      right: { kind: 'valueNode', nodeId: 'data_10' },
                     },
                   },
-                  next: 'calculateActionValue_42',
+                  next: 'calculateActionValue_69',
                 },
-                calculateActionValue_44: {
+                calculateActionValue_71: {
                   action: {
                     kind: 'calculateActionValue',
                     parameters: {
                       key: 'bufftime1',
                       operation: 'add',
                       left: { kind: 'constant', value: 0 },
-                      right: { kind: 'valueNode', nodeId: 'data_8' },
+                      right: { kind: 'valueNode', nodeId: 'data_10' },
                     },
                   },
-                  next: 'calculateActionValue_43',
+                  next: 'calculateActionValue_70',
                 },
               },
               dataNodes: {
                 data_1: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'EntityBB_atk_scale' },
+                  type: 'boolean',
+                  expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
                 },
                 data_2: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'EntityBB_poise' },
+                  expression: { kind: 'blackboard', key: 'EntityBB_atk_scale' },
                 },
                 data_3: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'EntityBB_atk_scale_2' },
+                  expression: { kind: 'blackboard', key: 'EntityBB_poise' },
                 },
                 data_4: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'EntityBB_poise_2' },
+                  type: 'boolean',
+                  expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
                 },
                 data_5: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'talent_combo_reduce' },
+                  expression: { kind: 'blackboard', key: 'EntityBB_atk_scale_2' },
                 },
                 data_6: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'EntityBB_poise_2' },
+                },
+                data_7: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'talent_combo_reduce' },
+                },
+                data_8: {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
@@ -9350,7 +9810,7 @@ export const si: OperatorDefinition = {
                     buffIds: ['buff_chr_0036_jsspsi_talent2_2'],
                   },
                 },
-                data_7: {
+                data_9: {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
@@ -9361,7 +9821,7 @@ export const si: OperatorDefinition = {
                     buffIds: ['buff_chr_0036_jsspsi_talent2_1'],
                   },
                 },
-                data_8: {
+                data_10: {
                   type: 'number',
                   expression: { kind: 'blackboard', key: 'EntityBB_enhance_duration' },
                 },
@@ -9392,30 +9852,30 @@ export const si: OperatorDefinition = {
             },
             { startFrame: 81, endFrame: 82, sequence: { $sequence: 'finishOwner_5' } },
             { startFrame: 57, endFrame: 58, sequence: { $sequence: 'finishOwner_6' } },
-            { startFrame: 63, endFrame: 64, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 66, endFrame: 67, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 70, endFrame: 71, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 73, endFrame: 74, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 77, endFrame: 78, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 80, endFrame: 81, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 84, endFrame: 85, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 88, endFrame: 89, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 100, endFrame: 101, sequence: { $sequence: 'mergeContextTargets_7' } },
-            { startFrame: 63, endFrame: 64, sequence: { $sequence: 'dealDamage_16' } },
-            { startFrame: 66, endFrame: 67, sequence: { $sequence: 'dealDamage_17' } },
-            { startFrame: 70, endFrame: 71, sequence: { $sequence: 'dealDamage_18' } },
-            { startFrame: 73, endFrame: 74, sequence: { $sequence: 'dealDamage_19' } },
-            { startFrame: 77, endFrame: 78, sequence: { $sequence: 'dealDamage_20' } },
-            { startFrame: 80, endFrame: 81, sequence: { $sequence: 'dealDamage_21' } },
-            { startFrame: 84, endFrame: 85, sequence: { $sequence: 'dealDamage_22' } },
-            { startFrame: 88, endFrame: 89, sequence: { $sequence: 'dealDamage_23' } },
-            { startFrame: 100, endFrame: 101, sequence: { $sequence: 'dealDamage_24' } },
+            { startFrame: 63, endFrame: 64, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 66, endFrame: 67, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 70, endFrame: 71, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 73, endFrame: 74, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 77, endFrame: 78, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 80, endFrame: 81, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 84, endFrame: 85, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 88, endFrame: 89, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 100, endFrame: 101, sequence: { $sequence: 'findTargets_7' } },
+            { startFrame: 63, endFrame: 64, sequence: { $sequence: 'dealDamage_19' } },
+            { startFrame: 66, endFrame: 67, sequence: { $sequence: 'dealDamage_23' } },
+            { startFrame: 70, endFrame: 71, sequence: { $sequence: 'dealDamage_27' } },
+            { startFrame: 73, endFrame: 74, sequence: { $sequence: 'dealDamage_31' } },
+            { startFrame: 77, endFrame: 78, sequence: { $sequence: 'dealDamage_35' } },
+            { startFrame: 80, endFrame: 81, sequence: { $sequence: 'dealDamage_39' } },
+            { startFrame: 84, endFrame: 85, sequence: { $sequence: 'dealDamage_43' } },
+            { startFrame: 88, endFrame: 89, sequence: { $sequence: 'dealDamage_47' } },
+            { startFrame: 100, endFrame: 101, sequence: { $sequence: 'dealDamage_51' } },
             {
               startFrame: 62,
               endFrame: 63,
-              sequence: { $sequence: 'findCharacterBySquadSlot_41' },
+              sequence: { $sequence: 'findCharacterBySquadSlot_68' },
             },
-            { startFrame: 97, endFrame: 100, sequence: { $sequence: 'calculateActionValue_44' } },
+            { startFrame: 97, endFrame: 100, sequence: { $sequence: 'calculateActionValue_71' } },
           ],
         },
       },
@@ -9445,11 +9905,7 @@ export const si: OperatorDefinition = {
                 setIgnoreGlobalTimeScale_1: {
                   action: {
                     kind: 'setIgnoreGlobalTimeScale',
-                    parameters: {
-                      abilityEntityTargets: [{ kind: 'current' }],
-                      ignore: true,
-                      revertOnEnd: true,
-                    },
+                    parameters: { targets: { kind: 'owner' }, ignore: true, revertOnEnd: true },
                   },
                   next: null,
                 },
@@ -9458,8 +9914,11 @@ export const si: OperatorDefinition = {
                     kind: 'findTargets',
                     parameters: {
                       owner: { kind: 'mainCharacter' },
+                      center: { kind: 'mainCharacter' },
                       query: {
                         kind: 'enemyByTags',
+                        scope: 'global',
+                        reverse: true,
                         tagQueryType: 'hasAny',
                         tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
                       },
@@ -9554,11 +10013,7 @@ export const si: OperatorDefinition = {
                 setIgnoreGlobalTimeScale_14: {
                   action: {
                     kind: 'setIgnoreGlobalTimeScale',
-                    parameters: {
-                      abilityEntityTargets: [{ kind: 'current' }],
-                      ignore: true,
-                      revertOnEnd: true,
-                    },
+                    parameters: { targets: { kind: 'owner' }, ignore: true, revertOnEnd: true },
                   },
                   next: null,
                 },
@@ -9620,7 +10075,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -9654,13 +10109,13 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'startTimeDilation',
                     parameters: {
-                      scope: 'entity',
+                      scope: 'hitStop',
+                      attacker: { kind: 'source' },
+                      targets: { kind: 'context', key: 'tar' },
+                      affectType: 'Both',
                       durationSeconds: { kind: 'constant', value: 0.25 },
-                      slot: 'TimeDilation/Layer/Entity/HitStop',
                       priority: 10,
                       curve: { kind: 'named', key: 'char_normal_attack' },
-                      finishByAction: false,
-                      targets: [{ kind: 'context', key: 'tar' }, 'caster'],
                     },
                   },
                   next: null,
@@ -9723,7 +10178,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -9756,7 +10211,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -9792,7 +10247,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -9806,7 +10261,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_60: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_59',
                 },
@@ -9850,7 +10308,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -9883,7 +10341,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -9919,7 +10377,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -9933,7 +10391,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_56: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_55',
                 },
@@ -9969,7 +10430,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -10075,7 +10536,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -10108,7 +10569,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -10144,7 +10605,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -10158,7 +10619,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_112: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_111',
                 },
@@ -10202,7 +10666,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -10235,7 +10699,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -10271,7 +10735,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -10285,7 +10749,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_108: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_107',
                 },
@@ -10321,7 +10788,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -10559,6 +11026,7 @@ export const si: OperatorDefinition = {
         useMainBodyHp: false,
         useMainBodyPoise: true,
         canBeHitIndividually: false,
+        halfBlockAngle: 180,
         onlyHitByNormalAttack: false,
         canBeDirectlyBuffed: false,
         asIndividualInExcludeTargetProcessor: false,
@@ -10591,11 +11059,7 @@ export const si: OperatorDefinition = {
                 setIgnoreGlobalTimeScale_1: {
                   action: {
                     kind: 'setIgnoreGlobalTimeScale',
-                    parameters: {
-                      abilityEntityTargets: [{ kind: 'current' }],
-                      ignore: true,
-                      revertOnEnd: true,
-                    },
+                    parameters: { targets: { kind: 'owner' }, ignore: true, revertOnEnd: true },
                   },
                   next: null,
                 },
@@ -10604,8 +11068,11 @@ export const si: OperatorDefinition = {
                     kind: 'findTargets',
                     parameters: {
                       owner: { kind: 'mainCharacter' },
+                      center: { kind: 'mainCharacter' },
                       query: {
                         kind: 'enemyByTags',
+                        scope: 'global',
+                        reverse: true,
                         tagQueryType: 'hasAny',
                         tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
                       },
@@ -10748,11 +11215,7 @@ export const si: OperatorDefinition = {
                 setIgnoreGlobalTimeScale_14: {
                   action: {
                     kind: 'setIgnoreGlobalTimeScale',
-                    parameters: {
-                      abilityEntityTargets: [{ kind: 'current' }],
-                      ignore: true,
-                      revertOnEnd: true,
-                    },
+                    parameters: { targets: { kind: 'owner' }, ignore: true, revertOnEnd: true },
                   },
                   next: null,
                 },
@@ -10814,7 +11277,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -10848,13 +11311,13 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'startTimeDilation',
                     parameters: {
-                      scope: 'entity',
+                      scope: 'hitStop',
+                      attacker: { kind: 'source' },
+                      targets: { kind: 'context', key: 'tar' },
+                      affectType: 'Both',
                       durationSeconds: { kind: 'constant', value: 0.25 },
-                      slot: 'TimeDilation/Layer/Entity/HitStop',
                       priority: 10,
                       curve: { kind: 'named', key: 'char_normal_attack' },
-                      finishByAction: false,
-                      targets: [{ kind: 'context', key: 'tar' }, 'caster'],
                     },
                   },
                   next: null,
@@ -10917,7 +11380,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -10950,7 +11413,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -10986,7 +11449,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11000,7 +11463,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_60: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_59',
                 },
@@ -11044,7 +11510,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11077,7 +11543,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11113,7 +11579,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11127,7 +11593,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_56: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_55',
                 },
@@ -11163,7 +11632,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11269,7 +11738,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11302,7 +11771,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11338,7 +11807,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11352,7 +11821,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_112: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_111',
                 },
@@ -11396,7 +11868,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11429,7 +11901,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11465,7 +11937,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11479,7 +11951,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_108: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_107',
                 },
@@ -11515,7 +11990,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11779,11 +12254,7 @@ export const si: OperatorDefinition = {
                 setIgnoreGlobalTimeScale_1: {
                   action: {
                     kind: 'setIgnoreGlobalTimeScale',
-                    parameters: {
-                      abilityEntityTargets: [{ kind: 'current' }],
-                      ignore: true,
-                      revertOnEnd: true,
-                    },
+                    parameters: { targets: { kind: 'owner' }, ignore: true, revertOnEnd: true },
                   },
                   next: null,
                 },
@@ -11792,8 +12263,11 @@ export const si: OperatorDefinition = {
                     kind: 'findTargets',
                     parameters: {
                       owner: { kind: 'mainCharacter' },
+                      center: { kind: 'mainCharacter' },
                       query: {
                         kind: 'enemyByTags',
+                        scope: 'global',
+                        reverse: true,
                         tagQueryType: 'hasAny',
                         tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoultarget'],
                       },
@@ -11888,11 +12362,7 @@ export const si: OperatorDefinition = {
                 setIgnoreGlobalTimeScale_14: {
                   action: {
                     kind: 'setIgnoreGlobalTimeScale',
-                    parameters: {
-                      abilityEntityTargets: [{ kind: 'current' }],
-                      ignore: true,
-                      revertOnEnd: true,
-                    },
+                    parameters: { targets: { kind: 'owner' }, ignore: true, revertOnEnd: true },
                   },
                   next: null,
                 },
@@ -11954,7 +12424,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -11988,13 +12458,13 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'startTimeDilation',
                     parameters: {
-                      scope: 'entity',
+                      scope: 'hitStop',
+                      attacker: { kind: 'source' },
+                      targets: { kind: 'context', key: 'tar' },
+                      affectType: 'Both',
                       durationSeconds: { kind: 'constant', value: 0.25 },
-                      slot: 'TimeDilation/Layer/Entity/HitStop',
                       priority: 10,
                       curve: { kind: 'named', key: 'char_normal_attack' },
-                      finishByAction: false,
-                      targets: [{ kind: 'context', key: 'tar' }, 'caster'],
                     },
                   },
                   next: null,
@@ -12057,7 +12527,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12090,7 +12560,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12126,7 +12596,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12140,7 +12610,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_60: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_59',
                 },
@@ -12184,7 +12657,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12217,7 +12690,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12253,7 +12726,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12267,7 +12740,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_56: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_55',
                 },
@@ -12303,7 +12779,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12409,7 +12885,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12442,7 +12918,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12478,7 +12954,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12492,7 +12968,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_112: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_111',
                 },
@@ -12536,7 +13015,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12569,7 +13048,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12605,7 +13084,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
@@ -12619,7 +13098,10 @@ export const si: OperatorDefinition = {
                 setCharacterPassiveUiValue_108: {
                   action: {
                     kind: 'setCharacterPassiveUiValue',
-                    parameters: { target: 'caster', value: { kind: 'constant', value: 0 } },
+                    parameters: {
+                      target: { kind: 'source' },
+                      value: { kind: 'constant', value: 0 },
+                    },
                   },
                   next: 'readBuffBlackboard_107',
                 },
@@ -12655,7 +13137,7 @@ export const si: OperatorDefinition = {
                   action: {
                     kind: 'readBuffBlackboard',
                     parameters: {
-                      target: 'caster',
+                      target: { kind: 'source' },
                       query: {
                         kind: 'id',
                         buffIds: ['buff_chr_0036_jsspsi_normal_skill_inkphantom_damage'],
