@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { publicAssetUrl } from '../../../utils/publicAssetUrl';
 import { computed } from 'vue';
 import type { PassiveUiWidgetState } from './state';
 const props = defineProps<PassiveUiWidgetState>();
@@ -8,13 +9,13 @@ const progressClip = computed(() => `inset(${(1 - progressRatio.value) * 100}% 0
 <template>
   <span class="passive-ui-skin">
     <span class="liino-ring" />
-    <img class="liino-deco" src="/next/passive-ui/liino-deco.webp" alt="" />
+    <img class="liino-deco" :src="publicAssetUrl('/next/passive-ui/liino-deco.webp')" alt="" />
     <img
       class="liino-note-bg"
       :src="
         mode === 'ultimate'
-          ? '/next/passive-ui/liino-ultimate-bg.webp'
-          : '/next/passive-ui/liino-normal-bg.webp'
+          ? publicAssetUrl('/next/passive-ui/liino-ultimate-bg.webp')
+          : publicAssetUrl('/next/passive-ui/liino-normal-bg.webp')
       "
       alt=""
     />
@@ -22,8 +23,8 @@ const progressClip = computed(() => `inset(${(1 - progressRatio.value) * 100}% 0
       class="liino-note-bar"
       :src="
         mode === 'ultimate'
-          ? '/next/passive-ui/liino-ultimate-bar.webp'
-          : '/next/passive-ui/liino-normal-bar.webp'
+          ? publicAssetUrl('/next/passive-ui/liino-ultimate-bar.webp')
+          : publicAssetUrl('/next/passive-ui/liino-normal-bar.webp')
       "
       :style="{ clipPath: progressClip }"
       alt=""
@@ -31,13 +32,13 @@ const progressClip = computed(() => `inset(${(1 - progressRatio.value) * 100}% 0
     <img
       v-if="ratio !== null"
       class="liino-star liino-star--big"
-      src="/next/passive-ui/liino-big-star.webp"
+      :src="publicAssetUrl('/next/passive-ui/liino-big-star.webp')"
       alt=""
     />
     <img
       v-if="ratio !== null"
       class="liino-star liino-star--small"
-      src="/next/passive-ui/liino-small-star.webp"
+      :src="publicAssetUrl('/next/passive-ui/liino-small-star.webp')"
       alt=""
     />
   </span>

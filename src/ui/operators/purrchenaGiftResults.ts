@@ -1,3 +1,4 @@
+import { publicAssetUrl } from '../../utils/publicAssetUrl';
 /** 噗切娜专属展示：从实际执行的礼盒回调读取奖励，不重新抽签，也不从伤害量猜结果。 */
 import type { CombatReceiptEntry } from '../../core/combat/receipt/combatReceipt';
 
@@ -40,7 +41,7 @@ export function projectPurrchenaGiftResults(
       ...origin,
       frame: entry.frame,
       receiptSequence: entry.sequence,
-      iconPath: `/operators/purrchena/${reward.skill} 01.webp`,
+      iconPath: publicAssetUrl(`/operators/purrchena/${reward.skill} 01.webp`),
       nameKey: `timeline.passiveUi.giftResults.${reward.reward}`,
       titleKey: `timeline.passiveUi.giftResults.${reward.skill}`,
       badge: rewardBadges[reward.reward],

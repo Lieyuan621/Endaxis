@@ -1,3 +1,4 @@
+import { publicAssetUrl } from '../../../utils/publicAssetUrl';
 /**
  * 物理异常展示投影。
  *
@@ -18,10 +19,10 @@ const NO_GUARD = 'buff_physical_no_guard';
 
 /** 时间轴和对象来源图的物理异常入口沿用原生 termicon；Buff 自身的原生 presentation 保持原样。 */
 const actionIcons: Readonly<Record<PhysicalInflictionType, string>> = {
-  airborne: '/icons/icon_term_ba_airborne.webp',
-  knockDown: '/icons/icon_term_ba_knockdown.webp',
-  crush: '/icons/icon_term_ba_crush.webp',
-  fracture: '/icons/icon_term_ba_fracture.webp',
+  airborne: publicAssetUrl('/icons/icon_term_ba_airborne.webp'),
+  knockDown: publicAssetUrl('/icons/icon_term_ba_knockdown.webp'),
+  crush: publicAssetUrl('/icons/icon_term_ba_crush.webp'),
+  fracture: publicAssetUrl('/icons/icon_term_ba_fracture.webp'),
 };
 const physicalActions: Readonly<Record<string, PhysicalInflictionType>> = {
   buff_physical_airborne: 'airborne',

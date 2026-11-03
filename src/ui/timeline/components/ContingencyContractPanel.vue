@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { publicAssetUrl } from '../../../utils/publicAssetUrl';
 import { resolveImage } from '../../imageResources';
 import { EaTooltip } from '@/design-system';
 import { EaButton, EaDeleteIcon, EaNumberInput, EaPopover } from '@/design-system';
@@ -407,9 +408,10 @@ function description(tag: ContingencyContractTagPresentation): string {
       <aside class="cc-detail">
         <div class="cc-detail-toolbar">
           <div class="cc-total-score" :title="t('contingencyContract.score')">
-            <img src="/contingency_contract/deco_contract_027.webp" alt="" /><strong>{{
-              selectedScore
-            }}</strong>
+            <img
+              :src="publicAssetUrl('/contingency_contract/deco_contract_027.webp')"
+              alt=""
+            /><strong>{{ selectedScore }}</strong>
           </div>
           <EaButton
             size="sm"

@@ -34,3 +34,16 @@ it('编辑器热重建时使用最新提交的项目，而不是进入路由时�
   mounted.onProjectChange(initial);
   expect(timelineRouteProps(route).initialProject).toBe(initial);
 });
+
+it('静态子目录部署使用带部署前缀的哈希路由，刷新不依赖服务端回退', async () => {
+  vi.stubEnv('BASE_URL', '/Endaxis/');
+  vi.resetModules();
+  try {
+    const { createWebHashHistory } = await import('vue-router');
+    await import('./index');
+    expect(createWebHashHistory).toHaveBeenLastCalledWith('/Endaxis/');
+  } finally {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  }
+});

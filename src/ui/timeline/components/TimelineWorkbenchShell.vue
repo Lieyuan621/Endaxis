@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { publicAssetUrl } from '../../../utils/publicAssetUrl';
 /**
  * 时间轴的七列工作台外壳，复刻既有面板几何和活动栏交互。
  * 内容区只通过插槽接入；本组件不读取项目、时间轴或战斗状态。
@@ -299,7 +300,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!leftCollapsed"
           :label="props.labels.library"
           @click="toggleLeft"
-          icon="/icons/btn_character.webp"
+          :icon="publicAssetUrl('/icons/btn_character.webp')"
         />
       </div>
       <div class="activity-group activity-group--bottom">
@@ -309,7 +310,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!bottomCollapsed && bottomTool === 'global'"
           :label="props.labels.globalConfig"
           @click="selectBottom('global')"
-          icon="/icons/global_config.webp"
+          :icon="publicAssetUrl('/icons/global_config.webp')"
         />
         <EaActivityRailButton
           class="activity-button activity-button--contract"
@@ -317,7 +318,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!bottomCollapsed && bottomTool === 'contract'"
           :label="props.labels.contract"
           @click="selectBottom('contract')"
-          icon="/contingency_contract/deco_contract_028.webp"
+          :icon="publicAssetUrl('/contingency_contract/deco_contract_028.webp')"
           :icon-size="28"
         />
         <EaActivityRailButton
@@ -326,7 +327,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!bottomCollapsed && bottomTool === 'enemy'"
           :label="props.labels.resourceMonitor"
           @click="selectBottom('enemy')"
-          icon="/icons/icon_wiki_group_monster_hongshan.webp"
+          :icon="publicAssetUrl('/icons/icon_wiki_group_monster_hongshan.webp')"
         />
       </div>
     </aside>
@@ -404,7 +405,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!rightCollapsed && rightTool === 'inspector'"
           :label="props.labels.inspector"
           @click="selectRight('inspector')"
-          icon="/icons/btn_week_raid.webp"
+          :icon="publicAssetUrl('/icons/btn_week_raid.webp')"
         />
         <EaActivityRailButton
           class="activity-button activity-button--battle-log"
@@ -412,7 +413,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!rightCollapsed && rightTool === 'battleLog'"
           :label="props.labels.battleLog"
           @click="selectRight('battleLog')"
-          icon="/icons/btn_manual.webp"
+          :icon="publicAssetUrl('/icons/btn_manual.webp')"
         />
         <EaActivityRailButton
           class="activity-button activity-button--performance"

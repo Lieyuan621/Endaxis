@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { publicAssetUrl } from '../../../utils/publicAssetUrl';
 import type { PassiveUiWidgetState } from './state';
 const props = defineProps<PassiveUiWidgetState>();
 const zhuangPointPositions: readonly (readonly [number, number])[] = [
@@ -26,7 +27,12 @@ const zhuangPointColor = (index: number) => {
 </script>
 <template>
   <span class="passive-ui-skin">
-    <img v-if="active" class="zhuang-glow" src="/next/passive-ui/zhuang-fangyi-glow.webp" alt="" />
+    <img
+      v-if="active"
+      class="zhuang-glow"
+      :src="publicAssetUrl('/next/passive-ui/zhuang-fangyi-glow.webp')"
+      alt=""
+    />
     <span class="zhuang-frame" />
     <span
       v-for="point in zhuangPoints"

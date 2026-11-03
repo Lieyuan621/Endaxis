@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { publicAssetUrl } from '../../../utils/publicAssetUrl';
 /**
  * 提弗洛斯原生战斗 HUD。
  *
@@ -21,7 +22,7 @@ function pointPosition(index: number) {
   <span class="passive-ui-skin typhoea-passive-ui">
     <img
       class="typhoea-background"
-      src="/next/passive-ui/typhoea-bg.webp"
+      :src="publicAssetUrl('/next/passive-ui/typhoea-bg.webp')"
       alt=""
       draggable="false"
     />

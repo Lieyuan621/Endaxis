@@ -1,3 +1,4 @@
+import { publicAssetUrl } from '../utils/publicAssetUrl';
 import { i18n } from '@/i18n';
 import { normalizeLocale } from '../i18n/elementPlusLocale';
 import { gameLocaleRegistry } from '../i18n/gameLocaleRegistry';
@@ -29,34 +30,46 @@ export type ResolvedRichTextTerm = {
 };
 
 const RICH_TEXT_STYLES: Record<string, ResolvedRichTextStyle> = {
-  'ba.airborne': { color: '#e2c099', icon: '/icons/icon_term_ba_airborne.webp' },
-  'ba.burning': { color: '#ff8e59', icon: '/icons/icon_term_ba_burning.webp' },
-  'ba.conduct': { color: '#ffcc00', icon: '/icons/icon_term_ba_conduct.webp' },
-  'ba.corrupt': { color: '#b4d945', icon: '/icons/icon_term_ba_corrupt.webp' },
-  'ba.crush': { color: '#e2c099', icon: '/icons/icon_term_ba_crush.webp' },
+  'ba.airborne': { color: '#e2c099', icon: publicAssetUrl('/icons/icon_term_ba_airborne.webp') },
+  'ba.burning': { color: '#ff8e59', icon: publicAssetUrl('/icons/icon_term_ba_burning.webp') },
+  'ba.conduct': { color: '#ffcc00', icon: publicAssetUrl('/icons/icon_term_ba_conduct.webp') },
+  'ba.corrupt': { color: '#b4d945', icon: publicAssetUrl('/icons/icon_term_ba_corrupt.webp') },
+  'ba.crush': { color: '#e2c099', icon: publicAssetUrl('/icons/icon_term_ba_crush.webp') },
   'ba.cryst': { color: '#2fc2cb', icon: null },
-  'ba.crystbreak': { color: '#2fc2cb', icon: '/icons/icon_term_ba_crystbreak.webp' },
-  'ba.crystinflict': { color: '#2fc2cb', icon: '/icons/icon_term_ba_crystinflict.webp' },
+  'ba.crystbreak': {
+    color: '#2fc2cb',
+    icon: publicAssetUrl('/icons/icon_term_ba_crystbreak.webp'),
+  },
+  'ba.crystinflict': {
+    color: '#2fc2cb',
+    icon: publicAssetUrl('/icons/icon_term_ba_crystinflict.webp'),
+  },
   'ba.ether': { color: '#9959FF', icon: null },
   'ba.fire': { color: '#ff8e59', icon: null },
-  'ba.fireinflict': { color: '#ff8e59', icon: '/icons/icon_term_ba_fireinflict.webp' },
-  'ba.fracture': { color: '#e2c099', icon: '/icons/icon_term_ba_fracture.webp' },
-  'ba.frozen': { color: '#2fc2cb', icon: '/icons/icon_term_ba_frozen.webp' },
+  'ba.fireinflict': {
+    color: '#ff8e59',
+    icon: publicAssetUrl('/icons/icon_term_ba_fireinflict.webp'),
+  },
+  'ba.fracture': { color: '#e2c099', icon: publicAssetUrl('/icons/icon_term_ba_fracture.webp') },
+  'ba.frozen': { color: '#2fc2cb', icon: publicAssetUrl('/icons/icon_term_ba_frozen.webp') },
   'ba.heal': { color: '#b4d945', icon: null },
   'ba.info': { color: '#999999', icon: null },
   'ba.key': { color: '#33c2ff', icon: null },
-  'ba.knockdown': { color: '#e2c099', icon: '/icons/icon_term_ba_knockdown.webp' },
+  'ba.knockdown': { color: '#e2c099', icon: publicAssetUrl('/icons/icon_term_ba_knockdown.webp') },
   'ba.natur': { color: '#b4d945', icon: null },
   'ba.naturalinflict': {
     color: '#b4d945',
-    icon: '/icons/icon_term_ba_naturalinflict.webp',
+    icon: publicAssetUrl('/icons/icon_term_ba_naturalinflict.webp'),
   },
-  'ba.noguard': { color: '#e2c099', icon: '/icons/icon_term_ba_noguard.webp' },
+  'ba.noguard': { color: '#e2c099', icon: publicAssetUrl('/icons/icon_term_ba_noguard.webp') },
   'ba.pd': { color: '#e2c099', icon: null },
   'ba.phy': { color: '#e2c099', icon: null },
   'ba.poise': { color: '#FFAE6B', icon: null },
   'ba.pulse': { color: '#ffcc00', icon: null },
-  'ba.pulseinflict': { color: '#ffcc00', icon: '/icons/icon_term_ba_pulseinflict.webp' },
+  'ba.pulseinflict': {
+    color: '#ffcc00',
+    icon: publicAssetUrl('/icons/icon_term_ba_pulseinflict.webp'),
+  },
   'ba.vup': { color: '#9eb7ff', icon: null },
 };
 

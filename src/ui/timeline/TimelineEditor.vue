@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { publicAssetUrl } from '../../utils/publicAssetUrl';
 import {
   copyEnemyTrack,
   instantiateEnemyTrack,
@@ -7230,7 +7231,7 @@ function setMobileGuideFrame(frame: number | null): void {
       />
       <div v-else-if="tool === 'contract'" class="contract-side-panel">
         <img
-          src="/contingency_contract/1/deco_contingency_select_tag_3.webp"
+          :src="publicAssetUrl('/contingency_contract/1/deco_contingency_select_tag_3.webp')"
           alt=""
           aria-hidden="true"
         />
