@@ -2757,7 +2757,25 @@
       "standardGroup": "Enemies",
       "customDesc": "Manually adjust attribute values",
       "desc": "Max:{max} · Nodes:{nodes}",
-      "empty": "No matching enemies found"
+      "empty": "No matching enemies found",
+      "basicAttributes": "Base attributes",
+      "staggerAttributes": "Stagger",
+      "birthMaxPoise": "Increased stagger limit",
+      "birthDamageReduction": "Birth damage reduction",
+      "birthHealing": "Periodic healing",
+      "birthEffects": "Spawn effects",
+      "baseValue": "Base",
+      "settledValue": "Calculated",
+      "baseBirthEffect": "Enemy default",
+      "stageBirthEffect": "Stage configuration",
+      "unsupportedBirthEffect": "Not supported",
+      "birthResistanceOverride": "Resistance override",
+      "birthPoiseImmune": "Stagger immunity",
+      "birthPhysicalReduction": "Physical status removes damage reduction",
+      "birthSpellReduction": "Arts status removes damage reduction",
+      "birthDeathSp": "SP recovery on death",
+      "countShield": "Layered Shield",
+      "countShieldLayers": "Layered Shield · {count} layers"
     }
   },
   "globalConfig": {
@@ -2901,6 +2919,7 @@
     "link_cd_reduction": "Combo CD reduction"
   },
   "buffEffects": {
+    "maxHp": "Max HP",
     "allResistance": "All resistance",
     "corrosionOverTime": "All resistances decrease over time",
     "resistance": " resistance",

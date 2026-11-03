@@ -56,7 +56,7 @@ const stages = computed(() =>
   }),
 );
 const stageGroups = computed(() => {
-  const groups = new Map<string, typeof generatedEnemyStages>();
+  const groups = new Map<string, (typeof generatedEnemyStages)[number][]>();
   for (const stage of stages.value) {
     const entries = groups.get(stage.groupId) ?? [];
     entries.push(stage);

@@ -1,3 +1,4 @@
+import { commonBuffDefinitions } from '../buffs/commonDefinitions';
 import {
   contingencyContractBuffDefinitions as generatedBuffs,
   contingencyContractInitializationPlans as generatedPlans,
@@ -14,7 +15,12 @@ import {
   type ContractInitialVariable,
 } from './initialVariables';
 
-export const contingencyContractBuffDefinitions = { ...generatedBuffs, ...seasonTwoEntryBuffs };
+// 与敌人出生效果共用的 Buff 由公共定义仓库拥有，合约只保留自己的入口及专属定义。
+export const contingencyContractBuffDefinitions = Object.fromEntries(
+  Object.entries({ ...generatedBuffs, ...seasonTwoEntryBuffs }).filter(
+    ([id]) => !Object.hasOwn(commonBuffDefinitions, id),
+  ),
+);
 export const contingencyContractInitializationPlans = [...generatedPlans, ...seasonTwoPreviewPlans];
 
 // 各期定义在此装配；通用变量读取和覆盖逻辑不依赖任何具体期数。

@@ -7,6 +7,7 @@ import { compileEnemyLifecycle } from './compileEnemyLifecycle';
 export function compileScenarioEnemyInstances(
   instances: readonly EnemyInstanceDocument[] | undefined,
   initialFrame: number,
+  index?: Parameters<typeof compileScenarioEnemy>[1],
 ): ReadonlyMap<string, CombatEnemyProgram> {
   const result = new Map<string, CombatEnemyProgram>();
   for (const instance of instances ?? []) {
@@ -14,7 +15,7 @@ export function compileScenarioEnemyInstances(
     const id = instance.id;
     if (result.has(id)) throw new Error(`duplicate enemy instance '${instance.id}'`);
     result.set(id, {
-      ...compileScenarioEnemy(instance.enemy),
+      ...compileScenarioEnemy(instance.enemy, index),
       lifecycle: compileEnemyLifecycle(instance.enemy.lifecycle, initialFrame),
     });
   }

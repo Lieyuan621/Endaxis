@@ -156,7 +156,7 @@ export function resolveCompiledAttributeModifierTargets(
   }
 }
 
-function compileModifierSlot(
+export function compileModifierSlot(
   formulaItem: ResolvedAttributeModifierSource['formulaItem'],
   sourcePath: string,
 ): AttributeModifierSlotSource {

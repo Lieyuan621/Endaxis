@@ -1,3 +1,4 @@
+import { RecoverPoiseOperationExecutor } from '../heal/recoverPoiseOperationExecutor';
 import type { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
 import type { EnemyLifecycle } from '../enemies/enemyLifecycle';
 import type { RangeSampleSource } from '../random/simulationRandom';
@@ -57,7 +58,7 @@ import {
   runtimeTargetFromEntityId,
   runtimeTargetEntityId,
 } from '../../game-data/logicalAbilityEntity';
-import type { HealCalculationAttribute } from '../../game-data/operatorDefinition';
+import type { MultiplyAttributeCalculationAttribute } from '../../game-data/operatorDefinition';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatAttributeSet, createCombatAttributeModifier } from '../attributes/combatAttributes';
 import {
@@ -268,6 +269,7 @@ type EnvironmentOptions = Pick<
   | 'createAbilityEntityBuffRuntime'
   | 'resolveUltimateEnergyGainMultiplier'
   | 'resolveMaxUltimateEnergy'
+  | 'createBirthVitalsExecutor'
   | 'createOperationExecutor'
   | 'emitAbilityEvent'
   | 'onPostSkillCastRequest'
@@ -477,6 +479,20 @@ export class StandardPlayerDamageEnvironment {
     enemyAttributes.bindChangeObserver('MaxHp', (value, previous) =>
       vitals.synchronizeMaxHealth(value, previous),
     );
+    if (restoredEnemyBuffs === undefined) {
+      enemyAttributes.define('PoiseRecTime', vitals.runtimeState.poiseRecoveryTime, {});
+      enemyAttributes.define(
+        'PoiseRecTimeScalar',
+        vitals.runtimeState.poiseRecoveryTimeMultiplier,
+        { minimum: 0 },
+      );
+    }
+    enemyAttributes.bindChangeObserver('PoiseRecTime', value => {
+      vitals.runtimeState.poiseRecoveryTime = value;
+    });
+    enemyAttributes.bindChangeObserver('PoiseRecTimeScalar', value => {
+      vitals.runtimeState.poiseRecoveryTimeMultiplier = value;
+    });
     if (restoredEnemyBuffs === undefined) enemyAttributes.define('MaxPoise', vitals.maxPoise, {});
     enemyAttributes.bindChangeObserver('MaxPoise', (value, previous) => {
       const previousPoise = vitals.poise;
@@ -825,6 +841,7 @@ export class StandardPlayerDamageEnvironment {
         runtime.configureBeforeImmunityEvents(this.#beforeBuffImmunityEvents);
         return runtime;
       },
+      createBirthVitalsExecutor: (context, delegate) => this.#createHealExecutor(context, delegate),
       createOperationExecutor: context => this.#createOperationExecutor(context),
       readSourceAttributeValue: (sourceId, request) =>
         this.#readSourceAttributeValue(sourceId, request),
@@ -1166,7 +1183,7 @@ export class StandardPlayerDamageEnvironment {
     >,
     delegate: CombatOperationExecutor,
   ): CombatOperationExecutor {
-    return new HealOperationExecutor({
+    const dependencies: ConstructorParameters<typeof HealOperationExecutor>[0] = {
       clock: context.clock,
       receipt: context.receipt,
       resolveSourceAttribute: (sourceOperatorId, attribute) =>
@@ -1200,6 +1217,10 @@ export class StandardPlayerDamageEnvironment {
         );
       },
       delegate,
+    };
+    return new HealOperationExecutor({
+      ...dependencies,
+      delegate: new RecoverPoiseOperationExecutor(dependencies),
     });
   }
 
@@ -1906,39 +1927,27 @@ export class StandardPlayerDamageEnvironment {
           resistances: {
             physical: {
               percent: attributes.get('PhysicalResistance'),
-              damageTakenMultiplier:
-                enemyDefender?.resistances.physical.damageTakenMultiplier ??
-                attributes.get('PhysicalDamageTakenScalar'),
+              damageTakenMultiplier: attributes.get('PhysicalDamageTakenScalar'),
             },
             heat: {
               percent: attributes.get('FireResistance'),
-              damageTakenMultiplier:
-                enemyDefender?.resistances.heat.damageTakenMultiplier ??
-                attributes.get('FireDamageTakenScalar'),
+              damageTakenMultiplier: attributes.get('FireDamageTakenScalar'),
             },
             electric: {
               percent: attributes.get('PulseResistance'),
-              damageTakenMultiplier:
-                enemyDefender?.resistances.electric.damageTakenMultiplier ??
-                attributes.get('PulseDamageTakenScalar'),
+              damageTakenMultiplier: attributes.get('PulseDamageTakenScalar'),
             },
             cryo: {
               percent: attributes.get('CrystResistance'),
-              damageTakenMultiplier:
-                enemyDefender?.resistances.cryo.damageTakenMultiplier ??
-                attributes.get('CrystDamageTakenScalar'),
+              damageTakenMultiplier: attributes.get('CrystDamageTakenScalar'),
             },
             nature: {
               percent: attributes.get('NaturalResistance'),
-              damageTakenMultiplier:
-                enemyDefender?.resistances.nature.damageTakenMultiplier ??
-                attributes.get('NaturalDamageTakenScalar'),
+              damageTakenMultiplier: attributes.get('NaturalDamageTakenScalar'),
             },
             ether: {
               percent: attributes.get('EtherResistance'),
-              damageTakenMultiplier:
-                enemyDefender?.resistances.ether.damageTakenMultiplier ??
-                attributes.get('EtherDamageTakenScalar'),
+              damageTakenMultiplier: attributes.get('EtherDamageTakenScalar'),
             },
           },
           ...(damageStep.parameters.calculation === 'attribute' &&
@@ -2480,7 +2489,7 @@ export class StandardPlayerDamageEnvironment {
     return this.#operatorBuffRuntime(operatorId, this.#operatorPanels.get(operatorId)).container;
   }
 
-  #readHealAttributeValue(entityId: string, attribute: HealCalculationAttribute): number {
+  #readHealAttributeValue(entityId: string, attribute: MultiplyAttributeCalculationAttribute): number {
     const enemy = this.#enemies.get(entityId);
     if (enemy !== undefined) {
       if (attribute === 'maxHealth') return enemy.vitals.maxHealth;

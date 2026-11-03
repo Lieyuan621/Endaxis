@@ -18,7 +18,7 @@ const sources = {
   gear: ['equipment.ts', 'GearDefinition'],
   gearSet: ['equipment.ts', 'GearSetDefinition'],
   consumable: ['consumables.ts', 'ConsumableDefinition'],
-  enemy: ['../../../src/core/game-data/enemyDefinition.ts', 'EnemyDefinition'],
+  enemy: ['enemies.ts', 'EnemyDefinition'],
   globalEffect: ['../../../src/core/game-data/globalEffectDefinition.ts', 'GlobalEffectDefinition'],
   contract: ['mechanics.ts', 'ContingencyContractTagDefinition'],
   skill: ['skills.ts', 'SkillDefinition'],

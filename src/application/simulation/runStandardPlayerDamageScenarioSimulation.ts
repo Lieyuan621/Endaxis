@@ -134,7 +134,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
   input: RunStandardPlayerDamageScenarioInput,
 ): PreparedStandardPlayerDamageScenarioRuntime {
   assertScenarioSimulationEndFrame(input.scenario, input.endFrame);
-  const enemy = compileScenarioEnemy(firstScenarioEnemy(input.scenario).enemy);
+  const enemy = compileScenarioEnemy(firstScenarioEnemy(input.scenario).enemy, input.options.index);
   const enemyVitals = createEnemyCombatVitals(enemy);
   const controlTimeline = resolveControlTimeline(
     input.scenario.tracks,
@@ -146,6 +146,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
       ...compileScenarioEnemyInstances(
         levelEnemies(input.scenario.level).slice(1),
         input.options.liveInputInitialFrame ?? -input.scenario.battle.prepFrames,
+        input.options.index,
       ),
     ].map(([id, program]) => [id, { program, vitals: createEnemyCombatVitals(program) }]),
   );

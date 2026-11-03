@@ -220,8 +220,8 @@ export interface CombatVitalsState {
   maxHealth: number;
   maxPoise: number;
   readonly poiseKnotThresholds: readonly number[];
-  readonly poiseRecoveryTime: number;
-  readonly poiseRecoveryTimeMultiplier: number;
+  poiseRecoveryTime: number;
+  poiseRecoveryTimeMultiplier: number;
   readonly poiseBrokenEndTime: number;
   readonly poiseRecoveryTimer: PeriodicTimerState;
   readonly poiseBrokenEndTimer: PeriodicTimerState;

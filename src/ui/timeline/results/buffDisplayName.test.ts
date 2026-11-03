@@ -51,7 +51,6 @@ describe('Buff display name', () => {
       'effects.name.dmgBonus:electric': '电磁伤害加成',
       'effects.name.dmgBonus:nature': '自然伤害加成',
       'statDetail.atkBonus': '攻击加成',
-      'statDetail.attackSlots.finalMultiplier': '独立乘法',
     };
     const translate = { te: (key: string) => key in messages, t: (key: string) => messages[key]! };
     const attributeEffects = [
@@ -96,7 +95,7 @@ describe('Buff display name', () => {
       ),
     ).toBe('法术脆弱+20%');
     expect(resolveBuffEffectSummary({ enabled: true, attributeEffects }, translate)).toBe(
-      '源石技艺强度+32\n法术伤害加成+30%\n攻击加成（独立乘法）×1.44',
+      '源石技艺强度+32\n法术伤害加成+30%\n攻击加成×1.44',
     );
     expect(
       resolveBuffEffectSummary(
@@ -186,7 +185,6 @@ describe('Buff display name', () => {
       'effects.name.critRate': '暴击率',
       'effects.name.artsIntensity': '源石技艺强度',
       'statDetail.atkBonus': '攻击加成',
-      'statDetail.attackSlots.finalMultiplier': '最终阶段：独立乘法',
     };
     const translate = { te: (key: string) => key in messages, t: (key: string) => messages[key]! };
     const segment = {
@@ -200,7 +198,7 @@ describe('Buff display name', () => {
       ],
     };
     expect(resolveBuffEffectSummary(segment, translate)).toBe(
-      '攻击力+20%\n暴击率+10%\n源石技艺强度+35\n攻击加成（最终阶段：独立乘法）×1.2',
+      '攻击力+20%\n暴击率+10%\n源石技艺强度+35\n攻击加成×1.2',
     );
     expect(resolveBuffEffectSummary({ ...segment, enabled: false }, translate)).toBeUndefined();
   });
@@ -316,4 +314,67 @@ it('keeps user-defined Buff names literal even when they look like translation k
       new Map([['custom', { text: 'effects.name.atkPercent' }]]),
     ),
   ).toBe('effects.name.atkPercent');
+});
+
+it('出生生命加成复用 Buff 摘要，并区分加算与独立乘法', () => {
+  const labels: Record<string, string> = {
+    'buffEffects.maxHp': '最大生命值',
+  };
+  const translate = { te: (key: string) => key in labels, t: (key: string) => labels[key]! };
+  expect(
+    resolveBuffEffectSummary(
+      { enabled: true, attributeEffects: [{ attribute: 'MaxHp', slot: 'multiplier', value: 6.6 }] },
+      translate,
+    ),
+  ).toBe('最大生命值+660%');
+  expect(
+    resolveBuffEffectSummary(
+      {
+        enabled: true,
+        attributeEffects: [{ attribute: 'MaxHp', slot: 'finalMultiplier', value: 2 }],
+      },
+      translate,
+    ),
+  ).toBe('最大生命值×2');
+});
+
+it('承伤倍率复用属性修正摘要，保持独立乘法语义', () => {
+  expect(
+    resolveBuffEffectSummary(
+      {
+        enabled: true,
+        attributeEffects: [
+          { attribute: 'PhysicalDamageTakenScalar', slot: 'baseFinalMultiplier', value: 0.5 },
+        ],
+      },
+      {
+        te: () => true,
+        t: (key, values) => (key === 'buffEffects.defender' ? `受到的${values?.type}伤害` : '物理'),
+      },
+    ),
+  ).toBe('受到的物理伤害×0.5');
+});
+
+it('承伤倍率仅将四种等值法术合并，物理独立显示', () => {
+  const translate = {
+    te: () => true,
+    t: (key: string, values?: Record<string, string>) =>
+      key === 'buffEffects.defender'
+        ? `受到的${values?.type}伤害`
+        : key === 'buffEffects.arts'
+          ? '法术'
+          : key.split('.').at(-1)!,
+  };
+  const attributeEffects = ['Physical', 'Fire', 'Pulse', 'Cryst', 'Natural'].map(type => ({
+    attribute: `${type}DamageTakenScalar`,
+    slot: 'baseFinalMultiplier',
+    value: 0.5,
+  }));
+  expect(resolveBuffEffectSummary({ enabled: true, attributeEffects }, translate)).toBe(
+    '受到的physical伤害×0.5\n受到的法术伤害×0.5',
+  );
+  attributeEffects[1]!.value = 0.8;
+  const different = resolveBuffEffectSummary({ enabled: true, attributeEffects }, translate);
+  expect(different).not.toContain('法术');
+  expect(different).toContain('受到的heat伤害×0.8');
 });

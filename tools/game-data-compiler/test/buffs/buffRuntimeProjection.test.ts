@@ -2277,6 +2277,48 @@ describe('公共 Buff 运行时投影', () => {
     });
   });
 
+  it('非动作期 Buff 忽略未启用的结束继承配置', () => {
+    const sequence = sourceFixture().graph.abilityEvents[0]!.actions[0]!;
+    const apply = sequence.actions[1]!;
+    if (apply.body.kind !== 'leaf' || apply.body.value.family !== 'buffApplication')
+      throw new Error('fixture');
+    const projected = projectSequence(
+      {
+        ...sequence,
+        actions: [
+          {
+            ...apply,
+            body: {
+              kind: 'leaf',
+              value: {
+                family: 'buffApplication',
+                action: {
+                  ...apply.body.value.action,
+                  target: fixedTarget('Source'),
+                  buffSource: 'ActionSource',
+                  autoFinishByAction: false,
+                  inheritSkillIds: [''],
+                  finishWithNextSkillIfNotInherited: true,
+                },
+              },
+            },
+          },
+        ],
+      },
+      {
+        gameplayTagRegistry: fixtureGameplayTagRegistry,
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      },
+    );
+    expect(projected.steps[0]).toMatchObject({ kind: 'applyBuff' });
+    const step = projected.steps[0]!;
+    if (step.kind !== 'applyBuff') throw new Error('expected applyBuff');
+    expect(step.parameters).not.toHaveProperty('finishByAction');
+    expect(step.parameters).not.toHaveProperty('inheritToNextSkillIds');
+  });
+
   it('主动回调尚未绑定 Owner 时拒绝把它当作 Buff 施加来源', () => {
     const sequence = sourceFixture().graph.abilityEvents[0]!.actions[0]!;
     const apply = sequence.actions[1]!;

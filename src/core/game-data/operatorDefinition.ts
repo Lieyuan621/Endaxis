@@ -2,7 +2,7 @@
 export {
   OPERATOR_ATTRIBUTES,
   type OperatorAttribute,
-  type HealCalculationAttribute,
+  type MultiplyAttributeCalculationAttribute,
   OPERATOR_RARITIES,
   type OperatorRarity,
   OPERATOR_WEAPON_TYPES,

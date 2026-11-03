@@ -1,3 +1,4 @@
+import { projectCountShieldTimeline } from './countShieldTimeline';
 /**
  * 把 Buff 生命周期回执投影成时间轴可画的持续段。
  * 这里只解释已发生的施加、叠层、数值变化和结束事实；展示位置和样式属于 UI。
@@ -522,7 +523,10 @@ export function projectBuffTimelineViz(
   entries: readonly CombatReceiptEntry[],
   endFrame: number,
 ): readonly BuffTimelineSegment[] {
-  const visible = projectBuffSegments(entries, endFrame, isVisibleBuff);
+  const visible = [
+    ...projectBuffSegments(entries, endFrame, isVisibleBuff),
+    ...projectCountShieldTimeline(entries, endFrame),
+  ];
   const parents = new Map<string, string>();
   const hidden = new Set<string>();
   for (const entry of entries) {

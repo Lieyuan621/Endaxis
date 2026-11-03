@@ -76,12 +76,30 @@ export function validateEnemy(value: unknown, path: string, issues: ValidationIs
   }
   if (value.lifecycle !== undefined)
     validateEnemyLifecycle(value.lifecycle, `${path}.lifecycle`, issues);
+  if (value.birthEffects !== undefined) {
+    const effects = value.birthEffects;
+    if (!isObject(effects))
+      issues.push({ path: `${path}.birthEffects`, message: 'expected an object' });
+    else {
+      if (
+        !Array.isArray(effects.enabledBuffs) ||
+        effects.enabledBuffs.some(key => typeof key !== 'string') ||
+        new Set(effects.enabledBuffs).size !== effects.enabledBuffs.length
+      )
+        issues.push({
+          path: `${path}.birthEffects.enabledBuffs`,
+          message: 'expected unique enabled birth buff keys',
+        });
+    }
+  }
   if (!isObject(value.source)) {
     issues.push({ path: `${path}.source`, message: 'expected an object' });
   } else if (value.source.kind === 'prefab') {
     requireString(value.source, 'enemyId', `${path}.source`, issues);
     requirePositiveInteger(value.source.level, `${path}.source.level`, issues);
   } else if (value.source.kind === 'stage') {
+    if (value.source.spawnId !== undefined)
+      requireString(value.source, 'spawnId', `${path}.source`, issues);
     for (const key of ['stageId', 'enemyId', 'templateId'])
       requireString(value.source, key, `${path}.source`, issues);
     requirePositiveInteger(value.source.level, `${path}.source.level`, issues);

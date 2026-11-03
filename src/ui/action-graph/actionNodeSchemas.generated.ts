@@ -241,6 +241,7 @@ const schema_8959ee040d75 = { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}
 const schema_da3ec022a2c5 = { kind: 'enum', options: ['exclude'] } as const;
 const schema_a9167de03017 = { kind: 'enum', options: ['distanceFilter'] } as const;
 const schema_fa5bef3852ca = { kind: 'enum', options: ['partBuffSource'] } as const;
+const schema_9a8579b4319a = { kind: 'enum', options: ['target'], optional: true } as const;
 const schema_8072773b759d = {
   kind: 'enum',
   options: ['intersection'],
@@ -696,6 +697,22 @@ const schema_d4b678a90d44 = {
   description: '',
   control: 'operand',
 } as const;
+const schema_07a7283ae6b9 = {
+  valueSchema: schema_4af9a3af2e9c,
+  path: ['parameters', 'multiplier'],
+  description: '属性乘数。',
+  control: 'levelValues',
+} as const;
+const schema_a2faa0e94822 = {
+  kind: 'union',
+  variants: [
+    schema_12874d6b1e8e,
+    schema_8f9b6ad744f9,
+    schema_362387e02fee,
+    { kind: 'object', fields: { kind: { kind: 'enum', options: ['currentTarget'] } } },
+  ],
+  semantics: { unionVariants: [schema_5bafbc7424f4, {}] },
+} as const;
 const schema_d0a5faa8cc2c = {
   kind: 'union',
   variants: [schema_12874d6b1e8e, schema_8f9b6ad744f9, schema_362387e02fee],
@@ -804,14 +821,6 @@ const schema_1150cb5b7660 = [
     },
   },
 ] as const;
-const schema_ca1e45ff7e3b = [
-  {
-    kind: 'object',
-    fields: { kind: { kind: 'enum', options: ['id'] }, buffIds: schema_e973cdb6b41f },
-  },
-  { kind: 'object', fields: schema_2233e538351b },
-  { kind: 'object', fields: { kind: { kind: 'enum', options: ['environment'] } } },
-] as const;
 const schema_c08c5d0f11be = {
   kind: 'union',
   variants: [
@@ -822,6 +831,18 @@ const schema_c08c5d0f11be = {
     { kind: 'object', fields: schema_2233e538351b },
   ],
   semantics: schema_a4c41ed6f378,
+} as const;
+const schema_36cf7816b909 = {
+  kind: 'union',
+  variants: [
+    {
+      kind: 'object',
+      fields: { kind: { kind: 'enum', options: ['id'] }, buffIds: schema_e973cdb6b41f },
+    },
+    { kind: 'object', fields: schema_2233e538351b },
+    { kind: 'object', fields: { kind: { kind: 'enum', options: ['environment'] } } },
+  ],
+  semantics: { unionVariants: [schema_a4c41ed6f378, {}] },
 } as const;
 const schema_28f2e8f96146 = {
   kind: 'object',
@@ -2263,51 +2284,6 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       },
     ],
   },
-  readBuffStackCount: {
-    fields: [
-      schema_087add57f9c6,
-      {
-        valueSchema: schema_c88d483f2d78,
-        path: schema_f251bafe9db2,
-        description: '要统计 Buff 的对象。',
-        control: 'json',
-      },
-      {
-        valueSchema: schema_a6fb872f76f4,
-        path: ['parameters', 'outputKey'],
-        description: '保存统计结果的动作黑板键。',
-        control: 'string',
-      },
-      {
-        valueSchema: {
-          kind: 'union',
-          variants: schema_ca1e45ff7e3b,
-          semantics: { unionVariants: [schema_a4c41ed6f378, {}] },
-        },
-        path: ['parameters', 'query'],
-        description: '按 ID、当前生命周期环境或标签选择 Buff。',
-        control: 'json',
-      },
-      {
-        valueSchema: schema_f3dcc58b8fca,
-        path: ['parameters', 'sameSourceSkillCast'],
-        description: '是否只统计与当前来源属于同一次技能施放的实例。',
-        control: 'boolean',
-      },
-      {
-        valueSchema: {
-          kind: 'enum',
-          options: ['enhance', 'instance'],
-          semantics: schema_a4c41ed6f378,
-          optional: true,
-        },
-        path: ['parameters', 'countType'],
-        description: '缺省保持历史的累计强化层数；原生 BuffCount 必须显式使用 instance。',
-        control: 'select',
-        options: ['enhance', 'instance'],
-      },
-    ],
-  },
   physicsCast: {
     fields: [
       schema_087add57f9c6,
@@ -3516,7 +3492,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'string',
       },
       {
-        valueSchema: { kind: 'enum', options: ['target'], optional: true },
+        valueSchema: schema_9a8579b4319a,
         path: ['parameters', 'attributeSource'],
         description: '缺省读取伤害来源；原生 valueSource=Target 时读取本次受伤目标。',
         control: 'select',
@@ -3723,16 +3699,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'json',
       },
       {
-        valueSchema: {
-          kind: 'union',
-          variants: [
-            schema_12874d6b1e8e,
-            schema_8f9b6ad744f9,
-            schema_362387e02fee,
-            { kind: 'object', fields: { kind: { kind: 'enum', options: ['currentTarget'] } } },
-          ],
-          semantics: { unionVariants: [schema_5bafbc7424f4, {}] },
-        },
+        valueSchema: schema_a2faa0e94822,
         path: ['parameters', 'healer'],
         description: '原生独立 ActionTarget 选择；currentTarget 指本次循环的被治疗者。',
         control: 'json',
@@ -3762,18 +3729,13 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         options: ['strength', 'agility', 'intellect', 'will', 'maxHealth'],
       },
       {
-        valueSchema: { kind: 'enum', options: ['target'], optional: true },
+        valueSchema: schema_9a8579b4319a,
         path: ['parameters', 'attributeSource'],
         description: '省略时读取治疗来源；原生 valueSource=Target 时读取治疗目标。',
         control: 'select',
         options: ['target'],
       },
-      {
-        valueSchema: schema_4af9a3af2e9c,
-        path: ['parameters', 'multiplier'],
-        description: '属性乘数。',
-        control: 'levelValues',
-      },
+      schema_07a7283ae6b9,
       {
         valueSchema: schema_4af9a3af2e9c,
         path: ['parameters', 'addition'],
@@ -3784,6 +3746,61 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         valueSchema: schema_4af9a3af2e9c,
         path: ['parameters', 'amount'],
         description: '直接使用的基础治疗值。',
+        control: 'levelValues',
+      },
+    ],
+  },
+  recoverPoise: {
+    fields: [
+      schema_087add57f9c6,
+      {
+        valueSchema: schema_f799c5afa3c5,
+        path: schema_f251bafe9db2,
+        description: '按原生目标查询顺序逐个失衡恢复。',
+        control: 'json',
+      },
+      {
+        valueSchema: schema_a2faa0e94822,
+        path: ['parameters', 'healer'],
+        description: '原生独立 ActionTarget 选择；currentTarget 指本次循环的被失衡恢复者。',
+        control: 'json',
+      },
+      {
+        valueSchema: schema_f3dcc58b8fca,
+        path: ['parameters', 'alwaysNext'],
+        description: '原生 AbilityAction.alwaysNext；false 时保留失衡恢复应用失败的序列短路。',
+        control: 'boolean',
+      },
+      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['strength', 'agility', 'intellect', 'will', 'maxHealth', 'MaxUltimateSp'],
+          semantics: { unionVariants: [schema_12d2e6c473ae, {}, {}] },
+          optional: true,
+        },
+        path: ['parameters', 'attribute'],
+        description: '用于计算失衡恢复的属性。',
+        control: 'select',
+        options: ['strength', 'agility', 'intellect', 'will', 'maxHealth', 'MaxUltimateSp'],
+      },
+      {
+        valueSchema: schema_9a8579b4319a,
+        path: ['parameters', 'attributeSource'],
+        description: '省略时读取失衡恢复来源；原生 valueSource=Target 时读取失衡恢复目标。',
+        control: 'select',
+        options: ['target'],
+      },
+      schema_07a7283ae6b9,
+      {
+        valueSchema: schema_4af9a3af2e9c,
+        path: ['parameters', 'addition'],
+        description: '乘算后加入的固定失衡恢复值。',
+        control: 'levelValues',
+      },
+      {
+        valueSchema: schema_4af9a3af2e9c,
+        path: ['parameters', 'amount'],
+        description: '直接使用的基础失衡恢复值。',
         control: 'levelValues',
       },
     ],
@@ -4361,11 +4378,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       schema_087add57f9c6,
       schema_708e1581a3df,
       {
-        valueSchema: {
-          kind: 'union',
-          variants: schema_ca1e45ff7e3b,
-          semantics: schema_5bafbc7424f4,
-        },
+        valueSchema: schema_36cf7816b909,
         path: ['parameters', 'query'],
         description: '',
         control: 'json',
@@ -4436,6 +4449,47 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   refreshCurrentBuffAttributeModifiers: schema_dcc07c6f70b9,
   saveDamageSkillCastId: schema_dcc07c6f70b9,
   skillAffix: schema_dcc07c6f70b9,
+  readBuffStackCount: {
+    fields: [
+      schema_087add57f9c6,
+      {
+        valueSchema: schema_c88d483f2d78,
+        path: schema_f251bafe9db2,
+        description: '要统计 Buff 的对象。',
+        control: 'json',
+      },
+      {
+        valueSchema: schema_a6fb872f76f4,
+        path: ['parameters', 'outputKey'],
+        description: '保存统计结果的动作黑板键。',
+        control: 'string',
+      },
+      {
+        valueSchema: schema_36cf7816b909,
+        path: ['parameters', 'query'],
+        description: '按 ID、当前生命周期环境或标签选择 Buff。',
+        control: 'json',
+      },
+      {
+        valueSchema: schema_f3dcc58b8fca,
+        path: ['parameters', 'sameSourceSkillCast'],
+        description: '是否只统计与当前来源属于同一次技能施放的实例。',
+        control: 'boolean',
+      },
+      {
+        valueSchema: {
+          kind: 'enum',
+          options: ['enhance', 'instance'],
+          semantics: schema_a4c41ed6f378,
+          optional: true,
+        },
+        path: ['parameters', 'countType'],
+        description: '缺省保持历史的累计强化层数；原生 BuffCount 必须显式使用 instance。',
+        control: 'select',
+        options: ['enhance', 'instance'],
+      },
+    ],
+  },
   dispelBuffs: {
     fields: [
       schema_087add57f9c6,
@@ -6259,6 +6313,35 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         description: '新的原生技能类型。',
         control: 'select',
         options: schema_85b910fa96f5,
+      },
+    ],
+  },
+  setCountShieldUi: {
+    fields: [
+      schema_087add57f9c6,
+      {
+        valueSchema: schema_a13ad28baeec,
+        path: schema_f251bafe9db2,
+        description: '要显示次数盾的能力系统目标。',
+        control: 'json',
+      },
+      {
+        valueSchema: { kind: 'boolean' },
+        path: ['parameters', 'remove'],
+        description: '移除次数盾显示。',
+        control: 'boolean',
+      },
+      {
+        valueSchema: schema_9b7ff1a12796,
+        path: ['parameters', 'maximum'],
+        description: '次数上限。',
+        control: 'operand',
+      },
+      {
+        valueSchema: schema_9b7ff1a12796,
+        path: ['parameters', 'current'],
+        description: '剩余次数。',
+        control: 'operand',
       },
     ],
   },

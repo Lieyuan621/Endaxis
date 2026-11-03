@@ -30,6 +30,7 @@ const LEAF_ACTION_KINDS = [
   'dealDamage',
   'dealStagger',
   'heal',
+  'recoverPoise',
   'changeResource',
   'disableNormalSkill',
   'limitMovementGait',
@@ -101,6 +102,7 @@ const LEAF_ACTION_KINDS = [
   'overrideMultiDashLimit',
   'changePlayerActionMode',
   'changeNativeSkillType',
+  'setCountShieldUi',
   'setCharacterPassiveUiValue',
   'inheritSkillCastInfoForBasicAttack',
   'startTyphoeaArchery',
@@ -325,6 +327,47 @@ export function compileLeafAction(
               },
       };
     }
+    case 'recoverPoise': {
+      return {
+        ...keyed,
+        kind: step.kind,
+        parameters:
+          step.parameters.amount === undefined
+            ? {
+                target: step.parameters.target,
+                healer: step.parameters.healer,
+                ...(step.parameters.alwaysNext === undefined
+                  ? {}
+                  : { alwaysNext: step.parameters.alwaysNext }),
+                attribute: step.parameters.attribute,
+                ...(step.parameters.attributeSource === undefined
+                  ? {}
+                  : { attributeSource: step.parameters.attributeSource }),
+                multiplier: resolveLevelValueOrActionOperand(
+                  step.parameters.multiplier,
+                  skillLevel,
+                  `${path}.parameters.multiplier`,
+                ),
+                addition: resolveLevelValueOrActionOperand(
+                  step.parameters.addition,
+                  skillLevel,
+                  `${path}.parameters.addition`,
+                ),
+              }
+            : {
+                target: step.parameters.target,
+                healer: step.parameters.healer,
+                ...(step.parameters.alwaysNext === undefined
+                  ? {}
+                  : { alwaysNext: step.parameters.alwaysNext }),
+                amount: resolveLevelValueOrActionOperand(
+                  step.parameters.amount,
+                  skillLevel,
+                  `${path}.parameters.amount`,
+                ),
+              },
+      };
+    }
     case 'changeResource': {
       const { amount, coefficient, ...parameters } = step.parameters;
       return {
@@ -518,6 +561,7 @@ export function compileLeafAction(
     case 'overrideMultiDashLimit':
     case 'changePlayerActionMode':
     case 'changeNativeSkillType':
+    case 'setCountShieldUi':
     case 'setCharacterPassiveUiValue':
     case 'startTyphoeaArchery':
     case 'inheritSkillCastInfoForBasicAttack':

@@ -25,12 +25,6 @@ interface Spawner {
     }
   >;
 }
-export interface StageEnemyAttributes {
-  id: string;
-  enemyId: string;
-  buffs: SpawnerBuff[];
-}
-
 /** 与 AKEDatabase 一样按场景、敌人和等级匹配；仅使用实际被刷怪动作引用的库条目。 */
 export async function loadSceneSpawners(directory: string, scene: string): Promise<Spawner[]> {
   let files: string[];

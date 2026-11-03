@@ -166,7 +166,7 @@ export function createFieldDeclarationExtractor(root: string) {
       const path = declarationPath(node);
       if (!path) return {};
       const file = sources.filePath(node.getSourceFile().fileName);
-      if (file === 'src/core/game-data/enemyDefinition.ts' && path === 'EnemyDefinition.levelHp')
+      if (file === 'packages/game-data-contract/src/enemies.ts' && path === 'EnemyDefinition.levelHp')
         return { readonlyDeclaration: true };
       const match = /^packages\/game-data-contract\/src\/([^/]+)\.ts$/.exec(file);
       if (!match) return {};

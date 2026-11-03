@@ -355,6 +355,8 @@ export function compileActionNode(
       // 后者只记录一次已成功的极限闪避。动作分支仍严格校验原生字段。
       'dashEnergyRecovery',
       'battleDetailRecord',
+      // 关卡信号没有当前战斗模型的消费者，与受击来源无关。
+      'levelEvent',
       // 标记的身份由 Owner/Source 解析，与受击事件的对端对象无关。
       'globalCooldown',
     ].includes(node.body.value.family)
@@ -1034,7 +1036,7 @@ export function compileActionNode(
       projectKeywordBuffAction(node.body.value.action, node.sourcePath, context, partyTargetGroups),
     ];
   }
-  if (node.body.value.family === 'heal') {
+  if (node.body.value.family === 'heal' || node.body.value.family === 'recoverPoise') {
     const action = node.body.value.action;
     const healer =
       action.healer === 'ActionSource'
@@ -1047,7 +1049,9 @@ export function compileActionNode(
               ? { kind: 'currentTarget' as const }
               : action.healer === 'MainCharacter'
                 ? { kind: 'mainCharacter' as const }
-                : action.healer === 'ContextTarget' && action.contextKey !== ''
+                : action.kind === 'heal' &&
+                    action.healer === 'ContextTarget' &&
+                    action.contextKey !== ''
                   ? { kind: 'context' as const, key: action.contextKey }
                   : null;
     const attributeNames = {
@@ -1056,13 +1060,14 @@ export function compileActionNode(
       Wisd: 'intellect',
       Will: 'will',
       MaxHp: 'maxHealth',
+      MaxUltimateSp: 'MaxUltimateSp',
     } as const;
     const attribute =
       action.calculation.kind === 'attribute'
         ? attributeNames[action.calculation.attributeType as keyof typeof attributeNames]
         : undefined;
     if (
-      action.healType !== 'Normal' ||
+      (action.kind === 'heal' && action.healType !== 'Normal') ||
       healer === null ||
       (action.calculation.kind === 'definite' && action.calculation.applyScale) ||
       (action.calculation.kind !== 'definite' &&
@@ -1081,25 +1086,27 @@ export function compileActionNode(
             multiplier: actionValueOperand(action.calculation.multiplier),
             addition: actionValueOperand(action.calculation.addition),
           };
-    return [
-      {
-        kind: 'heal',
-        parameters: {
-          target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
-          healer,
-          ...(action.alwaysNext ? { alwaysNext: true } : {}),
-          tags: projectGameplayTags(
-            action.useHealTags ? action.healTagIds : [],
-            context,
-            node.sourcePath,
-          ),
-          ...calculation,
-          ...(action.calculation.kind === 'attribute' && action.calculation.valueSource === 'Target'
-            ? { attributeSource: 'target' as const }
-            : {}),
-        },
-      },
-    ];
+    const parameters = {
+      target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+      healer,
+      ...(action.alwaysNext ? { alwaysNext: true } : {}),
+      ...calculation,
+      ...(action.calculation.kind === 'attribute' && action.calculation.valueSource === 'Target'
+        ? { attributeSource: 'target' as const }
+        : {}),
+    };
+    if (action.kind === 'recoverPoise') return [{ kind: 'recoverPoise', parameters }];
+    const tags = projectGameplayTags(
+      action.useHealTags ? action.healTagIds : [],
+      context,
+      node.sourcePath,
+    );
+    if (parameters.amount !== undefined)
+      return [{ kind: 'heal', parameters: { ...parameters, tags } }];
+    const healingAttribute = parameters.attribute;
+    if (healingAttribute === 'MaxUltimateSp')
+      throw new Error(`${node.sourcePath}: unsupported healing calculation attribute`);
+    return [{ kind: 'heal', parameters: { ...parameters, attribute: healingAttribute, tags } }];
   }
   if (node.body.value.family === 'buffQuery') {
     const action = node.body.value.action;
@@ -1542,6 +1549,19 @@ export function compileActionNode(
       // 已证明 GetFirstTarget 成功，才可省略表现写入及其动作结束清理。
       return [];
     }
+    if (action.kind === 'countShieldUi') {
+      return [
+        {
+          kind: 'setCountShieldUi',
+          parameters: {
+            target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+            remove: action.remove,
+            maximum: actionValueOperand(action.maximum),
+            current: actionValueOperand(action.current),
+          },
+        },
+      ];
+    }
     if (action.kind === 'passiveUiValue') {
       if (action.target === undefined || action.value === undefined)
         throw new Error(`${node.sourcePath}: character passive UI requires target and value`);
@@ -1974,9 +1994,11 @@ function compileBuffApplication(
   // AbilityEntity 来源只覆盖 Buff 图标的倒计时显示，不改变 Buff 自身时钟或数值生命周期，
   // 因而战斗 DSL 仍保留真实 Buff。时间轴目前按实例寿命绘制，尚不能单独显示这层图标倒计时；
   // 其余来源继续拒绝，避免把 TimedMarker 或独立宿主的显示时长误当成无效果字段。
+  // 原生 OnEnd 先检查 autoFinishByAction；未启用时不读取技能继承配置。
   if (
+    action.autoFinishByAction &&
     action.inheritSkillIds.length > 0 &&
-    (!action.autoFinishByAction || !action.finishWithNextSkillIfNotInherited)
+    !action.finishWithNextSkillIfNotInherited
   ) {
     throw new Error(`${sourcePath}: unsupported CreateBuff inheritance policy`);
   }
@@ -2125,7 +2147,7 @@ function compileBuffApplication(
           ? { iconDurationSource: { kind: 'actionOwnerAbilityEntity' as const } }
           : {}),
         ...(action.autoFinishByAction ? { finishByAction: true } : {}),
-        ...(action.inheritSkillIds.length === 0
+        ...(!action.autoFinishByAction || action.inheritSkillIds.length === 0
           ? {}
           : { inheritToNextSkillIds: action.inheritSkillIds }),
         ...(action.asChildBuff ? { asChildBuff: true } : {}),

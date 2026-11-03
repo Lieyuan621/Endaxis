@@ -10,7 +10,7 @@ import type { ScheduledSequenceDefinition } from './actions.ts';
 import type { ActionValueOperand } from './conditions.ts';
 import type { GameplayTag } from './gameplayTags.ts';
 import type {
-  AttributeModifierSlot,
+  AttributeModifier,
   DamageModifierDefinition,
   DamageScaleProcessorDefinition,
   HealModifierDefinition,
@@ -151,11 +151,9 @@ export interface SkillBuffSlotReplacement {
 }
 
 /** 可以直接写在干员或装备数据中的 Buff 蓝图。 */
-type SkillBuffProperties = Omit<BuffDefinitionProperties, 'damageModifiers'> & {
+type SkillBuffProperties = BuffDefinitionProperties & {
   /** 有动作入口的 Buff 保存自己的图；纯数值 Buff 可以省略。 */
   readonly actionGraph?: ActionGraphResourceDefinition;
-  /** Buff 启用期间参与伤害计算的条件和数值处理器。 */
-  readonly damageModifiers?: readonly CombatBuffDefinitionDamageModifier[];
   /** 可在施加时从该 Buff 已合并的实例黑板解析。 */
   maxStackCount?: BuffMaxStackCount;
   /** Buff 启用期间按实例局部时钟执行的相对帧时间线。 */
@@ -168,39 +166,17 @@ type SkillBuffProperties = Omit<BuffDefinitionProperties, 'damageModifiers'> & {
   igniteEventResponses?: readonly SkillBuffIgniteEventResponse[];
   /** 每次启用时换入、停用或结束时还原；生命周期归当前 Buff 实例所有。 */
   skillSlotReplacements?: readonly SkillBuffSlotReplacement[];
-  /** 不参与战斗计算的显示信息。 */
-  presentation?: SkillBuffPresentation;
 };
 
 /** Buff 定义目录；技能步骤只引用稳定 ID，并在施加时提供实例黑板覆盖值。 */
-export type StaticBuffDefinition = Omit<
-  SkillBuffProperties,
-  | 'actionGraph'
-  | 'scheduledSequences'
-  | 'lifecycleSequences'
-  | 'abilityEventResponses'
-  | 'igniteEventResponses'
-  | 'damageModifiers'
-  | 'healModifiers'
-  | 'poiseModifiers'
-> & {
+export type StaticBuffDefinition = BuffDefinitionProperties<never> & {
+  readonly maxStackCount?: BuffMaxStackCount;
+  readonly skillSlotReplacements?: readonly SkillBuffSlotReplacement[];
   readonly actionGraph?: never;
   readonly scheduledSequences?: never;
   readonly lifecycleSequences?: never;
   readonly abilityEventResponses?: never;
   readonly igniteEventResponses?: never;
-  readonly damageModifiers?: readonly (Omit<
-    NonNullable<SkillBuffProperties['damageModifiers']>[number],
-    'condition'
-  > & { readonly condition?: never })[];
-  readonly healModifiers?: readonly (Omit<
-    NonNullable<SkillBuffProperties['healModifiers']>[number],
-    'condition'
-  > & { readonly condition?: never })[];
-  readonly poiseModifiers?: readonly (Omit<
-    NonNullable<SkillBuffProperties['poiseModifiers']>[number],
-    'condition'
-  > & { readonly condition?: never })[];
 };
 
 /** 有动作入口就必须带图；纯数值 Buff 不创建空图。 */
@@ -602,23 +578,10 @@ export interface CombatBuffDefinitionLifecycleActions {
 }
 
 /** 外部定义中一项可序列化的原生八槽属性修正。 */
-export interface CombatBuffDefinitionAttributeModifier {
-  /** 指定属性名称，或在应用时按持有者选择主属性、副属性或全部四维。 */
-  readonly attribute:
-    | string
-    | {
-        /** 相对属性选择方式。 */
-        readonly kind: 'main' | 'secondary' | 'all';
-      };
-  /** 要写入的原生属性公式槽。 */
-  readonly slot: AttributeModifierSlot;
-  /** 固定修正值或从 Buff 黑板读取的值。 */
-  readonly value:
-    | number
-    | {
-        /** 读取修正值的 Buff 黑板键。 */
-        readonly blackboardKey: string;
-      };
+export interface CombatBuffDefinitionAttributeModifier extends AttributeModifier<
+  string | { readonly kind: 'main' | 'secondary' | 'all' },
+  number | { readonly blackboardKey: string }
+> {
   /** 修正 Buff 持有者还是 Buff 来源；省略时修正持有者。 */
   readonly target?: 'owner' | 'buffSource';
   /** 以换算属性来源写入，避免再次参与属性换算。 */
@@ -626,19 +589,21 @@ export interface CombatBuffDefinitionAttributeModifier {
 }
 
 /** 外部和内联 Buff 定义中可序列化的伤害处理器。 */
+export interface BuffInstantAttributeProcessorDefinition extends InstantAttributeProcessorDefinition {
+  /** Buff 伤害处理器始终读取战斗运行时属性。 */
+  readonly attributeTiming: 'runtime';
+}
+
 export type CombatBuffDefinitionDamageProcessor =
   | DamageScaleProcessorDefinition
-  | (Pick<InstantAttributeProcessorDefinition, 'kind' | 'targetSide' | 'attribute' | 'values'> & {
-      /** Buff 伤害处理器始终读取战斗运行时属性。 */
-      readonly attributeTiming: 'runtime';
-    });
+  | BuffInstantAttributeProcessorDefinition;
 
 /** Buff 激活期间向伤害生命周期注册的一项纯数据修正。 */
-export interface CombatBuffDefinitionDamageModifier {
+export interface CombatBuffDefinitionDamageModifier<Condition = ActionGraphReference> {
   /** 修正安装在攻击方还是防御方时启用。 */
   readonly enabledSide: DamageModifierDefinition['enabledSide'];
   /** 启用处理器前检查的条件。 */
-  readonly condition?: ActionGraphReference;
+  readonly condition?: Condition;
   /** 条件成立时按顺序执行的伤害处理器。 */
   readonly processors: readonly CombatBuffDefinitionDamageProcessor[];
 }
@@ -671,7 +636,7 @@ export interface CombatBuffDefinitionsDocument {
  * 一种 Buff 的公共配置，说明它如何显示、叠加、计时、触发，以及生效期间提供哪些战斗效果。
  * Buff ID 由使用这个类型的外层对象提供；施加目标、来源和本次传入的黑板值由施加动作提供。
  */
-export type BuffDefinitionProperties = {
+export type BuffDefinitionProperties<Condition = ActionGraphReference> = {
   /** 允许驱散所需的最低等级；省略表示不可驱散。 */
   readonly dispelLevel?: number;
   /** 启用时记录创建该 Buff 的技能施放编号，供 SkillAffix 条件匹配同一次施放。 */
@@ -711,13 +676,13 @@ export type BuffDefinitionProperties = {
   /** Buff 启用期间注册到目标或来源身上的属性修正。 */
   readonly attributeModifiers?: readonly CombatBuffDefinitionAttributeModifier[];
   /** Buff 启用期间参与伤害计算的条件和数值处理器。 */
-  readonly damageModifiers?: readonly CombatBuffDefinitionDamageModifier[];
+  readonly damageModifiers?: readonly CombatBuffDefinitionDamageModifier<Condition>[];
   /** 指定的其他 Buff 成功加入同一持有者时，对当前 Buff 的关键词倍率执行赋值、加法或乘法。 */
   readonly keywordEnhancements?: readonly BuffKeywordEnhancementDefinition[];
   /** Buff 启用期间参与治疗计算的条件和数值处理器。 */
-  readonly healModifiers?: readonly HealModifierDefinition[];
+  readonly healModifiers?: readonly HealModifierDefinition<Condition>[];
   /** Buff 启用期间参与失衡伤害计算的条件和数值处理器。 */
-  readonly poiseModifiers?: readonly PoiseModifierDefinition[];
+  readonly poiseModifiers?: readonly PoiseModifierDefinition<Condition>[];
   /** Buff 启用时创建的护盾；护盾的数值、吸收范围、次数和销毁行为由条目配置。 */
   readonly shields?: readonly BuffShieldDefinition[];
   /** Buff 启用期间提供的霸体值和抗冲击值，可作用于持有者或 Buff 来源。 */

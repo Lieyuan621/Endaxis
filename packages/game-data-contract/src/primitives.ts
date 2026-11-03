@@ -68,8 +68,8 @@ export type ActionStringOperand = string | { readonly kind: 'stringNode'; readon
 /** 字符串数据节点的操作。变量在当前调用的作用域中读取。 */
 export type ActionStringExpression = ActionStringOperand | { readonly blackboardKey: string };
 
-/** HealAction 的 MultiplyAttributeCalculation 可读取的已支持来源属性。 */
-export type HealCalculationAttribute = OperatorAttribute | 'maxHealth';
+/** 原生 MultiplyAttributeCalculation 已支持读取的属性。 */
+export type MultiplyAttributeCalculationAttribute = OperatorAttribute | 'maxHealth' | 'MaxUltimateSp';
 
 /** 游戏数据中允许出现的干员星级。 */
 export const OPERATOR_RARITIES = [4, 5, 6] as const;

@@ -30,7 +30,7 @@ it('Worker 携带附加敌人的基础定义，定义变化使选择缓存失效
   additional.source = {
     kind: 'stage',
     stageId: 'stage',
-    enemyId: 'variant',
+    enemyId: second.id.replaceAll('-', '_'),
     templateId: second.id,
     level: 90,
   };

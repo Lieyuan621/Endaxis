@@ -851,7 +851,9 @@
       "neutral": "Neutral",
       "Enemy": "Enemy",
       "Character": "Character",
-      "OnlyDead": "Dead targets only"
+      "OnlyDead": "Dead targets only",
+      "poise": "Poise",
+      "MaxUltimateSp": "Maximum ultimate energy"
     },
     "optional": "Optional",
     "unset": "Not set",
@@ -1997,6 +1999,14 @@
       "successTargetContextKey": {
         "name": "Successful target group",
         "help": "Replace this group with successfully triggered targets after execution; leave empty to skip saving."
+      },
+      "remove": {
+        "name": "Remove display",
+        "help": "Remove the count shield display without changing shield mechanics."
+      },
+      "current": {
+        "name": "Remaining count",
+        "help": "Remaining count"
       }
     },
     "help": "Help",
@@ -2770,6 +2780,14 @@
       "blowOffEnemy": {
         "name": "Blow off enemies",
         "help": "Preserves source life-state checks, target queries and action results. Currently supports the native OnlyDead branch, which processes no entities."
+      },
+      "setCountShieldUi": {
+        "name": "Update layered shield display",
+        "help": "Updates the remaining count and maximum without changing damage prevention or consumption rules."
+      },
+      "recoverPoise": {
+        "name": "Recover poise",
+        "help": "Recover poise using the target query and value calculation, without health healing events."
       }
     },
     "open": "Edit skill graph (Dev)",

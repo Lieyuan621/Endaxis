@@ -6,7 +6,7 @@ import {
 
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import type { HealCalculationAttribute } from '../../game-data/operatorDefinition';
+import type { MultiplyAttributeCalculationAttribute } from '../../game-data/operatorDefinition';
 import type { CombatReceiptSink } from '../receipt/combatReceipt';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
 import type { CombatClock } from '../time/combatClock';
@@ -31,11 +31,11 @@ export interface HealOperationDependencies {
   readonly receipt: CombatReceiptSink;
   readonly resolveSourceAttribute: (
     healerId: string,
-    attribute: HealCalculationAttribute,
+    attribute: MultiplyAttributeCalculationAttribute,
   ) => number;
   readonly resolveTargetAttribute?: (
     targetId: string,
-    attribute: HealCalculationAttribute,
+    attribute: MultiplyAttributeCalculationAttribute,
   ) => number;
   readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']>;
   /** 原生 HealAction 检查 alive（死亡标记），不是 HP > 0 或是否在场。 */
@@ -177,7 +177,7 @@ export class HealOperationExecutor implements CombatOperationExecutor {
     return resolveActionValueOperand(value, context.blackboard);
   }
 
-  #resolveTargetAttribute(targetId: string, attribute: HealCalculationAttribute): number {
+  #resolveTargetAttribute(targetId: string, attribute: MultiplyAttributeCalculationAttribute): number {
     const resolve = this.dependencies.resolveTargetAttribute;
     if (resolve === undefined) {
       throw new Error(`heal target attribute '${attribute}' resolver is not configured`);

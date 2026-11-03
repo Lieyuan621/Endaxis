@@ -1,3 +1,5 @@
+import type { StageEnemyIdentity } from '../../../packages/game-data-contract/src/enemies';
+export type { StageEnemyIdentity } from '../../../packages/game-data-contract/src/enemies';
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
 import type { SimulationRandomMode } from '../combat/random/simulationRandom';
 import type { GlobalEffectDefinition } from '../game-data/globalEffectDefinition';
@@ -249,15 +251,13 @@ export interface EnemyEditableValues {
   stagger: EnemyStaggerEditableValues;
 }
 
-/** 原生关卡与敌人条目身份；模板 ID 用于基础资料查询，不包含刷怪配置哈希。 */
-export interface StageEnemyIdentity {
-  stageId: string;
-  enemyId: string;
-  templateId: string;
-}
-
-/** 场景中的敌人：基础预制体、原生关卡敌人，或自定义配置；均保存完整数值。 */
+/** 场景中的敌人：基础预制体、原生关卡敌人，或自定义配置；均保存基础数值。 */
 export interface EnemyDocument {
+  /** 引用出生规则；editable 始终保存基础属性，结算值只在运行时派生。 */
+  birthEffects?: {
+    /** 显式启用的出生效果键；空列表表示全部关闭，读取时不合并定义默认项。 */
+    enabledBuffs: string[];
+  };
   source:
     | { kind: 'prefab'; enemyId: string; level: number }
     | ({ kind: 'stage'; level: number } & StageEnemyIdentity)

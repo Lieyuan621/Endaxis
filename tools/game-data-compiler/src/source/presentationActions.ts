@@ -486,7 +486,8 @@ export function parseForceTargetInFightActionSource(
   const attacker = parseTargetReferenceSource(action.attacker, `${path}.attacker`);
   const target = parseTargetReferenceSource(action.target, `${path}.target`);
   const sourceToOwner =
-    isPlainTargetReference(attacker, 'Source') && isPlainTargetReference(target, 'Owner');
+    (isPlainTargetReference(attacker, 'Source') || isPlainTargetReference(attacker, 'Target')) &&
+    isPlainTargetReference(target, 'Owner');
   const contextToShape =
     attacker.targetGroupKey.length > 0 &&
     isPlainTargetReference({ ...attacker, targetGroupKey: '' }, 'Context') &&

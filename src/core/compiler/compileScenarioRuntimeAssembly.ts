@@ -56,6 +56,9 @@ export type ScenarioRuntimeBuildIndex = Pick<
   Partial<
     Pick<
       GameDataRepository,
+      | 'getEnemyStage'
+      | 'getEnemy'
+      | 'getCommonBuffSource'
       | 'getCommonBuffDefinitions'
       | 'getCommonAbilityEntityDefinitions'
       | 'getMechanic'
@@ -564,7 +567,7 @@ export function compileScenarioRuntimeAssembly(
     resources,
     enemy: {
       id: firstScenarioEnemy(scenario).id,
-      ...compileScenarioEnemy(firstScenarioEnemy(scenario).enemy),
+      ...compileScenarioEnemy(firstScenarioEnemy(scenario).enemy, options.index),
       lifecycle: compileEnemyLifecycle(firstScenarioEnemy(scenario).enemy.lifecycle, initialFrame),
     },
     ...(scenario.battle.enemyAutomaticDeath === undefined

@@ -165,6 +165,7 @@ export async function createProjectGameDataRepository(
     contingency,
     mechanics,
     enemies,
+    enemyStages,
     consumables,
     selected,
   ] = await Promise.all([
@@ -173,6 +174,7 @@ export async function createProjectGameDataRepository(
     import('./contingencyContract/definitions'),
     import('./contingencyContract/contingencyContractAdapter'),
     import('./enemies/generated/index.generated'),
+    import('./enemies/generated/stages.generated'),
     import('./consumables'),
     loadReferencedDefinitions(project),
   ]);
@@ -189,6 +191,7 @@ export async function createProjectGameDataRepository(
       { id: 'consumables', buffDefinitions: consumables.consumableBuffDefinitions },
     ],
     enemies: enemies.generatedEnemyDefinitions,
+    enemyStages: enemyStages.generatedEnemyStages,
     mechanics: mechanics.contingencyContractMechanicDefinitions,
     consumables: consumables.consumableDefinitions,
     globalEffects: GLOBAL_EFFECT_PRESETS,
@@ -248,6 +251,7 @@ export async function createProjectGameDataRepository(
     getWeapon: (slug: string) => current.getWeapon(slug),
     getGear: (slug: string) => current.getGear(slug),
     getGearSet: (slug: string) => current.getGearSet(slug),
+    getEnemyStage: (id: string) => current.getEnemyStage?.(id) ?? null,
     getEnemy: (id: string) => current.getEnemy(id),
     getMechanic: (id: string) => current.getMechanic(id),
     getConsumable: (id: string) => current.getConsumable(id),

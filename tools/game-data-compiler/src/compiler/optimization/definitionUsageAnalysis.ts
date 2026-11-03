@@ -536,6 +536,7 @@ export function analyzeStepUsage(
         ? usage
         : { ...usage, unknownAccess: true };
     }
+    case 'recoverPoise':
     case 'heal': {
       const usage = effect([
         step.parameters.amount,
@@ -593,6 +594,12 @@ export function analyzeStepUsage(
     case 'setHealthFloor':
     case 'adjustSkillCooldown':
       return effect([step.parameters.value]);
+    case 'setCountShieldUi':
+      return effect([
+        step.parameters.maximum,
+        step.parameters.current,
+        ...targetQueryValueInputs(step.parameters.target),
+      ]);
     case 'setCharacterPassiveUiValue':
       return effect([step.parameters.value, ...targetQueryValueInputs(step.parameters.target)]);
     case 'applyPhysicalInfliction': {

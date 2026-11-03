@@ -72,7 +72,11 @@ const TIME_DILATION_ENTITY_TARGETS_SET = new Set<string>(TIME_DILATION_ENTITY_TA
 
 const BUFF_SINGLE_TARGETS_SET = new Set<string>(BUFF_SINGLE_TARGETS);
 
-const HEAL_CALCULATION_ATTRIBUTES_SET = new Set<string>([...OPERATOR_ATTRIBUTES, 'maxHealth']);
+const MULTIPLY_ATTRIBUTE_CALCULATION_ATTRIBUTES_SET = new Set<string>([
+  ...OPERATOR_ATTRIBUTES,
+  'maxHealth',
+  'MaxUltimateSp',
+]);
 
 const DAMAGE_CALCULATIONS_SET = new Set<string>(DAMAGE_CALCULATIONS);
 
@@ -734,6 +738,12 @@ function validateCombatStep(
     case 'setAbilityEntityTarget':
       validateTargetQuery(parameters.targets, `${path}.parameters.targets`, out);
       break;
+    case 'setCountShieldUi':
+      validateTargetQuery(parameters.target, `${path}.parameters.target`, out);
+      requireBoolean(parameters, 'remove', `${path}.parameters`, out);
+      validateActionValueOperand(parameters.maximum, `${path}.parameters.maximum`, out);
+      validateActionValueOperand(parameters.current, `${path}.parameters.current`, out);
+      break;
     case 'setCharacterPassiveUiValue':
       validateTargetQuery(parameters.target, `${path}.parameters.target`, out);
       validateActionValueOperand(parameters.value, `${path}.parameters.value`, out);
@@ -1131,6 +1141,7 @@ function validateCombatStep(
         );
       }
       break;
+    case 'recoverPoise':
     case 'heal':
       validateTargetQuery(parameters.target, `${path}.parameters.target`, out);
       const healer = asRecord(parameters.healer, `${path}.parameters.healer`, out);
@@ -1149,13 +1160,15 @@ function validateCombatStep(
         requireBoolean(parameters, 'alwaysNext', `${path}.parameters`, out);
       }
       if (parameters.amount === undefined) {
+        if (kind === 'heal' && parameters.attribute === 'MaxUltimateSp')
+          push(out, `${path}.parameters.attribute`, 'unsupported healing calculation attribute');
         if (parameters.attributeSource !== undefined && parameters.attributeSource !== 'target') {
           push(out, `${path}.parameters.attributeSource`, "expected 'target'");
         }
         requireEnum(
           parameters,
           'attribute',
-          HEAL_CALCULATION_ATTRIBUTES_SET,
+          MULTIPLY_ATTRIBUTE_CALCULATION_ATTRIBUTES_SET,
           `${path}.parameters`,
           out,
         );
@@ -1181,7 +1194,8 @@ function validateCombatStep(
           }
         }
       }
-      validateGameplayTags(parameters.tags, `${path}.parameters.tags`, out, true);
+      if (kind === 'heal')
+        validateGameplayTags(parameters.tags, `${path}.parameters.tags`, out, true);
       break;
     case 'aura': {
       validateBuffApplication(parameters, path, out, 'aura');

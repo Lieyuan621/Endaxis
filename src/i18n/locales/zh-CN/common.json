@@ -2757,7 +2757,25 @@
       "standardGroup": "敌人",
       "customDesc": "手动调整属性数值",
       "desc": "上限:{max} · 节点:{nodes}",
-      "empty": "未找到相关敌人"
+      "empty": "未找到相关敌人",
+      "basicAttributes": "基础属性",
+      "staggerAttributes": "失衡",
+      "birthMaxPoise": "失衡上限增加",
+      "birthDamageReduction": "出生减伤",
+      "birthHealing": "周期回血",
+      "birthEffects": "出生效果",
+      "baseValue": "基础值",
+      "settledValue": "结算值",
+      "baseBirthEffect": "敌人默认",
+      "stageBirthEffect": "关卡配置",
+      "unsupportedBirthEffect": "机制未接入",
+      "birthResistanceOverride": "抗性覆盖",
+      "birthPoiseImmune": "失衡免疫",
+      "birthPhysicalReduction": "物理异常解除减伤",
+      "birthSpellReduction": "法术状态解除减伤",
+      "birthDeathSp": "死亡回复技力",
+      "countShield": "层叠护盾",
+      "countShieldLayers": "层叠护盾 {count}层"
     }
   },
   "globalConfig": {
@@ -2901,6 +2919,7 @@
     "link_cd_reduction": "连携冷却缩减"
   },
   "buffEffects": {
+    "maxHp": "最大生命值",
     "allResistance": "全抗性",
     "corrosionOverTime": "全抗性随时间降低",
     "resistance": "抗性",

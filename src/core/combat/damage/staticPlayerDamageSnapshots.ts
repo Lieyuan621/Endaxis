@@ -37,6 +37,11 @@ export function initializeEnemyCombatAttributes(
     // 当前 1.4.4 AttributeType 已确认这些属性走原生八槽；敌人项目值本身允许为负，
     // 因而不在 Endaxis 额外猜造上下限。
     attributes.define(attribute, defender.resistances[damageType].percent, {});
+    attributes.define(
+      attribute.replace('Resistance', 'DamageTakenScalar'),
+      defender.resistances[damageType].damageTakenMultiplier,
+      {},
+    );
   }
   // 与干员共用既有区间属性键及零基数；不额外猜造易伤属性的上下限。
   for (const attribute of DAMAGE_SCALE_ATTRIBUTE_KEYS) attributes.define(attribute, 0, {});
@@ -280,6 +285,9 @@ export function resolveStaticPlayerDamageSnapshots(
                     damageType as keyof typeof ENEMY_RESISTANCE_ATTRIBUTES
                   ],
                   percent: enemyAttributes.get(attribute),
+                  damageTakenMultiplier: enemyAttributes.get(
+                    attribute.replace('Resistance', 'DamageTakenScalar'),
+                  ),
                 },
               ]),
             ) as PlayerDamageAttributeSnapshots['defender']['resistances'],

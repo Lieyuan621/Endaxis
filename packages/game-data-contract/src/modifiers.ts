@@ -27,6 +27,16 @@ export const ATTRIBUTE_MODIFIER_SLOTS = [
 /** 原生属性聚合公式中的固定槽位。 */
 export type AttributeModifierSlot = (typeof ATTRIBUTE_MODIFIER_SLOTS)[number];
 
+/** 一个属性修正项；常量配置与 Buff 黑板参数共用槽位和字段语义。 */
+export interface AttributeModifier<Attribute = string, Value = number> {
+  /** 属性名称，或由宿主上下文解析的属性选择器。 */
+  readonly attribute: Attribute;
+  /** 写入的通用八槽公式槽位。 */
+  readonly slot: AttributeModifierSlot;
+  /** 固定数值或由调用方求值的参数。 */
+  readonly value: Value;
+}
+
 /** 一个修正在各槽位提供的稀疏数值集合。 */
 export interface AttributeModifierValues {
   /** 普通固定加值。 */
@@ -193,11 +203,11 @@ export interface ModifyHealingIncreaseProcessorDefinition {
 }
 
 /** 一个 Buff 在治疗生命周期中注册的条件和处理器。 */
-export interface HealModifierDefinition {
+export interface HealModifierDefinition<Condition = ActionGraphReference> {
   /** 只有此修正安装在指定一方时才启用。 */
   readonly enabledSide: HealModifierSide;
   /** 所属 Buff 图中的条件动作入口；序列返回真后才执行处理器。 */
-  readonly condition?: ActionGraphReference;
+  readonly condition?: Condition;
   /** 按顺序执行的治疗处理器。 */
   readonly processors: readonly (
     ModifyHealCalculationResultProcessorDefinition | ModifyHealingIncreaseProcessorDefinition
@@ -231,11 +241,11 @@ export interface ModifyPoiseScalarProcessorDefinition {
 }
 
 /** 一个 Buff 在失衡伤害生命周期中注册的条件和处理器。 */
-export interface PoiseModifierDefinition {
+export interface PoiseModifierDefinition<Condition = ActionGraphReference> {
   /** 只有此修正安装在指定一方时才启用。 */
   readonly enabledSide: PoiseModifierSide;
   /** 所属 Buff 图中的条件动作入口；序列返回真后才执行处理器。 */
-  readonly condition?: ActionGraphReference;
+  readonly condition?: Condition;
   /** 按顺序执行的失衡伤害处理器。 */
   readonly processors: readonly ModifyPoiseScalarProcessorDefinition[];
 }

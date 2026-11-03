@@ -1,3 +1,4 @@
+import { COUNT_SHIELD_DISPLAY_ID } from '../../../core/projection/countShieldTimeline';
 import type { BuffTimelineSegment } from '../../../core/projection/buffTimelineViz';
 import { groupBuffTimelineRuns } from '../../../core/projection/buffTimelineViz';
 import type { EnemyEffectMarker } from '../../../core/projection/enemyEffectViz';
@@ -141,7 +142,8 @@ export function layoutEnemyOverviewStatuses<T extends BuffTimelineSegment>(
   const selected = buffs.filter(
     buff =>
       isEnemyTimelineBuffVisible(buff) &&
-      (isPhysicalStatusRowBuff(buff) ||
+      (buff.buffId === COUNT_SHIELD_DISPLAY_ID ||
+        isPhysicalStatusRowBuff(buff) ||
         attachmentIds.has(buff.buffId) ||
         buff.iconStyleInSquad === 'SpellAbnormal'),
   );

@@ -1,3 +1,15 @@
+import { readGameplayTagPaths } from './readGameplayTagPaths.ts';
+import {
+  projectEnemyAttributeModifier,
+  projectEnemyBirthBuffOption,
+} from '../src/domains/enemy/birthBuffOptions.ts';
+import type { AttributeModifier } from '../../../packages/game-data-contract/src/modifiers.ts';
+
+import { isDeepStrictEqual } from 'node:util';
+import type { OperatorBuffDefinitions } from '../../../packages/game-data-contract/src/index.ts';
+import { compileEnemyBirthBuffPrograms } from '../src/domains/enemy/birthBuffPrograms.ts';
+import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/definitionSourceRenderer.ts';
+import type { EnemyBirthBuffOption } from '../../../packages/game-data-contract/src/enemies.ts';
 import { imageRefFromPath } from '../src/compiler/publication/imageResources.ts';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -6,8 +18,6 @@ import { format, resolveConfig } from 'prettier';
 import { ENEMY_LEVELS } from '../../../packages/game-data-contract/src/enemies.ts';
 import { generateEnemyStageCatalog } from './generateEnemyStageCatalog.ts';
 import { parseModifierTypeValue } from '../src/source/attributeModifiers.ts';
-import { readEnemyBornBuffAttributes } from '../src/domains/enemy/bornBuffAttributes.ts';
-import type { StageEnemyAttributes } from '../src/domains/enemy/spawnerAttributes.ts';
 
 const TIER_BY_DISPLAY_TYPE = {
   0: 'normal',
@@ -41,6 +51,8 @@ interface EnemySelectionCatalog {
 }
 
 interface EnemyDefinitionSource {
+  readonly attributeModifiers?: readonly AttributeModifier[];
+  readonly birthBuffs?: readonly EnemyBirthBuffOption[];
   readonly id: string;
   readonly gameId: string;
   readonly icon?: string;
@@ -57,6 +69,7 @@ interface EnemyDefinitionSource {
     readonly knotThresholds: readonly number[];
     readonly knotBreakDurationSeconds: number;
     readonly brokenDurationSeconds: number;
+    readonly recoveryTimeMultiplier?: number;
     readonly finisherSpRecovery: number;
   };
   readonly finisherMultiplier: number;
@@ -69,11 +82,9 @@ export async function planEnemyDefinitions(
   selectionCategoriesPath = DEFAULT_SELECTION_CATEGORIES,
   stageVariantIds: readonly string[] = [],
   buffDirectory?: string,
-  stageAttributes: readonly StageEnemyAttributes[] = [],
 ) {
   const displayTable = await readTable(tablesDirectory, 'EnemyTemplateDisplayInfoTable');
   const enemyTable = await readTable(tablesDirectory, 'EnemyTable');
-  for (const entry of stageAttributes) enemyTable[entry.id] = enemyTable[entry.enemyId];
   const attributeTable = await readTable(tablesDirectory, 'EnemyAttributeTemplateTable');
   const templateTable = await readTable(tablesDirectory, 'EnemyTemplateTable');
   const rankDocument = requireRecord(
@@ -102,17 +113,7 @@ export async function planEnemyDefinitions(
     tablesDirectory,
   );
   const definitionIds = [...gameIds, ...stageVariantIds.filter(id => !gameIds.includes(id))];
-  const hasModifiers = definitionIds.some(
-    id =>
-      requireArray(requireRecord(enemyTable[id], id).attrModifiers ?? [], `${id}.attrModifiers`)
-        .length > 0,
-  );
-  const attributeMeta =
-    hasModifiers || buffDirectory ? await readTable(tablesDirectory, 'AttributeMetaTable') : {};
-  const bornAttributes = new Map<string, ReturnType<typeof readEnemyBornBuffAttributes>>();
-  const spawnerAttributes = new Map<string, ReturnType<typeof readEnemyBornBuffAttributes>>();
-  const deferredSpawnerAttributes: { enemyId: string; buffId: string; attributeType: number }[] =
-    [];
+  const birthSources = new Map<string, Record<string, unknown>>();
   if (buffDirectory) {
     const ids = new Set(
       definitionIds.flatMap(id =>
@@ -123,62 +124,35 @@ export async function planEnemyDefinitions(
     );
     for (const id of ids) {
       const path = join(buffDirectory, `${id}.json`);
-      bornAttributes.set(
-        id,
-        readEnemyBornBuffAttributes(JSON.parse(await readFile(path, 'utf8')), path),
-      );
+      birthSources.set(id, JSON.parse(await readFile(path, 'utf8')));
     }
   }
-  if (buffDirectory)
-    for (const entry of stageAttributes) {
-      const modifiers = [];
-      for (const buff of entry.buffs) {
-        const file = join(buffDirectory, `${buff.buffId}.json`);
-        const overrides = Object.fromEntries(
-          (buff.blackboard ?? [])
-            .filter(value => !value.useString)
-            .map(value => [value.key, value.valueFloat]),
-        );
-        for (const modifier of readEnemyBornBuffAttributes(
-          JSON.parse(await readFile(file, 'utf8')),
-          file,
-          overrides,
-        )) {
-          // 第一阶段的 EnemyDefinition 仅承载固有属性；护盾等承伤倍率仍属于待定机制。
-          if ([1, 3, 20, 21, 27, 31].includes(modifier.attrType)) modifiers.push(modifier);
-          else
-            deferredSpawnerAttributes.push({
-              enemyId: entry.id,
-              buffId: buff.buffId,
-              attributeType: modifier.attrType,
-            });
-        }
-      }
-      spawnerAttributes.set(entry.id, modifiers);
-    }
+  const birthPrograms = buffDirectory ? compileEnemyBirthBuffPrograms(buffDirectory, readGameplayTagPaths('src/data/combat/gameplayTagCatalog.generated.ts')) : {};
   const definitions = definitionIds.map(gameId => {
     const enemy = requireRecord(enemyTable[gameId], `EnemyTable.${gameId}`);
     const baseId = requireString(enemy.templateId, `${gameId}.enemy.templateId`);
-    const applyModifiers = compileEnemyAttributeModifiers(
-      [
-        ...requireArray(enemy.attrModifiers ?? [], `${gameId}.attrModifiers`).map((raw, index) => {
-          const modifier = requireRecord(raw, `${gameId}.attrModifiers[${index}]`);
-          return {
-            ...modifier,
-            formulaItem: parseModifierTypeValue(
-              modifier.modifierType,
-              `${gameId}.attrModifiers[${index}].modifierType`,
-            ),
-          };
-        }),
-        ...requireArray(enemy.bornBuffs ?? [], `${gameId}.bornBuffs`).flatMap(
-          id => bornAttributes.get(requireString(id, `${gameId}.bornBuffs`)) ?? [],
-        ),
-        ...(spawnerAttributes.get(gameId) ?? []),
-      ],
-      attributeMeta,
-      gameId,
-    );
+    const birthBuffs: EnemyBirthBuffOption[] = [];
+    for (const [index, rawId] of requireArray(
+      enemy.bornBuffs ?? [],
+      `${gameId}.bornBuffs`,
+    ).entries()) {
+      const buffId = requireString(rawId, gameId);
+      const source = birthSources.get(buffId);
+      if (source) {
+        const option = projectEnemyBirthBuffOption(source, buffId, 'enemy', index, {}, buffDirectory);
+        if (option) birthBuffs.push(option);
+      }
+    }
+    const attributeModifiers = requireArray(enemy.attrModifiers ?? [], gameId).map(raw => {
+      const modifier = requireRecord(raw, gameId);
+      if (modifier.modifyAttributeType !== 0)
+        throw new Error(`${gameId}: expected Specific target`);
+      return projectEnemyAttributeModifier(
+        requireInteger(modifier.attrType, gameId),
+        parseModifierTypeValue(modifier.modifierType, gameId),
+        requireFinite(modifier.attrValue, gameId),
+      );
+    });
     const display = requireRecord(displayTable[baseId], `EnemyTemplateDisplayInfoTable.${baseId}`);
     if (requireString(display.templateId, `${gameId}.display.templateId`) !== baseId) {
       throw new Error(`${gameId}: display template identity mismatch`);
@@ -216,14 +190,14 @@ export async function planEnemyDefinitions(
       );
       const level = requirePositiveInteger(values.get(0), `${gameId}.level[${index}]`);
       const hp = requirePositive(
-        applyModifiers(1, requireFinite(values.get(1), `${gameId}.hp[${index}]`)),
+        requireFinite(values.get(1), `${gameId}.hp[${index}]`),
         `${gameId}.hp[${index}]`,
       );
       return {
         level,
         hp,
         defense: requireFiniteNonNegative(
-          applyModifiers(3, requireFinite(values.get(3), `${gameId}.defense[${index}]`)),
+          requireFinite(values.get(3), `${gameId}.defense[${index}]`),
           `${gameId}.defense[${index}]`,
         ),
       };
@@ -245,8 +219,6 @@ export async function planEnemyDefinitions(
       independent.attrs,
       `${gameId}.levelIndependentAttributes.attrs`,
     );
-    for (const [type, value] of independentValues)
-      independentValues.set(type, applyModifiers(type, value));
     const knotThresholds = requireArray(
       attributes.poiseKnotPctList,
       `${gameId}.poiseKnotPctList`,
@@ -266,6 +238,8 @@ export async function planEnemyDefinitions(
 
     return {
       id: gameId.replaceAll('_', '-'),
+      ...(attributeModifiers.length ? { attributeModifiers } : {}),
+      ...(birthBuffs.length ? { birthBuffs } : {}),
       gameId,
       ...(iconAssetPath === undefined ? {} : { icon: imageRefFromPath(`/enemies/${baseId}.webp`) }),
       tier,
@@ -288,10 +262,17 @@ export async function planEnemyDefinitions(
         knotThresholds,
         knotBreakDurationSeconds,
         brokenDurationSeconds: requireFiniteNonNegative(
-          requireFinite(independentValues.get(21), `${gameId}.PoiseRecTime`) *
-            (independentValues.has(31) ? independentValues.get(31)! : applyModifiers(31, 1)),
-          `${gameId}.brokenDuration`,
+          independentValues.get(21),
+          `${gameId}.PoiseRecTime`,
         ),
+        ...(independentValues.has(31) && independentValues.get(31) !== 1
+          ? {
+              recoveryTimeMultiplier: requireFiniteNonNegative(
+                independentValues.get(31),
+                `${gameId}.PoiseRecTimeScalar`,
+              ),
+            }
+          : {}),
         finisherSpRecovery: requireFiniteNonNegative(
           attributes.breakingAttackedAtbObtain,
           `${gameId}.finisherSpRecovery`,
@@ -316,12 +297,12 @@ export async function planEnemyDefinitions(
     throw new Error(`rank evidence has non-display enemies: ${extraRanks.join(', ')}`);
   return {
     definitions,
-    deferredSpawnerAttributes,
+    birthPrograms,
     selection: {
       ...selection,
       hiddenEnemyIds: [
         ...selection.hiddenEnemyIds,
-        ...stageVariantIds.map(id => id.replaceAll('_', '-')),
+        ...stageVariantIds.filter(id => !gameIds.includes(id)).map(id => id.replaceAll('_', '-')),
       ],
     },
     excludedDisplayIds,
@@ -336,16 +317,7 @@ export async function generateEnemyDefinitions(args: Arguments) {
   const stageCatalog = await generateEnemyStageCatalog(args);
   const stageVariantIds = [
     ...new Set(
-      stageCatalog.stages.flatMap(stage =>
-        stage.enemies
-          .filter(enemy => enemy.definitionId !== null && !enemy.usesBaseDefinition)
-          .map(
-            enemy =>
-              stageCatalog.stageAttributes.find(
-                entry => entry.id.replaceAll('_', '-') === enemy.definitionId,
-              )?.id ?? enemy.source.enemyId,
-          ),
-      ),
+      stageCatalog.stages.flatMap(stage => stage.enemies.map(enemy => enemy.source.enemyId)),
     ),
   ];
   const plan = await planEnemyDefinitions(
@@ -355,7 +327,6 @@ export async function generateEnemyDefinitions(args: Arguments) {
     args.selectionCategories,
     stageVariantIds,
     args.buffDirectory,
-    stageCatalog.stageAttributes,
   );
   const prettierConfig = (await resolveConfig(resolve('.prettierrc.json'))) ?? {};
   const requiredLevels = new Map<string, Set<number>>();
@@ -373,6 +344,7 @@ export async function generateEnemyDefinitions(args: Arguments) {
       plan.selection,
       plan.compatibilityDefaults.evidence,
       requiredLevels,
+      plan.birthPrograms,
     ),
     {
       ...prettierConfig,
@@ -389,7 +361,6 @@ export async function generateEnemyDefinitions(args: Arguments) {
   }
   return {
     definitionCount: plan.definitions.length,
-    deferredSpawnerAttributes: plan.deferredSpawnerAttributes,
     stageCount: stageCatalog.stageCount,
     excludedDisplayIds: plan.excludedDisplayIds,
     compatibilityDefaults: plan.compatibilityDefaults,
@@ -402,6 +373,7 @@ function renderDefinitions(
   selection: EnemySelectionCatalog,
   evidence: string,
   requiredLevels: ReadonlyMap<string, ReadonlySet<number>>,
+  birthPrograms: ReturnType<typeof compileEnemyBirthBuffPrograms>,
 ): string {
   // Keep raw identities in the audit plan only; runtime references use the stable id.
   const runtimeDefinitions = definitions.map(({ gameId: _gameId, levelHp, ...definition }) => ({
@@ -416,11 +388,27 @@ function renderDefinitions(
         }),
     ),
   }));
-  return `import type { EnemyDefinition } from '../../../core/game-data/enemyDefinition';
+  const runtimeDefinitionsById: Record<string, OperatorBuffDefinitions[string]> = {};
+  for (const runtime of Object.values(birthPrograms)) {
+    for (const [id, definition] of Object.entries(runtime.buffDefinitions)) {
+      const previous = runtimeDefinitionsById[id];
+      if (previous && !isDeepStrictEqual(previous, definition)) {
+        throw new Error(`Conflicting enemy birth Buff definition: ${id}`);
+      }
+      runtimeDefinitionsById[id] = definition;
+    }
+  }
+  const runtimeSource = Object.keys(runtimeDefinitionsById).length
+    ? renderCommonBuffDefinitionsSource(runtimeDefinitionsById, 'enemyBirthBuffDefinitions')
+    : `export const enemyBirthBuffDefinitions = {};`;
+  const definitionSource = JSON.stringify(runtimeDefinitions, null, 2);
+  return `import type { EnemyDefinition } from '../../../../packages/game-data-contract/src/enemies';
+
+${runtimeSource}
 
 // knotBreakDurationSeconds is a project compatibility default: ${evidence}.
 // Every other field below is compiled from the same source snapshot and strict rank evidence.
-export const generatedEnemyDefinitions = ${JSON.stringify(runtimeDefinitions, null, 2)} as const satisfies readonly EnemyDefinition[];
+export const generatedEnemyDefinitions = ${definitionSource} as const satisfies readonly EnemyDefinition[];
 
 export const generatedEnemySelectionOrder = ${JSON.stringify(selection.enemyOrder)} as const;
 export const generatedEnemySelectionCategories = ${JSON.stringify(selection.categories, null, 2)} as const;
@@ -471,80 +459,6 @@ async function readEnemySelectionCatalog(
 async function readTable(directory: string, name: string): Promise<Record<string, unknown>> {
   const path = join(directory, `${name}.json`);
   return requireRecord(JSON.parse(await readFile(path, 'utf8')), path);
-}
-
-/** EnemyTable 当前使用常规 Addition/Multiplier/FinalMultiplier；采用原生聚合顺序，未知槽不猜测。 */
-function compileEnemyAttributeModifiers(
-  raw: unknown,
-  metadata: Record<string, unknown>,
-  enemyId: string,
-) {
-  const slots = new Map<
-    number,
-    {
-      addition: number;
-      multiplier: number;
-      finalAddition: number;
-      finalMultiplier: number;
-      baseAddition: number;
-      baseMultiplier: number;
-      baseFinalAddition: number;
-      baseFinalMultiplier: number;
-    }
-  >();
-  for (const [index, value] of requireArray(raw, `${enemyId}.attrModifiers`).entries()) {
-    const label = `${enemyId}.attrModifiers[${index}]`;
-    const modifier = requireRecord(value, label);
-    if (modifier.modifyAttributeType !== 0) throw new Error(`${label}: expected Specific target`);
-    const type = requireInteger(modifier.attrType, `${label}.attrType`);
-    // 敌人主动攻击尚未模拟，Atk 修正不影响当前承伤目标的属性。
-    if (![1, 2, 3, 20, 21, 27, 31].includes(type))
-      throw new Error(`${label}: unsupported enemy attribute ${type}`);
-    const slot = modifier.formulaItem;
-    const amount = requireFinite(modifier.attrValue, `${label}.attrValue`);
-    const aggregate = slots.get(type) ?? {
-      addition: 0,
-      multiplier: 1,
-      finalAddition: 0,
-      finalMultiplier: 1,
-      baseAddition: 0,
-      baseMultiplier: 1,
-      baseFinalAddition: 0,
-      baseFinalMultiplier: 1,
-    };
-    if (slot === 'Addition') aggregate.addition += amount;
-    else if (slot === 'Multiplier') aggregate.multiplier += amount;
-    else if (slot === 'FinalMultiplier') aggregate.finalMultiplier *= amount;
-    else if (slot === 'FinalAddition') aggregate.finalAddition += amount;
-    else if (slot === 'BaseAddition') aggregate.baseAddition += amount;
-    else if (slot === 'BaseMultiplier') aggregate.baseMultiplier += amount;
-    else if (slot === 'BaseFinalAddition') aggregate.baseFinalAddition += amount;
-    else if (slot === 'BaseFinalMultiplier') aggregate.baseFinalMultiplier *= amount;
-    else throw new Error(`${label}: unsupported enemy modifier slot ${slot}`);
-    slots.set(type, aggregate);
-  }
-  return (type: number, value: number): number => {
-    const modifier = slots.get(type);
-    if (!modifier) return value;
-    const meta = requireRecord(metadata[String(type)], `AttributeMetaTable.${type}`);
-    const clamp = (value: number) =>
-      Math.min(
-        meta.hasMaxValue ? requireFinite(meta.maxValue, `${type}.maxValue`) : Infinity,
-        Math.max(
-          meta.hasMinValue ? requireFinite(meta.minValue, `${type}.minValue`) : -Infinity,
-          value,
-        ),
-      );
-    const armed = clamp(
-      (clamp(value + modifier.baseAddition) * Math.max(0, modifier.baseMultiplier) +
-        modifier.baseFinalAddition) *
-        modifier.baseFinalMultiplier,
-    );
-    return clamp(
-      ((armed + modifier.addition) * Math.max(0, modifier.multiplier) + modifier.finalAddition) *
-        modifier.finalMultiplier,
-    );
-  };
 }
 
 function attributeValueMap(value: unknown, label: string): Map<number, number> {

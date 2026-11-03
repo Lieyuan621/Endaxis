@@ -1,3 +1,4 @@
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 import type { ActionGraphReference } from '../../../../../packages/game-data-contract/src/actionGraph.ts';
 import type {
   NativeSkillType,
@@ -192,7 +193,10 @@ type DamageParameters = Pick<
 export type CompiledSimpleDamageOperationSource = Step<'dealDamage', DamageParameters>;
 export type CompiledSimplePoiseOperationSource = Step<'dealStagger'>;
 
-type HealParameters = Pick<Parameters<'heal'>, 'target' | 'healer' | 'alwaysNext' | 'tags'> &
+type HealParameters<A = NonNullable<Parameters<'heal'>['attribute']>> = Pick<
+  Parameters<'heal'>,
+  'target' | 'healer' | 'alwaysNext' | 'tags'
+> &
   (
     | {
         readonly amount: CompiledActionValueOperandSource;
@@ -202,7 +206,7 @@ type HealParameters = Pick<Parameters<'heal'>, 'target' | 'healer' | 'alwaysNext
       }
     | {
         readonly amount?: never;
-        readonly attribute: NonNullable<Parameters<'heal'>['attribute']>;
+        readonly attribute: A;
         readonly attributeSource?: 'target';
         readonly multiplier: CompiledActionValueOperandSource;
         readonly addition: CompiledActionValueOperandSource;
@@ -240,6 +244,7 @@ export type CompiledBuffStepSource =
   | Step<'overrideMultiDashLimit'>
   | Step<'changePlayerActionMode'>
   | Step<'changeNativeSkillType'>
+  | Step<'setCountShieldUi'>
   | Step<'setCharacterPassiveUiValue'>
   | Step<'inheritSkillCastInfoForBasicAttack'>
   | Step<'startCurrentAbilityEntityChildSkillById'>
@@ -443,6 +448,10 @@ export type CompiledBuffStepSource =
   | CompiledSimpleDamageOperationSource
   | CompiledSimplePoiseOperationSource
   | Step<'heal', HealParameters>
+  | Step<
+      'recoverPoise',
+      DistributiveOmit<HealParameters<NonNullable<Parameters<'recoverPoise'>['attribute']>>, 'tags'>
+    >
   | Step<'finishBuffsById'>
   | Step<'dispelBuffs'>
   | Step<'finishBuffsByTag'>

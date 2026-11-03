@@ -1,3 +1,4 @@
+import { resolveEnemySpawn } from '../../core/project/enemyBirthEffects';
 import { firstScenarioEnemy, levelEnemies } from '../../core/project/level';
 /**
  * 协调敌人预制体选择和属性编辑，把一次 UI 意图转换为一次场景会话提交。
@@ -20,7 +21,7 @@ import type {
   StageEnemyIdentity,
 } from '../../core/project/schema';
 
-type TimelineEnemyGameData = Pick<GameDataRepository, 'getEnemy'> &
+type TimelineEnemyGameData = Pick<GameDataRepository, 'getEnemy' | 'getEnemyStage'> &
   Pick<GameDataBrowser, 'getEnemies'>;
 
 export interface TimelineEnemyEditorOptions {
@@ -46,10 +47,27 @@ export function useTimelineEnemyEditor(options: TimelineEnemyEditorOptions) {
     return id === null ? null : options.gameData.getEnemy(id);
   });
 
-  function selectDefinitionEnemy(enemyId: string, level: number, stage?: StageEnemyIdentity): void {
+  function selectDefinitionEnemy(
+    enemyId: string,
+    level: number,
+    stage?: StageEnemyIdentity,
+    enabledBirthBuffs?: readonly string[],
+  ): void {
     const definition = options.gameData.getEnemy(enemyId);
     if (definition === null) throw new Error(`missing enemy definition '${enemyId}'`);
-    const enemy = createDefinitionEnemyDocument(definition, level, options.fps, stage);
+    const enemy = createDefinitionEnemyDocument(
+      definition,
+      level,
+      options.fps,
+      stage,
+      enabledBirthBuffs,
+      stage
+        ? resolveEnemySpawn(
+            { kind: 'stage', ...stage, level },
+            options.gameData.getEnemyStage?.(stage.stageId) ?? null,
+          )
+        : null,
+    );
     options.session.commit('setScenarioEnemy', scenario =>
       setScenarioEnemy(
         scenario,
@@ -73,7 +91,17 @@ export function useTimelineEnemyEditor(options: TimelineEnemyEditorOptions) {
     const documents = instances.map(entry => {
       const definition = options.gameData.getEnemy(entry.definitionId);
       if (!definition) throw new Error(`missing enemy definition '${entry.definitionId}'`);
-      return createDefinitionEnemyDocument(definition, entry.level, options.fps, entry.source);
+      return createDefinitionEnemyDocument(
+        definition,
+        entry.level,
+        options.fps,
+        entry.source,
+        undefined,
+        resolveEnemySpawn(
+          { kind: 'stage', ...entry.source, level: entry.level },
+          options.gameData.getEnemyStage?.(entry.source.stageId) ?? null,
+        ),
+      );
     });
     const enemies = documents.map((enemy, index) => ({
       id: allocateId(),
@@ -98,9 +126,17 @@ export function useTimelineEnemyEditor(options: TimelineEnemyEditorOptions) {
     );
   }
 
-  function saveEnemyValues(values: EnemyEditableValues): void {
+  function saveEnemyValues(
+    values: EnemyEditableValues,
+    enabledBirthBuffs?: readonly string[],
+  ): void {
     options.session.commit('updateEnemyValues', scenario =>
-      replaceEnemyEditableValues(scenario, values, options.enemyInstanceId?.value),
+      replaceEnemyEditableValues(
+        scenario,
+        values,
+        options.enemyInstanceId?.value,
+        enabledBirthBuffs,
+      ),
     );
   }
 

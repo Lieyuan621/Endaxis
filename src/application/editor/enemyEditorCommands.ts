@@ -1,9 +1,15 @@
+import type { EnemySpawnDefinition } from '../../../packages/game-data-contract/src/enemies';
+import { enemyBirthOptions } from '../../core/project/enemyBirthEffects';
 import { firstScenarioEnemy, levelEnemies, mapLevelEnemies } from '../../core/project/level';
 /**
  * 将敌人预制体默认值转换为项目实例，并提供不可变的敌人覆盖命令。
  * 切换定义会重新捕获完整默认值；单项编辑只修改实例数值，不修改定义。
  */
-import { getEnemyHpAtLevel, type EnemyDefinition } from '../../core/game-data/enemyDefinition';
+import {
+  getEnemyHpAtLevel,
+  getEnemyRuntimeDefinitionId,
+  type EnemyDefinition,
+} from '../../core/game-data/enemyDefinition';
 import type {
   EnemyDocument,
   StageEnemyIdentity,
@@ -31,12 +37,14 @@ export function createDefinitionEnemyDocument(
   level: number,
   fps: number,
   stage?: StageEnemyIdentity,
+  enabledBirthBuffs?: readonly string[],
+  spawn?: EnemySpawnDefinition | null,
 ): EnemyDocument {
   const hp = getEnemyHpAtLevel(definition, level);
   if (hp === null) {
     throw new Error(`enemy '${definition.id}' has no HP value at level ${level}`);
   }
-  return {
+  const document: EnemyDocument = {
     source: stage
       ? { kind: 'stage', ...stage, level }
       : { kind: 'prefab', enemyId: definition.id, level },
@@ -54,6 +62,21 @@ export function createDefinitionEnemyDocument(
         brokenDurationFrames: secondsToFrames(definition.stagger.brokenDurationSeconds, fps),
         finisherSpRecovery: definition.stagger.finisherSpRecovery,
       },
+    },
+  };
+  const options = enemyBirthOptions(definition, spawn);
+  if (
+    !options.length &&
+    !definition.attributeModifiers?.length &&
+    definition.stagger.recoveryTimeMultiplier === undefined
+  )
+    return document;
+  return {
+    ...document,
+    birthEffects: {
+      enabledBuffs: [
+        ...(enabledBirthBuffs ?? options.filter(buff => buff.supported).map(buff => buff.key)),
+      ],
     },
   };
 }
@@ -100,12 +123,20 @@ export function replaceEnemyEditableValues(
   scenario: ScenarioDocument,
   values: EnemyEditableValues,
   instanceId?: string,
+  enabledBirthBuffs?: readonly string[],
 ): ScenarioDocument {
   const enemy =
     instanceId === undefined
       ? firstScenarioEnemy(scenario).enemy
       : levelEnemies(scenario.level).find(item => item.id === instanceId)?.enemy;
   if (!enemy) throw new Error('unknown enemy instance: ' + instanceId);
+  const definitionId = getEnemyRuntimeDefinitionId(enemy);
+  const configuration =
+    definitionId && (enemy.birthEffects || enabledBirthBuffs?.length)
+      ? {
+          enabledBuffs: [...(enabledBirthBuffs ?? enemy.birthEffects?.enabledBuffs ?? [])],
+        }
+      : undefined;
   const current = enemy.editable;
   let changed = false;
   for (const field of ['hp', 'defense', 'superArmor', 'finisherMultiplier'] as const) {
@@ -136,7 +167,22 @@ export function replaceEnemyEditableValues(
       changed = true;
     }
   }
-  if (!changed) return scenario;
+  const previousEnabled = enemy.birthEffects?.enabledBuffs ?? [];
+  const enabledChanged =
+    configuration &&
+    (configuration.enabledBuffs.length !== previousEnabled.length ||
+      configuration.enabledBuffs.some(key => !previousEnabled.includes(key)));
+  if (!changed && !enabledChanged) return scenario;
+  if (configuration)
+    return setScenarioEnemy(
+      scenario,
+      {
+        ...enemy,
+        birthEffects: configuration,
+        editable: structuredClone(values),
+      },
+      instanceId,
+    );
 
   return setScenarioEnemy(
     scenario,

@@ -1,3 +1,4 @@
+import { CountShieldUiOperationExecutor } from '../skills/countShieldUiOperationExecutor';
 import { selectMainEnemyTarget, type EnemyTargetSelection } from '../enemies/enemyTargetSelection';
 import type { TyphoeaArcheryRuntime } from '../abilities/typhoeaArcherySelection';
 import { TyphoeaArcheryOperationExecutor } from '../abilities/typhoeaArcheryOperationExecutor';
@@ -377,6 +378,13 @@ export interface AbilityEntityBuffRuntime extends BuffOperationTarget {
 
 /** 敌人实例的静态输入，可编辑属性来自存档。 */
 export interface CombatEnemyProgram {
+  readonly birthBuffs?: {
+    readonly definitions: Readonly<Record<string, ResolvedSkillBuffDefinition>>;
+    readonly applications: readonly {
+      readonly buffId: string;
+      readonly blackboard: Readonly<Record<string, number>>;
+    }[];
+  };
   readonly id?: string;
   readonly lifecycle?: EnemyLifecycleProgram;
   readonly source:
@@ -658,6 +666,14 @@ export interface CombatRuntimeEnvironmentOptions extends CombatRuntimeInputRules
    */
   readonly createOperationExecutor: (
     context: CombatOperationExecutorContext,
+  ) => CombatOperationExecutor;
+  /** 无技能宿主的出生事件复用生命账本操作，不伪造干员技能。 */
+  readonly createBirthVitalsExecutor?: (
+    context: Pick<
+      CombatOperationExecutorContext,
+      'clock' | 'receipt' | 'semanticEvents' | 'queryTargets'
+    >,
+    delegate: CombatOperationExecutor,
   ) => CombatOperationExecutor;
   /** 发布端使用公共事件载荷；具体生产能力由安装的运行时端口决定。 */
   readonly onPostSkillCastRequest?: (ownerId: string, info: CombatSkillCastInfo | null) => void;
@@ -1157,8 +1173,13 @@ export class CombatRuntimeAssembly {
 
       for (const [ownerId, sources] of this.sharedState.reactiveOperationSources) {
         const operator = this.#operators.get(ownerId);
-        if (operator === undefined)
-          throw new Error(`restored reactive source owner '${ownerId}' is missing`);
+        if (operator === undefined) {
+          const enemy = this.#readEnemyProgram(runtimeTargetFromEntityId(ownerId));
+          if (!enemy?.birthBuffs)
+            throw new Error(`restored reactive source owner '${ownerId}' is missing`);
+          this.#registerEnemyBirthOperations(ownerId, enemy, options);
+          continue;
+        }
         for (const sourceActionId of sources)
           this.#registerRestoredReactiveOperationBinding(operator, sourceActionId, options);
       }
@@ -1246,7 +1267,9 @@ export class CombatRuntimeAssembly {
         entities,
         globalBuffs: this.globalBuffs,
         resolveDefinition: (definitionOwnerId, definitionId) =>
-          this.#operators.get(definitionOwnerId)?.buffDefinitions?.[definitionId],
+          this.#operators.get(definitionOwnerId)?.buffDefinitions?.[definitionId] ??
+          this.#readEnemyProgram(runtimeTargetFromEntityId(definitionOwnerId))?.birthBuffs
+            ?.definitions[definitionId],
         resolveGlobalDefinition: (
           _sourceId,
           id,
@@ -2892,6 +2915,60 @@ export class CombatRuntimeAssembly {
     });
   }
 
+  #registerEnemyBirthOperations(
+    enemyId: string,
+    program: CombatEnemyProgram,
+    options: CombatRuntimeAssemblyOptions,
+  ): void {
+    if (!program.birthBuffs) return;
+    const sourceActionId = 'enemy-birth';
+    const key = `${enemyId}\u0000${sourceActionId}`;
+    if (!this.#reactiveOperationBindings.has(key))
+      this.#reactiveOperationBindings.set(key, state =>
+        this.#createReactiveOperationChain(
+          { ownerId: enemyId, buffDefinitions: program.birthBuffs!.definitions },
+          sourceActionId,
+          queryTargets =>
+            options.createBirthVitalsExecutor?.(
+              {
+                clock: this.clock,
+                receipt: this.receipt,
+                semanticEvents: this.semanticEvents,
+                queryTargets,
+              },
+              unsupportedReactiveTerminal,
+            ) ?? unsupportedReactiveTerminal,
+          options,
+          state,
+        ),
+      );
+  }
+
+  #applyEnemyBirthBuffs(
+    enemyId: string,
+    program: CombatEnemyProgram,
+    options: CombatRuntimeAssemblyOptions,
+  ): void {
+    const birth = program.birthBuffs;
+    if (!birth) return;
+    this.#registerEnemyBirthOperations(enemyId, program, options);
+    const target = this.#resolveBuffTargetById(enemyId);
+    if (!target.applyScoped) throw new Error(`enemy '${enemyId}' cannot apply birth Buffs`);
+    for (const application of birth.applications) {
+      const definition = birth.definitions[application.buffId];
+      if (!definition) throw new Error(`missing birth Buff '${application.buffId}'`);
+      target.applyScoped({
+        buffId: application.buffId,
+        definition,
+        sourceId: enemyId,
+        definitionOwnerId: enemyId,
+        sourceActionId: 'enemy-birth',
+        blackboardValues: application.blackboard,
+        producedBy: { kind: 'action', ownerId: enemyId, actionId: 'enemy-birth' },
+      });
+    }
+  }
+
   #bindEnemyLives(): FrameRuntime | undefined {
     const options = this.#options;
     const ids = options.enemyInstances?.keys() ?? [options.enemyBuffRuntime.ownerId];
@@ -2914,7 +2991,10 @@ export class CombatRuntimeAssembly {
         options.readEnemyLifecycleState?.(enemyId),
       );
       const runtime = new EnemyLifeRuntime(lifecycle, vitals, {
-        spawn: () => options.emitAbilityEvent?.(enemyId, 'enemyEnterFight', { sourceId: enemyId }),
+        spawn: () => {
+          this.#applyEnemyBirthBuffs(enemyId, program, options);
+          options.emitAbilityEvent?.(enemyId, 'enemyEnterFight', { sourceId: enemyId });
+        },
         healthCleared: previousHealth =>
           this.receipt.record({
             frame: this.clock.frame,
@@ -5034,7 +5114,12 @@ export class CombatRuntimeAssembly {
 
   /** 常驻事件监听器共用的条件与动作解释链；来源模块只提供末端能力和归因身份。 */
   #createReactiveOperationChain(
-    operator: CombatOperatorProgram,
+    operator:
+      | CombatOperatorProgram
+      | {
+          readonly ownerId: string;
+          readonly buffDefinitions: NonNullable<CombatOperatorProgram['buffDefinitions']>;
+        },
     sourceActionId: string,
     createTerminal: ReactiveTerminalFactory,
     options: CombatRuntimeAssemblyOptions,
@@ -5043,7 +5128,7 @@ export class CombatRuntimeAssembly {
     const terminal = createTerminal((query, context) =>
       targetContextOperations.queryTargets(query, context),
     );
-    const operatorId = operator.operatorId;
+    const operatorId = 'ownerId' in operator ? operator.ownerId : operator.operatorId;
     const operationHost = {
       state: restoredOperationHost ?? createCombatOperationHostState(),
       programs: this.combatOperationPrograms,
@@ -5097,7 +5182,10 @@ export class CombatRuntimeAssembly {
         finishProjectile: target => this.projectileLifetimes.finishByAction(target),
         ...this.#projectileRuntimeDependencies(operatorId),
       },
-      abilityEntityId => this.#resolveOperatorAbilityEntityDefinition(operator, abilityEntityId),
+      abilityEntityId =>
+        'ownerId' in operator
+          ? undefined
+          : this.#resolveOperatorAbilityEntityDefinition(operator, abilityEntityId),
       { state: operationHost.state.abilityEntities, programs: operationHost.programs },
     );
     const timeDilationOperations = this.#wrapPresentationAndTimeOperations(
@@ -5482,6 +5570,7 @@ export class CombatRuntimeAssembly {
     },
     queryTargets?: CombatOperationExecutor['queryTargets'],
   ): CombatOperationExecutor {
+    delegate = new CountShieldUiOperationExecutor(this.clock, this.receipt, queryTargets, delegate);
     delegate = new HideUiOperationExecutor(
       this.ultimatePresentation,
       operatorId,

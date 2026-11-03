@@ -118,6 +118,27 @@ const schema_12d2e6c473ae = { unionVariants: [{}, {}, {}, {}] } as const;
 const schema_84052e130a16 = { unionVariants: [{}, {}, {}, {}, {}, {}] } as const;
 const schema_ebdb00131bfd = { unionVariants: [{}, {}, {}, {}, {}, {}, {}] } as const;
 const schema_8959ee040d75 = { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}] } as const;
+const schema_41975b1e106f = {
+  skillSlotKey: {
+    kind: 'string',
+    referenceKind: 'skillSlot',
+    description: '要修改的原生技能槽，与技能库分组无关。',
+  },
+  targetSkillKey: {
+    kind: 'string',
+    referenceKind: 'skill',
+    description: 'Buff 启用期间换入的技能。',
+  },
+  revertedSkillKey: {
+    kind: 'string',
+    referenceKind: 'skill',
+    description: 'Buff 停用或结束时恢复的技能。',
+  },
+  inheritOriginSkillCooldownProgress: {
+    kind: 'boolean',
+    description: '已保留证据位；运行时尚未接入 true 的双向冷却进度复制。',
+  },
+} as const;
 const schema_09a98e6b12c6 = {
   kind: 'enum',
   options: ['sourceSkillCast'],
@@ -132,6 +153,12 @@ const schema_13723467980b = {
   kind: 'opaque',
   fallback: { reason: 'no-present-type' },
   optional: true,
+} as const;
+const schema_154604c6f84a = {
+  kind: 'opaque',
+  fallback: { reason: 'no-present-type' },
+  optional: true,
+  description: '所属 Buff 图中的条件动作入口；序列返回真后才执行处理器。',
 } as const;
 const schema_de0463628c7e = {
   kind: 'array',
@@ -234,6 +261,12 @@ const schema_1d2cb6929108 = {
   semantics: schema_a4c41ed6f378,
   description: '只有此修正安装在指定一方时才启用。',
 } as const;
+const schema_e9c977e433ad = {
+  kind: 'enum',
+  options: schema_a356e6cf2c40,
+  semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}] },
+  description: '写入的通用八槽公式槽位。',
+} as const;
 const schema_6e4c3f49f99a = {
   kind: 'enum',
   options: [
@@ -297,6 +330,10 @@ const schema_ed4ef47e3f5d = {
     semantics: { arrayElement: {} },
     description: '推测失败时放置的独立技能序列，允许重复，不影响技能库展示。',
   },
+} as const;
+const schema_cd6bb26e2390 = {
+  kind: 'object',
+  fields: { blackboardKey: { kind: 'string', description: '读取最大层数的 Buff 黑板键。' } },
 } as const;
 const schema_599d1b942d1e = {
   kind: 'object',
@@ -519,35 +556,10 @@ const schema_cf718c4186c5 = {
   optional: true,
   description: 'Buff 到期但被延长逻辑暂时阻止结束时，临时挂到所属实体的标签。',
 } as const;
-const schema_fee4ad765b72 = {
-  kind: 'array',
-  element: {
-    kind: 'object',
-    fields: {
-      skillSlotKey: {
-        kind: 'string',
-        referenceKind: 'skillSlot',
-        description: '要修改的原生技能槽，与技能库分组无关。',
-      },
-      targetSkillKey: {
-        kind: 'string',
-        referenceKind: 'skill',
-        description: 'Buff 启用期间换入的技能。',
-      },
-      revertedSkillKey: {
-        kind: 'string',
-        referenceKind: 'skill',
-        description: 'Buff 停用或结束时恢复的技能。',
-      },
-      inheritOriginSkillCooldownProgress: {
-        kind: 'boolean',
-        description: '已保留证据位；运行时尚未接入 true 的双向冷却进度复制。',
-      },
-    },
-  },
-  semantics: { arrayElement: {} },
-  optional: true,
-  description: '每次启用时换入、停用或结束时还原；生命周期归当前 Buff 实例所有。',
+const schema_a514ad26903f = {
+  attribute: { kind: 'string', description: '属性名称，或由宿主上下文解析的属性选择器。' },
+  slot: schema_e9c977e433ad,
+  value: { kind: 'number', description: '固定数值或由调用方求值的参数。' },
 } as const;
 const schema_39705e8d67e9 = [
   { kind: 'number' },
@@ -610,19 +622,6 @@ const schema_3c19b624f5c5 = {
   optional: true,
   description: '仅两种高优先级模式读取此值决定启用顺序；Stack 使用剩余寿命与实例编号选择替换项。',
 } as const;
-const schema_a808ed549afd = {
-  kind: 'union',
-  variants: [
-    { kind: 'number' },
-    {
-      kind: 'object',
-      fields: { blackboardKey: { kind: 'string', description: '读取最大层数的 Buff 黑板键。' } },
-    },
-  ],
-  semantics: schema_a4c41ed6f378,
-  optional: true,
-  description: '可在施加时从该 Buff 已合并的实例黑板解析。',
-} as const;
 const schema_d0cf781b32fe = {
   kind: 'union',
   variants: schema_39705e8d67e9,
@@ -658,11 +657,11 @@ const schema_338b4f4fde4d = {
   optional: true,
   description: '创建时按技能等级解析的动作黑板默认值。',
 } as const;
-const schema_54a362a427de = {
+const schema_2899ed757d6e = {
   kind: 'object',
   fields: schema_d5e7d287fb96,
   optional: true,
-  description: 'Buff 自身的图标、颜色、排序位置和进度条等显示设置。\n不参与战斗计算的显示信息。',
+  description: 'Buff 自身的图标、颜色、排序位置和进度条等显示设置。',
 } as const;
 const schema_213996462425 = {
   kind: 'object',
@@ -1452,50 +1451,11 @@ const schema_20a7058c1007 = {
     description: '能力实体启用期间安装的被动技能。',
   },
 } as const;
-const schema_34f991e409e4 = {
+const schema_9920bd1f5e44 = {
   kind: 'array',
   element: {
     kind: 'object',
     fields: {
-      attribute: {
-        kind: 'union',
-        variants: [
-          { kind: 'string' },
-          {
-            kind: 'object',
-            fields: {
-              kind: {
-                kind: 'enum',
-                options: ['all', 'main', 'secondary'],
-                semantics: schema_5bafbc7424f4,
-                description: '相对属性选择方式。',
-              },
-            },
-          },
-        ],
-        semantics: schema_a4c41ed6f378,
-        description: '指定属性名称，或在应用时按持有者选择主属性、副属性或全部四维。',
-      },
-      slot: {
-        kind: 'enum',
-        options: schema_a356e6cf2c40,
-        semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}] },
-        description: '要写入的原生属性公式槽。',
-      },
-      value: {
-        kind: 'union',
-        variants: [
-          { kind: 'number' },
-          {
-            kind: 'object',
-            fields: {
-              blackboardKey: { kind: 'string', description: '读取修正值的 Buff 黑板键。' },
-            },
-          },
-        ],
-        semantics: schema_a4c41ed6f378,
-        description: '固定修正值或从 Buff 黑板读取的值。',
-      },
       target: {
         kind: 'enum',
         options: ['buffSource', 'owner'],
@@ -1508,6 +1468,34 @@ const schema_34f991e409e4 = {
         options: ['converted'],
         optional: true,
         description: '以换算属性来源写入，避免再次参与属性换算。',
+      },
+      attribute: {
+        kind: 'union',
+        variants: [
+          { kind: 'string' },
+          {
+            kind: 'object',
+            fields: {
+              kind: {
+                kind: 'enum',
+                options: ['all', 'main', 'secondary'],
+                semantics: schema_5bafbc7424f4,
+              },
+            },
+          },
+        ],
+        semantics: schema_a4c41ed6f378,
+        description: '属性名称，或由宿主上下文解析的属性选择器。',
+      },
+      slot: schema_e9c977e433ad,
+      value: {
+        kind: 'union',
+        variants: [
+          { kind: 'number' },
+          { kind: 'object', fields: { blackboardKey: { kind: 'string' } } },
+        ],
+        semantics: schema_a4c41ed6f378,
+        description: '固定数值或由调用方求值的参数。',
       },
     },
   },
@@ -1749,7 +1737,7 @@ const schema_fa9874937ccd = {
   optional: true,
   description: '技能启用期间注册的战斗事件响应。',
 } as const;
-const schema_07ca46f3d991 = {
+const schema_68e0682e1a9f = {
   kind: 'array',
   element: {
     kind: 'union',
@@ -1789,7 +1777,11 @@ const schema_07ca46f3d991 = {
       {
         kind: 'object',
         fields: {
-          attribute: { kind: 'string', description: '原生属性名称。' },
+          attributeTiming: {
+            kind: 'enum',
+            options: ['runtime'],
+            description: 'Buff 伤害处理器始终读取战斗运行时属性。',
+          },
           kind: { kind: 'enum', options: ['instantAttribute'], description: '处理器种类判别值。' },
           targetSide: {
             kind: 'enum',
@@ -1797,6 +1789,7 @@ const schema_07ca46f3d991 = {
             semantics: schema_a4c41ed6f378,
             description: '要修改攻击方还是防御方的属性。',
           },
+          attribute: { kind: 'string', description: '原生属性名称。' },
           values: {
             kind: 'union',
             variants: [
@@ -1833,11 +1826,6 @@ const schema_07ca46f3d991 = {
             ],
             semantics: schema_a4c41ed6f378,
             description: '八槽完整值，或只写入一个槽的动态值。',
-          },
-          attributeTiming: {
-            kind: 'enum',
-            options: ['runtime'],
-            description: 'Buff 伤害处理器始终读取战斗运行时属性。',
           },
         },
       },
@@ -2668,6 +2656,43 @@ export const definitionSchemas = {
   enemy: {
     kind: 'object',
     fields: {
+      attributeModifiers: {
+        kind: 'array',
+        element: { kind: 'object', fields: schema_a514ad26903f },
+        semantics: { arrayElement: {} },
+        optional: true,
+      },
+      birthBuffs: {
+        kind: 'array',
+        element: {
+          kind: 'object',
+          fields: {
+            nameKey: { kind: 'string', optional: true },
+            runtimeBuffId: {
+              kind: 'string',
+              optional: true,
+              description: '可执行出生 Buff 的公共定义 ID。',
+            },
+            blackboard: {
+              kind: 'record',
+              value: { kind: 'number' },
+              semantics: { recordValue: {} },
+              optional: true,
+            },
+            key: { kind: 'string' },
+            buffId: { kind: 'string' },
+            origin: { kind: 'enum', options: ['enemy', 'stage'], semantics: schema_a4c41ed6f378 },
+            supported: { kind: 'boolean' },
+            modifiers: {
+              kind: 'array',
+              element: { kind: 'object', fields: schema_a514ad26903f },
+              semantics: { arrayElement: {} },
+            },
+          },
+        },
+        semantics: { arrayElement: {} },
+        optional: true,
+      },
       id: { kind: 'string' },
       icon: { kind: 'string', semantics: { aliases: ['ImageRef'] }, optional: true },
       tier: {
@@ -2711,6 +2736,11 @@ export const definitionSchemas = {
           },
           knotBreakDurationSeconds: { kind: 'number' },
           brokenDurationSeconds: { kind: 'number' },
+          recoveryTimeMultiplier: {
+            kind: 'number',
+            optional: true,
+            description: '基础失衡恢复时间倍率，省略时为 1。',
+          },
           finisherSpRecovery: {
             kind: 'number',
             description: '对该敌人施放处决后，玩家获得的技力。',
@@ -2862,14 +2892,13 @@ export const definitionSchemas = {
       {
         kind: 'object',
         fields: {
-          blackboard: schema_ed542e0d6573,
           dispelLevel: {
             kind: 'number',
             optional: true,
             description: '允许驱散所需的最低等级；省略表示不可驱散。',
           },
           affixSkillCastIdentity: schema_09a98e6b12c6,
-          presentation: schema_54a362a427de,
+          presentation: schema_2899ed757d6e,
           childPresentations: schema_a4cf7dc9e341,
           timeClock: schema_53925807bd61,
           applyTags: schema_117b99736db9,
@@ -2892,44 +2921,41 @@ export const definitionSchemas = {
           triggerIntervalSeconds: schema_174f8c55b872,
           waitFirstTriggerInterval: schema_5301263382d7,
           maxTriggerCount: schema_501a3eb5e4e2,
-          attributeModifiers: schema_34f991e409e4,
-          keywordEnhancements: schema_9ee1ea51ed9f,
-          shields: schema_a5af08cb3292,
-          sustainedProtection: schema_7a317c41ab0f,
-          role: schema_ee9d461eeb23,
-          spellBurst: schema_213996462425,
-          maxStackCount: schema_a808ed549afd,
-          skillSlotReplacements: schema_fee4ad765b72,
-          actionGraph: schema_13723467980b,
-          scheduledSequences: schema_13723467980b,
-          lifecycleSequences: schema_13723467980b,
-          abilityEventResponses: schema_13723467980b,
-          igniteEventResponses: schema_13723467980b,
+          blackboard: schema_ed542e0d6573,
+          attributeModifiers: schema_9920bd1f5e44,
           damageModifiers: {
             kind: 'array',
             element: {
               kind: 'object',
               fields: {
                 enabledSide: schema_c5f2c680637e,
-                processors: schema_07ca46f3d991,
-                condition: schema_13723467980b,
+                condition: {
+                  kind: 'opaque',
+                  fallback: { reason: 'no-present-type' },
+                  optional: true,
+                  description: '启用处理器前检查的条件。',
+                },
+                processors: schema_68e0682e1a9f,
               },
             },
             semantics: { arrayElement: {} },
             optional: true,
+            description: 'Buff 启用期间参与伤害计算的条件和数值处理器。',
           },
+          keywordEnhancements: schema_9ee1ea51ed9f,
           healModifiers: {
             kind: 'array',
             element: {
               kind: 'object',
               fields: {
                 enabledSide: schema_1d2cb6929108,
+                condition: schema_154604c6f84a,
                 processors: schema_362e3fdd1461,
-                condition: schema_13723467980b,
               },
             },
             semantics: { arrayElement: {} },
             optional: true,
+            description: 'Buff 启用期间参与治疗计算的条件和数值处理器。',
           },
           poiseModifiers: {
             kind: 'array',
@@ -2937,26 +2963,47 @@ export const definitionSchemas = {
               kind: 'object',
               fields: {
                 enabledSide: schema_5d82a3eec7ef,
+                condition: schema_154604c6f84a,
                 processors: schema_732047a460e0,
-                condition: schema_13723467980b,
               },
             },
             semantics: { arrayElement: {} },
             optional: true,
+            description: 'Buff 启用期间参与失衡伤害计算的条件和数值处理器。',
           },
+          shields: schema_a5af08cb3292,
+          sustainedProtection: schema_7a317c41ab0f,
+          role: schema_ee9d461eeb23,
+          spellBurst: schema_213996462425,
+          maxStackCount: {
+            kind: 'union',
+            variants: [{ kind: 'number' }, schema_cd6bb26e2390],
+            semantics: schema_a4c41ed6f378,
+            optional: true,
+          },
+          skillSlotReplacements: {
+            kind: 'array',
+            element: { kind: 'object', fields: schema_41975b1e106f },
+            semantics: { arrayElement: {} },
+            optional: true,
+          },
+          actionGraph: schema_13723467980b,
+          scheduledSequences: schema_13723467980b,
+          lifecycleSequences: schema_13723467980b,
+          abilityEventResponses: schema_13723467980b,
+          igniteEventResponses: schema_13723467980b,
         },
       },
       {
         kind: 'object',
         fields: {
-          blackboard: schema_ed542e0d6573,
           dispelLevel: {
             kind: 'number',
             optional: true,
             description: '允许驱散所需的最低等级；省略表示不可驱散。',
           },
           affixSkillCastIdentity: schema_09a98e6b12c6,
-          presentation: schema_54a362a427de,
+          presentation: schema_2899ed757d6e,
           childPresentations: schema_a4cf7dc9e341,
           timeClock: schema_53925807bd61,
           applyTags: schema_117b99736db9,
@@ -2979,7 +3026,28 @@ export const definitionSchemas = {
           triggerIntervalSeconds: schema_174f8c55b872,
           waitFirstTriggerInterval: schema_5301263382d7,
           maxTriggerCount: schema_501a3eb5e4e2,
-          attributeModifiers: schema_34f991e409e4,
+          blackboard: schema_ed542e0d6573,
+          attributeModifiers: schema_9920bd1f5e44,
+          damageModifiers: {
+            kind: 'array',
+            element: {
+              kind: 'object',
+              fields: {
+                enabledSide: schema_c5f2c680637e,
+                condition: {
+                  kind: 'opaque',
+                  fallback: schema_656c88cded91,
+                  semantics: schema_8ee971b26b52,
+                  optional: true,
+                  description: '启用处理器前检查的条件。',
+                },
+                processors: schema_68e0682e1a9f,
+              },
+            },
+            semantics: { arrayElement: {} },
+            optional: true,
+            description: 'Buff 启用期间参与伤害计算的条件和数值处理器。',
+          },
           keywordEnhancements: schema_9ee1ea51ed9f,
           healModifiers: {
             kind: 'array',
@@ -3017,27 +3085,13 @@ export const definitionSchemas = {
             kind: 'graph',
             description: '有动作入口的 Buff 保存自己的图；纯数值 Buff 可以省略。',
           },
-          damageModifiers: {
-            kind: 'array',
-            element: {
-              kind: 'object',
-              fields: {
-                enabledSide: schema_c5f2c680637e,
-                condition: {
-                  kind: 'opaque',
-                  fallback: schema_656c88cded91,
-                  semantics: schema_8ee971b26b52,
-                  optional: true,
-                  description: '启用处理器前检查的条件。',
-                },
-                processors: schema_07ca46f3d991,
-              },
-            },
-            semantics: { arrayElement: {} },
+          maxStackCount: {
+            kind: 'union',
+            variants: [{ kind: 'number' }, schema_cd6bb26e2390],
+            semantics: schema_a4c41ed6f378,
             optional: true,
-            description: 'Buff 启用期间参与伤害计算的条件和数值处理器。',
+            description: '可在施加时从该 Buff 已合并的实例黑板解析。',
           },
-          maxStackCount: schema_a808ed549afd,
           scheduledSequences: {
             kind: 'array',
             element: { kind: 'object', fields: schema_574a50c2d907 },
@@ -3283,7 +3337,13 @@ export const definitionSchemas = {
             optional: true,
             description: '每个实例独立持有的点燃响应；处理后是否结束由来源数据显式决定。',
           },
-          skillSlotReplacements: schema_fee4ad765b72,
+          skillSlotReplacements: {
+            kind: 'array',
+            element: { kind: 'object', fields: schema_41975b1e106f },
+            semantics: { arrayElement: {} },
+            optional: true,
+            description: '每次启用时换入、停用或结束时还原；生命周期归当前 Buff 实例所有。',
+          },
         },
       },
     ],

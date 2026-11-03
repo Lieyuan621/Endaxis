@@ -39,7 +39,7 @@ import type {
   DamageFeature,
   DamageTag,
   DamageType,
-  HealCalculationAttribute,
+  MultiplyAttributeCalculationAttribute,
   InflictionElement,
   LevelValues,
   OperatorAttribute,
@@ -582,7 +582,7 @@ export interface CombatStepParameters {
     | {
         /** 按原生指定一侧的属性乘区与固定加区计算。 */
         /** 用于计算治疗的属性。 */
-        attribute: HealCalculationAttribute;
+        attribute: OperatorAttribute | 'maxHealth';
         /** 省略时读取治疗来源；原生 valueSource=Target 时读取治疗目标。 */
         attributeSource?: 'target';
         /** 属性乘数。 */
@@ -597,6 +597,40 @@ export interface CombatStepParameters {
         /** 直接使用的基础治疗值。 */
         amount: LevelValues | ActionValueOperand;
         /** 固定值分支不能同时填写治疗属性。 */
+        attribute?: never;
+        /** 固定值分支不能同时填写属性乘数。 */
+        multiplier?: never;
+        /** 固定值分支不能同时填写固定加值。 */
+        addition?: never;
+      }
+  );
+  /** 原生 RecoverPoiseAction：恢复失衡值，不执行生命治疗修正与事件。 */
+  recoverPoise: {
+    /** 按原生目标查询顺序逐个失衡恢复。 */
+    target: ActionTargetQuery;
+    /** 原生独立 ActionTarget 选择；currentTarget 指本次循环的被失衡恢复者。 */
+    healer: ActionEntitySelection | { readonly kind: 'currentTarget' };
+    /** 原生 AbilityAction.alwaysNext；false 时保留失衡恢复应用失败的序列短路。 */
+    alwaysNext?: boolean;
+  } & (
+    | {
+        /** 按原生指定一侧的属性乘区与固定加区计算。 */
+        /** 用于计算失衡恢复的属性。 */
+        attribute: MultiplyAttributeCalculationAttribute;
+        /** 省略时读取失衡恢复来源；原生 valueSource=Target 时读取失衡恢复目标。 */
+        attributeSource?: 'target';
+        /** 属性乘数。 */
+        multiplier: LevelValues | ActionValueOperand;
+        /** 乘算后加入的固定失衡恢复值。 */
+        addition: LevelValues | ActionValueOperand;
+        /** 属性公式分支不能同时填写固定失衡恢复值。 */
+        amount?: never;
+      }
+    | {
+        /** 原生 DefiniteValueCalculation：直接使用动作值，不读取施法者属性。 */
+        /** 直接使用的基础失衡恢复值。 */
+        amount: LevelValues | ActionValueOperand;
+        /** 固定值分支不能同时填写失衡恢复属性。 */
         attribute?: never;
         /** 固定值分支不能同时填写属性乘数。 */
         multiplier?: never;
@@ -773,14 +807,14 @@ export interface CombatStepParameters {
   /** 保存最后一个匹配的有限时长 Buff 的剩余秒数；无匹配时写入 0。 */
   readBuffRemainingDuration: {
     target: ActionTargetQuery;
-    query: CombatStepParameters['readBuffStackCount']['query'];
+    query: BuffLookupQuery | { kind: 'environment' };
     outputKey: string;
   };
   /** 修改目标上匹配的有限时长 Buff；无限寿命 Buff 不受影响。 */
   setBuffRemainingDuration: {
     /** 原生只查询首个目标上的 Buff。 */
     target: ActionTargetQuery;
-    query: Exclude<CombatStepParameters['readBuffStackCount']['query'], { kind: 'environment' }>;
+    query: BuffLookupQuery;
     operation: 'assign' | 'add' | 'multiply';
     value: ActionValueOperand;
   };
@@ -1022,9 +1056,9 @@ export interface CombatStepParameters {
     ignoredAbilityEntityTargets?: readonly AbilityEntityTargetQuery[];
   };
   /** 将当前动作环境的来源施法替换为当前技能事件的来源施法。 */
-  changeOriginSkillToEventContextSkill: Record<never, never>;
+  changeOriginSkillToEventContextSkill: Record<string, never>;
   /** 取消当前可取消的施加事件；不删除已有Buff，也不截断动作序列。 */
-  terminateAddingBuff: Record<never, never>;
+  terminateAddingBuff: Record<string, never>;
   /** 原生 HideUIAction；区间生命周期独立于时间膨胀，不代表全部操作不可用。 */
   hideUi: {
     /** `true` 时只屏蔽输入，不隐藏界面。 */
@@ -1293,7 +1327,7 @@ export interface CombatStepParameters {
     alwaysNext: boolean;
   };
   /** DoOnceAction：每个动作实例只即时执行一次子序列，普通复位后可再次执行。 */
-  once: Record<never, never>;
+  once: Record<string, never>;
   /** 在承载调度区间内逐 Tick 驱动 body；保留原生周期动作的扫描与目标门槛。 */
   repeatEachTick: {
     /** 原生 Channeling 动作的逐帧和按目标重复设置。 */
@@ -1430,6 +1464,17 @@ export interface CombatStepParameters {
     /** 新的原生技能类型。 */
     nativeSkillType: NativeSkillType;
   };
+  /** 原生 CountShieldUIAction：更新次数盾显示，不改变实际免伤或扣次数规则。 */
+  setCountShieldUi: {
+    /** 要显示次数盾的能力系统目标。 */
+    target: ActionTargetQuery;
+    /** 移除次数盾显示。 */
+    remove: boolean;
+    /** 次数上限。 */
+    maximum: ActionValueOperand;
+    /** 剩余次数。 */
+    current: ActionValueOperand;
+  };
   /** 原生 NotifyCharPassiveUIAction：更新角色专属 HUD 数值，不修改伤害状态。 */
   setCharacterPassiveUiValue: {
     /** 查询首个能力系统目标；空查询不写入。 */
@@ -1497,6 +1542,7 @@ export const COMBAT_STEP_KINDS = [
   'dealDamage',
   'dealStagger',
   'heal',
+  'recoverPoise',
   'aura',
   'applyBuff',
   'createGlobalBuff',
@@ -1580,6 +1626,7 @@ export const COMBAT_STEP_KINDS = [
   'overrideMultiDashLimit',
   'changePlayerActionMode',
   'changeNativeSkillType',
+  'setCountShieldUi',
   'setCharacterPassiveUiValue',
   'inheritSkillCastInfoForBasicAttack',
   'startTyphoeaArchery',

@@ -83,14 +83,14 @@ it('keeps step kind, parameters and sequence fields correlated through the publi
   };
   const once: ResolvedCombatStepForKind<'once'> = {
     kind: 'once',
-    parameters: { scopeKey: 'test' },
+    parameters: {},
     body: emptyBody,
   };
   expect(rootActionSteps(once.body)).toEqual([]);
   // @ts-expect-error once requires its child sequence.
   const missingBody: ResolvedCombatStepForKind<'once'> = {
     kind: 'once',
-    parameters: { scopeKey: 'test' },
+    parameters: {},
   };
   void missingBody;
   // @ts-expect-error unknown kinds cannot silently resolve to never.

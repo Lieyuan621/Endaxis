@@ -142,6 +142,10 @@ import {
   parseFinishGlobalBuffActionSource,
   type GlobalBuffActionSource,
 } from './globalBuffActions.ts';
+import {
+  parseRecoverPoiseActionSource,
+  type RecoverPoiseActionSource,
+} from './recoverPoiseActions.ts';
 import { parseHealActionSource, type HealActionSource } from './healActions.ts';
 import {
   parseAddEntityControlTagsActionSource,
@@ -656,6 +660,7 @@ export type KnownNativeActionLeafSource =
       readonly action: { readonly kind: 'buffModifierRefresh' };
     }
   | { readonly family: 'heal'; readonly action: HealActionSource }
+  | { readonly family: 'recoverPoise'; readonly action: RecoverPoiseActionSource }
   | { readonly family: 'environment'; readonly action: BreakInteractiveActionSource }
   | { readonly family: 'elementalInfliction'; readonly action: ElementalInflictionActionSource }
   | {
@@ -1858,6 +1863,11 @@ export function tryParseKnownNativeActionLeafSource(
       return {
         family: 'buffTimePause',
         action: parseBuffTimePauseActionSource(value, path),
+      };
+    case 'RecoverPoiseAction':
+      return {
+        family: 'recoverPoise',
+        action: parseRecoverPoiseActionSource(value, path, inheritedBlackboard),
       };
     case 'HealAction':
       return { family: 'heal', action: parseHealActionSource(value, path, inheritedBlackboard) };

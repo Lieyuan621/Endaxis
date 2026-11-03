@@ -28,7 +28,7 @@ import type {
   DamageTag,
   DamageType,
   ElementalReaction,
-  HealCalculationAttribute,
+  MultiplyAttributeCalculationAttribute,
   OperatorAttribute,
   SkillBuffAbilityEventResponse,
   SkillBuffDefinition,
@@ -209,7 +209,27 @@ export interface ResolvedCombatStepParameters {
     tags: readonly GameplayTag[];
   } & (
     | {
-        attribute: HealCalculationAttribute;
+        attribute: CompiledStepParameters['heal']['attribute'] & string;
+        attributeSource?: 'target';
+        multiplier: number | CompiledValueInput;
+        addition: number | CompiledValueInput;
+        amount?: never;
+      }
+    | {
+        amount: number | CompiledValueInput;
+        attribute?: never;
+        multiplier?: never;
+        addition?: never;
+      }
+  );
+  /** 原生 RecoverPoiseAction：恢复失衡值，不执行生命治疗修正与事件。 */
+  recoverPoise: {
+    target: CompiledStepParameters['recoverPoise']['target'];
+    healer: CompiledStepParameters['recoverPoise']['healer'];
+    alwaysNext?: boolean;
+  } & (
+    | {
+        attribute: MultiplyAttributeCalculationAttribute;
         attributeSource?: 'target';
         multiplier: number | CompiledValueInput;
         addition: number | CompiledValueInput;
@@ -327,6 +347,7 @@ export interface ResolvedCombatStepParameters {
   overrideMultiDashLimit: CompiledStepParameters['overrideMultiDashLimit'];
   changePlayerActionMode: CompiledStepParameters['changePlayerActionMode'];
   changeNativeSkillType: CompiledStepParameters['changeNativeSkillType'];
+  setCountShieldUi: CompiledStepParameters['setCountShieldUi'];
   setCharacterPassiveUiValue: CompiledStepParameters['setCharacterPassiveUiValue'];
   inheritSkillCastInfoForBasicAttack: CompiledStepParameters['inheritSkillCastInfoForBasicAttack'];
   startTyphoeaArchery: CompiledStepParameters['startTyphoeaArchery'];
@@ -442,6 +463,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   dealDamage: 'operation',
   dealStagger: 'operation',
   heal: 'operation',
+  recoverPoise: 'operation',
   aura: 'sequence',
   applyBuff: 'operation',
   createGlobalBuff: 'operation',
@@ -525,6 +547,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   overrideMultiDashLimit: 'operation',
   changePlayerActionMode: 'operation',
   changeNativeSkillType: 'operation',
+  setCountShieldUi: 'operation',
   setCharacterPassiveUiValue: 'operation',
   inheritSkillCastInfoForBasicAttack: 'operation',
   startTyphoeaArchery: 'operation',

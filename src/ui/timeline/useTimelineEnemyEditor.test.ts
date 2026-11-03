@@ -74,13 +74,13 @@ describe('useTimelineEnemyEditor', () => {
     );
     expect(editor.selectedDefinition.value).toBeNull();
   });
-  it('关卡选择保存原生身份和完整数值，重新读取及模拟不依赖生成变体 ID', () => {
+  it('关卡选择保存出生定义引用，后台数据包包含规则且恢复后结算一致', () => {
     const { editor, scenario } = createEditor();
     const stage = generatedEnemyStages.find(stage =>
-      stage.enemies.some(enemy => enemy.definitionId?.includes('--')),
+      stage.enemies.some(enemy => enemy.birthBuffs?.some(buff => buff.supported)),
     )!;
     const entry = stage.enemies.find(
-      enemy => enemy.definitionId?.includes('--') && enemy.level !== null,
+      enemy => enemy.birthBuffs?.some(buff => buff.supported) && enemy.level !== null,
     )!;
     editor.selectDefinitionEnemy(entry.definitionId!, entry.level!, entry.source);
     const saved = firstScenarioEnemy(scenario.value).enemy;
@@ -90,22 +90,29 @@ describe('useTimelineEnemyEditor', () => {
       enemyId: entry.source.enemyId,
       templateId: entry.source.templateId,
       level: entry.level,
+      spawnId: entry.id,
     });
     expect(editor.selectedDefinition.value?.id).toBe(entry.source.templateId);
     const project = createEmptyProject({ createdWith: 'test' });
     project.scenarios = [scenario.value];
     project.activeScenarioId = scenario.value.id;
     const json = serializeProjectDocument(project);
-    expect(json).not.toContain(entry.definitionId!);
+    expect(saved.birthEffects).not.toHaveProperty('definitionId');
+    expect(json).not.toContain('"buffDefinitions"');
     const parsed = parseProjectDocument(json, { gameDataRepository });
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) throw new Error('expected a valid stage enemy');
     const restored = parsed.value.scenarios[0]!;
     expect(firstScenarioEnemy(restored).enemy).toEqual(saved);
     const data = captureScenarioSimulationGameData(restored, gameDataRepository);
-    expect(data.enemies.map(enemy => enemy.id)).toEqual([entry.source.templateId]);
-    expect(restoreScenarioSimulationGameData(data).getEnemy(entry.definitionId!)).toBeNull();
-    expect(compileScenarioEnemy(firstScenarioEnemy(restored).enemy).health).toBe(saved.editable.hp);
+    expect(data.enemies.map(enemy => enemy.id)).toEqual([
+      ...new Set([entry.source.templateId, entry.definitionId]),
+    ]);
+    expect(data.enemyStages?.map(stage => stage.id)).toEqual([stage.id]);
+    const workerRepository = restoreScenarioSimulationGameData(data);
+    expect(compileScenarioEnemy(firstScenarioEnemy(restored).enemy, workerRepository).health).toBe(
+      compileScenarioEnemy(saved, gameDataRepository).health,
+    );
   });
   it('选择敌人预制体会提交一次完整实例', () => {
     const { editor, scenario, session } = createEditor();
