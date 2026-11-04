@@ -25,6 +25,14 @@ export interface TimelineItemRef {
 }
 export const timelineItemKey = (ref: TimelineItemRef): string => JSON.stringify([ref.kind, ref.id]);
 
+/** 折叠准备区只保留展开入口，不允许输入被拖进隐藏的负帧区域。 */
+export function minimumEditableTimelineInputFrame(scenario: ScenarioDocument): number {
+  return Math.max(
+    scenario.inheritance?.frame ?? -Infinity,
+    scenario.editor.prepExpanded ? -scenario.battle.prepFrames : 0,
+  );
+}
+
 /** 编辑对象只描述作者输入。自动切人、hit 等模拟投影不注册为可编辑对象。 */
 export interface TimelineItem {
   readonly ref: TimelineItemRef;
@@ -85,7 +93,7 @@ function pointItems<T extends Timed>(
     const key = timelineItemKey(ref);
     const minimumFrame = Math.max(
       adapter.preparation ? -scenario.battle.prepFrames : 0,
-      adapter.input ? (scenario.inheritance?.frame ?? -Infinity) : -Infinity,
+      adapter.input ? minimumEditableTimelineInputFrame(scenario) : -Infinity,
     );
     return {
       ref,
@@ -240,7 +248,7 @@ export function collectTimelineItems(
           trackIndex: index as TrackIndex,
           frame: cast.placement.startFrame ?? starts.get(cast.id),
           multiple: true,
-          minimumFrame: scenario.inheritance?.frame ?? -scenario.battle.prepFrames,
+          minimumFrame: minimumEditableTimelineInputFrame(scenario),
           maximumFrame: scenario.battle.durationFrames,
           blocked:
             !!cast.presentation?.locked || anchorFrame < (scenario.inheritance?.frame ?? -Infinity),

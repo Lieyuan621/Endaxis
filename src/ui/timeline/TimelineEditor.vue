@@ -339,6 +339,7 @@ import {
 } from './interaction/timelineEditorSelection';
 import {
   collectTimelineItems,
+  minimumEditableTimelineInputFrame,
   moveTimelineItems,
   planTimelineItemMove,
   removeTimelineItems,
@@ -1010,13 +1011,7 @@ onMounted(() => {
 });
 const scenario = shallowRef(scenarioSession.snapshot.scenario);
 /** 折叠准备区只保留展开入口；此时不能把新的时间轴输入写进不可见历史。 */
-const minimumEditableInputFrame = computed(() =>
-  scenario.value.inheritance?.frame !== undefined
-    ? scenario.value.inheritance.frame
-    : scenario.value.editor.prepExpanded
-      ? -scenario.value.battle.prepFrames
-      : 0,
-);
+const minimumEditableInputFrame = computed(() => minimumEditableTimelineInputFrame(scenario.value));
 const timelinePrepPreviewFrames = ref<number | null>(null);
 const displayedTimelinePrepFrames = computed(
   () => timelinePrepPreviewFrames.value ?? scenario.value.battle.prepFrames,
@@ -3222,6 +3217,10 @@ const monitoredEnemyName = computed(() => {
       : enemyName(source.enemyId.replaceAll('_', '-')))
   );
 });
+const monitoredEnemyIndex = computed(
+  () =>
+    levelEnemies(scenario.value.level).findIndex(enemy => enemy.id === monitoredEnemyId.value) + 1,
+);
 const monitoredCurves = computed(() =>
   projectPublishedEnemyCurves(publishedSimulation.value, monitoredEnemyId.value),
 );
@@ -7014,6 +7013,8 @@ function setMobileGuideFrame(frame: number | null): void {
     <template #enemy>
       <EnemySettingsPanel
         :multi-enemy-enabled="multiEnemyEnabled"
+        :selected-enemy-index="monitoredEnemyIndex"
+        :selected-enemy-name="monitoredEnemyName"
         @select-stage="applyStageEnemies"
         :read-only="configurationReadOnly"
         :enemy="monitoredEnemy"
@@ -7170,6 +7171,8 @@ function setMobileGuideFrame(frame: number | null): void {
     <template #left-bottom="{ tool }">
       <EnemySettingsPanel
         :multi-enemy-enabled="multiEnemyEnabled"
+        :selected-enemy-index="monitoredEnemyIndex"
+        :selected-enemy-name="monitoredEnemyName"
         @select-stage="applyStageEnemies"
         :read-only="configurationReadOnly"
         v-if="tool === 'enemy'"
@@ -8283,6 +8286,7 @@ function setMobileGuideFrame(frame: number | null): void {
                   :snap-frames="snapFrames"
                   :key="activeProjectScenarioId"
                   :selected-id="monitoredEnemyId"
+                  :health-curve="monitoredHealthCurve"
                   :target-switches="scenario.battle.enemyTargetSwitches"
                   :published-target-selection="publishedEnemyTargetSelection"
                   :published-initial-frame="-(publishedSimulation?.scenario.battle.prepFrames ?? 0)"
@@ -8307,6 +8311,7 @@ function setMobileGuideFrame(frame: number | null): void {
                   :header-width="TIMELINE_TRACK_HEADER_WIDTH"
                   :read-only="configurationReadOnly"
                   :initial-frame="-scenario.battle.prepFrames"
+                  :minimum-editable-frame="minimumEditableInputFrame"
                   :automatic-death="scenario.battle.enemyAutomaticDeath ?? false"
                   @update-lifecycle="updateEnemyLifecycle"
                   @select="monitoredEnemyId = $event"
@@ -8378,16 +8383,10 @@ function setMobileGuideFrame(frame: number | null): void {
                 </TimelineEnemyOverview>
               </template>
               <template v-else>
-                <EaButton
-                  v-if="multiEnemyEnabled"
-                  class="enemy-overview-return"
-                  size="sm"
-                  variant="ghost"
-                  @click="enemyDetailOpen = false"
-                  >← {{ t('timeline.enemies.backToOverview') }}</EaButton
-                >
                 <TimelineEnemyEffects
                   :compact="compact"
+                  :show-overview-return="multiEnemyEnabled"
+                  @return-overview="enemyDetailOpen = false"
                   @open-damage-detail="
                     hitDetailTarget = null;
                     enemyDamageDetailSequence = $event;
@@ -10433,19 +10432,5 @@ button:disabled {
   font-weight: 900;
   text-align: center;
   white-space: nowrap;
-}
-</style>
-
-<style scoped>
-.enemy-overview-return {
-  height: 24px;
-  min-height: 24px;
-  max-height: 24px;
-  padding: 2px 8px;
-  font-size: 11px;
-  position: absolute;
-  top: 4px;
-  right: 12px;
-  z-index: 45;
 }
 </style>

@@ -79,6 +79,8 @@ const enemyOrder = new Map<string, number>(
 const props = defineProps<{
   readOnly?: boolean;
   multiEnemyEnabled?: boolean;
+  selectedEnemyIndex?: number;
+  selectedEnemyName?: string;
   enemy: EnemyDocument;
   definition: EnemyDefinition | null;
   enemies: readonly EnemyDefinition[];
@@ -357,7 +359,12 @@ function removeKnotThreshold(index: number): void {
       </span>
       <span class="enemy-info-col">
         <span class="enemy-name-line">
-          <strong class="enemy-name">{{ activeName }}</strong>
+          <span v-if="multiEnemyEnabled && selectedEnemyIndex" class="enemy-selected-index"
+            >{{ selectedEnemyIndex }}.</span
+          >
+          <strong class="enemy-name" :title="selectedEnemyName ?? activeName">{{
+            selectedEnemyName ?? activeName
+          }}</strong>
           <span v-if="enemy.source.kind !== 'custom'" class="enemy-level-badge"
             >Lv{{ enemy.source.level }}</span
           >
@@ -905,6 +912,12 @@ function removeKnotThreshold(index: number): void {
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.enemy-selected-index {
+  flex: 0 0 auto;
+  color: var(--ea-gold);
+  font-size: 11px;
+  font-weight: 700;
 }
 .enemy-level-badge,
 .click-hint {

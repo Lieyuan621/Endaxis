@@ -29,9 +29,89 @@ async function addTimedMarker(
   await page.keyboard.press('Escape');
 }
 
+test('敌人总览的可见入口能添加敌人、打开操作和详情', async ({ page }) => {
+  await page.goto('/timeline');
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
+  await page.getByRole('button', { name: '多敌人模式', exact: true }).click();
+  await page.keyboard.press('Escape');
+
+  const overview = page.locator('.enemy-overview');
+  await overview.locator('header').getByRole('button', { name: '添加敌人' }).click();
+  await expect(overview.locator('.enemy-overview__row')).toHaveCount(2);
+  await expect(page.locator('.enemy-settings-panel .enemy-name-line')).toContainText('2.');
+
+  await overview
+    .locator('.enemy-overview__row')
+    .first()
+    .getByRole('button', { name: /更多操作/ })
+    .click();
+  const menu = page.locator('.enemy-overview-menu');
+  await expect(menu.locator('.menu-header')).toContainText('1.');
+  await expect(menu.getByRole('button', { name: '添加敌人' })).toHaveCount(0);
+  await menu.getByRole('button', { name: '查看敌人详情' }).click();
+  const returnButton = page.getByRole('button', { name: '返回敌人总览' });
+  await expect(returnButton).toBeVisible();
+  const hudBounds = await box(page.locator('.enemy-hud-snapshot'));
+  expect((await box(returnButton)).x).toBeLessThan(hudBounds.x + hudBounds.width);
+  await expect(page.locator('.enemy-settings-panel .enemy-name-line')).toContainText('1.');
+
+  await returnButton.click();
+  await expect(overview.locator('.enemy-overview__row-action')).toHaveCount(2);
+  await overview.locator('.enemy-overview__row.is-selected .enemy-overview__avatar').dblclick();
+  await expect(page.getByRole('button', { name: '返回敌人总览' })).toBeVisible();
+});
+
+test('多敌人右键菜单与主时间轴使用同一套外观', async ({ page }) => {
+  await page.goto('/timeline');
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
+  await page.getByRole('button', { name: '多敌人模式', exact: true }).click();
+  await page.keyboard.press('Escape');
+
+  await page.locator('.enemy-overview header').click({ button: 'right' });
+  const overview = page.locator('.enemy-overview-menu');
+  await expect(overview).toHaveClass(/timeline-context-menu/);
+  await expect(overview.getByRole('button', { name: '添加敌人', exact: true })).toHaveClass(
+    /menu-item/,
+  );
+  const surfaceStyle = await overview.evaluate(element => {
+    const style = getComputedStyle(element);
+    return {
+      background: style.backgroundColor,
+      borderRadius: style.borderRadius,
+      font: style.font,
+    };
+  });
+
+  const lane = page.locator('.enemy-life-track').first();
+  const bounds = await box(lane);
+  await page.mouse.click(bounds.x + bounds.width - 8, bounds.y + Math.min(8, bounds.height / 2), {
+    button: 'right',
+  });
+  const lifecycle = page.locator('.enemy-life-menu');
+  await expect(lifecycle).toHaveClass(/timeline-context-menu/);
+  await expect(
+    lifecycle.getByRole('button', { name: '切出' }).locator('svg.enemy-lifecycle-menu-icon'),
+  ).toHaveCount(1);
+  await expect(
+    lifecycle
+      .getByRole('button', { name: '设为主攻击目标' })
+      .locator('svg.enemy-lifecycle-menu-icon'),
+  ).toHaveCount(1);
+  expect(
+    await lifecycle.evaluate(element => {
+      const style = getComputedStyle(element);
+      return {
+        background: style.backgroundColor,
+        borderRadius: style.borderRadius,
+        font: style.font,
+      };
+    }),
+  ).toEqual(surfaceStyle);
+});
+
 test('敌人生命周期拖动可取消，正常提交只需一次撤销', async ({ page }) => {
   await page.goto('/timeline');
-  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
   await page.getByRole('button', { name: '多敌人模式', exact: true }).click();
   await page.keyboard.press('Escape');
   const marker = page.locator('.life-avatar').first();
@@ -69,9 +149,33 @@ test('敌人生命周期拖动可取消，正常提交只需一次撤销', async
   await expect(marker).toHaveAttribute('title', original!);
 });
 
+test('准备区折叠时敌人标记不能拖入隐藏帧，展开后可以', async ({ page }) => {
+  await page.goto('/timeline');
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
+  await page.getByRole('button', { name: '多敌人模式', exact: true }).click();
+  await page.keyboard.press('Escape');
+  const avatar = page.locator('.life-avatar').first();
+  const dragBy = async (deltaX: number) => {
+    const rect = await box(avatar);
+    const x = rect.x + rect.width / 2;
+    const y = rect.y + rect.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + deltaX, y, { steps: 6 });
+    await page.mouse.up();
+  };
+  await dragBy(180);
+  await dragBy(-300);
+  await expect(avatar).toHaveAttribute('title', /0\.00s$/);
+
+  await page.locator('.prep-collapsed-entry button').click();
+  await dragBy(-100);
+  await expect(avatar).toHaveAttribute('title', /-\d+\.\d{2}s$/);
+});
+
 test('新增敌人独立编辑生命周期，删除后可撤销恢复', async ({ page }) => {
   await page.goto('/timeline');
-  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
   await page.getByRole('button', { name: '多敌人模式', exact: true }).click();
   await page.keyboard.press('Escape');
   const avatars = page.locator('.life-avatar');
@@ -113,19 +217,24 @@ test('新增敌人独立编辑生命周期，删除后可撤销恢复', async ({
 
 test('自动死亡模式仍显示手动死亡标记并允许编辑', async ({ page }) => {
   await page.goto('/timeline');
-  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
   await page.getByRole('button', { name: '多敌人模式', exact: true }).click();
   await page.keyboard.press('Escape');
+  await expect(page.locator('.enemy-health-mini')).toHaveCount(1);
   const avatar = page.locator('.life-avatar').first();
   const lane = page.locator('.enemy-life-track').first();
   const menu = page.locator('.enemy-life-menu');
   await addTimedMarker(page, lane, '手动死亡', '死亡', 15);
+  await expect(lane.locator('.enemy-overview__death-terminal')).toHaveCount(0);
   await expect(lane.getByRole('button', { name: '死亡', exact: true })).toHaveAttribute(
     'title',
     /15.00s$/,
   );
+  await expect(
+    lane.getByRole('button', { name: '死亡', exact: true }).locator('svg.ea-close-icon'),
+  ).toHaveCount(1);
   const toggle = async (enabled: boolean) => {
-    await page.getByRole('button', { name: '更多', exact: true }).click();
+    await page.getByRole('button', { name: '方案设置', exact: true }).click();
     const setting = page.getByRole('button', { name: '敌人自动死亡', exact: true });
     await setting.click();
     await expect(setting).toHaveAttribute('aria-pressed', String(enabled));
@@ -138,6 +247,9 @@ test('自动死亡模式仍显示手动死亡标记并允许编辑', async ({ pa
   );
   await avatar.click({ button: 'right' });
   await expect(menu.getByRole('button', { name: '手动死亡', exact: true })).toBeVisible();
+  await expect(
+    menu.getByRole('button', { name: '手动死亡', exact: true }).locator('svg.ea-close-icon'),
+  ).toHaveCount(1);
   await page.keyboard.press('Escape');
   await toggle(false);
   await expect(lane.getByRole('button', { name: '死亡', exact: true })).toHaveAttribute(
@@ -148,7 +260,7 @@ test('自动死亡模式仍显示手动死亡标记并允许编辑', async ({ pa
 
 test('头像选择同步敌人属性，修改第二敌人不会覆盖首敌', async ({ page }) => {
   await page.goto('/timeline');
-  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
   await page.getByRole('button', { name: '多敌人模式', exact: true }).click();
   await page.keyboard.press('Escape');
   const avatars = page.locator('.life-avatar');
@@ -174,7 +286,7 @@ test('多敌人显式启用、详情返回、折叠以及关闭限制', async ({
   const sections = page.locator('.enemy-status-section');
   await expect(sections).toHaveCount(3);
   await expect(page.locator('.enemy-overview')).toHaveCount(0);
-  const settings = async () => page.getByRole('button', { name: '更多', exact: true }).click();
+  const settings = async () => page.getByRole('button', { name: '方案设置', exact: true }).click();
   await settings();
   const toggle = page.getByRole('button', { name: '多敌人模式', exact: true });
   await expect(toggle).toHaveAttribute('aria-pressed', 'false');
@@ -210,6 +322,8 @@ test('多敌人显式启用、详情返回、折叠以及关闭限制', async ({
   await expect(toggle).toBeDisabled();
   await page.keyboard.press('Escape');
   await expect(toggle).not.toBeVisible();
+  await page.locator('.life-avatar').last().click();
+  await expect(page.locator('.life-avatar').last()).toHaveClass(/selected/);
   await page.locator('.life-avatar').last().dblclick();
   const returnButton = page.getByRole('button', { name: '返回敌人总览', exact: false });
   expect((await box(returnButton)).height).toBeLessThanOrEqual(28);
@@ -217,18 +331,18 @@ test('多敌人显式启用、详情返回、折叠以及关闭限制', async ({
 
 test('单个敌人的非默认生命周期也阻止关闭，恢复后可以关闭', async ({ page }) => {
   await page.goto('/timeline');
-  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
   const toggle = page.getByRole('button', { name: '多敌人模式', exact: true });
   await toggle.click();
   await page.keyboard.press('Escape');
   await page.locator('.life-avatar').first().click({ button: 'right' });
   const menu = page.locator('.enemy-life-menu');
   await menu.getByRole('button', { name: '切出', exact: true }).click();
-  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
   await expect(toggle).toBeDisabled();
   await page.keyboard.press('Escape');
   await page.keyboard.press('Control+z');
-  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
   await expect(toggle).toBeEnabled();
   await toggle.click();
   await page.keyboard.press('Escape');
@@ -281,7 +395,7 @@ test('关卡批量应用确认、取消与撤销', async ({ page }) => {
 
 test('敌人条提示与高亮，拖动排序、删除首轨和主目标标记', async ({ page }) => {
   await page.goto('/timeline');
-  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
   await page.getByRole('button', { name: '多敌人模式', exact: true }).click();
   await page.keyboard.press('Escape');
   await addEnemy(page);
@@ -340,7 +454,7 @@ test('敌人条提示与高亮，拖动排序、删除首轨和主目标标记',
 
 test('删除初始敌人后重新加载，可以直接编辑剩余敌人并切回单敌人', async ({ page }) => {
   await page.goto('/timeline');
-  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
   await page.getByRole('button', { name: '多敌人模式', exact: true }).click();
   await page.keyboard.press('Escape');
   await addEnemy(page);
@@ -355,7 +469,7 @@ test('删除初始敌人后重新加载，可以直接编辑剩余敌人并切�
   await dialog.locator('input').first().fill('123456');
   await dialog.getByRole('button', { name: '确定', exact: true }).click();
   await expect(page.locator('.stats-summary .summary-value').first()).toHaveText('123,456');
-  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await page.getByRole('button', { name: '方案设置', exact: true }).click();
   await page.getByRole('button', { name: '多敌人模式', exact: true }).click();
   await page.keyboard.press('Escape');
   await expect(page.locator('.enemy-overview')).not.toBeVisible();

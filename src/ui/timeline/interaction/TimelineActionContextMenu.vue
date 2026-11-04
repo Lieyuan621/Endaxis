@@ -98,7 +98,7 @@ onBeforeUnmount(() => {
     <div
       v-if="visible"
       ref="menu"
-      class="timeline-action-context-menu"
+      class="timeline-action-context-menu timeline-context-menu"
       :style="{ left: `${left}px`, top: `${top}px` }"
       role="menu"
       @contextmenu.prevent.stop
@@ -245,100 +245,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.timeline-action-context-menu {
-  position: fixed;
-  z-index: 10000;
-  min-width: 180px;
-  padding: 6px 0;
-  border: 1px solid #444;
-  border-radius: 6px;
-  background: #2b2b2b;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
-  color: #e0e0e0;
-  font:
-    13px/1 'Segoe UI',
-    Roboto,
-    sans-serif;
-  user-select: none;
-}
-
-.menu-header {
-  max-width: 220px;
-  margin-bottom: 4px;
-  padding: 6px 12px 10px;
-  overflow: hidden;
-  border-bottom: 1px solid #3a3a3a;
-  color: #888;
-  font-size: 12px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.menu-item {
-  width: 100%;
-  height: 32px;
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  border: 0;
-  background: transparent;
-  color: #ccc;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.menu-item:hover {
-  background: #007fd4;
-  color: #fff;
-}
-
-.menu-item:disabled {
-  color: #777;
-  background: transparent;
-  cursor: not-allowed;
-}
-
-.menu-item.delete-item:not(:disabled):hover {
-  background: #ff7875;
-}
-
-.menu-item svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.menu-item kbd {
-  color: #888;
-  font:
-    11px/1 Consolas,
-    monospace;
-}
-
-.menu-item:hover kbd {
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.divider {
-  height: 1px;
-  margin: 4px 0;
-  background: #444;
-}
-
-.menu-label {
-  padding: 4px 12px;
-  color: #777;
-  font-size: 11px;
-}
-
 .color-grid {
   display: grid;
   grid-template-columns: repeat(6, 20px);

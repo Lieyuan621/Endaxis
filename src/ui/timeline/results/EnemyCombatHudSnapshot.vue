@@ -43,6 +43,7 @@ const poiseStateLabel = computed(() => {
   >
     <header>
       <strong>{{ compact ? labels.compactStatus : labels.status }}</strong>
+      <slot name="header-action" />
     </header>
     <div class="gauge gauge--hp">
       <span class="gauge__value">

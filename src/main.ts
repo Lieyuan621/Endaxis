@@ -3,6 +3,7 @@ import { createPinia } from 'pinia';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
 import './design-system/styles/index.css';
+import './ui/timeline/interaction/timelineContextMenu.css';
 
 import App from './App.vue';
 

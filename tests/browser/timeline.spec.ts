@@ -18,6 +18,28 @@ test('桌面项目菜单集中加载、接收、导出与重置，并与显示�
   await expect(page.locator('.export-dialog-shell')).toBeVisible();
 });
 
+test('方案设置固定在标题区，长方案名不会推移设置按钮和页签', async ({ page }) => {
+  await page.goto('/timeline');
+  const settings = page.getByRole('button', { name: '方案设置', exact: true });
+  const tab = page.locator('.ts-tab-item').first();
+  const beforeSettings = await box(settings);
+  const beforeTab = await box(tab);
+  await settings.click();
+  const panel = page.locator('.header-scenario-settings-panel');
+  await expect(panel.getByRole('button', { name: '多敌人模式', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await expect(panel).not.toBeVisible();
+  await expect(page.locator('.header-tools-panel')).not.toContainText('方案设置');
+
+  await page.getByRole('button', { name: '重命名当前方案', exact: true }).click();
+  const name = '这是一个很长很长的方案名称用于检查布局';
+  await page.locator('.ts-title-wrapper input').fill(name);
+  await page.locator('.ts-title-wrapper input').press('Enter');
+  await expect(page.locator('.ts-title-wrapper')).toHaveAttribute('title', name);
+  expect((await box(settings)).x).toBeCloseTo(beforeSettings.x, 0);
+  expect((await box(tab)).x).toBeCloseTo(beforeTab.x, 0);
+});
+
 test('方案各自保留会话内滚动和缩放，新方案使用默认视图', async ({ page }) => {
   await page.goto('/timeline');
   await page.getByRole('button', { name: 'SCALE +', exact: true }).click();
@@ -228,9 +250,7 @@ for (const menuName of ['更多', '显示']) {
     const menu = page.getByRole('button', { name: menuName, exact: true });
     await menu.click();
     const menuPanel = page.locator(
-      menuName === '更多'
-        ? '.header-more-panel:not(.header-project-panel)'
-        : '.timeline-display-menu',
+      menuName === '更多' ? '.header-tools-panel' : '.timeline-display-menu',
     );
     await expect(menuPanel).toBeVisible();
     await page.mouse.move(before.x + 10, before.y + 25);

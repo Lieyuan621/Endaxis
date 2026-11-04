@@ -4,7 +4,9 @@ import { enemyLifecycleMarkerBounds } from './enemyLifecycleEditing';
 import { enemyPresenceMarkerKey, layoutEnemyLifecycleMarkers } from './enemyLifecycleMarkerLayout';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton, EaInput, EaNumberInput } from '../../../design-system';
+import { EaButton, EaCloseIcon, EaInput, EaNumberInput, EaPlusIcon } from '../../../design-system';
+import TimelineMenuActionIcon from '../interaction/TimelineMenuActionIcon.vue';
+import EnemyLifecycleMenuIcon from './EnemyLifecycleMenuIcon.vue';
 import type { EnemyLifecycleDocument } from '../../../core/project/schema';
 import type { InteractionLease } from '../../interaction/interactionSession';
 import { snapTimelineFrame } from '../interaction/timelineSnap';
@@ -16,6 +18,7 @@ const props = defineProps<{
   targetSwitches?: readonly { id: string; frame: number }[];
   lifecycle?: EnemyLifecycleDocument;
   initialFrame: number;
+  minimumEditableFrame: number;
   defaultSpawnFrame: number;
   endFrame: number;
   automaticDeath: boolean;
@@ -75,7 +78,7 @@ function markerStyle(id: string) {
     : {};
 }
 
-type Marker = { id: string; frame: number; label: string; glyph: string };
+type Marker = { id: string; frame: number; label: string; glyph?: string };
 const markers = computed<Marker[]>(() => [
   ...(props.targetSwitches ?? []).map(marker => ({
     id: 'target:' + marker.id,
@@ -96,7 +99,6 @@ const markers = computed<Marker[]>(() => [
           id: 'death',
           frame: value.value.deathFrame,
           label: t('timeline.enemies.death'),
-          glyph: '×',
         },
       ]
     : []),
@@ -136,7 +138,14 @@ usePopoverInteractionBoundary(
   },
 );
 watch(
-  () => [props.lifecycle, props.readOnly, props.automaticDeath, props.initialFrame, props.endFrame],
+  () => [
+    props.lifecycle,
+    props.readOnly,
+    props.automaticDeath,
+    props.initialFrame,
+    props.minimumEditableFrame,
+    props.endFrame,
+  ],
   () => {
     cancelDrag();
     menu.value = undefined;
@@ -204,15 +213,19 @@ function moveDrag(event: PointerEvent) {
   }
   if (!d.started && !passedTimelineDragThreshold(d.x, d.y, event.clientX, event.clientY)) return;
   d.started = true;
-  d.frame = clampFrame(
-    snapTimelineFrame(
-      props.pxFrame(props.framePx(d.marker.frame) + event.clientX - d.x),
-      props.snapFrames,
-      props.endFrame,
-      props.initialFrame,
-    ),
-    d.marker.id,
+  const [markerMinimum, markerMaximum] = bounds(d.marker.id);
+  const minimum = Math.max(markerMinimum, props.minimumEditableFrame);
+  if (minimum > markerMaximum) {
+    d.frame = d.marker.frame;
+    return;
+  }
+  const snapped = snapTimelineFrame(
+    props.pxFrame(props.framePx(d.marker.frame) + event.clientX - d.x),
+    props.snapFrames,
+    props.endFrame,
+    props.initialFrame,
   );
+  d.frame = Math.max(minimum, Math.min(markerMaximum, snapped));
 }
 function endDrag(event: PointerEvent) {
   const d = drag.value;
@@ -328,6 +341,7 @@ onBeforeUnmount(() => {
       :class="{
         'life-avatar': marker.id === 'spawn',
         'life-target': marker.id.startsWith('target:'),
+        'is-actual-death': marker.id === 'death' && actualDeathFrame === marker.frame,
         selected: marker.id === 'spawn' && selected,
       }"
       :disabled="readOnly && marker.id !== 'spawn'"
@@ -357,6 +371,7 @@ onBeforeUnmount(() => {
       <span v-else-if="marker.id.startsWith('presence:')" class="presence-glyph">{{
         marker.glyph
       }}</span>
+      <EaCloseIcon v-else-if="marker.id === 'death'" size="1em" />
       <template v-else>{{ marker.glyph }}</template>
       <span v-if="drag?.marker.id === marker.id" class="drag-time"
         >{{ (drag.frame / 30).toFixed(2) }}s</span
@@ -366,38 +381,50 @@ onBeforeUnmount(() => {
       <div
         v-if="menu"
         ref="menuElement"
-        class="enemy-life-menu"
+        class="enemy-life-menu timeline-context-menu"
         :style="{ left: menu.x + 'px', top: menu.y + 'px' }"
         @pointerdown.stop
         @contextmenu.prevent
       >
-        <header>{{ name }} · {{ menu.marker?.label ?? (menu.frame / 30).toFixed(2) + 's' }}</header>
+        <header class="menu-header">
+          {{ name }} · {{ menu.marker?.label ?? (menu.frame / 30).toFixed(2) + 's' }}
+        </header>
         <div v-if="coincidentMarkers.length > 1" class="coincident-markers">
           <EaButton
             v-for="marker in coincidentMarkers"
             :key="marker.id"
             :aria-pressed="menu.marker?.id === marker.id"
             @click="menu.marker = marker"
-            >{{ marker.glyph }} {{ marker.label }}</EaButton
+            ><EaCloseIcon v-if="marker.id === 'death'" />
+            <template v-else>{{ marker.glyph }}</template> {{ marker.label }}</EaButton
           >
         </div>
         <EaButton
           class="menu-item"
+          variant="ghost"
+          size="sm"
           @click="
             menu = undefined;
             emit('copy');
           "
-          >{{ t('common.copy') }} <span class="menu-shortcut">Ctrl+C</span></EaButton
+          ><TimelineMenuActionIcon action="copy" />
+          <span>{{ t('common.copy') }}</span>
+          <kbd>Ctrl+C</kbd></EaButton
         >
         <EaButton
           class="menu-item"
+          variant="ghost"
+          size="sm"
           :disabled="readOnly || !canPaste"
           @click="
             menu = undefined;
             emit('paste');
           "
-          >{{ t('common.paste') }} <span class="menu-shortcut">Ctrl+V</span></EaButton
+          ><TimelineMenuActionIcon action="paste" />
+          <span>{{ t('common.paste') }}</span>
+          <kbd>Ctrl+V</kbd></EaButton
         >
+        <div class="divider" />
         <template v-if="menu.marker">
           <label
             >{{ t('timeline.enemies.timeSeconds') }}
@@ -416,36 +443,65 @@ onBeforeUnmount(() => {
           </label>
           <EaButton
             v-if="menu.marker.id !== 'spawn'"
-            class="menu-item"
+            class="menu-item delete-item"
+            variant="ghost"
+            size="sm"
             :disabled="readOnly"
             @click="removeMarker"
-            >{{ t('common.delete') }}</EaButton
+            ><TimelineMenuActionIcon action="delete" />
+            <span>{{ t('common.delete') }}</span></EaButton
           >
         </template>
         <template v-else>
           <EaButton
             class="menu-item"
+            variant="ghost"
+            size="sm"
             :disabled="readOnly"
             @click="
               menu = undefined;
               emit('add');
             "
-            >{{ t('timeline.enemies.add') }}</EaButton
+            ><span class="menu-icon" aria-hidden="true"><EaPlusIcon /></span>
+            <span>{{ t('timeline.enemies.add') }}</span></EaButton
           >
-          <EaButton class="menu-item" :disabled="readOnly" @click="addEvent('presence')">{{
-            t(presenceAtMenu ? 'timeline.enemies.exit' : 'timeline.enemies.enter')
-          }}</EaButton>
-          <EaButton class="menu-item" :disabled="readOnly" @click="addEvent('death')">{{
-            t('timeline.enemies.manualDeath')
-          }}</EaButton>
           <EaButton
             class="menu-item"
+            variant="ghost"
+            size="sm"
+            :disabled="readOnly"
+            @click="addEvent('presence')"
+          >
+            <span class="menu-icon" aria-hidden="true"
+              ><EnemyLifecycleMenuIcon :kind="presenceAtMenu ? 'exit' : 'enter'"
+            /></span>
+            <span>{{
+              t(presenceAtMenu ? 'timeline.enemies.exit' : 'timeline.enemies.enter')
+            }}</span>
+          </EaButton>
+          <EaButton
+            class="menu-item"
+            variant="ghost"
+            size="sm"
+            :disabled="readOnly"
+            @click="addEvent('death')"
+          >
+            <span class="menu-icon" aria-hidden="true"><EaCloseIcon /></span>
+            <span>{{ t('timeline.enemies.manualDeath') }}</span>
+          </EaButton>
+          <EaButton
+            class="menu-item"
+            variant="ghost"
+            size="sm"
             :disabled="readOnly || !canTargetAtFrame(menu.frame)"
             @click="
               emit('setTarget', menu.frame);
               menu = undefined;
             "
-            >{{ t('timeline.enemies.setMainTarget') }}</EaButton
+            ><span class="menu-icon" aria-hidden="true"
+              ><EnemyLifecycleMenuIcon kind="target"
+            /></span>
+            <span>{{ t('timeline.enemies.setMainTarget') }}</span></EaButton
           >
           <template v-if="removable">
             <label
@@ -453,13 +509,16 @@ onBeforeUnmount(() => {
               }}<EaInput v-model="draftName" :disabled="readOnly" @change="emit('rename', $event)"
             /></label>
             <EaButton
-              class="menu-item"
+              class="menu-item delete-item"
+              variant="ghost"
+              size="sm"
               :disabled="readOnly"
               @click="
                 emit('remove');
                 menu = undefined;
               "
-              >{{ t('common.delete') }}</EaButton
+              ><TimelineMenuActionIcon action="delete" />
+              <span>{{ t('common.delete') }}</span></EaButton
             >
           </template>
         </template>
@@ -511,6 +570,10 @@ onBeforeUnmount(() => {
 .life-target:hover {
   background: transparent;
 }
+.life-marker.is-actual-death {
+  z-index: 3;
+  color: #ed7272;
+}
 .target-cursor {
   width: calc(var(--enemy-icon-size, 28px) * 0.4);
   height: 100%;
@@ -547,22 +610,7 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 .enemy-life-menu {
-  position: fixed;
-  z-index: 10000;
   min-width: 220px;
-  max-width: calc(100vw - 12px);
-  padding: 6px 0;
-  border: 1px solid #444;
-  border-radius: 6px;
-  background: #2b2b2b;
-  box-shadow: 0 6px 16px #0009;
-  color: #ccc;
-  font-size: 13px;
-}
-.enemy-life-menu header {
-  padding: 6px 12px;
-  border-bottom: 1px solid #3a3a3a;
-  color: #aaa;
 }
 .coincident-markers {
   display: flex;
@@ -581,24 +629,5 @@ onBeforeUnmount(() => {
 }
 .enemy-life-menu label > :last-child {
   width: 110px;
-}
-.menu-item {
-  display: flex;
-  width: 100%;
-  height: 32px;
-  padding: 0 12px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  justify-content: flex-start;
-}
-.menu-item:hover:not(:disabled) {
-  background: #007fd4;
-  color: white;
-}
-.menu-shortcut {
-  margin-left: auto;
-  color: var(--ea-fg-muted);
 }
 </style>

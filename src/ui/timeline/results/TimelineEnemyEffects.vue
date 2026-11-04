@@ -44,6 +44,7 @@ import { isPhysicalStatusRowBuff } from './physicalStatusDisplay';
 import { ENEMY_STATUS_CONTENT_TOP, enemyStatusRowSize } from './monitorSectionMinimums';
 import { projectBuffTimelineColors } from './buffTimelineColors';
 import TimelineAttachmentContinuation from './TimelineAttachmentContinuation.vue';
+import { ArrowLeft } from '@element-plus/icons-vue';
 
 const { t, te } = useI18n();
 
@@ -71,6 +72,7 @@ const props = defineProps<{
   targetName: (targetId: string) => string;
   enemyLevel: number;
   compact?: boolean;
+  showOverviewReturn?: boolean;
   poiseKnotThresholds: readonly number[];
   hudLabels: {
     status: string;
@@ -95,6 +97,7 @@ const props = defineProps<{
   }) => string | undefined;
 }>();
 const emit = defineEmits<{
+  'return-overview': [];
   'open-damage-detail': [sequence: number];
   'open-entity-detail': [segment: PositionedOperatorPassiveUiTimelineSegment, title: string];
   'open-entity-hit': [hit: EntityHit];
@@ -375,6 +378,18 @@ function scrollEffects(event: WheelEvent) {
       :poise-knot-thresholds="poiseKnotThresholds"
       :labels="hudLabels"
     >
+      <template v-if="showOverviewReturn" #header-action>
+        <button
+          type="button"
+          class="enemy-overview-return"
+          :title="t('timeline.enemies.backToOverview')"
+          :aria-label="t('timeline.enemies.backToOverview')"
+          @click="emit('return-overview')"
+        >
+          <ArrowLeft aria-hidden="true" />
+          <span v-if="!compact">{{ t('timeline.enemies.title') }}</span>
+        </button>
+      </template>
       <span v-if="visibleLastHitBuffs.length > 0" class="last-hit-buffs">
         <TimelineStatusIcon
           as="button"
@@ -520,6 +535,35 @@ function scrollEffects(event: WheelEvent) {
   overflow: clip;
   color: var(--ea-fg);
   background: var(--ea-workbench-main, #18181c);
+}
+.enemy-overview-return {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  height: 16px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ea-fg-secondary);
+  font: inherit;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.enemy-overview-return svg {
+  width: 12px;
+  height: 12px;
+}
+.enemy-overview-return:hover,
+.enemy-overview-return:focus-visible {
+  background: rgb(255 255 255 / 8%);
+  color: var(--ea-fg);
+}
+.enemy-overview-return:focus-visible {
+  outline: 1px solid var(--ea-gold);
 }
 
 .enemy-hud {

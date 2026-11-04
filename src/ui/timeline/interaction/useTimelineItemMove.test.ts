@@ -9,7 +9,12 @@ import { collectTimelineItems, timelineItemKey } from './timelineItems';
 
 afterEach(() => vi.unstubAllGlobals());
 
-function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
+function fixture(
+  readOnly = false,
+  minimumInputFrame = 0,
+  blocked = false,
+  preparation: 'collapsed' | 'expanded' | null = null,
+) {
   const events = new EventTarget();
   class Lane {
     readonly dataset = { trackIndex: '0' };
@@ -29,7 +34,8 @@ function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
   );
   vi.stubGlobal('cancelAnimationFrame', vi.fn());
   const original = createEmptyScenario('drag', 'drag');
-  original.battle.prepFrames = 0;
+  original.battle.prepFrames = preparation === null ? 0 : 30;
+  original.editor.prepExpanded = preparation === 'expanded';
   original.tracks[0] = {
     id: 'track',
     operator: null,
@@ -283,6 +289,17 @@ describe('timeline item move lifecycle', () => {
     f.move(40);
     expect(f.scenario.value.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(40);
     f.scope.stop();
+  });
+  it('准备区折叠时技能拖动停在 0 帧，展开后可拖进准备区', () => {
+    const collapsed = fixture(false, 0, false, 'collapsed');
+    collapsed.move(-100);
+    expect(collapsed.scenario.value.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(0);
+    collapsed.scope.stop();
+
+    const expanded = fixture(false, 0, false, 'expanded');
+    expanded.move(-100);
+    expect(expanded.scenario.value.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(-30);
+    expanded.scope.stop();
   });
   it('提交被拒绝时撤销预览，不能留下被判为历史输入的非法位置', async () => {
     const f = fixture();

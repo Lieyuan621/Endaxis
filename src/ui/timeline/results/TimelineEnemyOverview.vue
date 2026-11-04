@@ -10,7 +10,7 @@ import TimelineMonitorGrid from './TimelineMonitorGrid.vue';
 import type { EnemyTargetSelection } from '../../../core/combat/enemies/enemyTargetSelection';
 import { projectEnemyMainTargetSegments } from './enemyMainTargetSegments';
 import { layoutEnemyLifecycleMarkers } from './enemyLifecycleMarkerLayout';
-import { computed, ref, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { computed, ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue';
 import { ENEMY_STATUS_CONTENT_TOP, enemyStatusRowSize } from './monitorSectionMinimums';
 import { projectPoiseBrokenSegments } from '../../../core/projection/poiseCurves';
 import EnemyLifecycleTrack from './EnemyLifecycleTrack.vue';
@@ -18,8 +18,14 @@ import type { EnemyLifecycleDocument } from '../../../core/project/schema';
 import { useI18n } from 'vue-i18n';
 import { useInteractionSession } from '../../interaction/interactionSessionContext';
 import { usePopoverInteractionBoundary } from '../../interaction/usePopoverInteractionBoundary';
-import { EaButton } from '../../../design-system';
+import { EaButton, EaCloseIcon, EaPlusIcon } from '../../../design-system';
+import TimelineMenuActionIcon from '../interaction/TimelineMenuActionIcon.vue';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
+import type { EnemyHealthCurve } from '../../../core/projection/enemyHealthCurves';
+import EnemyHealthMiniCurve from './EnemyHealthMiniCurve.vue';
+import { ArrowRight, MoreFilled } from '@element-plus/icons-vue';
+
+const HEALTH_CURVE_HEIGHT = 16;
 
 const props = defineProps<{
   enemies: readonly {
@@ -30,12 +36,14 @@ const props = defineProps<{
   }[];
   targetSwitches?: readonly { id: string; frame: number; targetId: string }[];
   selectedId: string;
+  healthCurve?: EnemyHealthCurve | null;
   entries: readonly CombatReceiptEntry[];
   publishedTargetSelection: EnemyTargetSelection;
   publishedInitialFrame: number;
   publishedEndFrame: number;
   endFrame: number;
   initialFrame: number;
+  minimumEditableFrame: number;
   automaticDeath: boolean;
   framePx: (frame: number) => number;
   pxFrame: (px: number) => number;
@@ -93,6 +101,11 @@ function addEnemy() {
   menu.value = undefined;
   if (!props.readOnly) emit('add');
 }
+function openMenuDetail() {
+  const id = menu.value?.enemyId;
+  menu.value = undefined;
+  if (id) emit('openDetail', id);
+}
 const draggedRow = ref<string>();
 const dropTarget = ref<{ id: string; after: boolean }>();
 function finishDrag() {
@@ -143,8 +156,7 @@ function dropRow() {
   }
   finishDrag();
 }
-function locateEnemy(id: string) {
-  emit('select', id);
+function scrollEnemyIntoView(id: string) {
   const container = root.value?.querySelector<HTMLElement>('.enemy-overview__rows');
   const index = props.enemies.findIndex(enemy => enemy.id === id);
   const row = container?.querySelectorAll<HTMLElement>('.enemy-overview__row')[index];
@@ -158,10 +170,27 @@ function locateEnemy(id: string) {
       row.offsetHeight > container.clientHeight ? top : bottom - container.clientHeight,
     );
 }
+async function locateEnemy(id: string) {
+  emit('select', id);
+  await nextTick();
+  scrollEnemyIntoView(id);
+}
+watch(
+  () => props.selectedId,
+  async id => {
+    await nextTick();
+    scrollEnemyIntoView(id);
+  },
+);
 function selectEnemy(id: string) {
   emit('select', id);
 }
 const { t } = useI18n();
+const menuTitle = computed(() => {
+  if (!menu.value?.enemyId) return t('timeline.enemies.title');
+  const index = props.enemies.findIndex(enemy => enemy.id === menu.value?.enemyId);
+  return index < 0 ? t('timeline.enemies.title') : `${index + 1}. ${props.enemies[index]!.name}`;
+});
 const root = ref<HTMLElement>();
 const pasteBeforeId = ref<string>();
 function updatePastePosition(event: MouseEvent) {
@@ -232,6 +261,7 @@ onMounted(() => {
     height.value = root.value?.clientHeight ?? 0;
   });
   observer.observe(root.value);
+  nextTick(() => scrollEnemyIntoView(props.selectedId));
 });
 onBeforeUnmount(() => {
   observer?.disconnect();
@@ -240,11 +270,14 @@ onBeforeUnmount(() => {
 });
 const iconSize = computed(() =>
   enemyStatusRowSize(
-    height.value - ENEMY_STATUS_CONTENT_TOP - props.enemies.length * 4,
+    height.value -
+      ENEMY_STATUS_CONTENT_TOP -
+      props.enemies.length * 4 -
+      (props.healthCurve ? HEALTH_CURVE_HEIGHT : 0),
     props.enemies.reduce(
       (sum, enemy) =>
         sum +
-        props.statusLanes(enemy.id) +
+        (enemy.id === props.selectedId ? props.statusLanes(enemy.id) : 0) +
         Math.ceil(
           layoutEnemyLifecycleMarkers(
             enemy.lifecycle,
@@ -313,8 +346,19 @@ const rows = computed(() =>
         previous.end = segment.end;
       else mergedSegments.push(segment);
     }
+    const healthCurve = enemy.id === props.selectedId ? props.healthCurve : null;
+    const healthStartFrame = Math.max(props.initialFrame, segments[0]?.start ?? props.endFrame);
+    const healthEndFrame = Math.min(props.endFrame, props.publishedEndFrame, death ?? Infinity);
+    const healthHeight =
+      enemy.id === props.selectedId && healthCurve && healthEndFrame > healthStartFrame
+        ? HEALTH_CURVE_HEIGHT
+        : 0;
     return {
       ...enemy,
+      healthCurve,
+      healthStartFrame,
+      healthEndFrame,
+      healthHeight,
       markerLayout: layoutEnemyLifecycleMarkers(
         enemy.lifecycle,
         segments[0]?.start ?? props.initialFrame,
@@ -376,64 +420,87 @@ const rows = computed(() =>
     />
     <header>
       <span>{{ t('timeline.enemies.title') }}</span>
-      <div class="enemy-overview__avatars">
-        <TimelineStatusIcon
-          v-for="enemy in enemies"
-          :key="enemy.id"
-          as="button"
-          type="button"
-          style="width: 100%; height: auto; aspect-ratio: 1; min-width: 0"
-          :src="enemy.icon"
-          fallback="?"
-          class="enemy-overview__avatar is-clickable"
-          :class="{
-            'is-selected': selectedId === enemy.id,
-            'is-reorder-source': draggedRow === enemy.id,
-            'is-drop-before': dropTarget?.id === enemy.id && !dropTarget.after,
-            'is-drop-after': dropTarget?.id === enemy.id && dropTarget.after,
-          }"
-          :draggable="!readOnly"
-          @dragstart="beginDrag($event, enemy.id)"
-          @dragend="finishDrag"
-          @dragover="previewDrop($event, enemy.id, 'x')"
-          @dragleave="leaveRow"
-          @drop.prevent.stop="dropRow"
-          :title="enemy.name"
-          :aria-label="enemy.name"
-          :aria-pressed="selectedId === enemy.id"
-          @click.stop="locateEnemy(enemy.id)"
-          @contextmenu.prevent.stop="openMenu($event, enemy.id)"
-        />
-      </div>
+      <EaButton
+        type="button"
+        variant="ghost"
+        size="sm"
+        icon-only
+        class="enemy-overview__add"
+        :disabled="readOnly"
+        :title="t('timeline.enemies.add')"
+        :aria-label="t('timeline.enemies.add')"
+        @click.stop="addEnemy"
+      >
+        <EaPlusIcon />
+      </EaButton>
     </header>
     <Teleport to="body"
       ><div
         v-if="menu"
         ref="menuElement"
-        class="enemy-overview-menu ea-floating-surface"
+        class="enemy-overview-menu timeline-context-menu"
         :style="{ left: menu.x + 'px', top: menu.y + 'px' }"
         @pointerdown.stop
         @contextmenu.prevent
       >
-        <EaButton :disabled="readOnly" @click="addEnemy">{{ t('timeline.enemies.add') }}</EaButton>
-        <EaButton @click="copyEnemy()">{{ t('common.copy') }} <span>Ctrl+C</span></EaButton>
-        <EaButton :disabled="readOnly || !canPaste" @click="pasteEnemy"
-          >{{ t('common.paste') }} <span>Ctrl+V</span></EaButton
+        <div class="menu-header">
+          {{ menuTitle }}
+        </div>
+        <EaButton
+          v-if="menu.enemyId"
+          class="menu-item"
+          variant="ghost"
+          size="sm"
+          @click="openMenuDetail"
+        >
+          <span class="menu-icon" aria-hidden="true"><ArrowRight /></span>
+          <span>{{ t('timeline.enemies.openDetail') }}</span>
+        </EaButton>
+        <EaButton
+          v-if="!menu.enemyId"
+          class="menu-item"
+          variant="ghost"
+          size="sm"
+          :disabled="readOnly"
+          @click="addEnemy"
+        >
+          <span class="menu-icon" aria-hidden="true"><EaPlusIcon /></span>
+          <span>{{ t('timeline.enemies.add') }}</span>
+        </EaButton>
+        <EaButton class="menu-item" variant="ghost" size="sm" @click="copyEnemy()">
+          <TimelineMenuActionIcon action="copy" />
+          <span>{{ t('common.copy') }}</span>
+          <kbd>Ctrl+C</kbd>
+        </EaButton>
+        <EaButton
+          class="menu-item"
+          variant="ghost"
+          size="sm"
+          :disabled="readOnly || !canPaste"
+          @click="pasteEnemy"
+          ><TimelineMenuActionIcon action="paste" />
+          <span>{{ t('common.paste') }}</span>
+          <kbd>Ctrl+V</kbd></EaButton
         >
         <EaButton
           v-if="menu.enemyId"
+          class="menu-item delete-item"
+          variant="ghost"
+          size="sm"
           :disabled="readOnly || enemies.length <= 1"
           @click="removeMenuEnemy"
-          >{{ t('common.delete') }}</EaButton
+          ><TimelineMenuActionIcon action="delete" />
+          <span>{{ t('common.delete') }}</span></EaButton
         >
       </div></Teleport
     >
     <div class="enemy-overview__rows">
       <div
-        v-for="row in rows"
+        v-for="(row, index) in rows"
         :key="row.id"
         class="enemy-overview__row"
         :class="{
+          'is-selected': selectedId === row.id,
           'is-reorder-source': draggedRow === row.id,
           'is-drop-before': dropTarget?.id === row.id && !dropTarget.after,
           'is-drop-after': dropTarget?.id === row.id && dropTarget.after,
@@ -442,9 +509,52 @@ const rows = computed(() =>
         @dragleave="leaveRow"
         @drop.prevent.stop="dropRow"
         :style="{
-          height: row.markerLayout.height + 6 + statusLanes(row.id) * rowPitch + 'px',
+          height:
+            row.markerLayout.height +
+            6 +
+            row.healthHeight +
+            (row.id === selectedId ? statusLanes(row.id) * rowPitch : 0) +
+            'px',
+          '--enemy-label-control-height': row.markerLayout.height + 6 + 'px',
         }"
       >
+        <div class="enemy-overview__label">
+          <button
+            type="button"
+            class="enemy-overview__avatar"
+            :class="{ 'is-selected': selectedId === row.id }"
+            :draggable="!readOnly"
+            :title="`${index + 1}. ${row.name}`"
+            :aria-label="`${index + 1}. ${row.name}`"
+            :aria-pressed="selectedId === row.id"
+            @dragstart="beginDrag($event, row.id)"
+            @dragend="finishDrag"
+            @click.stop="locateEnemy(row.id)"
+            @dblclick.stop="emit('openDetail', row.id)"
+            @contextmenu.prevent.stop="openMenu($event, row.id)"
+          >
+            <TimelineStatusIcon
+              :size="Math.min(iconSize, 20)"
+              :src="row.icon"
+              fallback="?"
+              aria-hidden="true"
+            />
+            <span class="enemy-overview__index" aria-hidden="true">{{ index + 1 }}</span>
+            <span class="enemy-overview__name">{{ row.name }}</span>
+          </button>
+          <EaButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            icon-only
+            class="enemy-overview__row-action"
+            :title="t('timeline.enemies.moreActions')"
+            :aria-label="`${index + 1}. ${row.name} · ${t('timeline.enemies.moreActions')}`"
+            @click.stop="openMenu($event, row.id)"
+          >
+            <MoreFilled />
+          </EaButton>
+        </div>
         <EnemyLifecycleTrack
           @add="addEnemy"
           :can-paste="canPaste"
@@ -455,6 +565,7 @@ const rows = computed(() =>
           :lifecycle="row.lifecycle"
           :default-spawn-frame="row.spawnFrame"
           :initial-frame="initialFrame"
+          :minimum-editable-frame="minimumEditableFrame"
           :end-frame="endFrame"
           :automatic-death="automaticDeath"
           :actual-death-frame="row.death"
@@ -476,19 +587,35 @@ const rows = computed(() =>
           @rename="emit('rename', row.id, $event)"
           @remove="emit('remove', row.id)"
         >
-          <div class="enemy-overview__hits" :style="{ left: -scrollLeft + 'px' }">
+          <EnemyHealthMiniCurve
+            v-if="row.healthHeight && row.healthCurve"
+            :name="row.name"
+            :curve="row.healthCurve"
+            :start-frame="row.healthStartFrame"
+            :end-frame="row.healthEndFrame"
+            :top="row.markerLayout.height + 2"
+            :frame-px="framePx"
+            :px-frame="pxFrame"
+            :scroll-left="scrollLeft"
+          />
+          <div
+            v-if="row.id === selectedId"
+            class="enemy-overview__hits"
+            :style="{ left: -scrollLeft + 'px' }"
+          >
             <slot
               name="hits"
               :id="row.id"
               :icon-size="iconSize"
-              :status-top="row.markerLayout.height + 2"
+              :status-top="row.markerLayout.height + 2 + row.healthHeight"
             />
           </div>
           <div
+            v-if="row.id === selectedId"
             class="enemy-overview__states"
             :style="{
               left: -scrollLeft + 'px',
-              top: row.markerLayout.height + 2 + 'px',
+              top: row.markerLayout.height + 2 + row.healthHeight + 'px',
               height: statusLanes(row.id) * rowPitch + 'px',
               clipPath:
                 'polygon(' +
@@ -506,7 +633,7 @@ const rows = computed(() =>
               name="states"
               :id="row.id"
               :icon-size="iconSize"
-              :status-top="row.markerLayout.height + 2"
+              :status-top="row.markerLayout.height + 2 + row.healthHeight"
             />
           </div>
           <TimelinePointerTooltip
@@ -566,6 +693,8 @@ const rows = computed(() =>
             "
             class="enemy-overview__death"
             :title="t('timeline.enemies.death')"
+            role="img"
+            :aria-label="row.name + ' · ' + t('timeline.enemies.death')"
             :style="{
               left: framePx(row.death) - scrollLeft + 'px',
               top: row.markerLayout.markers.get('actualDeath')!.top + 'px',
@@ -573,8 +702,8 @@ const rows = computed(() =>
               width: iconSize + 'px',
               fontSize: Math.min(14, row.markerLayout.markers.get('actualDeath')!.height) + 'px',
             }"
-            >×</span
-          >
+            ><EaCloseIcon size="1em"
+          /></span>
         </EnemyLifecycleTrack>
       </div>
     </div>
@@ -592,15 +721,14 @@ const rows = computed(() =>
 }
 header {
   position: absolute;
-  z-index: 2;
-  inset: 0 auto 0 0;
+  z-index: 3;
+  inset: 0 auto auto 0;
   width: var(--enemy-header-width);
+  height: 18px;
   box-sizing: border-box;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 8px 10px;
+  align-items: center;
+  padding: 0 0 0 8px;
   border-left: 3px solid #ff7875;
   border-right: 1px solid var(--ea-divider, rgb(255 255 255 / 16%));
   background: var(--ea-workbench-panel, #252526);
@@ -608,34 +736,102 @@ header {
   font-size: 11px;
   font-weight: 600;
 }
-.enemy-overview__avatars {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  align-content: flex-start;
-  gap: 6px;
-  min-height: 0;
-  overflow-y: auto;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 2px 4px;
+.enemy-overview__add.ea-button {
+  width: 20px;
+  height: 18px;
+  margin-left: auto;
+  padding: 0;
+  border-left: 1px solid var(--ea-border-soft);
+  color: var(--ea-gold);
 }
-.enemy-overview__avatar.is-selected {
-  border-color: var(--ea-gold);
-  box-shadow: inset 0 0 0 1px var(--ea-gold);
+.enemy-overview__add svg {
+  width: 13px;
+  height: 13px;
 }
 .enemy-overview__rows {
   position: relative;
   box-sizing: border-box;
   height: 100%;
-  /* 轨道内头像与条已有 1px 顶部偏移，只补齐与状态区相同的总留白。 */
-  padding-top: v-bind("(ENEMY_STATUS_CONTENT_TOP - 1) + 'px'");
+  padding-top: 18px;
   overflow-y: auto;
-  margin-left: var(--enemy-header-width);
 }
 .enemy-overview__row {
   position: relative;
   display: grid;
-  height: 32px;
+  grid-template-columns: var(--enemy-header-width) minmax(0, 1fr);
+  min-width: 0;
+}
+.enemy-overview__label {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  box-sizing: border-box;
+  border-left: 3px solid transparent;
+  border-right: 1px solid var(--ea-divider, rgb(255 255 255 / 16%));
+  border-bottom: 1px solid var(--ea-border-soft);
+  background: var(--ea-workbench-panel, #252526);
+  display: flex;
+  align-items: flex-start;
+}
+.enemy-overview__row.is-selected .enemy-overview__label {
+  border-left-color: var(--ea-gold);
+  background: color-mix(in srgb, var(--ea-gold) 8%, var(--ea-workbench-panel, #252526));
+}
+.enemy-overview__avatar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: min(28px, var(--enemy-label-control-height));
+  padding: 2px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ea-fg);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.enemy-overview__row-action.ea-button {
+  flex: 0 0 20px;
+  width: 20px;
+  height: min(24px, var(--enemy-label-control-height));
+  padding: 0;
+  color: var(--ea-fg-muted);
+  opacity: 0.5;
+}
+.enemy-overview__row-action svg {
+  width: 13px;
+  height: 13px;
+}
+.enemy-overview__row-action.ea-button:hover,
+.enemy-overview__row-action.ea-button:focus-visible,
+.enemy-overview__row.is-selected .enemy-overview__row-action.ea-button {
+  opacity: 1;
+  color: var(--ea-gold);
+}
+.enemy-overview__avatar:hover {
+  background: rgb(255 255 255 / 7%);
+}
+.enemy-overview__avatar:focus-visible {
+  outline: 2px solid var(--ea-gold);
+  outline-offset: -2px;
+}
+.enemy-overview__name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11px;
+}
+.enemy-overview__index {
+  flex: 0 0 12px;
+  color: var(--ea-fg-muted);
+  font-size: 10px;
+  text-align: right;
+}
+.enemy-overview__avatar.is-selected .enemy-overview__name {
+  color: var(--ea-gold);
 }
 .enemy-overview__hits {
   position: absolute;
@@ -650,27 +846,54 @@ header {
 }
 .enemy-overview__lane {
   position: relative;
+  min-width: 0;
   overflow: clip;
   border-bottom: 1px solid var(--ea-border-soft);
+}
+.enemy-overview__row.is-selected .enemy-overview__lane {
+  background: rgb(255 255 255 / 2%);
 }
 .enemy-overview__segment.anomaly-duration-bar {
   position: absolute;
   top: var(--enemy-bar-top);
-  background: #518b89;
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
+  opacity: 0.65;
+}
+.enemy-overview__segment.anomaly-duration-bar::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 3px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: #456b69;
+  pointer-events: none;
+}
+.enemy-overview__segment.anomaly-duration-bar:hover {
+  box-shadow: none;
+}
+.enemy-overview__segment :deep(.striped-bg) {
+  display: none;
+}
+.enemy-overview__row.is-selected .enemy-overview__segment {
+  opacity: 1;
 }
 
-.enemy-overview__segment.absent {
-  background: repeating-linear-gradient(135deg, #354447 0 4px, #445557 4px 6px);
-  border-color: #607576;
+.enemy-overview__segment.absent::before {
+  background: repeating-linear-gradient(90deg, #607576 0 4px, transparent 4px 8px);
 }
-.enemy-overview__segment.is-main-target {
+.enemy-overview__segment.is-main-target:not(.absent)::before {
   background: #79b9b3;
+}
+.enemy-overview__segment.is-main-target:not(.absent) {
+  opacity: 1;
 }
 .enemy-overview__poise {
   position: absolute;
-  top: var(--enemy-bar-top);
-  height: 16px;
+  top: calc(var(--enemy-bar-top) + 6px);
+  height: 4px;
   z-index: 1;
   pointer-events: none;
   background: repeating-linear-gradient(
@@ -681,6 +904,7 @@ header {
 }
 .enemy-overview__death {
   position: absolute;
+  z-index: 3;
   display: grid;
   place-items: center;
   top: 2px;
@@ -714,42 +938,7 @@ header {
 .enemy-overview__row.is-drop-after::after {
   bottom: 0;
 }
-.enemy-overview-menu {
-  position: fixed;
-  z-index: var(--ea-z-context-menu, 10000);
-  min-width: 160px;
-  padding: 6px 0;
-}
-.enemy-overview-menu :deep(button span) {
-  margin-left: auto;
-  color: var(--ea-fg-muted);
-}
-.enemy-overview-menu :deep(button) {
-  width: 100%;
-  justify-content: flex-start;
-  border: 0;
-  border-radius: 0;
-}
 .enemy-overview__avatar[draggable='true'] {
   cursor: grab;
-}
-.enemy-overview__avatar.is-reorder-source {
-  opacity: 0.5;
-}
-.enemy-overview__avatar.is-drop-before::after,
-.enemy-overview__avatar.is-drop-after::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  bottom: -2px;
-  width: 2px;
-  background: var(--ea-gold);
-  pointer-events: none;
-}
-.enemy-overview__avatar.is-drop-before::after {
-  left: -4px;
-}
-.enemy-overview__avatar.is-drop-after::after {
-  right: -4px;
 }
 </style>
