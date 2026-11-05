@@ -1,9 +1,9 @@
 /** 产品展示命名；发布到各 Buff 的 presentation，不归属干员或技能。 */
 import type { CombatBuffPresentation } from '../../../packages/game-data-contract/src/buffs.ts';
 export const buffPresentationNames: Readonly<Record<string, string>> = {
-  buff_cc_chr_combo_lock_instance: 'contingencyContract.preview.comboLock',
-  buff_cc_chr_disable_normal_skill: 'contingencyContract.preview.battleLock',
-  buff_cc_eny_heal_no_inflict_do_heal: 'contingencyContract.preview.heal',
+  buff_cc_chr_combo_lock_instance: 'contingencyContract.buffs.comboLock',
+  buff_cc_chr_disable_normal_skill: 'contingencyContract.buffs.battleLock',
+  buff_cc_eny_heal_no_inflict_do_heal: 'contingencyContract.buffs.heal',
   buff_chr_0018_dapan_talent_1_preparation: 'effects.name.prepIngredients',
   buff_chr_0023_antal_tageffect: 'effects.name.focus',
   buff_chr_0028_wulfa_normal_bleed: 'effects.name.razorClawmark',

@@ -503,6 +503,7 @@ export function compileScenarioRuntimeAssembly(
           ...equipmentInitializationPrograms,
           ...(operatorIndex === 0
             ? mechanicInitializations.map(entry => ({
+                sourceKind: 'scenarioMechanic' as const,
                 key: `mechanic:${entry.selectionId}:${entry.contributionIndex}`,
                 initialBlackboard: {},
                 sequence: entry.contribution.sequence,

@@ -2796,14 +2796,7 @@
     "initialVariables": "初始变量",
     "editInitialVariables": "编辑初始变量",
     "clearInitialVariables": "清空编辑内容",
-    "preview": {
-      "operationName": "浸蓝测试作战",
-      "comboLock": "环境：锁闭-锁定连携技",
-      "battleLock": "环境：沉寂-锁定战技",
-      "heal": "改写：充血"
-    },
     "title": "危机合约",
-    "operationName": "重燃测试作战",
     "score": "危机等级",
     "queue": "队列",
     "selectedCount": "已选 {count} 个",
@@ -2829,6 +2822,37 @@
       "selfGlobalBuff": "己方修正",
       "reduceTime": "减少时间",
       "none": "无效果"
+    },
+    "share": {
+      "copy": "复制",
+      "import": "导入",
+      "placeholder": "请输入或粘贴分享码",
+      "copied": "分享码已复制",
+      "copyFailed": "复制失败，请允许访问剪贴板后重试",
+      "imported": "已导入指标组合",
+      "hint": "分享码仅包含当前期数的指标选择，不包含自定义参数。",
+      "preview": "共 {count} 项指标，危机等级 {score}；导入将替换本期选择，并恢复导入指标的默认参数。",
+      "errors": {
+        "invalid": "分享码格式错误，或不属于当前期数。",
+        "unavailable": "分享码包含尚未接入的指标，无法导入。",
+        "conflict": "分享码中存在互斥指标，无法导入。",
+        "prerequisite": "分享码缺少必需的前置指标，无法导入。"
+      },
+      "title": "指标导入与分享",
+      "open": "导入与分享",
+      "generate": "生成分享码",
+      "total": "指标总计",
+      "importTitle": "导入分享码",
+      "importHint": "可粘贴并导入所获得的分享码"
+    },
+    "operations": {
+      "indie_contract001": "重燃测试作战",
+      "indie_contract002": "浸蓝测试作战"
+    },
+    "buffs": {
+      "comboLock": "环境：锁闭-锁定连携技",
+      "battleLock": "环境：沉寂-锁定战技",
+      "heal": "改写：充血"
     }
   },
   "statDetail": {

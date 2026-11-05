@@ -14,8 +14,16 @@ import {
 
 export type ContingencyContractTagSupport = 'supported' | 'blocked' | 'omitted';
 export const contingencyContractSeasons = [
-  { id: 1, nameKey: 'contingencyContract.operationName' },
-  { id: 2, nameKey: 'contingencyContract.preview.operationName' },
+  {
+    id: 1,
+    gameId: 'indie_contract001',
+    nameKey: 'contingencyContract.operations.indie_contract001',
+  },
+  {
+    id: 2,
+    gameId: 'indie_contract002',
+    nameKey: 'contingencyContract.operations.indie_contract002',
+  },
 ] as const;
 
 export interface ContingencyContractTagPresentation extends ContingencyContractTagDefinition {

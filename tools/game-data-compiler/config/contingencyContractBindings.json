@@ -35,12 +35,11 @@
           "blackboardIndex": 0
         },
         {
-          "buffId": "buff_cc_enemy_common_hp_up",
+          "buffId": "buff_cc_enemy_common_hp_up_mult",
           "owner": "enemy",
           "blackboardIndex": 1
         }
-      ],
-      "$comment": "TODO：暂用 buff_cc_enemy_common_hp_up（FinalMultiplier）；后续核实是否应为 buff_cc_enemy_common_hp_up_mult（Multiplier），重点检查与其他生命加成的叠加。"
+      ]
     },
     "110601": {
       "omitted": "依赖敌人对干员造成伤害",
@@ -137,12 +136,11 @@
           "blackboardIndex": 0
         },
         {
-          "buffId": "buff_cc_enemy_common_hp_up",
+          "buffId": "buff_cc_enemy_common_hp_up_mult",
           "owner": "enemy",
           "blackboardIndex": 1
         }
-      ],
-      "$comment": "TODO：暂用 buff_cc_enemy_common_hp_up（FinalMultiplier）；后续核实是否应为 buff_cc_enemy_common_hp_up_mult（Multiplier），重点检查与其他生命加成的叠加。"
+      ]
     },
     "112302": {
       "omitted": "依赖敌人主动技能或攻击目标选择",

@@ -1,3 +1,5 @@
+import { levelEnemies } from '../../../core/project/level';
+import { resolveScenarioBuildAttributes } from '../../../application/editor/scenarioBuildAttributes';
 /**
  * 协调时间轴页面中的干员、武器和装备选择与编辑。
  * 它只持有弹窗等临时 UI 状态，所有持久化修改都通过场景会话提交，定义筛选也集中在这里完成。
@@ -105,6 +107,34 @@ export function useTimelineLoadoutEditor(options: TimelineLoadoutEditorOptions) 
     return target === null
       ? null
       : (loadoutModels.value[target.trackIndex]?.gears[target.slot] ?? null);
+  });
+  let previousBuildKey = '';
+  let previousBuildAttributes: ReturnType<typeof resolveScenarioBuildAttributes> | undefined;
+  const buildAttributes = computed(() => {
+    const scenario = options.scenario.value;
+    const key = JSON.stringify({
+      revision: options.definitionRevision?.value,
+      tracks: scenario.tracks.map(
+        track =>
+          track && {
+            id: track.id,
+            operator: track.operator,
+            weapon: track.weapon,
+            gears: track.gears,
+            initialState: track.initialState,
+          },
+      ),
+      enemies: levelEnemies(scenario.level).map(
+        ({ id, enemy: { lifecycle: _lifecycle, ...enemy } }) => ({ id, enemy }),
+      ),
+      mechanics: scenario.mechanics,
+      globalConfig: scenario.globalConfig,
+    });
+    if (previousBuildAttributes && key === previousBuildKey) return previousBuildAttributes;
+    const result = resolveScenarioBuildAttributes(scenario, options.gameData);
+    previousBuildKey = key;
+    previousBuildAttributes = result;
+    return result;
   });
   const panelResolution = computed<{
     readonly panels: ReadonlyMap<TrackIndex, ResolvedOperatorPanel>;
@@ -302,6 +332,7 @@ export function useTimelineLoadoutEditor(options: TimelineLoadoutEditorOptions) 
     selectableGears,
     selectedGearBuild,
     panelResolution,
+    buildAttributes,
     selectedPanel,
     openOperatorDialog,
     selectTrack,

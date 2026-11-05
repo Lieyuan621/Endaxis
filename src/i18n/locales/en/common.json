@@ -2796,14 +2796,7 @@
     "initialVariables": "Initial variables",
     "editInitialVariables": "Edit initial variables",
     "clearInitialVariables": "Clear custom values",
-    "preview": {
-      "operationName": "Blue Immersion Test Operation",
-      "comboLock": "Timed Combo Lock",
-      "battleLock": "Battle Skill Lock",
-      "heal": "Engorgement"
-    },
     "title": "Contingency Contract",
-    "operationName": "Rekindled Test Operation",
     "score": "Risk level",
     "queue": "Queue",
     "selectedCount": "{count} selected",
@@ -2829,6 +2822,37 @@
       "selfGlobalBuff": "Operator modifier",
       "reduceTime": "Time limit",
       "none": "No effect"
+    },
+    "share": {
+      "copy": "Copy",
+      "import": "Import",
+      "placeholder": "Enter or paste a share code",
+      "copied": "Share code copied",
+      "copyFailed": "Copy failed. Allow clipboard access and try again.",
+      "imported": "Contract selection imported",
+      "hint": "Share codes include this season’s selections, not custom parameters.",
+      "preview": "{count} modifiers, risk level {score}. Import replaces this season’s selection and resets imported modifiers to default parameters.",
+      "errors": {
+        "invalid": "Invalid share code or wrong season.",
+        "unavailable": "The code contains modifiers not yet available in Endaxis.",
+        "conflict": "The code contains conflicting modifiers.",
+        "prerequisite": "The code is missing prerequisite modifiers."
+      },
+      "title": "Import and share modifiers",
+      "open": "Import & share",
+      "generate": "Generate share code",
+      "total": "Total risk",
+      "importTitle": "Import share code",
+      "importHint": "Paste a share code to import its modifiers."
+    },
+    "operations": {
+      "indie_contract001": "Rekindled Test Operation",
+      "indie_contract002": "Blue Immersion Test Operation"
+    },
+    "buffs": {
+      "comboLock": "Timed Combo Lock",
+      "battleLock": "Battle Skill Lock",
+      "heal": "Engorgement"
     }
   },
   "statDetail": {

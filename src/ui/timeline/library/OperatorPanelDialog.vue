@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import { ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE } from '../../../core/combat/attributes/operatorAttackAttributes';
+import type { BuildAttributeModifier } from '../../../application/editor/scenarioBuildAttributes';
+import type { MechanicSelectionDocument } from '../../../core/project/schema';
+import {
+  resolveContingencyContractBuffPresentation,
+  localizedContingencyContractTagName,
+} from '../contingencyContractBuffPresentation';
 import { ElIcon } from 'element-plus';
 import { EaDialog } from '../../../design-system/index';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
@@ -26,6 +33,9 @@ import type { PublishedBuffSource } from '../results/publishedBuffSource';
 const props = defineProps<{
   visible: boolean;
   panel: ResolvedOperatorPanel | null;
+  buildModifiers?: readonly BuildAttributeModifier[];
+  mechanicSelections?: readonly MechanicSelectionDocument[];
+  buildAttributes?: Readonly<Record<string, number>>;
   operator: OperatorDefinition | null;
   operatorName: string;
   weapons?: ReadonlyMap<string, PublishedBuffSource>;
@@ -110,8 +120,43 @@ function sourcesFor(stat: OperatorPanelStat): readonly OperatorPanelContribution
   return props.panel?.receipt.filter(entry => entry.stat === stat) ?? [];
 }
 
+const statAttributes: Partial<Record<OperatorPanelStat, string>> = {
+  attack: 'Atk',
+  health: 'MaxHp',
+  defense: 'Def',
+  criticalRate: 'criticalRate',
+  criticalDamage: 'criticalDamageIncrease',
+  artsIntensity: 'PhysicalAndSpellInflictionEnhance',
+  ultimateEnergyGainEfficiency: 'UltimateSpGainScalar',
+};
+function buildSources(stat: OperatorPanelStat): readonly BuildAttributeModifier[] {
+  return (
+    props.buildModifiers?.filter(
+      modifier => modifier.attribute === (statAttributes[stat] ?? stat),
+    ) ?? []
+  );
+}
+function buildSourceLabel(source: BuildAttributeModifier): string {
+  const contract = resolveContingencyContractBuffPresentation(
+    source.sourceActionId,
+    props.mechanicSelections ?? [],
+  );
+  return contract ? localizedContingencyContractTagName(contract.tag, locale.value) : source.buffId;
+}
+function buildSourceValue(source: BuildAttributeModifier): string {
+  const multiplicative = source.slot.toLowerCase().includes('multiplier');
+  const value =
+    source.slot === 'finalMultiplier' || source.slot === 'baseFinalMultiplier'
+      ? source.value - 1
+      : source.value;
+  return multiplicative ||
+    ['criticalRate', 'criticalDamageIncrease', 'UltimateSpGainScalar'].includes(source.attribute)
+    ? signedPercent(value)
+    : signedNumber(value);
+}
 function hasSources(stat: OperatorPanelStat): boolean {
   return (
+    buildSources(stat).length > 0 ||
     (stat === 'attack' && props.panel?.attackDetail !== undefined) ||
     (stat === 'health' && props.panel?.healthDetail !== undefined) ||
     (props.panel?.receipt.some(entry => entry.stat === stat) ?? false)
@@ -126,16 +171,37 @@ function toggle(stat: OperatorPanelStat): void {
   expanded.value = next;
 }
 
+const displayPanel = computed(() => {
+  const panel = props.panel;
+  const values = props.buildAttributes;
+  if (!panel || !values) return panel;
+  return {
+    ...panel,
+    attributes: {
+      strength: values.strength!,
+      agility: values.agility!,
+      intellect: values.intellect!,
+      will: values.will!,
+    },
+    attack: values.attack!,
+    health: values.MaxHp!,
+    defense: values.Def!,
+    criticalRate: values.criticalRate!,
+    criticalDamage: values.criticalDamageIncrease!,
+    artsIntensity: values.PhysicalAndSpellInflictionEnhance!,
+    ultimateEnergyGainEfficiency: values.UltimateSpGainScalar!,
+  };
+});
 const attributeRows = computed<readonly StatRow[]>(() =>
   ATTRIBUTE_KEYS.map(key => ({
     key,
     label: statLabel(key),
-    value: formatNumber(Math.floor(props.panel?.attributes[key] ?? 0)),
+    value: formatNumber(Math.floor(displayPanel.value?.attributes[key] ?? 0)),
   })),
 );
 
 const attackBreakdown = computed(() => {
-  const panel = props.panel;
+  const panel = displayPanel.value;
   const detail = panel?.attackDetail;
   if (panel === null || detail === undefined) return null;
   const baseAttackTotal = detail.operatorBaseAttack + detail.weaponBaseAttack;
@@ -143,6 +209,7 @@ const attackBreakdown = computed(() => {
     const isMain = key === panel.mainAttribute;
     const isSub = key === panel.secondaryAttribute;
     const coefficient =
+      props.buildAttributes?.[ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE[key]] ??
       (isMain ? MAIN_ATTRIBUTE_ATTACK_FACTOR : 0) + (isSub ? SECONDARY_ATTRIBUTE_ATTACK_FACTOR : 0);
     return {
       key,
@@ -156,7 +223,7 @@ const attackBreakdown = computed(() => {
   return {
     ...detail,
     baseAttackTotal,
-    basicTotal: panel.attackBeforeAttributeScalar,
+    basicTotal: props.buildAttributes?.Atk ?? panel.attackBeforeAttributeScalar,
     attackBonus: baseAttackTotal * detail.attackPercent + detail.flatAttack,
     attributeContributions,
     attributeBonus: attributeContributions.reduce((sum, row) => sum + row.contribution, 0),
@@ -186,7 +253,7 @@ function signedNumber(value: number): string {
 }
 
 function signedPercent(value: number): string {
-  return `${value >= 0 ? '+' : ''}${(value * 100).toFixed(1)}%`;
+  return `${value >= 0 ? '+' : ''}${formatNumber(value * 100)}%`;
 }
 
 function isPrimaryStat(stat: OperatorPanelStat): boolean {
@@ -194,7 +261,7 @@ function isPrimaryStat(stat: OperatorPanelStat): boolean {
 }
 
 const statRows = computed<readonly StatRow[]>(() => {
-  const panel = props.panel;
+  const panel = displayPanel.value;
   if (panel === null) return [];
   return [
     { key: 'attack', label: statLabel('attack'), value: formatNumber(Math.floor(panel.attack)) },
@@ -288,6 +355,18 @@ const statRows = computed<readonly StatRow[]>(() => {
                     {{ attributeSourceLabel(source) }}
                   </td>
                   <td class="value-cell">{{ sourceValue(source) }}</td>
+                </tr>
+                <tr
+                  v-for="(source, index) in expanded.has(row.key) ? buildSources(row.key) : []"
+                  :key="`build:${row.key}:${index}`"
+                  class="sub-row dim"
+                  :class="{
+                    'is-main': operator?.mainAttribute === row.key,
+                    'is-sub': operator?.secondaryAttribute === row.key,
+                  }"
+                >
+                  <td class="label-cell indent-1 source-label">{{ buildSourceLabel(source) }}</td>
+                  <td class="value-cell">{{ buildSourceValue(source) }}</td>
                 </tr>
               </template>
             </tbody>
@@ -427,6 +506,14 @@ const statRows = computed<readonly StatRow[]>(() => {
                 >
                   <td class="label-cell indent-1 source-label">{{ statSourceLabel(source) }}</td>
                   <td class="value-cell">{{ sourceValue(source) }}</td>
+                </tr>
+                <tr
+                  v-for="(source, index) in expanded.has(row.key) ? buildSources(row.key) : []"
+                  :key="`build:${row.key}:${index}`"
+                  class="sub-row dim"
+                >
+                  <td class="label-cell indent-1 source-label">{{ buildSourceLabel(source) }}</td>
+                  <td class="value-cell">{{ buildSourceValue(source) }}</td>
                 </tr>
               </template>
             </tbody>

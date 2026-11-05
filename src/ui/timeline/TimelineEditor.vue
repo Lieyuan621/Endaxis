@@ -1453,6 +1453,7 @@ const {
   selectableGears,
   selectedGearBuild,
   panelResolution,
+  buildAttributes,
   selectedPanel,
   openOperatorDialog: openOperatorDialogNow,
   selectTrack,
@@ -4301,7 +4302,7 @@ function buffSourceName(segment: BuffPresentationSource): string | undefined {
     );
     return formatContingencyContractBuffSourceName(
       t('contingencyContract.title'),
-      t(season?.nameKey ?? 'contingencyContract.operationName'),
+      t(season?.nameKey ?? 'contingencyContract.operations.indie_contract001'),
       contractTagName,
     );
   }
@@ -6474,7 +6475,10 @@ const selectedContingencyContractTagIds = computed(() =>
   }),
 );
 
-function setSelectedContingencyContractTagIds(tagIds: readonly number[]): void {
+function setSelectedContingencyContractTagIds(
+  tagIds: readonly number[],
+  resetParameterTagIds: readonly number[] = [],
+): void {
   commitScenario('setContingencyContractTags', current => ({
     ...current,
     mechanics: {
@@ -6488,6 +6492,11 @@ function setSelectedContingencyContractTagIds(tagIds: readonly number[]): void {
           )
           .map(selection => ({
             ...selection,
+            ...(resetParameterTagIds.some(
+              tagId => selection.mechanicId === contingencyContractMechanicId(tagId),
+            )
+              ? { parameters: {} }
+              : {}),
             enabled: tagIds.some(
               tagId => selection.mechanicId === contingencyContractMechanicId(tagId),
             ),
@@ -7009,6 +7018,7 @@ function setMobileGuideFrame(frame: number | null): void {
         @select-stage="applyStageEnemies"
         :read-only="configurationReadOnly"
         :enemy="monitoredEnemy"
+        :build-attributes="buildAttributes.enemies.get(monitoredEnemyId)"
         :definition="selectedEnemyDefinition"
         :enemies="enemies"
         :fps="PROJECT_FPS"
@@ -7168,6 +7178,7 @@ function setMobileGuideFrame(frame: number | null): void {
         :read-only="configurationReadOnly"
         v-if="tool === 'enemy'"
         :enemy="monitoredEnemy"
+        :build-attributes="buildAttributes.enemies.get(monitoredEnemyId)"
         :definition="selectedEnemyDefinition"
         :enemies="enemies"
         :fps="PROJECT_FPS"
@@ -8999,6 +9010,13 @@ function setMobileGuideFrame(frame: number | null): void {
     v-if="panelDialogTrack !== null"
     :visible="panelDialogTrack !== null"
     :panel="selectedPanel"
+    :build-modifiers="
+      selectedPanel ? buildAttributes.operatorModifiers.get(selectedPanel.operatorId) : undefined
+    "
+    :mechanic-selections="scenario.mechanics.selections"
+    :build-attributes="
+      selectedPanel ? buildAttributes.operators.get(selectedPanel.operatorId) : undefined
+    "
     :operator="panelDialogOperator"
     :operator-name="panelDialogOperatorName"
     :weapons="capturePublishedEquipmentSources(editorGameDataRepository.getWeapons())"

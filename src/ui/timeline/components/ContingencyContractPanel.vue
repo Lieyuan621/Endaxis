@@ -9,6 +9,7 @@ import {
   contractDisplayBlackboard,
 } from '../../../data/contingencyContract/definitions';
 import { computed } from 'vue';
+import ContractShareControls from './ContractShareControls.vue';
 import { useI18n } from 'vue-i18n';
 import { GameRichTextRenderer } from '../../presentation';
 import { contingencyContractTagText } from '../contingencyContractBuffPresentation';
@@ -27,7 +28,7 @@ const props = defineProps<{
   selections: readonly MechanicSelectionDocument[];
 }>();
 const emit = defineEmits<{
-  setSelectedTagIds: [tagIds: readonly number[]];
+  setSelectedTagIds: [tagIds: readonly number[], resetParameterTagIds?: readonly number[]];
   setInitialVariable: [tagId: number, key: string, value: number];
   clearInitialVariables: [tagId: number];
 }>();
@@ -412,6 +413,12 @@ function description(tag: ContingencyContractTagPresentation): string {
               alt=""
             /><strong>{{ selectedScore }}</strong>
           </div>
+          <ContractShareControls
+            :season="season"
+            :selected-tag-ids="selectedTagIds"
+            :read-only="readOnly"
+            @import="(ids, resetIds) => emit('setSelectedTagIds', ids, resetIds)"
+          />
           <EaButton
             size="sm"
             type="button"
@@ -672,7 +679,7 @@ function description(tag: ContingencyContractTagPresentation): string {
 }
 .cc-detail-toolbar {
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   justify-content: space-between;
   gap: 8px;

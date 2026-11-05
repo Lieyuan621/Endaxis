@@ -1,3 +1,5 @@
+import { CombatRuntimeAssembly } from '../../core/combat/runtime/combatRuntimeAssembly';
+import { compileScenarioMechanics } from '../../core/compiler/compileScenarioRuntimeAssembly';
 import type { ActionExecutionTrace } from '../../core/combat/actions/actionExecutionTrace';
 import type { ResolvedCombatStepForKind } from '../../core/compiler/combatProgram';
 
@@ -347,6 +349,46 @@ export class ScenarioSimulationService {
     initialFrame = 0,
   ): StandardPlayerDamageCombatSession {
     return this.#createCombatSession(scenario, scenario.battle.durationFrames, initialFrame);
+  }
+
+  /** 构筑面板只安装机制初始化；干员的战斗被动与配装触发行为不参与静态结算。 */
+  createBuildAttributeRuntime(scenario: ScenarioDocument): CombatRuntimeAssembly {
+    const input = this.#createStandardSimulationInput(scenario, 0);
+    const prepared = prepareStandardPlayerDamageScenarioRuntime({
+      ...input,
+      options: { ...input.options, liveInputInitialFrame: 0 },
+    });
+    const compiled = {
+      ...prepared.compiled,
+      operators: prepared.compiled.operators.map(operator => ({
+        ...operator,
+        initializationPrograms: operator.initializationPrograms?.filter(
+          program => program.sourceKind === 'scenarioMechanic',
+        ),
+        passivePrograms: [],
+        upgradeEventPrograms: [],
+        comboConditionPrograms: [],
+        equipmentContributions: [],
+      })),
+    };
+    const assembly = new CombatRuntimeAssembly(compiled);
+    if (!compiled.operators.length) {
+      const mechanics = compileScenarioMechanics(scenario, input.options);
+      assembly.initializeScenePrograms(
+        mechanics.contributions.flatMap(entry =>
+          entry.contribution.kind === 'battleInitializationSequence'
+            ? [{ key: entry.selectionId, sequence: entry.contribution.sequence }]
+            : [],
+        ),
+        {
+          ...input.options.index.actionPrograms.compileCommonDefinitions(
+            input.options.index.getCommonDefinitionSources(),
+          ).buffDefinitions,
+          ...mechanics.buffDefinitions,
+        },
+      );
+    }
+    return assembly;
   }
 
   /** 仅解析已指定帧的人工输入；不包含自定义技能程序，普通固定轴转换优先用此入口。 */

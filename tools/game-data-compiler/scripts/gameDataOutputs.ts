@@ -36,6 +36,7 @@ export const GAME_DATA_PUBLISH_DIRECTORY_OUTPUTS = [
 ] as const;
 
 export const GAME_DATA_PUBLISH_FILE_OUTPUTS = [
+  'src/data/contingencyContract/shareLayouts.generated.ts',
   'src/imageCatalog.generated.ts',
   ...OPERATOR_DEFINITION_OUTPUTS,
   'src/data/combat/gameplayTagCatalog.generated.ts',

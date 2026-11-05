@@ -260,7 +260,7 @@ const commonBuff_buff_cc_chr_combo_lock_instance: SkillBuffDefinition = {
     showInHeadBarAttached: false,
     icon: 'endaxis:contingency_contract/2/lockdown',
     showInSquadIcon: true,
-    nameKey: 'contingencyContract.preview.comboLock',
+    nameKey: 'contingencyContract.buffs.comboLock',
   },
   applyTags: [],
   extendTags: [],
@@ -365,7 +365,7 @@ const commonBuff_buff_cc_chr_disable_normal_skill: SkillBuffDefinition = {
     showInHeadBarAttached: false,
     icon: 'endaxis:contingency_contract/2/silence',
     showInSquadIcon: true,
-    nameKey: 'contingencyContract.preview.battleLock',
+    nameKey: 'contingencyContract.buffs.battleLock',
   },
   applyTags: ['Status/DisableNormalSkillExceptForAdditional'],
   extendTags: [],
@@ -1260,22 +1260,22 @@ const commonBuff_buff_cc_chr_ult_skill_usp_clear: SkillBuffDefinition = {
   actionGraph: commonBuff_buff_cc_chr_ult_skill_usp_clear$actionGraph,
 };
 
-const commonBuff_buff_cc_enemy_common_hp_up$actionGraph = {
+const commonBuff_buff_cc_enemy_common_hp_up_mult$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff_buff_cc_enemy_common_hp_up: SkillBuffDefinition = {
+const commonBuff_buff_cc_enemy_common_hp_up_mult: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
   applyTags: [],
   extendTags: [],
-  blackboard: { hp_up: 1.5 },
+  blackboard: { hp_up: 0.5 },
   attributeModifiers: [
-    { attribute: 'MaxHp', slot: 'finalMultiplier', value: { blackboardKey: 'hp_up' } },
+    { attribute: 'MaxHp', slot: 'multiplier', value: { blackboardKey: 'hp_up' } },
   ],
-  actionGraph: commonBuff_buff_cc_enemy_common_hp_up$actionGraph,
+  actionGraph: commonBuff_buff_cc_enemy_common_hp_up_mult$actionGraph,
 };
 
 const commonBuff_buff_cc_eny_damage_resist$actionGraph = {
@@ -1559,10 +1559,10 @@ const commonBuff_buff_cc_eny_heal_no_inflict_do_heal$actionGraph = {
             target: { kind: 'owner' },
             healer: { kind: 'owner' },
             alwaysNext: true,
+            tags: [],
             attribute: 'maxHealth',
             multiplier: { kind: 'valueNode', nodeId: 'data_1' },
             addition: { kind: 'constant', value: 0 },
-            tags: [],
           },
         },
         next: null,
@@ -1583,7 +1583,7 @@ const commonBuff_buff_cc_eny_heal_no_inflict_do_heal: SkillBuffDefinition = {
   presentation: {
     icon: 'endaxis:icons/icon_battle_continuous_healing',
     showInHeadBarCommon: true,
-    nameKey: 'contingencyContract.preview.heal',
+    nameKey: 'contingencyContract.buffs.heal',
   },
   applyTags: [],
   extendTags: [],
@@ -2247,7 +2247,7 @@ export const contingencyContractBuffDefinitions: OperatorBuffDefinitions = Objec
   buff_cc_chr_normal_skill_dmg_down: commonBuff_buff_cc_chr_normal_skill_dmg_down,
   buff_cc_chr_set_skill_atb_recover_ratio: commonBuff_buff_cc_chr_set_skill_atb_recover_ratio,
   buff_cc_chr_ult_skill_usp_clear: commonBuff_buff_cc_chr_ult_skill_usp_clear,
-  buff_cc_enemy_common_hp_up: commonBuff_buff_cc_enemy_common_hp_up,
+  buff_cc_enemy_common_hp_up_mult: commonBuff_buff_cc_enemy_common_hp_up_mult,
   buff_cc_eny_damage_resist: commonBuff_buff_cc_eny_damage_resist,
   buff_cc_eny_half_hp_clear_inflict_and_abnormal:
     commonBuff_buff_cc_eny_half_hp_clear_inflict_and_abnormal,
@@ -2769,7 +2769,7 @@ export const contingencyContractInitializationPlans = Object.freeze<
                 },
                 buffs: [
                   {
-                    buffId: 'buff_cc_enemy_common_hp_up',
+                    buffId: 'buff_cc_enemy_common_hp_up_mult',
                     blackboardAssignments: { hp_up: { kind: 'constant', value: 1.2 } },
                     stringBlackboardAssignments: {},
                   },
@@ -3015,7 +3015,7 @@ export const contingencyContractInitializationPlans = Object.freeze<
                 },
                 buffs: [
                   {
-                    buffId: 'buff_cc_enemy_common_hp_up',
+                    buffId: 'buff_cc_enemy_common_hp_up_mult',
                     blackboardAssignments: { hp_up: { kind: 'constant', value: 1.2 } },
                     stringBlackboardAssignments: {},
                   },

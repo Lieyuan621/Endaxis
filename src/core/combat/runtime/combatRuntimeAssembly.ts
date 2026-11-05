@@ -2918,6 +2918,36 @@ export class CombatRuntimeAssembly {
     });
   }
 
+  /** 无干员构筑的场景初始化以敌人实例为动作宿主；不创建虚构的干员。 */
+  initializeScenePrograms(
+    programs: readonly CompiledOperatorInitializationProgram[],
+    buffDefinitions: Readonly<Record<string, ResolvedSkillBuffDefinition>>,
+  ): void {
+    if (this.#options.operators.length !== 0)
+      throw new Error('scene-only initialization requires an empty squad');
+    const ownerId = this.stateGraph.enemy.id;
+    for (const program of programs) {
+      const operations = this.#createReactiveOperationChain(
+        { ownerId, buffDefinitions },
+        `scene-initialization:${program.key}`,
+        () => unsupportedReactiveTerminal,
+        this.#options,
+      );
+      const runtime = new CombatActionSequenceRuntime(
+        operations,
+        {
+          blackboard: new ActionBlackboard(program.initialBlackboard ?? {}),
+          actionOwnerId: ownerId,
+          actionSourceId: ownerId,
+        },
+        {},
+        this.semanticEvents,
+        ownerId,
+      );
+      runtime.createSequence(program.sequence).executeInstant({});
+    }
+  }
+
   #registerEnemyBirthOperations(
     enemyId: string,
     program: CombatEnemyProgram,

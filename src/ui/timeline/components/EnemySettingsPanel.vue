@@ -1,12 +1,9 @@
 <script setup lang="ts">
+import { ENEMY_RESISTANCE_ATTRIBUTES } from '../../../core/combat/damage/playerActiveDamageInput';
 import '../library/armoryDialog.css';
 import '../library/armoryDialogTheme.css';
 import type { EnemyBirthBuffOption } from '../../../../packages/game-data-contract/src/enemies';
-import {
-  enemyBirthOptions,
-  resolveEnemySpawn,
-  resolveEnemyBirthValues,
-} from '../../../core/project/enemyBirthEffects';
+import { enemyBirthOptions, resolveEnemySpawn } from '../../../core/project/enemyBirthEffects';
 import type { StageEnemyIdentity } from '../../../core/project/schema';
 import { resolveImage } from '../../imageResources';
 import { generatedEnemyStages } from '../../../data/enemies/generated/stages.generated';
@@ -82,6 +79,7 @@ const props = defineProps<{
   selectedEnemyIndex?: number;
   selectedEnemyName?: string;
   enemy: EnemyDocument;
+  buildAttributes?: Readonly<Record<string, number>>;
   definition: EnemyDefinition | null;
   enemies: readonly EnemyDefinition[];
   fps: number;
@@ -178,9 +176,20 @@ const spawnDefinition = computed(() =>
 const birthOptions = computed(() =>
   enemyBirthOptions(birthDefinition.value, spawnDefinition.value),
 );
-const resolvedValues = computed(() =>
-  resolveEnemyBirthValues(props.enemy, birthDefinition.value, props.fps, spawnDefinition.value),
-);
+const resolvedValues = computed(() => {
+  const attributes = props.buildAttributes;
+  if (!attributes) throw new Error('missing enemy build attributes');
+  return {
+    hp: attributes.MaxHp!,
+    stagger: { ...props.enemy.editable.stagger, maximum: attributes.MaxPoise! },
+    resistances: Object.fromEntries(
+      Object.entries(ENEMY_RESISTANCE_ATTRIBUTES).map(([element, key]) => [
+        element,
+        attributes[key]!,
+      ]),
+    ),
+  };
+});
 function toggleBirthBuff(key: string, enabled: boolean) {
   enabledBirthBuffs.value = enabled
     ? [...new Set([...enabledBirthBuffs.value, key])]
