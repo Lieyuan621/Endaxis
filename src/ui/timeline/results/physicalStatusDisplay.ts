@@ -1,4 +1,5 @@
-import { publicAssetUrl } from '../../../utils/publicAssetUrl';
+import { resolveImage } from '../../imageResources';
+import type { ImageRef } from '../../../../packages/game-data-contract/src/primitives';
 /**
  * 物理异常展示投影。
  *
@@ -18,11 +19,11 @@ import {
 const NO_GUARD = 'buff_physical_no_guard';
 
 /** 时间轴和对象来源图的物理异常入口沿用原生 termicon；Buff 自身的原生 presentation 保持原样。 */
-const actionIcons: Readonly<Record<PhysicalInflictionType, string>> = {
-  airborne: publicAssetUrl('/icons/icon_term_ba_airborne.webp'),
-  knockDown: publicAssetUrl('/icons/icon_term_ba_knockdown.webp'),
-  crush: publicAssetUrl('/icons/icon_term_ba_crush.webp'),
-  fracture: publicAssetUrl('/icons/icon_term_ba_fracture.webp'),
+const actionIcons: Readonly<Record<PhysicalInflictionType, ImageRef>> = {
+  airborne: 'endaxis:icons/icon_term_ba_airborne',
+  knockDown: 'endaxis:icons/icon_term_ba_knockdown',
+  crush: 'endaxis:icons/icon_term_ba_crush',
+  fracture: 'endaxis:icons/icon_term_ba_fracture',
 };
 const physicalActions: Readonly<Record<string, PhysicalInflictionType>> = {
   buff_physical_airborne: 'airborne',
@@ -45,7 +46,7 @@ interface ConsumedGuard {
 
 export function physicalStatusIconPath(buffId: string): string | undefined {
   const action = physicalActions[buffId];
-  return action === undefined ? undefined : actionIcons[action];
+  return action === undefined ? undefined : resolveImage(actionIcons[action]);
 }
 
 /** 这一行仅包含四种物理异常和破防；不按颜色、图标或头顶栏位置判断。 */
@@ -134,8 +135,8 @@ export function projectPhysicalStatusDisplay(
 
   const segments = projectBuffIconTimelineMetadata(
     physicalEntries.map(entry => {
-      const iconPath = physicalStatusIconPath(String(entry.data?.buffId));
-      return iconPath === undefined || entry.event !== 'BuffApplied'
+      const action = physicalActions[String(entry.data?.buffId)];
+      return action === undefined || entry.event !== 'BuffApplied'
         ? entry
         : {
             ...entry,
@@ -143,7 +144,7 @@ export function projectPhysicalStatusDisplay(
               ...entry.data,
               visible: true,
               abnormalColorType: 'Physical',
-              icon: 'endaxis:' + iconPath.slice(1, -5),
+              icon: actionIcons[action],
             },
           };
     }),

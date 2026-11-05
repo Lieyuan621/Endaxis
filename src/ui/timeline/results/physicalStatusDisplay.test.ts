@@ -1,10 +1,29 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import { isPhysicalStatusRowBuff, projectPhysicalStatusDisplay } from './physicalStatusDisplay';
 import { layoutEnemyStatusRows } from './enemyStatusRows';
 import { layoutEnemyDamageHits } from './enemyDamageHitLayout';
 
 const guardId = 'buff_physical_no_guard';
+
+it('子目录部署保留物理异常资源引用，仅在显示时解析 URL', async () => {
+  vi.stubEnv('BASE_URL', '/Endaxis/');
+  vi.resetModules();
+  try {
+    const { projectPhysicalStatusDisplay: project } = await import('./physicalStatusDisplay');
+    const { resolveImage } = await import('../../imageResources');
+    const [display] = project(
+      [applied(1, 40, 'buff_physical_crushed', 1, 1, { physicalInflictionType: 'crush' })],
+      100,
+      { enemySuperArmor: 0 },
+    );
+    expect(display?.icon).toBe('endaxis:icons/icon_term_ba_crush');
+    expect(resolveImage(display?.icon)).toBe('/Endaxis/icons/icon_term_ba_crush.webp');
+  } finally {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  }
+});
 
 it('only admits the four physical abnormalities and guard to the physical row', () => {
   for (const buffId of [

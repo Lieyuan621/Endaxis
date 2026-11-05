@@ -964,7 +964,8 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       if (
         event === undefined ||
         !('payload' in event) ||
-        (event.event !== 'buffConsumed' &&
+        (event.event !== 'outputBuff' &&
+          event.event !== 'buffConsumed' &&
           event.event !== 'buffAbsorbed' &&
           event.event !== 'buffAbsorbedFrameEnd' &&
           event.event !== 'buffConsumedFrameEnd' &&

@@ -501,6 +501,42 @@ function numberedPlacementIds(prefix: string) {
 }
 
 describe('registered generated operators', () => {
+  it('明河战技一段、连携、战技二段施加殷雷', () => {
+    const operator = gameDataRepository.getOperator('minghe')!;
+    let scenario = createEmptyScenario('scenario:minghe-thunder', '明河殷雷');
+    scenario.battle.durationFrames = 600;
+    scenario.tracks[0] = {
+      id: 'track:minghe',
+      operator: createDefaultOperatorInstance(operator),
+      weapon: null,
+      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+      initialState: { ultimateEnergy: 0 },
+      skillCasts: [],
+    };
+    const ids = numberedPlacementIds('minghe-thunder');
+    for (const [skillGroupKey, skillKey, startFrame] of [
+      ['battleSkill', 'chr_0037_minghe_normalskill_1', 1],
+      ['comboSkill', 'chr_0037_minghe_combo_skill', 120],
+      ['battleSkill', 'chr_0037_minghe_normalskill_2', 240],
+    ] as const) {
+      scenario = placeSkillGroup({
+        scenario,
+        trackIndex: 0,
+        operator,
+        skillGroupKey,
+        skillKey,
+        startFrame,
+        ids,
+      }).scenario;
+    }
+    const session = createEditorSimulationService().createCombatSession(scenario);
+    session.advanceToFrame(600);
+    const entries = session.collectResult().receiptEntries;
+    expect(
+      entries.filter(entry => entry.event === 'BuffApplied').map(entry => entry.data?.buffId),
+    ).toContain('buff_chr_0037_minghe_thundertrigger');
+  });
+
   it.each(['basicAttack', 'battleSkill', 'comboSkill', 'ultimate'] as const)(
     '明河 %s 产生伤害且切面恢复不改变结果',
     skillGroupKey => {

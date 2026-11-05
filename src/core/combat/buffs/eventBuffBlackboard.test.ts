@@ -79,6 +79,41 @@ it.each([
   expect(blackboard.getNumber('result')).toBe(9);
 });
 
+it('输出 Buff 事件读取新施加实例的黑板', () => {
+  const blackboard = new ActionBlackboard({ result: 0 });
+  const buff = createEventBuff({ count: 3 });
+  const executor = new BuffOperationExecutor({
+    sourceId: 'owner',
+    resolveTarget: () => {
+      throw new Error('must not query another Buff');
+    },
+    delegate: { execute: () => false, evaluate: () => false },
+  });
+  expect(
+    executor.execute(
+      {
+        kind: 'readEventBuffBlackboard',
+        parameters: { desiredKey: 'count', outputKey: 'result' },
+      },
+      {
+        blackboard,
+        actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' }),
+        event: {
+          event: 'outputBuff',
+          payload: {
+            buff,
+            sourceId: 'owner',
+            targetId: 'enemy',
+            buffId: 'buff:test',
+            buffTags: [],
+          },
+        },
+      },
+    ),
+  ).toBe(true);
+  expect(blackboard.getNumber('result')).toBe(3);
+});
+
 it.each(['finishedBuff', 'buffEndsEarly', 'buffConsumed', 'buffAbsorbed'] as const)(
   '%s 读取同一已结束实例的实时黑板，保留发布时快照',
   event => {

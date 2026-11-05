@@ -261,6 +261,15 @@ async function setup() {
     'ItemTable',
   ])
     await json(path.join(sourceRoot, 'TableCfg-current', `${table}.json`), {});
+  await json(path.join(sourceRoot, 'TableCfg-current/ContingencyContractTable.json'), {
+    fixture: {
+      activityId: 'activity',
+      contractColMap: { 1: { contractRowMap: { 1: { column: 1, row: 1, tagId: 101 } } } },
+    },
+  });
+  await json(path.join(sourceRoot, 'TableCfg-current/ActivityContingencyContractTable.json'), {
+    activity: { tagMaxColumn: 2 },
+  });
   for (const directory of ['CharacterData', 'SkillData'])
     await fs.mkdir(path.join(sourceRoot, directory), { recursive: true });
   const args = parseRebuildArguments([
@@ -278,6 +287,7 @@ describe('完整重建的统一战斗定义阶段', () => {
     const { root, args } = await setup();
     const preserved = [
       'src/data/contingencyContract/generated/fixture.json',
+      'src/data/contingencyContract/shareLayouts.generated.ts',
       'public/contingency_contract/fixture.json',
       'src/i18n/game-locales/zh/contingency-contracts.json',
       'src/i18n/game-locales/en/contingency-contracts.json',
@@ -339,6 +349,7 @@ describe('完整重建的统一战斗定义阶段', () => {
     expect(mocks.publish).toHaveBeenCalledTimes(1);
     expect(mocks.publish.mock.calls[0]![0].fileOutputs).toEqual(
       expect.arrayContaining([
+        'src/data/contingencyContract/shareLayouts.generated.ts',
         'src/i18n/game-locales/zh/contingency-contracts.json',
         'src/i18n/game-locales/en/contingency-contracts.json',
       ]),
