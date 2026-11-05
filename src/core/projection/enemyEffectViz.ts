@@ -111,9 +111,12 @@ export function projectBuffDamageDisplayOwners(
     }
   }
   for (const entry of entries) {
+    const abilityDamage =
+      entry.event === 'DamageApplied' && entry.producedBy?.kind === 'abilityEntity';
     if (
-      !isBuffDamageReceipt(entry) ||
-      entry.targetId !== entry.data?.buffOwnerId ||
+      owners[entry.sequence] !== undefined ||
+      (!abilityDamage &&
+        (!isBuffDamageReceipt(entry) || entry.targetId !== entry.data?.buffOwnerId)) ||
       findBuffTimelineSegmentForDamage(entry, segments)
     )
       continue;
@@ -125,18 +128,31 @@ export function projectBuffDamageDisplayOwners(
         if (node.ref.kind !== 'buff' || node.ref.ownerId !== entry.targetId) return false;
         const buffId = node.fact?.data?.buffId;
         if (typeof buffId !== 'string') return false;
-        const segment = findBuffTimelineSegmentForDamage(
-          {
-            ...entry,
-            data: {
-              ...entry.data,
-              buffId,
-              buffOwnerId: node.ref.ownerId,
-              buffInstanceId: node.ref.instanceId,
-            },
-          },
-          segments,
-        );
+        const { ownerId, instanceId } = node.ref;
+        // Buff 结束后创建的能力实体可能延迟命中，仍归到同一实例的最后可见段。
+        // 不延长状态寿命，也不关联后续重新施加的同名 Buff。
+        const segment = abilityDamage
+          ? segments
+              .filter(
+                segment =>
+                  segment.targetId === ownerId &&
+                  segment.instanceId === instanceId &&
+                  segment.buffId === buffId &&
+                  segment.startFrame <= entry.frame,
+              )
+              .sort((a, b) => b.startFrame - a.startFrame)[0]
+          : findBuffTimelineSegmentForDamage(
+              {
+                ...entry,
+                data: {
+                  ...entry.data,
+                  buffId,
+                  buffOwnerId: node.ref.ownerId,
+                  buffInstanceId: node.ref.instanceId,
+                },
+              },
+              segments,
+            );
         if (segment) owners[entry.sequence] = segment;
         return segment !== undefined;
       },

@@ -274,6 +274,8 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
         : this.delegate.evaluate(condition, context);
     }
     if (condition.kind === 'eventBuffFinishReasonIn') {
+      if (context?.buffFinishContext !== undefined)
+        return condition.reasons.includes(context.buffFinishContext.reason);
       const event = context?.event;
       if (!event || !('event' in event)) return false;
       if (
@@ -341,6 +343,42 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
         skillCastInfo.originSkillType !== undefined &&
         condition.skillTypes.includes(skillCastInfo.originSkillType)
       );
+    }
+    if (
+      condition.kind === 'eventConsumedBuffLayerCompare' ||
+      condition.kind === 'eventBuffEnhanceLayerCompare'
+    ) {
+      const event = context?.event;
+      const layers =
+        condition.kind === 'eventBuffEnhanceLayerCompare' &&
+        context?.buffFinishContext !== undefined
+          ? context.buffFinishContext.layerCount
+          : event === undefined || !('payload' in event)
+            ? undefined
+            : condition.kind === 'eventBuffEnhanceLayerCompare'
+              ? event.event === 'buffEnhanceChanged' ||
+                event.event === 'buffAbsorbedFrameEnd' ||
+                event.event === 'buffConsumedFrameEnd'
+                ? event.payload.layerCount
+                : undefined
+              : event.event === 'buffConsumed' || event.event === 'buffAbsorbed'
+                ? event.payload.layers
+                : undefined;
+      if (layers === undefined || context === undefined) return false;
+      const matched = compareCombatNumbers(
+        layers,
+        resolveActionValueOperand(condition.value, context.blackboard),
+        condition.operator,
+      );
+      if (!matched) return false;
+      if (condition.outputKey) {
+        const old = Math.fround(readRequiredActionNumber(context.blackboard, condition.outputKey));
+        const value = Math.fround(layers);
+        if (!(Math.abs(Math.fround(old - value)) <= Math.fround(0.00001))) {
+          context.blackboard.assignDynamicUnconditionally(condition.outputKey, value);
+        }
+      }
+      return true;
     }
     if (context?.event === undefined) {
       throw new Error(`${condition.kind} requires a combat event context`);
@@ -489,38 +527,6 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
         (condition.sources === undefined || condition.sources.includes(event.source)) &&
         (condition.gainKinds === undefined || condition.gainKinds.includes(event.gainKind))
       );
-    }
-    if (
-      condition.kind === 'eventConsumedBuffLayerCompare' ||
-      condition.kind === 'eventBuffEnhanceLayerCompare'
-    ) {
-      const event = context.event;
-      const layers = !('payload' in event)
-        ? undefined
-        : condition.kind === 'eventBuffEnhanceLayerCompare'
-          ? event.event === 'buffEnhanceChanged' ||
-            event.event === 'buffAbsorbedFrameEnd' ||
-            event.event === 'buffConsumedFrameEnd'
-            ? event.payload.layerCount
-            : undefined
-          : event.event === 'buffConsumed' || event.event === 'buffAbsorbed'
-            ? event.payload.layers
-            : undefined;
-      if (layers === undefined) return false;
-      const matched = compareCombatNumbers(
-        layers,
-        resolveActionValueOperand(condition.value, context.blackboard),
-        condition.operator,
-      );
-      if (!matched) return false;
-      if (condition.outputKey) {
-        const old = Math.fround(readRequiredActionNumber(context.blackboard, condition.outputKey));
-        const value = Math.fround(layers);
-        if (!(Math.abs(Math.fround(old - value)) <= Math.fround(0.00001))) {
-          context.blackboard.assignDynamicUnconditionally(condition.outputKey, value);
-        }
-      }
-      return true;
     }
     if (condition.kind === 'eventOverheal') {
       const event = healAbilityEvent(context.event)?.payload;

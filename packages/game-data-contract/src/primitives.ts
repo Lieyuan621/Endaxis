@@ -69,7 +69,8 @@ export type ActionStringOperand = string | { readonly kind: 'stringNode'; readon
 export type ActionStringExpression = ActionStringOperand | { readonly blackboardKey: string };
 
 /** 原生 MultiplyAttributeCalculation 已支持读取的属性。 */
-export type MultiplyAttributeCalculationAttribute = OperatorAttribute | 'maxHealth' | 'MaxUltimateSp';
+export type MultiplyAttributeCalculationAttribute =
+  OperatorAttribute | 'maxHealth' | 'MaxUltimateSp';
 
 /** 游戏数据中允许出现的干员星级。 */
 export const OPERATOR_RARITIES = [4, 5, 6] as const;
@@ -219,6 +220,8 @@ export const DAMAGE_FEATURES = [
   'crush',
   /** 具有击飞效果。 */
   'airborne',
+  /** 碎甲伤害。 */
+  'fracture',
   /** 具有击倒效果。 */
   'knockDown',
   /** 具有碎冰效果。 */

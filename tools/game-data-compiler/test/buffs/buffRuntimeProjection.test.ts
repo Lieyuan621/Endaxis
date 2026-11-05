@@ -1711,6 +1711,27 @@ describe('公共 Buff 运行时投影', () => {
         undefined,
         { gameplayTagRegistry: fixtureGameplayTagRegistry, ...{ fixedBuffOwnerTarget } },
       );
+    for (const [mask, feature] of [
+      [16384, 'crush'],
+      [32768, 'airborne'],
+      [65536, 'knockDown'],
+      [1073741824, 'fracture'],
+    ] as const) {
+      const projected = project(
+        {
+          ...damage,
+          units: damage.units.map(unit => ({
+            ...unit,
+            damageDecorateMask: unit.attributeType === 'Hp' ? mask : 0,
+          })),
+        },
+        'enemy',
+      );
+      expect(lifecycleSteps(projected, 'start')[0]).toMatchObject({
+        kind: 'dealDamage',
+        parameters: { features: [feature, 'physicalInfliction'] },
+      });
+    }
     const knockdown = {
       ...damage,
       units: damage.units.map(unit => ({
@@ -1789,7 +1810,7 @@ describe('公共 Buff 运行时投影', () => {
       )[0],
     ).toMatchObject({
       kind: 'dealDamage',
-      parameters: { features: ['knockDown', 'physicalInfliction'] },
+      parameters: { features: ['crush', 'knockDown', 'physicalInfliction'] },
     });
   });
 

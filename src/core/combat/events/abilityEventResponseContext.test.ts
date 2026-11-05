@@ -523,3 +523,24 @@ it.each(['beforeOutputKnockDown', 'afterOutputKnockDown'] as const)(
   },
 );
 import { createEventBuff } from './buffEventTestFixture';
+
+it('嵌套事件不读取外层 Buff 结束上下文，异常退出后恢复', () => {
+  const context: CombatOperationContext = {
+    blackboard: new ActionBlackboard(),
+    buffFinishContext: { reason: 'early', layerCount: -3, skillCastInfo: null },
+  };
+  const original = context.buffFinishContext;
+  expect(() =>
+    withAbilityEventResponseContext(
+      context,
+      { event: 'abilityEntityFinished', payload },
+      undefined,
+      () => {
+        expect(context.buffFinishContext).toBeUndefined();
+        throw new Error('nested');
+      },
+    ),
+  ).toThrow('nested');
+  expect(context.buffFinishContext).toBe(original);
+  expect(context.event).toBeUndefined();
+});

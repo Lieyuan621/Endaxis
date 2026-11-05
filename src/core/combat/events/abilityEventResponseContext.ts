@@ -38,6 +38,7 @@ function withEventContext<T>(
   const skillCastInfo = abilityEventSkillCastInfo(event);
   const previous = {
     event: context.event,
+    buffFinishContext: context.buffFinishContext,
     eventSkillCastInfo: context.eventSkillCastInfo,
     targetContext: context.targetContext,
     actionInputTargets: context.actionInputTargets,
@@ -46,6 +47,7 @@ function withEventContext<T>(
   const trigger = targetContext.getOptional('trigger');
   try {
     context.event = event;
+    context.buffFinishContext = undefined;
     // 原生只读取栈顶事件；新事件未提供来源时不能继承外层事件的来源。
     context.eventSkillCastInfo = skillCastInfo;
     context.actionInputTargets = targets?.inputTarget == null ? [] : [targets?.inputTarget];

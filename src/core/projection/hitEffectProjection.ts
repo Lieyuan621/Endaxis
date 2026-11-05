@@ -92,7 +92,7 @@ export function projectHitDamageIdentity(
   if (castId === undefined && stepKey !== undefined) {
     const origin = origins.findAncestor(
       origins.get({ kind: 'receipt', sequence: entry.sequence }),
-      node => node.ref.kind === 'action',
+      node => origins.isSkillCast(node, entry.sequence),
       { relations: ['producedBy', 'originCast'], throughSequence: entry.sequence },
     );
     if (origin.status === 'found' && origin.node.ref.kind === 'action') {

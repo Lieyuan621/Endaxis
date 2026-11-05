@@ -13,6 +13,7 @@ export const buffPresentationNames: Readonly<Record<string, string>> = {
   buff_chr_0033_camille_normal_skill_weak: 'effects.name.firefangVesperwings',
   buff_chr_0036_jsspsi_normal_skill_hitstop: 'effects.name.immobilization',
   buff_chr_0036_jsspsi_normal_skill_soul_timedisplay: 'effects.name.artfulIntent',
+  buff_chr_0037_minghe_thundertrigger: 'effects.name.sunderization',
   buff_common_affixes_combo_trigger: 'effects.name.link',
   buff_common_affixes_slow_default_child: 'effects.name.slow',
   buff_common_affixes_speedup: 'effects.name.speedup',

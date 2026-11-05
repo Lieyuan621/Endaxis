@@ -5406,7 +5406,7 @@ const laevatainBuff13ActionGraph = {
         expression: {
           kind: 'eventDamageTagsMatch',
           match: 'hasAny',
-          tags: ['powerAttack', 'normalAttackLastCombo'],
+          tags: ['normalAttackLastCombo', 'powerAttack'],
         },
       },
     },

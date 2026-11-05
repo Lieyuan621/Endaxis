@@ -3077,3 +3077,26 @@ it('PushBack 保留来源点查询及失败结果，不因已知空目标组而�
     },
   ]);
 });
+
+it.each([
+  [16384, 'crush'],
+  [32768, 'airborne'],
+  [65536, 'knockDown'],
+  [1073741824, 'fracture'],
+] as const)('物理伤害位 %s 的条件只检查对应特征 %s', (mask, feature) => {
+  const action = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.Conditions.CheckDamageDecorateMask+Data, Gameplay.Beyond',
+      checkType: 'HasAny',
+      mask,
+    },
+    'fixture.damageMask',
+    {},
+  );
+  expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
+    kind: 'eventDamageFeaturesMatch',
+    match: 'hasAny',
+    features: [feature],
+  });
+});

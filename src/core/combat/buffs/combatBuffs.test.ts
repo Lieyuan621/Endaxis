@@ -1,3 +1,4 @@
+import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
 import { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
 import { chainEntry } from '../../../test/compiledGraphEntry';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
@@ -3328,3 +3329,63 @@ it('标签免疫在添加冷却和前置事件之前拒绝 Buff，显式忽略�
   expect(before).toBe(1);
   expect(container.hasEntityTag('Status/Frozen')).toBe(true);
 });
+
+it.each(['early', 'lifetime'] as const)(
+  'Buff %s 结束动作读取本次原因和层数，不依赖事件广播',
+  reason => {
+    const container = new CombatBuffContainer('enemy', new CombatAttributeSet<Attribute>());
+    const executor = new EventContextConditionExecutor({
+      execute: () => true,
+      evaluate: () => false,
+    });
+    const finishSource =
+      reason === 'early'
+        ? {
+            skillCastId: 12,
+            originSkillId: 'finisher',
+            originSkillType: 'battleSkill' as const,
+            nonReturnedSpCost: 100,
+          }
+        : null;
+    let calls = 0;
+    const buff = container.add(
+      {
+        id: 'finish-context',
+        stackingType: 'enhance',
+        maxStackCount: 5,
+        actions: {
+          finish: (instance, finishContext) => {
+            calls++;
+            const context = {
+              blackboard: new ActionBlackboard({ count: 0 }),
+              buffFinishContext: finishContext,
+            };
+            expect(finishContext.skillCastInfo).toBe(finishSource);
+            expect(
+              executor.evaluate({ kind: 'eventBuffFinishReasonIn', reasons: ['early'] }, context),
+            ).toBe(reason === 'early');
+            expect(
+              executor.evaluate(
+                {
+                  kind: 'eventBuffEnhanceLayerCompare',
+                  operator: 'less',
+                  value: { kind: 'constant', value: 0 },
+                  outputKey: 'count',
+                },
+                context,
+              ),
+            ).toBe(true);
+            expect(context.blackboard.getNumber('count')).toBe(-instance.enhanceCount);
+            expect(context.blackboard.getNumber('count')).toBe(-2);
+          },
+        },
+      },
+      'caster',
+    );
+    if (buff === null) throw new Error('fixture Buff was not created');
+    buff.enhance('caster');
+    expect(buff.finish(reason, finishSource)).toBe(true);
+    expect(buff.finish(reason, finishSource)).toBe(false);
+    expect(calls).toBe(1);
+  },
+);

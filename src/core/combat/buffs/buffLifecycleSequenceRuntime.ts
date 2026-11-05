@@ -1,3 +1,4 @@
+import type { BuffFinishContext } from './combatBuffs';
 import type { EnemyPartTransferInfo } from '../state/foundationState';
 import type { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
 import { inheritCombatOperationContext } from '../actions/inheritCombatOperationContext';
@@ -782,7 +783,12 @@ export function attachBuffLifecycleSequences<Key extends string>(
     | 'beforeEnhance'
     | 'enhanceChanged'
     | 'afterEnhance';
-  const execute = (key: InstantLifecycle, buff: CombatBuff<Key>, inputTargetId?: string): void => {
+  const execute = (
+    key: InstantLifecycle,
+    buff: CombatBuff<Key>,
+    inputTargetId?: string,
+    buffFinishContext?: BuffFinishContext,
+  ): void => {
     const definition = sequences[key];
     if (definition === undefined) return;
     const runtime = runtimeFor(buff);
@@ -792,6 +798,7 @@ export function attachBuffLifecycleSequences<Key extends string>(
       runtime,
       definition,
       inheritCombatOperationContext(runtime.context, {
+        ...(buffFinishContext === undefined ? {} : { buffFinishContext }),
         ...(inputTargetId === undefined
           ? {}
           : {
@@ -1040,8 +1047,8 @@ export function attachBuffLifecycleSequences<Key extends string>(
     abilityEventResponses.length === 0
       ? {}
       : {
-          finish: buff => {
-            execute('finish', buff);
+          finish: (buff, context) => {
+            execute('finish', buff, undefined, context);
             endEnableSequence(buff);
             disposeEventResponses(buff);
           },

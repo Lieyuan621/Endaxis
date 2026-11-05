@@ -999,7 +999,7 @@ const schema_e05c65bfa2a5 = {
     description: '同一稳定技能组的 UI 变体，不会产生独立的释放身份。',
   },
 } as const;
-const schema_41b22f7a5842 = [
+const schema_dddd96c65a04 = [
   {
     kind: 'object',
     fields: {
@@ -1135,14 +1135,14 @@ const schema_41b22f7a5842 = [
         variants: [
           {
             kind: 'enum',
-            options: ['crush', 'airborne', 'knockDown', 'fracture'],
+            options: ['crush', 'airborne', 'fracture', 'knockDown'],
             semantics: schema_12d2e6c473ae,
           },
           {
             kind: 'array',
             element: {
               kind: 'enum',
-              options: ['crush', 'airborne', 'knockDown', 'fracture'],
+              options: ['crush', 'airborne', 'fracture', 'knockDown'],
               semantics: schema_12d2e6c473ae,
             },
             semantics: { arrayElement: schema_12d2e6c473ae },
@@ -1720,7 +1720,7 @@ const schema_a5af08cb3292 = {
   optional: true,
   description: 'Buff 启用时创建的护盾；护盾的数值、吸收范围、次数和销毁行为由条目配置。',
 } as const;
-const schema_fa9874937ccd = {
+const schema_bd9bad30daa5 = {
   kind: 'array',
   element: {
     kind: 'object',
@@ -1728,7 +1728,7 @@ const schema_fa9874937ccd = {
       key: { kind: 'string', description: '事件响应在当前技能中的唯一名称。' },
       event: {
         kind: 'union',
-        variants: schema_41b22f7a5842,
+        variants: schema_dddd96c65a04,
         semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
         description: '要监听的战斗事件及其筛选参数。',
       },
@@ -1843,7 +1843,7 @@ const schema_68e0682e1a9f = {
   semantics: { arrayElement: schema_a4c41ed6f378 },
   description: '条件成立时按顺序执行的伤害处理器。',
 } as const;
-const schema_50106ee90dd3 = {
+const schema_4e7580a01f85 = {
   kind: 'array',
   element: {
     kind: 'union',
@@ -1861,7 +1861,7 @@ const schema_50106ee90dd3 = {
           sequence: schema_0164b02b9dc4,
           event: {
             kind: 'union',
-            variants: schema_41b22f7a5842,
+            variants: schema_dddd96c65a04,
             semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
             description: '监听一项语义战斗事件。',
           },
@@ -2625,7 +2625,7 @@ export const definitionSchemas = {
       },
       actionGraph: schema_a20dbc08091b,
       modifiers: schema_72930dbfd226,
-      eventHandlers: schema_50106ee90dd3,
+      eventHandlers: schema_4e7580a01f85,
       blackboard: schema_04ac62f53921,
       enableSequence: schema_78022e2596fd,
       initializationSequence: schema_b983f675c8a2,
@@ -2818,7 +2818,7 @@ export const definitionSchemas = {
           costs: schema_558c826756dd,
           costFrame: schema_df06170b65b5,
           switchToBuffCast: schema_19225484aa38,
-          eventHandlers: schema_fa9874937ccd,
+          eventHandlers: schema_bd9bad30daa5,
           skillTags: schema_54f3a28a51c4,
           blackboard: schema_338b4f4fde4d,
           scheduledSequences: schema_f6b9a1dd719e,
@@ -2883,7 +2883,7 @@ export const definitionSchemas = {
           costs: schema_558c826756dd,
           costFrame: schema_df06170b65b5,
           switchToBuffCast: schema_19225484aa38,
-          eventHandlers: schema_fa9874937ccd,
+          eventHandlers: schema_bd9bad30daa5,
           skillTags: schema_54f3a28a51c4,
           blackboard: schema_338b4f4fde4d,
           scheduledSequences: schema_f6b9a1dd719e,
@@ -3913,7 +3913,7 @@ export const definitionSchemas = {
       levelCount: { kind: 'number', description: '这条词条可以解析的等级数量。' },
       actionGraph: schema_a20dbc08091b,
       modifiers: schema_72930dbfd226,
-      eventHandlers: schema_50106ee90dd3,
+      eventHandlers: schema_4e7580a01f85,
       blackboard: schema_04ac62f53921,
       enableSequence: schema_78022e2596fd,
       initializationSequence: schema_b983f675c8a2,

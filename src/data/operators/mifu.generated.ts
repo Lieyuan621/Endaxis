@@ -3615,7 +3615,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_12' },
             tags: [],
-            features: ['canBreakWeakness', 'physicalInfliction'],
+            features: ['canBreakWeakness', 'crush', 'physicalInfliction'],
           },
         },
         next: null,

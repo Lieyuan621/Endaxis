@@ -3732,6 +3732,7 @@ const mingheBuff10: SkillBuffDefinition = {
     icon: 'endaxis:icons/icon_battle_buff_minghe_thundertrigger',
     showInHeadBarCommon: true,
     abnormalColorType: 'Pulse',
+    nameKey: 'effects.name.sunderization',
   },
   applyTags: [],
   extendTags: [],

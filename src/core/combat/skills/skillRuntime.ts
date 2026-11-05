@@ -1,3 +1,4 @@
+import type { BuffFinishContext } from '../buffs/combatBuffs';
 import type { ProjectileLaunchSchedule } from '../../../../packages/game-data-contract/src/projectileSchedule';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 
@@ -126,6 +127,8 @@ export interface RuntimeSkillTransition {
 
 /** 技能运行时把普通操作和条件判断委托给战斗装配层的端口。 */
 export interface CombatOperationContext {
+  /** 仅 Buff 结束动作及其同步子调用读取，不是能力事件。 */
+  readonly buffFinishContext?: BuffFinishContext;
   /** 当前 Buff 环境保存的部件转交信息；事件信息在求值时优先合并。 */
   readonly partTransferInfo?: EnemyPartTransferInfo;
   /** 执行动作的技能配置属性，不代表当前命中的属性。 */

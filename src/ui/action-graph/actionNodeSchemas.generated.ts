@@ -90,10 +90,11 @@ const schema_2eb8cb87ac4f = [
   'less',
   'lessOrEqual',
 ] as const;
-const schema_49db036f17e4 = [
+const schema_9d2d7d8c9790 = [
   'canBreakWeakness',
   'crush',
   'airborne',
+  'fracture',
   'knockDown',
   'shatter',
   'dot',
@@ -293,9 +294,9 @@ const schema_fb9acc9d77b1 = {
   options: ['launch', 'hit', 'block', 'reach', 'finish'],
   semantics: schema_8b5920c2fde6,
 } as const;
-const schema_0c6017ad0ce2 = {
+const schema_cf3b028ef11e = {
   kind: 'enum',
-  options: ['crush', 'airborne', 'knockDown', 'fracture'],
+  options: ['crush', 'airborne', 'fracture', 'knockDown'],
   semantics: schema_12d2e6c473ae,
 } as const;
 const schema_30dadad79116 = {
@@ -547,10 +548,10 @@ const schema_d91410ccad46 = {
   element: schema_23bc76e1d0a0,
   semantics: { arrayElement: { aliases: ['CombatCondition'] } },
 } as const;
-const schema_f269985d992f = {
+const schema_033bf54469b1 = {
   kind: 'array',
-  element: { kind: 'enum', options: schema_49db036f17e4, semantics: schema_8959ee040d75 },
-  semantics: { arrayElement: schema_8959ee040d75 },
+  element: { kind: 'enum', options: schema_9d2d7d8c9790, semantics: schema_bd2dc972d7c3 },
+  semantics: { arrayElement: schema_bd2dc972d7c3 },
   optional: true,
 } as const;
 const schema_0f0b494ec253 = {
@@ -3556,11 +3557,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'json',
       },
       {
-        valueSchema: schema_f269985d992f,
+        valueSchema: schema_033bf54469b1,
         path: ['parameters', 'features'],
         description: '原生伤害位中与技能分类无关的行为特征。',
         control: 'multiselect',
-        options: schema_49db036f17e4,
+        options: schema_9d2d7d8c9790,
       },
       {
         valueSchema: schema_4af9a3af2e9c,
@@ -3701,11 +3702,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'levelValues',
       },
       {
-        valueSchema: schema_f269985d992f,
+        valueSchema: schema_033bf54469b1,
         path: ['parameters', 'features'],
         description: '保留原生 PoisePack 的装饰位；当前木桩没有弱点窗口，但不能从数据中丢弃。',
         control: 'multiselect',
-        options: schema_49db036f17e4,
+        options: schema_9d2d7d8c9790,
       },
     ],
   },
@@ -6652,10 +6653,10 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
                       types: {
                         kind: 'union',
                         variants: [
-                          schema_0c6017ad0ce2,
+                          schema_cf3b028ef11e,
                           {
                             kind: 'array',
-                            element: schema_0c6017ad0ce2,
+                            element: schema_cf3b028ef11e,
                             semantics: schema_66a2df19b08f,
                           },
                         ],
@@ -7431,13 +7432,13 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
       {
         valueSchema: {
           kind: 'array',
-          element: { kind: 'enum', options: schema_49db036f17e4, semantics: schema_8959ee040d75 },
-          semantics: { arrayElement: schema_8959ee040d75 },
+          element: { kind: 'enum', options: schema_9d2d7d8c9790, semantics: schema_bd2dc972d7c3 },
+          semantics: { arrayElement: schema_bd2dc972d7c3 },
         },
         path: ['features'],
         description: '参与匹配的伤害特征。',
         control: 'multiselect',
-        options: schema_49db036f17e4,
+        options: schema_9d2d7d8c9790,
       },
     ],
   },
@@ -7483,13 +7484,13 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
       {
         valueSchema: {
           kind: 'array',
-          element: schema_0c6017ad0ce2,
+          element: schema_cf3b028ef11e,
           semantics: schema_66a2df19b08f,
         },
         path: ['types'],
         description: '任一匹配即可成立的物理异常类型。',
         control: 'multiselect',
-        options: ['crush', 'airborne', 'knockDown', 'fracture'],
+        options: ['crush', 'airborne', 'fracture', 'knockDown'],
       },
       {
         valueSchema: schema_b168dffc75ec,

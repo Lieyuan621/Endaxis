@@ -1,3 +1,4 @@
+import { projectDamageDecorateMask } from '../damageDecorateMask.ts';
 import { projectSelectorBuffValidators } from './selectorBuffProjection.ts';
 import { projectNativeTagQueryType } from '../../source/tagQuery.ts';
 import type { SkillInterruptReason } from '../../../../../packages/game-data-contract/src/conditions.ts';
@@ -555,43 +556,8 @@ function compileConditionLeaf(
       ExceptAny: 'exceptAny',
       ExceptAll: 'exceptAll',
     }[condition.checkType] as 'hasAny' | 'hasAll' | 'exceptAny' | 'exceptAll' | undefined;
-    const has = (bit: number) => Math.floor(condition.mask / bit) % 2 === 1;
-    const tags = [
-      ...(has(4) ? (['powerAttack'] as const) : []),
-      ...(has(128) ? (['normalAttack'] as const) : []),
-      ...(has(256) ? (['normalSkill'] as const) : []),
-      ...(has(512) ? (['ultimateSkill'] as const) : []),
-      ...(has(1024) ? (['plungingAttack'] as const) : []),
-      ...(has(8192) ? (['comboSkill'] as const) : []),
-      ...(has(131072) ? (['dashAttack'] as const) : []),
-      ...(has(2097152) ? (['normalAttackLastCombo'] as const) : []),
-      ...(has(4194304) ? (['fireBurst'] as const) : []),
-      ...(has(8388608) ? (['cryoBurst'] as const) : []),
-      ...(has(16777216) ? (['electricBurst'] as const) : []),
-      ...(has(33554432) ? (['natureBurst'] as const) : []),
-    ];
-    const features = [
-      ...(has(4096) ? (['canBreakWeakness'] as const) : []),
-      ...(has(16384) ? (['crush'] as const) : []),
-      ...(has(32768) ? (['airborne'] as const) : []),
-      ...(has(65536) ? (['knockDown'] as const) : []),
-      ...(has(134217728) ? (['shatter'] as const) : []),
-      ...(has(268435456) ? (['dot'] as const) : []),
-      ...(has(536870912) ? (['remainArea'] as const) : []),
-      ...(has(1073741824) ? (['physicalInfliction'] as const) : []),
-      ...(has(2147483648) ? (['talentDamage'] as const) : []),
-    ];
-    const knownBits = [
-      4, 128, 256, 512, 1024, 4096, 8192, 16384, 32768, 65536, 131072, 2097152, 4194304, 8388608,
-      16777216, 33554432, 134217728, 268435456, 536870912, 1073741824, 2147483648,
-    ];
-    if (
-      match === undefined ||
-      tags.length + features.length === 0 ||
-      !Number.isSafeInteger(condition.mask) ||
-      condition.mask < 0 ||
-      condition.mask - knownBits.reduce((sum, bit) => sum + (has(bit) ? bit : 0), 0) !== 0
-    ) {
+    const { tags, features } = projectDamageDecorateMask(condition.mask, sourcePath);
+    if (match === undefined || tags.length + features.length === 0) {
       throw new Error(`${sourcePath}: unsupported damage decorate mask ${condition.mask}`);
     }
     const projected = [

@@ -31,7 +31,7 @@ const commonBuff_buff_cc02_eny_numshield$actionGraph = {
         expression: {
           kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          tags: ['normalSkill', 'ultimateSkill', 'comboSkill', 'normalAttackLastCombo'],
+          tags: ['normalAttackLastCombo', 'normalSkill', 'ultimateSkill', 'comboSkill'],
         },
       },
       data_2: {
@@ -2389,7 +2389,7 @@ const commonBuff_buff_cc_chr_no_lastcombo_stop_atb_recover$actionGraph = {
         expression: {
           kind: 'eventDamageTagsMatch',
           match: 'hasAny',
-          tags: ['powerAttack', 'normalAttackLastCombo'],
+          tags: ['normalAttackLastCombo', 'powerAttack'],
         },
       },
       data_2: {
@@ -2616,7 +2616,7 @@ const commonBuff_buff_cc_chr_no_lastcombo_weak$actionGraph = {
         expression: {
           kind: 'eventDamageTagsMatch',
           match: 'hasAny',
-          tags: ['powerAttack', 'normalAttackLastCombo'],
+          tags: ['normalAttackLastCombo', 'powerAttack'],
         },
       },
       data_3: {

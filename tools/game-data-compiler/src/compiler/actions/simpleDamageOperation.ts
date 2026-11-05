@@ -1,3 +1,4 @@
+import { projectDamageDecorateMask } from '../damageDecorateMask.ts';
 import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
 import type { DamageActionSource } from '../../source/damageActions.ts';
 import type { ScalarSource } from '../../source/scalar.ts';
@@ -237,60 +238,18 @@ export function compileEventTargetSimpleDamageOperationSource(
   // DamageEnums.g.cs：分类位彼此独立。hitEnvironment 只增加环境命中旁路，不改变同一
   // DamageUnit 对目标的结算；Endaxis 没有可破坏环境，只投影目标伤害。
   // 用安全整数和减法验剩余位，避免 JS 位运算把高位截断后误当作已覆盖。
-  const mask = unit.damageDecorateMask;
-  const powerAttack = Math.floor(mask / 4) % 2 === 1;
-  const normalAttack = Math.floor(mask / 128) % 2 === 1;
-  const normalSkill = Math.floor(mask / 256) % 2 === 1;
-  const ultimateSkill = Math.floor(mask / 512) % 2 === 1;
-  const plungingAttack = Math.floor(mask / 1024) % 2 === 1;
-  const canBreakWeakness = Math.floor(mask / 4096) % 2 === 1;
-  const comboSkill = Math.floor(mask / 8192) % 2 === 1;
-  const crush = Math.floor(mask / 16384) % 2 === 1;
-  const airborne = Math.floor(mask / 32768) % 2 === 1;
-  // DamageEnums.g.cs：KnockDown=65536 同时属于 PhysicalInfliction 组合掩码。
-  const knockDown = Math.floor(mask / 65536) % 2 === 1;
-  const dashAttack = Math.floor(mask / 131072) % 2 === 1;
-  const normalAttackLastCombo = Math.floor(mask / 2097152) % 2 === 1;
-  const fireBurst = Math.floor(mask / 4194304) % 2 === 1;
-  const cryoBurst = Math.floor(mask / 8388608) % 2 === 1;
-  const electricBurst = Math.floor(mask / 16777216) % 2 === 1;
-  const natureBurst = Math.floor(mask / 33554432) % 2 === 1;
-  const burning = Math.floor(mask / 67108864) % 2 === 1;
-  const shatter = Math.floor(mask / 134217728) % 2 === 1;
-  const dot = Math.floor(mask / 268435456) % 2 === 1;
-  const remainArea = Math.floor(mask / 536870912) % 2 === 1;
-  const fracture = Math.floor(mask / 1073741824) % 2 === 1;
-  const talentDamage = Math.floor(mask / 2147483648) % 2 === 1;
-  const physicalInfliction = crush || airborne || knockDown || fracture;
+  const decoration = projectDamageDecorateMask(unit.damageDecorateMask, sourcePath);
+  const features = [...decoration.features];
   if (
-    !Number.isSafeInteger(mask) ||
-    mask < 0 ||
-    mask -
-      (powerAttack ? 4 : 0) -
-      (normalAttack ? 128 : 0) -
-      (normalSkill ? 256 : 0) -
-      (ultimateSkill ? 512 : 0) -
-      (plungingAttack ? 1024 : 0) -
-      (canBreakWeakness ? 4096 : 0) -
-      (comboSkill ? 8192 : 0) -
-      (crush ? 16384 : 0) -
-      (airborne ? 32768 : 0) -
-      (knockDown ? 65536 : 0) -
-      (dashAttack ? 131072 : 0) -
-      (normalAttackLastCombo ? 2097152 : 0) !==
-      (fireBurst ? 4194304 : 0) +
-        (cryoBurst ? 8388608 : 0) +
-        (electricBurst ? 16777216 : 0) +
-        (natureBurst ? 33554432 : 0) +
-        (burning ? 67108864 : 0) +
-        (shatter ? 134217728 : 0) +
-        (dot ? 268435456 : 0) +
-        (remainArea ? 536870912 : 0) +
-        (fracture ? 1073741824 : 0) +
-        (talentDamage ? 2147483648 : 0)
-  ) {
-    throw new Error(`${sourcePath}: unsupported event damage decorate mask ${mask}`);
-  }
+    features.some(
+      feature =>
+        feature === 'crush' ||
+        feature === 'airborne' ||
+        feature === 'knockDown' ||
+        feature === 'fracture',
+    )
+  )
+    features.push('physicalInfliction');
   const staggerCalculation =
     poiseUnit === undefined ? undefined : compileSimplePoiseOperand(poiseUnit, sourcePath, 1);
   return {
@@ -330,22 +289,7 @@ export function compileEventTargetSimpleDamageOperationSource(
             ),
             calculationAddition: scalarOperand(attributeCalculation.addition),
           }),
-      tags: [
-        ...(normalAttack ? (['normalAttack'] as const) : []),
-        ...(normalAttackLastCombo ? (['normalAttackLastCombo'] as const) : []),
-        ...(powerAttack ? (['powerAttack'] as const) : []),
-        ...(plungingAttack ? (['plungingAttack'] as const) : []),
-        ...(dashAttack ? (['dashAttack'] as const) : []),
-        ...(normalSkill ? (['normalSkill'] as const) : []),
-        ...(ultimateSkill ? (['ultimateSkill'] as const) : []),
-        ...(comboSkill ? (['comboSkill'] as const) : []),
-        ...(fireBurst ? (['fireBurst'] as const) : []),
-        ...(cryoBurst ? (['cryoBurst'] as const) : []),
-        ...(electricBurst ? (['electricBurst'] as const) : []),
-        ...(natureBurst ? (['natureBurst'] as const) : []),
-        ...(burning ? (['fireAbnormal'] as const) : []),
-        ...(shatter ? (['cryoAbnormal'] as const) : []),
-      ],
+      tags: decoration.tags,
       ...(unit.gameplayTagIds.length === 0
         ? {}
         : {
@@ -355,19 +299,7 @@ export function compileEventTargetSimpleDamageOperationSource(
               `${sourcePath}.units[0].damageTags`,
             ),
           }),
-      ...(canBreakWeakness || dot || remainArea || physicalInfliction || shatter || talentDamage
-        ? {
-            features: [
-              ...(canBreakWeakness ? (['canBreakWeakness'] as const) : []),
-              ...(dot ? (['dot'] as const) : []),
-              ...(remainArea ? (['remainArea'] as const) : []),
-              ...(knockDown ? (['knockDown'] as const) : []),
-              ...(physicalInfliction ? (['physicalInfliction'] as const) : []),
-              ...(shatter ? (['shatter'] as const) : []),
-              ...(talentDamage ? (['talentDamage'] as const) : []),
-            ],
-          }
-        : {}),
+      ...(features.length === 0 ? {} : { features }),
       ...(instantAttributeModifiers.length === 0 ? {} : { instantAttributeModifiers }),
       ...(instantDamageScaleModifiers.length === 0 ? {} : { instantDamageScaleModifiers }),
       ...(staggerCalculation === undefined ? {} : { stagger: staggerCalculation.value }),

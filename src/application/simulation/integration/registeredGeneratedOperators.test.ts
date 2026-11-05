@@ -1,3 +1,7 @@
+import { projectBuffIconTimelineMetadata } from '../../../core/projection/buffTimelineViz';
+import { projectBuffDamageDisplayOwners } from '../../../core/projection/enemyEffectViz';
+import { projectEnemyEffectViz } from '../../../core/projection/enemyEffectViz';
+import { layoutEnemyDamageHits } from '../../../ui/timeline/results/enemyDamageHitLayout';
 import { firstScenarioEnemy } from '../../../core/project/level';
 import { skillFixture, type SkillFixtureProperties } from '../../../test/skillFixture';
 import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
@@ -501,10 +505,10 @@ function numberedPlacementIds(prefix: string) {
 }
 
 describe('registered generated operators', () => {
-  it('明河战技一段、连携、战技二段施加殷雷', () => {
+  it('明河施加殷雷后，终结技猛击引爆并产生伤害', () => {
     const operator = gameDataRepository.getOperator('minghe')!;
     let scenario = createEmptyScenario('scenario:minghe-thunder', '明河殷雷');
-    scenario.battle.durationFrames = 600;
+    scenario.battle.durationFrames = 900;
     scenario.tracks[0] = {
       id: 'track:minghe',
       operator: createDefaultOperatorInstance(operator),
@@ -518,6 +522,7 @@ describe('registered generated operators', () => {
       ['battleSkill', 'chr_0037_minghe_normalskill_1', 1],
       ['comboSkill', 'chr_0037_minghe_combo_skill', 120],
       ['battleSkill', 'chr_0037_minghe_normalskill_2', 240],
+      ['ultimate', 'chr_0037_minghe_ultimate_skill', 450],
     ] as const) {
       scenario = placeSkillGroup({
         scenario,
@@ -530,11 +535,51 @@ describe('registered generated operators', () => {
       }).scenario;
     }
     const session = createEditorSimulationService().createCombatSession(scenario);
-    session.advanceToFrame(600);
+    session.advanceToFrame(400);
+    const restored = session.fork(session.runtime.save());
+    session.advanceToFrame(900);
+    restored.advanceToFrame(900);
     const entries = session.collectResult().receiptEntries;
     expect(
       entries.filter(entry => entry.event === 'BuffApplied').map(entry => entry.data?.buffId),
     ).toContain('buff_chr_0037_minghe_thundertrigger');
+    const explosions = entries.filter(
+      entry =>
+        entry.event === 'DamageApplied' &&
+        String(entry.data?.stepKey).includes('chr_0037_minghe_specialfracture_thunderskill'),
+    );
+    expect(explosions).toHaveLength(1);
+    expect(explosions[0]!.data?.value).toBeGreaterThan(0);
+    const segments = projectBuffIconTimelineMetadata(entries, 900);
+    const owners = projectBuffDamageDisplayOwners(entries, segments);
+    const owner = owners[explosions[0]!.sequence];
+    expect(owner?.buffId).toBe('buff_chr_0037_minghe_thundertrigger');
+    expect(owner!.endFrame).toBeLessThan(explosions[0]!.frame);
+    expect(projectTimelineHitOccurrences(entries).has('upgrade-initialization:talent:0')).toBe(
+      false,
+    );
+    expect(projectEnemyEffectViz(entries, 900).damageHits).toContain(explosions[0]);
+    const marker = layoutEnemyDamageHits(entries, segments, [], new Set(), segments, owners).find(
+      marker => marker.group.includes(explosions[0]!),
+    );
+    expect(marker).toBeDefined();
+    expect(marker!.standalone).toBe(false);
+    const restoredExplosions = restored
+      .collectResult()
+      .receiptEntries.filter(
+        entry =>
+          entry.event === 'DamageApplied' &&
+          String(entry.data?.stepKey).includes('chr_0037_minghe_specialfracture_thunderskill'),
+      );
+    expect(
+      restoredExplosions.map(entry => ({
+        frame: entry.frame,
+        targetId: entry.targetId,
+        data: entry.data,
+      })),
+    ).toEqual(
+      explosions.map(entry => ({ frame: entry.frame, targetId: entry.targetId, data: entry.data })),
+    );
   });
 
   it.each(['basicAttack', 'battleSkill', 'comboSkill', 'ultimate'] as const)(

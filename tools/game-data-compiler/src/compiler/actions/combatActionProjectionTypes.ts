@@ -162,32 +162,9 @@ type DamageParameters = Pick<
   readonly calculationAddition?: CompiledActionValueOperandSource;
   readonly calculationValue?: CompiledActionValueOperandSource;
   readonly calculationValueScale?: CompiledActionValueOperandSource;
-  readonly tags: readonly (
-    | 'normalAttack'
-    | 'normalAttackLastCombo'
-    | 'powerAttack'
-    | 'plungingAttack'
-    | 'dashAttack'
-    | 'normalSkill'
-    | 'ultimateSkill'
-    | 'comboSkill'
-    | 'fireBurst'
-    | 'electricBurst'
-    | 'cryoBurst'
-    | 'natureBurst'
-    | 'fireAbnormal'
-    | 'cryoAbnormal'
-  )[];
+  readonly tags: Parameters<'dealDamage'>['tags'];
   readonly gameplayTags?: Parameters<'dealDamage'>['gameplayTags'];
-  readonly features?: readonly (
-    | 'canBreakWeakness'
-    | 'dot'
-    | 'remainArea'
-    | 'talentDamage'
-    | 'knockDown'
-    | 'physicalInfliction'
-    | 'shatter'
-  )[];
+  readonly features?: Parameters<'dealDamage'>['features'];
   readonly stagger?: CompiledActionValueOperandSource;
   readonly staggerMultiplier?: CompiledActionValueOperandSource;
 };
