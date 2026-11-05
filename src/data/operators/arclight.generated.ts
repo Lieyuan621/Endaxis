@@ -1501,6 +1501,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
 
 export const arclightChr_0007_ikut_normal_skill: SkillDefinition = {
   actionGraph: arclightChr_0007_ikut_normal_skillActionGraph,
+  skillTags: ['Skill/Character/chr_0007_ikut/NormalSkill'],
   key: 'chr_0007_ikut_normal_skill',
   element: 'electric',
   blackboard: {

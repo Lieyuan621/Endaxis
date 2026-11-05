@@ -218,7 +218,6 @@ function description(tag: ContingencyContractTagPresentation): string {
 
 <template>
   <section class="cc-panel">
-    <p v-if="season === 2" class="cc-preview-note">{{ t('contingencyContract.preview.note') }}</p>
     <div class="cc-body">
       <div class="cc-groups">
         <div class="cc-grid" :style="{ width: `${gridWidth}px`, height: `${gridHeight}px` }">
@@ -525,12 +524,6 @@ function description(tag: ContingencyContractTagPresentation): string {
 .cc-variable :deep(.ea-number-input) {
   width: 100px;
   flex-shrink: 0;
-}
-.cc-preview-note {
-  margin: 0;
-  padding: 10px 12px;
-  color: var(--ea-fg-muted);
-  font-size: 12px;
 }
 .cc-panel {
   height: 100%;

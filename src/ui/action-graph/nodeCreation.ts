@@ -65,6 +65,8 @@ const actionGroups: Readonly<Record<string, readonly string[]>> = {
     'findCharacterTeamTargets',
     'createSpatialPointTargets',
     'blowOffEnemy',
+    'exitControlledState',
+    'boneAttach',
     'pushBack',
     'pull',
     'saveTargetDistance',

@@ -1,3 +1,4 @@
+import { isPresentationOnlyActionSequence } from '../src/compiler/skills/skillPresentationTargets.ts';
 import { collectCombatInvisibleRandomKeys } from '../src/compiler/optimization/nativePresentationUsage.ts';
 import { simplifyNativeSequences } from '../src/compiler/optimization/nativeSequenceOptimization.ts';
 import { describe, expect, it } from 'vitest';
@@ -2254,6 +2255,32 @@ describe('公共 Action 叶子分派', () => {
         actionTargetTarget: 'enemy',
       }),
     ).toThrow('unsupported BoneAttach target projection');
+    expect(isPresentationOnlyActionSequence(parsed)).toBe(true);
+    const enhanced = {
+      ...parsed,
+      actions: parsed.actions.map(node => {
+        if (
+          node.body.kind !== 'leaf' ||
+          node.body.value.family !== 'spatial' ||
+          node.body.value.action.kind !== 'boneAttach'
+        )
+          throw new Error('expected BoneAttach');
+        return {
+          ...node,
+          body: {
+            ...node.body,
+            value: {
+              ...node.body.value,
+              action: {
+                ...node.body.value.action,
+                enhancedAnchor: node.body.value.action.target,
+              },
+            },
+          },
+        };
+      }),
+    };
+    expect(isPresentationOnlyActionSequence(enhanced)).toBe(false);
   });
 
   it('DisableRootMotionAction 只接受无额外载荷的原生形状', () => {

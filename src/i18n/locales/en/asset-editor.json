@@ -2007,6 +2007,22 @@
       "current": {
         "name": "Remaining count",
         "help": "Remaining count"
+      },
+      "dieWhenTargetDies": {
+        "name": "Die with target",
+        "help": "Destroy this ability entity when its spawn-bound target dies. Retargeting does not change this binding."
+      },
+      "anchor": {
+        "name": "Attachment source"
+      },
+      "nativeTickIntervalV2": {
+        "name": "Native interval V2"
+      },
+      "totalTickCount": {
+        "name": "Total tick count"
+      },
+      "totalDurationSeconds": {
+        "name": "Total duration (seconds)"
       }
     },
     "help": "Help",
@@ -2717,6 +2733,10 @@
         "name": "Change remaining status duration",
         "help": "Find statuses by ID or tag, then set, add to, or scale their remaining duration."
       },
+      "eventSkillTagsMatch": {
+        "name": "Check event skill tags",
+        "help": "Match the current event skill’s exact tags. Returns false when the event has no skill."
+      },
       "skillDamageTypeIn": {
         "name": "Check skill element",
         "help": "Check the event skill’s element, or the executing skill when there is no event skill."
@@ -2788,6 +2808,14 @@
       "recoverPoise": {
         "name": "Recover poise",
         "help": "Recover poise using the target query and value calculation, without health healing events."
+      },
+      "exitControlledState": {
+        "name": "Exit controlled state",
+        "help": "End the action owner’s controlled state without removing its status buffs."
+      },
+      "boneAttach": {
+        "name": "Attach target",
+        "help": "Hold the target in a caught state while the action is active. Attachment motion is not simulated."
       }
     },
     "open": "Edit skill graph (Dev)",

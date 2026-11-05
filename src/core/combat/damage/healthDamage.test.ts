@@ -186,8 +186,8 @@ describe('executeHealthDamage', () => {
       'target:beforeTakeDamage',
       'source:beforeOutputDamage',
       'source:beforeKillEntity',
-      'source:afterKillEntity',
       'receipt:DamageApplied',
+      'source:afterKillEntity',
       'target:takeDamage',
       'source:outputDamage',
     ]);

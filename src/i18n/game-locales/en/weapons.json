@@ -2120,6 +2120,34 @@
       ]
     }
   },
+  "wpn_sword_0025": {
+    "name": "Lunar Calling",
+    "skill1": {
+      "name": "Will [L]",
+      "description": "Will <@ba.vup>+{0}</>",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156]
+    },
+    "skill2": {
+      "name": "ATK [L]",
+      "description": "ATK <@ba.vup>+{0}%</>",
+      "values": [5, 9, 13, 17, 21, 25, 29, 33, 39]
+    },
+    "skill3": {
+      "name": "Infliction: Coursing Stars",
+      "description": "Arts Intensity <@ba.vup>+{0}</>.\nWhen wielder's skill applies <#ba.conduct>Electrification</>, the entire team gains ATK <@ba.vup>+{1}%</> for 20s.\nWhen the wielder <#ba.consume>consumes</> <#ba.spellinflict>Arts Infliction</>, the wielder gains Electric DMG Dealt <@ba.vup>+{2}%</> for 20s.\n<@ba.info>The two effects apply separately and do not stack with themselves.</>",
+      "values": [
+        [30, 7.5, 12],
+        [36, 9, 14.4],
+        [42, 10.5, 16.8],
+        [48, 12, 19.2],
+        [54, 13.5, 21.6],
+        [60, 15, 24],
+        [66, 16.5, 26.4],
+        [72, 18, 28.8],
+        [84, 21, 33.6]
+      ]
+    }
+  },
   "wpn_sword_0026": {
     "name": "Farsight",
     "skill1": {

@@ -124,25 +124,26 @@ export class HealOperationExecutor implements CombatOperationExecutor {
     // 乘创建 HealPack 时双方属性快照的 1 + output + taken。
     calculation.value *= 1 + calculation.healerOutputIncrease + calculation.receiverTakenIncrease;
     const requested = Math.max(0, calculation.value);
-    const result = target.vitals.heal(requested);
-    this.dependencies.receipt.record({
-      frame: this.dependencies.clock.frame,
-      time: this.dependencies.clock.time,
-      event: 'HealingApplied',
-      sourceId: healerId,
-      targetId: target.entityId,
-      data: {
-        attribute: attribute ?? 'definite',
-        attributeValue,
-        multiplier,
-        addition,
-        tags: JSON.stringify(step.parameters.tags),
-        requestedHealing: result.requestedHealing,
-        actualHealing: result.actualHealing,
-        overhealing: result.overhealing,
-        previousHealth: result.previousHealth,
-        currentHealth: result.currentHealth,
-      },
+    const result = target.vitals.heal(requested, result => {
+      this.dependencies.receipt.record({
+        frame: this.dependencies.clock.frame,
+        time: this.dependencies.clock.time,
+        event: 'HealingApplied',
+        sourceId: healerId,
+        targetId: target.entityId,
+        data: {
+          attribute: attribute ?? 'definite',
+          attributeValue,
+          multiplier,
+          addition,
+          tags: JSON.stringify(step.parameters.tags),
+          requestedHealing: result.requestedHealing,
+          actualHealing: result.actualHealing,
+          overhealing: result.overhealing,
+          previousHealth: result.previousHealth,
+          currentHealth: result.currentHealth,
+        },
+      });
     });
     const eventBase = {
       sourceId: healerId,
@@ -177,7 +178,10 @@ export class HealOperationExecutor implements CombatOperationExecutor {
     return resolveActionValueOperand(value, context.blackboard);
   }
 
-  #resolveTargetAttribute(targetId: string, attribute: MultiplyAttributeCalculationAttribute): number {
+  #resolveTargetAttribute(
+    targetId: string,
+    attribute: MultiplyAttributeCalculationAttribute,
+  ): number {
     const resolve = this.dependencies.resolveTargetAttribute;
     if (resolve === undefined) {
       throw new Error(`heal target attribute '${attribute}' resolver is not configured`);

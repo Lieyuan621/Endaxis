@@ -12,6 +12,7 @@ import {
 } from '../../core/game-data/enemyDefinition';
 import type {
   EnemyDocument,
+  EnemyInstanceDocument,
   StageEnemyIdentity,
   EnemyEditableValues,
   ScenarioDocument,
@@ -23,7 +24,6 @@ export interface StageEnemySelection {
   definitionId: string;
   level: number;
   source: StageEnemyIdentity;
-  name: string;
 }
 
 function secondsToFrames(seconds: number, fps: number): number {
@@ -86,12 +86,27 @@ export function setScenarioEnemy(
   enemy: EnemyDocument,
   instanceId?: string,
 ): ScenarioDocument {
+  return updateEnemyInstance(
+    scenario,
+    item => ({
+      id: item.id,
+      enemy: { ...enemy, lifecycle: item.enemy.lifecycle },
+    }),
+    instanceId,
+  );
+}
+
+function updateEnemyInstance(
+  scenario: ScenarioDocument,
+  update: (item: EnemyInstanceDocument) => EnemyInstanceDocument,
+  instanceId?: string,
+): ScenarioDocument {
   const id = instanceId ?? firstScenarioEnemy(scenario).id;
   if (!levelEnemies(scenario.level).some(item => item.id === id))
     throw new Error('unknown enemy instance: ' + id);
   return {
     ...scenario,
-    level: mapLevelEnemies(scenario.level, item => (item.id === id ? { ...item, enemy } : item)),
+    level: mapLevelEnemies(scenario.level, item => (item.id === id ? update(item) : item)),
   };
 }
 
@@ -174,29 +189,35 @@ export function replaceEnemyEditableValues(
       configuration.enabledBuffs.some(key => !previousEnabled.includes(key)));
   if (!changed && !enabledChanged) return scenario;
   if (configuration)
-    return setScenarioEnemy(
+    return updateEnemyInstance(
       scenario,
-      {
-        ...enemy,
-        birthEffects: configuration,
-        editable: structuredClone(values),
-      },
+      item => ({
+        ...item,
+        enemy: {
+          ...enemy,
+          birthEffects: configuration,
+          editable: structuredClone(values),
+        },
+      }),
       instanceId,
     );
 
-  return setScenarioEnemy(
+  return updateEnemyInstance(
     scenario,
-    {
-      ...enemy,
-      editable: {
-        ...values,
-        resistances: { ...values.resistances },
-        stagger: {
-          ...values.stagger,
-          knotThresholds: [...values.stagger.knotThresholds],
+    item => ({
+      ...item,
+      enemy: {
+        ...enemy,
+        editable: {
+          ...values,
+          resistances: { ...values.resistances },
+          stagger: {
+            ...values.stagger,
+            knotThresholds: [...values.stagger.knotThresholds],
+          },
         },
       },
-    },
+    }),
     instanceId,
   );
 }

@@ -1086,27 +1086,35 @@ export function compileActionNode(
             multiplier: actionValueOperand(action.calculation.multiplier),
             addition: actionValueOperand(action.calculation.addition),
           };
-    const parameters = {
+    const commonParameters = {
       target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
       healer,
       ...(action.alwaysNext ? { alwaysNext: true } : {}),
+    };
+    const parameters = {
       ...calculation,
       ...(action.calculation.kind === 'attribute' && action.calculation.valueSource === 'Target'
         ? { attributeSource: 'target' as const }
         : {}),
     };
-    if (action.kind === 'recoverPoise') return [{ kind: 'recoverPoise', parameters }];
+    if (action.kind === 'recoverPoise')
+      return [{ kind: 'recoverPoise', parameters: { ...commonParameters, ...parameters } }];
     const tags = projectGameplayTags(
       action.useHealTags ? action.healTagIds : [],
       context,
       node.sourcePath,
     );
     if (parameters.amount !== undefined)
-      return [{ kind: 'heal', parameters: { ...parameters, tags } }];
+      return [{ kind: 'heal', parameters: { ...commonParameters, tags, ...parameters } }];
     const healingAttribute = parameters.attribute;
     if (healingAttribute === 'MaxUltimateSp')
       throw new Error(`${node.sourcePath}: unsupported healing calculation attribute`);
-    return [{ kind: 'heal', parameters: { ...parameters, attribute: healingAttribute, tags } }];
+    return [
+      {
+        kind: 'heal',
+        parameters: { ...commonParameters, tags, ...parameters, attribute: healingAttribute },
+      },
+    ];
   }
   if (node.body.value.family === 'buffQuery') {
     const action = node.body.value.action;
@@ -1179,8 +1187,7 @@ export function compileActionNode(
       action.target.targetSource !== 'Target' ||
       action.target.targetGroupKey !== '' ||
       action.settings.checkType !== 'Context' ||
-      action.settings.buffIds.length !== 1 ||
-      action.settings.buffIds[0] !== '' ||
+      action.settings.buffIds.some(id => id !== '') ||
       action.settings.tagQuery.tagIds.length !== 0
     ) {
       throw new Error(`${node.sourcePath}: unsupported event Buff blackboard read`);
@@ -1334,6 +1341,7 @@ export function compileActionNode(
       'MaxHp',
       'MaxUltimateSp',
       'HealTakenIncrease',
+      'PhysicalAndSpellInflictionEnhance',
       'FireAbnormalDamageIncrease',
       'PulseAbnormalDamageIncrease',
       'CrystAbnormalDamageIncrease',
@@ -1688,6 +1696,21 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'spatial' && node.body.value.action.kind === 'boneAttach') {
     const action = node.body.value.action;
+    if (action.enhancedAnchor) {
+      return [
+        {
+          kind: 'boneAttach',
+          parameters: {
+            target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+            anchor: projectActionTargetQuery(
+              action.enhancedAnchor,
+              context,
+              `${node.sourcePath}.anchor`,
+            ),
+          },
+        },
+      ];
+    }
     const targetIsProvenEnemy =
       isPlainTargetReference(action.target, 'Target', action.target.targetGroupKey) &&
       ((action.target.targetGroupKey === '' && context.actionTargetTarget === 'enemy') ||
@@ -2046,7 +2069,17 @@ function compileBuffApplication(
                           ? ('partyExceptCaster' as const)
                           : isPartyInstantSearch(action.target)
                             ? ('party' as const)
-                            : null;
+                            : inferBuffTargetKind(
+                                  projectActionTargetQuery(
+                                    action.target,
+                                    context,
+                                    `${sourcePath}.target`,
+                                  ),
+                                  context,
+                                  partyTargetGroups,
+                                ) === 'enemy'
+                              ? 'enemy'
+                              : null;
   // 此值只供 Buff 闭包推断宿主种类；unknown 不能变成默认干员来源。
   // 实际来源始终由下面的 ActionTargetQuery 在执行时解析。
   const source: BuffApplicationSource | 'unknown' | undefined | null =

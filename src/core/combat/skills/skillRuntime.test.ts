@@ -2377,6 +2377,7 @@ describe('SkillRuntime', () => {
     const inherited = {
       skillCastId: 41,
       originSkillId: 'ultimateSkill',
+      originSkillTags: ['Skill/Source'],
       originSkillType: 'ultimate' as const,
       nonReturnedSpCost: 73,
     };
@@ -2618,4 +2619,31 @@ describe('SkillRuntime', () => {
     expect(fixture.runtime.cooldown.ready).toBe(true);
     expect(fixture.receipt.entries.map(entry => entry.event)).toContain('SkillCooldownReady');
   });
+});
+
+it('技能定义标签经过编译进入施法事件和来源身份', () => {
+  const definition = {
+    ...defineSkillFixture({ key: 'tagged', timelineBlockFrames: 2, costFrame: 0, costs: [] }),
+    skillTags: ['Skill/Test'],
+  };
+  const compiled = compileSkill({
+    operatorId: 'operator',
+    skillGroupKey: 'battleSkill',
+    skillType: 'battleSkill',
+    skill: definition,
+    skillLevel: 1,
+    programs: skillPrograms,
+  });
+  const emitted: AbilitySkillPayload[] = [];
+  const runtime = new SkillRuntime(compiled, {
+    clock: new CombatClock(),
+    receipt: new CombatReceiptCollector(),
+    resources: null,
+    operations: { execute: () => true, evaluate: () => true },
+    allocateSkillCastId: () => 1,
+    emitAfterSkillApplyCost: payload => emitted.push(payload),
+  });
+  expect(runtime.tryStart()).toBe(true);
+  expect(runtime.skillCastInfo.originSkillTags).toEqual(['Skill/Test']);
+  expect(emitted[0]?.skillTags).toEqual(['Skill/Test']);
 });

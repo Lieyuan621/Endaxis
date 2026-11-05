@@ -2024,6 +2024,22 @@
       "current": {
         "name": "剩余次数",
         "help": "剩余次数"
+      },
+      "dieWhenTargetDies": {
+        "name": "随目标死亡",
+        "help": "出生时绑定的目标死亡后，销毁该能力实体。后续切换目标不改变这一绑定。"
+      },
+      "anchor": {
+        "name": "挂点来源"
+      },
+      "nativeTickIntervalV2": {
+        "name": "原生周期动作 V2"
+      },
+      "totalTickCount": {
+        "name": "总次数"
+      },
+      "totalDurationSeconds": {
+        "name": "总时长（秒）"
       }
     },
     "help": "查看说明",
@@ -2734,6 +2750,10 @@
         "name": "修改状态剩余时间",
         "help": "按状态标识或标签查找目标状态，再设置、增加或缩放剩余时间。"
       },
+      "eventSkillTagsMatch": {
+        "name": "检查事件技能标签",
+        "help": "精确匹配当前事件关联技能的标签；没有关联技能时返回假。"
+      },
       "skillDamageTypeIn": {
         "name": "检查技能属性",
         "help": "检查触发事件的技能属性；无事件技能时检查当前执行技能。"
@@ -2805,6 +2825,14 @@
       "recoverPoise": {
         "name": "恢复失衡值",
         "help": "按原生目标查询和数值公式恢复失衡值，不触发生命治疗事件。"
+      },
+      "exitControlledState": {
+        "name": "退出受控状态",
+        "help": "结束动作宿主的受控状态，不移除其身上的状态 Buff。"
+      },
+      "boneAttach": {
+        "name": "挂接目标",
+        "help": "在目标与挂点来源存在时建立抓取控制，动作结束时释放；不模拟挂点运动。"
       }
     },
     "open": "编辑技能图（Dev）",

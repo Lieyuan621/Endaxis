@@ -107,6 +107,9 @@ function setup() {
     { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
   );
   const executor = new KnockDownOperationExecutor({
+    exitOwnerControl: ownerId => {
+      if (ownerId === 'enemy') control.exit();
+    },
     queryTargets: queries.queryTargets.bind(queries),
     resolveTarget: selected =>
       selected.kind === 'enemy' ? { target, isTargetAlive: () => alive, getControl } : undefined,
@@ -152,6 +155,19 @@ function setup() {
 }
 
 describe('普通根倒地：复用真实 Buff 目标与控制标签', () => {
+  it('退出受控按宿主执行，保留异常 Buff，不误清其他目标', () => {
+    const s = setup();
+    s.executor.execute(step({ force: true }), s.context);
+    expect(s.control.active).toBe(true);
+    const exit = { kind: 'exitControlledState' as const, parameters: {} };
+    s.executor.execute(exit, { ...s.context, actionOwnerId: 'other-enemy' });
+    expect(s.control.active).toBe(true);
+    s.executor.execute(exit, { ...s.context, actionOwnerId: 'enemy' });
+    expect(s.control.active).toBe(false);
+    expect(s.container.hasEntityTag(DOWN_TAG)).toBe(false);
+    expect(s.target.getCountByIds([DOWN_BUFF])).toBe(1);
+  });
+
   it('恢复倒地计时后沿用剩余时间，到期只清理新分支的控制标签', () => {
     const original = setup();
     original.executor.execute(step(), original.context);

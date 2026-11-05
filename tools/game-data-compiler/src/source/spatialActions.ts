@@ -258,6 +258,7 @@ export interface SaveTargetDistanceActionSource {
 
 export interface BoneAttachActionSource {
   readonly kind: 'boneAttach';
+  readonly enhancedAnchor?: TargetReferenceSource;
   readonly target: TargetReferenceSource;
   readonly anchorSlot: string;
   readonly subSlot: string;
@@ -594,11 +595,8 @@ export function parseReceiveMoveInputActionSource(
         `${path}.stopSuperArmorThreshold`,
       ),
     };
-    if (movementConstraints.enableStopDistance) {
-      throw new Error(
-        `${path}.enableStopDistance: movement stop behavior requires native projection`,
-      );
-    }
+    // 原生移动管线用停止距离裁剪位移，不结束技能或派发战斗回调。
+    // 此处仍解析完整参数；无空间移动的战斗投影不执行位移约束。
   }
   return {
     kind: 'receiveMoveInput',
@@ -948,11 +946,14 @@ export function parseBoneAttachActionSource(value: unknown, path: string): BoneA
     'airborneCheckStepDownOffset',
   ];
   if ('useEnhancedAttach' in action) {
-    // 当前木桩投影不执行挂点运动；新增的增强挂接、免死变更及结束落地检查不能静默省略。
-    for (const key of ['useEnhancedAttach', 'notAddUndeadableTag', 'checkAirborneOnEnd']) {
-      if (requireBoolean(action[key], `${path}.${key}`))
-        throw new Error(`${path}.${key}: requires native projection`);
-    }
+    requireBoolean(action.useEnhancedAttach, `${path}.useEnhancedAttach`);
+    requireBoolean(action.checkAirborneOnEnd, `${path}.checkAirborneOnEnd`);
+    const notAddUndeadableTag = requireBoolean(
+      action.notAddUndeadableTag,
+      `${path}.notAddUndeadableTag`,
+    );
+    if (action.useEnhancedAttach && !notAddUndeadableTag)
+      throw new Error(`${path}: BoneAttach Undeadable lifecycle is not supported`);
   }
   requireExactFields(
     action,
@@ -988,6 +989,14 @@ export function parseBoneAttachActionSource(value: unknown, path: string): BoneA
     throw new Error(`${path}.lerpTime: expected finite non-negative number`);
   return {
     kind: 'boneAttach',
+    ...(action.useEnhancedAttach === true
+      ? {
+          enhancedAnchor: parseTargetReferenceSource(
+            action.anchorSourceSettings,
+            `${path}.anchorSourceSettings`,
+          ),
+        }
+      : {}),
     target: parseTargetReferenceSource(action.targetSettings, `${path}.targetSettings`),
     anchorSlot: requireNonEmptyString(action.anchorSlot, `${path}.anchorSlot`),
     subSlot: requireNonEmptyString(action.subSlot, `${path}.subSlot`),

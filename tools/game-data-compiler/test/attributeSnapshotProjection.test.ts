@@ -124,6 +124,22 @@ describe('公共属性快照投影', () => {
     });
   });
 
+  it('源石技艺强度快照保留原生属性和非转化读取阶段', () => {
+    expect(
+      project({
+        primaryAttributeType: 'Specific',
+        attributeType: 'PhysicalAndSpellInflictionEnhance',
+        key: 'yuanshi_damageadd',
+      }),
+    ).toMatchObject({
+      parameters: {
+        attribute: { kind: 'specific', key: 'PhysicalAndSpellInflictionEnhance' },
+        stage: 'finalNonConverted',
+        targetKey: 'yuanshi_damageadd',
+      },
+    });
+  });
+
   it('Specific/Level 不能误走 Sub 的忽略字段路径', () => {
     expect(() => project({ primaryAttributeType: 'Specific' })).toThrow(
       'unsupported attribute snapshot target or selector',

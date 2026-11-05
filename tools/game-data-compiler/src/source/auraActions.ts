@@ -255,7 +255,7 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
   const spatialBlackboardKeys = parseFiniteRangedShape(action.shapeData, `${path}.shapeData`);
   requireExpected(action.excludeColliderOptions, 0, `${path}.excludeColliderOptions`);
   const filter = requireRecord(action.targetFilter, `${path}.targetFilter`);
-  const rangedBuffs = parseAuraBuffInputs(action.buffInput, `${path}.buffInput`, false);
+  const rangedBuffs = parseAuraBuffInputs(action.buffInput, `${path}.buffInput`);
   const autoEnemyTarget = filter.autoSetTargetFaction === true && filter.factionTarget === 'Anti';
   const autoPartyTarget = filter.autoSetTargetFaction === true && filter.factionTarget === 'Ally';
   if (
@@ -334,7 +334,7 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
   requireExpected(action.includeUnmarkable, false, `${path}.includeUnmarkable`);
   const influenceLimit = parseInfluenceLimit(action, path);
   requireExpected(action.buffSource, 'ActionSource', `${path}.buffSource`);
-  if (parseAuraBuffInputs(action.buffInput, `${path}.buffInput`, false).length !== 0) {
+  if (parseAuraBuffInputs(action.buffInput, `${path}.buffInput`).length !== 0) {
     throw new Error(`${path}.buffInput: expected empty array`);
   }
   requireExpected(action.overrideBuffIconDuration, false, `${path}.overrideBuffIconDuration`);
@@ -592,7 +592,7 @@ export function parseAuraReferenceActionSource(
 ): AuraReferenceActionSource {
   const action = parseAuraRecord(value, path);
   readAuraType(action.auraType, `${path}.auraType`);
-  const buffs = parseAuraBuffInputs(action.buffInput, `${path}.buffInput`, false);
+  const buffs = parseAuraBuffInputs(action.buffInput, `${path}.buffInput`);
   const exitBuffs = parseAuraExitAction(
     action.actionWhenExitAura,
     `${path}.actionWhenExitAura`,
@@ -604,11 +604,7 @@ export function parseAuraReferenceActionSource(
   };
 }
 
-function parseAuraBuffInputs(
-  value: unknown,
-  path: string,
-  requireNonEmpty = true,
-): GlobalPartyAuraBuffInputSource[] {
+function parseAuraBuffInputs(value: unknown, path: string): GlobalPartyAuraBuffInputSource[] {
   const buffs = requireArray(value, path).map((raw, index) => {
     const inputPath = `${path}[${index}]`;
     const input = requireRecord(raw, inputPath);
@@ -633,7 +629,6 @@ function parseAuraBuffInputs(
       assignments,
     };
   });
-  if (requireNonEmpty && buffs.length === 0) throw new Error(`${path}: expected at least one Buff`);
   return buffs;
 }
 

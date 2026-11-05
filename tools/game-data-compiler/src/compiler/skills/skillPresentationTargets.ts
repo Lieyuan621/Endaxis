@@ -98,7 +98,8 @@ function isPresentationActionNode(
     return (
       isCombatInvisiblePresentationLeaf(node) ||
       body.value.family === 'presentationCalculation' ||
-      body.value.family === 'spatial'
+      (body.value.family === 'spatial' &&
+        (body.value.action.kind !== 'boneAttach' || body.value.action.enhancedAnchor === undefined))
     );
   }
   if (body.kind !== 'ifElse') return false;
@@ -181,6 +182,9 @@ function isPresentationSelectionNode(
     return [body.condition, body.whenTrue, body.whenFalse].every(sequence =>
       sequence.actions.every(isPresentationSelectionNode),
     );
+  }
+  if (body.kind === 'tickInterval' || body.kind === 'tickIntervalV2') {
+    return body.actionOnTick.actions.every(isPresentationSelectionNode);
   }
   if (body.kind === 'forEach' || body.kind === 'once') {
     return body.action.actions.every(isPresentationSelectionNode);

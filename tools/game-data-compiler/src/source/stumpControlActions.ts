@@ -94,6 +94,7 @@ export interface LaunchUpwardActionSource {
 }
 
 export type StumpControlActionSource =
+  | { readonly kind: 'exitControlledState' }
   | EnemyHurtAnimationActionSource
   | PushBackActionSource
   | PullActionSource
@@ -493,4 +494,14 @@ export function parseTargetHitStopActionSource(
     durationSeconds: duration,
     priorityTagId: requireInteger(priority.tagId, `${path}.timeDilationPriority.tagId`),
   };
+}
+
+/** BreakoutAction 的 ControlledState 分支；动画切换不进入战斗投影。 */
+export function parseBreakoutActionSource(value: unknown, path: string): StumpControlActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(action, new Set([...META, 'breakOutState', 'animName']), path);
+  requireString(action.animName, `${path}.animName`);
+  if (action.breakOutState !== 'ControlledState')
+    throw new Error(`${path}.breakOutState: only ControlledState is projected`);
+  return { kind: 'exitControlledState' };
 }

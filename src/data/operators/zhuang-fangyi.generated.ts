@@ -8086,17 +8086,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: 'applyBuff_22',
               },
-              repeatEachTick_24: {
-                action: {
-                  kind: 'repeatEachTick',
-                  parameters: {
-                    nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.2 },
-                  },
-                  body: { $sequence: null },
-                },
-                next: null,
-              },
-              modifyActionValue_26: {
+              modifyActionValue_25: {
                 action: {
                   kind: 'modifyActionValue',
                   parameters: {
@@ -8107,13 +8097,23 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              ifElse_27: {
+              ifElse_26: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
                   condition: { kind: 'conditionNode', nodeId: 'data_14' },
-                  whenTrue: { $sequence: 'modifyActionValue_26' },
+                  whenTrue: { $sequence: 'modifyActionValue_25' },
                   whenFalse: { $sequence: null },
+                },
+                next: null,
+              },
+              repeatEachTick_27: {
+                action: {
+                  kind: 'repeatEachTick',
+                  parameters: {
+                    nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.2 },
+                  },
+                  body: { $sequence: 'ifElse_26' },
                 },
                 next: null,
               },
@@ -8123,11 +8123,11 @@ export const zhuangFangyi: OperatorDefinition = {
                   parameters: {
                     nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.2 },
                   },
-                  body: { $sequence: 'ifElse_27' },
+                  body: { $sequence: null },
                 },
                 next: null,
               },
-              createTimedMarker_31: {
+              createTimedMarker_30: {
                 action: {
                   kind: 'createTimedMarker',
                   parameters: {
@@ -8242,11 +8242,10 @@ export const zhuangFangyi: OperatorDefinition = {
           { startFrame: 69, endFrame: 70, sequence: { $sequence: 'findTargets_6' } },
           { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_17' } },
           { startFrame: 69, endFrame: 70, sequence: { $sequence: 'checkCondition_23' } },
-          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_24' } },
-          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_28' } },
-          { startFrame: 15, endFrame: 64, sequence: { $sequence: 'repeatEachTick_24' } },
-          { startFrame: 67, endFrame: 71, sequence: { $sequence: 'repeatEachTick_24' } },
-          { startFrame: 67, endFrame: 70, sequence: { $sequence: 'createTimedMarker_31' } },
+          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_27' } },
+          { startFrame: 15, endFrame: 64, sequence: { $sequence: 'repeatEachTick_28' } },
+          { startFrame: 67, endFrame: 71, sequence: { $sequence: 'repeatEachTick_28' } },
+          { startFrame: 67, endFrame: 70, sequence: { $sequence: 'createTimedMarker_30' } },
         ],
       },
     },

@@ -246,6 +246,7 @@ import {
   parseUltimateShowActionSource,
   parseVoiceInterruptActionSource,
   parseVoiceTriggerActionSource,
+  parseVoicePlaybackActionSource,
   parseWeaponAnimationActionSource,
   parseWeaponVisibilityActionSource,
   type CameraPresentationActionSource,
@@ -356,6 +357,7 @@ import {
   parseTakeDownActionSource,
   parseTargetHitStopActionSource,
   type StumpControlActionSource,
+  parseBreakoutActionSource,
 } from './stumpControlActions.ts';
 import { parseTagQuerySource, type TagQuerySource } from './tagQuery.ts';
 import { parseTargetReferenceSource, type TargetReferenceSource } from './target.ts';
@@ -402,6 +404,7 @@ const CONDITION_ACTION_NAMES = new Set([
   'Probablity',
   'CheckSkillType',
   'CheckSkillDamageType',
+  'CheckSkillGameplayTag',
   'CheckSkillId',
   'CheckSkillInterruptReason',
   'CheckOriginSkillType',
@@ -1267,10 +1270,18 @@ export function tryParseKnownNativeActionLeafSource(
         family: 'presentation',
         action: parseModifyWeaponMountPointActionSource(value, path),
       };
+    case 'BreakoutAction':
+      return { family: 'stumpControl', action: parseBreakoutActionSource(value, path) };
     case 'VoiceTriggerAction':
       return {
         family: 'presentation',
         action: parseVoiceTriggerActionSource(value, path),
+      };
+    case 'VoiceTriggerPauseAction':
+    case 'VoiceTriggerResumeAction':
+      return {
+        family: 'presentation',
+        action: parseVoicePlaybackActionSource(value, path, name === 'VoiceTriggerResumeAction'),
       };
     case 'VoiceInterruptAction':
       return {

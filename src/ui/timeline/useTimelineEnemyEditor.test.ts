@@ -170,7 +170,6 @@ it('批量应用关卡是完整可撤销事务，坏条目不会部分提交', (
     definitionId: entry.definitionId!,
     level: entry.level!,
     source: entry.source,
-    name: entry.nameKey,
   }));
   let nextId = 0;
   const allocate = () => `enemy:${++nextId}`;

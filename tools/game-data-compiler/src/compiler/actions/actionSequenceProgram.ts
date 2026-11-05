@@ -95,6 +95,13 @@ export interface CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, T
     },
     state: TState,
   ) => CompiledActionNodeProgram<TStep, TState> | null;
+  /** 领域可在宿主调度区间内保留旧版 TickIntervalAction 的原生周期语义。 */
+  readonly compileTickIntervalV2?: (
+    node: NativeActionNodeSource<TLeaf> & {
+      readonly body: NativeActionBodySourceMap<TLeaf>['tickIntervalV2'];
+    },
+    state: TState,
+  ) => CompiledActionNodeProgram<TStep, TState> | null;
   /** 多分支保留有序标签、独立实例和返回值；由公共领域投影决定正式表示。 */
   readonly compileSwitch?: (
     node: NativeActionNodeSource<TLeaf> & {
@@ -309,6 +316,17 @@ export function compileActionNodePrograms<TLeaf, TCondition, TStep, TState>(
     const compiled = options.compileTickInterval(
       first as NativeActionNodeSource<TLeaf> & {
         readonly body: NativeActionBodySourceMap<TLeaf>['tickInterval'];
+      },
+      state,
+    );
+    if (compiled !== null) {
+      return [...compiled.steps, ...compileActionNodePrograms(rest, options, compiled.state)];
+    }
+  }
+  if (first!.body.kind === 'tickIntervalV2' && options.compileTickIntervalV2 !== undefined) {
+    const compiled = options.compileTickIntervalV2(
+      first as NativeActionNodeSource<TLeaf> & {
+        readonly body: NativeActionBodySourceMap<TLeaf>['tickIntervalV2'];
       },
       state,
     );

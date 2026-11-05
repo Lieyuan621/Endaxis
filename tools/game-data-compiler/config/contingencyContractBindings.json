@@ -1,0 +1,235 @@
+{
+  "indie_contract002": {
+    "110001": {
+      "omitted": "仅修改敌人输出",
+      "buffs": []
+    },
+    "110002": {
+      "omitted": "仅修改敌人输出",
+      "buffs": []
+    },
+    "110101": {
+      "omitted": "波次治疗拾取物不进入模拟",
+      "buffs": []
+    },
+    "110302": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_chr_disable_same_normal_skill",
+          "owner": "caster",
+          "blackboardIndex": 0
+        },
+        {
+          "buffId": "buff_cc_chr_set_skill_atb_recover_ratio",
+          "owner": "caster",
+          "blackboardIndex": 0
+        }
+      ],
+      "spRecoveryBlackboardIndex": 0
+    },
+    "110403": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_chr_normal_skill_dmg_down",
+          "owner": "caster",
+          "blackboardIndex": 0
+        },
+        {
+          "buffId": "buff_cc_enemy_common_hp_up",
+          "owner": "enemy",
+          "blackboardIndex": 1
+        }
+      ],
+      "$comment": "TODO：暂用 buff_cc_enemy_common_hp_up（FinalMultiplier）；后续核实是否应为 buff_cc_enemy_common_hp_up_mult（Multiplier），重点检查与其他生命加成的叠加。"
+    },
+    "110601": {
+      "omitted": "依赖敌人对干员造成伤害",
+      "buffs": []
+    },
+    "110602": {
+      "omitted": "依赖敌人对干员造成伤害",
+      "buffs": []
+    },
+    "110703": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_chr_ult_skill_usp_clear",
+          "owner": "caster",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "110801": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_chr_dmg_down_after_consume",
+          "owner": "caster",
+          "blackboardIndex": 0
+        },
+        {
+          "buffId": "buff_cc_chr_dmg_down_after_consume_inflict",
+          "owner": "caster",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "110802": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_chr_dmg_down_after_consume",
+          "owner": "caster",
+          "blackboardIndex": 0
+        },
+        {
+          "buffId": "buff_cc_chr_dmg_down_after_consume_inflict",
+          "owner": "caster",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "110901": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_eny_heal_no_inflict",
+          "owner": "enemy",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "110903": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_eny_heal_no_inflict",
+          "owner": "enemy",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "111001": {
+      "omitted": "闪避与体力不进入模拟",
+      "buffs": []
+    },
+    "111003": {
+      "omitted": "闪避与体力不进入模拟",
+      "buffs": []
+    },
+    "111201": {
+      "omitted": "主控切换由时间轴输入",
+      "buffs": []
+    },
+    "111301": {
+      "omitted": "依赖敌人对干员造成伤害",
+      "buffs": []
+    },
+    "111303": {
+      "omitted": "依赖敌人对干员造成伤害",
+      "buffs": []
+    },
+    "111602": {
+      "omitted": "依赖敌人主动技能或攻击目标选择",
+      "buffs": []
+    },
+    "111703": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_chr_normal_attack_dmg_down",
+          "owner": "caster",
+          "blackboardIndex": 0
+        },
+        {
+          "buffId": "buff_cc_enemy_common_hp_up",
+          "owner": "enemy",
+          "blackboardIndex": 1
+        }
+      ],
+      "$comment": "TODO：暂用 buff_cc_enemy_common_hp_up（FinalMultiplier）；后续核实是否应为 buff_cc_enemy_common_hp_up_mult（Multiplier），重点检查与其他生命加成的叠加。"
+    },
+    "112302": {
+      "omitted": "依赖敌人主动技能或攻击目标选择",
+      "buffs": []
+    },
+    "112402": {
+      "omitted": "依赖敌人主动技能或攻击目标选择",
+      "buffs": []
+    },
+    "112403": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_eny_half_hp_clear_inflict_and_abnormal",
+          "owner": "enemy",
+          "blackboardIndex": 2
+        }
+      ]
+    },
+    "112501": {
+      "omitted": "可避免的地面区域不进入模拟",
+      "buffs": []
+    },
+    "112701": {
+      "omitted": "依赖敌人主动技能或攻击目标选择",
+      "buffs": []
+    },
+    "112801": {
+      "omitted": "可避免的地面区域不进入模拟",
+      "buffs": []
+    },
+    "112901": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_eny_damage_resist",
+          "owner": "enemy",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "112903": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_eny_damage_resist",
+          "owner": "enemy",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "113302": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_chr_no_lastcombo_weak",
+          "owner": "caster",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "113502": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_chr_combo_lock",
+          "owner": "caster",
+          "blackboardIndex": 0
+        },
+        {
+          "buffId": "buff_cc_chr_combo_skill_dmg_up",
+          "owner": "caster",
+          "blackboardIndex": 1
+        }
+      ]
+    },
+    "113603": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_eny_numshield_on_dead",
+          "owner": "enemy",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "113801": {
+      "omitted": "关卡挑战倒计时不参与伤害模拟",
+      "buffs": []
+    },
+    "113802": {
+      "omitted": "关卡挑战倒计时不参与伤害模拟",
+      "buffs": []
+    }
+  }
+}

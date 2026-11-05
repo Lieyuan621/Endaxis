@@ -71,6 +71,32 @@ describe('LogicalAbilityEntityRuntime', () => {
       independent,
     ]);
   });
+  it('目标死亡只绑定出生首项，初始化换目标和切面恢复均不重绑', () => {
+    const runtime = createRuntime();
+    const first = { kind: 'enemy', enemyId: 'enemy:first' } as const;
+    const second = { kind: 'enemy', enemyId: 'enemy:second' } as const;
+    const entity = runtime.spawn({
+      abilityEntityId: 'bound',
+      definition: { lifetime: { kind: 'infinite' } },
+      ownerId: 'caster',
+      source: { kind: 'operator', operatorId: 'caster' },
+      targets: [first, second],
+      dieWhenTargetDies: true,
+      initialize: target => runtime.setTargets(target, [second]),
+    });
+    const restored = new LogicalAbilityEntityRuntime({
+      restoredState: structuredClone(runtime.runtimeState),
+    });
+    expect(restored.targets(entity)).toEqual([second]);
+    expect(restored.notifyEntityDied(second)).toBe(0);
+    expect(restored.notifyEntityDied(first)).toBe(1);
+    expect(restored.isAlive(entity)).toBe(false);
+    expect(restored.runtimeState.instances.get(entity.instanceId)?.pendingReleaseReason).toBe(
+      'targetDied',
+    );
+    expect(runtime.isAlive(entity)).toBe(true);
+  });
+
   it('一名敌人死亡只清理其关联实体，恢复后仍保留另一名敌人的身份', () => {
     const runtime = createRuntime();
     const spawn = (instanceId: string) =>
@@ -83,14 +109,14 @@ describe('LogicalAbilityEntityRuntime', () => {
       });
     const a = spawn('a');
     const b = spawn('b');
-    expect(runtime.notifySourceDied({ kind: 'enemy', enemyId: 'enemy:a' })).toBe(1);
+    expect(runtime.notifyEntityDied({ kind: 'enemy', enemyId: 'enemy:a' })).toBe(1);
     expect(runtime.isAlive(a)).toBe(false);
     expect(runtime.isAlive(b)).toBe(true);
     const restored = new LogicalAbilityEntityRuntime({
       restoredState: structuredClone(runtime.runtimeState),
     });
-    expect(restored.notifySourceDied({ kind: 'enemy', enemyId: 'enemy:a' })).toBe(0);
-    expect(restored.notifySourceDied({ kind: 'enemy', enemyId: 'enemy:b' })).toBe(1);
+    expect(restored.notifyEntityDied({ kind: 'enemy', enemyId: 'enemy:a' })).toBe(0);
+    expect(restored.notifyEntityDied({ kind: 'enemy', enemyId: 'enemy:b' })).toBe(1);
     expect(runtime.isAlive(b)).toBe(true);
   });
   it('恢复后来源死亡逐级传递，仅结束启用了联动的后代', () => {
@@ -114,13 +140,13 @@ describe('LogicalAbilityEntityRuntime', () => {
       restoredState: structuredClone(runtime.runtimeState),
     });
 
-    restored.notifySourceDied(request.source);
+    restored.notifyEntityDied(request.source);
 
     for (const target of [parent, child, grandchild]) expect(restored.isAlive(target)).toBe(false);
     expect(restored.isAlive(independent)).toBe(true);
     expect(restored.isAlive(otherEnemyChild)).toBe(true);
     expect(runtime.isAlive(parent)).toBe(true);
-    expect(restored.notifySourceDied(request.source)).toBe(0);
+    expect(restored.notifyEntityDied(request.source)).toBe(0);
   });
 
   it('出生初始化写入的黑板先于子技能可见，初始化失败不启动子技能', () => {
@@ -283,9 +309,9 @@ describe('LogicalAbilityEntityRuntime', () => {
       hooks: { finished },
     });
     // 墨影跟随主体死亡，不取决于来源干员或 dieWhenSourceDies 开关。
-    expect(bodyDeath.notifySourceDied({ kind: 'operator', operatorId: 'caster' })).toBe(0);
+    expect(bodyDeath.notifyEntityDied({ kind: 'operator', operatorId: 'caster' })).toBe(0);
     expect(bodyDeath.isAlive(entity)).toBe(true);
-    expect(bodyDeath.notifySourceDied({ kind: 'enemy', enemyId: 'enemy' })).toBe(1);
+    expect(bodyDeath.notifyEntityDied({ kind: 'enemy', enemyId: 'enemy' })).toBe(1);
     expect(bodyDeath.isAlive(entity)).toBe(false);
     bodyDeath.advanceFrame();
     expect(finished).toHaveBeenCalledWith(
@@ -519,7 +545,7 @@ describe('LogicalAbilityEntityRuntime', () => {
       },
     });
     runtime.advanceFrame();
-    runtime.notifySourceDied(source);
+    runtime.notifyEntityDied(source);
     const blackboard = runtime.entityBlackboard(entity);
     const session = createStateTestSession(
       { directory: runtime.runtimeState, blackboard: blackboard.runtimeState },
@@ -936,11 +962,11 @@ describe('LogicalAbilityEntityRuntime', () => {
 
     expect(childSkillRequested).toHaveBeenCalledTimes(1);
     expect(runtime.isActive(entity)).toBe(true);
-    expect(runtime.notifySourceDied({ kind: 'operator', operatorId: 'a' })).toBe(1);
+    expect(runtime.notifyEntityDied({ kind: 'operator', operatorId: 'a' })).toBe(1);
     expect(runtime.isActive(entity)).toBe(true);
     expect(runtime.snapshot(entity).isAlive).toBe(false);
     expect(runtime.findOwnerSpawned({ ownerId: 'a' })).toEqual([entity]);
-    expect(runtime.notifySourceDied({ kind: 'operator', operatorId: 'a' })).toBe(0);
+    expect(runtime.notifyEntityDied({ kind: 'operator', operatorId: 'a' })).toBe(0);
     runtime.advanceFrame();
     expect(runtime.isActive(entity)).toBe(false);
     expect(runtime.activeCount).toBe(0);

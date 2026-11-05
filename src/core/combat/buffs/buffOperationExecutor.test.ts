@@ -53,6 +53,54 @@ function createExecutor(dependencies: BuffOperationDependencies): BuffOperationE
 }
 
 describe('BuffOperationExecutor', () => {
+  it('抓取持有首次查询的目标，切换主目标和恢复切面后仍成对释放标签', () => {
+    const containers = new Map(
+      ['enemy:first', 'enemy:second'].map(id => [
+        id,
+        new CombatBuffContainer(id, new CombatAttributeSet()),
+      ]),
+    );
+    let selected = 'enemy:first';
+    let hasAnchor = true;
+    const executor = createExecutor({
+      sourceId: 'caster',
+      delegate,
+      resolveTarget: () => containers.get(selected)!,
+      resolveEventTarget: id => containers.get(id)!,
+      queryTargets: query =>
+        query.kind === 'source'
+          ? hasAnchor
+            ? [{ kind: 'operator', operatorId: 'caster' }]
+            : []
+          : [{ kind: 'enemy', enemyId: selected }],
+    });
+    const step = {
+      kind: 'boneAttach',
+      parameters: { target: { kind: 'inputTarget' }, anchor: { kind: 'source' } },
+    } as const;
+    const context = () => ({
+      blackboard: new ActionBlackboard(),
+      boneAttachState: { targetId: null as string | null },
+    });
+    const first = context();
+    const second = context();
+    hasAnchor = false;
+    expect(executor.execute(step, first)).toBe(false);
+    hasAnchor = true;
+    executor.execute(step, first);
+    executor.execute(step, second);
+    const restored = { ...first, boneAttachState: structuredClone(first.boneAttachState) };
+    selected = 'enemy:second';
+    executor.end(step, restored);
+    executor.end(step, restored);
+    expect(containers.get('enemy:first')!.matchesEntityTags(['Status/Immobilized'], 'hasAny')).toBe(
+      true,
+    );
+    executor.end(step, second);
+    for (const container of containers.values())
+      expect(container.matchesEntityTags(['Status/Immobilized'], 'hasAny')).toBe(false);
+  });
+
   it('驱散跳过来源位置点，逐个处理接收者且不替换来源身份', () => {
     const first = new CombatBuffContainer('enemy:first', new CombatAttributeSet());
     const second = new CombatBuffContainer('enemy:second', new CombatAttributeSet());

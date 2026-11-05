@@ -240,6 +240,7 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
 
 export const avywennaChr_0012_avywen_combo_skill: SkillDefinition = {
   actionGraph: avywennaChr_0012_avywen_combo_skillActionGraph,
+  skillTags: ['Skill/Character/chr_0012_avywen/AvywenComboSkill'],
   key: 'chr_0012_avywen_combo_skill',
   element: 'electric',
   blackboard: {

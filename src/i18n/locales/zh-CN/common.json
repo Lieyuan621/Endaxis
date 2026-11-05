@@ -115,6 +115,7 @@
     "confirmButton": "确认重置"
   },
   "common": {
+    "originalNameSuffix": "（{name}）",
     "increase": "增加",
     "decrease": "减少",
     "add": "添加",
@@ -1789,6 +1790,7 @@
         "queueComboLock": "在队尾插入限时锁。此前已打开的窗口仍可释放，之后的窗口须等待锁结束。",
         "disableNormalSkill": "在动作生效期间添加战技禁用标签，可允许追加战技继续释放。",
         "limitMovementGait": "写入宿主共用步态限制，全部限制动作结束后清除。最大步态低于冲刺时影响闪避准入。",
+        "exitControlledState": "退出受控状态",
         "pushBack": "击退目标",
         "pull": "保留目标查询与拉拽处理结果，不模拟位移。未处理目标时按继续策略返回。",
         "saveTargetDistance": "双方目标存在时将距离写入变量；模拟距离为零。任一目标缺失时保留变量原值。",
@@ -1928,6 +1930,7 @@
         "queueComboLock": "锁定连携队列",
         "disableNormalSkill": "禁用战技",
         "limitMovementGait": "限制步态",
+        "exitControlledState": "退出受控状态",
         "pushBack": "击退目标",
         "pull": "拉拽目标",
         "saveTargetDistance": "保存目标距离",
@@ -2795,29 +2798,9 @@
     "clearInitialVariables": "清空编辑内容",
     "preview": {
       "operationName": "浸蓝测试作战",
-      "note": "试用版：行为采用原生 Buff，词条组合和默认数值待正式合约数据确认。",
       "comboLock": "环境：锁闭-锁定连携技",
-      "comboDamage": "环境：锁闭-连携技伤害加成",
       "battleLock": "环境：沉寂-锁定战技",
-      "heal": "改写：充血",
-      "tags": {
-        "200001": {
-          "name": "环境：锁闭",
-          "description": "连携技伤害加成 +{comboDamagePercent}%。全队每施放 {comboCount} 次连携技，在连携队列中加入持续 {lockSeconds} 秒的锁；锁前已开启的窗口仍可使用。洛茜二段连携不计数。"
-        },
-        "200002": {
-          "name": "环境：沉寂",
-          "description": "技力自然恢复速度提升 {spRecoveryPercent}%，技能带来的技力恢复量提升 {spGainPercent}%。干员施放普通战技后锁定普通战技；全队完成一轮后解除。原生后续段战技不受此锁限制，也不计数。"
-        },
-        "200003": {
-          "name": "环境：逸散",
-          "description": "任意干员施放终结技并支付费用后，清空其他队员的终结技能量。"
-        },
-        "200004": {
-          "name": "改写：充血",
-          "description": "敌人不再处于破防或法术附着状态后，等待 {healDelaySeconds} 秒，每秒恢复最大生命值的 {healPercent}%。重新施加这些状态会中止计时和回血。"
-        }
-      }
+      "heal": "改写：充血"
     },
     "title": "危机合约",
     "operationName": "重燃测试作战",

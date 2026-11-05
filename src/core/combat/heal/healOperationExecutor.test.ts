@@ -75,6 +75,23 @@ function fixture(
 }
 
 describe('原生治疗目标和结算', () => {
+  it('治疗写入先记账，再发布可递归改变生命的通知', () => {
+    const f = fixture({ receiver: 100 });
+    const target = f.vitals.get('receiver')!;
+    target.bindHealthChangeObserver(() => {
+      expect(f.receipt.entries.at(-1)).toMatchObject({
+        event: 'HealingApplied',
+        targetId: 'receiver',
+        data: { previousHealth: 100, currentHealth: 200, actualHealing: 100 },
+      });
+      target.bindHealthChangeObserver(() => {});
+      target.synchronizeMaxHealth(2000, 1000);
+    });
+    f.executor.execute(definite, f.context);
+    expect(target.health).toBe(400);
+    expect(f.receipt.entries).toHaveLength(1);
+  });
+
   it('保存的死亡目标不接受治疗或发布事件，零血量但存活的木桩仍可治疗', () => {
     const events: string[] = [];
     const f = fixture(

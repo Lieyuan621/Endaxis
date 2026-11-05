@@ -21,6 +21,7 @@ const TAG_FIELDS = new Set([
   'tagTerms',
 ]);
 const TERM_FIELDS = new Set(['blackboard', 'buffId', 'termType']);
+const TAG_LAYOUT_FIELDS = new Set([...TAG_FIELDS].filter(field => field !== 'tagTerms'));
 const BLACKBOARD_FIELDS = new Set(['key', 'value', 'valueStr']);
 const CONTRACT_FIELDS = new Set(['activityId', 'contractGroupMap']);
 const COLUMN_CONTRACT_FIELDS = new Set([
@@ -182,19 +183,41 @@ export function parseContingencyContractCatalogSource(
   ccTagTableValue: unknown,
   contractTableValue: unknown,
 ): ContingencyContractCatalogSource {
+  return parseCatalog(ccTagTableValue, contractTableValue, (tag, path) => {
+    if (!Object.hasOwn(tag, 'tagTerms')) {
+      throw new Error(
+        `${path}: missing combat effect source; this CcTagTable has no tagTerms. ` +
+          'Explicit Buff bindings are required.',
+      );
+    }
+    return requireArray(tag.tagTerms, `${path}.tagTerms`).map((term, index) =>
+      parseTerm(term, `${path}.tagTerms[${index}]`),
+    );
+  });
+}
+
+/** 展示表不承诺具有效果来源；返回值不携带 terms，不能误作空效果编译。 */
+export function parseContingencyContractLayoutSource(
+  ccTagTableValue: unknown,
+  contractTableValue: unknown,
+) {
+  const catalog = parseCatalog(ccTagTableValue, contractTableValue, () => []);
+  return {
+    tags: catalog.tags.map(({ terms: _terms, ...tag }) => tag),
+    contracts: catalog.contracts,
+  };
+}
+
+function parseCatalog(
+  ccTagTableValue: unknown,
+  contractTableValue: unknown,
+  readTerms: (tag: SourceRecord, path: string) => readonly ContingencyContractTermSource[],
+): ContingencyContractCatalogSource {
   const tagTable = requireRecord(ccTagTableValue, 'CcTagTable');
   const tags = orderedNumericEntries(tagTable, 'CcTagTable').map(([key, raw]) => {
     const path = `CcTagTable.${key}`;
     const tag = requireRecord(raw, path);
-    // 1.6.3 的客户端表仅保留展示信息；效果由 ServerSyncClientConfigSystem
-    // 按词条 ID 提供。缺少效果来源不能解释为空列表，否则会静默删除合约效果。
-    if (!Object.hasOwn(tag, 'tagTerms')) {
-      throw new Error(
-        `${path}: missing combat effect source; this CcTagTable has no tagTerms. ` +
-          'Server-synchronized contingency contract Buff configuration is required.',
-      );
-    }
-    requireExactFields(tag, TAG_FIELDS, path);
+    requireExactFields(tag, Object.hasOwn(tag, 'tagTerms') ? TAG_FIELDS : TAG_LAYOUT_FIELDS, path);
     const tagId = requireInteger(tag.tagId, `${path}.tagId`);
     if (String(tagId) !== key) throw new Error(`${path}.tagId: does not match table key`);
     return {
@@ -204,9 +227,7 @@ export function parseContingencyContractCatalogSource(
       icon: requireString(tag.icon, `${path}.icon`),
       romanNumSuffix: requireString(tag.romanNumSuffix, `${path}.romanNumSuffix`),
       score: requireInteger(tag.score, `${path}.score`),
-      terms: requireArray(tag.tagTerms, `${path}.tagTerms`).map((term, index) =>
-        parseTerm(term, `${path}.tagTerms[${index}]`),
-      ),
+      terms: readTerms(tag, path),
     };
   });
   const tagsById = new Map(tags.map(tag => [tag.tagId, tag]));

@@ -2193,25 +2193,33 @@ describe('施法输入限制与木桩物理控制投影', () => {
     });
   });
 
-  it('InterruptAction 的 Target 来源不读取残留 targetGroupKey', () => {
-    const action = parseKnownNativeActionLeafSource(
-      {
-        ...META,
-        $type: 'Beyond.Gameplay.Core.InterruptAction+Data, Gameplay.Beyond',
-        attacker: targetFixture('Source'),
-        defender: targetFixture('Target', undefined, 'residual-enemy-key'),
-        overrideSuperArmorLimit: -1,
-        immobilizedTime: 1,
-      },
-      'fixture.action',
-      {},
-    );
+  it.each(['caster', 'buffSource'] as const)(
+    'InterruptAction 对敌人的省略不依赖来源 %s',
+    actionSourceTarget => {
+      const action = parseKnownNativeActionLeafSource(
+        {
+          ...META,
+          $type: 'Beyond.Gameplay.Core.InterruptAction+Data, Gameplay.Beyond',
+          attacker: targetFixture('Source'),
+          defender: targetFixture('Target', undefined, 'residual-enemy-key'),
+          overrideSuperArmorLimit: -1,
+          immobilizedTime: 1,
+        },
+        'fixture.action',
+        {},
+      );
 
-    expect(compileBuffLeafNode(node(action), new Set(), new Map(), leafContext())).toEqual({
-      steps: [],
-      state: new Map(),
-    });
-  });
+      expect(
+        compileBuffLeafNode(node(action), new Set(), new Map(), {
+          ...leafContext(),
+          actionSourceTarget,
+        }),
+      ).toEqual({
+        steps: [],
+        state: new Map(),
+      });
+    },
+  );
 
   it.each([undefined, false, true])(
     '能力实体出生于直接 Source，单目标下多输入配置 %s 不改变结果',
@@ -2298,6 +2306,16 @@ describe('施法输入限制与木桩物理控制投影', () => {
         state: new Map(),
       });
       if (action.family !== 'abilityEntity') throw new Error('expected AbilityEntity action');
+      expect(
+        compileBuffLeafNode(
+          node({ ...action, action: { ...action.action, dieWhenTargetDies: true } }),
+          new Set(),
+          new Map(),
+          leafContext(),
+        ),
+      ).toMatchObject({
+        steps: [{ kind: 'spawnAbilityEntity', parameters: { dieWhenTargetDies: true } }],
+      });
       const enemyTargetAction = {
         ...action,
         action: { ...action.action, setTarget: true },

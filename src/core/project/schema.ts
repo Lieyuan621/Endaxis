@@ -24,7 +24,7 @@ import type {
 } from '../game-data/equipmentDefinition';
 
 export const PROJECT_KIND = 'EndaxisProject' as const;
-export const PROJECT_SCHEMA_VERSION = 2 as const;
+export const PROJECT_SCHEMA_VERSION = 3 as const;
 export const PROJECT_FPS = 30 as const;
 
 /** 存档 JSON 相关结构定义 */
@@ -272,7 +272,7 @@ export interface EnemyDocument {
 /** 关卡中的敌人实例，身份不随轨道顺序改变。 */
 export interface EnemyInstanceDocument {
   id: string;
-  name: string;
+  name?: string;
   enemy: EnemyDocument;
 }
 

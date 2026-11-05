@@ -1,3 +1,4 @@
+import { normalizeNativeTableNumbers } from '../../source/nativeTableNumbers.ts';
 import { imageRefFromPath } from '../../compiler/publication/imageResources.ts';
 import type { ConsumableDefinition } from '../../../../../packages/game-data-contract/src/consumables.ts';
 import { parseItemIdentitySource } from '../../source/itemIdentity.ts';
@@ -52,7 +53,7 @@ export function compileConsumableCatalog(
     left.localeCompare(right),
   )) {
     const path = `UseItemTable.${itemId}`;
-    const row = requireRecord(raw, path);
+    const row = requireRecord(normalizeNativeTableNumbers(raw), path);
     requireExactFields(row, USE_ITEM_FIELDS, path);
     if (requireString(row.itemId, `${path}.itemId`) !== itemId)
       throw new Error(`${path}.itemId: identity mismatch`);

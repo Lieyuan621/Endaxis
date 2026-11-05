@@ -701,7 +701,7 @@ export const siChr_0036_jsspsi_attack5ActionGraph = {
             source: { kind: 'source' },
             targets: { kind: 'source' },
             spGainKind: 'gain',
-            spGainSource: 'default',
+            spGainSource: 'normalAttack',
           },
         },
         next: null,

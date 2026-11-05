@@ -35,6 +35,7 @@ import { ardelia } from './ardelia.generated';
 import { liino } from './liino.generated';
 import { default as typhoeus } from './typhoeus.generated';
 import { purrchena } from './purrchena.generated';
+import { minghe } from './minghe.generated';
 
 export {
   si,
@@ -70,6 +71,7 @@ export {
   liino,
   typhoeus,
   purrchena,
+  minghe,
 };
 
 /** 正式干员目录及显示顺序；完整加载与按需加载共用同一注册入口。 */
@@ -93,6 +95,7 @@ export const operatorDefinitions = [
   camille,
   pogranichnik,
   purrchena,
+  minghe,
   tangtang,
   typhoeus,
   laevatain,

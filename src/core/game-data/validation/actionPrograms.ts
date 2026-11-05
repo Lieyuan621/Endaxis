@@ -286,6 +286,8 @@ function validateEntitySkillCastMetadata(
   out: SkillDefinitionValidationIssue[],
 ): void {
   requireEnum(skill, 'nativeSkillType', NATIVE_SKILL_TYPES_SET, path, out);
+  if (skill.skillTags !== undefined)
+    validateGameplayTags(skill.skillTags, `${path}.skillTags`, out);
   if (skill.normalSkillSubType !== undefined)
     requireEnum(skill, 'normalSkillSubType', NORMAL_SKILL_SUB_TYPES_SET, path, out);
   const duration = requireFiniteNumber(skill, 'naturalDurationFrames', path, out);
@@ -666,6 +668,8 @@ function validateCombatStep(
       validateTargetQuery(parameters.targets, `${path}.parameters.targets`, out);
       if (parameters.deadOption !== 'OnlyDead')
         push(out, `${path}.parameters.deadOption`, 'only OnlyDead is currently supported');
+      break;
+    case 'exitControlledState':
       break;
     case 'pushBack':
       validateTargetQuery(parameters.source, `${path}.parameters.source`, out);
@@ -1679,6 +1683,10 @@ function validateCombatStep(
       );
       requireBoolean(parameters, 'clearUltimateEnergyOnEnd', `${path}.parameters`, out);
       break;
+    case 'boneAttach':
+      validateTargetQuery(parameters.target, `${path}.parameters.target`, out);
+      validateTargetQuery(parameters.anchor, `${path}.parameters.anchor`, out);
+      break;
     case 'disableNormalSkill':
       requireBoolean(parameters, 'normalOnly', `${path}.parameters`, out);
       break;
@@ -2057,6 +2065,7 @@ function validateCombatStep(
         [
           parameters.nativeChanneling,
           parameters.nativeTickInterval,
+          parameters.nativeTickIntervalV2,
           parameters.nativeExecuteInterval,
         ].filter(value => value !== undefined).length > 1
       ) {
@@ -2074,12 +2083,20 @@ function validateCombatStep(
           requireFiniteNumber(channeling, 'targetTriggerIntervalSeconds', channelingPath, out);
         }
       }
-      for (const key of ['nativeTickInterval', 'nativeExecuteInterval'] as const) {
+      for (const key of [
+        'nativeTickInterval',
+        'nativeExecuteInterval',
+        'nativeTickIntervalV2',
+      ] as const) {
         if (parameters[key] === undefined) continue;
         const tickPath = `${path}.parameters.${key}`;
         const tick = asRecord(parameters[key], tickPath, out);
         if (tick !== null) {
           requireBoolean(tick, 'executeEachFrame', tickPath, out);
+          if (key === 'nativeTickIntervalV2') {
+            requireInteger(tick, 'totalTickCount', tickPath, out);
+            requireFiniteNumber(tick, 'totalDurationSeconds', tickPath, out);
+          }
           const interval = requireFiniteNumber(tick, 'intervalSeconds', tickPath, out);
           if (interval !== null && interval < 0) {
             push(out, `${tickPath}.intervalSeconds`, 'expected a non-negative number');

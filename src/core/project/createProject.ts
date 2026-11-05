@@ -29,7 +29,6 @@ export function createEmptyScenario(id: string, name: string): ScenarioDocument 
       kind: 'singleEnemy',
       enemy: {
         id: 'enemy',
-        name: '',
         enemy: {
           source: { kind: 'custom', level: 90 },
           rank: 'mob',

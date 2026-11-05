@@ -33,7 +33,7 @@ interface Arguments {
   readonly runtimeDefaults: string;
   readonly selectionCategories?: string;
   readonly outputDirectory: string;
-  readonly localeDirectory?: string;
+  readonly localeDirectory: string;
   readonly buffDirectory: string;
   readonly spawnerDirectory: string;
   readonly check: boolean;
@@ -127,7 +127,12 @@ export async function planEnemyDefinitions(
       birthSources.set(id, JSON.parse(await readFile(path, 'utf8')));
     }
   }
-  const birthPrograms = buffDirectory ? compileEnemyBirthBuffPrograms(buffDirectory, readGameplayTagPaths('src/data/combat/gameplayTagCatalog.generated.ts')) : {};
+  const birthPrograms = buffDirectory
+    ? compileEnemyBirthBuffPrograms(
+        buffDirectory,
+        readGameplayTagPaths('src/data/combat/gameplayTagCatalog.generated.ts'),
+      )
+    : {};
   const definitions = definitionIds.map(gameId => {
     const enemy = requireRecord(enemyTable[gameId], `EnemyTable.${gameId}`);
     const baseId = requireString(enemy.templateId, `${gameId}.enemy.templateId`);
@@ -139,7 +144,14 @@ export async function planEnemyDefinitions(
       const buffId = requireString(rawId, gameId);
       const source = birthSources.get(buffId);
       if (source) {
-        const option = projectEnemyBirthBuffOption(source, buffId, 'enemy', index, {}, buffDirectory);
+        const option = projectEnemyBirthBuffOption(
+          source,
+          buffId,
+          'enemy',
+          index,
+          {},
+          buffDirectory,
+        );
         if (option) birthBuffs.push(option);
       }
     }
@@ -553,6 +565,9 @@ function parseArguments(values: readonly string[]): Arguments {
     parsed.get('--selection-categories') ?? DEFAULT_SELECTION_CATEGORIES,
   );
   const outputDirectory = resolve(parsed.get('--output') ?? 'src/data/enemies/generated');
+  if (parsed.has('--output') && !parsed.has('--locale-output'))
+    throw new Error('--locale-output is required with --output');
+  const localeDirectory = resolve(parsed.get('--locale-output') ?? 'src/i18n/game-locales');
   if (
     !parsed.has('--tables') ||
     !parsed.has('--rank-evidence') ||
@@ -568,6 +583,7 @@ function parseArguments(values: readonly string[]): Arguments {
     runtimeDefaults,
     selectionCategories,
     outputDirectory,
+    localeDirectory,
     buffDirectory: resolve(parsed.get('--buff-directory')!),
     spawnerDirectory: resolve(parsed.get('--spawner-directory')!),
     check,

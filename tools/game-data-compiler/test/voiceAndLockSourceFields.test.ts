@@ -1,3 +1,4 @@
+import { assertPresentationCalculationIsolation } from '../src/compiler/scenario/presentationCalculationIsolation.ts';
 import { describe, expect, it } from 'vitest';
 import {
   parseVoiceTriggerActionSource,
@@ -76,9 +77,58 @@ describe('语音与镜头锁定的新版字段', () => {
   });
 
   it('非空语音句柄写回仍需分析消费者', () => {
-    expect(() =>
+    expect(
       parseVoiceTriggerActionSource({ ...voice, _responseQuestIdKey: 'voice_id' }, 'voice'),
-    ).toThrow('voice handle consumers require explicit projection');
+    ).toEqual({ kind: 'voiceTrigger', outputKey: 'voice_id' });
+  });
+
+  it('语音暂停恢复可省略，但句柄流入保留程序时拒绝编译', () => {
+    const source = parseKnownNativeActionSequenceSource(
+      {
+        onlyExecuteWhenSourceIsMainChar: false,
+        onlyExecuteWhenSourceIsGuard: false,
+        actionData: [
+          { ...voice, _responseQuestIdKey: 'voice_id' },
+          {
+            ...meta,
+            $type:
+              'Beyond.Gameplay.Core.VoiceTriggerPauseAction+VoiceTriggerPauseActionData, Gameplay.Beyond',
+            _responseQuestIdKey: 'voice_id',
+            _fadeTimeMs: 50,
+          },
+          {
+            ...meta,
+            $type:
+              'Beyond.Gameplay.Core.VoiceTriggerResumeAction+VoiceTriggerResumeActionData, Gameplay.Beyond',
+            _responseQuestIdKey: 'voice_id',
+            _fadeTimeMs: 50,
+            _seekOnResume: true,
+            _seekTimeMs: 4400,
+          },
+        ],
+      },
+      'voiceSequence',
+      {},
+    );
+    expect(
+      projectSequence(source, {
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      }),
+    ).toEqual({ steps: [] });
+    const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+    const entry = graph.node({
+      kind: 'modifyActionValue',
+      parameters: {
+        key: 'voice_id',
+        operation: 'add',
+        value: { kind: 'constant', value: 1 },
+      },
+    });
+    expect(() => assertPresentationCalculationIsolation([source], [entry], graph)).toThrow(
+      'presentation output voice_id reaches retained combat program',
+    );
   });
 
   it('原生 VoSpeakerType 数值仍是纯表现输入', () => {

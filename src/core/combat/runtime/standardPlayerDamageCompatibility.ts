@@ -129,6 +129,7 @@ function inspectCondition(
     case 'eventInflictionElementIn':
     case 'eventPhysicalInflictionTypeIn':
     case 'eventCustomAbilityNameMatch':
+    case 'eventSkillTagsMatch':
     case 'skillDamageTypeIn':
     case 'eventSkillTypeIn':
     case 'originSkillTypeIn':
@@ -210,6 +211,15 @@ function inspectSequenceBody(
   rootActionSteps(sequence).forEach((step, index) => {
     const stepPath = `${path}.steps[${index}]`;
     switch (step.kind) {
+      case 'exitControlledState':
+        if (!flags.knockDown)
+          report(
+            collect,
+            'unsupported-step',
+            stepPath,
+            'controlled-state exit requires control bindings',
+          );
+        return;
       case 'physicsCast':
         inspectSequence(step.whenHit, `${stepPath}.whenHit`, collect, flags, source);
         inspectSequence(step.whenMiss, `${stepPath}.whenMiss`, collect, flags, source);
@@ -377,6 +387,7 @@ function inspectSequenceBody(
       case 'setGlobalCooldown':
       case 'gainSquadUltimateEnergyFromSkillCost':
       case 'gainFinisherSp':
+      case 'boneAttach':
       case 'disableNormalSkill':
       case 'limitMovementGait':
       case 'queueComboLock':

@@ -630,7 +630,14 @@ function removeKnotThreshold(index: number): void {
               <ElIcon v-else class="custom-portrait"><Plus /></ElIcon>
             </div>
             <div class="header-info">
-              <div class="name">{{ activeName }}</div>
+              <div class="name">
+                {{ selectedEnemyName || activeName
+                }}<span
+                  v-if="selectedEnemyName && selectedEnemyName !== activeName"
+                  class="original-name"
+                  >{{ t('common.originalNameSuffix', { name: activeName }) }}</span
+                >
+              </div>
               <div class="tags">
                 <span
                   v-if="definition"
@@ -1341,6 +1348,11 @@ function removeKnotThreshold(index: number): void {
   font-size: 20px;
   font-weight: 700;
   overflow-wrap: anywhere;
+}
+.original-name {
+  color: var(--ea-fg-muted);
+  font-size: 0.85em;
+  font-weight: 500;
 }
 .tags {
   display: flex;

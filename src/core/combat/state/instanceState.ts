@@ -168,6 +168,8 @@ export interface LogicalAbilityEntityState {
   targets?: readonly RuntimeTargetRef[];
   allowMultiInputTarget?: boolean;
   readonly dieWhenSourceDies: boolean;
+  /** 出生时登记死亡监听的首个目标，独立于之后可变的 target/targets。 */
+  readonly deathBoundTarget?: RuntimeTargetRef;
   readonly blackboard: ActionBlackboardState;
   /** 出生时实际采用的计时器周期，包含时长覆盖；null 表示无限寿命。赋值不改变周期。 */
   readonly durationPeriodSeconds: number | null;

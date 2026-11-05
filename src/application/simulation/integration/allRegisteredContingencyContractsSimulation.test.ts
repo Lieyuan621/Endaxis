@@ -1,3 +1,4 @@
+import { projectEnemyHealthCurveFromReceipt } from '../../../core/projection/enemyHealthCurves';
 import { firstScenarioEnemy } from '../../../core/project/level';
 import { describe, expect, it } from 'vitest';
 
@@ -45,7 +46,7 @@ describe('危机合约生效词条的开局装配', () => {
     },
   ])('沉寂限制普通战技并放行原生后续段：$slug', async ({ slug, first, second, blocked }) => {
     const scenario = createEmptyScenario('preview-locks', 'preview');
-    scenario.mechanics.selections = [200001, 200002].map(id => ({
+    scenario.mechanics.selections = [113502, 110302].map(id => ({
       id: String(id),
       mechanicId: contingencyContractMechanicId(id),
       enabled: true,
@@ -71,7 +72,7 @@ describe('危机合约生效词条的开局装配', () => {
     scenario.mechanics.selections = [
       {
         id: 'lock',
-        mechanicId: contingencyContractMechanicId(200002),
+        mechanicId: contingencyContractMechanicId(110302),
         enabled: true,
         parameters: {},
       },
@@ -102,7 +103,7 @@ describe('危机合约生效词条的开局装配', () => {
       run.receiptEntries.some(e => e.event === 'SkillStarted' && e.data?.castId === 'battle:1'),
     ).toBe(true);
   });
-  it('第二期预览按全队计数挂锁、清空能量并执行敌人回血', async () => {
+  it('第二期按全队计数挂锁、清空能量并执行敌人回血', async () => {
     const scenario = createEmptyScenario('preview-contracts', 'preview');
     firstScenarioEnemy(scenario).enemy.editable.hp = 1000000;
     for (let index = 0; index < 2; index++) {
@@ -155,7 +156,7 @@ describe('危机合约生效词条的开局装配', () => {
         ],
       };
     }
-    scenario.mechanics.selections = [200001, 200002, 200003, 200004].map(id => ({
+    scenario.mechanics.selections = [113502, 110302, 110703, 110901].map(id => ({
       id: `preview:${id}`,
       mechanicId: contingencyContractMechanicId(id),
       enabled: true,
@@ -218,7 +219,7 @@ describe('危机合约生效词条的开局装配', () => {
     ).toEqual([{ targetId: 'track:1', value: 0 }]);
     const without = structuredClone(scenario);
     without.mechanics.selections = without.mechanics.selections.filter(
-      entry => entry.mechanicId !== contingencyContractMechanicId(200001),
+      entry => entry.mechanicId !== contingencyContractMechanicId(113502),
     );
     const baseline = await service.simulate(without, 1200);
     // 实际伤害还受导电和干员天赋影响，确保增伤未只停留在 Buff 展示层。
@@ -230,7 +231,7 @@ describe('危机合约生效词条的开局装配', () => {
     const healingOnly = structuredClone(scenario);
     for (const track of healingOnly.tracks) if (track) track.skillCasts = [];
     healingOnly.mechanics.selections = healingOnly.mechanics.selections.filter(
-      entry => entry.mechanicId === contingencyContractMechanicId(200004),
+      entry => entry.mechanicId === contingencyContractMechanicId(110901),
     );
     const healing = await service.simulate(healingOnly, 240);
     expect(projectBuffTimelineViz(healing.receiptEntries, 240)).toContainEqual(
@@ -244,10 +245,10 @@ describe('危机合约生效词条的开局装配', () => {
     const heal = healing.receiptEntries.find(
       entry => entry.event === 'HealingApplied' && entry.targetId === 'enemy',
     );
-    expect(heal?.data?.requestedHealing).toBeCloseTo(50000, 1);
+    expect(heal?.data?.requestedHealing).toBeCloseTo(30000, 1);
     healingOnly.mechanics.selections[0]!.parameters = {
-      healRatioPerSecond: 0.07,
-      healDelaySeconds: 1,
+      hp_ratio: 0.07,
+      countdown: 1,
     };
     const customized = await service.simulate(healingOnly, 240);
     const customHeal = customized.receiptEntries.find(
@@ -255,6 +256,59 @@ describe('危机合约生效词条的开局装配', () => {
     );
     expect(customHeal?.data?.requestedHealing).toBeCloseTo(70000, 1);
     expect(customHeal!.frame).toBeLessThan(heal!.frame);
+  });
+  it('武器钝化的生命上限加成在死亡清理后仍形成连续生命曲线', async () => {
+    const scenario = createEmptyScenario('contract-health', 'contract-health');
+    const enemy = firstScenarioEnemy(scenario);
+    enemy.enemy.editable.hp = 100;
+    scenario.battle.enemyAutomaticDeath = true;
+    scenario.mechanics.selections = [
+      {
+        id: 'health',
+        mechanicId: contingencyContractMechanicId(111703),
+        enabled: true,
+        parameters: {},
+      },
+    ];
+    scenario.tracks[0] = {
+      id: 'track:perlica',
+      operator: {
+        operatorSlug: 'perlica',
+        level: 90,
+        promoted: true,
+        potential: 0,
+        trustLevel: 4,
+        skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
+        talentStates: {},
+      },
+      weapon: null,
+      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+      initialState: { ultimateEnergy: 0 },
+      skillCasts: [
+        {
+          id: 'battle',
+          source: {
+            kind: 'operatorSkill',
+            skillGroupKey: 'battleSkill',
+            skillKey: 'chr_0004_pelica_normal_skill',
+          },
+          placement: { startFrame: 0 },
+        },
+      ],
+    };
+    const service = new ScenarioSimulationService({
+      index: gameDataRepository,
+      resources,
+      spellInflictionSettings: skillSettings,
+    });
+    const run = await service.simulate(scenario, 120);
+    const curve = projectEnemyHealthCurveFromReceipt(
+      { health: 100, maxHealth: 100 },
+      run.receiptEntries,
+      0,
+      enemy.id,
+    );
+    expect(curve.points.at(-1)?.value).toBe(0);
   });
   it('逐项建立真实 Buff 和来源回执，并将可见状态投影到时间轴', async () => {
     if (!operator) throw new Error('repository has no operator');
@@ -310,9 +364,16 @@ describe('危机合约生效词条的开局装配', () => {
           expect(receipt.data?.sourceActionId).toBe(expectedSourceActionId);
         }
         const visibleReceipts = contractBuffReceipts.filter(
-          receipt => receipt.data?.visible === true || typeof receipt.data?.icon === 'string',
+          receipt =>
+            receipt.data?.visible !== false &&
+            (receipt.data?.visible === true || typeof receipt.data?.icon === 'string'),
         );
         const projected = projectBuffTimelineViz(result.receiptEntries, 0);
+        for (const receipt of contractBuffReceipts.filter(
+          receipt => receipt.data?.visible === false,
+        )) {
+          expect(projected.some(segment => segment.buffId === receipt.data?.buffId)).toBe(false);
+        }
         for (const receipt of visibleReceipts) {
           visibleContractBuffCount += 1;
           expect(

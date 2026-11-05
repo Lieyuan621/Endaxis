@@ -95,6 +95,7 @@ export type CompiledBuffConditionSource =
   | Condition<'eventDamageTagsMatch' | 'eventDamageGameplayTagsMatch' | 'eventDamageFeaturesMatch'>
   | Condition<'eventSpGainMatch'>
   | Condition<'skillDamageTypeIn'>
+  | Condition<'eventSkillTagsMatch'>
   | Condition<'skillInterruptReasonIn'>
   | Condition<'eventSkillTypeIn'>
   | Condition<'currentSkillTypeIn'>
@@ -414,6 +415,7 @@ export type CompiledBuffStepSource =
   | Step<'evaluateCurve'>
   | Step<'saveTargetDistance'>
   | Step<'blowOffEnemy'>
+  | Step<'exitControlledState'>
   | Step<'pushBack'>
   | Step<'pull'>
   | Step<'storeRandomInteger'>
@@ -439,6 +441,7 @@ export type CompiledBuffStepSource =
     >
   | Step<'gainFinisherSp'>
   | Step<'disableNormalSkill'>
+  | Step<'boneAttach'>
   | Step<'limitMovementGait'>
   | Step<'queueComboLock'>
   | Step<'restrictUltimateEnergyRecovery'>

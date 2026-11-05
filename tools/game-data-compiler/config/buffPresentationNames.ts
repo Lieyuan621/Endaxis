@@ -58,6 +58,9 @@ export const buffPresentationOverrides: Readonly<Record<string, CombatBuffPresen
     visible: true,
     showInSquadIcon: true,
   },
+  buff_cc_chr_no_lastcombo_weak_countdown: {
+    visible: false,
+  },
   buff_chr_0036_jsspsi_normal_skill_hitstop: {
     icon: 'endaxis:operators/si/battle_01',
     visible: true,

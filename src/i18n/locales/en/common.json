@@ -115,6 +115,7 @@
     "confirmButton": "Confirm Reset"
   },
   "common": {
+    "originalNameSuffix": " ({name})",
     "increase": "Increase",
     "decrease": "Decrease",
     "add": "Add",
@@ -1789,6 +1790,7 @@
         "queueComboLock": "Append a timed lock. Existing windows stay available; later windows must wait for the lock to expire.",
         "disableNormalSkill": "Apply a battle-skill restriction while the action is active, optionally allowing additional stages.",
         "limitMovementGait": "Write the owner's shared gait limit until all gait actions end. A maximum below Sprint affects dodge eligibility.",
+        "exitControlledState": "Exit controlled state",
         "pushBack": "Preserves attacker life-state checks and target queries. A nonempty target list succeeds without simulating movement.",
         "pull": "Preserves target queries and pull processing results without moving targets. Uses the continuation flag when no target is processed.",
         "saveTargetDistance": "Writes distance when both targets exist; simulated distance is zero. Leaves the variable unchanged if either target is missing.",
@@ -1928,6 +1930,7 @@
         "queueComboLock": "Lock combo queue",
         "disableNormalSkill": "Disable battle skill",
         "limitMovementGait": "Limit movement gait",
+        "exitControlledState": "Exit controlled state",
         "pushBack": "Push targets back",
         "pull": "Pull targets",
         "saveTargetDistance": "Save target distance",
@@ -2795,29 +2798,9 @@
     "clearInitialVariables": "Clear custom values",
     "preview": {
       "operationName": "Blue Immersion Test Operation",
-      "note": "Preview: behavior uses native Buffs. Tag combinations and default values await the official contract data.",
       "comboLock": "Timed Combo Lock",
-      "comboDamage": "Combo Skill Damage Boost",
       "battleLock": "Battle Skill Lock",
-      "heal": "Engorgement",
-      "tags": {
-        "200001": {
-          "name": "Environment: Lockdown",
-          "description": "Combo skill damage +{comboDamagePercent}%. Every {comboCount} squad combo casts inserts a {lockSeconds}-second lock into the combo queue. Windows opened before the lock remain usable. Rossi’s second combo stage does not count."
-        },
-        "200002": {
-          "name": "Environment: Silence",
-          "description": "Natural SP recovery +{spRecoveryPercent}%; SP recovered by skills +{spGainPercent}%. Casting a normal battle skill locks normal battle skills until the squad completes a round. Native follow-up stages remain available and do not count."
-        },
-        "200003": {
-          "name": "Environment: Dissipation",
-          "description": "After an operator casts an ultimate and pays its cost, clear the other squad members’ ultimate energy."
-        },
-        "200004": {
-          "name": "Rewrite: Engorgement",
-          "description": "Once the enemy has neither Vulnerability nor Arts Infliction, wait {healDelaySeconds} seconds, then recover {healPercent}% maximum HP each second. Reapplying these statuses stops the timer and healing."
-        }
-      }
+      "heal": "Engorgement"
     },
     "title": "Contingency Contract",
     "operationName": "Rekindled Test Operation",

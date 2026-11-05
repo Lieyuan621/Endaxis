@@ -187,7 +187,7 @@ export function validateEnemyInstances(
     else if (identities.has(instance.id))
       issues.push({ path: `${itemPath}.id`, message: 'duplicate enemy instance id' });
     else identities.add(instance.id);
-    if (typeof instance.name !== 'string')
+    if (instance.name !== undefined && typeof instance.name !== 'string')
       issues.push({ path: `${itemPath}.name`, message: 'expected a string' });
     validateEnemy(instance.enemy, `${itemPath}.enemy`, issues);
   });

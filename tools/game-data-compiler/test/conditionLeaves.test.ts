@@ -38,6 +38,28 @@ const TARGET_CONTEXT = {
 } as const;
 
 describe('公共条件叶子 IR', () => {
+  it('全部敌人查询保留全局范围、目录顺序及真实 selector owner 排除', () => {
+    const raw = targetFixture('InstantSearch', {
+      finderData: { $type: 'Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond' },
+      validatorData: [
+        { $type: 'Beyond.Gameplay.Core.Selector+ExcludeOwnerValidator+Data, Gameplay.Beyond' },
+      ],
+      postProcessorData: [],
+    });
+    const target = parseTargetReferenceSource({ ...raw, selectorOwner: 'ActionSource' }, 'target');
+    const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+    expect(projectActionTargetQuery(target, { ...TARGET_CONTEXT, graph }, 'target')).toEqual({
+      kind: 'exclude',
+      targets: {
+        kind: 'enemyByTags',
+        scope: 'global',
+        reverse: true,
+        tagQueryType: 'hasAll',
+        tags: [],
+      },
+      excludeTargets: { kind: 'source' },
+    });
+  });
   it('BuffValidator 保留查询组合、匹配模式与空 ID，不额外生成行为', () => {
     const validator = (mode: string, checkType: string) => ({
       $type: 'Beyond.Gameplay.Core.Selector+BuffValidator+Data, Gameplay.Beyond',

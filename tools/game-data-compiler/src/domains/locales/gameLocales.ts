@@ -1,3 +1,4 @@
+import { normalizeNativeTableNumbers } from '../../source/nativeTableNumbers.ts';
 import { ATTRIBUTE_TYPES } from '../../source/attributeModifiers.ts';
 import {
   requireArray,
@@ -179,11 +180,17 @@ export function compileGameLocales(
       throw new Error(`${context}: unresolved or missing text`);
     return result;
   };
-  const patches = table('SkillPatchTable');
+  const patches = requireRecord(
+    normalizeNativeTableNumbers(table('SkillPatchTable')),
+    'SkillPatchTable',
+  );
   const bundles = (id: string) =>
     array(record(patches[id], id).SkillPatchDataBundle, id).map(value => requireRecord(value, id));
   const operators: Document = {};
-  const effects = table('PotentialTalentEffectTable');
+  const effects = requireRecord(
+    normalizeNativeTableNumbers(table('PotentialTalentEffectTable')),
+    'PotentialTalentEffectTable',
+  );
   const effectDescription = (id: string, name: string, context: string) => {
     const effect = record(effects[id], context);
     const desc = text(effect.desc) || text(bundles(id)[0]?.description);
@@ -396,7 +403,7 @@ export function compileGameLocales(
   const slots = requireRecord(enumTerms.slotType, 'enumTerms.slotType');
   for (const id of Object.keys(identities.gears).sort()) {
     const item = requireRecord(table('ItemTable')[id], id),
-      equip = requireRecord(table('EquipTable')[id], id);
+      equip = requireRecord(normalizeNativeTableNumbers(table('EquipTable')[id]), id);
     const name = requiredText(item.name, id, true);
     const slot = ({ 0: 'armor', 1: 'gloves', 2: 'accessory' } as Record<string, string>)[
       String(equip.partType)

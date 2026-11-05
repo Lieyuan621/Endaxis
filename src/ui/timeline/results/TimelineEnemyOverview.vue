@@ -31,6 +31,7 @@ const props = defineProps<{
   enemies: readonly {
     id: string;
     name: string;
+    customName?: string;
     icon?: string;
     lifecycle?: EnemyLifecycleDocument;
   }[];
@@ -571,6 +572,7 @@ const rows = computed(() =>
           :actual-death-frame="row.death"
           :read-only="readOnly"
           :name="row.name"
+          :custom-name="row.customName"
           :icon="row.icon"
           :selected="row.id === selectedId"
           :removable="enemies.length > 1"

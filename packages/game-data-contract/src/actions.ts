@@ -300,6 +300,8 @@ export interface CombatStepParameters {
     targets: ActionTargetQuery;
     deadOption: 'OnlyDead';
   };
+  /** 退出动作宿主的受控组件状态；不结束物理异常 Buff。 */
+  exitControlledState: Record<string, never>;
   /** 保留击退的查询顺序和成功条件；不模拟空间位移。 */
   pushBack: {
     source: ActionTargetQuery;
@@ -416,6 +418,8 @@ export interface CombatStepParameters {
     saveToContextKey?: string;
     /** 来源结束时是否同步结束实体。 */
     dieWhenSourceDies: boolean;
+    /** 出生时绑定首个输入目标的死亡；后续替换目标不会重绑。 */
+    dieWhenTargetDies?: boolean;
     /** 原生 dieOnEnd：生成动作结束时同步结束本动作创建的实体。 */
     finishByAction?: boolean;
     /** 从当前动作黑板计算并覆盖实体黑板的数值。 */
@@ -959,6 +963,8 @@ export interface CombatStepParameters {
   };
   /** 原生 DisableNormalSkillWithUI；标签随动作结束撤销。 */
   disableNormalSkill: { normalOnly: boolean };
+  /** 骨骼挂接的控制寿命；固定空间模型不计算挂点运动。 */
+  boneAttach: { target: ActionTargetQuery; anchor: ActionTargetQuery };
   /** 原生 MoveGaitAction；动作存续期间约束宿主步态，当前模型用最大步态检查闪避输入。 */
   limitMovementGait: { min: 'Walk' | 'Run' | 'Sprint'; max: 'Walk' | 'Run' | 'Sprint' };
   restrictUltimateEnergyRecovery: {
@@ -1351,6 +1357,13 @@ export interface CombatStepParameters {
       executeEachFrame: boolean;
       intervalSeconds: number;
     };
+    /** V2 周期动作：首次 Tick 执行，按次数限制并在达到总时长后补齐。 */
+    nativeTickIntervalV2?: {
+      executeEachFrame: boolean;
+      intervalSeconds: number;
+      totalTickCount: number;
+      totalDurationSeconds: number;
+    };
     nativeTickInterval?: {
       /** 是否每个模拟帧执行。 */
       executeEachFrame: boolean;
@@ -1518,6 +1531,7 @@ export const COMBAT_STEP_KINDS = [
   'findCharacterTeamTargets',
   'createSpatialPointTargets',
   'blowOffEnemy',
+  'exitControlledState',
   'pushBack',
   'pull',
   'saveTargetDistance',
@@ -1570,6 +1584,7 @@ export const COMBAT_STEP_KINDS = [
   'holdBuffsById',
   'inheritBuffById',
   'disableNormalSkill',
+  'boneAttach',
   'limitMovementGait',
   'queueComboLock',
   'restrictUltimateEnergyRecovery',

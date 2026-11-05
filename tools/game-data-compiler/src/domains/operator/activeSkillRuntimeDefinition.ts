@@ -24,6 +24,7 @@ export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
     SkillDefinition,
     | 'key'
     | 'element'
+    | 'skillTags'
     | 'useSkillGroupIcon'
     | 'timelineBlockFrames'
     | 'timelineBlockFollowUpSkillId'
@@ -85,6 +86,7 @@ export function compileOperatorActiveSkillRuntimeDefinitionSource(input: {
   );
   const definition: CompiledOperatorActiveSkillRuntimeDefinitionSource = {
     actionGraph: runtime.actionGraph,
+    ...(runtime.skillTags === undefined ? {} : { skillTags: runtime.skillTags }),
     ...(runtime.normalSkillSubType === undefined
       ? {}
       : { normalSkillSubType: runtime.normalSkillSubType }),

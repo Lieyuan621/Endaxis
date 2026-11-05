@@ -1348,3 +1348,70 @@ describe('EventContextConditionExecutor', () => {
     },
   );
 });
+
+describe('事件技能标签', () => {
+  const executor = new EventContextConditionExecutor(terminal);
+  const source = {
+    skillCastId: 1,
+    originSkillId: 'source',
+    nonReturnedSpCost: 0,
+    originSkillTags: ['Skill/Test/Child'],
+  };
+  const context = { blackboard: new ActionBlackboard(), skillCastInfo: source };
+  const condition = {
+    kind: 'eventSkillTagsMatch' as const,
+    tagQueryType: 'hasAny' as const,
+    tags: ['Skill/Test/Child'],
+  };
+
+  it('读取当前事件的施法来源，不回退监听器或执行上下文', () => {
+    const event = {
+      event: 'beforeOutputDamage' as const,
+      payload: { ...createKillEvent().payload, skillCastInfo: source },
+    };
+    expect(executor.evaluate(condition, { ...context, event })).toBe(true);
+    expect(executor.evaluate(condition, context)).toBe(false);
+    expect(
+      executor.evaluate(condition, {
+        ...context,
+        event: { ...event, payload: { ...event.payload, skillCastInfo: null } },
+      }),
+    ).toBe(false);
+    expect(executor.evaluate({ ...condition, tags: ['Skill/Test'] }, { ...context, event })).toBe(
+      false,
+    );
+  });
+
+  it('施放事件检查本次技能，不读取继承的来源技能标签', () => {
+    const event = {
+      event: 'beforeCastSkill' as const,
+      payload: {
+        sourceId: 'operator',
+        targetId: 'operator',
+        skillId: 'child',
+        skillCastId: 2,
+        skillTags: ['Skill/Other'],
+        skillCastInfo: source,
+      },
+    };
+    expect(executor.evaluate(condition, { ...context, event })).toBe(false);
+    expect(executor.evaluate({ ...condition, tags: ['Skill/Other'] }, { ...context, event })).toBe(
+      true,
+    );
+  });
+
+  it.each([
+    ['hasAny', false],
+    ['hasAll', true],
+    ['exceptAny', true],
+    ['exceptAll', false],
+  ] as const)('空条件集合 %s 遵循集合语义，但没有技能时仍为假', (tagQueryType, expected) => {
+    const event = {
+      event: 'beforeOutputDamage' as const,
+      payload: { ...createKillEvent().payload, skillCastInfo: source },
+    };
+    const empty = { ...condition, tags: [], tagQueryType };
+    expect(executor.evaluate(empty, { ...context, event })).toBe(expected);
+    expect(executor.evaluate(empty, context)).toBe(false);
+  });
+});

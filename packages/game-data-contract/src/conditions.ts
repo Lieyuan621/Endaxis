@@ -568,6 +568,12 @@ export type CombatConditionExpression =
       skillTypes: readonly SkillType[];
     }
   | {
+      /** 判断当前事件关联技能的定义标签；没有技能时为假。 */
+      kind: 'eventSkillTagsMatch';
+      tagQueryType: GameplayTagQueryType;
+      tags: readonly GameplayTag[];
+    }
+  | {
       /** 检查技能事件中的技能配置属性；无技能事件时读取当前执行技能。 */
       kind: 'skillDamageTypeIn';
       damageTypes: readonly DamageElement[];
@@ -777,6 +783,7 @@ export const COMBAT_CONDITION_KINDS = [
   'eventProjectileIgnoreImmuneLevelCompare',
   'eventSkillTypeIn',
   'skillDamageTypeIn',
+  'eventSkillTagsMatch',
   'eventCustomAbilityNameMatch',
   'currentSkillTypeIn',
   'originSkillTypeIn',

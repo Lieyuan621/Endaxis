@@ -56,6 +56,13 @@ export function parseCachedTagQuerySource(value: unknown, path: string): TagQuer
   return parseTagQuerySource(value, path);
 }
 
+/** 原生 GameplayTagList；区别于目标查询中的 tags 数组。 */
+export function parseGameplayTagListSource(value: unknown, path: string): number[] {
+  const list = requireRecord(value, path);
+  requireExactFields(list, new Set(['predefinedTag']), path);
+  return parseTagIdsSource(list.predefinedTag, `${path}.predefinedTag`);
+}
+
 export function parseTagIdsSource(value: unknown, path: string): number[] {
   return requireArray(value, path).map((rawTag, index) => {
     return parseTagIdSource(rawTag, `${path}[${index}]`);

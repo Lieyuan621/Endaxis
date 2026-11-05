@@ -262,6 +262,15 @@ export function createProjectileProjectionExtensionSource(input: {
         compiled,
         skill: {
           skillId: compiled.skillId,
+          ...((graph.skillTagIds?.length ?? 0) === 0
+            ? {}
+            : {
+                skillTags: projectGameplayTags(
+                  graph.skillTagIds ?? [],
+                  callbackContext,
+                  sourcePath + '.skillTags',
+                ),
+              }),
           nativeSkillType,
           ...(graph.normalSkillSubType === 'AdditionalNormalSkill'
             ? { normalSkillSubType: 'additionalNormalSkill' as const }

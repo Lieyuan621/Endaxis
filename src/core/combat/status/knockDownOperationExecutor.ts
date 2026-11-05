@@ -50,6 +50,7 @@ export interface KnockDownTargetBinding {
 export interface KnockDownOperationDependencies {
   readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']>;
   readonly resolveTarget: (target: RuntimeTargetRef) => KnockDownTargetBinding | undefined;
+  readonly exitOwnerControl?: (ownerId: string) => void;
   readonly predefine: GameplayTagPredefine;
   readonly readSourceDurationAddition: (sourceId: string) => number;
   readonly resolveBuffDefinition: (id: string) => ResolvedSkillBuffDefinition | undefined;
@@ -72,6 +73,12 @@ export class KnockDownOperationExecutor implements CombatOperationExecutor {
   constructor(readonly dependencies: KnockDownOperationDependencies) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'exitControlledState') {
+      if (!context?.actionOwnerId || !this.dependencies.exitOwnerControl)
+        throw new Error('controlled-state exit requires an owner control binding');
+      this.dependencies.exitOwnerControl(context.actionOwnerId);
+      return true;
+    }
     if (step.kind !== 'applyPhysicalInfliction' || step.parameters.type !== 'knockDown')
       return this.dependencies.delegate.execute(step, context);
     const d = this.dependencies;

@@ -81,6 +81,7 @@ export function compileAbilityEntityChildSkillSource(
     skillId: runtime.skillId,
     nativeSkillType,
     naturalDurationFrames: Math.max(1, runtime.durationFrame),
+    ...(runtime.skillTags === undefined ? {} : { skillTags: runtime.skillTags }),
     ...(runtime.normalSkillSubType === undefined
       ? {}
       : { normalSkillSubType: runtime.normalSkillSubType }),

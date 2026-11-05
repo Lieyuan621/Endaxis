@@ -3388,7 +3388,7 @@ describe('CombatRuntimeAssembly', () => {
     ]);
     const monitor = entityBuffs?.buffs[0];
     expect(
-      assembly.abilityEntities.notifySourceDied({ kind: 'operator', operatorId: 'operator' }),
+      assembly.abilityEntities.notifyEntityDied({ kind: 'operator', operatorId: 'operator' }),
     ).toBe(0);
     assembly.advanceFrames(6);
 

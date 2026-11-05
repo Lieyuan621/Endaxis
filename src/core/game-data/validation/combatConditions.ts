@@ -306,6 +306,10 @@ export function validateCombatCondition(
       requireEnum(record, 'match', TAG_QUERY_TYPES_WITH_EXACT_SET, path, out);
       validateDamageTags(record.tags, `${path}.tags`, out);
       break;
+    case 'eventSkillTagsMatch':
+      requireEnum(record, 'tagQueryType', TAG_QUERY_TYPES_SET, path, out);
+      validateGameplayTags(record.tags, `${path}.tags`, out);
+      break;
     case 'eventTransferredPartTagsMatch':
       requireEnum(record, 'tagQueryType', TAG_QUERY_TYPES_SET, path, out);
       validateGameplayTags(record.tags, `${path}.tags`, out);

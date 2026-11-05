@@ -6,6 +6,7 @@ import type { RuntimeTargetGroup, RuntimeTargetRef } from '../../game-data/logic
 import { singleTargetList, runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
 import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
 import type {
+  BoneAttachState,
   ActionBuffReferencesState,
   ActionRegistrationState,
   ActionSequenceState,
@@ -69,6 +70,7 @@ export interface CombatActionSequenceRuntimeHooks {
 }
 
 class OperationStep extends StatelessCombatStep {
+  #attachment: BoneAttachState | null = null;
   #registrationState: ActionRegistrationState | null = null;
   #buffReferencesState: ActionBuffReferencesState | null = null;
 
@@ -78,6 +80,7 @@ class OperationStep extends StatelessCombatStep {
     readonly operationContext: CombatOperationContext,
   ) {
     super();
+    if (step.kind === 'boneAttach') this.#attachment = { targetId: null };
     if (
       step.kind === 'changePlayerActionMode' ||
       step.kind === 'overrideBasicAttackMapping' ||
@@ -98,6 +101,8 @@ class OperationStep extends StatelessCombatStep {
   }
 
   override get executionData(): OperationStepData {
+    if (this.#attachment) return { kind: 'boneAttach', attachment: this.#attachment };
+
     if (this.#registrationState !== null) {
       return {
         kind: this.#registrationKind(),
@@ -114,6 +119,12 @@ class OperationStep extends StatelessCombatStep {
   }
 
   override bindExecutionData(data: ActionStepData | null): void {
+    if (this.#attachment) {
+      if (data?.kind !== 'boneAttach') throw new Error('expected bone attachment data');
+      this.#attachment = data.attachment;
+      return;
+    }
+
     if (this.step.kind === 'dealDamage' && this.step.parameters.takeAttackSnapshot === true) {
       const snapshots = this.operationContext.damageCalculationSnapshots;
       if (snapshots === undefined) {
@@ -137,8 +148,15 @@ class OperationStep extends StatelessCombatStep {
   }
 
   #withState<T>(operation: () => T): T {
-    if (this.#registrationState === null && this.#buffReferencesState === null) return operation();
+    if (
+      this.#registrationState === null &&
+      this.#buffReferencesState === null &&
+      this.#attachment === null
+    )
+      return operation();
     const context = this.operationContext;
+    const previousAttachment = context.boneAttachState;
+    if (this.#attachment) context.boneAttachState = this.#attachment;
     const previous = context.actionRegistrationState;
     const previousBuffs = context.actionBuffReferencesState;
     if (this.#registrationState !== null) context.actionRegistrationState = this.#registrationState;
@@ -147,6 +165,8 @@ class OperationStep extends StatelessCombatStep {
     try {
       return operation();
     } finally {
+      if (previousAttachment === undefined) delete context.boneAttachState;
+      else context.boneAttachState = previousAttachment;
       if (previous === undefined) delete context.actionRegistrationState;
       else context.actionRegistrationState = previous;
       if (previousBuffs === undefined) delete context.actionBuffReferencesState;

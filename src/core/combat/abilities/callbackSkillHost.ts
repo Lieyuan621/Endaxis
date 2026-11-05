@@ -173,6 +173,7 @@ export function createCallbackSkillHostFactory(dependencies: {
           ? {}
           : { normalSkillSubType: program.normalSkillSubType }),
         naturalDurationFrames: program.naturalDurationFrames,
+        skillTags: program.skillTags,
         initialBlackboard: program.initialBlackboard,
         timelineActions: program.timelineActions,
         costFrame: program.castResource.costFrame,
@@ -227,6 +228,7 @@ export function createCallbackSkillHostFactory(dependencies: {
       const castSource = inherited ?? {
         skillCastId: dependencies.allocateSkillCastId(),
         originSkillId: program.skillId,
+        originSkillTags: program.skillTags,
         nonReturnedSpCost: 0,
       };
       group.ability.prepareBeforeSkillCastStart(
@@ -236,6 +238,7 @@ export function createCallbackSkillHostFactory(dependencies: {
           sourceId: ownerId,
           targetId: ownerId,
           skillId: program.skillId,
+          skillTags: program.skillTags,
           skillCastId: castSource.skillCastId,
           skillCastInfo: castSource,
         },

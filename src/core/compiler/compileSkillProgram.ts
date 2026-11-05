@@ -100,6 +100,7 @@ export function compileSkillProgram(
     ...(input.skill.nativeSkillType === undefined
       ? {}
       : { nativeSkillType: input.skill.nativeSkillType }),
+    ...(input.skill.skillTags === undefined ? {} : { skillTags: input.skill.skillTags }),
     ...(input.skill.normalSkillSubType === undefined
       ? {}
       : { normalSkillSubType: input.skill.normalSkillSubType }),

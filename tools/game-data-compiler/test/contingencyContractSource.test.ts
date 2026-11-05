@@ -3,6 +3,7 @@ import {
   collectContingencyContractGlobalBuffIds,
   compileContingencyContractTagDefinitions,
   parseContingencyContractCatalogSource,
+  parseContingencyContractLayoutSource,
 } from '../src/domains/contingencyContract/contingencyContractSource.ts';
 
 function tag(tagId: number, termType: number, buffId: string) {
@@ -36,8 +37,19 @@ describe('Contingency Contract native source', () => {
       Object.entries(tag(100003, 2, 'global_buff_party')).filter(([key]) => key !== 'tagTerms'),
     );
     expect(() => parseContingencyContractCatalogSource({ 100003: presentation }, {})).toThrow(
-      'Server-synchronized contingency contract Buff configuration is required',
+      'Explicit Buff bindings are required',
     );
+    const layout = parseContingencyContractLayoutSource(
+      { 100003: presentation },
+      {
+        indie_contract001: {
+          activityId: 'activity',
+          contractGroupMap: { 1: { contractMap: { 1: entry(100003) } } },
+        },
+      },
+    );
+    expect(layout.tags[0]?.tagId).toBe(100003);
+    expect(layout.tags[0]).not.toHaveProperty('terms');
   });
 
   it('keeps native column order and recovers the three explicit term identities', () => {

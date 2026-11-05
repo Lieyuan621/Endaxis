@@ -7,14 +7,21 @@ import type { MechanicContribution } from '../../core/scenarioMechanics/mechanic
 import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 import {
   contingencyContractDefinitionRevision,
-  contingencyContractBlockedTagReasons,
-  contingencyContractOmittedTagReasons,
+  contingencyContractBlockedTagReasons as seasonOneBlocked,
+  contingencyContractOmittedTagReasons as seasonOneOmitted,
 } from './generated/contingencyContractDefinitions.generated';
+import {
+  contingencyContractBlockedTagReasons as seasonTwoBlocked,
+  contingencyContractOmittedTagReasons as seasonTwoOmitted,
+} from './generated/contingencyContract.indie_contract002.generated';
 import { contingencyContractInitializationPlans } from './definitions';
 import { contractInitialVariables, resolveContractInitialVariables } from './definitions';
 import { withContractInitialVariables } from './initialVariables';
 
 export const CONTINGENCY_CONTRACT_MECHANIC_PREFIX = 'contingency-contract:tag:';
+
+const contingencyContractBlockedTagReasons = { ...seasonOneBlocked, ...seasonTwoBlocked };
+const contingencyContractOmittedTagReasons = { ...seasonOneOmitted, ...seasonTwoOmitted };
 
 const programs = new ActionGraphDefinitionRepository();
 

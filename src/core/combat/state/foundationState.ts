@@ -1,3 +1,4 @@
+import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags.ts';
 export {
   BUFF_FINISH_REASONS,
   type BuffFinishReason,
@@ -102,6 +103,7 @@ export interface AttackReceiptSnapshot {
 }
 
 export interface SkillCastEventData extends AbilityOriginPayload {
+  readonly skillTags?: readonly GameplayTag[];
   readonly element?: DamageElement;
   /** 玩家技能库分类；实体内部技能没有此分类。 */
   readonly skillType?: SkillType;
@@ -313,6 +315,8 @@ export interface SharedSpRecoveryModifierState {
  * 该值只在单场模拟内流转并由 Buff 等实例复制，不属于项目存档或编辑器对象身份。
  */
 export interface CombatSkillCastInfo {
+  /** 来源技能定义的标签，随施法来源继承，不读取接收者的技能。 */
+  readonly originSkillTags?: readonly GameplayTag[];
   /** 单场运行时内的非零释放序号；0 保留为“没有来源施法”。 */
   readonly skillCastId: number;
   /** 最初发起本次施法链的技能；当前直接释放时就是正在执行的技能。 */
@@ -410,5 +414,6 @@ export type LogicalAbilityEntityFinishReason =
   | 'explicit'
   | 'ownerFinished'
   | 'sourceDied'
+  | 'targetDied'
   | 'stackingLimit'
   | 'soulMainBodyDied';

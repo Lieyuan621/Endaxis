@@ -240,6 +240,7 @@ export function createProgramDefinitionCompiler(
       skillId: childSkill.skillId,
       skillLevel,
       nativeSkillType: childSkill.nativeSkillType,
+      ...(childSkill.skillTags === undefined ? {} : { skillTags: childSkill.skillTags }),
       ...(childSkill.normalSkillSubType === undefined
         ? {}
         : { normalSkillSubType: childSkill.normalSkillSubType }),

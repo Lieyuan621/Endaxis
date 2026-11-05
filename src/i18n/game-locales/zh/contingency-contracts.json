@@ -171,6 +171,134 @@
     "name": "队列：重负",
     "description": "主控干员12秒内未对敌人造成重击时，暂停技力自然恢复"
   },
+  "110001": {
+    "name": "改写：刺激",
+    "description": "敌人造成伤害<color=#cc9900>+{dmg_up:0%}</color>/+{@110002@dmg_up:0%}"
+  },
+  "110002": {
+    "name": "改写：刺激",
+    "description": "敌人造成伤害+{@110001@dmg_up:0%}/<color=#cc9900>+{dmg_up:0%}</color>"
+  },
+  "110101": {
+    "name": "环境：枯萎",
+    "description": "波次间隔不产生治愈团块"
+  },
+  "110302": {
+    "name": "环境：沉寂",
+    "description": "技力自然恢复速度<color=#cc9900>+{recover_ratio:0%}</color>，\n技能技力恢复量<color=#cc9900>+{skill_ratio:0%}</color>，\n同一干员施放战技后无法再次施放战技，直到队内所有干员都施放一次战技。\n该效果仅对初始战技生效。"
+  },
+  "110403": {
+    "name": "队列：困顿",
+    "description": "敌人生命值<color=#cc9900>+{hp_up:0%}</color>，干员战技伤害<color=#cc9900>-{-dmg_scale:0%}</color>"
+  },
+  "110601": {
+    "name": "队列：斩首",
+    "description": "主控干员受到伤害<color=#cc9900>+{dmg_scale:0%}</color>/+{@110602@dmg_scale:0%}"
+  },
+  "110602": {
+    "name": "队列：斩首",
+    "description": "主控干员受到伤害+{@110601@dmg_scale:0%}/<color=#cc9900>+{dmg_scale:0%}</color>"
+  },
+  "110703": {
+    "name": "环境：逸散",
+    "description": "干员施放终结技后，清空全队终结技能量。"
+  },
+  "110801": {
+    "name": "队列：肌肉溶解",
+    "description": "干员消耗<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color>0.1秒后，伤害<color=#cc9900>-{-dmg_scale:0%}</color>/-{@110802@-dmg_scale:0%}，持续<color=#cc9900>{duration:0}</color>秒。"
+  },
+  "110802": {
+    "name": "队列：肌肉溶解",
+    "description": "干员消耗<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color>0.1秒后，伤害-{@110801@-dmg_scale:0%}/<color=#cc9900>-{-dmg_scale:0%}</color>，持续<color=#cc9900>{duration:0}</color>秒。"
+  },
+  "110901": {
+    "name": "改写：充血",
+    "description": "敌人未处于<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color><color=#cc9900>{countdown:0}</color>秒后，每秒回复最大生命值<color=#cc9900>{hp_ratio:0%}</color>/{@110903@hp_ratio:0%}的生命值。"
+  },
+  "110903": {
+    "name": "改写：充血",
+    "description": "敌人未处于<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color><color=#cc9900>{countdown:0}</color>秒后，每秒回复最大生命值{@110901@hp_ratio:0%}/<color=#cc9900>{hp_ratio:0%}</color>的生命值。"
+  },
+  "111001": {
+    "name": "环境：捆缚",
+    "description": "干员的体力条替换为<color=#cc9900>{dash_count:0}</color>点体力，每次闪避消耗1点体力，体力每<color=#cc9900>{interval:0}</color>秒回复<color=#cc9900>{recover_count:0}</color>点。"
+  },
+  "111003": {
+    "name": "环境：捆缚",
+    "description": "禁止闪避"
+  },
+  "111201": {
+    "name": "环境：分隔",
+    "description": "战斗开始后，禁止切换主控干员。"
+  },
+  "111301": {
+    "name": "队列：衰竭",
+    "description": "敌人对干员造成的伤害无视<color=#1da6e0>护盾</color>，敌人造成伤害的<color=#cc9900>{hp_down_ratio:0%}</color>会变为减少干员生命值上限。\n主控干员受到伤害后，造成的治疗量降低<color=#cc9900>{-heal_scale:0%}</color>，持续<color=#cc9900>{countdown:0}</color>秒。"
+  },
+  "111303": {
+    "name": "队列：衰竭",
+    "description": "敌人对干员造成的伤害无视<color=#1da6e0>护盾</color>，敌人造成伤害的<color=#cc9900>{hp_down_ratio:0%}</color>会变为减少干员生命值上限。\n主控干员受到伤害后，造成的治疗量降低<color=#cc9900>{-heal_scale:0%}</color>，持续<color=#cc9900>{countdown:0}</color>秒。"
+  },
+  "111602": {
+    "name": "改写：刚体",
+    "description": "打断敌人蓄力需要<color=#cc9900>{interrupt_times:0}</color>次，干员每施放一次技能最多造成一次打断。"
+  },
+  "111703": {
+    "name": "队列：武器钝化",
+    "description": "敌人生命值<color=#cc9900>+{hp_up:0%}</color>，干员普攻伤害<color=#cc9900>-{-dmg_scale:0%}</color>"
+  },
+  "112302": {
+    "name": "改写：犼群",
+    "description": "披甲裂兽出场和生命值到达50%时，下一次技能必定为特殊技能。特殊技能会持续施放，一段时间后可被打断。"
+  },
+  "112402": {
+    "name": "改写：天坠",
+    "description": "开天将出场和生命值到达50%时，下一次技能必定为特殊技能。"
+  },
+  "112403": {
+    "name": "改写：天坠",
+    "description": "开天将出场时，施放特殊技能。\n开天将生命值到达50%时，施放特殊技能并清除自身所有<color=#a68360>破防</color>、<color=#1da6e0>法术附着</color>和异常，清除效果不会反复触发。"
+  },
+  "112501": {
+    "name": "改写：化合配方",
+    "description": "开天将发射的飞弹落地时会在原地产生腐蚀区域，干员处于区域内时获得腐蚀状态。"
+  },
+  "112701": {
+    "name": "环境：聚焦",
+    "description": "敌人会更多攻击主控干员。"
+  },
+  "112801": {
+    "name": "改写：滑行爱好",
+    "description": "场边出现间歇性向场内投掷香蕉皮的山犼兽，山犼兽不可被攻击，香蕉皮最多同时存在<color=#cc9900>5</color>个，每个存在<color=#cc9900>15</color>秒。"
+  },
+  "112901": {
+    "name": "改写：轻防护",
+    "description": "敌人全抗性变为<color=#cc9900>{resist:0}</color>/{@112903@resist:0}"
+  },
+  "112903": {
+    "name": "改写：轻防护",
+    "description": "敌人全抗性变为{@112901@resist:0}/<color=#cc9900>{resist:0}</color>"
+  },
+  "113302": {
+    "name": "队列：颓丧",
+    "description": "主控干员<color=#cc9900>{countdown:0}</color>秒内未重击或处决，所有干员获得<color=#cc9900>{weak_rate:0%}</color>虚弱，效果最多叠加至<color=#cc9900>{max_stack:0}</color>层，主控干员造成重击或处决后清空所有虚弱层数。"
+  },
+  "113502": {
+    "name": "环境：锁闭",
+    "description": "连携技造成伤害<color=#cc9900>+{dmg_add:0%}</color>\n不存在连携锁时，每施放<color=#cc9900>{max_stack:0}</color>个连携技，连携技队列末尾出现一个连携锁，使之后的连携技无法被施放。连携锁<color=#cc9900>{duration:0}</color>秒后消失。"
+  },
+  "113603": {
+    "name": "改写：硬质化",
+    "description": "敌人被击败后，场上所有敌人获得<color=#cc9900>{add_layers:0}</color>层<color=#1da6e0>层叠护盾</color>。该<color=#1da6e0>层叠护盾</color>不会防止敌人被施加<color=#a68360>破防</color>、<color=#1da6e0>法术附着</color>和异常。"
+  },
+  "113801": {
+    "name": "环境：时限",
+    "description": "倒计时<color=#cc9900>-{-time:0}</color>秒"
+  },
+  "113802": {
+    "name": "环境：时限",
+    "description": "倒计时<color=#cc9900>-{-time:0}</color>秒"
+  },
   "900101": {
     "name": "改写：活性",
     "description": "敌人生命值<color=#cc9900>+{hp_up-1:0%}</color>/+{@900102@hp_up-1:0%}/+{@900103@hp_up-1:0%}"

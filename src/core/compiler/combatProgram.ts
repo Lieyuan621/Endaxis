@@ -106,6 +106,7 @@ export type ResolvedSkillBuffDefinition = Omit<
 
 /** 各宿主共用、等级已经展开的动作数据，不附带施法或对象身份。 */
 export interface CompiledSkillActionProgram {
+  readonly skillTags?: SkillDefinition['skillTags'];
   readonly element?: DamageElement;
   readonly initialBlackboard: Readonly<Record<string, number>>;
   readonly timelineActions: readonly CompiledTimelineAction[];
@@ -148,6 +149,7 @@ export interface ResolvedCombatStepParameters {
   mergeContextTargets: CompiledStepParameters['mergeContextTargets'];
   findCharacterTeamTargets: CompiledStepParameters['findCharacterTeamTargets'];
   blowOffEnemy: CompiledStepParameters['blowOffEnemy'];
+  exitControlledState: CompiledStepParameters['exitControlledState'];
   pushBack: CompiledStepParameters['pushBack'];
   pull: CompiledStepParameters['pull'];
   saveTargetDistance: CompiledStepParameters['saveTargetDistance'];
@@ -315,6 +317,7 @@ export interface ResolvedCombatStepParameters {
   gainSquadUltimateEnergyFromSkillCost: { coefficient: number };
   gainFinisherSp: CompiledStepParameters['gainFinisherSp'];
   disableNormalSkill: CompiledStepParameters['disableNormalSkill'];
+  boneAttach: CompiledStepParameters['boneAttach'];
   limitMovementGait: CompiledStepParameters['limitMovementGait'];
   queueComboLock: CompiledStepParameters['queueComboLock'];
   restrictUltimateEnergyRecovery: Omit<
@@ -438,6 +441,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   mergeContextTargets: 'operation',
   findCharacterTeamTargets: 'operation',
   blowOffEnemy: 'operation',
+  exitControlledState: 'operation',
   pushBack: 'operation',
   pull: 'operation',
   saveTargetDistance: 'operation',
@@ -489,6 +493,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   holdBuffsById: 'operation',
   inheritBuffById: 'operation',
   disableNormalSkill: 'operation',
+  boneAttach: 'operation',
   limitMovementGait: 'operation',
   queueComboLock: 'operation',
   restrictUltimateEnergyRecovery: 'operation',

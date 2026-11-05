@@ -10,6 +10,7 @@ import {
   requireBoolean,
   requireEnum,
   validateLevelValues,
+  validateGameplayTags,
   NATIVE_SKILL_TYPES_SET,
   NORMAL_SKILL_SUB_TYPES_SET,
   COMBAT_RESOURCES_SET,
@@ -145,6 +146,8 @@ export function validateSkillDefinition(
   else if (record.levelSource !== undefined)
     push(out, `${path}.levelSource`, 'dodge does not use skill levels');
   requireEnum(record, 'nativeSkillType', NATIVE_SKILL_TYPES_SET, path, out);
+  if (record.skillTags !== undefined)
+    validateGameplayTags(record.skillTags, `${path}.skillTags`, out);
   if (record.normalSkillSubType !== undefined)
     requireEnum(record, 'normalSkillSubType', NORMAL_SKILL_SUB_TYPES_SET, path, out);
   requireNonNegativeInteger(record, 'timelineBlockFrames', path, out);

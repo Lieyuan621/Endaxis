@@ -310,6 +310,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
                 'tools/game-data-compiler/config/enemies/hidden-enemies.json',
               ),
               outputDirectory: path.join(candidateRoot, relativeOutput),
+              localeDirectory: path.join(candidateRoot, 'src/i18n/game-locales'),
               buffDirectory: path.join(sourceRoot, 'BuffData'),
               spawnerDirectory: path.join(sourceRoot, 'SpawnerConfig'),
               check: false,

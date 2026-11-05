@@ -21,6 +21,7 @@ import type {
   CombatActionProjectionExtensionsSource,
 } from '../combatProjectionCommon.ts';
 import {
+  projectGameplayTags,
   isCurrentTargetRestrictedSingleEnemyTargetGroup,
   isDynamicSingleEnemyTagTargetGroup,
   isPartyHitBoxTargetGroup,
@@ -73,6 +74,7 @@ export type CompiledActiveSkillTimelineSequenceSource = Readonly<
  * 原生时长与技能块宽度仍分别保留；技能等级的具体取值由最终消费者选择。
  */
 export interface CompiledActiveSkillRuntimeProjectionSource {
+  readonly skillTags?: SkillDefinition['skillTags'];
   readonly normalSkillSubType?: SkillDefinition['normalSkillSubType'];
   readonly actionGraph: ActionGraphResourceDefinition;
   readonly skillId: string;
@@ -1298,6 +1300,15 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   );
   return {
     skillId: graph.skillId,
+    ...((graph.skillTagIds?.length ?? 0) === 0
+      ? {}
+      : {
+          skillTags: projectGameplayTags(
+            graph.skillTagIds ?? [],
+            context,
+            input.sourcePath + '.skillTags',
+          ),
+        }),
     ...(graph.normalSkillSubType === 'AdditionalNormalSkill'
       ? { normalSkillSubType: 'additionalNormalSkill' as const }
       : {}),

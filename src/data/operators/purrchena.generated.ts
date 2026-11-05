@@ -1211,6 +1211,7 @@ export const purrchenaChr_0038_purrche_power_attackActionGraph = {
 
 export const purrchenaChr_0038_purrche_power_attack: SkillDefinition = {
   actionGraph: purrchenaChr_0038_purrche_power_attackActionGraph,
+  skillTags: ['Skill/Character/char_0018_dapan/PowerAttack'],
   key: 'chr_0038_purrche_power_attack',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -2822,6 +2823,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
 
 export const purrchenaChr_0038_purrche_normal_skill_block_1: SkillDefinition = {
   actionGraph: purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph,
+  skillTags: ['Skill/Character/chr_0038_purrche/ImmuneNormalSkillfx'],
   key: 'chr_0038_purrche_normal_skill_block_1',
   element: 'nature',
   blackboard: { atb_return_2: 20, potential_5_atb: 0, talent_1_stack: 0, talent_1_usp: 0 },
@@ -3655,6 +3657,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
 
 export const purrchenaChr_0038_purrche_normal_skill_loop_1: SkillDefinition = {
   actionGraph: purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph,
+  skillTags: ['Skill/Character/chr_0038_purrche/ImmuneNormalSkillfx'],
   key: 'chr_0038_purrche_normal_skill_loop_1',
   element: 'physical',
   blackboard: {},

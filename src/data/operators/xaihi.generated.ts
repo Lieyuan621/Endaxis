@@ -1792,6 +1792,7 @@ export const xaihiChr_0011_seraph_normal_skillActionGraph = {
 
 export const xaihiChr_0011_seraph_normal_skill: SkillDefinition = {
   actionGraph: xaihiChr_0011_seraph_normal_skillActionGraph,
+  skillTags: ['Skill/Character/chr_0011_seraph/NormalSkill'],
   key: 'chr_0011_seraph_normal_skill',
   element: 'cryo',
   blackboard: {

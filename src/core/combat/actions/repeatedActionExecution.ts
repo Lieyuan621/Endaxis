@@ -16,6 +16,11 @@ export function executeRepeatedAction(
     parameters.nativeTickInterval === undefined && parameters.nativeExecuteInterval === undefined;
   state.timerSeconds = 0;
   state.scanCount = 0;
+  state.checkFrame = -1;
+  if (parameters.nativeTickIntervalV2) {
+    state.skipInitialTick = false;
+    return;
+  }
   // TickIntervalAction.ExecuteInternal 主动 OnTick(0)，但不跳过后续普通 Tick。
   // 其他重复动作保留各自启动语义。
   scanRepeatedAction(state, parameters, executeBody);
@@ -26,7 +31,13 @@ export function tickRepeatedAction(
   parameters: RepeatedActionParameters,
   deltaTime: number,
   executeBody: () => void,
+  frame?: number,
 ): void {
+  if (parameters.nativeTickIntervalV2) {
+    if (frame === undefined) throw new Error('TickIntervalV2 requires a frame clock');
+    tickIntervalV2(state, parameters.nativeTickIntervalV2, deltaTime, frame, executeBody);
+    return;
+  }
   if (state.skipInitialTick) {
     state.skipInitialTick = false;
     return;
@@ -69,4 +80,50 @@ function scanRepeatedAction(
     return;
   }
   executeBody();
+}
+
+function tickIntervalV2(
+  state: RepeatedActionState,
+  parameters: NonNullable<RepeatedActionParameters['nativeTickIntervalV2']>,
+  delta: number,
+  frame: number,
+  body: () => void,
+): void {
+  state.timerSeconds = Math.fround(state.timerSeconds + Math.fround(delta));
+  const eachFrame =
+    parameters.executeEachFrame ||
+    Math.fround(parameters.intervalSeconds) < Math.fround(0.0329900011);
+  const count = eachFrame ? (state.checkFrame < 0 ? 1 : Math.max(0, frame - state.checkFrame)) : 1;
+  state.checkFrame = frame;
+  for (let i = 0; i < count; i++) {
+    if (parameters.totalTickCount > 0 && state.scanCount >= parameters.totalTickCount) break;
+    if (
+      !eachFrame &&
+      state.timerSeconds < Math.fround(state.scanCount * Math.fround(parameters.intervalSeconds))
+    )
+      break;
+    state.scanCount++;
+    body();
+  }
+}
+
+/** V2 仅在累计时间达到配置时长后补齐，提前结束不自动补齐。 */
+export function finishRepeatedAction(
+  state: RepeatedActionState,
+  parameters: RepeatedActionParameters,
+  body: () => void,
+): void {
+  const tick = parameters.nativeTickIntervalV2;
+  if (!tick) return;
+  if (
+    tick.totalTickCount > 0 &&
+    tick.totalDurationSeconds > 0 &&
+    state.timerSeconds >= Math.fround(tick.totalDurationSeconds)
+  ) {
+    while (state.scanCount < tick.totalTickCount) {
+      state.scanCount++;
+      body();
+    }
+  }
+  resetRepeatedAction(state);
 }

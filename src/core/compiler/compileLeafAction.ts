@@ -12,6 +12,7 @@ const LEAF_ACTION_KINDS = [
   'mergeContextTargets',
   'findCharacterTeamTargets',
   'blowOffEnemy',
+  'exitControlledState',
   'pushBack',
   'pull',
   'saveTargetDistance',
@@ -33,6 +34,7 @@ const LEAF_ACTION_KINDS = [
   'recoverPoise',
   'changeResource',
   'disableNormalSkill',
+  'boneAttach',
   'limitMovementGait',
   'queueComboLock',
   'restrictUltimateEnergyRecovery',
@@ -132,6 +134,8 @@ export function compileLeafAction(
     case 'findCharacterTeamTargets':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'blowOffEnemy':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'exitControlledState':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'pushBack':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
@@ -388,6 +392,8 @@ export function compileLeafAction(
         },
       };
     }
+    case 'boneAttach':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'disableNormalSkill':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'limitMovementGait':

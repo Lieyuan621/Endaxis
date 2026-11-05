@@ -733,7 +733,9 @@ function propagateBuffTargets(
                       isPartyExceptOwnerInstantSearch(action.target) ||
                       isPartyInstantSearch(action.target))
                   ? ('caster' as const)
-                  : isUniqueEnemyMainTargetInstantSearch(action.target)
+                  : isUniqueEnemyMainTargetInstantSearch(action.target) ||
+                      (action.target.targetSource === 'InstantSearch' &&
+                        action.target.finderType === 'AllEnemyFinder')
                     ? ('enemy' as const)
                     : (action.target.targetSource === 'Context' ||
                           action.target.targetSource === 'Target') &&

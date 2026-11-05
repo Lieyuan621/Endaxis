@@ -431,6 +431,166 @@ export const imageCatalog: readonly {
     category: 'contingency_contract',
   },
   {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1002',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1002.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1003',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1003.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_101',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_101.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_102',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_102.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1101',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1101.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1103',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1103.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1202',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1202.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1203',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1203.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1302',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1302.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1403',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1403.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1602',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1602.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1702',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1702.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1703',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1703.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1901',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1901.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1902',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1902.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_201',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_201.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_2201',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_2201.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_3001',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_3001.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_301',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_301.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_302',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_302.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_403',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_403.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_501',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_501.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_502',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_502.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_601',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_601.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_602',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_602.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_603',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_603.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_701',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_701.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_703',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_703.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_801',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_801.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_803',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_803.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key1',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_key1.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key3',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_key3.webp',
+    category: 'contingency_contract',
+  },
+  {
     ref: 'endaxis:contingency_contract/2/lockdown',
     path: '/contingency_contract/2/lockdown.webp',
     category: 'contingency_contract',
@@ -2516,6 +2676,11 @@ export const imageCatalog: readonly {
     category: 'icons',
   },
   {
+    ref: 'endaxis:icons/icon_battle_buff_minghe_thundertrigger',
+    path: '/icons/icon_battle_buff_minghe_thundertrigger.webp',
+    category: 'icons',
+  },
+  {
     ref: 'endaxis:icons/icon_battle_buff_purrche_talent_01',
     path: '/icons/icon_battle_buff_purrche_talent_01.webp',
     category: 'icons',
@@ -2883,6 +3048,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:icons/icon_element_physical',
     path: '/icons/icon_element_physical.webp',
+    category: 'icons',
+  },
+  {
+    ref: 'endaxis:icons/icon_energy_fusion_conduct',
+    path: '/icons/icon_energy_fusion_conduct.webp',
     category: 'icons',
   },
   {
@@ -3936,6 +4106,46 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
+    ref: 'endaxis:operators/minghe/avatar',
+    path: '/operators/minghe/avatar.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/battle_01',
+    path: '/operators/minghe/battle 01.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/battle_02',
+    path: '/operators/minghe/battle 02.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/combo_01',
+    path: '/operators/minghe/combo 01.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/portrait',
+    path: '/operators/minghe/portrait.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/talent_1',
+    path: '/operators/minghe/talent 1.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/talent_2',
+    path: '/operators/minghe/talent 2.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/ultimate_01',
+    path: '/operators/minghe/ultimate 01.webp',
+    category: 'operators',
+  },
+  {
     ref: 'endaxis:operators/perlica/avatar',
     path: '/operators/perlica/avatar.webp',
     category: 'operators',
@@ -4788,6 +4998,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:weapons/sword/wpn_sword_0024',
     path: '/weapons/sword/wpn_sword_0024.webp',
+    category: 'weapons',
+  },
+  {
+    ref: 'endaxis:weapons/sword/wpn_sword_0025',
+    path: '/weapons/sword/wpn_sword_0025.webp',
     category: 'weapons',
   },
   {

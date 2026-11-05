@@ -547,6 +547,25 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
   }
 
   execute(step: RuntimeOperation, context?: CombatOperationContext): boolean {
+    if (step.kind === 'boneAttach') {
+      const state = context?.boneAttachState;
+      const query = this.dependencies.queryTargets;
+      const resolve = this.dependencies.resolveEventTarget;
+      if (!state || !context || !query || !resolve)
+        throw new Error('bone attachment requires target queries and action state');
+      if (state.targetId !== null) return true;
+      // 原生挂接持有单个目标与挂点来源，缺少任一对象则不建立控制。
+      const selected = query(step.parameters.target, context)[0];
+      const anchor = query(step.parameters.anchor, context)[0];
+      if (!selected || !anchor) return false;
+      const id = runtimeTargetEntityId(selected);
+      if (id === undefined) return false;
+      const target = resolve(id);
+      if (!target.addEntityTags) throw new Error('bone attachment requires entity tags');
+      state.targetId = id;
+      target.addEntityTags(['Status/Immobilized/BeCaught']);
+      return true;
+    }
     if (step.kind === 'disableNormalSkill') {
       const state = context?.actionRegistrationState;
       const owner = context?.actionOwnerId;
@@ -1409,6 +1428,16 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
   }
 
   end(step: RuntimeOperation, context?: CombatOperationContext): void {
+    if (step.kind === 'boneAttach') {
+      const state = context?.boneAttachState;
+      if (!state) throw new Error('bone attachment requires action state');
+      if (state.targetId === null) return;
+      const target = this.dependencies.resolveEventTarget?.(state.targetId);
+      if (!target?.removeEntityTags) throw new Error('bone attachment requires entity tags');
+      state.targetId = null;
+      target.removeEntityTags(['Status/Immobilized/BeCaught']);
+      return;
+    }
     if (step.kind === 'disableNormalSkill') {
       const state = context?.actionRegistrationState;
       const owner = context?.actionOwnerId;

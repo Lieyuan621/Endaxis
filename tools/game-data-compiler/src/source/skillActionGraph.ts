@@ -1,3 +1,4 @@
+import { parseGameplayTagListSource } from './tagQuery.ts';
 import {
   parseKnownNativeActionLeafSource,
   type KnownNativeActionLeafSource,
@@ -101,6 +102,7 @@ export interface SkillActionGroupSource<TLeaf> {
  * SkillData 的动作图切片。其余根字段只做版本签名校验，不表示施法、UI 与智能选敌已经解析。
  */
 export interface SkillActionGraphSource<TLeaf> {
+  readonly skillTagIds?: readonly number[];
   readonly normalSkillSubType?: 'Normal' | 'AdditionalNormalSkill';
   readonly skillId: string;
   readonly level: number;
@@ -144,6 +146,7 @@ export function parseSkillActionGraphSource<TLeaf>(
     ...(Object.hasOwn(root, 'canCastInWater')
       ? { canCastInWater: requireBoolean(root.canCastInWater, `${sourcePath}.canCastInWater`) }
       : {}),
+    skillTagIds: parseGameplayTagListSource(root.skillTags, `${sourcePath}.skillTags`),
     skillId: requireNonEmptyString(root.skillId, `${sourcePath}.skillId`),
     level: requireNonNegativeInteger(root.level, `${sourcePath}.level`),
     durationFrame: requireNonNegativeInteger(root.durationFrame, `${sourcePath}.durationFrame`),

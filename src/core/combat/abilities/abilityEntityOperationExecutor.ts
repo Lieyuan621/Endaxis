@@ -449,6 +449,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
         allowMultiInputTarget: parameters.allowMultiInputTarget ?? false,
         ...(overrideDurationSeconds === undefined ? {} : { overrideDurationSeconds }),
         dieWhenSourceDies: parameters.dieWhenSourceDies,
+        dieWhenTargetDies: parameters.dieWhenTargetDies,
         ...(Object.keys(assignments).length === 0 ? {} : { blackboardAssignments: assignments }),
         ...(Object.keys(valueCalculations).length === 0
           ? {}
@@ -494,10 +495,8 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
       // 原生 OnSpawn 的 TryCastSkill 失败不撤销实体出生，也不选择其他子技能。
       return undefined;
     }
-    if (definition.childSkill !== undefined) return definition.childSkill;
-    const children = Object.values(definition.childSkills ?? {});
-    if (children.length <= 1) return children[0];
-    throw new Error('AbilityEntity definition has multiple child skills but Spawn selected none');
+    // childSkills 是可按 ID 调用的技能集合，不从集合中推断出生技能。
+    return definition.childSkill;
   }
 
   end(step: RuntimeOperation, context?: CombatOperationContext): void {

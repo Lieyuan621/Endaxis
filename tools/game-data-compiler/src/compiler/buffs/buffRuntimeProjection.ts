@@ -1811,6 +1811,43 @@ function createBuffSequenceProjection(
       });
       return { steps: [{ kind: 'once', parameters: {}, body }], state: partyTargetGroups };
     },
+    compileTickIntervalV2: (node, partyTargetGroups) => {
+      const action = node.body;
+      if (
+        action.tickInterval.blackboardKey !== null ||
+        action.fixedTickCount.blackboardKey !== null
+      )
+        return null;
+      let intervalSeconds = Math.fround(action.tickInterval.value);
+      let totalTickCount = action.totalTickCount;
+      if (action.tickMode === 'FixedCount' && action.fixedTickCount.value > 0) {
+        totalTickCount = action.fixedTickCount.value;
+        if (action.totalDurationSeconds > 0)
+          intervalSeconds = Math.fround(action.totalDurationSeconds / totalTickCount);
+      }
+      const body = compileActionSequenceProgram(action.actionOnTick, {
+        ...createBuffSequenceProjection(visualOnlyIds, context, extensions),
+        initialState: () => partyTargetGroups,
+        resultIsConsumed: false,
+      });
+      return {
+        steps: [
+          {
+            kind: 'repeatEachTick',
+            parameters: {
+              nativeTickIntervalV2: {
+                executeEachFrame: action.tickMode === 'EachFrame',
+                intervalSeconds,
+                totalTickCount,
+                totalDurationSeconds: action.totalDurationSeconds,
+              },
+            },
+            body,
+          },
+        ],
+        state: partyTargetGroups,
+      };
+    },
     compileTickInterval: (node, partyTargetGroups) => {
       if (context.timelineRange === undefined || node.body.useIntervalBlackboardKey) return null;
       if (!(node.body.intervalSeconds >= 0) || !Number.isFinite(node.body.intervalSeconds))

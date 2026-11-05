@@ -275,17 +275,8 @@ export function compileBuffLeafNode(
   }
   if (node.body.value.family === 'abilityEntity') {
     const action = node.body.value.action;
-    // 当前 1.6.3 消费者均关闭这些新增分支；来源完整保留，启用时不能静默裁剪。
-    if (
-      action.dieWhenTargetDies ||
-      action.attachWeaponModel ||
-      action.readFullPotentialExtraEffect ||
-      (action.weaponIndex !== undefined && action.weaponIndex !== 0)
-    ) {
-      throw new Error(
-        `${node.sourcePath}: enabled target-death or weapon SpawnAbilityEntity options require native projection`,
-      );
-    }
+    // 原生 TryAttachWeaponModel 仅挂接武器视图；满潜选项读取的是武器装饰特效。
+    // 保留能力实体与子技能，模型挂接参数不进入战斗投影。
     const bornAt = projectActionTargetQuery(action.bornAt, context, `${node.sourcePath}.bornAt`);
     const sourceIsOwner = action.sourceType === 'ActionOwner';
     if (sourceIsOwner) requireActionOwnerProjection(context, node.sourcePath);
@@ -346,6 +337,7 @@ export function compileBuffLeafNode(
             pauseEffectOnEnd: action.pauseEffectOnEnd,
             inheritSourceSkillCastId: action.inheritSourceSkillCastId,
             dieWhenSourceDies: action.dieWhenSourceDies,
+            ...(action.dieWhenTargetDies ? { dieWhenTargetDies: true } : {}),
             dieOnEnd: action.dieOnEnd,
           }),
       );
@@ -375,6 +367,7 @@ export function compileBuffLeafNode(
         inheritActionBlackboard: action.assignBlackboard,
         ...(action.inheritSourceSkillCastId ? {} : { inheritSourceSkillCastInfo: false }),
         dieWhenSourceDies: action.dieWhenSourceDies,
+        ...(action.dieWhenTargetDies ? { dieWhenTargetDies: true } : {}),
         ...(action.dieOnEnd ? { finishByAction: true } : {}),
         ...(targetQuery === undefined ? {} : { target: targetQuery }),
         ...(action.allowMultiInputTarget ? { allowMultiInputTarget: true } : {}),
@@ -471,13 +464,10 @@ export function compileBuffLeafNode(
           partyTargetGroups.get(action.defender.targetGroupKey) === 'dynamicEnemy' ||
           partyTargetGroups.get(action.defender.targetGroupKey) === 'enemy')) ||
       (action.defender.targetSource === 'Owner' && context.fixedBuffOwnerTarget === 'enemy');
-    if (
-      (context.actionSourceTarget !== 'caster' && context.fixedBuffSourceTarget !== 'caster') ||
-      action.attacker.targetSource !== 'Source' ||
-      !defenderIsEnemy
-    )
+    if (action.attacker.targetSource !== 'Source' || !defenderIsEnemy)
       throw new Error(`${node.sourcePath}: unsupported InterruptAction stump projection`);
-    // 玩家伤害模型不模拟敌方主动行为及受击硬直。投射物命中输入保留真实身份，
+    // 玩家伤害模型不模拟敌方主动行为及受击硬直；来源是否干员不改变这一边界。
+    // 投射物命中输入保留真实身份，
     // 不能为了省略敌方控制而把整个回调目标改成 enemy。当前墨魂模板初始霸体 50，
     // 高于这里使用的默认中断门槛 20；不将 InterruptAction 映射为无条件结束子技能。
     // 此省略不代表通用能力实体已实现受击硬直或完整的霸体判定。
@@ -485,6 +475,9 @@ export function compileBuffLeafNode(
   }
   if (node.body.value.family === 'stumpControl') {
     const action = node.body.value.action;
+    if (action.kind === 'exitControlledState') {
+      return { steps: [{ kind: 'exitControlledState', parameters: {} }], state: partyTargetGroups };
+    }
     if (action.kind === 'blowOffEnemy') {
       if (action.deadOption !== 'OnlyDead')
         throw new Error(`${node.sourcePath}: live-target BlowOffEnemy processing is not projected`);
@@ -1265,6 +1258,38 @@ export function compileBuffLeafNode(
       // FindTargetAction 在 owner/center 可解析时即使搜索为空也覆盖 Context 并返回 true。
       // 无读取者只能证明结果无用；仍排除可能取样或写入的后处理器。
       return { steps: [], state: partyTargetGroups };
+    }
+    if (
+      write.producerType === 'FindTargetAction' &&
+      write.finderType === 'AllEnemyFinder' &&
+      write.validatorTypes.every(type => type === 'BuffValidator') &&
+      (write.buffValidators?.length ?? 0) === write.validatorTypes.length &&
+      write.postProcessorTypes.length === 0 &&
+      write.priorityFilters.length === 0 &&
+      write.shuffleTargets.length === 0 &&
+      write.distanceValidators.length === 0
+    ) {
+      const query = projectSelectorBuffValidators(
+        { kind: 'enemyByTags', scope: 'global', reverse: true, tagQueryType: 'hasAll', tags: [] },
+        write.buffValidators ?? [],
+        context,
+        node.sourcePath,
+      );
+      const nextGroups = new Map(partyTargetGroups);
+      nextGroups.set(write.targetGroupKey, 'dynamicEnemy');
+      return {
+        steps: [
+          {
+            kind: 'findTargets',
+            parameters: {
+              owner: projectSelectorOwner(write, node.sourcePath),
+              query,
+              saveToContextKey: write.targetGroupKey,
+            },
+          },
+        ],
+        state: nextGroups,
+      };
     }
     if (
       write.producerType === 'FindTargetAction' &&

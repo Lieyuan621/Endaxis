@@ -256,3 +256,32 @@ it('敌方全局光环保留全局集合和 Owner 排除，范围光环不扩大
     excludeTargets: { kind: 'owner' },
   });
 });
+
+it('GlobalAura 允许无直接 Buff，仍保留进入与离开动作', () => {
+  const callback = {
+    ...emptySequence,
+    actionData: [
+      {
+        $type: 'Beyond.Gameplay.Core.BreakoutAction+Data, Gameplay.Beyond',
+        isEnable: true,
+        priorityLevel: 'Default',
+        priorityOffset: 0,
+        serverActionIndex: 1,
+        breakOutState: 'ControlledState',
+        animName: 'FightIdle',
+      },
+    ],
+  };
+  const parsed = parseGlobalPartyAuraActionSource(
+    {
+      ...base,
+      buffInput: [],
+      actionInAura: callback,
+      actionWhenExitAura: callback,
+    },
+    'aura',
+  );
+  expect(parsed.buffs).toEqual([]);
+  expect(parsed.actionOnEnter.actions).toHaveLength(1);
+  expect(parsed.actionOnExit.actions).toHaveLength(1);
+});

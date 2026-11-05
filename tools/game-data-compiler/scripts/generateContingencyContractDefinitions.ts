@@ -9,6 +9,9 @@ import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBui
 import type { CompiledBuffDefinitionSource } from '../src/compiler/buffs/buffProjectionTypes.ts';
 import { compileGlobalBuffTemplate } from '../src/compiler/buffs/globalBuffProjection.ts';
 import { compileStandardStumpBuffClosure } from '../src/compiler/buffs/standardStumpBuffClosure.ts';
+import { readGeneratedTimeDilationPriorities } from '../src/compiler/catalogs/generatedTimeDilationCatalog.ts';
+import { resolveContractBuffBindings } from '../src/domains/contingencyContract/contractBuffBindings.ts';
+import { imageRefFromPath } from '../src/compiler/publication/imageResources.ts';
 import { finalizeDefinitionResources } from '../src/compiler/finalizeDefinitions.ts';
 import type {
   ActionGraphReference,
@@ -21,12 +24,13 @@ import type { DefinitionOptimizationMode } from '../src/compiler/optimization/de
 import type { GraphSharedEntityValueUsage } from '../src/compiler/optimization/graphValueOptimization.ts';
 import { createGraphEntityUsageContext } from '../src/compiler/optimization/graphValueOptimization.ts';
 import {
-  checkGeneratedDefinitionFiles,
-  writeGeneratedDefinitionFiles,
+  writeGeneratedDefinitionFile,
+  type RenderedDefinitionFileSource,
 } from '../src/compiler/publication/writeGeneratedDefinitionFiles.ts';
 import {
   compileContingencyContractTagDefinitions,
   parseContingencyContractCatalogSource,
+  parseContingencyContractLayoutSource,
   type ContingencyContractCatalogSource,
 } from '../src/domains/contingencyContract/contingencyContractSource.ts';
 import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/definitionSourceRenderer.ts';
@@ -40,17 +44,27 @@ import {
   requireArray,
   requireInteger,
   requireNonEmptyString,
+  requireNumber,
   requireRecord,
 } from '../src/source/primitives.ts';
 
-export interface ContingencyContractDefinitionSourceArguments {
+interface ContingencyContractBuffSourceArguments {
   readonly tableRoot: string;
   readonly buffDataRoot: string;
   readonly globalBuffCatalog: string;
   readonly skillSettingCatalog: string;
   readonly gameplayTagPaths: readonly string[];
-  readonly scope: string;
   readonly nativeJsonEncoding?: NativeJsonEncodingSchema;
+}
+
+export interface ContingencyContractDefinitionSourceArguments extends ContingencyContractBuffSourceArguments {
+  readonly scope: string;
+}
+
+export interface BoundContingencyContractSourceArguments extends ContingencyContractBuffSourceArguments {
+  readonly bindings: string;
+  readonly supplement: string;
+  readonly timeDilationCatalog: string;
 }
 
 interface Arguments extends ContingencyContractDefinitionSourceArguments {
@@ -84,6 +98,240 @@ export interface CompiledContingencyContractDefinitions {
 
 function readJson(file: string): unknown {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+/** 服务器仅公布参数时，以显式人工绑定编译根 Buff，不伪造原生 GlobalBuff 模板。 */
+export function compileBoundContingencyContractDefinitionsFromFiles(
+  args: BoundContingencyContractSourceArguments,
+) {
+  const supplement = readJson(args.supplement);
+  const bindings = resolveContractBuffBindings(readJson(args.bindings), supplement);
+  const gameId = requireNonEmptyString(requireRecord(supplement, args.supplement).gameId, 'gameId');
+  const layout = parseContingencyContractLayoutSource(
+    readJson(path.join(args.tableRoot, 'CcTagTable.json')),
+    readJson(path.join(args.tableRoot, 'ContingencyContractTable.json')),
+  );
+  const contract = layout.contracts.find(entry => entry.id === gameId);
+  if (!contract) throw new Error(`unknown contract layout ${gameId}`);
+  const tagIds = new Set(
+    contract.columns.flatMap(column => column.entries.map(entry => entry.tagId)),
+  );
+  for (const binding of bindings)
+    if (!tagIds.has(binding.tagId))
+      throw new Error(`tag ${binding.tagId} does not belong to ${gameId}`);
+  const globalBuffCatalog = readJson(args.globalBuffCatalog);
+  const settings = readJson(args.skillSettingCatalog);
+  const registry = new GameplayTagRegistry(args.gameplayTagPaths);
+  const priorities = readGeneratedTimeDilationPriorities(args.timeDilationCatalog);
+  const definitions: Record<string, CompiledBuffDefinitionSource> = {};
+  const initializationPlans: ContingencyContractInitializationPlan[] = [];
+  const pending = new Map<number, string>();
+  const omitted = new Map<number, string>();
+  const readNative = args.nativeJsonEncoding
+    ? createNativeJsonEncodingReader(args.nativeJsonEncoding)
+    : undefined;
+  for (const binding of bindings) {
+    if (binding.omitted) {
+      if (binding.buffs.length || binding.pending)
+        throw new Error(`tag ${binding.tagId}: omitted binding contains effects`);
+      omitted.set(binding.tagId, binding.omitted);
+      continue;
+    }
+    if (binding.pending) pending.set(binding.tagId, binding.pending);
+    const graph = createActionGraphBuilder();
+    const steps: ActionGraphStep[] = [];
+    const sharedValues: Record<string, number> = {};
+    if (binding.spRecoveryBonus !== undefined) {
+      sharedValues.recover_ratio = binding.spRecoveryBonus;
+      for (const buff of binding.buffs) {
+        if (buff.owner !== 'caster') throw new Error('shared SP binding requires character buffs');
+        for (const [key, value] of Object.entries(buff.blackboard)) {
+          if (typeof value !== 'number')
+            throw new Error(`shared SP parameter ${key} must be numeric`);
+          sharedValues[key] = value;
+        }
+      }
+      steps.push({
+        kind: 'createGlobalBuff',
+        parameters: {
+          globalBuffId: `endaxis_contract_${binding.tagId}_sp_recovery`,
+          source: 'battle',
+          blackboardAssignments: Object.fromEntries(
+            Object.entries(sharedValues).map(([key, value]) => [key, { kind: 'constant', value }]),
+          ),
+          definition: {
+            stackingType: 'unlimited',
+            blackboard: sharedValues,
+            children: binding.buffs.map(buff => ({
+              buffId: buff.buffId,
+              blackboardAssignments: Object.fromEntries(
+                Object.keys(buff.blackboard).map(key => [key, { kind: 'valueNode', nodeId: key }]),
+              ),
+            })),
+            sharedSpModifiers: [
+              {
+                attribute: 'spRecovery',
+                operation: 'multiplier',
+                value: { kind: 'valueNode', nodeId: 'recover_ratio' },
+                applyToReturnSpGain: true,
+              },
+            ],
+          },
+        },
+      });
+    }
+    for (const buff of binding.buffs) {
+      const closure = compileStandardStumpBuffClosure(
+        [buff.buffId],
+        (id: string) => {
+          const file = path.join(args.buffDataRoot, `${id}.json`);
+          const value = readJson(file);
+          return readNative ? readNative(value, 'Beyond.Gameplay.Core.BuffData', file) : value;
+        },
+        globalBuffCatalog,
+        settings,
+        undefined,
+        () => ({
+          resolveTimeDilationPriority: (id, sourcePath) => {
+            const priority = priorities.get(id);
+            if (priority === undefined)
+              throw new Error(`${sourcePath}: unknown time dilation priority ${id}`);
+            return priority;
+          },
+        }),
+        new Map([[buff.buffId, buff.owner]]),
+        new Set([buff.buffId]),
+        registry,
+      );
+      const blocked = closure.diagnostics.filter(item => item.status === 'blocked');
+      if (blocked.length)
+        throw new Error(`tag ${binding.tagId}: ${blocked.map(item => item.reason).join(' | ')}`);
+      mergeDefinitions(definitions, closure.definitions, `tag ${binding.tagId}`);
+      if (binding.spRecoveryBonus !== undefined) continue;
+      steps.push({
+        kind: 'applyBuff',
+        parameters: {
+          targets:
+            buff.owner === 'caster'
+              ? { kind: 'characterTeam', excludeOwner: false }
+              : {
+                  kind: 'enemyByTags',
+                  scope: 'global',
+                  reverse: true,
+                  tagQueryType: 'hasAll',
+                  tags: [],
+                },
+          buffs: [
+            {
+              buffId: buff.buffId,
+              blackboardAssignments: Object.fromEntries(
+                Object.entries(buff.blackboard)
+                  .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
+                  .map(([key, value]) => [key, { kind: 'constant', value }]),
+              ),
+              stringBlackboardAssignments: Object.fromEntries(
+                Object.entries(buff.blackboard).filter(
+                  (entry): entry is [string, string] => typeof entry[1] === 'string',
+                ),
+              ),
+            },
+          ],
+        },
+      });
+    }
+    initializationPlans.push({
+      tagId: binding.tagId,
+      sequence: graph.sequence(steps),
+      actionGraph: {
+        main: {
+          ...graph.finish(),
+          ...(binding.spRecoveryBonus === undefined
+            ? {}
+            : {
+                dataNodes: Object.fromEntries(
+                  Object.keys(sharedValues).map(key => [
+                    key,
+                    { type: 'number' as const, expression: { kind: 'blackboard' as const, key } },
+                  ]),
+                ),
+              }),
+        },
+        macros: {},
+      },
+    });
+  }
+  return {
+    contract,
+    tags: layout.tags.filter(tag => tagIds.has(tag.tagId)),
+    buffDefinitions: definitions,
+    initializationPlans,
+    pending,
+    omitted,
+  };
+}
+
+/** 人工绑定与原生词条沿用同一个图优化、校验和源码渲染流程。 */
+export async function renderBoundContingencyContractDefinitionsFromFiles(
+  args: BoundContingencyContractSourceArguments,
+  iconDirectory: string,
+) {
+  const compiled = compileBoundContingencyContractDefinitionsFromFiles(args);
+  const supplement = requireRecord(readJson(args.supplement), args.supplement);
+  const published = requireRecord(supplement.tags, 'supplement.tags');
+  const byId = new Map(compiled.tags.map(tag => [tag.tagId, tag]));
+  const tags = compiled.contract.columns.flatMap(column =>
+    column.entries.flatMap(entry => {
+      if (!Object.hasOwn(published, String(entry.tagId))) return [];
+      const tag = byId.get(entry.tagId)!;
+      if (!/^[a-zA-Z0-9_-]+$/u.test(tag.icon)) throw new Error(`unsafe contract icon ${tag.icon}`);
+      const data = requireRecord(published[String(entry.tagId)], `tag ${entry.tagId}`);
+      const blackboard: Record<string, number> = {};
+      for (const board of requireArray(data.serverBlackboards, 'serverBlackboards'))
+        for (const [key, raw] of Object.entries(requireRecord(board, 'blackboard')))
+          if (!Object.hasOwn(blackboard, key))
+            blackboard[key] = requireNumber(requireRecord(raw, key).floatValue, key);
+      return [
+        {
+          tagId: tag.tagId,
+          columnId: column.id,
+          conflictId: entry.conflictId,
+          score: tag.score,
+          keyId: entry.keyId,
+          lockIds: entry.lockIds,
+          romanNumSuffix: tag.romanNumSuffix,
+          icon: imageRefFromPath(`/${iconDirectory}/${tag.icon}.webp`),
+          blackboard,
+        },
+      ];
+    }),
+  );
+  const plans = compiled.initializationPlans.filter(plan => !compiled.pending.has(plan.tagId));
+  for (const tag of tags)
+    if (
+      !plans.some(plan => plan.tagId === tag.tagId) &&
+      !compiled.pending.has(tag.tagId) &&
+      !compiled.omitted.has(tag.tagId)
+    )
+      throw new Error(`published tag ${tag.tagId} has no binding or explicit scope decision`);
+  const rendered = await renderContingencyContractDefinitionsFromCompiled({
+    tags,
+    buffDefinitions: compiled.buffDefinitions,
+    initializationPlans: plans,
+    revision: String(supplement.gameId),
+    scope: {
+      supportedTagIds: new Set(plans.map(plan => plan.tagId)),
+      blockedTagReasons: compiled.pending,
+      omittedTagReasons: compiled.omitted,
+    },
+  });
+  if (!/^[a-zA-Z0-9_-]+$/.test(compiled.contract.id)) throw new Error('unsafe contract ID');
+  return {
+    ...rendered,
+    files: rendered.files.map(file => ({
+      ...file,
+      relativePath: `contingencyContract.${compiled.contract.id}.generated.ts`,
+    })),
+  };
 }
 
 function readScope(file: string): ContingencyContractSimulationScope {
@@ -331,9 +579,23 @@ export function compileContingencyContractDefinitionsFromFiles(
 export async function generateContingencyContractDefinitions(args: Arguments) {
   const compiled = compileContingencyContractDefinitionsFromFiles(args);
   const rendered = await renderContingencyContractDefinitionsFromCompiled(compiled);
-  if (args.check) checkGeneratedDefinitionFiles(args.output, rendered.files);
-  else await writeGeneratedDefinitionFiles(args.output, rendered.files);
+  await publishContractFiles(args.output, rendered.files, args.check);
   return rendered.summary;
+}
+
+/** 各期共用目录；独立生成一期时不删除其他期的产物。 */
+async function publishContractFiles(
+  output: string,
+  files: readonly RenderedDefinitionFileSource[],
+  check: boolean,
+) {
+  for (const file of files) {
+    if (check) {
+      const actual = fs.readFileSync(path.join(output, file.relativePath), 'utf8');
+      if (actual.replaceAll('\r\n', '\n') !== file.content.replaceAll('\r\n', '\n'))
+        throw new Error(`generated contract file is stale: ${file.relativePath}`);
+    } else await writeGeneratedDefinitionFile(output, file);
+  }
 }
 
 /** 保留已验证的范围和版本，只渲染文件内容，不重新读取或编译机制来源。 */
@@ -407,12 +669,31 @@ async function main(values: readonly string[]): Promise<void> {
   const gameplayTagModule = await import(
     pathToFileURL(path.resolve(required('--gameplay-tag-catalog'))).href
   );
-  const result = await generateContingencyContractDefinitions({
+  const source = {
     tableRoot: path.resolve(required('--table-root')),
     buffDataRoot: path.resolve(required('--buff-data-root')),
     globalBuffCatalog: path.resolve(required('--global-buff-catalog')),
     skillSettingCatalog: path.resolve(required('--skill-setting-catalog')),
     gameplayTagPaths: gameplayTagModule.GAMEPLAY_TAG_PATHS,
+  };
+  if (options.has('--bindings')) {
+    const rendered = await renderBoundContingencyContractDefinitionsFromFiles(
+      {
+        ...source,
+        bindings: path.resolve(required('--bindings')),
+        supplement: path.resolve(required('--supplement')),
+        timeDilationCatalog: path.resolve(required('--time-dilation-catalog')),
+      },
+      required('--icon-directory'),
+    );
+    const output = path.resolve(required('--output'));
+    await publishContractFiles(output, rendered.files, check);
+    const { optimization: _optimization, ...summary } = rendered.summary;
+    process.stdout.write(`${JSON.stringify(summary)}\n`);
+    return;
+  }
+  const result = await generateContingencyContractDefinitions({
+    ...source,
     scope: path.resolve(required('--scope')),
     output: path.resolve(required('--output')),
     check,

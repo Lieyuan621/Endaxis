@@ -26,6 +26,7 @@ const props = defineProps<{
   readOnly: boolean;
   canPaste?: boolean;
   name: string;
+  customName?: string;
   icon?: string;
   selected?: boolean;
   removable: boolean;
@@ -47,11 +48,11 @@ const emit = defineEmits<{
   removeTarget: [id: string];
 }>();
 const { t } = useI18n();
-const draftName = ref(props.name);
+const draftName = ref(props.customName ?? '');
 watch(
-  () => props.name,
+  () => props.customName,
   name => {
-    draftName.value = name;
+    draftName.value = name ?? '';
   },
 );
 const value = computed(
@@ -506,7 +507,11 @@ onBeforeUnmount(() => {
           <template v-if="removable">
             <label
               >{{ t('timeline.enemies.name')
-              }}<EaInput v-model="draftName" :disabled="readOnly" @change="emit('rename', $event)"
+              }}<EaInput
+                v-model="draftName"
+                :placeholder="name"
+                :disabled="readOnly"
+                @change="emit('rename', $event)"
             /></label>
             <EaButton
               class="menu-item delete-item"

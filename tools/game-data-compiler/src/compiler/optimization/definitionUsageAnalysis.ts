@@ -426,6 +426,7 @@ function analyzeConditionOwnUsage(
     case 'eventDamageFeaturesMatch':
     case 'eventDamageSkillCastRecorded':
     case 'eventDamageTypeIn':
+    case 'eventSkillTagsMatch':
     case 'skillDamageTypeIn':
     case 'eventSkillTypeIn':
     case 'originSkillTypeIn':
@@ -468,6 +469,12 @@ export function analyzeStepUsage(
     observable: true,
   });
   switch (step.kind) {
+    case 'boneAttach':
+      return effect([
+        ...targetQueryValueInputs(step.parameters.target),
+        ...targetQueryValueInputs(step.parameters.anchor),
+      ]);
+
     case 'launchProjectile':
       return effect(projectileValueInputs(step.parameters));
     case 'findTargets':
@@ -696,6 +703,8 @@ export function analyzeStepUsage(
         ...targetQueryValueInputs(step.parameters.source),
         ...targetQueryValueInputs(step.parameters.targets),
       ]);
+    case 'exitControlledState':
+      return effect([]);
     case 'pushBack':
       return effect([
         ...targetQueryValueInputs(step.parameters.source),

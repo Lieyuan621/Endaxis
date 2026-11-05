@@ -383,6 +383,13 @@ const schema_d15269949758 = {
   control: 'select',
   options: schema_6184e5edaa83,
 } as const;
+const schema_b9a93266cffd = {
+  valueSchema: schema_d865c3950c88,
+  path: ['tagQueryType'],
+  description: '',
+  control: 'select',
+  options: schema_6184e5edaa83,
+} as const;
 const schema_1f01ef5d6643 = {
   valueSchema: { kind: 'enum', options: schema_505c3b18af15, semantics: schema_8b5920c2fde6 },
   path: ['match'],
@@ -553,6 +560,12 @@ const schema_0f0b494ec253 = {
   description: '参与匹配的标签路径。',
 } as const;
 const schema_dcc07c6f70b9 = { fields: [schema_087add57f9c6] } as const;
+const schema_135e3f8c2eeb = {
+  valueSchema: schema_69c08dd2b579,
+  path: ['tags'],
+  description: '',
+  control: 'json',
+} as const;
 const schema_0d61f0a9d44e = {
   valueSchema: schema_69c08dd2b579,
   path: ['buffTags'],
@@ -2465,6 +2478,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       },
     ],
   },
+  exitControlledState: schema_dcc07c6f70b9,
   pushBack: {
     fields: [
       schema_087add57f9c6,
@@ -2943,6 +2957,12 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         valueSchema: { kind: 'boolean' },
         path: ['parameters', 'dieWhenSourceDies'],
         description: '来源结束时是否同步结束实体。',
+        control: 'boolean',
+      },
+      {
+        valueSchema: schema_f3dcc58b8fca,
+        path: ['parameters', 'dieWhenTargetDies'],
+        description: '出生时绑定首个输入目标的死亡；后续替换目标不会重绑。',
         control: 'boolean',
       },
       {
@@ -4813,6 +4833,18 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       },
     ],
   },
+  boneAttach: {
+    fields: [
+      schema_087add57f9c6,
+      schema_708e1581a3df,
+      {
+        valueSchema: schema_a13ad28baeec,
+        path: ['parameters', 'anchor'],
+        description: '',
+        control: 'json',
+      },
+    ],
+  },
   limitMovementGait: {
     fields: [
       schema_087add57f9c6,
@@ -5918,6 +5950,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         path: ['parameters', 'nativeExecuteInterval'],
         description:
           'ExecuteInterval：立即执行一次，保留子序列到下次执行或宿主结束，不向子序列传递 Tick。',
+        control: 'json',
+      },
+      {
+        valueSchema: {
+          kind: 'object',
+          fields: {
+            executeEachFrame: { kind: 'boolean' },
+            intervalSeconds: { kind: 'number' },
+            totalTickCount: { kind: 'number' },
+            totalDurationSeconds: { kind: 'number' },
+          },
+          optional: true,
+        },
+        path: ['parameters', 'nativeTickIntervalV2'],
+        description: 'V2 周期动作：首次 Tick 执行，按次数限制并在达到总时长后补齐。',
         control: 'json',
       },
       {
@@ -7351,14 +7398,8 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:eventTransferredPartTagsMatch': {
     fields: [
-      {
-        valueSchema: schema_d865c3950c88,
-        path: ['tagQueryType'],
-        description: '',
-        control: 'select',
-        options: schema_6184e5edaa83,
-      },
-      { valueSchema: schema_69c08dd2b579, path: ['tags'], description: '', control: 'json' },
+      schema_b9a93266cffd,
+      schema_135e3f8c2eeb,
       {
         valueSchema: schema_b168dffc75ec,
         path: ['saveToContextKey'],
@@ -7470,6 +7511,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
       },
     ],
   },
+  'boolean:eventSkillTagsMatch': { fields: [schema_b9a93266cffd, schema_135e3f8c2eeb] },
   'boolean:skillDamageTypeIn': {
     fields: [
       {

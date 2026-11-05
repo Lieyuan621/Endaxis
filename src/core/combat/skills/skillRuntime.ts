@@ -18,7 +18,11 @@ import type { DamageModifierConditionInput } from '../damage/damageModifiers';
 import type { PoiseModifierConditionInput } from '../damage/poiseModifiers';
 import type { HealModifierConditionInput } from '../heal/healModifiers';
 import type { CombatObjectRef } from '../receipt/combatReceipt';
-import type { ActionBuffReferencesState, ActionRegistrationState } from '../state/actionState';
+import type {
+  BoneAttachState,
+  ActionBuffReferencesState,
+  ActionRegistrationState,
+} from '../state/actionState';
 import type { ActionBlackboardState } from '../state/foundationState';
 import type { TimelineActionProcessor } from '../timeline/timelineActionProcessor';
 import type { ComboWindowRuntime } from './comboWindowRuntime';
@@ -131,6 +135,7 @@ export interface CombatOperationContext {
   /** 仅在执行持有登记的步骤时挂接，实际数据由动作树持有。 */
   actionRegistrationState?: ActionRegistrationState;
   actionBuffReferencesState?: ActionBuffReferencesState;
+  boneAttachState?: BoneAttachState;
   /** 三类结算互斥的临时上下文；不冒充能力事件，也不覆盖 Buff 的来源身份。 */
   readonly modifierContext?:
     | {
@@ -716,6 +721,7 @@ export class SkillRuntime {
     return {
       skillCastId: this.#execution.skillCastId,
       originSkillId: origin?.originSkillId ?? this.#program.skillId,
+      originSkillTags: origin === undefined ? this.#program.skillTags : origin.originSkillTags,
       originSkillType: origin?.originSkillType ?? this.#program.skillType,
       ...(origin?.originCastId !== undefined
         ? { originCastId: origin.originCastId }
@@ -1237,6 +1243,7 @@ export class SkillRuntime {
       sourceId: this.#hostIdentity.eventSourceId,
       targetId: this.#hostIdentity.eventSourceId,
       element: this.#program.element,
+      skillTags: this.#program.skillTags,
       skillType: this.#program.skillType,
       skillId: this.#program.executionSkillId ?? this.#program.skillId,
       skillCastId: this.#execution.skillCastId,

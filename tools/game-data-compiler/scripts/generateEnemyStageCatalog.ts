@@ -4,6 +4,7 @@ import { resolve, join, dirname, basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 import { createHash } from 'node:crypto';
+import { enemyStageNameTextIds } from '../config/enemyStageNames.ts';
 import {
   collectSpawnerEnemies,
   findSpawnerBuffs,
@@ -35,7 +36,7 @@ interface EnemySource {
 export async function generateEnemyStageCatalog(args: {
   tablesDirectory: string;
   outputDirectory: string;
-  localeDirectory?: string;
+  localeDirectory: string;
   spawnerDirectory?: string;
   buffDirectory?: string;
   check: boolean;
@@ -95,7 +96,7 @@ export async function generateEnemyStageCatalog(args: {
       `group_${key}`,
       stage.dungeonCategory === 'dungeon_resource' || stage.dungeonCategory === 'dungeon_bossrush'
         ? seriesName
-        : groupBase.get(key)?.dungeonName,
+        : stageName(id, groupBase.get(key) ?? stage),
       id,
     );
     if (stage.dungeonCategory === 'dungeon_seasontower') {
@@ -119,6 +120,10 @@ export async function generateEnemyStageCatalog(args: {
       }
     }
     return nameKey;
+  }
+  function stageName(id: string, stage: StageSource): TextReference {
+    const textId = enemyStageNameTextIds[id];
+    return textId ? { id: textId } : stage.dungeonName;
   }
   const sceneSpawners = new Map(
     await Promise.all(
@@ -185,7 +190,7 @@ export async function generateEnemyStageCatalog(args: {
           difficultyOrder: towerDifficulty.get(id) ?? stage.sortId,
           groupNameKey: groupName(id, stage, group?.name),
           seriesId: stage.dungeonSeriesId,
-          nameKey: name(`stage_${id}`, stage.dungeonName, id),
+          nameKey: name(`stage_${id}`, stageName(id, stage), id),
           difficultyNameKey: name(`difficulty_${id}`, stage.dungeonLevelDesc, ''),
           seriesNameKey: name(
             `series_${stage.dungeonSeriesId}`,
@@ -305,8 +310,7 @@ export async function generateEnemyStageCatalog(args: {
     if (args.check) throw new Error(`${file}: obsolete enemy stage group`);
     await unlink(join(args.outputDirectory, file));
   }
-  const localeDirectory =
-    args.localeDirectory ?? resolve(args.outputDirectory, '../../../i18n/game-locales');
+  const localeDirectory = args.localeDirectory;
   for (const [locale, entries] of Object.entries(messages)) {
     const localeOutput = join(localeDirectory, locale === 'zh-CN' ? 'zh' : locale, 'stages.json');
     // 文本在遍历来源表时收集，落盘顺序不应随来源表的键顺序改变。
@@ -353,6 +357,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
     await generateEnemyStageCatalog({
       tablesDirectory: resolve(process.argv[2]),
       outputDirectory: resolve('src/data/enemies/generated'),
+      localeDirectory: resolve('src/i18n/game-locales'),
       check: process.argv.includes('--check'),
     }),
   );

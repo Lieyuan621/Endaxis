@@ -1,3 +1,4 @@
+import { normalizeNativeTableNumbers } from './nativeTableNumbers.ts';
 import {
   parseAttributeTypeValue,
   parseModifierTypeValue,
@@ -119,7 +120,7 @@ export function parseEquipmentItemSources(
 
   return equipmentIds.map(equipmentId => {
     const sourcePath = `${equipSourceName}.${equipmentId}`;
-    const row = requireRecord(equipTable[equipmentId], sourcePath);
+    const row = requireRecord(normalizeNativeTableNumbers(equipTable[equipmentId]), sourcePath);
     requireExactFields(row, EQUIPMENT_FIELDS, sourcePath);
     const embeddedId = requireString(row.itemId, `${sourcePath}.itemId`);
     if (embeddedId !== equipmentId) {

@@ -553,6 +553,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
 
 export const liinoChr_0035_liino_combo_skill: SkillDefinition = {
   actionGraph: liinoChr_0035_liino_combo_skillActionGraph,
+  skillTags: ['Skill/Character/chr_0035_liino/ComboSkill'],
   key: 'chr_0035_liino_combo_skill',
   element: 'electric',
   blackboard: {
@@ -6053,6 +6054,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
 
 export const liinoChr_0035_liino_ultimate_skill: SkillDefinition = {
   actionGraph: liinoChr_0035_liino_ultimate_skillActionGraph,
+  skillTags: ['Skill/Character/chr_0035_liino/UltSkillMusic'],
   key: 'chr_0035_liino_ultimate_skill',
   element: 'electric',
   blackboard: {

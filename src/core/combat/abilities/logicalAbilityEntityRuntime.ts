@@ -69,6 +69,7 @@ export interface LogicalAbilityEntitySpawnRequest {
   readonly allowMultiInputTarget?: boolean;
   readonly overrideDurationSeconds?: number;
   readonly dieWhenSourceDies?: boolean;
+  readonly dieWhenTargetDies?: boolean;
   readonly blackboardAssignments?: Readonly<Record<string, ActionBlackboardValue>>;
   readonly blackboardValueCalculations?: Readonly<Record<string, ActionValueCalculation>>;
   readonly sourceSkillCastId?: number;
@@ -103,6 +104,7 @@ export interface LogicalAbilityEntitySnapshot {
   readonly remainingDurationSeconds: number | null;
   readonly elapsedDurationSeconds: number;
   readonly dieWhenSourceDies: boolean;
+  readonly deathBoundTarget?: RuntimeTargetRef;
   /** FinishOwner 后到控制器回收 Tick 前实例仍在目录中，但已不存活。 */
   readonly isAlive: boolean;
   readonly blackboard: Readonly<Record<string, ActionBlackboardValue>>;
@@ -306,6 +308,11 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
         : request.overrideDurationSeconds === undefined
           ? request.definition.lifetime.durationSeconds
           : requireDuration(Math.max(0, request.overrideDurationSeconds), 'override duration');
+    const deathBoundTarget = request.dieWhenTargetDies
+      ? request.targets === undefined
+        ? request.target
+        : request.targets[0]
+      : undefined;
     const instanceId = this.#allocateInstanceId();
     if (!Number.isSafeInteger(instanceId) || instanceId <= 0) {
       throw new RangeError('AbilityEntity instance id must be a positive safe integer');
@@ -369,6 +376,7 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
           ? {}
           : { allowMultiInputTarget: request.allowMultiInputTarget }),
         dieWhenSourceDies: request.dieWhenSourceDies ?? false,
+        ...(deathBoundTarget === undefined ? {} : { deathBoundTarget: { ...deathBoundTarget } }),
         blackboard: blackboard.runtimeState,
         durationPeriodSeconds: remainingDurationSeconds,
         remainingDurationSeconds,
@@ -632,10 +640,10 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       );
     this.#hooks.killed?.(this.#snapshot(instance), reason);
     // 能力实体同样可以作为来源；原生 OnDie 会触发其子实体登记的来源死亡回调。
-    this.notifySourceDied(entity);
+    this.notifyEntityDied(entity);
   }
 
-  notifySourceDied(source: RuntimeTargetRef): number {
+  notifyEntityDied(source: RuntimeTargetRef): number {
     if (!this.runtimeState.deadSources.some(dead => sameRuntimeTarget(dead, source))) {
       this.runtimeState.deadSources.push(source);
     }
@@ -645,7 +653,10 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
           instance.state.isAlive &&
           ((instance.state.soul !== undefined &&
             sameRuntimeTarget(instance.state.soul.mainBody, source)) ||
-            (instance.state.dieWhenSourceDies && sameRuntimeTarget(instance.state.source, source))),
+            (instance.state.dieWhenSourceDies &&
+              sameRuntimeTarget(instance.state.source, source)) ||
+            (instance.state.deathBoundTarget !== undefined &&
+              sameRuntimeTarget(instance.state.deathBoundTarget, source))),
       )
       .map(instance => ({
         target: { kind: 'abilityEntity' as const, instanceId: instance.state.instanceId },
@@ -653,7 +664,9 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
           instance.state.soul !== undefined &&
           sameRuntimeTarget(instance.state.soul.mainBody, source)
             ? ('soulMainBodyDied' as const)
-            : ('sourceDied' as const),
+            : instance.state.dieWhenSourceDies && sameRuntimeTarget(instance.state.source, source)
+              ? ('sourceDied' as const)
+              : ('targetDied' as const),
       }));
     // 死亡回调可同步回收其他实例；快照不保证轮到时它仍存在。
     for (const { target, reason } of targets) if (this.isActive(target)) this.kill(target, reason);
@@ -886,6 +899,9 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       remainingDurationSeconds: instance.state.remainingDurationSeconds,
       elapsedDurationSeconds: instance.state.elapsedDurationSeconds,
       dieWhenSourceDies: instance.state.dieWhenSourceDies,
+      ...(instance.state.deathBoundTarget === undefined
+        ? {}
+        : { deathBoundTarget: { ...instance.state.deathBoundTarget } }),
       isAlive: instance.state.isAlive,
       blackboard: instance.blackboard.snapshot(),
     });

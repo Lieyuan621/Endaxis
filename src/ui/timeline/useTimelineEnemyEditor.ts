@@ -69,11 +69,7 @@ export function useTimelineEnemyEditor(options: TimelineEnemyEditorOptions) {
         : null,
     );
     options.session.commit('setScenarioEnemy', scenario =>
-      setScenarioEnemy(
-        scenario,
-        { ...enemy, lifecycle: selectedEnemy.value.lifecycle },
-        options.enemyInstanceId?.value,
-      ),
+      setScenarioEnemy(scenario, enemy, options.enemyInstanceId?.value),
     );
   }
 
@@ -103,9 +99,8 @@ export function useTimelineEnemyEditor(options: TimelineEnemyEditorOptions) {
         ),
       );
     });
-    const enemies = documents.map((enemy, index) => ({
+    const enemies = documents.map(enemy => ({
       id: allocateId(),
-      name: instances[index]!.name,
       enemy,
     }));
     options.session.commit('setStageEnemies', scenario => ({
@@ -118,11 +113,7 @@ export function useTimelineEnemyEditor(options: TimelineEnemyEditorOptions) {
   function selectCustomEnemy(level = 90): void {
     const enemy = createCustomEnemyDocument(level);
     options.session.commit('setCustomEnemy', scenario =>
-      setScenarioEnemy(
-        scenario,
-        { ...enemy, lifecycle: selectedEnemy.value.lifecycle },
-        options.enemyInstanceId?.value,
-      ),
+      setScenarioEnemy(scenario, enemy, options.enemyInstanceId?.value),
     );
   }
 

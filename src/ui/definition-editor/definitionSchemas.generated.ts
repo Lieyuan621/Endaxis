@@ -174,6 +174,7 @@ const schema_2f77e5f400ca = {
   variants: [{ kind: 'string' }, { kind: 'number' }],
   semantics: schema_a4c41ed6f378,
 } as const;
+const schema_47b614ea0470 = { kind: 'string', semantics: { aliases: ['GameplayTag'] } } as const;
 const schema_caf8bad50862 = {
   kind: 'string',
   semantics: { aliases: ['ImageRef'] },
@@ -544,17 +545,24 @@ const schema_c9333362ec65 = {
 } as const;
 const schema_117b99736db9 = {
   kind: 'array',
-  element: { kind: 'string', semantics: { aliases: ['GameplayTag'] } },
+  element: schema_47b614ea0470,
   semantics: { arrayElement: { aliases: ['GameplayTag'] } },
   optional: true,
   description: 'Buff 的分类标签；启用时同时挂到所属实体，并用于按标签查找、计数和结束 Buff。',
 } as const;
 const schema_cf718c4186c5 = {
   kind: 'array',
-  element: { kind: 'string', semantics: { aliases: ['GameplayTag'] } },
+  element: schema_47b614ea0470,
   semantics: { arrayElement: { aliases: ['GameplayTag'] } },
   optional: true,
   description: 'Buff 到期但被延长逻辑暂时阻止结束时，临时挂到所属实体的标签。',
+} as const;
+const schema_54f3a28a51c4 = {
+  kind: 'array',
+  element: schema_47b614ea0470,
+  semantics: { arrayElement: { aliases: ['GameplayTag'] } },
+  optional: true,
+  description: '技能定义自身的标签，用于当前事件关联技能的精确标签判断。',
 } as const;
 const schema_a514ad26903f = {
   attribute: { kind: 'string', description: '属性名称，或由宿主上下文解析的属性选择器。' },
@@ -1362,7 +1370,7 @@ const schema_20a7058c1007 = {
   },
   bornTags: {
     kind: 'array',
-    element: { kind: 'string', semantics: { aliases: ['GameplayTag'] } },
+    element: schema_47b614ea0470,
     semantics: { arrayElement: { aliases: ['GameplayTag'] } },
     optional: true,
     description:
@@ -2668,6 +2676,13 @@ export const definitionSchemas = {
           kind: 'object',
           fields: {
             nameKey: { kind: 'string', optional: true },
+            nameParams: {
+              kind: 'record',
+              value: { kind: 'number' },
+              semantics: { recordValue: {} },
+              optional: true,
+              description: '选择器名称的格式化参数，不参与战斗结算。',
+            },
             runtimeBuffId: {
               kind: 'string',
               optional: true,
@@ -2804,6 +2819,7 @@ export const definitionSchemas = {
           costFrame: schema_df06170b65b5,
           switchToBuffCast: schema_19225484aa38,
           eventHandlers: schema_fa9874937ccd,
+          skillTags: schema_54f3a28a51c4,
           blackboard: schema_338b4f4fde4d,
           scheduledSequences: schema_f6b9a1dd719e,
           icon: schema_38b7ef5ded62,
@@ -2868,6 +2884,7 @@ export const definitionSchemas = {
           costFrame: schema_df06170b65b5,
           switchToBuffCast: schema_19225484aa38,
           eventHandlers: schema_fa9874937ccd,
+          skillTags: schema_54f3a28a51c4,
           blackboard: schema_338b4f4fde4d,
           scheduledSequences: schema_f6b9a1dd719e,
           icon: schema_38b7ef5ded62,
@@ -3398,6 +3415,7 @@ export const definitionSchemas = {
         },
         description: '该技能自己的扣费和冷却设置。',
       },
+      skillTags: schema_54f3a28a51c4,
       blackboard: schema_338b4f4fde4d,
       scheduledSequences: schema_f6b9a1dd719e,
     },

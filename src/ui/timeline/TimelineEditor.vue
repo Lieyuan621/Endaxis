@@ -4170,17 +4170,6 @@ function enemyName(enemyId: string): string {
   return getEnemyGameName(enemyId, locale.value);
 }
 
-const enemyHudName = computed(() => {
-  const instance = firstScenarioEnemy(scenario.value);
-  const source = instance.enemy.source;
-  return (
-    instance.name ||
-    (source.kind === 'custom'
-      ? t('resourceMonitor.enemy.custom')
-      : enemyName(source.enemyId.replaceAll('_', '-')))
-  );
-});
-
 function skillName(groupKey: string, slug: string | null): string {
   if (slug === null) return groupKey;
   const definition = editorGameDataRepository.getOperator(slug);
@@ -6640,6 +6629,7 @@ function enemyOverviewIcon(enemy: EnemyDocument): string | undefined {
 const enemyOverviewRows = computed(() =>
   levelEnemies(scenario.value.level).map(instance => ({
     id: instance.id,
+    customName: instance.name,
     name:
       instance.name ||
       (instance.enemy.source.kind === 'custom'
@@ -6658,11 +6648,12 @@ function updateEnemyLifecycle(id: string, lifecycle: EnemyLifecycleDocument): vo
   }));
 }
 function renameEnemyInstance(id: string, name: string): void {
-  if (!name.trim()) return;
   commitScenario('renameEnemy', current => ({
     ...current,
     level: mapLevelEnemies(current.level, item =>
-      item.id === id ? { ...item, name: name.trim() } : item,
+      item.id === id
+        ? { id: item.id, enemy: item.enemy, ...(name.trim() && { name: name.trim() }) }
+        : item,
     ),
   }));
 }
@@ -6755,7 +6746,7 @@ function addEnemyInstance(): void {
     ...current,
     level: {
       kind: 'multiEnemies',
-      enemies: [...levelEnemies(current.level), { id, name: enemyHudName.value, enemy }],
+      enemies: [...levelEnemies(current.level), { id, enemy }],
     },
   }));
   monitoredEnemyId.value = id;

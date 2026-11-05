@@ -64,6 +64,7 @@ import {
 import { CombatStep, type CombatExecutionContext } from './combatStep';
 import {
   executeRepeatedAction,
+  finishRepeatedAction,
   resetRepeatedAction,
   tickRepeatedAction,
 } from './repeatedActionExecution';
@@ -1058,12 +1059,28 @@ export class ActionGraphExecution
         const data = saved ?? { kind: 'repeat' as const, repetition: createRepeatedActionState() };
         // 周期之间复用子动作实例；恢复不重放已执行的动作。
         let persistentBody: ActionGraphExecution | null = null;
+        const bodyHost = () =>
+          action.parameters.nativeTickIntervalV2
+            ? this.host.withSavedInput(data.repetition.inputTarget)
+            : this.host;
         if (data.repetition.body !== null)
-          persistentBody = this.#child(id, 0, action.body.$sequence, data.repetition.body);
+          persistentBody = this.#child(
+            id,
+            0,
+            action.body.$sequence,
+            data.repetition.body,
+            bodyHost(),
+          );
         const run = (context: CombatExecutionContext) => {
           const existingBody = persistentBody;
           if (persistentBody === null) {
-            persistentBody = this.#child(id, 0, action.body.$sequence);
+            persistentBody = this.#child(
+              id,
+              0,
+              action.body.$sequence,
+              data.repetition.body ?? undefined,
+              bodyHost(),
+            );
             data.repetition.body = persistentBody.runtimeState;
           }
           if (action.parameters.nativeExecuteInterval !== undefined) {
@@ -1074,7 +1091,8 @@ export class ActionGraphExecution
           }
           if (
             !persistentBody.executeInstant(context) &&
-            action.parameters.nativeTickInterval === undefined
+            action.parameters.nativeTickInterval === undefined &&
+            action.parameters.nativeTickIntervalV2 === undefined
           )
             throw new Error(
               'repeatEachTick body returned false; repeated short-circuit is not modeled',
@@ -1083,16 +1101,31 @@ export class ActionGraphExecution
         binding = {
           data,
           execute: context => {
+            if (action.parameters.nativeTickIntervalV2) {
+              data.repetition.inputTarget =
+                this.host.inputTarget == null ? null : { ...this.host.inputTarget };
+              persistentBody = null;
+            }
             executeRepeatedAction(data.repetition, action.parameters, () => run(context));
             return true;
           },
           tick: (delta, context) =>
-            tickRepeatedAction(data.repetition, action.parameters, delta, () => run(context)),
+            tickRepeatedAction(
+              data.repetition,
+              action.parameters,
+              delta,
+              () => run(context),
+              this.host.frame?.(),
+            ),
           reset: context => {
             persistentBody?.reset(context);
-            resetRepeatedAction(data.repetition);
+            if (!action.parameters.nativeTickIntervalV2) resetRepeatedAction(data.repetition);
           },
-          end: context => persistentBody?.end(context),
+          end: context => {
+            finishRepeatedAction(data.repetition, action.parameters, () => run(context));
+            persistentBody?.end(context);
+            data.repetition.inputTarget = null;
+          },
         };
       }
     } else {

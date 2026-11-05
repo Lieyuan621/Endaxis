@@ -1138,6 +1138,10 @@ export class StandardPlayerDamageEnvironment {
         data: { type: 'knockDown' },
       });
     return new KnockDownOperationExecutor({
+      exitOwnerControl: ownerId => {
+        // 无受控组件的宿主无需处理；不能改为结束宿主的异常 Buff。
+        this.#enemies.get(ownerId)?.knockDown?.exit();
+      },
       queryTargets: (query, actionContext) => {
         if (context.queryTargets === undefined)
           throw new Error('knock-down target query is unavailable');
@@ -2489,7 +2493,10 @@ export class StandardPlayerDamageEnvironment {
     return this.#operatorBuffRuntime(operatorId, this.#operatorPanels.get(operatorId)).container;
   }
 
-  #readHealAttributeValue(entityId: string, attribute: MultiplyAttributeCalculationAttribute): number {
+  #readHealAttributeValue(
+    entityId: string,
+    attribute: MultiplyAttributeCalculationAttribute,
+  ): number {
     const enemy = this.#enemies.get(entityId);
     if (enemy !== undefined) {
       if (attribute === 'maxHealth') return enemy.vitals.maxHealth;

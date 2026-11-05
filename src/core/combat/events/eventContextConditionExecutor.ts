@@ -1,3 +1,4 @@
+import { GameplayTagRegistry } from '../tags/gameplayTags';
 import type {
   GameplayTag,
   GameplayTagMatchType,
@@ -37,6 +38,8 @@ import { resolveActionValueOperand } from '../actions/actionBlackboard';
 import { NATIVE_ELEMENT_VALUES, spellBurstElement } from '../infliction/elementalInfliction';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { GameplayTagQueryType } from '../tags/gameplayTags';
+
+const skillTagRegistry = new GameplayTagRegistry();
 
 export class EventContextConditionExecutor implements CombatOperationExecutor {
   constructor(
@@ -165,6 +168,15 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       return (
         event?.event === 'skillInterrupted' && condition.reasons.includes(event.payload.reason)
       );
+    }
+    if (condition.kind === 'eventSkillTagsMatch') {
+      const event = context?.event;
+      if (event === undefined || !('event' in event)) return false;
+      const skill = skillAbilityEvent(event);
+      const source = abilityEventSkillCastInfo(event);
+      if (skill === undefined && source == null) return false;
+      const tags = skill === undefined ? source?.originSkillTags : skill.payload.skillTags;
+      return skillTagRegistry.query(tags ?? [], condition.tags, condition.tagQueryType, true);
     }
     if (condition.kind === 'skillDamageTypeIn') {
       const eventSkill =

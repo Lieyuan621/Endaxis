@@ -501,6 +501,50 @@ function numberedPlacementIds(prefix: string) {
 }
 
 describe('registered generated operators', () => {
+  it.each(['basicAttack', 'battleSkill', 'comboSkill', 'ultimate'] as const)(
+    '明河 %s 产生伤害且切面恢复不改变结果',
+    skillGroupKey => {
+      const operator = gameDataRepository.getOperator('minghe')!;
+      const scenario = createEmptyScenario('scenario:minghe', '明河');
+      scenario.battle.durationFrames = 600;
+      scenario.tracks[0] = {
+        id: 'track:minghe',
+        operator: createDefaultOperatorInstance(operator),
+        weapon: null,
+        gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+        initialState: { ultimateEnergy: 0 },
+        skillCasts: [],
+      };
+      const placed = placeSkillGroup({
+        scenario,
+        trackIndex: 0,
+        operator,
+        skillGroupKey,
+        startFrame: 1,
+        ids: numberedPlacementIds('minghe'),
+      }).scenario;
+      const session = createEditorSimulationService().createCombatSession(placed);
+      session.advanceToFrame(70);
+      const restored = session.fork(session.runtime.save());
+      session.advanceToFrame(600);
+      restored.advanceToFrame(600);
+      const result = session.collectResult();
+      expect(restored.collectResult()).toEqual(result);
+      expect(
+        result.receiptEntries.some(
+          entry => entry.event === 'DamageApplied' && entry.sourceId === 'track:minghe',
+        ),
+      ).toBe(true);
+      if (skillGroupKey === 'battleSkill') {
+        const started = result.receiptEntries
+          .filter(entry => entry.event === 'SkillStarted')
+          .map(entry => entry.data?.skillId);
+        expect(started).toContain('chr_0037_minghe_normalskill_1');
+        expect(started).toContain('chr_0037_minghe_normalskill_2');
+      }
+    },
+  );
+
   it.each(['battleSkill', 'comboSkill', 'ultimate'] as const)(
     '噗切娜 %s 的专属行为可经页面模拟入口执行',
     async skillGroupKey => {

@@ -57,6 +57,13 @@ function compileConditionLeaf(
   sourcePath: string,
   context: CombatActionProjectionContextSource,
 ): CompiledBuffConditionSource {
+  if (condition.kind === 'skillGameplayTag') {
+    return {
+      kind: 'eventSkillTagsMatch',
+      tagQueryType: condition.queryType,
+      tags: projectGameplayTags(condition.tagIds, context, sourcePath + '.gameplayTagList'),
+    };
+  }
   if (condition.kind === 'globalBuffCount') {
     const operator = COMPARISON_OPERATORS[condition.comparison];
     if (!operator) throw new Error(`${sourcePath}: unsupported global Buff comparison`);
@@ -958,6 +965,22 @@ export function projectActionTargetQuery(
       return { kind: 'context', key: target.ownerContextKey };
     throw new Error(`${path}: unsupported selector owner ${target.selectorOwner}`);
   };
+  if (
+    target.finderType === 'AllEnemyFinder' &&
+    target.postProcessorTypes.length === 0 &&
+    target.validatorTypes.every(type => type === 'ExcludeOwnerValidator')
+  ) {
+    const targets: ActionTargetQuery = {
+      kind: 'enemyByTags',
+      scope: 'global',
+      reverse: true,
+      tagQueryType: 'hasAll',
+      tags: [],
+    };
+    return target.validatorTypes.includes('ExcludeOwnerValidator')
+      ? { kind: 'exclude', targets, excludeTargets: owner() }
+      : targets;
+  }
   if (
     target.finderType === 'HitBoxFinder' &&
     target.finderAutoSetTargetFaction === true &&

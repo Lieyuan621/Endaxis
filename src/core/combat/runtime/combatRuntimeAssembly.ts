@@ -1503,6 +1503,7 @@ export class CombatRuntimeAssembly {
                 : { normalSkillSubType: program.normalSkillSubType }),
               element: program.element,
               naturalDurationFrames: program.naturalDurationFrames,
+              skillTags: program.skillTags,
               initialBlackboard: program.initialBlackboard,
               timelineActions: program.timelineActions,
               costFrame: program.castResource.costFrame,
@@ -2661,10 +2662,12 @@ export class CombatRuntimeAssembly {
             skillType: program.skillType,
             element: program.element,
             skillId: program.executionSkillId ?? program.skillId,
+            skillTags: program.skillTags,
             skillCastId,
             skillCastInfo: effectiveInheritedSkillCastInfo ?? {
               skillCastId,
               originSkillId: program.skillId,
+              originSkillTags: program.skillTags,
               originSkillType: program.skillType,
               ...(castId === undefined ? {} : { originCastId: castId }),
               nonReturnedSpCost: 0,
@@ -3007,7 +3010,7 @@ export class CombatRuntimeAssembly {
         emit: event =>
           options.emitAbilityEvent?.(enemyId, event, { sourceId: enemyId, targetId: enemyId }),
         died: () => {
-          this.abilityEntities.notifySourceDied(runtimeTargetFromEntityId(enemyId));
+          this.abilityEntities.notifyEntityDied(runtimeTargetFromEntityId(enemyId));
           // Entity.Die 在死亡通知后同步进入 AbilitySystem.OnFinish，Clear 走 Release 而非自然结束。
           const buffs =
             options.enemyInstances === undefined
@@ -3799,7 +3802,7 @@ export class CombatRuntimeAssembly {
             ? 'lifetime'
             : reason === 'stackingLimit'
               ? 'stackEvicted'
-              : reason === 'sourceDied' || reason === 'soulMainBodyDied'
+              : reason === 'sourceDied' || reason === 'targetDied' || reason === 'soulMainBodyDied'
                 ? reason
                 : 'other';
         // 原生先通知自身，再通知来源；自身 Buff 在通知完成后才释放。

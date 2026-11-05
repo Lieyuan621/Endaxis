@@ -1666,6 +1666,29 @@ describe('AbilityEntityOperationExecutor', () => {
       ],
     });
 
+    const definition = {
+      lifetime: { kind: 'limited' as const, durationSeconds: 10 },
+      childSkills: {
+        'child-a': child('child-a', 'wrong-child'),
+        'child-b': child('child-b', 'selected-child'),
+      },
+    };
+    executor.execute(
+      {
+        kind: 'spawnAbilityEntity',
+        parameters: {
+          bornAt: { kind: 'owner' as const },
+          abilityEntityId: 'idle-host',
+
+          definition,
+          dieWhenSourceDies: false,
+        },
+      },
+      { blackboard: new ActionBlackboard() },
+    );
+
+    expect(execute).not.toHaveBeenCalled();
+    expect(entities.snapshot(entities.findAll()[0]!).childSkillId).toBeUndefined();
     executor.execute(
       {
         kind: 'spawnAbilityEntity',
@@ -1673,13 +1696,7 @@ describe('AbilityEntityOperationExecutor', () => {
           bornAt: { kind: 'owner' as const },
           abilityEntityId: 'multi-child-host',
           childSkillId: 'child-b',
-          definition: {
-            lifetime: { kind: 'limited', durationSeconds: 10 },
-            childSkills: {
-              'child-a': child('child-a', 'wrong-child'),
-              'child-b': child('child-b', 'selected-child'),
-            },
-          },
+          definition,
           dieWhenSourceDies: false,
         },
       },
@@ -1693,7 +1710,7 @@ describe('AbilityEntityOperationExecutor', () => {
       }),
       expect.anything(),
     );
-    expect(entities.snapshot(entities.findAll()[0]!).childSkillId).toBe('child-b');
+    expect(entities.snapshot(entities.findAll()[1]!).childSkillId).toBe('child-b');
   });
 
   it('keeps the spawned entity alive when its requested child skill is unregistered', () => {

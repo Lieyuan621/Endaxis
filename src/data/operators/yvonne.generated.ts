@@ -3096,6 +3096,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
 
 export const yvonneChr_0017_yvonne_ult_attack2_1: SkillDefinition = {
   actionGraph: yvonneChr_0017_yvonne_ult_attack2_1ActionGraph,
+  skillTags: ['Skill/Character/chr_0017_yvonne/DashAttack'],
   key: 'chr_0017_yvonne_ult_attack2_1',
   element: 'cryo',
   blackboard: {

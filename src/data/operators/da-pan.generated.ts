@@ -835,6 +835,7 @@ export const daPanChr_0018_dapan_power_attackActionGraph = {
 
 export const daPanChr_0018_dapan_power_attack: SkillDefinition = {
   actionGraph: daPanChr_0018_dapan_power_attackActionGraph,
+  skillTags: ['Skill/Character/char_0018_dapan/PowerAttack'],
   key: 'chr_0018_dapan_power_attack',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },

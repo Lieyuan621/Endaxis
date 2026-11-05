@@ -246,7 +246,13 @@ export function parseHideHeadBarActionSource(
 }
 
 export type CameraPresentationActionSource =
-  HideUiActionSource | OtherCameraPresentationActionSource;
+  HideUiActionSource | OtherCameraPresentationActionSource | VoicePresentationActionSource;
+
+export interface VoicePresentationActionSource {
+  readonly kind: 'voiceTrigger' | 'voicePause' | 'voiceResume';
+  readonly outputKey?: string;
+  readonly inputKey?: string;
+}
 
 export interface OtherCameraPresentationActionSource {
   readonly kind:
@@ -263,7 +269,6 @@ export interface OtherCameraPresentationActionSource {
     | 'igniteBuffText'
     | 'immuneText'
     | 'weaponMountPoint'
-    | 'voiceTrigger'
     | 'voiceInterrupt'
     | 'overrideCameraFollow'
     | 'temporaryUnlock'
@@ -1232,17 +1237,41 @@ export function parseVoiceTriggerActionSource(
   for (const key of ['_jumpToWhenPlayMs', '_seekFadeInMs']) {
     if (key in action) requireInteger(action[key], `${path}.${key}`);
   }
-  // 原生把成功播放的句柄写回动作黑板；有写回时不能直接按纯语音省略。
-  if (
-    '_responseQuestIdKey' in action &&
-    readOptionalReferenceKey(action._responseQuestIdKey, `${path}._responseQuestIdKey`) !== ''
-  ) {
-    throw new Error(
-      `${path}._responseQuestIdKey: voice handle consumers require explicit projection`,
-    );
-  }
+  const outputKey =
+    '_responseQuestIdKey' in action
+      ? readOptionalReferenceKey(action._responseQuestIdKey, `${path}._responseQuestIdKey`)
+      : '';
   parseTargetReferenceSource(action.targetSettings, `${path}.targetSettings`);
-  return { kind: 'voiceTrigger' };
+  return { kind: 'voiceTrigger', ...(outputKey ? { outputKey } : {}) };
+}
+
+/** 句柄只用于语音系统的暂停、恢复和跳转，不是战斗调度句柄。 */
+export function parseVoicePlaybackActionSource(
+  value: unknown,
+  path: string,
+  resume: boolean,
+): VoicePresentationActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(
+    action,
+    new Set([
+      ...ACTION_META_FIELDS,
+      '_responseQuestIdKey',
+      '_fadeTimeMs',
+      ...(resume ? ['_seekOnResume', '_seekTimeMs'] : []),
+    ]),
+    path,
+  );
+  const inputKey = readOptionalReferenceKey(
+    action._responseQuestIdKey,
+    `${path}._responseQuestIdKey`,
+  );
+  requireInteger(action._fadeTimeMs, `${path}._fadeTimeMs`);
+  if (resume) {
+    requireBoolean(action._seekOnResume, `${path}._seekOnResume`);
+    requireInteger(action._seekTimeMs, `${path}._seekTimeMs`);
+  }
+  return { kind: resume ? 'voiceResume' : 'voicePause', inputKey };
 }
 
 export function parseVoiceInterruptActionSource(

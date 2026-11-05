@@ -95,7 +95,6 @@ function selectAll(entries: readonly Entry[]): void {
       definitionId: entry.definitionId,
       level: entry.level,
       source: entry.source,
-      name: stageName(entry.nameKey) || props.nameOf(entry.source.templateId),
     });
   }
   if (selections.length) emit('selectAll', selections);

@@ -1,3 +1,4 @@
+import { normalizeNativeTableNumbers } from './nativeTableNumbers.ts';
 import { projectNativeDamageElement } from './damageElement.ts';
 import type { DamageElement } from '../../../../packages/game-data-contract/src/primitives.ts';
 import {
@@ -22,7 +23,7 @@ export interface SkillPatchSource {
 /** 解析一项 SkillPatch，并证明所有等级提供相同的黑板键集合。 */
 export function parseSkillPatchSource(value: unknown, skillId: string): SkillPatchSource {
   const rootPath = `SkillPatchTable.${skillId}`;
-  const entry = requireRecord(value, rootPath);
+  const entry = requireRecord(normalizeNativeTableNumbers(value), rootPath);
   const bundles = requireArray(entry.SkillPatchDataBundle, `${rootPath}.SkillPatchDataBundle`);
   if (bundles.length === 0) {
     throw new Error(`${rootPath}: expected at least one level`);
