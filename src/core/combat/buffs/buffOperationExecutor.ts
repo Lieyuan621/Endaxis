@@ -1808,6 +1808,12 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
             ? queried
             : (this.dependencies.resolvePartBuffSource?.(queried) ?? queried);
         if (reference.kind === 'spatialPoint') continue;
+        // 延迟命中可能仍携带已回收的能力实体引用；标签条件对此应判为不满足。
+        if (
+          reference.kind === 'abilityEntity' &&
+          this.dependencies.isEntityAvailable?.(reference) === false
+        )
+          return false;
         const target =
           reference.kind === 'abilityEntity'
             ? this.dependencies.resolveCurrentAbilityEntityTarget?.(reference)

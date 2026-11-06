@@ -3613,6 +3613,39 @@ describe('BuffOperationExecutor', () => {
     expect(executor.evaluate({ ...condition, checkPartTags: true }, context)).toBe(true);
   });
 
+  it('延迟目标组里的能力实体已回收时，标签条件不再读取它的 Buff 容器', () => {
+    const tag = 'Test/ActiveEntity';
+    const target = new CombatBuffContainer(
+      'ability-entity:18',
+      new CombatAttributeSet(),
+      new GameplayTagRegistry([tag]),
+    );
+    target.addEntityTags([tag]);
+    let active = false;
+    const resolve = vi.fn(() => target);
+    const executor = new BuffOperationExecutor({
+      sourceId: 'operator',
+      resolveTarget: () => target,
+      queryTargets: () => [{ kind: 'abilityEntity', instanceId: 18 }],
+      isEntityAvailable: () => active,
+      resolveCurrentAbilityEntityTarget: resolve,
+      delegate,
+    });
+    const condition = {
+      kind: 'entityTagMatch' as const,
+      target: { kind: 'inputTarget' as const },
+      tagQueryType: 'hasAny' as const,
+      tags: [tag],
+    };
+    const context = { blackboard: new ActionBlackboard() };
+
+    expect(executor.evaluate(condition, context)).toBe(false);
+    expect(resolve).not.toHaveBeenCalled();
+    active = true;
+    expect(executor.evaluate(condition, context)).toBe(true);
+    expect(resolve).toHaveBeenCalledOnce();
+  });
+
   it('reads the first matching active buff and writes its value to the action blackboard', () => {
     const path = 'buff/status/conduct';
     const target = new CombatBuffContainer(
