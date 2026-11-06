@@ -3622,12 +3622,16 @@ describe('BuffOperationExecutor', () => {
     );
     target.addEntityTags([tag]);
     let active = false;
+    let mixed = false;
     const resolve = vi.fn(() => target);
     const executor = new BuffOperationExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
-      queryTargets: () => [{ kind: 'abilityEntity', instanceId: 18 }],
-      isEntityAvailable: () => active,
+      queryTargets: () => [
+        ...(mixed ? [{ kind: 'abilityEntity' as const, instanceId: 19 }] : []),
+        { kind: 'abilityEntity', instanceId: 18 },
+      ],
+      isEntityAvailable: ref => active || (ref.kind === 'abilityEntity' && ref.instanceId === 19),
       resolveCurrentAbilityEntityTarget: resolve,
       delegate,
     });
@@ -3644,6 +3648,9 @@ describe('BuffOperationExecutor', () => {
     active = true;
     expect(executor.evaluate(condition, context)).toBe(true);
     expect(resolve).toHaveBeenCalledOnce();
+    active = false;
+    mixed = true;
+    expect(executor.evaluate(condition, context)).toBe(true);
   });
 
   it('reads the first matching active buff and writes its value to the action blackboard', () => {

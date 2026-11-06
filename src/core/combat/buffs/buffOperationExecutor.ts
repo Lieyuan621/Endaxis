@@ -1803,17 +1803,17 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       let found = false;
       for (let index = targets.length - 1; index >= 0; index -= 1) {
         const queried = targets[index]!;
+        if (queried.kind === 'spatialPoint') continue;
+        // 已回收的目标不参与标签判断。
+        if (
+          queried.kind === 'abilityEntity' &&
+          this.dependencies.isEntityAvailable?.(queried) === false
+        )
+          continue;
         const reference =
           condition.checkPartTags === true
             ? queried
             : (this.dependencies.resolvePartBuffSource?.(queried) ?? queried);
-        if (reference.kind === 'spatialPoint') continue;
-        // 延迟命中可能仍携带已回收的能力实体引用；标签条件对此应判为不满足。
-        if (
-          reference.kind === 'abilityEntity' &&
-          this.dependencies.isEntityAvailable?.(reference) === false
-        )
-          return false;
         const target =
           reference.kind === 'abilityEntity'
             ? this.dependencies.resolveCurrentAbilityEntityTarget?.(reference)
