@@ -1,11 +1,13 @@
 <script setup lang="ts">
-defineProps<{ kind: 'enter' | 'exit' | 'target' }>();
+defineProps<{ kind: 'spawn' | 'enter' | 'exit' | 'target' }>();
 </script>
 
 <template>
   <svg
     class="enemy-lifecycle-menu-icon"
     viewBox="0 0 24 24"
+    width="16"
+    height="16"
     fill="none"
     stroke="currentColor"
     stroke-width="2"
@@ -13,7 +15,10 @@ defineProps<{ kind: 'enter' | 'exit' | 'target' }>();
     stroke-linejoin="round"
     aria-hidden="true"
   >
-    <template v-if="kind === 'enter'">
+    <template v-if="kind === 'spawn'">
+      <path d="m12 3 8 9-8 9-8-9 8-9Z" />
+    </template>
+    <template v-else-if="kind === 'enter'">
       <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
       <path d="M4 12h9m-4-4 4 4-4 4" />
     </template>

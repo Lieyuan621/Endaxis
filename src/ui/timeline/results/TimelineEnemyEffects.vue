@@ -59,7 +59,8 @@ const props = defineProps<{
   prepFrames: number;
   pxPerFrame: number;
   trackHeaderWidth: number;
-  scrollLeft: number;
+  scrollLeft?: number;
+  scrollState?: { readonly left: { readonly value: number } };
   prepEndFrame?: number;
 
   prepExpanded: boolean;
@@ -96,6 +97,7 @@ const props = defineProps<{
     readonly sourceActionId?: string;
   }) => string | undefined;
 }>();
+const currentScrollLeft = computed(() => props.scrollState?.left.value ?? props.scrollLeft ?? 0);
 const emit = defineEmits<{
   'return-overview': [];
   'open-damage-detail': [sequence: number];
@@ -138,7 +140,7 @@ function pointX(frame: number): number {
       props.pxPerFrame,
       props.prepExpanded,
       props.prepEndFrame,
-    ) - props.scrollLeft
+    ) - currentScrollLeft.value
   );
 }
 
@@ -366,7 +368,7 @@ function scrollEffects(event: WheelEvent) {
       :prep-expanded="prepExpanded"
       :px-per-frame="pxPerFrame"
       :track-header-width="trackHeaderWidth"
-      :scroll-left="scrollLeft"
+      :scroll-left="currentScrollLeft"
     />
     <EnemyCombatHudSnapshot
       class="enemy-hud"

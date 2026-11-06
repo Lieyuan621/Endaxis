@@ -79,20 +79,30 @@ function markerStyle(id: string) {
     : {};
 }
 
-type Marker = { id: string; frame: number; label: string; glyph?: string };
+type Marker = {
+  id: string;
+  frame: number;
+  label: string;
+  menuIcon?: 'spawn' | 'enter' | 'exit' | 'target';
+};
 const markers = computed<Marker[]>(() => [
   ...(props.targetSwitches ?? []).map(marker => ({
     id: 'target:' + marker.id,
     frame: marker.frame,
     label: t('timeline.enemies.mainTarget'),
-    glyph: '◎',
+    menuIcon: 'target' as const,
   })),
-  { id: 'spawn', frame: value.value.spawnFrame, label: t('timeline.enemies.spawn'), glyph: '◆' },
+  {
+    id: 'spawn',
+    frame: value.value.spawnFrame,
+    label: t('timeline.enemies.spawn'),
+    menuIcon: 'spawn' as const,
+  },
   ...value.value.presenceChanges.map(change => ({
     id: enemyPresenceMarkerKey(change.id),
     frame: change.frame,
     label: t(change.present ? 'timeline.enemies.enter' : 'timeline.enemies.exit'),
-    glyph: change.present ? '▶' : '◀',
+    menuIcon: change.present ? ('enter' as const) : ('exit' as const),
   })),
   ...(value.value.deathFrame !== undefined
     ? [
@@ -369,11 +379,12 @@ onBeforeUnmount(() => {
         <span v-else>?</span>
       </template>
       <span v-else-if="marker.id.startsWith('target:')" class="target-cursor" aria-hidden="true" />
-      <span v-else-if="marker.id.startsWith('presence:')" class="presence-glyph">{{
-        marker.glyph
-      }}</span>
+      <EnemyLifecycleMenuIcon
+        v-else-if="marker.id.startsWith('presence:')"
+        :kind="marker.menuIcon ?? 'enter'"
+        class="presence-glyph"
+      />
       <EaCloseIcon v-else-if="marker.id === 'death'" size="1em" />
-      <template v-else>{{ marker.glyph }}</template>
       <span v-if="drag?.marker.id === marker.id" class="drag-time"
         >{{ (drag.frame / 30).toFixed(2) }}s</span
       >
@@ -397,7 +408,8 @@ onBeforeUnmount(() => {
             :aria-pressed="menu.marker?.id === marker.id"
             @click="menu.marker = marker"
             ><EaCloseIcon v-if="marker.id === 'death'" />
-            <template v-else>{{ marker.glyph }}</template> {{ marker.label }}</EaButton
+            <EnemyLifecycleMenuIcon v-else-if="marker.menuIcon" :kind="marker.menuIcon" />
+            {{ marker.label }}</EaButton
           >
         </div>
         <EaButton
@@ -622,9 +634,15 @@ onBeforeUnmount(() => {
   gap: 6px;
   padding: 8px 12px 0;
 }
-.coincident-markers [aria-pressed='true'] {
-  color: var(--el-color-primary);
-  border-color: currentColor;
+.coincident-markers .ea-button[aria-pressed='true'] {
+  box-shadow: none;
+}
+.coincident-markers .enemy-lifecycle-menu-icon,
+.coincident-markers .ea-close-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  margin-right: 4px;
 }
 .enemy-life-menu label {
   display: flex;

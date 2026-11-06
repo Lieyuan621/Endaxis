@@ -1,4 +1,5 @@
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import { describe, expect, it, vi } from 'vitest';
 
 import type {
@@ -70,6 +71,50 @@ describe('ElementalInflictionOperationExecutor', () => {
       ['actual-source', 'enemy'],
       ['actual-source', 'enemy'],
     ]);
+  });
+  it('显式目标组中的空间位置不触发附着，仍处理敌人并拒绝其他非敌人实体', () => {
+    const record = vi.fn();
+    const applyOperation = vi.fn();
+    const emitSourceEvent = vi.fn();
+    const emitTargetEvent = vi.fn();
+    const queryTargets = vi.fn((): RuntimeTargetRef[] => [
+      { kind: 'spatialPoint' as const, pointId: 1 },
+      { kind: 'enemy' as const, enemyId: 'enemy' },
+    ]);
+    const executor = new ElementalInflictionOperationExecutor({
+      sourceOperatorId: 'operator',
+      targetId: 'enemy',
+      skillId: 'skill',
+      clock: new CombatClock(),
+      receipt: { record },
+      queryTargets,
+      getExistingAttachment: () => null,
+      applyOperation,
+      emitSourceEvent,
+      emitTargetEvent,
+      delegate: { execute: () => true, evaluate: () => false },
+    });
+    const step: ResolvedCombatStepForKind<'applyElementalInfliction'> = {
+      ...STEP,
+      parameters: { ...STEP.parameters, target: { kind: 'context', key: 'tar' } },
+    };
+    const context = { blackboard: new ActionBlackboard() };
+
+    expect(executor.execute(step, context)).toBe(true);
+    expect(record).toHaveBeenCalledWith(expect.objectContaining({ targetId: 'enemy' }));
+    expect(record).toHaveBeenCalledTimes(1);
+    const sourceEventCount = emitSourceEvent.mock.calls.length;
+    const targetEventCount = emitTargetEvent.mock.calls.length;
+
+    queryTargets.mockReturnValue([{ kind: 'spatialPoint', pointId: 2 }]);
+    expect(executor.execute(step, context)).toBe(true);
+    expect(record).toHaveBeenCalledTimes(1);
+    expect(applyOperation).toHaveBeenCalledTimes(1);
+    expect(emitSourceEvent).toHaveBeenCalledTimes(sourceEventCount);
+    expect(emitTargetEvent).toHaveBeenCalledTimes(targetEventCount);
+
+    queryTargets.mockReturnValue([{ kind: 'operator', operatorId: 'other' }]);
+    expect(() => executor.execute(step, context)).toThrow('not the bound enemy');
   });
   it.each([true, false])(
     'records exact conversion identities only when the output was added: %s',

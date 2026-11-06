@@ -8,7 +8,7 @@ import type { LoadoutGearSlot } from '../library/loadoutBuildViewModel';
 import OperatorSupportNotice from '../library/OperatorSupportNotice.vue';
 import { getOperatorAvatarPath } from '../../gameAssetPaths';
 import OperatorAvatar from '../../components/OperatorAvatar.vue';
-import { EaButton, EaNumberInput } from '@/design-system';
+import { EaButton, EaChevronIcon, EaNumberInput } from '@/design-system';
 
 const props = defineProps<{
   readOnly?: boolean;
@@ -112,7 +112,7 @@ function startReorder(event: DragEvent): void {
         :aria-label="$t('common.moveUp')"
         @click.stop="$emit('moveUp')"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="18 15 12 9 6 15" /></svg>
+        <EaChevronIcon direction="up" :size="10" :stroke-width="3" />
       </EaButton>
       <span
         class="drag-handle"
@@ -141,7 +141,7 @@ function startReorder(event: DragEvent): void {
         :aria-label="$t('common.moveDown')"
         @click.stop="$emit('moveDown')"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9" /></svg>
+        <EaChevronIcon direction="down" :size="10" :stroke-width="3" />
       </EaButton>
     </span>
     <span class="identity-body">

@@ -687,7 +687,8 @@
         "comboWindows": "Combo windows",
         "comboWindowsLocked": "Combo window (locked)",
         "switchMarkers": "Switch markers",
-        "effectLinks": "Links"
+        "effectLinks": "Links",
+        "dodgeMarkers": "Dodge markers"
       },
       "shortcutsLabel": "Shortcuts",
       "shortcutsTooltip": "View all keyboard shortcuts",

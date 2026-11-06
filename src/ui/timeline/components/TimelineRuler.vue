@@ -86,6 +86,8 @@ const ticks = computed(() =>
     pxPerFrame: props.pxPerFrame,
     visibleLeftPx: props.visibleLeftPx,
     visibleWidthPx: props.visibleWidthPx,
+    // 父组件每 256px 更新一次可见窗口，缓冲区覆盖窗口边缘的刻度。
+    bufferPx: 400,
     prepExpanded: props.prepExpanded,
     prepEndFrame: props.prepEndFrame,
   }),

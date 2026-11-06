@@ -687,7 +687,8 @@
         "comboWindows": "连携窗口",
         "comboWindowsLocked": "连携窗口（被锁定）",
         "switchMarkers": "换人标记",
-        "effectLinks": "连线"
+        "effectLinks": "连线",
+        "dodgeMarkers": "闪避标记"
       },
       "shortcutsLabel": "快捷键",
       "shortcutsTooltip": "查看全部快捷键",

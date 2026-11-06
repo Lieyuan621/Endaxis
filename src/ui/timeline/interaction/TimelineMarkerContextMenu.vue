@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import TimelineMenuActionIcon from './TimelineMenuActionIcon.vue';
+import TimelineMarkerMenuIcon from './TimelineMarkerMenuIcon.vue';
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton } from '../../../design-system/index';
+import { EaButton, EaChevronIcon } from '../../../design-system/index';
 import { useInteractionSession } from '../../interaction/interactionSessionContext';
 import { usePopoverInteractionBoundary } from '../../interaction/usePopoverInteractionBoundary';
 const { t } = useI18n({ useScope: 'global' });
@@ -121,7 +122,7 @@ onBeforeUnmount(() => {
         :disabled="canInherit === false"
         @click="$emit('inherit')"
       >
-        <span class="menu-icon" aria-hidden="true">⟲</span>
+        <TimelineMarkerMenuIcon kind="inherit" />
         <span>{{ t('inheritance.createHere') }}</span>
       </EaButton>
       <div v-if="isDev && cycleBoundary && !inheritanceBoundary" class="divider"></div>
@@ -166,9 +167,9 @@ onBeforeUnmount(() => {
             class="menu-item"
             @click="$emit('setDodgeMode', existingDodgeMode === 'dodge' ? 'perfectDodge' : 'dodge')"
           >
-            <span class="menu-icon" aria-hidden="true">{{
-              existingDodgeMode === 'dodge' ? '✦' : '↝'
-            }}</span>
+            <TimelineMarkerMenuIcon
+              :kind="existingDodgeMode === 'dodge' ? 'perfectDodge' : 'dodge'"
+            />
             <span>{{
               existingDodgeMode === 'dodge' ? labels.switchToPerfectDodge : labels.switchToDodge
             }}</span>
@@ -187,10 +188,7 @@ onBeforeUnmount(() => {
             role="menuitem"
             @click="$emit('controlComboCooldown', 'ready')"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M20 11a8 8 0 1 1-2.3-5.7" />
-              <path d="M20 4v7h-7" />
-            </svg>
+            <TimelineMarkerMenuIcon kind="comboReady" />
             <span>{{ t('comboControl.ready') }}</span>
           </EaButton>
           <EaButton
@@ -199,19 +197,12 @@ onBeforeUnmount(() => {
             role="menuitem"
             @click="$emit('controlComboCooldown', 'cooldown')"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 2" />
-            </svg>
+            <TimelineMarkerMenuIcon kind="comboCooldown" />
             <span>{{ t('comboControl.cooldown') }}</span>
           </EaButton>
           <div class="divider"></div>
           <EaButton type="button" class="menu-item" role="menuitem" @click="$emit('addCycle')">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <line x1="12" y1="2" x2="12" y2="22" />
-              <path d="M16 14c2 0 3-1 3-3s-1-3-3-3h-4" />
-              <polyline points="14 10 12 8 14 6" />
-            </svg>
+            <TimelineMarkerMenuIcon kind="cycleBoundary" />
             <span>{{ labels.addCycle }}</span>
           </EaButton>
           <EaButton
@@ -220,11 +211,7 @@ onBeforeUnmount(() => {
             role="menuitem"
             @click="$emit('toggleSimulationStart')"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <line x1="12" y1="2" x2="12" y2="22" />
-              <line x1="8" y1="6" x2="16" y2="6" />
-              <line x1="8" y1="18" x2="16" y2="18" />
-            </svg>
+            <TimelineMarkerMenuIcon kind="simulationStart" />
             <span>{{
               hasSimulationStart ? labels.removeSimulationStart : labels.addSimulationStart
             }}</span>
@@ -235,21 +222,15 @@ onBeforeUnmount(() => {
             role="menuitem"
             @click="$emit('toggleSimulationEnd')"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <line x1="12" y1="2" x2="12" y2="22" />
-              <line x1="8" y1="6" x2="16" y2="6" />
-              <line x1="8" y1="18" x2="16" y2="18" />
-            </svg>
+            <TimelineMarkerMenuIcon kind="simulationEnd" />
             <span>{{
               hasSimulationEnd ? labels.removeSimulationEnd : labels.addSimulationEnd
             }}</span>
           </EaButton>
           <div class="menu-item has-submenu" role="menuitem" aria-haspopup="menu">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M16 3h5v5M8 21H3v-5M21 3l-7 7M3 21l7-7" />
-            </svg>
+            <TimelineMarkerMenuIcon kind="switchOperator" />
             <span>{{ labels.switchOperator }}</span>
-            <span class="arrow">▶</span>
+            <EaChevronIcon class="arrow" :size="12" :stroke-width="3" />
             <div class="submenu-list" role="menu">
               <EaButton
                 v-for="target in switchTargets"
@@ -271,10 +252,7 @@ onBeforeUnmount(() => {
             :disabled="!canTargetTrack"
             @click="$emit('useConsumable')"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 3h6v4l3 5v7H6v-7l3-5V3Z" />
-              <path d="M8 12h8" />
-            </svg>
+            <TimelineMarkerMenuIcon kind="consumable" />
             <span>{{ labels.useConsumable }}</span>
           </EaButton>
           <EaButton
@@ -284,7 +262,8 @@ onBeforeUnmount(() => {
             :disabled="!canTargetTrack"
             @click="$emit('addDodge', 'dodge')"
           >
-            <span class="menu-icon" aria-hidden="true">↝</span><span>{{ labels.dodge }}</span>
+            <TimelineMarkerMenuIcon kind="dodge" />
+            <span>{{ labels.dodge }}</span>
           </EaButton>
           <EaButton
             type="button"
@@ -293,8 +272,8 @@ onBeforeUnmount(() => {
             :disabled="!canTargetTrack"
             @click="$emit('addDodge', 'perfectDodge')"
           >
-            <span class="menu-icon" aria-hidden="true">✦</span
-            ><span>{{ labels.perfectDodge }}</span>
+            <TimelineMarkerMenuIcon kind="perfectDodge" />
+            <span>{{ labels.perfectDodge }}</span>
           </EaButton>
         </template>
       </fieldset>
@@ -366,7 +345,6 @@ onBeforeUnmount(() => {
   text-align: left;
   cursor: pointer;
 }
-.menu-item > svg,
 .menu-item > .menu-icon {
   width: 20px;
   margin-right: 8px;
@@ -387,15 +365,6 @@ onBeforeUnmount(() => {
   opacity: 0.5;
   cursor: not-allowed;
 }
-.menu-item svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
 .menu-item kbd {
   margin-left: 10px;
   color: #888;
@@ -406,10 +375,6 @@ onBeforeUnmount(() => {
 .menu-item:hover kbd {
   color: rgb(255 255 255 / 75%);
 }
-.menu-icon {
-  width: 16px;
-  text-align: center;
-}
 .menu-item.has-submenu {
   justify-content: space-between;
   gap: var(--ea-control-gap);
@@ -417,7 +382,6 @@ onBeforeUnmount(() => {
 .menu-item .arrow {
   margin-left: 10px;
   color: #666;
-  font-size: 10px;
 }
 .submenu-list {
   position: absolute;

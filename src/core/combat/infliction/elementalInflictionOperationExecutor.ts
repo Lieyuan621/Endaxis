@@ -136,6 +136,8 @@ export class ElementalInflictionOperationExecutor implements CombatOperationExec
         throw new Error('elemental infliction target requires target bindings');
       const targets = this.dependencies.queryTargets(step.parameters.target, context);
       for (const target of targets) {
+        // 位置点可出现在命中目标组中，但没有可承载元素附着的实体。
+        if (target.kind === 'spatialPoint') continue;
         const routed = this.dependencies.resolveInflictionTarget?.(target) ?? target;
         if (routed.kind !== 'enemy')
           throw new Error('elemental infliction target is not the bound enemy');

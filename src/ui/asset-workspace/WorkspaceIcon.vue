@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EaCopyIcon } from '@/design-system';
+import { EaChevronIcon, EaCopyIcon } from '@/design-system';
 
 withDefaults(defineProps<{ name: string; size?: number }>(), { size: 16 });
 
@@ -9,8 +9,6 @@ const paths: Record<string, string> = {
   folder: 'M3 6h7l2 3h9v11H3ZM3 6V4h7l2 2',
   search: 'M16 16 21 21M18 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',
   close: 'm6 6 12 12M6 18 18 6',
-  chevron: 'm9 5 7 7-7 7',
-  down: 'm5 9 7 7 7-7',
   lock: 'M6 11h12v10H6ZM8 11V7a4 4 0 0 1 8 0v4',
   unlock: 'M6 11h12v10H6ZM8 11V7a4 4 0 0 1 7.5-2',
   undo: 'M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12',
@@ -34,6 +32,12 @@ const paths: Record<string, string> = {
 
 <template>
   <EaCopyIcon v-if="name === 'copy'" :size="size" :stroke-width="1.6" />
+  <EaChevronIcon
+    v-else-if="name === 'chevron' || name === 'down'"
+    :direction="name === 'chevron' ? 'right' : 'down'"
+    :size="size"
+    :stroke-width="1.6"
+  />
   <svg
     v-else
     :width="size"

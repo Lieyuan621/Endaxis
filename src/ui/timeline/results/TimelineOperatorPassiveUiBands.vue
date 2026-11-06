@@ -13,6 +13,8 @@ import { timelineUpperBuffTop } from './timelineTrackEffectLayout';
 
 const props = defineProps<{
   segments: readonly PositionedOperatorPassiveUiTimelineSegment[];
+  visibleLeftPx?: number;
+  visibleRightPx?: number;
   prepFrames: number;
   pxPerFrame: number;
   actionTop: number;
@@ -73,10 +75,26 @@ function segmentName(segment: PositionedOperatorPassiveUiTimelineSegment): strin
 const items = computed(() =>
   // 热更新时旧模拟结果可能仍引用已经移除的外观，不让失效展示阻断整条轨道。
   props.segments
-    .filter(
-      segment =>
-        segment.kind === 'abilityEntityCount' || passiveUiSkins[segment.appearance] !== undefined,
-    )
+    .filter(segment => {
+      if (segment.kind !== 'abilityEntityCount' && passiveUiSkins[segment.appearance] === undefined)
+        return false;
+      if (props.visibleLeftPx === undefined || props.visibleRightPx === undefined) return true;
+      const left = frameToTimelinePx(
+        segment.startFrame,
+        props.prepFrames,
+        props.pxPerFrame,
+        props.prepExpanded,
+        props.prepEndFrame,
+      );
+      const right = frameToTimelinePx(
+        segment.endFrame,
+        props.prepFrames,
+        props.pxPerFrame,
+        props.prepExpanded,
+        props.prepEndFrame,
+      );
+      return right >= props.visibleLeftPx && left <= props.visibleRightPx;
+    })
     .map(segment => {
       const left = frameToTimelinePx(
         segment.startFrame,
@@ -114,6 +132,19 @@ const items = computed(() =>
 const hitItems = computed(() => {
   const counts = new Map<string, number>();
   return (props.hits ?? []).flatMap(hit => {
+    const left = frameToTimelinePx(
+      hit.frame,
+      props.prepFrames,
+      props.pxPerFrame,
+      props.prepExpanded,
+      props.prepEndFrame,
+    );
+    if (
+      props.visibleLeftPx !== undefined &&
+      props.visibleRightPx !== undefined &&
+      (left < props.visibleLeftPx || left > props.visibleRightPx)
+    )
+      return [];
     const segment = props.segments.find(
       segment =>
         segment.kind === 'abilityEntityCount' &&
@@ -128,13 +159,7 @@ const hitItems = computed(() => {
       ? [
           {
             ...hit,
-            left: frameToTimelinePx(
-              hit.frame,
-              props.prepFrames,
-              props.pxPerFrame,
-              props.prepExpanded,
-              props.prepEndFrame,
-            ),
+            left,
             top: timelineUpperBuffTop(segment.lane) + 18 + index * 7,
           },
         ]

@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
-import { EaButton, EaDialog } from '../../../design-system/index';
+import { EaButton, EaChevronIcon, EaDialog } from '../../../design-system/index';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import {
   initialBuffDetailInstanceIndex,
@@ -174,7 +174,7 @@ function endReasonText(instance: BuffDetailInstance): string {
               :disabled="instanceIndex === 0"
               @click="instanceIndex--"
             >
-              ‹
+              <EaChevronIcon direction="left" :size="14" />
             </EaButton>
             <span>{{ instanceIndex + 1 }} / {{ target.instances!.length }}</span>
             <EaButton
@@ -184,7 +184,7 @@ function endReasonText(instance: BuffDetailInstance): string {
               :disabled="instanceIndex >= target.instances!.length - 1"
               @click="instanceIndex++"
             >
-              ›
+              <EaChevronIcon :size="14" />
             </EaButton>
           </span>
         </header>

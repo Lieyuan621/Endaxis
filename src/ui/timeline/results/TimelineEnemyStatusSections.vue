@@ -4,7 +4,7 @@
  * 本组件只负责段落折叠、比例调整与持久化，不解释任何战斗数据。
  */
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
-import { EaButton } from '../../../design-system/index';
+import { EaButton, EaChevronIcon } from '../../../design-system/index';
 import { useInteractionSession } from '../../interaction/interactionSessionContext';
 import {
   DEFAULT_MONITOR_SECTION_WEIGHTS,
@@ -274,7 +274,12 @@ watch(
           :aria-expanded="!collapsed[key]"
           @click="toggle(key)"
         >
-          <span class="section-toggle__chevron" aria-hidden="true"></span>
+          <EaChevronIcon
+            class="section-toggle__chevron"
+            :direction="collapsed[key] ? 'up' : 'down'"
+            :size="10"
+            :stroke-width="3"
+          />
           <strong>{{ props.labels[key] }}</strong>
         </EaButton>
         <div v-show="!collapsed[key]" class="section-content">
@@ -357,11 +362,8 @@ watch(
 
 .section-toggle__chevron {
   display: block;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(45deg);
+  width: 10px;
+  height: 10px;
   opacity: 0.88;
 }
 
@@ -391,7 +393,6 @@ watch(
 
 .enemy-status-section.is-collapsed .section-toggle__chevron {
   flex: 0 0 auto;
-  transform: rotate(-135deg);
 }
 
 .section-content {

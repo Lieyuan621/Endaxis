@@ -26,7 +26,8 @@ const props = defineProps<{
   /** 时间轴内容区左侧轨道头宽度；曲线从这里开始画，和标尺对齐。 */
   trackHeaderWidth: number;
   /** 时间轴当前的横向滚动距离；曲线按它平移，跟着时间轴一起滚。 */
-  scrollLeft: number;
+  scrollLeft?: number;
+  scrollState?: { readonly left: { readonly value: number } };
   enemyHealthCurve?: EnemyHealthCurve | null;
   poiseCurve?: PoiseCurve | null;
   poiseBrokenSegments?: readonly PoiseBrokenSegment[];
@@ -50,6 +51,7 @@ const props = defineProps<{
   poiseBrokenLabel?: string;
   spInsufficientLabel?: string;
 }>();
+const currentScrollLeft = computed(() => props.scrollState?.left.value ?? props.scrollLeft ?? 0);
 
 const emit = defineEmits<{
   updateResourceRule: [field: 'maxSp' | 'initialSp' | 'spRecoveryPerSecond', value: number];
@@ -142,7 +144,7 @@ const visibleRows = computed(() =>
 );
 const hasCurves = computed(() => visibleRows.value.length > 0);
 
-/** 与时间轴同坐标系的横坐标：轨道头 + 帧位置，再减去当前滚动距离。 */
+/** 曲线的世界坐标保持不变；滚动只平移 SVG 图层。 */
 function pointX(frame: number): number {
   return (
     props.trackHeaderWidth +
@@ -152,9 +154,12 @@ function pointX(frame: number): number {
       props.pxPerFrame,
       props.prepExpanded,
       props.prepEndFrame,
-    ) -
-    props.scrollLeft
+    )
   );
+}
+
+function screenX(frame: number): number {
+  return pointX(frame) - currentScrollLeft.value;
 }
 
 function clamp(value: number, minimum: number, maximum: number): number {
@@ -207,7 +212,7 @@ function fillPath(row: ResourceCurveRow): string {
   return `M ${startX} ${baselineY(row)} L ${coordinates.join(' L ')} L ${pointX(last.frame)} ${baselineY(row)} Z`;
 }
 
-// 光标读数更新不改变曲线几何；仅数据、坐标或面板高度变化时重建 SVG 路径。
+// 滚动和光标读数都不改变曲线几何；只平移 SVG 图层。
 const curvePaths = computed(
   () =>
     new Map(
@@ -295,7 +300,7 @@ const spWarnings = computed(() => {
         :prep-expanded="prepExpanded"
         :px-per-frame="pxPerFrame"
         :track-header-width="trackHeaderWidth"
-        :scroll-left="scrollLeft"
+        :scroll-left="currentScrollLeft"
       />
       <span class="curve-label" :style="{ width: `${trackHeaderWidth}px` }">
         <template
@@ -364,18 +369,6 @@ const spWarnings = computed(() => {
         </template>
       </span>
       <svg
-        v-memo="[
-          curvePaths.get(row.key),
-          width,
-          rowHeight(row),
-          row.points,
-          poiseBrokenSegments,
-          poiseKnotSegments,
-          poiseBrokenLabel,
-          prepExpanded,
-          prepEndFrame,
-          scrollLeft,
-        ]"
         class="curve-chart"
         :width="width"
         height="100%"
@@ -438,53 +431,20 @@ const spWarnings = computed(() => {
             :y2="pointY(row, index * 100)"
           />
           <text
-            :x="trackHeaderWidth + 5 - scrollLeft"
+            :x="trackHeaderWidth + 5 - currentScrollLeft"
             :y="pointY(row, row.maxValue) + 12"
             class="guide-label"
           >
             MAX({{ formatNumber(row.maxValue) }})
           </text>
           <text
-            :x="trackHeaderWidth + 5 - scrollLeft"
+            :x="trackHeaderWidth + 5 - currentScrollLeft"
             :y="baselineY(row) - 4"
             class="guide-label guide-label--zero"
           >
             0
           </text>
         </template>
-        <g v-if="row.kind === 'poise'">
-          <rect
-            v-for="segment in poiseKnotSegments ?? []"
-            :key="`knot:${segment.startFrame}:${segment.endFrame}`"
-            :x="pointX(segment.startFrame)"
-            y="0"
-            :width="Math.max(0, pointX(segment.endFrame) - pointX(segment.startFrame))"
-            :height="rowHeight(row)"
-            fill="url(#poise-knot-pattern)"
-            class="poise-knot-zone"
-          />
-          <g
-            v-for="segment in poiseBrokenSegments ?? []"
-            :key="`${segment.startFrame}:${segment.endFrame}`"
-          >
-            <rect
-              :x="pointX(segment.startFrame)"
-              y="0"
-              :width="Math.max(0, pointX(segment.endFrame) - pointX(segment.startFrame))"
-              :height="rowHeight(row)"
-              fill="url(#poise-broken-pattern)"
-              class="poise-broken-zone"
-            />
-            <text
-              :x="(pointX(segment.startFrame) + pointX(segment.endFrame)) / 2"
-              :y="rowHeight(row) / 2 + 4"
-              class="poise-broken-label"
-              text-anchor="middle"
-            >
-              {{ poiseBrokenLabel }}
-            </text>
-          </g>
-        </g>
         <rect
           v-if="row.kind === 'sp'"
           class="sp-negative-zone"
@@ -493,30 +453,93 @@ const spWarnings = computed(() => {
           :width="width"
           :height="Math.max(0, rowHeight(row) - baselineY(row))"
         />
-        <path
-          class="curve-fill"
-          :style="{ fill: `url(#curve-fill-${row.kind})` }"
-          :d="curvePaths.get(row.key)?.fill ?? ''"
-        />
-        <path class="curve-line" :d="curvePaths.get(row.key)?.line ?? ''" />
-        <circle
-          v-for="(point, index) in row.points.filter(point => point.source !== 'autoRecovery')"
-          :key="`${point.frame}:${index}`"
-          class="curve-point"
-          :cx="pointX(point.frame)"
-          :cy="pointY(row, point.value)"
-          :r="POINT_RADIUS"
-          :class="{ 'is-negative': row.kind === 'sp' && point.value < 0 }"
-        >
-          <title>{{ pointTitle(point) }}</title>
-        </circle>
+        <g :transform="`translate(${-currentScrollLeft} 0)`">
+          <g
+            v-if="row.kind === 'poise'"
+            v-memo="[
+              poiseKnotSegments,
+              poiseBrokenSegments,
+              poiseBrokenLabel,
+              rowHeight(row),
+              prepFrames,
+              pxPerFrame,
+              prepExpanded,
+              prepEndFrame,
+              trackHeaderWidth,
+            ]"
+          >
+            <rect
+              v-for="segment in poiseKnotSegments ?? []"
+              :key="`knot:${segment.startFrame}:${segment.endFrame}`"
+              :x="pointX(segment.startFrame)"
+              y="0"
+              :width="Math.max(0, pointX(segment.endFrame) - pointX(segment.startFrame))"
+              :height="rowHeight(row)"
+              fill="url(#poise-knot-pattern)"
+              class="poise-knot-zone"
+            />
+            <g
+              v-for="segment in poiseBrokenSegments ?? []"
+              :key="`${segment.startFrame}:${segment.endFrame}`"
+            >
+              <rect
+                :x="pointX(segment.startFrame)"
+                y="0"
+                :width="Math.max(0, pointX(segment.endFrame) - pointX(segment.startFrame))"
+                :height="rowHeight(row)"
+                fill="url(#poise-broken-pattern)"
+                class="poise-broken-zone"
+              />
+              <text
+                :x="(pointX(segment.startFrame) + pointX(segment.endFrame)) / 2"
+                :y="rowHeight(row) / 2 + 4"
+                class="poise-broken-label"
+                text-anchor="middle"
+              >
+                {{ poiseBrokenLabel }}
+              </text>
+            </g>
+          </g>
+          <g v-memo="[curvePaths.get(row.key)]">
+            <path
+              class="curve-fill"
+              :style="{ fill: `url(#curve-fill-${row.kind})` }"
+              :d="curvePaths.get(row.key)?.fill ?? ''"
+            />
+            <path class="curve-line" :d="curvePaths.get(row.key)?.line ?? ''" />
+          </g>
+          <g
+            v-memo="[
+              row.points,
+              row.maxValue,
+              rowHeight(row),
+              prepFrames,
+              pxPerFrame,
+              prepExpanded,
+              prepEndFrame,
+              trackHeaderWidth,
+            ]"
+          >
+            <circle
+              v-for="(point, index) in row.points.filter(point => point.source !== 'autoRecovery')"
+              :key="`${point.frame}:${index}`"
+              class="curve-point"
+              :cx="pointX(point.frame)"
+              :cy="pointY(row, point.value)"
+              :r="POINT_RADIUS"
+              :class="{ 'is-negative': row.kind === 'sp' && point.value < 0 }"
+            >
+              <title>{{ pointTitle(point) }}</title>
+            </circle>
+          </g>
+        </g>
       </svg>
       <span
         v-for="(warning, index) in row.kind === 'sp' ? spWarnings : []"
         :key="`sp-warning-${warning.frame}:${index}`"
         class="sp-warning-tag"
         :style="{
-          left: `${pointX(warning.frame)}px`,
+          left: `${screenX(warning.frame)}px`,
           top: `${warning.top}px`,
         }"
       >

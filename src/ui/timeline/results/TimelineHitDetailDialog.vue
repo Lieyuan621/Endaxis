@@ -5,6 +5,7 @@ import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigin
 import {
   EaButton,
   EaCheckbox,
+  EaChevronIcon,
   EaDialog,
   EaDialogActions,
   EaTooltip,
@@ -1100,8 +1101,8 @@ function onClose(): void {
           :aria-label="labels.previousHit"
           :disabled="damageIndex === 0"
           @click="damageIndex--"
-          >‹</EaButton
-        >
+          ><EaChevronIcon direction="left" :size="14"
+        /></EaButton>
         <span>{{ damageIndex + 1 }} / {{ damageDetails.length }}</span>
         <EaButton
           size="sm"
@@ -1109,8 +1110,8 @@ function onClose(): void {
           :aria-label="labels.nextHit"
           :disabled="damageIndex >= damageDetails.length - 1"
           @click="damageIndex++"
-          >›</EaButton
-        >
+          ><EaChevronIcon :size="14"
+        /></EaButton>
       </div>
       <div v-if="damageDetails.length > 0" class="ea-detail-breakdown">
         <template

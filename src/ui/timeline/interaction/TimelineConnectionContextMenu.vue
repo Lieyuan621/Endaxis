@@ -2,7 +2,7 @@
 /** 技能块连线的右键菜单。端口和删除命令交给编辑器提交。 */
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton, EaDeleteIcon } from '../../../design-system/index';
+import { EaButton, EaChevronIcon, EaDeleteIcon } from '../../../design-system/index';
 import { useKeyboardShortcutScope } from '../../keyboard/keyboardShortcutRouter';
 import { connectionPortI18nKey, type TimelineConnectionPort } from './timelineConnections';
 
@@ -112,7 +112,7 @@ onBeforeUnmount(() => window.removeEventListener('pointerdown', closeFromOutside
           <span class="label">{{
             t(side === 'from' ? 'contextMenu.setSourcePort' : 'contextMenu.setTargetPort')
           }}</span>
-          <span class="arrow">▶</span>
+          <EaChevronIcon class="arrow" :size="12" :stroke-width="3" />
         </EaButton>
         <div class="submenu-grid ea-floating-surface">
           <template v-for="(option, index) in portOptions" :key="index">
@@ -207,7 +207,6 @@ onBeforeUnmount(() => window.removeEventListener('pointerdown', closeFromOutside
   text-align: left;
 }
 .menu-item .arrow {
-  font-size: 10px;
   color: var(--ea-fg-faint);
   margin-left: 10px;
 }

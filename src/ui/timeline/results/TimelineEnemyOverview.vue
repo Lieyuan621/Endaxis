@@ -48,7 +48,8 @@ const props = defineProps<{
   automaticDeath: boolean;
   framePx: (frame: number) => number;
   pxFrame: (px: number) => number;
-  scrollLeft: number;
+  scrollLeft?: number;
+  scrollState?: { readonly left: { readonly value: number } };
   snapFrames: number;
   headerWidth: number;
   timelineWidth: number;
@@ -61,6 +62,7 @@ const props = defineProps<{
   canPaste?: boolean;
   statusLanes: (id: string) => number;
 }>();
+const currentScrollLeft = computed(() => props.scrollState?.left.value ?? props.scrollLeft ?? 0);
 const emit = defineEmits<{
   add: [];
   copy: [id: string];
@@ -417,7 +419,7 @@ const rows = computed(() =>
       :prep-expanded="prepExpanded"
       :px-per-frame="pxPerFrame"
       :track-header-width="headerWidth"
-      :scroll-left="scrollLeft"
+      :scroll-left="currentScrollLeft"
     />
     <header>
       <span>{{ t('timeline.enemies.title') }}</span>
@@ -581,7 +583,7 @@ const rows = computed(() =>
           @remove-target="emit('removeTarget', $event)"
           :frame-px="framePx"
           :px-frame="pxFrame"
-          :scroll-left="scrollLeft"
+          :scroll-left="currentScrollLeft"
           :snap-frames="snapFrames"
           @select="selectEnemy(row.id)"
           @open-detail="emit('openDetail', row.id)"
@@ -598,12 +600,12 @@ const rows = computed(() =>
             :top="row.markerLayout.height + 2"
             :frame-px="framePx"
             :px-frame="pxFrame"
-            :scroll-left="scrollLeft"
+            :scroll-left="currentScrollLeft"
           />
           <div
             v-if="row.id === selectedId"
             class="enemy-overview__hits"
-            :style="{ left: -scrollLeft + 'px' }"
+            :style="{ left: -currentScrollLeft + 'px' }"
           >
             <slot
               name="hits"
@@ -616,7 +618,7 @@ const rows = computed(() =>
             v-if="row.id === selectedId"
             class="enemy-overview__states"
             :style="{
-              left: -scrollLeft + 'px',
+              left: -currentScrollLeft + 'px',
               top: row.markerLayout.height + 2 + row.healthHeight + 'px',
               height: statusLanes(row.id) * rowPitch + 'px',
               clipPath:
@@ -664,7 +666,7 @@ const rows = computed(() =>
                 marginLeft: segment.start === row.spawnFrame ? '2px' : '0px',
                 left:
                   framePx(segment.start) -
-                  scrollLeft +
+                  currentScrollLeft +
                   (segment.start === row.spawnFrame ? iconSize : 0) +
                   'px',
                 width:
@@ -685,7 +687,7 @@ const rows = computed(() =>
             class="enemy-overview__poise"
             aria-hidden="true"
             :style="{
-              left: framePx(segment.startFrame) - scrollLeft + 'px',
+              left: framePx(segment.startFrame) - currentScrollLeft + 'px',
               width: Math.max(1, framePx(segment.endFrame) - framePx(segment.startFrame)) + 'px',
             }"
           />
@@ -698,7 +700,7 @@ const rows = computed(() =>
             role="img"
             :aria-label="row.name + ' · ' + t('timeline.enemies.death')"
             :style="{
-              left: framePx(row.death) - scrollLeft + 'px',
+              left: framePx(row.death) - currentScrollLeft + 'px',
               top: row.markerLayout.markers.get('actualDeath')!.top + 'px',
               height: row.markerLayout.markers.get('actualDeath')!.height + 'px',
               width: iconSize + 'px',
@@ -876,7 +878,7 @@ header {
 .enemy-overview__segment.anomaly-duration-bar:hover {
   box-shadow: none;
 }
-.enemy-overview__segment :deep(.striped-bg) {
+.enemy-overview__segment.anomaly-duration-bar::after {
   display: none;
 }
 .enemy-overview__row.is-selected .enemy-overview__segment {

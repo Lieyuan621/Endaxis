@@ -2,9 +2,7 @@
 withDefaults(defineProps<{ as?: 'span' | 'button' }>(), { as: 'span' });
 </script>
 <template>
-  <component :is="as" class="anomaly-duration-bar generic-buff-bar"
-    ><span class="striped-bg" /><slot
-  /></component>
+  <component :is="as" class="anomaly-duration-bar generic-buff-bar"><slot /></component>
 </template>
 <style scoped>
 .anomaly-duration-bar {
@@ -35,10 +33,12 @@ withDefaults(defineProps<{ as?: 'span' | 'button' }>(), { as: 'span' });
       0 2px 8px rgb(0 0 0 / 50%);
   }
 }
-.striped-bg {
+.anomaly-duration-bar::after {
+  content: '';
   position: absolute;
   inset: 0;
   border-radius: 2px;
+  pointer-events: none;
   background: repeating-linear-gradient(
     45deg,
     rgb(255 255 255 / 20%),
@@ -46,11 +46,10 @@ withDefaults(defineProps<{ as?: 'span' | 'button' }>(), { as: 'span' });
     transparent 2px,
     transparent 6px
   );
+  /* 固定小图案尺寸，长持续条无需重新生成整段宽度的渐变。 */
+  background-size: 17px 17px;
 }
 .anomaly-duration-bar {
   padding: 0;
-}
-.striped-bg {
-  pointer-events: none;
 }
 </style>
