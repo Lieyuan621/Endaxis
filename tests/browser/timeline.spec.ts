@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { test, expect, box, openPerlica, startPlacement, placeBasicGroup } from './helpers';
 
 test('桌面项目菜单集中加载、接收、导出与重置，并与显示菜单互斥', async ({ page }) => {
@@ -18,12 +19,18 @@ test('桌面项目菜单集中加载、接收、导出与重置，并与显示�
   await expect(page.locator('.export-dialog-shell')).toBeVisible();
 });
 
-test('方案设置固定在标题区，长方案名不会推移设置按钮和页签', async ({ page }) => {
+test('方案设置位于重命名按钮左侧，长方案名不会推移设置按钮和页签', async ({ page }) => {
   await page.goto('/timeline');
   const settings = page.getByRole('button', { name: '方案设置', exact: true });
   const tab = page.locator('.ts-tab-item').first();
   const beforeSettings = await box(settings);
   const beforeTab = await box(tab);
+  expect(beforeSettings.x + beforeSettings.width).toBeLessThan(
+    (await box(page.getByRole('button', { name: '重命名当前方案', exact: true }))).x,
+  );
+  expect(beforeSettings.x + beforeSettings.width).toBeLessThan(
+    (await box(page.locator('.ts-title-wrapper'))).x,
+  );
   await settings.click();
   const panel = page.locator('.header-scenario-settings-panel');
   await expect(panel.getByRole('button', { name: '多敌人模式', exact: true })).toBeVisible();
@@ -38,6 +45,39 @@ test('方案设置固定在标题区，长方案名不会推移设置按钮和�
   await expect(page.locator('.ts-title-wrapper')).toHaveAttribute('title', name);
   expect((await box(settings)).x).toBeCloseTo(beforeSettings.x, 0);
   expect((await box(tab)).x).toBeCloseTo(beforeTab.x, 0);
+});
+
+test('拖入 JSON 项目文件会打开导入确认，并能覆盖当前项目', async ({ page }) => {
+  await page.goto('/timeline');
+  await page.getByRole('button', { name: '项目', exact: true }).click();
+  await page.locator('.header-project-panel').getByRole('button', { name: '导出' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('.export-dialog-shell .export-action-card').first().click();
+  const download = await downloadPromise;
+  const json = await readFile((await download.path())!, 'utf8');
+  await page.keyboard.press('Escape');
+
+  await page.getByRole('button', { name: '重命名当前方案', exact: true }).click();
+  await page.locator('.ts-title-wrapper input').fill('拖入前修改的方案');
+  await page.locator('.ts-title-wrapper input').press('Enter');
+  await expect(page.locator('.ts-title-wrapper')).toHaveAttribute('title', '拖入前修改的方案');
+
+  await page
+    .locator('.track-lane')
+    .first()
+    .evaluate((lane, content) => {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(new File([content], 'project.json', { type: 'application/json' }));
+      lane.dispatchEvent(
+        new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer }),
+      );
+      lane.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+    }, json);
+  const importDialog = page.getByRole('dialog', { name: '导入项目内容' });
+  await expect(importDialog).toBeVisible();
+  await importDialog.getByRole('radio', { name: '完整覆盖' }).click();
+  await importDialog.getByRole('button', { name: '确认完整覆盖' }).click();
+  await expect(page.locator('.ts-title-wrapper')).toHaveAttribute('title', '方案 1');
 });
 
 test('方案各自保留会话内滚动和缩放，新方案使用默认视图', async ({ page }) => {

@@ -1081,11 +1081,7 @@ async function receiveProjectCode(code: string): Promise<void> {
   }
 }
 
-async function handleProjectFileChange(event: Event): Promise<void> {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  input.value = '';
-  if (file === undefined) return;
+async function openProjectFile(file: File): Promise<void> {
   try {
     const content =
       /\.png$/i.test(file.name) || file.type === 'image/png'
@@ -1096,6 +1092,45 @@ async function handleProjectFileChange(event: Event): Promise<void> {
     ElMessage.error(error instanceof Error ? error.message : '打开项目失败');
   }
 }
+
+async function handleProjectFileChange(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (file !== undefined) await openProjectFile(file);
+}
+
+function isExternalFileDrag(event: DragEvent): boolean {
+  return event.dataTransfer?.types.includes('Files') ?? false;
+}
+
+function handleExternalProjectDragOver(event: DragEvent): void {
+  if (!isExternalFileDrag(event)) return;
+  event.preventDefault();
+  if (event.dataTransfer !== null) event.dataTransfer.dropEffect = 'copy';
+}
+
+function handleExternalProjectDrop(event: DragEvent): void {
+  if (!isExternalFileDrag(event)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const file = event.dataTransfer?.files[0];
+  if (file === undefined) return;
+  if (!/\.(json|png)$/i.test(file.name) && !['application/json', 'image/png'].includes(file.type)) {
+    ElMessage.warning('仅支持 JSON 项目文件或带项目数据的 PNG 图片');
+    return;
+  }
+  void openProjectFile(file);
+}
+
+onMounted(() => {
+  window.addEventListener('dragover', handleExternalProjectDragOver, true);
+  window.addEventListener('drop', handleExternalProjectDrop, true);
+});
+onScopeDispose(() => {
+  window.removeEventListener('dragover', handleExternalProjectDragOver, true);
+  window.removeEventListener('drop', handleExternalProjectDrop, true);
+});
 
 const legacyConversionConfirmation = shallowRef<{
   content: string;

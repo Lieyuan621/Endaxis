@@ -3,6 +3,7 @@ import { EaPopover } from '@/design-system';
 /** 时间轴顶部方案栏。DOM 分区与视觉契约以旧版 TimelineEditor 为准。 */
 import {
   EaButton,
+  EaCopyIcon,
   EaDeleteIcon,
   EaDiceIcon,
   EaInput,
@@ -253,68 +254,6 @@ onBeforeUnmount(() => {
   <div class="timeline-header-content" @click.self="$emit('clearSelection')">
     <div class="tech-scenario-bar" @click.self="$emit('clearSelection')">
       <div class="ts-header-group" @click.self="$emit('clearSelection')">
-        <EaButton
-          variant="ghost"
-          size="sm"
-          icon-only
-          type="button"
-          class="toolbar-no-shrink"
-          :title="labels.rename"
-          :aria-label="labels.rename"
-          @click="beginRename"
-        >
-          <svg class="ts-rename-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-            />
-          </svg>
-        </EaButton>
-        <EaButton
-          variant="ghost"
-          size="sm"
-          icon-only
-          type="button"
-          class="toolbar-no-shrink"
-          :title="labels.duplicate"
-          :aria-label="labels.duplicate"
-          @click="$emit('duplicate')"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-          </svg>
-        </EaButton>
-
-        <EaButton
-          v-if="scenarios.length > 1"
-          variant="danger"
-          size="sm"
-          icon-only
-          type="button"
-          class="toolbar-no-shrink"
-          :title="labels.delete"
-          :aria-label="labels.delete"
-          @click="$emit('delete')"
-        >
-          <EaDeleteIcon />
-        </EaButton>
-
-        <div class="ts-title-wrapper" :title="scenarioName">
-          <span class="ts-deco-bracket">[</span>
-          <EaInput
-            v-if="renaming"
-            ref="renameInput"
-            v-model="renameDraft"
-            class="ts-title-input"
-            variant="inline"
-            size="sm"
-            @blur="finishRename"
-            @keydown.enter.prevent="finishRename"
-            @keydown.esc.prevent="cancelRename"
-          />
-          <strong v-else class="ts-title-text" @dblclick="beginRename">{{ scenarioName }}</strong>
-          <span class="ts-deco-bracket">]</span>
-        </div>
         <EaPopover
           v-model:visible="scenarioSettingsOpen"
           placement="bottom-start"
@@ -540,6 +479,65 @@ onBeforeUnmount(() => {
             </section>
           </div>
         </EaPopover>
+        <EaButton
+          variant="ghost"
+          size="sm"
+          icon-only
+          type="button"
+          class="toolbar-no-shrink"
+          :title="labels.rename"
+          :aria-label="labels.rename"
+          @click="beginRename"
+        >
+          <svg class="ts-rename-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+            />
+          </svg>
+        </EaButton>
+        <EaButton
+          variant="ghost"
+          size="sm"
+          icon-only
+          type="button"
+          class="toolbar-no-shrink"
+          :title="labels.duplicate"
+          :aria-label="labels.duplicate"
+          @click="$emit('duplicate')"
+        >
+          <EaCopyIcon />
+        </EaButton>
+
+        <EaButton
+          v-if="scenarios.length > 1"
+          variant="danger"
+          size="sm"
+          icon-only
+          type="button"
+          class="toolbar-no-shrink"
+          :title="labels.delete"
+          :aria-label="labels.delete"
+          @click="$emit('delete')"
+        >
+          <EaDeleteIcon />
+        </EaButton>
+
+        <div class="ts-title-wrapper" :title="scenarioName">
+          <span class="ts-deco-bracket">[</span>
+          <EaInput
+            v-if="renaming"
+            ref="renameInput"
+            v-model="renameDraft"
+            class="ts-title-input"
+            variant="inline"
+            size="sm"
+            @blur="finishRename"
+            @keydown.enter.prevent="finishRename"
+            @keydown.esc.prevent="cancelRename"
+          />
+          <strong v-else class="ts-title-text" @dblclick="beginRename">{{ scenarioName }}</strong>
+          <span class="ts-deco-bracket">]</span>
+        </div>
       </div>
       <div
         ref="scenarioTabs"
@@ -1211,6 +1209,11 @@ onBeforeUnmount(() => {
 .ts-header-group .ea-button .ts-rename-icon {
   fill: currentColor;
   stroke: none;
+}
+
+.ts-header-group .ea-button .ea-copy-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .ts-header-group .ts-settings-button.ea-button svg {

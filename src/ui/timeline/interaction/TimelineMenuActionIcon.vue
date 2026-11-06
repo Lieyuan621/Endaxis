@@ -1,15 +1,14 @@
 <script setup lang="ts">
+import { EaCopyIcon } from '@/design-system';
+
 defineProps<{ action: 'copy' | 'cut' | 'paste' | 'delete' }>();
 </script>
 
 <template>
   <span class="menu-icon" aria-hidden="true">
-    <svg viewBox="0 0 24 24">
-      <template v-if="action === 'copy'">
-        <rect x="8" y="8" width="12" height="13" rx="2" />
-        <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h3" />
-      </template>
-      <template v-else-if="action === 'cut'">
+    <EaCopyIcon v-if="action === 'copy'" />
+    <svg v-else viewBox="0 0 24 24">
+      <template v-if="action === 'cut'">
         <circle cx="6" cy="6" r="3" />
         <circle cx="6" cy="18" r="3" />
         <path d="m8 8 12 12M8 16 20 4" />

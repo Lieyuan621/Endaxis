@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { EaCopyIcon } from '@/design-system';
+
 withDefaults(defineProps<{ name: string; size?: number }>(), { size: 16 });
 
 const paths: Record<string, string> = {
@@ -14,7 +16,6 @@ const paths: Record<string, string> = {
   undo: 'M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12',
   redo: 'm15 4 5 5-5 5M20 9H10a6 6 0 0 0 0 12',
   check: 'm5 12 4 4L19 6',
-  copy: 'M9 9h12v12H9ZM15 9V3H3v12h6',
   graph: 'M3 4h6v6H3ZM15 14h6v6h-6ZM9 7h9v7M3 17h6v4H3ZM6 10v7',
   link: 'm9 15 6-6M8 16l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0M16 8l1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0',
   arrow: 'M5 12h14m-6-6 6 6-6 6',
@@ -32,7 +33,9 @@ const paths: Record<string, string> = {
 </script>
 
 <template>
+  <EaCopyIcon v-if="name === 'copy'" :size="size" :stroke-width="1.6" />
   <svg
+    v-else
     :width="size"
     :height="size"
     viewBox="0 0 24 24"
