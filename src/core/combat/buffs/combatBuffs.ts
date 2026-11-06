@@ -1430,7 +1430,10 @@ export class CombatBuffContainer<Key extends string> {
           );
         }
         definition.bindRestoredActions(buff);
-      } else if (definition.actions?.duringEnable !== undefined) {
+      } else if (
+        definition.actions?.duringEnable !== undefined &&
+        (buff.isStarted || buff.isEnabled)
+      ) {
         throw new Error(
           `restored Buff '${state.identity.definitionId}' has unbound during-enable actions`,
         );

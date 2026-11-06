@@ -158,6 +158,7 @@ class BuffScheduledSequenceAction<Key extends string> implements BuffDuringEnabl
   bindRestored(buff: CombatBuff<Key>): void {
     const saved = buff.runtimeState.actionHost?.scheduled;
     if (saved === null || saved === undefined) {
+      if (!buff.isEnabled) return;
       throw new Error(`restored Buff '${buff.definition.id}' has no scheduled action state`);
     }
     this.#state = saved;
