@@ -752,7 +752,11 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
           ? [this.dependencies.resolveTarget(step.parameters.target)]
           : this.dependencies.queryTargets!(step.parameters.target, context)
               .filter(target => target.kind !== 'spatialPoint')
-              .map(target => this.#resolveContextTarget(target));
+              .map(target =>
+                this.#resolveContextTarget(
+                  this.dependencies.resolvePartBuffSource?.(target) ?? target,
+                ),
+              );
       for (const target of targets) {
         if (!target.apply) throw new Error('forceSpellStatus requires an application target');
         if (layers > 0) {

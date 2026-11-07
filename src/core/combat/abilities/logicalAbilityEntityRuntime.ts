@@ -725,7 +725,7 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
   /**
    * FilterEnemyPartBlockAngle 的木桩投影：范围查询已假定目标处于有效范围内，
    * 不模拟方位，主体与部位同点（方向夹角为零）。独立受击部位不参与互斥。
-   * 同组优先选择输入中符合条件的部位，其次唯一阻挡部位；距离平局保留原生组顺序。
+   * 同组优先保留显式输入目标，默认选择主体；只有部位候选时仍保留部位。
    */
   filterHitBoxParts(
     targets: readonly RuntimeTargetRef[],
@@ -760,9 +760,14 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       });
       // 原生倒序扫描阻挡部位；输入目标优先终止扫描。
       const selected =
-        blocking
-          .reverse()
-          .find(target => inputTarget !== undefined && sameRuntimeTarget(target, inputTarget)) ??
+        group.find(
+          target =>
+            inputTarget !== undefined &&
+            sameRuntimeTarget(target, inputTarget) &&
+            (target.kind !== 'abilityEntity' ||
+              blocking.some(part => sameRuntimeTarget(part, target))),
+        ) ??
+        group.find(target => sameRuntimeTarget(target, this.mainBody(group[0]!))) ??
         (blocking.length === 1 ? blocking[0]! : group[0]!);
       removed.push(...group.filter(target => !sameRuntimeTarget(target, selected)));
     }

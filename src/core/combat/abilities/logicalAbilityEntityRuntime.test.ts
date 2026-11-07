@@ -56,18 +56,24 @@ describe('LogicalAbilityEntityRuntime', () => {
     const independent = spawn(second, true);
     const candidates = [first, second, soul, independent];
     expect(runtime.filterHitBoxParts(candidates, first, false)).toEqual([
+      first,
       second,
-      soul,
       independent,
     ]);
+    expect(runtime.filterHitBoxParts(candidates, undefined, false)).toEqual([
+      first,
+      second,
+      independent,
+    ]);
+    expect(runtime.filterHitBoxParts(candidates, soul, false)).toEqual([second, soul, independent]);
     expect(runtime.filterHitBoxParts([first, second], first, false)).toEqual([first, second]);
     expect(runtime.filterHitBoxParts([soul], first, false)).toEqual([soul]);
     const restored = new LogicalAbilityEntityRuntime({
       restoredState: structuredClone(runtime.runtimeState),
     });
     expect(restored.filterHitBoxParts(candidates, first, false)).toEqual([
+      first,
       second,
-      soul,
       independent,
     ]);
   });
