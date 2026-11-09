@@ -5,7 +5,7 @@ import { publicAssetUrl } from '../../../utils/publicAssetUrl';
  * 内容区只通过插槽接入；本组件不读取项目、时间轴或战斗状态。
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { EaButton, EaActivityRailButton } from '@/design-system';
+import { EaButton, EaActivityRailButton, EaChevronIcon } from '@/design-system';
 import { useInteractionSession } from '../../interaction/interactionSessionContext';
 import {
   resolveWorkbenchSidePanelMaximumWidth,
@@ -375,7 +375,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :aria-label="props.labels.collapsePanel"
           @click="collapseBottom"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+          <EaChevronIcon direction="down" :size="16" :stroke-width="2.5" />
         </EaButton>
         <slot
           name="bottom"
@@ -623,8 +623,8 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
   z-index: 45;
   top: 0;
   left: calc(180px + (100% - 180px) / 2);
-  width: 28px;
-  height: 16px;
+  width: 30px;
+  height: 20px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -632,27 +632,16 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
   background: transparent;
   color: var(--ea-fg-secondary);
   cursor: pointer;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
 }
 
 .bottom-panel-collapse.ea-button.ea-button--icon-only {
-  width: 28px;
-  min-width: 28px;
-  height: 16px;
+  width: 30px;
+  min-width: 30px;
 }
 
 .bottom-panel-collapse:focus-visible {
   color: var(--ea-fg);
-}
-
-.bottom-panel-collapse svg {
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .right-panel {

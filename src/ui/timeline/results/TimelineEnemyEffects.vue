@@ -132,15 +132,14 @@ const rowPitch = computed(() => iconSize.value + 4);
 const durationBarColor = useDurationBarColor();
 const ICON_TOP = ENEMY_STATUS_CONTENT_TOP;
 
+// 状态内容保持时间轴世界坐标；滚动只平移容器，避免逐项重算 Buff 详情与图标。
 function pointX(frame: number): number {
-  return (
-    frameToCondensedTimelinePx(
-      frame,
-      props.prepFrames,
-      props.pxPerFrame,
-      props.prepExpanded,
-      props.prepEndFrame,
-    ) - currentScrollLeft.value
+  return frameToCondensedTimelinePx(
+    frame,
+    props.prepFrames,
+    props.pxPerFrame,
+    props.prepExpanded,
+    props.prepEndFrame,
   );
 }
 
@@ -417,7 +416,13 @@ function scrollEffects(event: WheelEvent) {
       :style="{ left: trackHeaderWidth + 'px' }"
       @wheel="scrollEffects"
     >
-      <div class="enemy-timed-effects" :style="{ height: contentHeight + 'px' }">
+      <div
+        class="enemy-timed-effects"
+        :style="{
+          height: contentHeight + 'px',
+          transform: `translateX(${-currentScrollLeft}px)`,
+        }"
+      >
         <TimelineDamageHit
           v-for="hit in damageHits"
           :key="`damage:${hit.sequence}`"

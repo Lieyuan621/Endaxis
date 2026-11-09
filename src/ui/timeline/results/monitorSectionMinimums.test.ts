@@ -83,8 +83,8 @@ describe('legacy enemy status density and dividers', () => {
       { affliction: false, poise: true, sp: false },
       DEFAULT_MONITOR_SECTION_WEIGHTS,
     );
-    expect(layout.bodies).toEqual({ affliction: 80, poise: 0, sp: 86 });
-    expect(layout.rects.poise).toEqual({ bodyHeight: 0, stripHeight: 14, shellHeight: 14 });
+    expect(layout.bodies).toEqual({ affliction: 74, poise: 0, sp: 86 });
+    expect(layout.rects.poise).toEqual({ bodyHeight: 0, stripHeight: 20, shellHeight: 20 });
     expect(Object.values(layout.rects).reduce((sum, section) => sum + section.shellHeight, 0)).toBe(
       180,
     );
@@ -118,6 +118,6 @@ it('总览只分配总览和技力两段高度，隐藏的失衡不占空间', (
     DEFAULT_MONITOR_SECTION_WEIGHTS,
     ['affliction', 'sp'],
   );
-  expect(collapsed.rects.affliction.shellHeight).toBe(14);
-  expect(collapsed.rects.sp.shellHeight).toBe(286);
+  expect(collapsed.rects.affliction.shellHeight).toBe(20);
+  expect(collapsed.rects.sp.shellHeight).toBe(280);
 });

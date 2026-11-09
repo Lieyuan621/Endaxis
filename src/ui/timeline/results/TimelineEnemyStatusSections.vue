@@ -277,8 +277,8 @@ watch(
           <EaChevronIcon
             class="section-toggle__chevron"
             :direction="collapsed[key] ? 'up' : 'down'"
-            :size="10"
-            :stroke-width="3"
+            :size="16"
+            :stroke-width="2.5"
           />
           <strong>{{ props.labels[key] }}</strong>
         </EaButton>
@@ -333,8 +333,8 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 16px;
+  width: 30px;
+  height: 20px;
   padding: 0;
   border: 0;
   color: var(--ea-fg-secondary);
@@ -345,11 +345,11 @@ watch(
 /* The first arrow stays inside the clipped monitor edge; collapsed strips keep a centered control. */
 .enemy-status-section:first-child .section-toggle,
 .enemy-status-section.is-collapsed .section-toggle {
-  top: 7px;
+  top: 10px;
 }
 
 .enemy-status-section.follows-collapsed:not(.is-collapsed) .section-toggle {
-  top: 8px;
+  top: 10px;
 }
 
 .section-toggle strong {
@@ -361,19 +361,11 @@ watch(
 }
 
 .section-toggle__chevron {
-  display: block;
-  width: 10px;
-  height: 10px;
   opacity: 0.88;
 }
 
 .enemy-status-section.is-collapsed {
   background: var(--ea-workbench-panel, #252526);
-}
-
-.enemy-status-section.is-collapsed .section-toggle {
-  width: 24px;
-  height: 14px;
 }
 
 .section-summary {
@@ -387,12 +379,8 @@ watch(
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.4px;
-  line-height: 14px;
+  line-height: 20px;
   white-space: nowrap;
-}
-
-.enemy-status-section.is-collapsed .section-toggle__chevron {
-  flex: 0 0 auto;
 }
 
 .section-content {

@@ -16,7 +16,7 @@ export interface MonitorSectionLayout {
 export const ENEMY_STATUS_CONTENT_TOP = 2;
 
 export const MONITOR_RESIZE_HANDLE_REACH = 6;
-export const MONITOR_COLLAPSED_STRIP_HEIGHT = 14;
+export const MONITOR_COLLAPSED_STRIP_HEIGHT = 20;
 export const MONITOR_MINIMUM_HEIGHT = 116;
 const MONITOR_EXPANDED_MINIMUM_HEIGHT = 200;
 export const MONITOR_MAXIMUM_HEIGHT = 520;
