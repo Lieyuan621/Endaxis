@@ -23,13 +23,20 @@ import {
   getSkillCastPlacementChains,
   resolveDodgeMarkerLastInputFrame,
 } from '../../../core/project/skillCastPlacement';
+import { MIN_COLLAPSIBLE_PREP_FRAMES } from '../timelineGeometry';
 
 export type EditableBattleResourceRule = keyof Pick<
   BattleDocument['resourceRules'],
   'maxSp' | 'initialSp' | 'spRecoveryPerSecond'
 >;
 
-/** 战前准备只改变现实时间轴的负向可视区，不平移以战斗帧保存的技能或标记。 */
+export function canCollapseTimelinePrep(scenario: ScenarioDocument): boolean {
+  return (
+    scenario.battle.prepFrames + (scenario.inheritance?.frame ?? 0) >= MIN_COLLAPSIBLE_PREP_FRAMES
+  );
+}
+
+/** 战前准备不平移技能或标记；短到放不下折叠栏时同时恢复展开视图。 */
 export function setBattlePrepFrames(
   scenario: ScenarioDocument,
   prepFrames: number,
@@ -37,8 +44,17 @@ export function setBattlePrepFrames(
   if (!Number.isInteger(prepFrames) || prepFrames < 0) {
     throw new RangeError('prepFrames must be a non-negative integer');
   }
-  if (scenario.battle.prepFrames === prepFrames) return scenario;
-  return { ...scenario, battle: { ...scenario.battle, prepFrames } };
+  const battle =
+    scenario.battle.prepFrames === prepFrames
+      ? scenario.battle
+      : { ...scenario.battle, prepFrames };
+  const editor =
+    prepFrames + (scenario.inheritance?.frame ?? 0) < MIN_COLLAPSIBLE_PREP_FRAMES &&
+    !scenario.editor.prepExpanded
+      ? { ...scenario.editor, prepExpanded: true }
+      : scenario.editor;
+  if (battle === scenario.battle && editor === scenario.editor) return scenario;
+  return { ...scenario, battle, editor };
 }
 
 /** 折叠只改变准备区的编辑投影，不改变任何技能、标记或模拟帧。 */
@@ -46,8 +62,9 @@ export function setTimelinePrepExpanded(
   scenario: ScenarioDocument,
   prepExpanded: boolean,
 ): ScenarioDocument {
-  if (scenario.editor.prepExpanded === prepExpanded) return scenario;
-  return { ...scenario, editor: { ...scenario.editor, prepExpanded } };
+  const allowedExpanded = prepExpanded || !canCollapseTimelinePrep(scenario);
+  if (scenario.editor.prepExpanded === allowedExpanded) return scenario;
+  return { ...scenario, editor: { ...scenario.editor, prepExpanded: allowedExpanded } };
 }
 
 function battleDurationContentFloor(scenario: ScenarioDocument): number {

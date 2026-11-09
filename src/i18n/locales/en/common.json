@@ -89,9 +89,12 @@
     }
   },
   "comboControl": {
-    "title": "Combo cooldown control",
     "cooldown": "Start all combo cooldowns",
+    "cooldownMenu": "Force cooldown",
+    "cooldownShort": "CD",
     "ready": "Reset all combo cooldowns",
+    "readyMenu": "Ready now",
+    "readyShort": "Ready",
     "hint": "Set team combo cooldowns without creating a combo window or casting a skill. Skills run before markers on the same frame."
   },
   "display": {
@@ -2393,10 +2396,10 @@
     "connectionSettings": "Connection Settings",
     "setSourcePort": "Set Output Point",
     "setTargetPort": "Set Input Point",
-    "globalOps": "Global Operations",
-    "comboCooldownControl": "Combo Cooldown",
-    "comboCooldownReadyAll": "Ready All Combo Cooldowns",
-    "comboCooldownStartAll": "Start All Combo Cooldowns",
+    "timelineOps": "Timeline actions",
+    "trackActions": "Track actions",
+    "timelineMarkers": "Timeline markers",
+    "teamCombo": "Team combos",
     "addCycleBoundary": "Add Cycle Boundary",
     "addSimulationStartline": "Add Simulation Startline",
     "removeSimulationStartline": "Remove Simulation Startline",

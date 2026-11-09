@@ -310,6 +310,7 @@ import {
   dissolveSkillCastGroups,
   insertSkillCastIntoGroup,
   resolveInitialUltimateEnergyPresetMode,
+  canCollapseTimelinePrep,
   setBattleDurationFrames,
   setBattlePrepFrames,
   setControlSwitchTrack,
@@ -946,7 +947,15 @@ const suppliedProject =
     : parseProjectDocument(props.initialProject, { gameDataRepository });
 if (suppliedProject !== undefined && !suppliedProject.ok)
   throw new Error('临时预览轴未通过项目校验');
-const initialProject = suppliedProject?.ok
+function expandShortPrepInProject(project: EndaxisProjectDocument): EndaxisProjectDocument {
+  const scenarios = project.scenarios.map(scenario =>
+    canCollapseTimelinePrep(scenario) ? scenario : setTimelinePrepExpanded(scenario, true),
+  );
+  return scenarios.every((scenario, index) => scenario === project.scenarios[index])
+    ? project
+    : { ...project, scenarios };
+}
+let initialProject = suppliedProject?.ok
   ? structuredClone(suppliedProject.value)
   : createEmptyProject({
       projectId: 'sample',
@@ -958,6 +967,7 @@ if (props.initialScenario !== undefined) {
   initialProject.activeScenarioId = initialScenario.id;
   initialProject.scenarios = [initialScenario];
 }
+initialProject = expandShortPrepInProject(initialProject);
 const projectSession = new ProjectEditorSession(initialProject);
 projectDefinitionLibrary.value = getProjectDefinitionLibrary(initialProject);
 const scenarioSession = new ActiveScenarioEditorSession(projectSession);
@@ -1033,6 +1043,10 @@ onMounted(() => {
   }
 });
 const scenario = shallowRef(scenarioSession.snapshot.scenario);
+const hasPrepHistory = computed(
+  () => scenario.value.battle.prepFrames + (scenario.value.inheritance?.frame ?? 0) > 0,
+);
+const canCollapsePrep = computed(() => canCollapseTimelinePrep(scenario.value));
 /** 折叠准备区只保留展开入口；此时不能把新的时间轴输入写进不可见历史。 */
 const minimumEditableInputFrame = computed(() => minimumEditableTimelineInputFrame(scenario.value));
 const timelinePrepPreviewFrames = ref<number | null>(null);
@@ -1326,10 +1340,11 @@ async function acceptOpenedProject(
   convertedLegacyProject = false,
   selection: ProjectImportSelection = { mode: 'replace', scenarioIds: [] },
 ): Promise<void> {
+  const preparedProject = expandShortPrepInProject(project);
   if (selection.mode === 'append') {
     const merged = appendProjectScenarios(
       projectSession.snapshot.project,
-      project,
+      preparedProject,
       selection.scenarioIds,
       () => `scenario:${crypto.randomUUID()}`,
     );
@@ -1339,7 +1354,7 @@ async function acceptOpenedProject(
     projectSession.commit('importScenarios', () => merged);
   } else {
     resetSimulationPublication();
-    projectSession.replaceProject(project);
+    projectSession.replaceProject(preparedProject);
   }
   selectedTrack.value = 0;
   clearTimelineSelection();
@@ -2898,6 +2913,14 @@ function timelineFramePx(frame: number, prepFrames = scenario.value.battle.prepF
     scenario.value.inheritance?.frame ?? 0,
   );
 }
+const displayedPrepWidthPx = computed(() =>
+  timelineFramePx(scenario.value.inheritance?.frame ?? 0, displayedTimelinePrepFrames.value),
+);
+const prepToggleLeftPx = computed(
+  () =>
+    TIMELINE_TRACK_HEADER_WIDTH +
+    (displayedPrepWidthPx.value < 18 ? -18 : displayedPrepWidthPx.value - 18),
+);
 function timelineFrameSpanPx(startFrame: number, durationFrames: number): number {
   return Math.max(0, timelineFramePx(startFrame + durationFrames) - timelineFramePx(startFrame));
 }
@@ -7036,6 +7059,7 @@ function setMobileGuideFrame(frame: number | null): void {
     :selected-track="selectedTrack"
     :selected-cast-id="selectedCastId"
     :prep-frames="scenario.battle.prepFrames"
+    :can-collapse-prep="canCollapsePrep"
     :duration-frames="scenario.battle.durationFrames"
     :prep-expanded="scenario.editor.prepExpanded"
     :minimum-editable-frame="minimumEditableInputFrame"
@@ -7444,7 +7468,9 @@ function setMobileGuideFrame(frame: number | null): void {
           class="timeline-surface"
           :class="{
             'is-library-placing': libraryPlacement !== null,
-            'is-history-collapsed': !scenario.editor.prepExpanded,
+            'is-history-collapsed': !scenario.editor.prepExpanded && hasPrepHistory,
+            'is-compact-prep':
+              scenario.editor.prepExpanded && hasPrepHistory && displayedPrepWidthPx < 28,
           }"
           :style="timelineSurfaceStyle"
           @mousemove="updateCursorGuide"
@@ -7454,6 +7480,7 @@ function setMobileGuideFrame(frame: number | null): void {
           <div class="corner-placeholder">
             <TimelineCornerToolbar
               :configuration-read-only="configurationReadOnly"
+              :prep-frames="scenario.battle.prepFrames + (scenario.inheritance?.frame ?? 0)"
               :snap-label="snapFrames === PRECISE_TIMELINE_SNAP_FRAMES ? '1f' : '0.1s'"
               :zoom-percent="timelineZoomPercent"
               :initial-gauge-mode="initialUltimateEnergyPresetMode"
@@ -7462,12 +7489,16 @@ function setMobileGuideFrame(frame: number | null): void {
                 initialGauge: t('timelineGrid.toolbar.initialGauge'),
                 snapPrecision: t('timelineGrid.toolbar.snapPrecision'),
                 zoom: 'SCALE',
+                prep: t(configurationReadOnly ? 'inheritance.boundary' : 'timelineGrid.prep.title'),
+                prepDuration: t('timelineGrid.prep.setDurationTitle'),
               }"
               @toggle-snap-precision="toggleSnapPrecision"
               @cycle-initial-gauge="cycleInitialUltimateEnergyPreset"
               @set-unified-initial-gauge="setUnifiedTrackInitialUltimateEnergy"
               @update-zoom-percent="updateTimelineZoomPercent"
               @set-zoom-percent="setTimelineZoomPercent"
+              @set-prep-frames="setTimelinePrepFrames"
+              @prep-info="openInheritanceInfo"
             />
           </div>
           <TimelineRuler
@@ -7486,12 +7517,12 @@ function setMobileGuideFrame(frame: number | null): void {
             :visible-left-px="effectViewportBucketPx"
             :visible-width-px="timelineViewportWidth"
             @seek="seekTimeline"
-            @prep-info="openInheritanceInfo"
             @resize-history="beginInheritedHistoryResize"
             @set-prep-frames="setTimelinePrepFrames"
             @set-duration-frames="setTimelineDurationFrames"
           />
           <div
+            v-if="hasPrepHistory && (!scenario.editor.prepExpanded || displayedPrepWidthPx >= 28)"
             class="timeline-battle-start-boundary"
             :class="{ 'is-prep-collapsed': !scenario.editor.prepExpanded }"
             :style="{
@@ -7508,10 +7539,7 @@ function setMobileGuideFrame(frame: number | null): void {
             @contextmenu="openInheritanceInfo"
           ></div>
           <div
-            v-if="
-              scenario.battle.prepFrames + (scenario.inheritance?.frame ?? 0) > 0 &&
-              !scenario.editor.prepExpanded
-            "
+            v-if="canCollapsePrep && !scenario.editor.prepExpanded"
             class="prep-collapsed-entry"
             :style="{ left: `${TIMELINE_TRACK_HEADER_WIDTH}px` }"
           >
@@ -7531,11 +7559,10 @@ function setMobileGuideFrame(frame: number | null): void {
             <span>{{ t('timelineGrid.prep.expand') }}</span>
           </div>
           <div
-            v-else-if="scenario.battle.prepFrames + (scenario.inheritance?.frame ?? 0) > 0"
+            v-else-if="canCollapsePrep"
             class="prep-expanded-collapse"
-            :style="{
-              left: `${TIMELINE_TRACK_HEADER_WIDTH + Math.max(0, timelineFramePx(scenario.inheritance?.frame ?? 0) - 18)}px`,
-            }"
+            :class="{ 'is-outside-prep': displayedPrepWidthPx < 18 }"
+            :style="{ left: `${prepToggleLeftPx}px` }"
           >
             <EaButton
               variant="ghost"
@@ -7738,7 +7765,6 @@ function setMobileGuideFrame(frame: number | null): void {
             :key="marker.id"
             class="timeline-marker team-event-marker"
             :class="{
-              'combo-cooldown-guide': true,
               'is-ready': marker.event.mode === 'ready',
               selected: isItemSelected('externalEvent', marker.id),
             }"
@@ -7762,16 +7788,8 @@ function setMobileGuideFrame(frame: number | null): void {
               )
             "
           >
-            <div class="combo-cooldown-marker">
-              <svg v-if="marker.event.mode === 'ready'" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20 11a8 8 0 1 1-2.3-5.7" />
-                <path d="M20 4v7h-7" />
-              </svg>
-              <svg v-else viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="8" />
-                <path d="M12 7v5l3 2" />
-              </svg>
-            </div>
+            <span>{{ formatGuideFrame(marker.frame) }}</span>
+            <b>{{ t(`comboControl.${marker.event.mode}Short`) }}</b>
           </div>
 
           <div class="track-stack">
@@ -8003,12 +8021,14 @@ function setMobileGuideFrame(frame: number | null): void {
                   :perfect-label="t('effects.name.perfectTiming')"
                 />
                 <div
+                  v-if="hasPrepHistory"
                   class="prep-zone"
                   :style="{
                     width: `${timelineFramePx(scenario.inheritance?.frame ?? 0, displayedTimelinePrepFrames)}px`,
                   }"
                 ></div>
                 <div
+                  v-if="hasPrepHistory"
                   class="battle-start-line"
                   :style="{
                     left: `${timelineFramePx(scenario.inheritance?.frame ?? 0, displayedTimelinePrepFrames)}px`,
@@ -9723,7 +9743,6 @@ button:disabled {
 .prep-collapsed-entry,
 .prep-expanded-collapse {
   position: absolute;
-  /* 与轨道分隔线重合时，准备区按钮优先命中；仍低于固定轨道头和标尺。 */
   z-index: 41;
   top: calc(60px + (100% - 60px) / 2);
   transform: translateY(-50%);
@@ -9736,6 +9755,10 @@ button:disabled {
 .prep-collapsed-entry {
   width: 18px;
   gap: 8px;
+}
+
+.prep-expanded-collapse.is-outside-prep {
+  z-index: 90;
 }
 
 .prep-collapsed-entry > span {
@@ -10016,11 +10039,18 @@ button:disabled {
 }
 
 .team-event-marker {
+  --combo-control-color: #f15b8a;
   top: 60px;
   bottom: 0;
   width: 1px;
-  border-left: 1px dashed #ff7875;
-  box-shadow: none;
+  background: color-mix(in srgb, var(--combo-control-color) 55%, transparent);
+  cursor: grab;
+  /* 竖线不抢准备区拖动，标签仍显示在轨道内容上方。 */
+  z-index: auto;
+}
+
+.team-event-marker.is-ready {
+  --combo-control-color: #20d9d2;
 }
 
 .cycle-boundary-marker::after,
@@ -10071,21 +10101,29 @@ button:disabled {
 .team-event-marker > span,
 .team-event-marker > b {
   position: absolute;
-  left: 4px;
+  z-index: 12;
+  left: 0;
   padding: 2px 4px;
-  background: rgb(80 16 20 / 92%);
-  color: #ffccc7;
   font-size: 10px;
-  font-weight: 500;
+  font-family: monospace;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: auto;
   white-space: nowrap;
 }
 
 .team-event-marker > span {
-  top: 2px;
+  top: 0;
+  border-radius: 0 4px 4px 0;
+  background: var(--combo-control-color);
+  color: #222;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 30%);
 }
 
 .team-event-marker > b {
-  top: 20px;
+  top: 28px;
+  color: var(--combo-control-color);
+  text-shadow: 0 0 2px color-mix(in srgb, var(--combo-control-color) 50%, transparent);
 }
 
 .track-switch-marker {
@@ -10250,20 +10288,11 @@ button:disabled {
 
 .timeline-marker.selected:not(.simulation-range-marker):not(.cycle-boundary-marker):not(
     .track-switch-marker
-  ) {
+  ):not(.team-event-marker) {
   outline: 2px solid var(--ea-gold);
   outline-offset: 2px;
 }
 
-.team-event-marker.combo-cooldown-guide {
-  --combo-control-color: #f15b8a;
-  width: 1px;
-  border: 0;
-  background: color-mix(in srgb, var(--combo-control-color) 55%, transparent);
-  cursor: grab;
-  /* 图标可高于 0 秒线命中区，竖线本身仍不抢准备区拖动。 */
-  z-index: auto;
-}
 .controlled-combo-cooldown-bar {
   position: absolute;
   top: calc(var(--timeline-action-top) + 57px);
@@ -10292,44 +10321,20 @@ button:disabled {
   background: currentColor;
   transform: translateY(-50%);
 }
-.team-event-marker.combo-cooldown-guide.is-ready {
-  --combo-control-color: #20d9d2;
-}
-.combo-cooldown-guide.selected {
+.team-event-marker.selected {
   width: 2px;
   background: #fff;
   box-shadow: 0 0 8px rgb(255 255 255 / 75%);
   outline: 0;
   z-index: 31;
 }
-.combo-cooldown-marker {
-  position: absolute;
-  z-index: 12;
-  top: 0;
-  left: 50%;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  color: #161616;
-  background: var(--combo-control-color);
-  border: 1px solid color-mix(in srgb, var(--combo-control-color) 72%, #fff);
-  transform: translateX(-50%);
-  box-shadow: 0 2px 6px rgb(0 0 0 / 45%);
-}
-.combo-cooldown-guide.selected .combo-cooldown-marker {
-  color: #111;
+.team-event-marker.selected > span {
   background: #fff;
-  border-color: #fff;
+  color: #111;
 }
-.combo-cooldown-marker svg {
-  width: 15px;
-  height: 15px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.team-event-marker.selected > b {
+  color: #fff;
+  text-shadow: 0 0 2px rgb(255 255 255 / 80%);
 }
 
 .simulation-panel {
@@ -10472,6 +10477,11 @@ button:disabled {
   background: var(--ea-prep-fill);
   z-index: 0;
   pointer-events: none;
+}
+
+/* 短准备区按真实帧宽显示，但加深底色，避免窄色带在轨道背景中消失。 */
+.timeline-surface.is-compact-prep .track-lane .prep-zone {
+  background: color-mix(in srgb, var(--ea-prep-fill) 75%, var(--ea-mark-strong) 25%);
 }
 
 .battle-start-line {

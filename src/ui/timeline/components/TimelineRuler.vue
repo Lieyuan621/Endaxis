@@ -38,7 +38,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   seek: [frame: number];
-  prepInfo: [event: MouseEvent];
   resizeHistory: [event: PointerEvent];
   setPrepFrames: [frames: number];
   setDurationFrames: [frames: number];
@@ -46,17 +45,13 @@ const emit = defineEmits<{
 const { t } = useI18n({ useScope: 'global' });
 const prepPreview = ref<number | null>(null);
 const durationPreview = ref<number | null>(null);
-const prepEditorOpen = ref(false);
 const durationEditorOpen = ref(false);
-usePopoverInteractionBoundary(interactionSession, () => prepEditorOpen.value, closePrepEditor);
 usePopoverInteractionBoundary(
   interactionSession,
   () => durationEditorOpen.value,
   closeDurationEditor,
 );
-const prepDraft = ref<number>();
 const durationDraftSeconds = ref<number>();
-const prepInput = ref<{ focus: (options?: FocusOptions) => void } | null>(null);
 const durationInput = ref<{ focus: (options?: FocusOptions) => void } | null>(null);
 let stopResize: (() => void) | null = null;
 const activePrepFrames = computed(() => prepPreview.value ?? props.prepFrames);
@@ -172,33 +167,9 @@ function beginResize(kind: 'prep' | 'duration', event: PointerEvent): void {
   window.addEventListener('pointercancel', cancel);
 }
 
-function openPrepEditor(event: MouseEvent): void {
-  if (props.prepReadOnly) {
-    emit('prepInfo', event);
-    return;
-  }
-  prepDraft.value = props.prepFrames;
-  prepEditorOpen.value = true;
-  durationEditorOpen.value = false;
-  void nextTick(() => prepInput.value?.focus({ preventScroll: true }));
-}
-
-function applyPrepDraft(): void {
-  if (!prepEditorOpen.value) return;
-  const frames = Number(prepDraft.value);
-  prepEditorOpen.value = false;
-  if (Number.isInteger(frames) && frames >= 0) emit('setPrepFrames', frames);
-}
-
-function closePrepEditor(): void {
-  prepDraft.value = props.prepFrames;
-  prepEditorOpen.value = false;
-}
-
 function openDurationEditor(): void {
   durationDraftSeconds.value = props.durationFrames / PROJECT_FPS;
   durationEditorOpen.value = true;
-  prepEditorOpen.value = false;
   void nextTick(() => durationInput.value?.focus({ preventScroll: true }));
 }
 
@@ -240,7 +211,10 @@ function seek(event: MouseEvent): void {
       <div class="prep-zone" :style="{ width: `${prepWidth}px` }"></div>
       <div
         class="operation-layer"
-        :style="{ clipPath: prepExpanded ? undefined : 'inset(0 0 0 18px)' }"
+        :style="{
+          clipPath:
+            !prepExpanded && prepFrames + (prepEndFrame ?? 0) > 0 ? 'inset(0 0 0 18px)' : undefined,
+        }"
       >
         <span
           v-for="operation in operationMarkers"
@@ -272,44 +246,14 @@ function seek(event: MouseEvent): void {
         <span v-if="tick.label" class="tick-label">{{ tick.label }}</span>
       </span>
       <span
+        v-if="prepFrames + (prepEndFrame ?? 0) > 0 && (!prepExpanded || prepWidth >= 28)"
         class="axis-boundary axis-boundary--prep"
         :class="{ 'is-prep-collapsed': !prepExpanded }"
         :style="{ left: `${prepWidth}px` }"
+        :title="t(prepReadOnly ? 'inheritance.boundary' : 'timelineGrid.prep.setDurationTitle')"
         @pointerdown="beginResize('prep', $event)"
         @click.stop
-      >
-        <EaButton
-          variant="ghost"
-          size="sm"
-          icon-only
-          type="button"
-          :title="t(prepReadOnly ? 'inheritance.boundary' : 'timelineGrid.prep.setDurationTitle')"
-          @pointerdown.stop
-          @click.stop="openPrepEditor"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="14"
-            height="14"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <template v-if="prepReadOnly">
-              <circle cx="6" cy="5" r="2"></circle>
-              <circle cx="18" cy="19" r="2"></circle>
-              <path d="M6 7v5a7 7 0 0 0 7 7h3M13 5h7m-3-3 3 3-3 3"></path>
-            </template>
-            <template v-else>
-              <circle cx="12" cy="12" r="9"></circle>
-              <path d="M12 7v6l4 2"></path>
-            </template>
-          </svg>
-        </EaButton>
-      </span>
+      ></span>
       <span
         class="axis-boundary axis-boundary--end"
         :style="{ left: `${totalWidth}px` }"
@@ -343,26 +287,8 @@ function seek(event: MouseEvent): void {
         <b>{{ Math.round(activeDurationFrames / PROJECT_FPS) }}s</b>
       </span>
       <form
-        v-if="prepEditorOpen"
-        class="axis-editor"
-        :style="{ left: `${prepWidth + 8}px` }"
-        @submit.prevent="applyPrepDraft"
-        @pointerdown.stop
-      >
-        <EaNumberInput
-          ref="prepInput"
-          v-model="prepDraft"
-          size="sm"
-          controls-position="right"
-          :min="0"
-          :step="1"
-          @blur="applyPrepDraft"
-        />
-        <span>f</span>
-      </form>
-      <form
         v-if="durationEditorOpen"
-        class="axis-editor axis-editor--end"
+        class="axis-editor"
         :style="{ left: `${Math.max(8, totalWidth - 88)}px` }"
         @submit.prevent="applyDurationDraft"
         @pointerdown.stop
@@ -594,10 +520,10 @@ function seek(event: MouseEvent): void {
   background: rgb(0 229 255 / 55%);
 }
 
-.axis-boundary button {
+.axis-boundary--end button {
   position: absolute;
   top: 6px;
-  left: -12px;
+  left: -15px;
   width: 18px;
   height: 18px;
   display: grid;
@@ -611,30 +537,16 @@ function seek(event: MouseEvent): void {
   transition: color 0.12s ease;
 }
 
-.axis-boundary button:hover {
+.axis-boundary--end button:hover {
   color: var(--ea-gold);
 }
 
-.axis-boundary button:focus-visible {
+.axis-boundary--end button:focus-visible {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ea-gold) 35%, transparent);
-}
-
-.axis-boundary--end button {
-  left: -15px;
 }
 
 .axis-boundary--prep.is-prep-collapsed {
   cursor: default;
-}
-
-.axis-boundary--prep.is-prep-collapsed button {
-  top: auto;
-  bottom: 20px;
-  left: -11px;
-}
-
-.axis-boundary--end::before {
-  background: rgb(0 229 255 / 55%);
 }
 
 .axis-boundary b {

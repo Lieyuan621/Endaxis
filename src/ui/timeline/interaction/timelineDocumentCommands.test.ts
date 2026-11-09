@@ -35,6 +35,7 @@ import {
   setControlSwitchTrack,
   setBattleDurationFrames,
   setBattlePrepFrames,
+  setTimelinePrepExpanded,
   setTrackGear,
   setTrackOperator,
   setTrackWeapon,
@@ -67,6 +68,15 @@ describe('battle axis commands', () => {
     );
     expect(setBattlePrepFrames(updated, 60)).toBe(updated);
     expect(() => setBattlePrepFrames(original, -1)).toThrow('non-negative integer');
+  });
+
+  it('keeps prep shorter than the collapsed strip expanded', () => {
+    const original = scenario();
+    const short = setBattlePrepFrames(original, 5);
+    expect(short.editor.prepExpanded).toBe(true);
+    expect(setTimelinePrepExpanded(short, false)).toBe(short);
+    const wideEnough = setBattlePrepFrames(short, 11);
+    expect(setTimelinePrepExpanded(wideEnough, false).editor.prepExpanded).toBe(false);
   });
 
   it('shortens the battle axis only as far as its latest stable timeline object', () => {

@@ -273,7 +273,25 @@ function changeSummary(node: CombatObjectNode): string | undefined {
 </script>
 
 <template>
-  <EaButton size="sm" class="open-origin-graph" @click="open = true">{{ title }} ↗</EaButton>
+  <EaButton size="sm" class="open-origin-graph" @click="open = true">
+    <span>{{ title }}</span>
+    <svg
+      class="open-origin-graph__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M7.2 6.2 16.8 11M7.2 17.8 16.8 13" />
+      <circle cx="5" cy="5" r="2.2" />
+      <circle cx="5" cy="19" r="2.2" />
+      <circle cx="19" cy="12" r="2.2" />
+    </svg>
+  </EaButton>
   <InputRegionBoundary label="CombatObjectOriginGraph" :active="open" modal>
     <EaDialog
       v-model="open"
@@ -493,6 +511,11 @@ function changeSummary(node: CombatObjectNode): string | undefined {
 <style scoped>
 .open-origin-graph {
   margin-top: var(--ea-space-4);
+}
+.open-origin-graph__icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
 }
 .graph-toolbar,
 .zoom-controls {

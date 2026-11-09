@@ -54,7 +54,10 @@ test('拖入 JSON 项目文件会打开导入确认，并能覆盖当前项目',
   const downloadPromise = page.waitForEvent('download');
   await page.locator('.export-dialog-shell .export-action-card').first().click();
   const download = await downloadPromise;
-  const json = await readFile((await download.path())!, 'utf8');
+  const exported = JSON.parse(await readFile((await download.path())!, 'utf8'));
+  exported.scenarios[0].battle.prepFrames = 5;
+  exported.scenarios[0].editor.prepExpanded = false;
+  const json = JSON.stringify(exported);
   await page.keyboard.press('Escape');
 
   await page.getByRole('button', { name: '重命名当前方案', exact: true }).click();
@@ -78,6 +81,9 @@ test('拖入 JSON 项目文件会打开导入确认，并能覆盖当前项目',
   await importDialog.getByRole('radio', { name: '完整覆盖' }).click();
   await importDialog.getByRole('button', { name: '确认完整覆盖' }).click();
   await expect(page.locator('.ts-title-wrapper')).toHaveAttribute('title', '方案 1');
+  await expect(page.locator('.prep-tool-button')).toContainText('5f');
+  await expect(page.locator('.timeline-surface')).not.toHaveClass(/is-history-collapsed/);
+  await expect(page.locator('.prep-collapsed-entry, .prep-expanded-collapse')).toHaveCount(0);
 });
 
 test('方案各自保留会话内滚动和缩放，新方案使用默认视图', async ({ page }) => {
@@ -102,6 +108,100 @@ test('方案各自保留会话内滚动和缩放，新方案使用默认视图',
   await page.locator('.ts-tab-item').first().click();
   await expect(page.locator('.zoom-value')).toHaveText('100%');
   await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBe(0);
+});
+
+test('展开战前准备区后仍能显示并放置技能', async ({ page }) => {
+  await openPerlica(page);
+  await page.locator('.prep-collapsed-entry button').click();
+  await expect(page.locator('.timeline-surface')).not.toHaveClass(/is-history-collapsed/);
+  await expect(page.locator('.prep-expanded-collapse button')).toBeVisible();
+  const prepWidth = await page
+    .locator('.track-lane .prep-zone')
+    .first()
+    .evaluate(element => element.getBoundingClientRect().width);
+  expect(prepWidth).toBeGreaterThan(50);
+
+  await startPlacement(page);
+  const lane = await box(page.locator('.track-lane').first());
+  await page.mouse.move(lane.x + Math.min(70, prepWidth / 2), lane.y + 25, { steps: 20 });
+  await expect
+    .poll(async () => (await box(page.locator('#custom-drag-ghost'))).x)
+    .toBeLessThan(lane.x + prepWidth);
+  await page.mouse.up();
+  await expect(page.locator('.timeline-action-block')).toHaveCount(4);
+  const firstBlock = await box(page.locator('.timeline-action-block').first());
+  expect(firstBlock.x).toBeLessThan(lane.x + prepWidth);
+});
+
+test('准备时长为零或极短时，时轴原点没有遮挡控件', async ({ page }) => {
+  await page.goto('/timeline');
+  const prepButton = page.locator('.prep-tool-button');
+  const setPrepFrames = async (frames: number) => {
+    await prepButton.click();
+    await page.locator('.prep-popover input').fill(String(frames));
+    await page.locator('.prep-popover input').press('Enter');
+  };
+  await setPrepFrames(0);
+  await expect(page.locator('.prep-collapsed-entry, .prep-expanded-collapse')).toHaveCount(0);
+  await expect(page.locator('.axis-boundary--prep')).toHaveCount(0);
+  await expect(prepButton).toContainText('0f');
+  await expect(prepButton).toBeInViewport({ ratio: 1 });
+  expect(
+    await page
+      .locator('.track-lane')
+      .first()
+      .evaluate(element => getComputedStyle(element).clipPath),
+  ).toBe('none');
+  expect(
+    await page.locator('.operation-layer').evaluate(element => getComputedStyle(element).clipPath),
+  ).toBe('none');
+
+  await setPrepFrames(5);
+  await expect(prepButton).toContainText('5f');
+  await expect(page.locator('.prep-collapsed-entry, .prep-expanded-collapse')).toHaveCount(0);
+  await expect(page.locator('.timeline-surface')).not.toHaveClass(/is-history-collapsed/);
+  await expect(page.locator('.timeline-surface')).toHaveClass(/is-compact-prep/);
+  await expect(page.locator('.axis-boundary--prep')).toHaveCount(0);
+  const shortPrep = page.locator('.track-lane .prep-zone').first();
+  await expect(shortPrep).toBeVisible();
+  expect(
+    await shortPrep.evaluate(element => element.getBoundingClientRect().width),
+  ).toBeGreaterThan(0);
+  await expect(page.locator('.track-lane .battle-start-line').first()).toBeVisible();
+  await expect(prepButton).toBeInViewport({ ratio: 1 });
+
+  await setPrepFrames(10);
+  await expect(page.locator('.prep-collapsed-entry, .prep-expanded-collapse')).toHaveCount(0);
+  await expect(shortPrep).toBeVisible();
+  await setPrepFrames(11);
+  await page.locator('.prep-expanded-collapse button').click();
+  await expect(page.locator('.timeline-surface')).toHaveClass(/is-history-collapsed/);
+  await page.locator('.prep-collapsed-entry button').click();
+  await expect(page.locator('.timeline-surface')).not.toHaveClass(/is-history-collapsed/);
+
+  await prepButton.click();
+  const popover = page.locator('.prep-popover');
+  await expect(popover).toBeVisible();
+  expect((await box(popover)).width).toBeLessThan(130);
+  await popover.locator('input').fill('150');
+  await popover.locator('input').press('Escape');
+  await expect(popover).toHaveCount(0);
+  await expect(prepButton).toContainText('11f');
+
+  await setPrepFrames(150);
+  await expect(page.locator('.prep-expanded-collapse button')).toBeVisible();
+  await prepButton.click();
+  await popover.locator('input').fill('151');
+  await page
+    .locator('.track-lane')
+    .first()
+    .click({ position: { x: 200, y: 25 } });
+  await expect(prepButton).toContainText('151f');
+  const width = await page
+    .locator('.track-lane .prep-zone')
+    .first()
+    .evaluate(element => element.getBoundingClientRect().width);
+  expect(width).toBeGreaterThan(50);
 });
 
 test('技能、闪避和切人共用选区，整体移动、右键删除和撤销', async ({ page }) => {

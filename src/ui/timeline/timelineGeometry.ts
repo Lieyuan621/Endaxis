@@ -3,6 +3,8 @@
  * 准备阶段显示在战斗第 0 帧左侧，但项目和模拟中的帧身份保持不变。
  */
 export const COLLAPSED_PREP_WIDTH_PX = 18;
+// 100% 缩放下 10 帧约 16.7px；至少 11 帧才放得下 18px 折叠栏。
+export const MIN_COLLAPSIBLE_PREP_FRAMES = 11;
 
 export function frameToTimelinePx(
   frame: number,

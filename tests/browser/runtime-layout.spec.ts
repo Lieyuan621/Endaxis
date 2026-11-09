@@ -100,11 +100,12 @@ test.describe('touch browser declaring desktop identity', () => {
     };
     const viewport = page.locator('.timeline-scroll');
     const block = page.locator('.timeline-action-block').last();
+    const initialScrollLeft = await viewport.evaluate(element => element.scrollLeft);
     const original = await box(block);
     await swipe(original.x + 10, original.y + 25, 60);
     await expect.poll(async () => (await box(block)).x - original.x).toBeCloseTo(60, 0);
     await expect(page.locator('.timeline-action-block.is-moving')).toHaveCount(0);
-    expect(await viewport.evaluate(element => element.scrollLeft)).toBe(0);
+    expect(await viewport.evaluate(element => element.scrollLeft)).toBe(initialScrollLeft);
     const positions = await page
       .locator('.timeline-action-block')
       .evaluateAll(elements => elements.map(element => (element as HTMLElement).style.left));

@@ -102,7 +102,9 @@ onBeforeUnmount(() => {
       @pointerdown.stop
       @contextmenu.prevent
     >
-      <header v-if="!inheritanceBoundary">{{ existingLabel ?? t('contextMenu.globalOps') }}</header>
+      <header v-if="!inheritanceBoundary">
+        {{ existingLabel ?? t('contextMenu.timelineOps') }}
+      </header>
       <template v-if="inheritanceBoundary">
         <EaButton
           type="button"
@@ -149,8 +151,7 @@ onBeforeUnmount(() => {
           <kbd>Ctrl+X</kbd>
         </EaButton>
         <EaButton
-          v-if="!existingLabel"
-          :disabled="!canPaste"
+          v-if="!existingLabel && canPaste"
           class="menu-item"
           role="menuitem"
           @click="$emit('paste')"
@@ -159,6 +160,7 @@ onBeforeUnmount(() => {
           <span>{{ t('common.paste') }}</span>
           <kbd>Ctrl+V</kbd>
         </EaButton>
+        <div v-if="!existingLabel && canPaste" class="divider"></div>
         <template v-if="existingLabel">
           <EaButton
             v-if="existingDodgeMode"
@@ -181,100 +183,109 @@ onBeforeUnmount(() => {
           </EaButton>
         </template>
         <template v-else>
-          <small class="menu-label">{{ t('comboControl.title') }}</small>
-          <EaButton
-            type="button"
-            class="menu-item combo-control-entry"
-            role="menuitem"
-            @click="$emit('controlComboCooldown', 'ready')"
-          >
-            <TimelineMarkerMenuIcon kind="comboReady" />
-            <span>{{ t('comboControl.ready') }}</span>
-          </EaButton>
-          <EaButton
-            type="button"
-            class="menu-item combo-control-entry"
-            role="menuitem"
-            @click="$emit('controlComboCooldown', 'cooldown')"
-          >
-            <TimelineMarkerMenuIcon kind="comboCooldown" />
-            <span>{{ t('comboControl.cooldown') }}</span>
-          </EaButton>
-          <div class="divider"></div>
-          <EaButton type="button" class="menu-item" role="menuitem" @click="$emit('addCycle')">
-            <TimelineMarkerMenuIcon kind="cycleBoundary" />
-            <span>{{ labels.addCycle }}</span>
-          </EaButton>
-          <EaButton
-            type="button"
-            class="menu-item"
-            role="menuitem"
-            @click="$emit('toggleSimulationStart')"
-          >
-            <TimelineMarkerMenuIcon kind="simulationStart" />
-            <span>{{
-              hasSimulationStart ? labels.removeSimulationStart : labels.addSimulationStart
-            }}</span>
-          </EaButton>
-          <EaButton
-            type="button"
-            class="menu-item"
-            role="menuitem"
-            @click="$emit('toggleSimulationEnd')"
-          >
-            <TimelineMarkerMenuIcon kind="simulationEnd" />
-            <span>{{
-              hasSimulationEnd ? labels.removeSimulationEnd : labels.addSimulationEnd
-            }}</span>
-          </EaButton>
-          <div class="menu-item has-submenu" role="menuitem" aria-haspopup="menu">
-            <TimelineMarkerMenuIcon kind="switchOperator" />
-            <span>{{ labels.switchOperator }}</span>
-            <EaChevronIcon class="arrow" :size="12" :stroke-width="3" />
-            <div class="submenu-list" role="menu">
-              <EaButton
-                v-for="target in switchTargets"
-                :key="target.trackIndex"
-                type="button"
-                class="submenu-list-item"
-                role="menuitem"
-                @click="$emit('addSwitch', target.trackIndex)"
-              >
-                <img v-if="target.avatar" :src="target.avatar" alt="" />
-                <span>{{ target.name }}</span>
-              </EaButton>
+          <div class="menu-group" role="group" :aria-label="t('contextMenu.trackActions')">
+            <small class="menu-label">{{ t('contextMenu.trackActions') }}</small>
+            <div class="menu-item has-submenu" role="menuitem" aria-haspopup="menu">
+              <TimelineMarkerMenuIcon kind="switchOperator" />
+              <span>{{ labels.switchOperator }}</span>
+              <EaChevronIcon class="arrow" :size="12" :stroke-width="3" />
+              <div class="submenu-list" role="menu">
+                <EaButton
+                  v-for="target in switchTargets"
+                  :key="target.trackIndex"
+                  type="button"
+                  class="submenu-list-item"
+                  role="menuitem"
+                  @click="$emit('addSwitch', target.trackIndex)"
+                >
+                  <img v-if="target.avatar" :src="target.avatar" alt="" />
+                  <span>{{ target.name }}</span>
+                </EaButton>
+              </div>
             </div>
+            <EaButton
+              type="button"
+              class="menu-item"
+              role="menuitem"
+              :disabled="!canTargetTrack"
+              @click="$emit('useConsumable')"
+            >
+              <TimelineMarkerMenuIcon kind="consumable" />
+              <span>{{ labels.useConsumable }}</span>
+            </EaButton>
+            <EaButton
+              type="button"
+              class="menu-item"
+              role="menuitem"
+              :disabled="!canTargetTrack"
+              @click="$emit('addDodge', 'dodge')"
+            >
+              <TimelineMarkerMenuIcon kind="dodge" />
+              <span>{{ labels.dodge }}</span>
+            </EaButton>
+            <EaButton
+              type="button"
+              class="menu-item"
+              role="menuitem"
+              :disabled="!canTargetTrack"
+              @click="$emit('addDodge', 'perfectDodge')"
+            >
+              <TimelineMarkerMenuIcon kind="perfectDodge" />
+              <span>{{ labels.perfectDodge }}</span>
+            </EaButton>
           </div>
-          <EaButton
-            type="button"
-            class="menu-item"
-            role="menuitem"
-            :disabled="!canTargetTrack"
-            @click="$emit('useConsumable')"
-          >
-            <TimelineMarkerMenuIcon kind="consumable" />
-            <span>{{ labels.useConsumable }}</span>
-          </EaButton>
-          <EaButton
-            type="button"
-            class="menu-item"
-            role="menuitem"
-            :disabled="!canTargetTrack"
-            @click="$emit('addDodge', 'dodge')"
-          >
-            <TimelineMarkerMenuIcon kind="dodge" />
-            <span>{{ labels.dodge }}</span>
-          </EaButton>
-          <EaButton
-            type="button"
-            class="menu-item"
-            role="menuitem"
-            :disabled="!canTargetTrack"
-            @click="$emit('addDodge', 'perfectDodge')"
-          >
-            <TimelineMarkerMenuIcon kind="perfectDodge" />
-            <span>{{ labels.perfectDodge }}</span>
-          </EaButton>
+          <div class="menu-group" role="group" :aria-label="t('contextMenu.timelineMarkers')">
+            <small class="menu-label">{{ t('contextMenu.timelineMarkers') }}</small>
+            <EaButton type="button" class="menu-item" role="menuitem" @click="$emit('addCycle')">
+              <TimelineMarkerMenuIcon kind="cycleBoundary" />
+              <span>{{ labels.addCycle }}</span>
+            </EaButton>
+            <EaButton
+              type="button"
+              class="menu-item"
+              role="menuitem"
+              @click="$emit('toggleSimulationStart')"
+            >
+              <TimelineMarkerMenuIcon kind="simulationStart" />
+              <span>{{
+                hasSimulationStart ? labels.removeSimulationStart : labels.addSimulationStart
+              }}</span>
+            </EaButton>
+            <EaButton
+              type="button"
+              class="menu-item"
+              role="menuitem"
+              @click="$emit('toggleSimulationEnd')"
+            >
+              <TimelineMarkerMenuIcon kind="simulationEnd" />
+              <span>{{
+                hasSimulationEnd ? labels.removeSimulationEnd : labels.addSimulationEnd
+              }}</span>
+            </EaButton>
+          </div>
+          <div class="menu-group" role="group" :aria-label="t('contextMenu.teamCombo')">
+            <small class="menu-label">{{ t('contextMenu.teamCombo') }}</small>
+            <EaButton
+              type="button"
+              class="menu-item"
+              role="menuitem"
+              :title="t('comboControl.ready')"
+              @click="$emit('controlComboCooldown', 'ready')"
+            >
+              <TimelineMarkerMenuIcon kind="comboReady" />
+              <span>{{ t('comboControl.readyMenu') }}</span>
+            </EaButton>
+            <EaButton
+              type="button"
+              class="menu-item"
+              role="menuitem"
+              :title="t('comboControl.cooldown')"
+              @click="$emit('controlComboCooldown', 'cooldown')"
+            >
+              <TimelineMarkerMenuIcon kind="comboCooldown" />
+              <span>{{ t('comboControl.cooldownMenu') }}</span>
+            </EaButton>
+          </div>
         </template>
       </fieldset>
     </div>
@@ -295,7 +306,7 @@ onBeforeUnmount(() => {
 .marker-context-menu {
   position: fixed;
   z-index: 10000;
-  min-width: 180px;
+  min-width: 212px;
   padding: 6px 0;
   border: 1px solid #444;
   border-radius: 6px;
@@ -313,7 +324,7 @@ onBeforeUnmount(() => {
   padding: 6px 12px;
   overflow: hidden;
   border-bottom: 1px solid #3a3a3a;
-  color: #777;
+  color: #aaa;
   font-size: 12px;
   font-weight: 600;
   text-overflow: ellipsis;
@@ -327,9 +338,14 @@ onBeforeUnmount(() => {
 .menu-label {
   display: block;
   max-width: 280px;
-  padding: 4px 12px;
-  color: #777;
+  padding: 5px 12px 3px;
+  color: #aaa;
   font-size: 11px;
+}
+.menu-group + .menu-group {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #3a3a3a;
 }
 .menu-item {
   position: relative;

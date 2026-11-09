@@ -407,7 +407,7 @@ function formatDurationFrames(frames: number): string {
     </span>
     <span
       v-for="port in connectionPorts"
-      v-show="showConnectionPorts"
+      v-if="showConnectionPorts"
       :key="port"
       class="connection-port"
       :class="[
@@ -446,7 +446,6 @@ function formatDurationFrames(frames: number): string {
   background-image: linear-gradient(var(--action-fill), var(--action-fill));
   color: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
   box-shadow: var(--action-edge-ring, none);
-  backdrop-filter: var(--action-backdrop-filter, blur(4px));
   font-family: inherit;
   font-size: inherit;
   font-weight: 700;
@@ -598,6 +597,7 @@ function formatDurationFrames(frames: number): string {
   );
   color: #777;
   opacity: 0.6;
+  backdrop-filter: var(--action-backdrop-filter, blur(4px));
 }
 
 .timeline-action-block.is-locked {

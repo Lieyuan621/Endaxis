@@ -89,9 +89,12 @@
     }
   },
   "comboControl": {
-    "title": "连携冷却",
     "cooldown": "所有连携强制进入冷却",
+    "cooldownMenu": "强制进入冷却",
+    "cooldownShort": "冷却",
     "ready": "所有连携冷却立即回转",
+    "readyMenu": "立即回转",
+    "readyShort": "回转",
     "hint": "设置全队连携冷却；不会创建连携窗口或触发技能释放。同帧先执行技能，再执行此标记。"
   },
   "display": {
@@ -2393,10 +2396,10 @@
     "connectionSettings": "连线设置",
     "setSourcePort": "设置 出点",
     "setTargetPort": "设置 入点",
-    "globalOps": "全局操作",
-    "comboCooldownControl": "连携冷却",
-    "comboCooldownReadyAll": "所有连携冷却立即回转",
-    "comboCooldownStartAll": "所有连携强制进入冷却",
+    "timelineOps": "时间轴操作",
+    "trackActions": "轨道操作",
+    "timelineMarkers": "时间轴标记",
+    "teamCombo": "全队连携",
     "addCycleBoundary": "添加循环分界线",
     "addSimulationStartline": "添加模拟起始线",
     "removeSimulationStartline": "移除模拟起始线",

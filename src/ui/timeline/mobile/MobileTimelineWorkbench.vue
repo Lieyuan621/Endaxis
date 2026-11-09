@@ -98,6 +98,7 @@ const props = defineProps<{
   selectedTrack: TrackIndex;
   selectedCastId: string | null;
   prepFrames: number;
+  canCollapsePrep: boolean;
   durationFrames: number;
   prepExpanded: boolean;
   minimumEditableFrame: number;
@@ -1072,6 +1073,7 @@ function setScenario(value: EaSelectValue | EaSelectValue[]): void {
                   >
                 </div>
                 <EaButton
+                  v-if="canCollapsePrep"
                   class="header-more-check-row header-more-check-row--compact mobile-prep-setting"
                   :pressed="prepExpanded"
                   @click="emit('togglePrep')"
@@ -1357,7 +1359,11 @@ function setScenario(value: EaSelectValue | EaSelectValue[]): void {
             :class="{ 'is-collapsed': !prepExpanded }"
             :style="{ height: `${prepHeight}px` }"
           >
-            <EaButton class="mobile-prep-center-label" size="sm" @click="emit('togglePrep')"
+            <EaButton
+              v-if="canCollapsePrep"
+              class="mobile-prep-center-label"
+              size="sm"
+              @click="emit('togglePrep')"
               ><span>{{ t('timelineGrid.prep.title') }}</span
               ><span class="mobile-prep-title-icon" :class="{ 'is-collapsed': !prepExpanded }"
                 ><svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
