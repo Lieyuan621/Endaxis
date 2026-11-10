@@ -266,6 +266,11 @@ import {
 } from '../../application/editor/projectTransfer';
 import { groupPlacedSkillSequence, placeLibrarySkillGroup } from './interaction/placeSkillGroup';
 import {
+  filterHideUiPlacementReceipts,
+  projectHideUiPlacementIntervals,
+  snapSkillPlacementDelta,
+} from './interaction/hideUiPlacement';
+import {
   findSkillCastGroupInsertion,
   matchingPublishedSkillCastIds,
   projectCompatibleHitFrames,
@@ -356,6 +361,7 @@ import {
   removeTimelineItems,
   timelineItemKey,
   type TimelineItemKind,
+  type TimelineMovePlan,
 } from './interaction/timelineItems';
 import { handleTimelineEditorShortcut } from './interaction/timelineKeyboardShortcuts';
 import { resolveTimelineLibraryDropFrame } from './interaction/timelineLibraryDropGeometry';
@@ -2747,6 +2753,7 @@ const {
   commit: commitScenario,
   simulate: ensureCurrentSimulation,
   blocked: () => ElMessage.warning(t('timelineGrid.action.locked')),
+  resolveDelta: resolveHideUiMoveDelta,
   dropped: (event, items) => {
     itemClickSequence = null;
     if (items.length === 1 && items[0]!.ref.kind === 'skill')
@@ -2849,15 +2856,55 @@ const mobileOperationHints = computed(() =>
     perfect: operation.perfect === true,
   })),
 );
+const ultimateTimeDilationCastIds = computed(
+  () =>
+    new Set(
+      viewModel.value.tracks.flatMap(track =>
+        track.skillCasts.filter(cast => cast.operationType === 'ultimate').map(cast => cast.id),
+      ),
+    ),
+);
 const publishedTimeDilationBands = computed(() => {
   if (simulationRun.value === null) return [];
-  return projectTimelineTimeDilationBands(publishedReceiptEntries.value, simulationRun.value.frame);
+  return projectTimelineTimeDilationBands(
+    publishedReceiptEntries.value,
+    simulationRun.value.frame,
+    ultimateTimeDilationCastIds.value,
+  );
 });
+const hideUiPlacementReceipts = computed(() =>
+  filterHideUiPlacementReceipts(
+    publishedReceiptEntries.value,
+    compatibleSkillCastReceiptIds.value,
+    scenario.value.inheritance?.frame ?? -Infinity,
+  ),
+);
+function hideUiPlacementIntervals(excluded: ReadonlySet<string> = new Set()) {
+  return projectHideUiPlacementIntervals(hideUiPlacementReceipts.value, excluded);
+}
+function resolveHideUiMoveDelta(plan: TimelineMovePlan, delta: number): number | null {
+  const skills = plan.items.filter(item => item.ref.kind === 'skill');
+  return snapSkillPlacementDelta(
+    skills.flatMap(item => (item.frame === undefined ? [] : [item.frame])),
+    Math.max(plan.minimumDelta, Math.min(plan.maximumDelta, delta)),
+    hideUiPlacementIntervals(new Set(skills.map(item => item.ref.id))),
+    plan.maximumDelta,
+  );
+}
+function moveEditableTimelineItems(
+  document: ScenarioDocument,
+  plan: TimelineMovePlan,
+  delta: number,
+): ScenarioDocument {
+  const snapped = resolveHideUiMoveDelta(plan, delta);
+  return snapped === null ? document : moveTimelineItems(document, plan, snapped).scenario;
+}
 const publishedTimeDilationPreviewFacts = computed(() =>
   prepareTimeDilationDragPreview(
     publishedReceiptEntries.value,
     publishedTimeDilationBands.value,
     simulationRun.value?.frame ?? 0,
+    ultimateTimeDilationCastIds.value,
   ),
 );
 const timeDilationBands = computed(() => {
@@ -3131,9 +3178,8 @@ function alignSelectedCastToTarget(event: PointerEvent, targetCastId: string): b
   });
   const plan = planTimelineItemMove(timelineItems.value, itemSelection.value.selectedIds);
   if (!plan) return true;
-  const changed = commitScenario(
-    'alignTimelineItems',
-    current => moveTimelineItems(current, plan, frame - source.startFrame).scenario,
+  const changed = commitScenario('alignTimelineItems', current =>
+    moveEditableTimelineItems(current, plan, frame - source.startFrame),
   );
   alignmentGuide.value = null;
   if (changed) ElMessage.success(alignmentPresentation(mode).result);
@@ -5159,9 +5205,8 @@ function setItemFrame(kind: TimelineItemKind, id: string, frame: number): void {
   const origin =
     item.frame ?? (kind === 'skill' ? displayedSkillCastStartFrames.value.get(id) : undefined);
   if (origin === undefined) return;
-  commitScenario(
-    'moveTimelineItems',
-    current => moveTimelineItems(current, plan, frame - origin).scenario,
+  commitScenario('moveTimelineItems', current =>
+    moveEditableTimelineItems(current, plan, frame - origin),
   );
 }
 function removeItem(kind: TimelineItemKind, id: string): boolean {
@@ -5726,6 +5771,14 @@ async function placeGroup(
   dropPoint?: { x: number; y: number },
 ): Promise<void> {
   startFrame = Math.max(minimumEditableInputFrame.value, startFrame);
+  const snappedStart = snapSkillPlacementDelta(
+    [startFrame],
+    0,
+    hideUiPlacementIntervals(),
+    scenario.value.battle.durationFrames - startFrame,
+  );
+  if (snappedStart === null) return;
+  startFrame += snappedStart;
   const operatorSlug = viewModel.value.tracks[trackIndex]?.operatorSlug ?? null;
   const operator =
     operatorSlug === null ? null : editorGameDataRepository.getOperator(operatorSlug);
@@ -6279,7 +6332,18 @@ function pasteClipboardAtTimelinePosition(frame?: number): boolean {
       : pointerMarkerFrame(timelinePointerClientX.value, 0, minimumFrame);
   const result = pasteTimelineActions(scenario.value, clipboard, frame ?? pasteFrame, ids);
   if (!result.itemRefs.length) return false;
-  if (!commitScenario('pasteTimelineItems', () => result.scenario)) return false;
+  const pastedItems = collectTimelineItems(result.scenario);
+  const pastePlan = planTimelineItemMove(
+    pastedItems,
+    new Set(result.itemRefs.map(timelineItemKey)),
+  );
+  const pasteDelta = pastePlan === null ? 0 : resolveHideUiMoveDelta(pastePlan, 0);
+  if (pasteDelta === null) return false;
+  const pastedScenario =
+    pastePlan === null
+      ? result.scenario
+      : moveTimelineItems(result.scenario, pastePlan, pasteDelta).scenario;
+  if (!commitScenario('pasteTimelineItems', () => pastedScenario)) return false;
   const keys = result.itemRefs.map(timelineItemKey);
   applyItemSelection({ selectedIds: new Set(keys), primaryId: keys.at(-1) ?? null });
   return true;
@@ -6344,9 +6408,8 @@ function nudgeSelectedActions(direction: -1 | 1): boolean {
     ElMessage.warning(t('timelineGrid.action.locked'));
     return true;
   }
-  commitScenario(
-    'moveTimelineItems',
-    current => moveTimelineItems(current, plan, direction * snapFrames.value).scenario,
+  commitScenario('moveTimelineItems', current =>
+    moveEditableTimelineItems(current, plan, direction * snapFrames.value),
   );
   return true;
 }

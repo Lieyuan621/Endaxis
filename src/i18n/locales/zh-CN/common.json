@@ -286,7 +286,7 @@
       "TimelineActionEnded": "时间轴动作结束",
       "TimelineActionStarted": "时间轴动作开始",
       "TimelineComboCooldownControlled": "连携冷却受控",
-      "UltimateInputBlockedByPresentation": "终结技输入被表现阶段阻止",
+      "SkillInputBlockedByPresentation": "技能输入被终结技演出阻止",
       "UltimatePresentationChanged": "终结技表现阶段变化"
     },
     "receiptDetails": {
@@ -513,7 +513,7 @@
       "interruptUnavailable": "{skill}尚不能在此时接续。",
       "interruptUnavailableNamed": "{current}尚不能被{skill}中断。",
       "interruptUnknown": "模拟暂时无法判断{skill}能否中断正在执行的技能。",
-      "duringUltimate": "终结技演出尚未结束，此时尚不能再次释放终结技。",
+      "duringUltimate": "终结技演出尚未结束，尚不能释放技能。",
       "cannotUseSkills": "干员受当前状态限制，尚不能释放技能。",
       "skills": "技能",
       "blockedByState": "干员{state}，尚不能释放{skill}。",

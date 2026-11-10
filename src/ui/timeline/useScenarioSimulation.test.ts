@@ -7,6 +7,12 @@ import { arclight, perlica, zhuangFangyi } from '../../data/operators';
 import { gameDataRepository } from '../../data/gameDataRepository';
 import { skillSettings } from '../../data/combat/skillSettings';
 import { placeSkillGroup } from './interaction/placeSkillGroup';
+import {
+  filterHideUiPlacementReceipts,
+  projectHideUiPlacementIntervals,
+  snapSkillPlacementDelta,
+} from './interaction/hideUiPlacement';
+import { matchingPublishedSkillCastIds } from './interaction/skillCastGroupInteraction';
 import { projectSkillCastActualDurationFrames } from '../../core/projection/timelineDisplayTime';
 import {
   ScenarioSimulationService,
@@ -608,13 +614,17 @@ describe('useScenarioSimulation', () => {
   );
 
   it.each([
-    [2, true],
+    [2, true, 'ultimate'],
     // Input precedes the update that would end Perlica's HideUI without a second cast.
-    [53, true],
-    [54, false],
+    [53, true, 'ultimate'],
+    [54, false, 'ultimate'],
+    [2, true, 'battleSkill'],
+    [54, false, 'battleSkill'],
+    [2, true, 'comboSkill'],
+    [54, false, 'comboSkill'],
   ] as const)(
-    'locates cross-track ultimate presentation diagnostics at authored frame %s (blocked %s)',
-    async (secondFrame, blocked) => {
+    'locates cross-track presentation diagnostics at authored frame %s (blocked %s, input %s)',
+    async (secondFrame, blocked, skillGroupKey) => {
       let initial = createPerlicaScenario();
       const firstTrack = initial.tracks[0]!;
       initial.tracks[1] = {
@@ -636,7 +646,7 @@ describe('useScenarioSimulation', () => {
         scenario: first.scenario,
         trackIndex: 1,
         operator: arclight,
-        skillGroupKey: 'ultimate',
+        skillGroupKey,
         startFrame: secondFrame,
         ids,
       });
@@ -659,12 +669,10 @@ describe('useScenarioSimulation', () => {
         expect(succeeded, String(harness.result.error.value)).toBe(true);
         const diagnostics = harness.result.diagnosticsByCastId.value;
         expect(diagnostics.get(first.skillCastIds[0]!) ?? []).not.toContain(
-          'ultimateInputDuringPresentation',
+          'skillInputDuringPresentation',
         );
         expect(
-          (diagnostics.get(second.skillCastIds[0]!) ?? []).includes(
-            'ultimateInputDuringPresentation',
-          ),
+          (diagnostics.get(second.skillCastIds[0]!) ?? []).includes('skillInputDuringPresentation'),
         ).toBe(blocked);
         const entries = harness.result.run.value!.receiptEntries;
         const firstPresentationEnd = entries.filter(
@@ -674,6 +682,17 @@ describe('useScenarioSimulation', () => {
             entry.data?.active === false,
         );
         expect(firstPresentationEnd).toHaveLength(1);
+        expect(firstPresentationEnd[0]!.data?.sourceCastId).toBe(first.skillCastIds[0]);
+        const presentationReceipts = filterHideUiPlacementReceipts(
+          entries,
+          matchingPublishedSkillCastIds(initial, initial),
+        );
+        const intervals = projectHideUiPlacementIntervals(presentationReceipts);
+        expect(intervals[0]?.startFrame).toBe(1);
+        expect(snapSkillPlacementDelta([2], 0, intervals)).toBeGreaterThan(0);
+        expect(
+          projectHideUiPlacementIntervals(filterHideUiPlacementReceipts(entries, new Set())),
+        ).toEqual([]);
         // A forced overlapping ultimate introduces its own time dilation. Do not
         // turn the isolated 52-local-frame interval into a fixed wall-time lock.
         if (blocked) expect(firstPresentationEnd[0]!.frame).toBeGreaterThanOrEqual(secondFrame);
@@ -692,7 +711,7 @@ describe('useScenarioSimulation', () => {
           }),
         );
         expect(
-          entries.filter(entry => entry.event === 'UltimateInputBlockedByPresentation'),
+          entries.filter(entry => entry.event === 'SkillInputBlockedByPresentation'),
         ).toHaveLength(blocked ? 1 : 0);
         expect(initial.tracks[1]!.skillCasts[0]!.placement.startFrame).toBe(secondFrame);
       } finally {

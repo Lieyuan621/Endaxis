@@ -1817,17 +1817,15 @@ describe('CombatRuntimeAssembly', () => {
     },
   );
 
-  it.each(['battleSkill', 'ultimate', undefined] as const)(
-    'diagnoses only evidenced ultimate input during another operator presentation: %s',
+  it.each(['basicAttack', 'battleSkill', 'comboSkill', 'ultimate', undefined] as const)(
+    'diagnoses player input during another operator presentation without suppressing simulation: %s',
     action => {
       const assembly = createAssembly([skill({ costs: [] })]);
       assembly.ultimatePresentation.setActive(true, 'another-operator', 'cinematic');
       expect(assembly.tryStartPlayerInput('operator', 'skill', undefined, action)).toBe(true);
       expect(
-        assembly.receipt.entries.filter(
-          entry => entry.event === 'UltimateInputBlockedByPresentation',
-        ),
-      ).toHaveLength(action === 'ultimate' ? 1 : 0);
+        assembly.receipt.entries.filter(entry => entry.event === 'SkillInputBlockedByPresentation'),
+      ).toHaveLength(1);
       expect(assembly.receipt.entries).toContainEqual(
         expect.objectContaining({ event: 'SkillStarted' }),
       );
@@ -1844,9 +1842,7 @@ describe('CombatRuntimeAssembly', () => {
     assembly.advanceFrame();
     expect(assembly.tryStartPlayerInput('operator', 'skill', undefined, 'ultimate')).toBe(true);
     expect(
-      assembly.receipt.entries.filter(
-        entry => entry.event === 'UltimateInputBlockedByPresentation',
-      ),
+      assembly.receipt.entries.filter(entry => entry.event === 'SkillInputBlockedByPresentation'),
     ).toHaveLength(0);
   });
 

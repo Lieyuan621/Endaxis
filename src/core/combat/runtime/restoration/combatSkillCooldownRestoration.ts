@@ -54,22 +54,7 @@ export function resolveCombatSkillCooldownConfiguration(
       `skill '${program.skillId}' belongs to '${program.operatorId}', expected '${operator.operatorId}'`,
     );
   }
-  const multiplier = (operator.panel?.combatModifiers ?? []).reduce((result, modifier) => {
-    if (
-      modifier.kind === 'skillCooldownMultiplier' &&
-      (Array.isArray(modifier.skillTypes)
-        ? modifier.skillTypes.includes(program.skillType)
-        : modifier.skillTypes === program.skillType)
-    ) {
-      return result * modifier.value;
-    }
-    return result;
-  }, 1);
-  if (!Number.isFinite(multiplier) || multiplier <= 0) {
-    throw new RangeError(
-      `skill '${program.skillId}' of '${operator.operatorId}' has invalid cooldown multiplier ${multiplier}`,
-    );
-  }
+  const multiplier = resolveCombatSkillCooldownMultiplier(operator, program.skillType);
   return program.cooldownFrames === undefined &&
     cooldownSkillType(program) !== 'normalSkill' &&
     cooldownSkillType(program) !== 'comboSkill'
@@ -78,6 +63,30 @@ export function resolveCombatSkillCooldownConfiguration(
         periodFrames: (program.cooldownFrames ?? 0) * multiplier,
         ...(program.costFrame === undefined ? {} : { commitFrame: program.costFrame }),
       };
+}
+
+/** 装备等构筑来源的固定倍率；与实际冷却配置、开场属性面板共用。 */
+export function resolveCombatSkillCooldownMultiplier(
+  operator: Pick<CombatOperatorProgram, 'operatorId' | 'panel'>,
+  skillType: CompiledSkillCooldownProgram['skillType'],
+): number {
+  const multiplier = (operator.panel?.combatModifiers ?? []).reduce((result, modifier) => {
+    if (
+      modifier.kind === 'skillCooldownMultiplier' &&
+      (Array.isArray(modifier.skillTypes)
+        ? modifier.skillTypes.includes(skillType)
+        : modifier.skillTypes === skillType)
+    ) {
+      return result * modifier.value;
+    }
+    return result;
+  }, 1);
+  if (!Number.isFinite(multiplier) || multiplier <= 0) {
+    throw new RangeError(
+      `operator '${operator.operatorId}' has invalid ${skillType} cooldown multiplier ${multiplier}`,
+    );
+  }
+  return multiplier;
 }
 
 /**

@@ -14,7 +14,12 @@ export class UltimatePresentationRuntime {
     return this.runtimeState.inUltimateCasting;
   }
 
-  setActive(active: boolean, sourceId: string, sourceActionId: string): void {
+  setActive(
+    active: boolean,
+    sourceId: string,
+    sourceActionId: string,
+    sourceCastId?: string,
+  ): void {
     // 原生为直接布尔写入，不擅自改成引用计数。
     this.runtimeState.inUltimateCasting = active;
     this.receipt.record({
@@ -22,7 +27,12 @@ export class UltimatePresentationRuntime {
       time: this.clock.time,
       event: 'UltimatePresentationChanged',
       sourceId,
-      data: { sourceActionId, active, showUi: !active },
+      data: {
+        sourceActionId,
+        active,
+        showUi: !active,
+        ...(sourceCastId === undefined ? {} : { sourceCastId }),
+      },
     });
   }
 }

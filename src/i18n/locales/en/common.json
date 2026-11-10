@@ -286,7 +286,7 @@
       "TimelineActionEnded": "Timeline action ended",
       "TimelineActionStarted": "Timeline action started",
       "TimelineComboCooldownControlled": "Combo cooldown controlled",
-      "UltimateInputBlockedByPresentation": "Ultimate input blocked by presentation",
+      "SkillInputBlockedByPresentation": "Skill input blocked by ultimate presentation",
       "UltimatePresentationChanged": "Ultimate presentation changed"
     },
     "receiptDetails": {
@@ -513,7 +513,7 @@
       "interruptUnavailable": "It is too early to follow up with {skill}.",
       "interruptUnavailableNamed": "{current} cannot yet be interrupted by {skill}.",
       "interruptUnknown": "The simulation cannot yet determine whether {skill} can interrupt the ongoing skill.",
-      "duringUltimate": "The ultimate animation has not finished. Another ultimate cannot be used yet.",
+      "duringUltimate": "Skills cannot be used while the ultimate presentation is active.",
       "cannotUseSkills": "The operator’s current status prevents skill use.",
       "skills": "skills",
       "blockedByState": "The operator {state} and cannot use {skill} yet.",

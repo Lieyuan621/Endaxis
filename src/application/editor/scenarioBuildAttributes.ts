@@ -10,6 +10,7 @@ import type { ScenarioDocument } from '../../core/project/schema';
 import { mapLevelEnemies } from '../../core/project/level';
 import { CombatAttributeSet } from '../../core/combat/attributes/combatAttributes';
 import { resolveOperatorAttack } from '../../core/combat/attributes/operatorAttackAttributes';
+import { resolveCombatSkillCooldownMultiplier } from '../../core/combat/runtime/restoration/combatSkillCooldownRestoration';
 import { createScenarioSimulationService } from '../simulation/createScenarioSimulationService';
 
 export interface BuildAttributeModifier {
@@ -92,6 +93,9 @@ export function resolveScenarioBuildAttributes(
             {
               ...capture(attributes),
               attack: resolveOperatorAttack(operator.panel, attributes).value,
+              comboSkillCooldownMultiplier:
+                resolveCombatSkillCooldownMultiplier(operator, 'comboSkill') *
+                attributes.get('ComboSkillCooldownScalar'),
             },
           ],
         ];

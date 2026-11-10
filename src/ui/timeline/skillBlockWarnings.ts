@@ -68,7 +68,7 @@ const warningKeys: Record<
   skillInputUnknown: 'inputUnknown',
   skillInterruptUnavailable: 'interruptUnavailable',
   skillInterruptUnknown: 'interruptUnknown',
-  ultimateInputDuringPresentation: 'duringUltimate',
+  skillInputDuringPresentation: 'duringUltimate',
   skillCommonTagUnavailable: 'cannotUseSkills',
   skillTypeTagUnavailable: 'cannotUseSkillType',
   attackDuringDashWindow: 'afterDodge',

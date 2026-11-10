@@ -2294,13 +2294,12 @@ export class CombatRuntimeAssembly {
         });
       }
     }
-    // OnPressUltimateSkillStart checks inUltimateCasting before requesting a cast.
-    // This is an input diagnostic, not a general skill lifecycle/interruption gate.
-    if (action === 'ultimate' && this.ultimatePresentation.inUltimateCasting) {
+    // 演出隐藏界面期间诊断新提交的玩家技能输入；不停止已运行的技能或派生效果。
+    if (this.ultimatePresentation.inUltimateCasting) {
       this.receipt.record({
         frame: this.clock.frame,
         time: this.clock.time,
-        event: 'UltimateInputBlockedByPresentation',
+        event: 'SkillInputBlockedByPresentation',
         sourceId: operatorId,
         data: { skillId: expectedSkillId, ...(castId === undefined ? {} : { castId }) },
       });

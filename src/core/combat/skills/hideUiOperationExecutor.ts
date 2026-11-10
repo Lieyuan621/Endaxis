@@ -18,7 +18,7 @@ export class HideUiOperationExecutor implements CombatOperationExecutor {
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
     if (step.kind !== 'hideUi') return this.delegate.execute(step, context);
-    this.#set(step.parameters.onlyBlockInput, true);
+    this.#set(step.parameters.onlyBlockInput, true, context);
     return true;
   }
 
@@ -27,16 +27,21 @@ export class HideUiOperationExecutor implements CombatOperationExecutor {
       this.delegate.end?.(step, context);
       return;
     }
-    this.#set(step.parameters.onlyBlockInput, false);
+    this.#set(step.parameters.onlyBlockInput, false, context);
   }
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     return this.delegate.evaluate(condition, context);
   }
 
-  #set(onlyBlockInput: boolean, active: boolean): void {
+  #set(onlyBlockInput: boolean, active: boolean, context?: CombatOperationContext): void {
     if (onlyBlockInput)
       throw new Error('HideUIAction.onlyBlockInput requires the CommonMask input protocol');
-    this.runtime.setActive(active, this.sourceId, this.sourceActionId);
+    this.runtime.setActive(
+      active,
+      this.sourceId,
+      this.sourceActionId,
+      context?.skillCastInfo?.originCastId,
+    );
   }
 }

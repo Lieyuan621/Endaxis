@@ -5,7 +5,8 @@ import { createEmptyScenario } from '../../../core/project/createProject';
 import { createInteractionSession } from '../../interaction/interactionSession';
 import { createEmptyTimelineActionSelection } from './timelineActionSelection';
 import { useTimelineItemMove } from './useTimelineItemMove';
-import { collectTimelineItems, timelineItemKey } from './timelineItems';
+import { collectTimelineItems, timelineItemKey, type TimelineMovePlan } from './timelineItems';
+import { snapSkillPlacementDelta } from './hideUiPlacement';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -14,6 +15,7 @@ function fixture(
   minimumInputFrame = 0,
   blocked = false,
   preparation: 'collapsed' | 'expanded' | null = null,
+  resolveDelta?: (plan: TimelineMovePlan, delta: number) => number | null,
 ) {
   const events = new EventTarget();
   class Lane {
@@ -89,6 +91,7 @@ function fixture(
       commit: commitScenario,
       simulate: simulateNow,
       blocked: vi.fn(),
+      resolveDelta,
     }),
   )!;
   const begin = () =>
@@ -132,11 +135,11 @@ function fixture(
     commitScenario,
     scope,
     move,
-    finish: () =>
+    finish: (clientX = 30) =>
       events.dispatchEvent(
         Object.assign(new Event('pointerup'), {
           pointerId: 1,
-          clientX: 30,
+          clientX,
           clientY: 100,
           stopPropagation() {},
         }),
@@ -145,6 +148,29 @@ function fixture(
 }
 
 describe('timeline item move lifecycle', () => {
+  it('snaps the preview and committed input before simulation, with one undo step', async () => {
+    const f = fixture(false, 0, false, null, (plan, delta) =>
+      snapSkillPlacementDelta(
+        plan.anchors.map(item => item.frame!),
+        delta,
+        [{ startFrame: 50, endFrame: 61 }],
+        plan.maximumDelta,
+      ),
+    );
+    try {
+      f.move(55);
+      expect(f.scenario.value.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(61);
+      expect(f.simulateNow).not.toHaveBeenCalled();
+      f.finish(55);
+      await vi.waitFor(() => expect(f.movement.gesture.value).toBeNull());
+      expect(f.session.snapshot.scenario.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(61);
+      expect(f.commitScenario).toHaveBeenCalledTimes(1);
+      expect(f.session.undo()).toBe(true);
+      expect(f.scenario.value).toBe(f.original);
+    } finally {
+      f.scope.stop();
+    }
+  });
   it('直接提交最终预览，不广播原位置，且正式编辑历史支持单次撤销重做', async () => {
     const f = fixture();
     const preview = f.scenario.value;

@@ -351,26 +351,14 @@ export class ScenarioSimulationService {
     return this.#createCombatSession(scenario, scenario.battle.durationFrames, initialFrame);
   }
 
-  /** 构筑面板只安装机制初始化；干员的战斗被动与配装触发行为不参与静态结算。 */
+  /** 完成正常开场初始化后供构筑面板读取；不推进时间或执行时间轴输入。 */
   createBuildAttributeRuntime(scenario: ScenarioDocument): CombatRuntimeAssembly {
     const input = this.#createStandardSimulationInput(scenario, 0);
     const prepared = prepareStandardPlayerDamageScenarioRuntime({
       ...input,
       options: { ...input.options, liveInputInitialFrame: 0 },
     });
-    const compiled = {
-      ...prepared.compiled,
-      operators: prepared.compiled.operators.map(operator => ({
-        ...operator,
-        initializationPrograms: operator.initializationPrograms?.filter(
-          program => program.sourceKind === 'scenarioMechanic',
-        ),
-        passivePrograms: [],
-        upgradeEventPrograms: [],
-        comboConditionPrograms: [],
-        equipmentContributions: [],
-      })),
-    };
+    const compiled = prepared.compiled;
     const assembly = new CombatRuntimeAssembly(compiled);
     if (!compiled.operators.length) {
       const mechanics = compileScenarioMechanics(scenario, input.options);

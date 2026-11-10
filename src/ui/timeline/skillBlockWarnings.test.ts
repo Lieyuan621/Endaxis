@@ -122,7 +122,7 @@ describe('技能块告警文案', () => {
       'skillInputUnknown',
       'skillInterruptUnavailable',
       'skillInterruptUnknown',
-      'ultimateInputDuringPresentation',
+      'skillInputDuringPresentation',
       'skillCommonTagUnavailable',
       'skillTypeTagUnavailable',
       'attackDuringDashWindow',

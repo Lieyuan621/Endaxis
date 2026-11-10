@@ -128,6 +128,7 @@ const statAttributes: Partial<Record<OperatorPanelStat, string>> = {
   criticalDamage: 'criticalDamageIncrease',
   artsIntensity: 'PhysicalAndSpellInflictionEnhance',
   ultimateEnergyGainEfficiency: 'UltimateSpGainScalar',
+  skillCooldownReduction: 'ComboSkillCooldownScalar',
 };
 function buildSources(stat: OperatorPanelStat): readonly BuildAttributeModifier[] {
   return (
@@ -150,7 +151,12 @@ function buildSourceValue(source: BuildAttributeModifier): string {
       ? source.value - 1
       : source.value;
   return multiplicative ||
-    ['criticalRate', 'criticalDamageIncrease', 'UltimateSpGainScalar'].includes(source.attribute)
+    [
+      'criticalRate',
+      'criticalDamageIncrease',
+      'UltimateSpGainScalar',
+      'ComboSkillCooldownScalar',
+    ].includes(source.attribute)
     ? signedPercent(value)
     : signedNumber(value);
 }
@@ -190,6 +196,7 @@ const displayPanel = computed(() => {
     criticalDamage: values.criticalDamageIncrease!,
     artsIntensity: values.PhysicalAndSpellInflictionEnhance!,
     ultimateEnergyGainEfficiency: values.UltimateSpGainScalar!,
+    skillCooldownReduction: 1 - values.comboSkillCooldownMultiplier!,
   };
 });
 const attributeRows = computed<readonly StatRow[]>(() =>

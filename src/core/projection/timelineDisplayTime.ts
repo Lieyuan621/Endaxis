@@ -111,12 +111,13 @@ export function projectSkillCastActualDurationFrames(
 
 /**
  * 把需要在整条时间轴上表达的时间实例配对为实际帧区间。
- * 只展示全局范围的公共命名曲线 ComboSkill 与终结技时间膨胀，不依据来源技能的类型推断。
+ * 展示全局 ComboSkill 曲线与终结技时间膨胀；终结技释放没有专用时间膨胀时展示其其他全局实例。
  * 其他实例仍参与模拟并校验生命周期，但不在轴上装饰。
  */
 export function projectTimelineTimeDilationBands(
   entries: readonly CombatReceiptEntry[],
   simulationEndFrame: number,
+  ultimateCastIds: ReadonlySet<string> = new Set(),
 ): readonly TimelineTimeDilationBand[] {
   if (!Number.isFinite(simulationEndFrame) || simulationEndFrame < 0) {
     throw new RangeError('simulation end frame must be a non-negative finite number');
@@ -124,10 +125,12 @@ export function projectTimelineTimeDilationBands(
   const active = new Map<number, Omit<TimelineTimeDilationBand, 'endFrame'>>();
   const bands: TimelineTimeDilationBand[] = [];
   const visible = new Set<number>();
+  const fallbackCastIds = timelineTimeDilationFallbackCastIds(entries, ultimateCastIds);
   for (const entry of entries) {
     if (entry.event === 'TimeDilationStarted') {
       const instance = readTimeDilationInstance(entry);
-      if (isTimelineTimeDilationVisible(entry)) visible.add(instance.instanceId);
+      if (isTimelineTimeDilationVisible(entry, fallbackCastIds, ultimateCastIds))
+        visible.add(instance.instanceId);
       if (active.has(instance.instanceId)) {
         throw new Error(`time dilation instance ${instance.instanceId} started more than once`);
       }
@@ -163,10 +166,36 @@ export function projectTimelineTimeDilationBands(
 }
 
 /** 开始及拒绝回执共用筛选，拖动预览不能把隐藏区间重新显示出来。 */
-export function isTimelineTimeDilationVisible(entry: CombatReceiptEntry): boolean {
+export function timelineTimeDilationFallbackCastIds(
+  entries: readonly CombatReceiptEntry[],
+  ultimateCastIds: ReadonlySet<string>,
+): ReadonlySet<string> {
+  const fallback = new Set(ultimateCastIds);
+  for (const entry of entries)
+    if (
+      entry.event === 'TimeDilationStarted' &&
+      entry.data?.kind === 'global' &&
+      entry.data.slot === 'ultimate' &&
+      typeof entry.data.sourceCastId === 'string'
+    )
+      fallback.delete(entry.data.sourceCastId);
+  return fallback;
+}
+
+export function isTimelineTimeDilationVisible(
+  entry: CombatReceiptEntry,
+  fallbackCastIds: ReadonlySet<string> = new Set(),
+  ultimateCastIds: ReadonlySet<string> = new Set(),
+): boolean {
+  const source = entry.data?.sourceCastId;
+  if (typeof source === 'string' && ultimateCastIds.has(source) && !fallbackCastIds.has(source))
+    return entry.data?.kind === 'global' && entry.data.slot === 'ultimate';
   return (
     entry.data?.kind === 'global' &&
-    (entry.data?.curveKey === 'ComboSkill' || entry.data?.slot === 'ultimate')
+    (entry.data?.curveKey === 'ComboSkill' ||
+      entry.data?.slot === 'ultimate' ||
+      (typeof entry.data?.sourceCastId === 'string' &&
+        fallbackCastIds.has(entry.data.sourceCastId)))
   );
 }
 

@@ -12,7 +12,7 @@ export const SKILL_AVAILABILITY_DIAGNOSTIC_REASONS = [
   'skillInputUnknown',
   'skillInterruptUnavailable',
   'skillInterruptUnknown',
-  'ultimateInputDuringPresentation',
+  'skillInputDuringPresentation',
   'skillCommonTagUnavailable',
   'skillTypeTagUnavailable',
   'attackDuringDashWindow',
@@ -48,7 +48,7 @@ export interface SkillAvailabilityDiagnostic {
 
 function readReason(event: string): SkillAvailabilityDiagnosticReason | undefined {
   if (event === 'SkillInputBlockedByDashWindow') return 'attackDuringDashWindow';
-  if (event === 'UltimateInputBlockedByPresentation') return 'ultimateInputDuringPresentation';
+  if (event === 'SkillInputBlockedByPresentation') return 'skillInputDuringPresentation';
   if (event === 'SkillInputBlockedByCommonTag') return 'skillCommonTagUnavailable';
   if (event === 'SkillInputBlockedByTypeTag') return 'skillTypeTagUnavailable';
   if (event === 'SkillCostUnavailableAtStart') return 'resourceUnavailable';

@@ -5,6 +5,120 @@ import { gameDataRepository } from '../../data/gameDataRepository';
 import { createTimelineSampleScenario } from '../../ui/timeline/timelineSampleScenario';
 import { firstScenarioEnemy } from '../../core/project/level';
 import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from '../../data/contingencyContract/contingencyContractAdapter';
+import { operatorDefinitions } from '../../data/operators';
+import { createScenarioSimulationService } from '../simulation/createScenarioSimulationService';
+
+it.each([false, true])('captures opening combo cooldown multiplier with gear set=%s', withGear => {
+  const scenario = createTimelineSampleScenario();
+  const track = scenario.tracks[0]!;
+  if (withGear) {
+    const gear = (suffix: string) => {
+      const gearSlug = `item_equip_t4_suit_combo_cd01_${suffix}`;
+      return {
+        gearSlug,
+        artificingLevels: gameDataRepository.getGear(gearSlug)!.traits.map(() => 0),
+      };
+    };
+    track.gears.armor = gear('body_01');
+    track.gears.gloves = gear('hand_01');
+    track.gears.accessory1 = gear('edc_01');
+  }
+  const fixed = withGear ? 0.85 : 1;
+  const before = resolveScenarioBuildAttributes(scenario, gameDataRepository);
+  expect(before.operators.get(track.id)?.comboSkillCooldownMultiplier).toBeCloseTo(fixed);
+  scenario.globalConfig.customBuff = {
+    stackingType: 'unlimited',
+    attributeModifiers: [
+      { attribute: 'ComboSkillCooldownScalar', slot: 'finalMultiplier', value: 0.75 },
+    ],
+  };
+  const result = resolveScenarioBuildAttributes(scenario, gameDataRepository);
+  expect(result.operators.get(track.id)?.ComboSkillCooldownScalar).toBe(0.75);
+  expect(result.operators.get(track.id)?.comboSkillCooldownMultiplier).toBeCloseTo(fixed * 0.75);
+  expect(result.operatorModifiers.get(track.id)).toContainEqual(
+    expect.objectContaining({
+      attribute: 'ComboSkillCooldownScalar',
+      slot: 'finalMultiplier',
+      value: 0.75,
+    }),
+  );
+});
+
+it('uses normal initialization and leaves frame-zero skill inputs pending', () => {
+  const scenario = createTimelineSampleScenario();
+  const owner = scenario.tracks[0]!;
+  owner.operator!.operatorSlug = 'gilberta';
+  owner.operator!.talentStates = { '0': 2 };
+  const cast = scenario.tracks[1]!.skillCasts[0]!;
+  cast.placement.startFrame = 0;
+  cast.presentation = { disabled: false };
+  const service = createScenarioSimulationService(gameDataRepository);
+  const panel = service.createBuildAttributeRuntime(scenario);
+  const normal = service.createInputCombatSession(scenario, 0).runtime;
+  expect(panel.stateGraph.operators).toEqual(normal.readState().operators);
+  expect(panel.receipt.entries.some(entry => entry.event === 'SkillStarted')).toBe(false);
+  expect(panel.clock.frame).toBe(0);
+  const original = resolveScenarioBuildAttributes(scenario, gameDataRepository);
+  scenario.tracks[1]!.skillCasts = [];
+  expect(resolveScenarioBuildAttributes(scenario, gameDataRepository)).toEqual(original);
+});
+
+it.each([
+  [0, 0, 1],
+  [1, 0, 1.04],
+  [2, 0, 1.07],
+  [2, 3, 1.12],
+])(
+  'includes Gilberta talent %s potential %s in eligible teammates static charging efficiency',
+  (talent, potential, expected) => {
+    const scenario = createTimelineSampleScenario();
+    const owner = scenario.tracks[0]!;
+    owner.operator!.operatorSlug = 'gilberta';
+    owner.operator!.talentStates = { '0': talent };
+    owner.operator!.potential = potential;
+    const caster = scenario.tracks[1]!;
+    caster.operator!.operatorSlug = 'perlica';
+    caster.initialState.ultimateEnergy = 0;
+    caster.skillCasts = [];
+    scenario.tracks[2] = {
+      ...structuredClone(caster),
+      id: 'track:ineligible',
+      operator: { ...structuredClone(caster.operator!), operatorSlug: 'arclight' },
+    };
+    scenario.tracks[3] = {
+      ...structuredClone(caster),
+      id: 'track:guard',
+      operator: { ...structuredClone(caster.operator!), operatorSlug: 'lifeng' },
+    };
+    const result = resolveScenarioBuildAttributes(scenario, gameDataRepository);
+    expect(result.operators.get(owner.id)?.UltimateSpGainScalar).toBeCloseTo(expected);
+    expect(result.operators.get(caster.id)?.UltimateSpGainScalar).toBeCloseTo(expected);
+    expect(result.operators.get('track:ineligible')?.UltimateSpGainScalar).toBe(1);
+    expect(result.operators.get('track:guard')?.UltimateSpGainScalar).toBeCloseTo(expected);
+  },
+);
+
+it.each(operatorDefinitions)(
+  'initializes static passive attributes for $slug without skill inputs',
+  definition => {
+    const scenario = createTimelineSampleScenario();
+    const track = scenario.tracks[0]!;
+    scenario.tracks = [track, null, null, null];
+    track.operator!.operatorSlug = definition.slug;
+    track.operator!.talentStates = Object.fromEntries(
+      definition.talents.map((talent, index) => [String(index), talent.levels]),
+    );
+    track.operator!.potential = definition.potentials.reduce(
+      (sum, potential) => sum + potential.levels,
+      0,
+    );
+    const attributes = resolveScenarioBuildAttributes(scenario, gameDataRepository).operators.get(
+      track.id,
+    )!;
+    expect(attributes).toBeDefined();
+    expect(Object.values(attributes).every(Number.isFinite)).toBe(true);
+  },
+);
 
 it('includes contract maximum health but ignores skill inputs and enemy death', () => {
   const scenario = createTimelineSampleScenario();
