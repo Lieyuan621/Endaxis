@@ -114,8 +114,9 @@ export function useScenarioSimulation(
         scenario,
         scenario.battle.simulationRange?.endFrame ?? scenario.battle.durationFrames,
       );
-      // 同一方案拖动期间允许发布已经完整算完的旧落点；它仍是一份完整快照。
-      // 项目切换、重置或更晚结果已发布时，旧任务不能再覆盖界面。
+      // 拖动期间若已有更新的落点在等待，旧任务的完整结果也无需发布：
+      // 保留上一份完整快照，避免每次 Worker 完成时反复重建所有监控与时间轴投影。
+      // 项目切换、重置或更晚结果已发布时，旧任务同样不能覆盖界面。
       const isCurrent =
         runId === latestRunId &&
         sameScenarioExceptGraphPresentation(options.scenario.value, scenario);
@@ -125,6 +126,7 @@ export function useScenarioSimulation(
         epoch === publicationEpoch &&
         scenario.id === options.scenario.value.id &&
         runId > lastPublishedRunId &&
+        (isCurrent || !rerunRequested) &&
         !returnedToPublishedScenario;
       if (!canPublish) return false;
       publishedState.value = Object.freeze({

@@ -296,7 +296,9 @@ test('多敌人显式启用、详情返回、折叠以及关闭限制', async ({
   await expect(page.locator('.enemy-overview')).toBeVisible();
   await sections.first().locator('.section-toggle').click();
   await expect(sections.first()).toHaveClass(/is-collapsed/);
+  await expect(sections.first().locator('.enemy-overview')).toHaveCount(0);
   await sections.first().locator('.section-toggle').click();
+  await expect(sections.first().locator('.enemy-overview')).toBeVisible();
   await page.locator('.life-avatar').first().click();
   await expect(sections).toHaveCount(2);
   await page.locator('.life-avatar').first().dblclick();

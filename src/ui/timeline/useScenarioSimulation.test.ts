@@ -299,7 +299,7 @@ describe('useScenarioSimulation', () => {
       harness.stop();
     }
   });
-  it('连续编辑期间发布已经完整算完的快照，重置后禁止旧结果复活', async () => {
+  it('连续编辑期间跳过过期快照，重置后禁止旧结果复活', async () => {
     const scenario = shallowRef(createPerlicaScenario());
     const requests: Array<(value: any) => void> = [];
     const fakeService = {
@@ -313,13 +313,12 @@ describe('useScenarioSimulation', () => {
         debounceMs: 10000,
       }),
     )!;
-    const oldScenario = scenario.value;
     const first = result.simulateNow();
     scenario.value = { ...scenario.value, name: 'moving' };
     const latest = result.simulateNow();
     requests[0]!({ frame: 1 });
     expect(await first).toBe(false);
-    expect(result.published.value?.scenario).toBe(oldScenario);
+    expect(result.published.value).toBeNull();
     expect(result.stale.value).toBe(true);
     result.resetPublication();
     requests[1]!({ frame: 2 });
@@ -404,6 +403,48 @@ describe('useScenarioSimulation', () => {
       expect(calls).toBe(3);
       expect(result.published.value?.scenario).toBe(finalScenario);
       expect(result.error.value).toBeNull();
+    } finally {
+      scope.stop();
+    }
+  });
+
+  it('拖动已有更新落点等待时不发布过期模拟', async () => {
+    const initial = createPerlicaScenario();
+    const scenario = shallowRef(initial);
+    const run = {
+      availabilityDiagnostics: [],
+      executionDiagnostics: [],
+      comboWindowDiagnostics: [],
+    };
+    let resolveOld!: (value: typeof run) => void;
+    let resolveLatest!: (value: typeof run) => void;
+    let calls = 0;
+    const fakeService = {
+      simulate: () => {
+        calls += 1;
+        if (calls === 1) return Promise.resolve(run);
+        return new Promise<typeof run>(resolve => {
+          if (calls === 2) resolveOld = resolve;
+          else resolveLatest = resolve;
+        });
+      },
+    } as unknown as ScenarioSimulationService;
+    const scope = effectScope();
+    const result = scope.run(() => useScenarioSimulation({ scenario, service: fakeService }))!;
+    try {
+      await waitFor(() => result.published.value !== null);
+      const initialPublication = result.published.value;
+      scenario.value = { ...initial, name: 'old position' };
+      await waitFor(() => calls === 2);
+      const latest = { ...initial, name: 'latest position' };
+      scenario.value = latest;
+      resolveOld(run);
+      await waitFor(() => calls === 3);
+      expect(result.published.value).toBe(initialPublication);
+      expect(result.stale.value).toBe(true);
+      resolveLatest(run);
+      await waitFor(() => result.published.value?.scenario === latest);
+      expect(result.stale.value).toBe(false);
     } finally {
       scope.stop();
     }

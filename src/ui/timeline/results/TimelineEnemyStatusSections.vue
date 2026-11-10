@@ -282,7 +282,7 @@ watch(
           />
           <strong>{{ props.labels[key] }}</strong>
         </EaButton>
-        <div v-show="!collapsed[key]" class="section-content">
+        <div v-if="!collapsed[key]" class="section-content">
           <slot :name="key" :compact="isSectionCompact(key)" />
         </div>
       </section>

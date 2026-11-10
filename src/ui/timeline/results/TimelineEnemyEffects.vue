@@ -61,6 +61,9 @@ const props = defineProps<{
   trackHeaderWidth: number;
   scrollLeft?: number;
   scrollState?: { readonly left: { readonly value: number } };
+  /** 分桶后的可见世界坐标；导出时留空以绘制全部效果。 */
+  visibleLeftPx?: number;
+  visibleRightPx?: number;
   prepEndFrame?: number;
 
   prepExpanded: boolean;
@@ -254,10 +257,9 @@ const buffs = computed(() =>
           ...new Set(buff.windows.map(member => resolveBuffDisplayName(member.buffId, { t, te }))),
         ].join(' / ')
       : baseTitle;
-    const icon =
-      (isPhysicalStatusRowBuff(buff) ? resolveImage(buff.icon) : props.icon?.(buff)) ??
-      resolveImage(buff.icon) ??
-      resolveImage(buff.icon);
+    const icon = isPhysicalStatusRowBuff(buff)
+      ? resolveImage(buff.icon)
+      : (props.icon?.(buff) ?? resolveImage(buff.icon));
     return {
       ...buff,
       isAttachment: props.attachmentBuffIds?.has(buff.buffId) ?? false,
@@ -317,12 +319,9 @@ const buffs = computed(() =>
             ...(member.endReason === undefined ? {} : { endReason: member.endReason }),
             ...(member.stackingType === undefined ? {} : { stackingType: member.stackingType }),
             ...(member.parentBuffId === undefined ? {} : { parentBuffId: member.parentBuffId }),
-            icon:
-              (isPhysicalStatusRowBuff(member)
-                ? resolveImage(member.icon)
-                : props.icon?.(member)) ??
-              resolveImage(member.icon) ??
-              resolveImage(member.icon),
+            icon: isPhysicalStatusRowBuff(member)
+              ? resolveImage(member.icon)
+              : (props.icon?.(member) ?? resolveImage(member.icon)),
             ...(memberModifierSummary === undefined
               ? {}
               : { modifierSummary: memberModifierSummary }),
@@ -332,6 +331,19 @@ const buffs = computed(() =>
     };
   }),
 );
+const visibleBuffs = computed(() => {
+  const left = props.visibleLeftPx;
+  const right = props.visibleRightPx;
+  if (left === undefined || right === undefined) return buffs.value;
+  return buffs.value.filter(buff => {
+    const start = pointX(buff.startFrame);
+    const end = Math.max(
+      pointX(buff.durationEndFrame ?? buff.endFrame) + iconSize.value,
+      start + buff.iconOffset + iconSize.value,
+    );
+    return end >= left && start <= right;
+  });
+});
 
 const lastHitSummary = computed(() => summarizeLastHitBuffs(buffs.value, props.snapshotFrame));
 const visibleLastHitBuffs = computed(() => lastHitSummary.value.buffs);
@@ -477,7 +489,7 @@ function scrollEffects(event: WheelEvent) {
           @activate="emit('open-entity-hit', hit)"
         />
         <div
-          v-for="buff in buffs"
+          v-for="buff in visibleBuffs"
           :key="buff.key"
           class="attachment-item"
           :style="{ left: `${buff.left}px`, top: `${buff.top}px` }"

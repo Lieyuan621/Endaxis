@@ -56,7 +56,10 @@ import { projectPublishedEnemyCurves } from './results/publishedEnemyCurves';
 import { projectCombatHudSnapshot } from '../../core/projection/combatHudSnapshot';
 import { projectDodgeMarkerDiagnostics } from '../../core/projection/dodgeMarkerDiagnostics';
 import { projectDodgeMarkerEffects } from '../../core/projection/dodgeMarkerEffects';
-import { projectEnemyEffectViz } from '../../core/projection/enemyEffectViz';
+import {
+  projectEnemyEffectViz,
+  projectEnemyEffectVizesForTargets,
+} from '../../core/projection/enemyEffectViz';
 import { elementalAttachments } from '../../data/buffs/elementalAttachments';
 import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from '../../data/contingencyContract/contingencyContractAdapter';
 import {
@@ -815,6 +818,9 @@ const visibleEffectLeftPx = computed(() =>
 );
 const visibleEffectRightPx = computed(
   () => effectViewportBucketPx.value + timelineViewportWidth.value + EFFECT_WINDOW_STEP_PX * 2,
+);
+const visibleEnemyEffectRightPx = computed(
+  () => effectViewportBucketPx.value + timelineViewportWidth.value + EFFECT_WINDOW_STEP_PX,
 );
 const displayedCompactTrackHeights = computed(() =>
   resolveCompactTrackHeights(
@@ -3392,13 +3398,21 @@ const mobilePhysicalStatusSegments = computed(() => {
 });
 
 /** 光标快照只消费已经生成的生命周期段，不回查或重算 Buff 运行时。 */
+// HUD 和专属状态只解释已发布的模拟。拖动草稿尚未产生新回执时，
+// 不让当前轴的 viewModel 变化反复重扫整份旧回执。
+const publishedOperatorTracks = computed(() => {
+  void operatorDefinitionRevision.value;
+  return (publishedSimulation.value?.scenario.tracks ?? []).flatMap(track =>
+    track?.operator ? [{ id: track.id, slug: track.operator.operatorSlug }] : [],
+  );
+});
+
 const combatHudInitialSkillSlots = computed(() =>
-  viewModel.value.tracks.flatMap(track => {
-    if (track.operatorInstanceId === null || track.operatorSlug === null) return [];
-    const definition = editorGameDataRepository.getOperator(track.operatorSlug);
+  publishedOperatorTracks.value.flatMap(track => {
+    const definition = editorGameDataRepository.getOperator(track.slug);
     return [
       {
-        operatorId: track.operatorInstanceId,
+        operatorId: track.id,
         slots: (definition?.skillSlots ?? []).map(slot => ({
           skillSlotKey: slot.key,
           currentSkillKey: slot.baseSkillKey,
@@ -3409,18 +3423,17 @@ const combatHudInitialSkillSlots = computed(() =>
 );
 
 const operatorStatusTimelineSources = computed(() =>
-  viewModel.value.tracks.flatMap(track => {
-    if (track.operatorInstanceId === null || track.operatorSlug === null) return [];
-    const operator = editorGameDataRepository.getOperator(track.operatorSlug);
+  publishedOperatorTracks.value.flatMap(track => {
+    const operator = editorGameDataRepository.getOperator(track.slug);
     const definition = operator?.passiveUi;
     return [
-      ...(definition === undefined ? [] : [{ operatorId: track.operatorInstanceId, definition }]),
+      ...(definition === undefined ? [] : [{ operatorId: track.id, definition }]),
       ...Object.entries(operator?.abilityEntityDefinitions ?? {}).flatMap(
         ([abilityEntityId, entity]) =>
           entity.presentation && !entity.presentation.damageDisplayBuffId
             ? [
                 {
-                  operatorId: track.operatorInstanceId!,
+                  operatorId: track.id,
                   definition: {
                     kind: 'abilityEntityCount' as const,
                     abilityEntityId,
@@ -3436,10 +3449,9 @@ const operatorStatusTimelineSources = computed(() =>
 
 /** 专属 UI 不只采样光标快照；非零状态还要保留完整生命周期供轨道展示。 */
 const combatHudOperatorPassiveUis = computed(() =>
-  viewModel.value.tracks.flatMap(track => {
-    if (track.operatorInstanceId === null || track.operatorSlug === null) return [];
-    const definition = editorGameDataRepository.getOperator(track.operatorSlug)?.passiveUi;
-    return definition ? [{ operatorId: track.operatorInstanceId, definition }] : [];
+  publishedOperatorTracks.value.flatMap(track => {
+    const definition = editorGameDataRepository.getOperator(track.slug)?.passiveUi;
+    return definition ? [{ operatorId: track.id, definition }] : [];
   }),
 );
 const operatorPassiveUiTimelineSegments = computed(() => {
@@ -3452,6 +3464,27 @@ const operatorPassiveUiTimelineSegments = computed(() => {
         operatorStatusTimelineSources.value,
       );
 });
+const enemyAbilityEntitySegments = computed(() =>
+  operatorPassiveUiTimelineSegments.value.filter(
+    segment => segment.kind === 'abilityEntityCount' && segment.placement === 'enemy',
+  ),
+);
+const enemyEffectLabels = computed(() => ({ burst: t('timeline.effect.burst') }));
+const enemyEffectHudLabels = computed(() => ({
+  status: t('resourceMonitor.modules.enemyStatus'),
+  compactStatus: t('resourceMonitor.modules.enemyStatusCompact'),
+  hp: t('timeline.simGuide.enemyHp'),
+  poise: t('timeline.simGuide.poise'),
+  recovering: t('timeline.simGuide.poiseRecovering'),
+  brokenEndWindow: t('timeline.simGuide.poiseBrokenEndWindow'),
+}));
+const enemyMonitorSectionLabels = computed(() => ({
+  affliction: showingEnemyOverview.value
+    ? t('timeline.enemies.title')
+    : t('resourceMonitor.modules.enemyStatus'),
+  poise: t('resourceMonitor.modules.stagger'),
+  sp: t('resourceMonitor.modules.sp'),
+}));
 
 /** 旧版底部摘要固定取最后一次敌人受伤时刻，而不是跟随隐藏的编辑光标。 */
 const collapsedMonitorSectionCount = ref(0);
@@ -3611,23 +3644,17 @@ const positionedBuffsByTargetAndPlacement = computed(() => {
   return partitions;
 });
 
-const enemyOverviewEffects = computed(
-  () =>
+const enemyOverviewEffects = computed(() =>
+  projectEnemyEffectVizesForTargets(
+    publishedReceiptEntries.value,
+    simulationRun.value?.frame ?? 0,
     new Map(
-      enemyOverviewRows.value.map(enemy => {
-        const viz = projectEnemyEffectViz(
-          publishedReceiptEntries.value,
-          simulationRun.value?.frame ?? 0,
-          new Map(
-            [...publishedOperators.value.values()].flatMap(operator =>
-              Object.entries(operator.abilityEntityDamageBuffs ?? {}),
-            ),
-          ),
-          enemy.id,
-        );
-        return [enemy.id, viz] as const;
-      }),
+      [...publishedOperators.value.values()].flatMap(operator =>
+        Object.entries(operator.abilityEntityDamageBuffs ?? {}),
+      ),
     ),
+    enemyOverviewRows.value.map(enemy => enemy.id),
+  ),
 );
 
 const enemyOverviewStatuses = computed(
@@ -8218,6 +8245,8 @@ function setMobileGuideFrame(frame: number | null): void {
                   v-for="cast in track.skillCasts"
                   :key="cast.id"
                   :action-id="cast.id"
+                  :visible-left-px="renderAllTimelineEffects ? undefined : visibleEffectLeftPx"
+                  :visible-right-px="renderAllTimelineEffects ? undefined : visibleEffectRightPx"
                   :label="timelineCastLabel(cast, track)"
                   :operation-type="cast.operationType"
                   :left="timelineFramePx(castActualStartFrame(cast.id, cast.startFrame))"
@@ -8367,13 +8396,7 @@ function setMobileGuideFrame(frame: number | null): void {
             :overview="showingEnemyOverview"
             @collapsed-count-change="collapsedMonitorSectionCount = $event"
             :expand-all-token="expandAllToken"
-            :labels="{
-              affliction: showingEnemyOverview
-                ? t('timeline.enemies.title')
-                : t('resourceMonitor.modules.enemyStatus'),
-              poise: t('resourceMonitor.modules.stagger'),
-              sp: t('resourceMonitor.modules.sp'),
-            }"
+            :labels="enemyMonitorSectionLabels"
             :collapse-label="t('common.close')"
             :expand-label="t('timelineGrid.prep.expand')"
             @collapse-panel="collapsePanel"
@@ -8503,12 +8526,7 @@ function setMobileGuideFrame(frame: number | null): void {
                   :duration-frames="scenario.battle.durationFrames"
                   v-if="combatHudSnapshot !== null"
                   :viz="enemyEffectViz"
-                  :entity-segments="
-                    operatorPassiveUiTimelineSegments.filter(
-                      segment =>
-                        segment.kind === 'abilityEntityCount' && segment.placement === 'enemy',
-                    )
-                  "
+                  :entity-segments="enemyAbilityEntitySegments"
                   :entity-hits="entityStatusHits"
                   @open-entity-detail="openOperatorPassiveUiDetail"
                   @open-entity-hit="
@@ -8532,6 +8550,10 @@ function setMobileGuideFrame(frame: number | null): void {
                   :operator-buff-name-keys="operatorBuffDisplayNameKeys"
                   :icon="buffIcon"
                   :timeline-width="timelineWidth"
+                  :visible-left-px="renderAllTimelineEffects ? undefined : effectViewportBucketPx"
+                  :visible-right-px="
+                    renderAllTimelineEffects ? undefined : visibleEnemyEffectRightPx
+                  "
                   :prep-frames="scenario.battle.prepFrames"
                   :prep-expanded="scenario.editor.prepExpanded"
                   :prep-end-frame="scenario.inheritance?.frame ?? 0"
@@ -8546,17 +8568,8 @@ function setMobileGuideFrame(frame: number | null): void {
                   :poise-knot-thresholds="
                     publishedMonitoredEnemy?.editable.stagger.knotThresholds ?? []
                   "
-                  :hud-labels="{
-                    status: t('resourceMonitor.modules.enemyStatus'),
-                    compactStatus: t('resourceMonitor.modules.enemyStatusCompact'),
-                    hp: t('timeline.simGuide.enemyHp'),
-                    poise: t('timeline.simGuide.poise'),
-                    recovering: t('timeline.simGuide.poiseRecovering'),
-                    brokenEndWindow: t('timeline.simGuide.poiseBrokenEndWindow'),
-                  }"
-                  :labels="{
-                    burst: t('timeline.effect.burst'),
-                  }"
+                  :hud-labels="enemyEffectHudLabels"
+                  :labels="enemyEffectLabels"
                   @open-buff-detail="openBuffDetail"
                 />
               </template>

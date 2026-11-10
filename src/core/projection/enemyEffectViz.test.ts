@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CombatReceiptEntry } from '../combat/receipt/combatReceipt';
-import { projectEnemyEffectViz } from './enemyEffectViz';
+import { projectEnemyEffectViz, projectEnemyEffectVizesForTargets } from './enemyEffectViz';
 
 function receipt(
   sequence: number,
@@ -60,5 +60,27 @@ describe('projectEnemyEffectViz', () => {
     expect(result).toEqual({
       markers: [{ frame: 20, kind: 'attachmentTrigger', element: 'electric' }],
     });
+  });
+
+  it('多目标共用投影与分别投影的输出一致', () => {
+    const entries = [
+      receipt(0, 5, 'ElementalInflictionApplied', {
+        requestedElement: 'electric',
+        outcomeKind: 'compoundStatus',
+      }),
+      {
+        ...receipt(1, 10, 'DamageApplied', { spellBurstType: 'Fire', value: 20 }),
+        targetId: 'other',
+      },
+      receipt(2, 12, 'DamageApplied', { spellBurstType: 'Pulse', value: 0 }),
+    ];
+    const shared = projectEnemyEffectVizesForTargets(entries, 90, new Map(), [
+      'enemy',
+      'other',
+      'unused',
+    ]);
+    for (const id of ['enemy', 'other', 'unused']) {
+      expect(shared.get(id)).toEqual(projectEnemyEffectViz(entries, 90, new Map(), id));
+    }
   });
 });

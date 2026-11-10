@@ -74,15 +74,49 @@ export interface EnemyEffectViz {
   readonly attachmentConversions?: readonly AttachmentConversion[];
 }
 
-export function projectBuffDamageDisplayOwners(
+/** 伤害回执只可能归属同一目标、Buff ID 与实例的窗口，避免逐次扫描全部状态段。 */
+function indexBuffSegments(segments: readonly BuffTimelineSegment[]) {
+  const byInstance = new Map<string, BuffTimelineSegment[]>();
+  for (const segment of segments) {
+    // 合并展示段的外层实例可能不是产生伤害的成员；保留其所有原始窗口身份。
+    const members = 'members' in segment && Array.isArray(segment.members) ? segment.members : [];
+    const windows = 'windows' in segment && Array.isArray(segment.windows) ? segment.windows : [];
+    const keys = new Set(
+      [segment, ...members, ...windows].map(
+        item => `${item.targetId}\u0000${item.buffId}\u0000${item.instanceId}`,
+      ),
+    );
+    for (const key of keys) {
+      const values = byInstance.get(key) ?? [];
+      values.push(segment);
+      byInstance.set(key, values);
+    }
+  }
+  return byInstance;
+}
+
+function buffSegmentsForDamage(
+  byInstance: ReadonlyMap<string, readonly BuffTimelineSegment[]>,
+  entry: CombatReceiptEntry,
+): readonly BuffTimelineSegment[] {
+  const buffId = entry.data?.buffId;
+  const ownerId = entry.data?.buffOwnerId;
+  const instanceId = entry.data?.buffInstanceId;
+  if (typeof buffId !== 'string' || typeof ownerId !== 'string' || !Number.isInteger(instanceId))
+    return [];
+  return byInstance.get(`${ownerId}\u0000${buffId}\u0000${instanceId}`) ?? [];
+}
+
+function projectBuffDamageDisplayOwnersWithIndex(
   entries: readonly CombatReceiptEntry[],
   segments: readonly BuffTimelineSegment[],
-  entityBuffs: ReadonlyMap<string, string> = new Map(),
+  entityBuffs: ReadonlyMap<string, string>,
+  byInstance: ReadonlyMap<string, readonly BuffTimelineSegment[]>,
+  origins?: CombatObjectOrigins,
 ): Readonly<Record<number, BuffTimelineSegment>> {
   const owners: Record<number, BuffTimelineSegment> = {};
-  let origins: CombatObjectOrigins | undefined;
   if (entityBuffs.size) {
-    origins = new CombatObjectOrigins(entries);
+    origins ??= new CombatObjectOrigins(entries);
     const entitySegments = new Map<number, BuffTimelineSegment[]>();
     for (const segment of segments) {
       const buff = origins.get({
@@ -117,7 +151,7 @@ export function projectBuffDamageDisplayOwners(
       owners[entry.sequence] !== undefined ||
       (!abilityDamage &&
         (!isBuffDamageReceipt(entry) || entry.targetId !== entry.data?.buffOwnerId)) ||
-      findBuffTimelineSegmentForDamage(entry, segments)
+      findBuffTimelineSegmentForDamage(entry, buffSegmentsForDamage(byInstance, entry))
     )
       continue;
     origins ??= new CombatObjectOrigins(entries);
@@ -132,7 +166,7 @@ export function projectBuffDamageDisplayOwners(
         // Buff 结束后创建的能力实体可能延迟命中，仍归到同一实例的最后可见段。
         // 不延长状态寿命，也不关联后续重新施加的同名 Buff。
         const segment = abilityDamage
-          ? segments
+          ? (byInstance.get(`${ownerId}\u0000${buffId}\u0000${instanceId}`) ?? [])
               .filter(
                 segment =>
                   segment.targetId === ownerId &&
@@ -151,7 +185,7 @@ export function projectBuffDamageDisplayOwners(
                   buffInstanceId: node.ref.instanceId,
                 },
               },
-              segments,
+              byInstance.get(`${ownerId}\u0000${buffId}\u0000${instanceId}`) ?? [],
             );
         if (segment) owners[entry.sequence] = segment;
         return segment !== undefined;
@@ -162,6 +196,19 @@ export function projectBuffDamageDisplayOwners(
     if (result.status !== 'found') delete owners[entry.sequence];
   }
   return owners;
+}
+
+export function projectBuffDamageDisplayOwners(
+  entries: readonly CombatReceiptEntry[],
+  segments: readonly BuffTimelineSegment[],
+  entityBuffs: ReadonlyMap<string, string> = new Map(),
+): Readonly<Record<number, BuffTimelineSegment>> {
+  return projectBuffDamageDisplayOwnersWithIndex(
+    entries,
+    segments,
+    entityBuffs,
+    indexBuffSegments(segments),
+  );
 }
 
 export interface AttachmentConversion {
@@ -213,37 +260,75 @@ export function projectEnemyEffectViz(
   entityBuffs: ReadonlyMap<string, string> = new Map(),
   targetId?: string,
 ): EnemyEffectViz {
+  return projectEnemyEffectVizesForTargets(
+    entries,
+    endFrame,
+    entityBuffs,
+    targetId === undefined ? undefined : [targetId],
+  ).get(targetId)!;
+}
+
+/** 多敌人总览共享一次 Buff 投影和回执来源索引。 */
+export function projectEnemyEffectVizesForTargets(
+  entries: readonly CombatReceiptEntry[],
+  endFrame: number,
+  entityBuffs: ReadonlyMap<string, string> = new Map(),
+  targetIds?: readonly string[],
+): ReadonlyMap<string | undefined, EnemyEffectViz> {
   if (!Number.isInteger(endFrame) || endFrame < 0) {
     throw new RangeError('endFrame must be a non-negative integer');
   }
-  const markers: EnemyEffectMarker[] = [];
-  const damageHits: CombatReceiptEntry[] = [];
-  const attachmentConversions: AttachmentConversion[] = [];
+  const targets = new Map<
+    string | undefined,
+    {
+      markers: EnemyEffectMarker[];
+      damageHits: CombatReceiptEntry[];
+      attachmentConversions: AttachmentConversion[];
+    }
+  >();
+  for (const id of targetIds ?? [undefined])
+    targets.set(id, { markers: [], damageHits: [], attachmentConversions: [] });
   const buffSegments = projectBuffIconTimelineMetadata(entries, endFrame);
-  const damageDisplayOwners = projectBuffDamageDisplayOwners(entries, buffSegments, entityBuffs);
+  const byInstance = indexBuffSegments(buffSegments);
   const origins = new CombatObjectOrigins(entries);
+  const damageDisplayOwners = projectBuffDamageDisplayOwnersWithIndex(
+    entries,
+    buffSegments,
+    entityBuffs,
+    byInstance,
+    origins,
+  );
   for (const entry of entries) {
-    if (targetId !== undefined && entry.targetId !== targetId) continue;
+    const result = targets.get(targetIds === undefined ? undefined : entry.targetId);
+    if (result === undefined) continue;
     const enemyBuffDamage =
       isBuffDamageReceipt(entry) &&
       entry.targetId === entry.data?.buffOwnerId &&
-      !isSkillFollowupBuffDamageReceipt(entry, buffSegments, damageDisplayOwners);
+      !isSkillFollowupBuffDamageReceipt(
+        entry,
+        buffSegmentsForDamage(byInstance, entry),
+        damageDisplayOwners,
+      );
     if (
       (entry.event === 'DamageApplied' && typeof entry.data?.spellBurstType === 'string') ||
       enemyBuffDamage ||
       damageDisplayOwners[entry.sequence] !== undefined ||
       isUnattributedDamageReceipt(entry, origins)
     ) {
-      damageHits.push(entry);
+      result.damageHits.push(entry);
       if (typeof entry.data?.spellBurstType === 'string') {
-        markers.push({ frame: entry.frame, kind: 'burst', burstType: entry.data.spellBurstType });
+        result.markers.push({
+          frame: entry.frame,
+          kind: 'burst',
+          burstType: entry.data.spellBurstType,
+        });
       }
       continue;
     }
     if (entry.event === 'ElementalInflictionApplied') {
       const data = requireData(entry);
       if (data.outcomeKind === 'compoundStatus') {
-        markers.push({
+        result.markers.push({
           frame: entry.frame,
           kind: 'attachmentTrigger',
           element: requireString(entry, data, 'requestedElement'),
@@ -254,7 +339,7 @@ export function projectEnemyEffectViz(
     if (entry.event === 'ElementalAttachmentConverted') {
       const data = requireData(entry);
       if (!entry.targetId) throw new Error(`receipt ${entry.sequence} has no conversion target`);
-      attachmentConversions.push({
+      result.attachmentConversions.push({
         frame: entry.frame,
         targetId: entry.targetId,
         consumedBuffId: requireString(entry, data, 'consumedBuffId'),
@@ -265,11 +350,18 @@ export function projectEnemyEffectViz(
       continue;
     }
   }
-  return {
-    markers,
-    ...(Object.keys(damageDisplayOwners).length ? { damageDisplayOwners } : {}),
-    ...(damageHits.length ? { damageHits } : {}),
-    ...(damageHits.length && buffSegments.length ? { damageBuffs: buffSegments } : {}),
-    ...(attachmentConversions.length ? { attachmentConversions } : {}),
-  };
+  return new Map(
+    [...targets].map(([id, result]) => [
+      id,
+      {
+        markers: result.markers,
+        ...(Object.keys(damageDisplayOwners).length ? { damageDisplayOwners } : {}),
+        ...(result.damageHits.length ? { damageHits: result.damageHits } : {}),
+        ...(result.damageHits.length && buffSegments.length ? { damageBuffs: buffSegments } : {}),
+        ...(result.attachmentConversions.length
+          ? { attachmentConversions: result.attachmentConversions }
+          : {}),
+      },
+    ]),
+  );
 }

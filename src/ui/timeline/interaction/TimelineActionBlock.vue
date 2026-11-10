@@ -54,6 +54,9 @@ const props = defineProps<{
   warningFallbackText?: string;
   /** 技能块上的独立命中点标记，点击后打开命中详情。 */
   hits?: readonly TimelineHitMarkerView[];
+  /** 轨道世界坐标的缓冲视窗；导出时留空以显示全部命中。 */
+  visibleLeftPx?: number;
+  visibleRightPx?: number;
   /** 由该技能产生的时间膨胀流光，沿用旧版从技能块左侧开始并裁剪到块内。 */
   timeDilationSegments?: readonly { readonly left: number; readonly width: number }[];
   /** 由运行时冷却回执投影出的现实时间持续条；不预测模拟终点外的结束帧。 */
@@ -85,6 +88,16 @@ const hovered = ref(false);
 const { appearance } = useAppearance();
 const isLightAppearance = computed(() => appearance.value === 'light');
 const decorationsVisible = computed(() => props.showDecorations !== false);
+const visibleHits = computed(() => {
+  const hits = props.hits ?? [];
+  const left = props.visibleLeftPx;
+  const right = props.visibleRightPx;
+  if (left === undefined || right === undefined) return hits;
+  return hits.filter(hit => {
+    const x = props.left + projectTimelineHitMarkerLeftPx(hit.leftPx);
+    return x >= left && x <= right;
+  });
+});
 
 const TYPE_SHORTHAND: Readonly<Partial<Record<OperationType, string>>> = {
   basicAttack: 'A',
@@ -287,7 +300,7 @@ function formatDurationFrames(frames: number): string {
     </template>
     <span v-if="durationPending" class="duration-pending-mark" aria-hidden="true"></span>
     <span
-      v-for="hit in hits ?? []"
+      v-for="hit in visibleHits"
       :key="`${hit.hitId}:${hit.executionFrame ?? 'preview'}`"
       class="hit-marker"
       :class="{
