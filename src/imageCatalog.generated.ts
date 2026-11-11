@@ -186,8 +186,8 @@ export const imageCatalog: readonly {
     category: 'consumables',
   },
   {
-    ref: 'endaxis:contingency_contract/1/deco_contingency_select_tag_3',
-    path: '/contingency_contract/1/deco_contingency_select_tag_3.webp',
+    ref: 'endaxis:contingency_contract/1/deco_contingency',
+    path: '/contingency_contract/1/deco_contingency.webp',
     category: 'contingency_contract',
   },
   {
@@ -421,6 +421,11 @@ export const imageCatalog: readonly {
     category: 'contingency_contract',
   },
   {
+    ref: 'endaxis:contingency_contract/2/deco_contingency',
+    path: '/contingency_contract/2/deco_contingency.webp',
+    category: 'contingency_contract',
+  },
+  {
     ref: 'endaxis:contingency_contract/2/dissipation',
     path: '/contingency_contract/2/dissipation.webp',
     category: 'contingency_contract',
@@ -601,13 +606,13 @@ export const imageCatalog: readonly {
     category: 'contingency_contract',
   },
   {
-    ref: 'endaxis:contingency_contract/deco_contract_027',
-    path: '/contingency_contract/deco_contract_027.webp',
+    ref: 'endaxis:contingency_contract/deco_contract_0',
+    path: '/contingency_contract/deco_contract_0.webp',
     category: 'contingency_contract',
   },
   {
-    ref: 'endaxis:contingency_contract/deco_contract_028',
-    path: '/contingency_contract/deco_contract_028.webp',
+    ref: 'endaxis:contingency_contract/deco_contract_1',
+    path: '/contingency_contract/deco_contract_1.webp',
     category: 'contingency_contract',
   },
   {

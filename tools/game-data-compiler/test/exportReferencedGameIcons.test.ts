@@ -7,8 +7,10 @@ import type { AkedbSnapshot } from '../scripts/gameDataProviders.ts';
 import {
   addEquipmentConfiguredReferences,
   addOperatorImpliedReferences,
+  addProjectContractSeasonDecorations,
   exportReference,
   parseArguments,
+  sourcePlanForReference,
 } from '../scripts/exportReferencedGameIcons.ts';
 
 const temporaryRoots: string[] = [];
@@ -33,6 +35,31 @@ const reference = {
 };
 
 describe('全量图片隔离导出', () => {
+  it('把各期项目装饰图作为本地资源保留到隔离候选', async () => {
+    const publicRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'endaxis-contract-deco-'));
+    temporaryRoots.push(publicRoot);
+    for (const season of ['1', '2', 'other']) {
+      const directory = path.join(publicRoot, 'contingency_contract', season);
+      await fs.mkdir(directory, { recursive: true });
+      await fs.writeFile(path.join(directory, 'deco_contingency.webp'), 'fixture');
+    }
+    const references = new Map<string, Set<string>>();
+    await addProjectContractSeasonDecorations(references, publicRoot);
+    expect([...references.keys()]).toEqual([
+      '/contingency_contract/1/deco_contingency.webp',
+      '/contingency_contract/2/deco_contingency.webp',
+    ]);
+    for (const publicPath of references.keys()) {
+      expect(sourcePlanForReference(publicPath, new Map())).toMatchObject({ localOnly: true });
+    }
+    for (const publicPath of [
+      '/contingency_contract/deco_contract_0.webp',
+      '/contingency_contract/deco_contract_1.webp',
+    ]) {
+      expect(sourcePlanForReference(publicPath, new Map())).toMatchObject({ localOnly: true });
+    }
+  });
+
   it('平铺图标从 AKEDB 选取稳定的同名资源，缺失不回退 VFS', async () => {
     const args = await isolatedArguments(['--source-mode', 'hybrid']);
     const assetPath = 'assets/beyond/dynamicassets/gameplay/ui/sprites/bufficon/example.png';

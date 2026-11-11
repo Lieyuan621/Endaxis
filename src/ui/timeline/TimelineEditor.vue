@@ -503,6 +503,15 @@ function defineLazyDialog<T extends Component>(load: () => Promise<{ default: T 
 }
 
 const contractSeason = ref(1);
+const contractDecoUrl = computed(() =>
+  publicAssetUrl(`/contingency_contract/${contractSeason.value}/deco_contingency.webp`),
+);
+function useContractDecoFallback(event: Event): void {
+  const image = event.currentTarget;
+  if (!(image instanceof HTMLImageElement)) return;
+  const fallback = publicAssetUrl('/contingency_contract/deco_contract_0.webp');
+  if (image.getAttribute('src') !== fallback) image.src = fallback;
+}
 const contractSeasonOptions = computed(() =>
   contingencyContractSeasons.map(season => ({ value: season.id, label: t(season.nameKey) })),
 );
@@ -7427,9 +7436,11 @@ function setMobileGuideFrame(frame: number | null): void {
       />
       <div v-else-if="tool === 'contract'" class="contract-side-panel">
         <img
-          :src="publicAssetUrl('/contingency_contract/1/deco_contingency_select_tag_3.webp')"
+          :key="contractSeason"
+          :src="contractDecoUrl"
           alt=""
           aria-hidden="true"
+          @error="useContractDecoFallback"
         />
         <div class="contract-side-title">{{ t('contingencyContract.title') }}</div>
         <EaSelect

@@ -409,7 +409,7 @@ function description(tag: ContingencyContractTagPresentation): string {
         <div class="cc-detail-toolbar">
           <div class="cc-total-score" :title="t('contingencyContract.score')">
             <img
-              :src="publicAssetUrl('/contingency_contract/deco_contract_027.webp')"
+              :src="publicAssetUrl('/contingency_contract/deco_contract_1.webp')"
               alt=""
             /><strong>{{ selectedScore }}</strong>
           </div>

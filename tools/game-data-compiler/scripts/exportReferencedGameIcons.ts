@@ -250,6 +250,26 @@ async function collectLiteralReferences(
   return references;
 }
 
+/** 合约期数装饰图由项目维护；发布目录同步时仍需复制到隔离候选。 */
+export async function addProjectContractSeasonDecorations(
+  references: Map<string, Set<string>>,
+  publicRoot = PUBLIC_ROOT,
+): Promise<void> {
+  const directory = path.join(publicRoot, 'contingency_contract');
+  const seasons = await readdir(directory, { withFileTypes: true }).catch(error => {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw error;
+  });
+  for (const season of seasons) {
+    if (!season.isDirectory() || !/^[1-9]\d*$/.test(season.name)) continue;
+    const publicPath = `/contingency_contract/${season.name}/deco_contingency.webp`;
+    if (!(await exists(path.join(directory, season.name, 'deco_contingency.webp')))) continue;
+    const owners = references.get(publicPath) ?? new Set<string>();
+    owners.add('project contract decoration');
+    references.set(publicPath, owners);
+  }
+}
+
 async function findTableDirectory(sourceRoot: string): Promise<string> {
   const entries = await readdir(sourceRoot, { withFileTypes: true });
   const candidates = entries
@@ -407,7 +427,7 @@ export async function addEquipmentConfiguredReferences(
   return result;
 }
 
-function sourcePlanForReference(
+export function sourcePlanForReference(
   publicPath: string,
   configuredOverrides: ReadonlyMap<
     string,
@@ -424,7 +444,13 @@ function sourcePlanForReference(
     };
   }
   const stem = path.posix.basename(publicPath, '.webp');
-  if (stem === 'default' || stem === 'default_icon' || publicPath === '/icons/global_config.webp') {
+  if (
+    stem === 'default' ||
+    stem === 'default_icon' ||
+    publicPath === '/icons/global_config.webp' ||
+    /^\/contingency_contract\/deco_contract_[01]\.webp$/.test(publicPath) ||
+    /^\/contingency_contract\/[1-9]\d*\/deco_contingency\.webp$/.test(publicPath)
+  ) {
     return { sourceNames: [], preferredPathSegments: [], localOnly: true };
   }
   if (publicPath.startsWith('/weapons/')) {
@@ -466,6 +492,7 @@ async function buildReferenceClosure(
   arguments_: ExportGameIconsArguments,
 ): Promise<readonly IconReference[]> {
   const references = await collectLiteralReferences(arguments_.additionalReferenceRoots);
+  await addProjectContractSeasonDecorations(references);
   const configuredOverrides = await addOperatorImpliedReferences(
     references,
     arguments_.gameDataSourceRoot,

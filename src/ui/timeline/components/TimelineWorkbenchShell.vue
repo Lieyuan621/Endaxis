@@ -318,7 +318,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!bottomCollapsed && bottomTool === 'contract'"
           :label="props.labels.contract"
           @click="selectBottom('contract')"
-          :icon="publicAssetUrl('/contingency_contract/deco_contract_028.webp')"
+          :icon="publicAssetUrl('/contingency_contract/deco_contract_0.webp')"
           :icon-size="28"
         />
         <EaActivityRailButton
