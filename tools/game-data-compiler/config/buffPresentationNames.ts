@@ -49,6 +49,10 @@ export const buffPresentationNames: Readonly<Record<string, string>> = {
 
 /** 原生无图标的效果在时间轴上的补充展示，不改变 Buff 行为。 */
 export const buffPresentationOverrides: Readonly<Record<string, CombatBuffPresentation>> = {
+  buff_wpn_claym_0018_enemyvul: {
+    visible: true,
+    showInHeadBarCommon: true,
+  },
   buff_cc_chr_combo_lock_instance: {
     icon: 'endaxis:contingency_contract/2/lockdown',
     visible: true,

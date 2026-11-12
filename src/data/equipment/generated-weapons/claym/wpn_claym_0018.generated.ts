@@ -180,6 +180,7 @@ const definition = {
       triggerIntervalSeconds: 0,
       waitFirstTriggerInterval: true,
       maxTriggerCount: 1,
+      presentation: { visible: true, showInHeadBarCommon: true, showInHeadBarAttached: false },
       applyTags: [],
       extendTags: [],
       blackboard: { dmg_taken_up: 0, duration: 0 },

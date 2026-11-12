@@ -200,6 +200,31 @@ describe('公共 Buff 运行时投影', () => {
       },
     ]);
   });
+  it('玉中身易伤通过展示配置进入敌人状态栏，图标由武器来源解析', () => {
+    const source = sourceFixture();
+    const definition = compileBuffRuntimeDefinitionSource(
+      {
+        ...source,
+        graph: { ...source.graph, buffId: 'buff_wpn_claym_0018_enemyvul' },
+        presentation: {
+          ...source.presentation,
+          hasIcon: false,
+          spritePath: '',
+          showInHeadBarCommon: false,
+          showInHeadBarAttached: false,
+          showInSquadIcon: false,
+        },
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { gameplayTagRegistry: fixtureGameplayTagRegistry },
+    );
+    expect(definition.presentation).toMatchObject({ visible: true, showInHeadBarCommon: true });
+    expect(definition.presentation).not.toHaveProperty('icon');
+  });
+
   it('精简图标配置时保留显式隐藏、无图标显示及敌人状态栏排除语义', () => {
     const source = sourceFixture();
     const project = (overrides: Partial<BuffRuntimeSource['presentation']>) =>
