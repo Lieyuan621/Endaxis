@@ -51,7 +51,10 @@ import {
 } from '../../../data/enemies/generated/index.generated';
 
 const EDITABLE_RESISTANCE_DAMAGE_TYPES = DAMAGE_ELEMENTS;
-const { t, te } = useI18n();
+const { t, te, locale } = useI18n();
+function formatAttribute(value: number): string {
+  return new Intl.NumberFormat(locale.value, { maximumFractionDigits: 2 }).format(value);
+}
 const { t: categoryName } = useI18n({
   useScope: 'local',
   messages: { 'zh-CN': { ...zhCategories, ...zhStages }, en: { ...enCategories, ...enStages } },
@@ -385,11 +388,11 @@ function removeKnotThreshold(index: number): void {
     <div class="stats-summary">
       <div class="summary-row">
         <span class="summary-label">{{ labels.enemyHp }}</span
-        ><span class="summary-value">{{ resolvedValues.hp.toLocaleString() }}</span>
+        ><span class="summary-value">{{ formatAttribute(resolvedValues.hp) }}</span>
       </div>
       <div class="summary-row">
         <span class="summary-label">{{ labels.maximumStagger }}</span
-        ><span class="summary-value">{{ resolvedValues.stagger.maximum.toLocaleString() }}</span>
+        ><span class="summary-value">{{ formatAttribute(resolvedValues.stagger.maximum) }}</span>
       </div>
       <div class="summary-row">
         <span class="summary-label">{{ labels.staggerNodes }}</span
@@ -400,7 +403,9 @@ function removeKnotThreshold(index: number): void {
         <span class="summary-value summary-value--res">
           <template v-for="(item, index) in resistanceSummary" :key="item.type">
             <span v-if="index > 0" class="res-sep">/</span>
-            <span class="res-value" :style="{ color: item.color }">{{ item.value }}</span>
+            <span class="res-value" :style="{ color: item.color }">{{
+              formatAttribute(item.value)
+            }}</span>
           </template>
         </span>
       </div>

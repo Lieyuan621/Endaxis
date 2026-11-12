@@ -110,19 +110,19 @@ const props = defineProps<{
     directMultiplier: string;
     levelCoefficient: string;
     artsIntensity: string;
-    levelDetail: (value: number) => string;
-    artsIntensityDetail: (value: number) => string;
+    levelDetail: (value: string) => string;
+    artsIntensityDetail: (value: string) => string;
     staggerMultiplier: string;
     finisherMultiplier: string;
     additionalScale: string;
-    stacksDetail: (value: number) => string;
+    stacksDetail: (value: string) => string;
     baseMultiplier: string;
     fixedMultiplier: string;
     hitFraction: string;
     damageTaken: string;
     defenseMultiplier: string;
     resistanceMultiplier: string;
-    defenseDetail: (value: number) => string;
+    defenseDetail: (value: string) => string;
   };
 }>();
 
@@ -289,7 +289,7 @@ function renderModifierRows(
             : item.attribute.endsWith('Resistance')
               ? `${signed}${item.value.toFixed(1)}%`
               : absolute
-                ? `${signed}${item.value.toLocaleString()}`
+                ? `${signed}${componentNumber(item.value)}`
                 : `${signed}${pct(item.value)}`;
       const factorAttribute = Object.entries(ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE).find(
         ([, attribute]) => attribute === item.attribute,
@@ -548,7 +548,7 @@ function multiplierTerms(
     const bonus = calculation.rightCalculation;
     const stackDetail =
       bonus?.operation === 'multiply' && /(?:cnt|count|num|layers?)$/i.test(bonus.rightKey ?? '')
-        ? `${props.labels.stacksDetail(bonus.right)} × ${pct(bonus.left)}`
+        ? `${props.labels.stacksDetail(componentNumber(bonus.right))} × ${pct(bonus.left)}`
         : undefined;
     return [
       ...terms,
@@ -580,7 +580,7 @@ function multiplierTerms(
       {
         kind: 'factor',
         label: stackName,
-        detail: props.labels.stacksDetail(calculation.right),
+        detail: props.labels.stacksDetail(componentNumber(calculation.right)),
         value: factor,
       },
     ];
@@ -805,7 +805,9 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
           detail:
             zone === 'combo' && comboInstances.size > 0
               ? props.labels.stacksDetail(
-                  [...comboInstances.values()].reduce((sum, count) => sum + count, 0),
+                  componentNumber(
+                    [...comboInstances.values()].reduce((sum, count) => sum + count, 0),
+                  ),
                 )
               : `${value >= 1 ? '+' : ''}${pct(value - 1)}`,
           value: mult(value),
@@ -876,7 +878,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
     multiplierRows.push({
       label: props.labels.defenseMultiplier,
       order: 10,
-      detail: props.labels.defenseDetail(Math.floor(finiteNumber(data.enemyDefense))),
+      detail: props.labels.defenseDetail(num(data.enemyDefense)),
       value: mult(data.defenseMultiplier),
       factor: finiteNumber(data.defenseMultiplier, 1),
     });
@@ -886,7 +888,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
         order: 14,
         detail:
           typeof data.sourceLevel === 'number'
-            ? props.labels.levelDetail(data.sourceLevel)
+            ? props.labels.levelDetail(componentNumber(data.sourceLevel))
             : undefined,
         value: mult(data.levelCoefficient),
         factor: data.levelCoefficient,
@@ -901,7 +903,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
         order: 15,
         detail:
           typeof data.artsIntensity === 'number'
-            ? props.labels.artsIntensityDetail(data.artsIntensity)
+            ? props.labels.artsIntensityDetail(componentNumber(data.artsIntensity))
             : undefined,
         value: mult(data.artsIntensityMultiplier),
         factor: data.artsIntensityMultiplier,

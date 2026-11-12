@@ -112,7 +112,7 @@ it('按旧版顺序展示独立乘区，失衡只从独立增伤中拆出一次'
               artsIntensity: 'arts',
               additionalScale: 'effectiveness',
               defenseDetail: () => '',
-              stacksDetail: (count: number) => `${count} 层`,
+              stacksDetail: (count: string) => `${count} 层`,
             },
           },
         ),
@@ -162,7 +162,7 @@ it('keeps flat, additive percentage and independent attack sources separate with
       attack: 100,
       levelCoefficient: 1 + 89 / 196,
       artsIntensityMultiplier: 1.5,
-      artsIntensity: 50,
+      artsIntensity: 50.123456789,
       sourceLevel: 90,
       reactionDamageKind: 'spellBurst',
       skillType: 'battleSkill',
@@ -242,8 +242,11 @@ it('keeps flat, additive percentage and independent attack sources separate with
               levelCoefficient: '等级系数',
               defenseMultiplier: '防御修正',
               artsIntensity: '源石技艺强度',
-              levelDetail: (value: number) => `等级 ${value}`,
-              artsIntensityDetail: (value: number) => `${value} 点`,
+              levelDetail: (value: string) => `等级 ${value}`,
+              artsIntensityDetail: (value: string) => {
+                expect(typeof value).toBe('string');
+                return `${value} 点`;
+              },
               directMultiplier: '其他倍率',
               defenseDetail: () => '',
             },
@@ -266,7 +269,7 @@ it('keeps flat, additive percentage and independent attack sources separate with
         value: 'x1.454',
         factor: 1 + 89 / 196,
       }),
-      expect.objectContaining({ label: '源石技艺强度', detail: '50 点', value: 'x1.5' }),
+      expect.objectContaining({ label: '源石技艺强度', detail: '50.123 点', value: 'x1.5' }),
       expect.objectContaining({ label: '其他倍率', factor: 1.2 }),
     ]),
   );
@@ -475,7 +478,7 @@ it('projects expandable crit rows from the frozen hit facts', async () => {
                   ? '寒冷附着'
                   : undefined,
               artsIntensity: '技艺强度',
-              stacksDetail: (stacks: number) => `${stacks} 层`,
+              stacksDetail: (stacks: string) => `${stacks} 层`,
               criticalRate: 'CRIT',
               criticalDamage: 'CRIT DMG',
               defenseDetail: () => '',

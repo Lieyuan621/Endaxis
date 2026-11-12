@@ -9325,16 +9325,16 @@ function setMobileGuideFrame(frame: number | null): void {
       staggerMultiplier: t('hitDetail.staggerMult'),
       finisherMultiplier: t('hitDetail.finisherMult'),
       additionalScale: t('hitDetail.additionalScale'),
-      stacksDetail: (stacks: number) => t('hitDetail.linkDetail', { stacks }),
+      stacksDetail: (stacks: string) => t('hitDetail.linkDetail', { stacks }),
       baseMultiplier: t('hitDetail.baseMultiplier'),
       fixedMultiplier: t('hitDetail.fixedMultiplier'),
       hitFraction: t('hitDetail.hitFraction'),
-      levelDetail: (level: number) => t('hitDetail.levelCoeffDetail', { level }),
-      artsIntensityDetail: (value: number) => t('hitDetail.artsIntensityDetail', { value }),
+      levelDetail: (level: string) => t('hitDetail.levelCoeffDetail', { level }),
+      artsIntensityDetail: (value: string) => t('hitDetail.artsIntensityDetail', { value }),
       damageTaken: t('hitDetail.dmgTaken'),
       defenseMultiplier: t('hitDetail.defMult'),
       resistanceMultiplier: t('hitDetail.resMult'),
-      defenseDetail: (value: number) => t('hitDetail.defDetail', { def: value }),
+      defenseDetail: (value: string) => t('hitDetail.defDetail', { def: value }),
     }"
     @close="
       hitDetailTarget = null;
