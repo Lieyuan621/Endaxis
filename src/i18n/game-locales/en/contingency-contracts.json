@@ -191,6 +191,10 @@
     "name": "Team: Lethargy",
     "description": "Enemy HP <color=#cc9900>+{hp_up:0%}</color>. Operator Battle Skill DMG Dealt <color=#cc9900>-{-dmg_scale:0%}</color>."
   },
+  "110502": {
+    "name": "Ambient: Echombo",
+    "description": "Combo skills cost <color=#cc9900>{atb:0}</color> SP to cast. After casting an operator's combo skill, immediately reset the operator's combo skill cooldown and unconditionally trigger 1 combo skill casting that uses no SP. The combo cooldown only starts after casting the free combo skill."
+  },
   "110601": {
     "name": "Team: Decapitate",
     "description": "DMG Taken by the controlled operator <color=#cc9900>+{dmg_scale:0%}</color>/+{@110602@dmg_scale:0%}."
@@ -251,6 +255,10 @@
     "name": "Edit: Team Mangler",
     "description": "When the Armored Mangler enters battle, and when it is at 50% HP, its next skill will be a channeling skill that can only be interrupted after a while."
   },
+  "112303": {
+    "name": "Edit: Team Mangler",
+    "description": "When the Armored Mangler enters battle, and when it is at 50% HP, its next skill will be a channeling skill that can only be interrupted after a while. An additional Armored Mangler already down to 50% HP will appear."
+  },
   "112402": {
     "name": "Edit: Skyfall",
     "description": "When the Cloud Obliterator enters battle, and when it is at 50% HP, its next skill will be a special skill."
@@ -279,9 +287,17 @@
     "name": "Edit: Light Protection",
     "description": "Enemy resistance to all elements is now {@112901@resist:0}/<color=#cc9900>{resist:0}</color>."
   },
+  "113201": {
+    "name": "Edit: Control Shield",
+    "description": "Enemies are immune to crowd control effects of Lift, Knock Down, <color=#009cad>Solidification</color>, and Immobilization."
+  },
   "113302": {
     "name": "Team: Apathy",
     "description": "If the controlled operator does not perform a final strike or finisher within <color=#cc9900>{countdown:0}</color>s, all operators suffer <color=#cc9900>{weak_rate:0%}</color> Weakness (this can reach <color=#cc9900>{max_stack:0}</color> stacks). Use the controlled operator to perform a final strike or finisher to remove all stacks."
+  },
+  "113402": {
+    "name": "Edit: Dueling Circle",
+    "description": "There is a circle around the final set of enemies of each wave. When the controlled operator is outside this circle, all operators deal <color=#cc9900>-{-dmg_taken_down:0%}</color> DMG to enemies."
   },
   "113502": {
     "name": "Ambient: Combo Lock",
@@ -291,11 +307,23 @@
     "name": "Edit: Hard Stacks",
     "description": "When an enemy is defeated, all other enemies in the arena gain <color=#cc9900>{add_layers:0}</color> <color=#1da6e0>shield stack(s)</color>. These <color=#1da6e0>shield stacks</color> do not protect enemies from <color=#a68360>Vulnerability</color>, <color=#1da6e0>Arts Inflictions</color>, Physical Statuses, and Arts Reactions."
   },
+  "113701": {
+    "name": "Edit: Encasement",
+    "description": "For each <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color> stack that an enemy has, the said enemy receives DMG Taken (of the corresponding element) <color=#cc9900>-{-dmg_scale:0%}</color>/-{@113702@-dmg_scale:0%} \nThis effect is removed 0.1s after the <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color> ends."
+  },
+  "113702": {
+    "name": "Edit: Encasement",
+    "description": "For each <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color> stack that an enemy has, the said enemy receives DMG Taken (of the corresponding element) -{@113701@-dmg_scale:0%}/<color=#cc9900>-{-dmg_scale:0%}</color> \nThis effect is removed 0.1s after the <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color> ends."
+  },
   "113801": {
     "name": "Ambient: Time Limit",
     "description": "Timer <color=#cc9900>-{-time:0}</color>s."
   },
   "113802": {
+    "name": "Ambient: Time Limit",
+    "description": "Timer <color=#cc9900>-{-time:0}</color>s."
+  },
+  "113803": {
     "name": "Ambient: Time Limit",
     "description": "Timer <color=#cc9900>-{-time:0}</color>s."
   },

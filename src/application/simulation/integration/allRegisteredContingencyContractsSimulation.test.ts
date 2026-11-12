@@ -30,7 +30,103 @@ const resources = {
   normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
 } as const;
 
+function createContractSkillScenario(
+  tagId: number,
+  skillGroupKey: 'battleSkill' | 'comboSkill',
+  frames: readonly number[],
+) {
+  const scenario = createEmptyScenario('contract-effects', 'contract-effects');
+  scenario.battle.resourceRules = { maxSp: 1000, initialSp: 1000, spRecoveryPerSecond: 0 };
+  scenario.tracks[0] = {
+    id: 'echo:operator',
+    operator: {
+      operatorSlug: 'perlica',
+      level: 90,
+      promoted: true,
+      potential: 0,
+      trustLevel: 4,
+      skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
+      talentStates: {},
+    },
+    weapon: null,
+    gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+    initialState: { ultimateEnergy: 0 },
+    skillCasts: frames.map((startFrame, i) => ({
+      id: `echo:${i}`,
+      source: {
+        kind: 'operatorSkill',
+        skillGroupKey,
+        skillKey:
+          skillGroupKey === 'battleSkill'
+            ? 'chr_0004_pelica_normal_skill'
+            : 'chr_0004_pelica_combo_skill',
+      },
+      placement: { startFrame },
+    })),
+  };
+  scenario.mechanics.selections = [
+    {
+      id: 'echo',
+      mechanicId: contingencyContractMechanicId(tagId),
+      enabled: true,
+      parameters: {},
+    },
+  ];
+  return scenario;
+}
+
 describe('危机合约生效词条的开局装配', () => {
+  it.each([113701, 113702])('裹附按服务器参数降低对应属性的实际伤害：%s', async tagId => {
+    const scenario = createContractSkillScenario(tagId, 'battleSkill', [0, 150, 300]);
+    const service = new ScenarioSimulationService({
+      index: gameDataRepository,
+      resources,
+      spellInflictionSettings: skillSettings,
+    });
+    firstScenarioEnemy(scenario).enemy.editable.hp = 1000000;
+    const result = await service.simulate(scenario, 400);
+    const without = structuredClone(scenario);
+    without.mechanics.selections = [];
+    const baseline = await service.simulate(without, 400);
+    const damage = (run: typeof result) =>
+      run.receiptEntries
+        .filter(entry => entry.event === 'DamageApplied')
+        .map(entry => Number(entry.data?.value ?? 0));
+    const actual = damage(result),
+      normal = damage(baseline);
+    expect(actual.length).toBeGreaterThan(1);
+    expect(actual).toHaveLength(normal.length);
+    expect(actual[0]).toBe(normal[0]);
+    expect(actual.reduce((a, b) => a + b, 0)).toBeLessThan(normal.reduce((a, b) => a + b, 0));
+  });
+
+  it('回声首次连携扣除50技力，额外连携免费且随后恢复扣费', async () => {
+    const scenario = createContractSkillScenario(110502, 'comboSkill', [0, 150, 900]);
+    const service = new ScenarioSimulationService({
+      index: gameDataRepository,
+      resources,
+      spellInflictionSettings: skillSettings,
+    });
+    const run = await service.simulate(scenario, 1000);
+    const costs = run.receiptEntries.filter(
+      entry => entry.event === 'SkillCostApplied' && entry.sourceId === 'echo:operator',
+    );
+    expect(costs.map(entry => entry.data?.nonReturnedSpCost)).toEqual([50, 0, 50]);
+    expect(
+      run.receiptEntries
+        .filter(entry => entry.event === 'SkillCooldownAdjusted')
+        .map(entry => entry.frame),
+    ).toEqual([0, 900]);
+    expect(
+      run.receiptEntries.some(entry => entry.event === 'SkillCooldownReady' && entry.frame === 720),
+    ).toBe(true);
+    expect(
+      run.receiptEntries.filter(
+        entry => entry.event === 'SkillStarted' && String(entry.data?.castId).startsWith('echo:'),
+      ),
+    ).toHaveLength(3);
+  });
+
   it.each([
     {
       slug: 'perlica',

@@ -31,7 +31,7 @@ const commonBuff_buff_cc02_eny_numshield$actionGraph = {
         expression: {
           kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          tags: ['normalSkill', 'ultimateSkill', 'comboSkill', 'normalAttackLastCombo'],
+          tags: ['normalAttackLastCombo', 'normalSkill', 'ultimateSkill', 'comboSkill'],
         },
       },
       data_2: {
@@ -285,6 +285,195 @@ const commonBuff_buff_cc_chr_combo_lock_stack: SkillBuffDefinition = {
   actionGraph: commonBuff_buff_cc_chr_combo_lock_stack$actionGraph,
 };
 
+const commonBuff_buff_cc_chr_combo_skill_cost_atb$actionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_chr_combo_skill_cost_atb_effect',
+                copiedBlackboardAssignments: { atb: 'atb' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      applyBuff_2: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+            asChildBuff: true,
+          },
+        },
+        next: null,
+      },
+      changeOriginSkillToEventContextSkill_3: {
+        action: { kind: 'changeOriginSkillToEventContextSkill', parameters: {} },
+        next: 'applyBuff_2',
+      },
+      checkCondition_4: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'changeOriginSkillToEventContextSkill_3',
+      },
+      finishBuffsById_5: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_cc_chr_combo_skill_cost_atb_effect'],
+            reason: 'other',
+          },
+        },
+        next: null,
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'finishBuffsById_5',
+      },
+      checkCondition_8: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'applyBuff_1',
+      },
+      checkCondition_10: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'finishBuffsById_5',
+      },
+      checkCondition_11: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: 'checkCondition_10',
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffIdMatch',
+          buffIds: ['buff_cc_chr_combo_skill_reset_cd_extra_state'],
+        },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffIdMatch',
+          buffIds: ['buff_cc_chr_combo_skill_reset_cd_extra_state'],
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'less',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_cc_chr_combo_skill_reset_cd_extra_state'],
+        },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'eventSkillIdIn', skillIds: ['chr_0028_wulfa_combo_2_skill'] },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_chr_combo_skill_cost_atb: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { atb: 25, rate: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: { start: [{ $sequence: 'applyBuff_1' }] },
+  abilityEventResponses: [
+    { event: 'afterSkillApplyCost', priority: 0, sequence: { $sequence: 'checkCondition_4' } },
+    { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_6' } },
+    { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_8' } },
+    { event: 'afterSkillApplyCost', priority: 0, sequence: { $sequence: 'checkCondition_11' } },
+  ],
+  actionGraph: commonBuff_buff_cc_chr_combo_skill_cost_atb$actionGraph,
+};
+
+const commonBuff_buff_cc_chr_combo_skill_cost_atb_effect$actionGraph = {
+  main: {
+    nodes: {
+      finishCurrentBuff_1: {
+        action: {
+          kind: 'finishCurrentBuff',
+          parameters: { reason: 'other', finishSource: 'actionSource' },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'finishCurrentBuff_1',
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffIdMatch',
+          buffIds: ['buff_cc_chr_combo_skill_reset_cd_extra_state'],
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_chr_combo_skill_cost_atb_effect: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { atb: 25 },
+  attributeModifiers: [
+    { attribute: 'ComboSkillAtbCostAddition', slot: 'addition', value: { blackboardKey: 'atb' } },
+  ],
+  abilityEventResponses: [
+    { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
+  ],
+  actionGraph: commonBuff_buff_cc_chr_combo_skill_cost_atb_effect$actionGraph,
+};
+
 const commonBuff_buff_cc_chr_combo_skill_dmg_up$actionGraph = {
   main: {
     nodes: {
@@ -341,6 +530,611 @@ const commonBuff_buff_cc_chr_combo_skill_dmg_up: SkillBuffDefinition = {
     },
   ],
   actionGraph: commonBuff_buff_cc_chr_combo_skill_dmg_up$actionGraph,
+};
+
+const commonBuff_buff_cc_chr_combo_skill_reset_cd$actionGraph = {
+  main: {
+    nodes: {
+      applyBuff_4: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_cc_chr_combo_skill_reset_cd_delay_trigger' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      applyBuff_5: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_cc_chr_combo_skill_reset_cd_extra_state' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'applyBuff_4',
+      },
+      finishBuffsById_2: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_cc_chr_combo_skill_reset_cd_extra_state'],
+            reason: 'other',
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_3: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'extra_cast',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          },
+        },
+        next: 'finishBuffsById_2',
+      },
+      ifElse_6: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'modifyActionValue_3' },
+          whenFalse: { $sequence: 'applyBuff_5' },
+        },
+        next: null,
+      },
+      modifyActionValue_7: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'extra_cast',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_6',
+      },
+      checkCondition_8: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'modifyActionValue_7',
+      },
+      invertNextResult_9: {
+        action: { kind: 'invertNextResult', parameters: {} },
+        next: 'checkCondition_8',
+      },
+      checkCondition_10: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: 'invertNextResult_9',
+      },
+      applyBuff_14: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_chr_combo_skill_reset_cd_delay_trigger',
+                blackboardAssignments: { delay: { kind: 'constant', value: 0.06666 } },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      applyBuff_15: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_chr_combo_skill_reset_cd_extra_state',
+                blackboardAssignments: { mark: { kind: 'constant', value: 1 } },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'applyBuff_14',
+      },
+      modifyActionValue_16: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'extra_cast',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'applyBuff_15',
+      },
+      ifElse_17: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'modifyActionValue_3' },
+          whenFalse: { $sequence: 'modifyActionValue_16' },
+        },
+        next: null,
+      },
+      checkCondition_18: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+        },
+        next: 'ifElse_17',
+      },
+      checkCondition_19: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+        },
+        next: 'checkCondition_18',
+      },
+      ifElse_25: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+          whenTrue: { $sequence: 'modifyActionValue_3' },
+          whenFalse: { $sequence: 'applyBuff_15' },
+        },
+        next: null,
+      },
+      modifyActionValue_26: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'extra_cast',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_25',
+      },
+      checkCondition_27: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+        },
+        next: 'modifyActionValue_26',
+      },
+      checkCondition_28: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+        },
+        next: 'checkCondition_27',
+      },
+      applyBuff_30: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_cc_chr_combo_skill_reset_cd_extra_state' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_31: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'extra_cast',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'applyBuff_30',
+      },
+      ifElse_33: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          whenTrue: { $sequence: 'modifyActionValue_31' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'applyBuff_4',
+      },
+      checkCondition_34: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
+        },
+        next: 'ifElse_33',
+      },
+      applyBuff_38: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_chr_combo_skill_reset_cd_extra_state',
+                blackboardAssignments: { mark: { kind: 'constant', value: 1 } },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_39: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          whenTrue: { $sequence: 'modifyActionValue_3' },
+          whenFalse: { $sequence: 'applyBuff_38' },
+        },
+        next: null,
+      },
+      modifyActionValue_40: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'extra_cast',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_39',
+      },
+      checkCondition_41: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
+        },
+        next: 'modifyActionValue_40',
+      },
+      checkCondition_42: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
+        },
+        next: 'checkCondition_41',
+      },
+      checkCondition_49: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_17' } },
+        },
+        next: 'modifyActionValue_40',
+      },
+      checkCondition_50: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
+        },
+        next: 'checkCondition_49',
+      },
+      checkCondition_51: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
+        },
+        next: 'checkCondition_50',
+      },
+      checkCondition_58: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
+        },
+        next: 'modifyActionValue_40',
+      },
+      checkCondition_59: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_21' } },
+        },
+        next: 'checkCondition_58',
+      },
+      checkCondition_60: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_22' } },
+        },
+        next: 'checkCondition_59',
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'extra_cast', fallback: 0 },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'max_cast', fallback: 0 } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'equal',
+          right: { kind: 'valueNode', nodeId: 'data_2' },
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventSkillIdIn',
+          skillIds: [
+            'chr_0028_wulfa_combo_1_skill',
+            'chr_0028_wulfa_combo_2_skill',
+            'chr_0028_wulfa_combo_3_skill',
+            'chr_0033_camille_combo_skill_2',
+            'chr_0034_typhoea_combo_skill',
+            'chr_0034_typhoea_combo_skillfloating',
+          ],
+        },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'eventSkillIdIn', skillIds: ['chr_0028_wulfa_combo_3_skill'] },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'equal',
+          right: { kind: 'valueNode', nodeId: 'data_2' },
+        },
+      },
+      data_10: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventSkillIdIn',
+          skillIds: ['chr_0034_typhoea_combo_skillfloating', 'chr_0034_typhoea_combo_skill'],
+        },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] },
+      },
+      data_12: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_13: {
+        type: 'boolean',
+        expression: { kind: 'eventSkillIdIn', skillIds: ['chr_0033_camille_combo_skill_2'] },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'equal',
+          right: { kind: 'valueNode', nodeId: 'data_2' },
+        },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffFinishReasonIn', reasons: ['lifetime'] },
+      },
+      data_16: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0028_wulfa_combo_usetimer'] },
+      },
+      data_17: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'lessOrEqual',
+          value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0028_wulfa_combo_usetimer'],
+        },
+      },
+      data_18: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffFinishReasonIn', reasons: ['other'] },
+      },
+      data_19: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0028_wulfa_combo_usecount'] },
+      },
+      data_20: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0028_wulfa_combo_usecount'],
+        },
+      },
+      data_21: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'lessOrEqual',
+          value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0028_wulfa_combo_usetimer'],
+        },
+      },
+      data_22: {
+        type: 'boolean',
+        expression: { kind: 'eventSkillIdIn', skillIds: ['chr_0028_wulfa_combo_2_skill'] },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_chr_combo_skill_reset_cd: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { extra_cast: 0, max_cast: 2 },
+  attributeModifiers: [],
+  abilityEventResponses: [
+    { event: 'afterSkillApplyCost', priority: 0, sequence: { $sequence: 'checkCondition_10' } },
+    { event: 'afterSkillApplyCost', priority: 0, sequence: { $sequence: 'checkCondition_19' } },
+    { event: 'afterSkillApplyCost', priority: 0, sequence: { $sequence: 'checkCondition_28' } },
+    { event: 'afterSkillApplyCost', priority: 0, sequence: { $sequence: 'checkCondition_34' } },
+    { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_42' } },
+    { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_51' } },
+    { event: 'skillEnd', priority: 0, sequence: { $sequence: 'checkCondition_60' } },
+  ],
+  actionGraph: commonBuff_buff_cc_chr_combo_skill_reset_cd$actionGraph,
+};
+
+const commonBuff_buff_cc_chr_combo_skill_reset_cd_delay_trigger$actionGraph = {
+  main: {
+    nodes: {
+      openComboWindow_1: {
+        action: {
+          kind: 'openComboWindow',
+          parameters: {
+            nextSkillKeyFromSlot: 'comboSkill',
+            owner: { kind: 'owner' },
+            target: { kind: 'battleMainTarget' },
+            trigger: { kind: 'battleMainTarget' },
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_chr_combo_skill_reset_cd_delay_trigger: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: { blackboardKey: 'delay' },
+  applyTags: [],
+  extendTags: [],
+  blackboard: { delay: 0.033333 },
+  attributeModifiers: [],
+  lifecycleSequences: { finish: [{ $sequence: 'openComboWindow_1' }] },
+  actionGraph: commonBuff_buff_cc_chr_combo_skill_reset_cd_delay_trigger$actionGraph,
+};
+
+const commonBuff_buff_cc_chr_combo_skill_reset_cd_extra_state$actionGraph = {
+  main: {
+    nodes: {
+      adjustSkillCooldown_1: {
+        action: {
+          kind: 'adjustSkillCooldown',
+          parameters: {
+            target: { kind: 'owner' },
+            skill: { kind: 'type', skillType: 'comboSkill' },
+            operation: 'set',
+            basis: 'absoluteSeconds',
+            value: { kind: 'constant', value: 0 },
+          },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'adjustSkillCooldown_1',
+      },
+      checkCondition_4: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'adjustSkillCooldown_1',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'mark', fallback: 0 } },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_chr_combo_skill_reset_cd_extra_state: SkillBuffDefinition = {
+  stackingType: 'overwriteDuration',
+  priority: 0,
+  maxStackCount: 1,
+  triggerIntervalSeconds: 0.03333,
+  waitFirstTriggerInterval: true,
+  maxTriggerCount: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { mark: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: {
+    start: [{ $sequence: 'checkCondition_2' }],
+    trigger: [{ $sequence: 'checkCondition_4' }],
+  },
+  actionGraph: commonBuff_buff_cc_chr_combo_skill_reset_cd_extra_state$actionGraph,
 };
 
 const commonBuff_buff_cc_chr_disable_normal_skill$actionGraph = {
@@ -846,7 +1640,7 @@ const commonBuff_buff_cc_chr_no_lastcombo_weak$actionGraph = {
         expression: {
           kind: 'eventDamageTagsMatch',
           match: 'hasAny',
-          tags: ['powerAttack', 'normalAttackLastCombo'],
+          tags: ['normalAttackLastCombo', 'powerAttack'],
         },
       },
       data_3: {
@@ -1276,6 +2070,908 @@ const commonBuff_buff_cc_enemy_common_hp_up_mult: SkillBuffDefinition = {
     { attribute: 'MaxHp', slot: 'multiplier', value: { blackboardKey: 'hp_up' } },
   ],
   actionGraph: commonBuff_buff_cc_enemy_common_hp_up_mult$actionGraph,
+};
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down$actionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_enemy_inflict_stack_dmg_down_stack_changed_listener',
+                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            asChildBuff: true,
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1 },
+  attributeModifiers: [],
+  lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
+  actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down$actionGraph,
+};
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_cryst$actionGraph = {
+  main: {
+    nodes: {
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'boolean', expression: { kind: 'eventDamageTypeIn', damageTypes: ['cryo'] } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_cryst: SkillBuffDefinition = {
+  stackingType: 'stack',
+  priority: 0,
+  maxStackCount: 4,
+  presentation: { icon: 'endaxis:icons/icon_battle_cryst_dmg_down', showInHeadBarCommon: true },
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1 },
+  attributeModifiers: [],
+  damageModifiers: [
+    {
+      enabledSide: 'defender',
+      condition: { $sequence: 'checkCondition_1' },
+      processors: [
+        {
+          kind: 'damageScale',
+          side: 'defender',
+          zone: 'product',
+          addition: { blackboardKey: 'dmg_scale' },
+        },
+      ],
+    },
+  ],
+  actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_cryst$actionGraph,
+};
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_fire$actionGraph = {
+  main: {
+    nodes: {
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'boolean', expression: { kind: 'eventDamageTypeIn', damageTypes: ['heat'] } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_fire: SkillBuffDefinition = {
+  stackingType: 'stack',
+  priority: 0,
+  maxStackCount: 4,
+  presentation: { icon: 'endaxis:icons/icon_battle_fire_dmg_down', showInHeadBarCommon: true },
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1 },
+  attributeModifiers: [],
+  damageModifiers: [
+    {
+      enabledSide: 'defender',
+      condition: { $sequence: 'checkCondition_1' },
+      processors: [
+        {
+          kind: 'damageScale',
+          side: 'defender',
+          zone: 'product',
+          addition: { blackboardKey: 'dmg_scale' },
+        },
+      ],
+    },
+  ],
+  actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_fire$actionGraph,
+};
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_natural$actionGraph = {
+  main: {
+    nodes: {
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'eventDamageTypeIn', damageTypes: ['nature'] },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_natural: SkillBuffDefinition = {
+  stackingType: 'stack',
+  priority: 0,
+  maxStackCount: 4,
+  presentation: { icon: 'endaxis:icons/icon_battle_natural_dmg_down', showInHeadBarCommon: true },
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1 },
+  attributeModifiers: [],
+  damageModifiers: [
+    {
+      enabledSide: 'defender',
+      condition: { $sequence: 'checkCondition_1' },
+      processors: [
+        {
+          kind: 'damageScale',
+          side: 'defender',
+          zone: 'product',
+          addition: { blackboardKey: 'dmg_scale' },
+        },
+      ],
+    },
+  ],
+  actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_natural$actionGraph,
+};
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_phy$actionGraph = {
+  main: {
+    nodes: {
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'eventDamageTypeIn', damageTypes: ['physical'] },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_phy: SkillBuffDefinition = {
+  stackingType: 'stack',
+  priority: 0,
+  maxStackCount: 4,
+  presentation: { icon: 'endaxis:icons/icon_battle_physical_dmg_down', showInHeadBarCommon: true },
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1 },
+  attributeModifiers: [],
+  damageModifiers: [
+    {
+      enabledSide: 'defender',
+      condition: { $sequence: 'checkCondition_1' },
+      processors: [
+        {
+          kind: 'damageScale',
+          side: 'defender',
+          zone: 'product',
+          addition: { blackboardKey: 'dmg_scale' },
+        },
+      ],
+    },
+  ],
+  actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_phy$actionGraph,
+};
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_pulse$actionGraph = {
+  main: {
+    nodes: {
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'eventDamageTypeIn', damageTypes: ['electric'] },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_pulse: SkillBuffDefinition = {
+  stackingType: 'stack',
+  priority: 0,
+  maxStackCount: 4,
+  presentation: { icon: 'endaxis:icons/icon_battle_pulse_dmg_down', showInHeadBarCommon: true },
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1 },
+  attributeModifiers: [],
+  damageModifiers: [
+    {
+      enabledSide: 'defender',
+      condition: { $sequence: 'checkCondition_1' },
+      processors: [
+        {
+          kind: 'damageScale',
+          side: 'defender',
+          zone: 'product',
+          addition: { blackboardKey: 'dmg_scale' },
+        },
+      ],
+    },
+  ],
+  actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_pulse$actionGraph,
+};
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_stack_changed_listener$actionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_enemy_inflict_stack_dmg_down_sync_delay_fire',
+                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'applyBuff_1',
+      },
+      applyBuff_3: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_enemy_inflict_stack_dmg_down_sync_delay_pulse',
+                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_4: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'applyBuff_3',
+      },
+      applyBuff_5: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_enemy_inflict_stack_dmg_down_sync_delay_cryst',
+                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'applyBuff_5',
+      },
+      applyBuff_7: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_enemy_inflict_stack_dmg_down_sync_delay_natural',
+                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_8: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'applyBuff_7',
+      },
+      applyBuff_9: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_enemy_inflict_stack_dmg_down_sync_delay_phy',
+                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_10: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: 'applyBuff_9',
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffTagsMatch',
+          match: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
+        },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffTagsMatch',
+          match: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+        },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffTagsMatch',
+          match: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffTagsMatch',
+          match: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+        },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffTagsMatch',
+          match: 'hasAny',
+          buffTags: ['Skill/Character/Common/NoGuard'],
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_stack_changed_listener: SkillBuffDefinition =
+  {
+    stackingType: 'unlimited',
+    priority: 0,
+    maxStackCount: 1,
+    applyTags: [],
+    extendTags: [],
+    blackboard: { dmg_scale: -0.1 },
+    attributeModifiers: [],
+    abilityEventResponses: [
+      { event: 'buffEnhanceChanged', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
+      { event: 'buffEnhanceChanged', priority: 0, sequence: { $sequence: 'checkCondition_4' } },
+      { event: 'buffEnhanceChanged', priority: 0, sequence: { $sequence: 'checkCondition_6' } },
+      { event: 'buffEnhanceChanged', priority: 0, sequence: { $sequence: 'checkCondition_8' } },
+      { event: 'buffEnhanceChanged', priority: 0, sequence: { $sequence: 'checkCondition_10' } },
+    ],
+    actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_stack_changed_listener$actionGraph,
+  };
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_cryst$actionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_enemy_inflict_stack_dmg_down_cryst',
+                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            count: { kind: 'valueNode', nodeId: 'data_1' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'applyBuff_1',
+      },
+      finishBuffsById_3: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_cc_enemy_inflict_stack_dmg_down_cryst'],
+            reason: 'other',
+          },
+        },
+        next: 'checkCondition_2',
+      },
+      readBuffStackCount_4: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'stack',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+            },
+          },
+        },
+        next: 'finishBuffsById_3',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'stack' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'stack', fallback: 0 } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_2' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_cryst: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: 0.1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1, stack: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: { finish: [{ $sequence: 'readBuffStackCount_4' }] },
+  actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_cryst$actionGraph,
+};
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_fire$actionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_enemy_inflict_stack_dmg_down_fire',
+                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            count: { kind: 'valueNode', nodeId: 'data_1' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'applyBuff_1',
+      },
+      finishBuffsById_3: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_cc_enemy_inflict_stack_dmg_down_fire'],
+            reason: 'other',
+          },
+        },
+        next: 'checkCondition_2',
+      },
+      readBuffStackCount_4: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'stack',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
+            },
+          },
+        },
+        next: 'finishBuffsById_3',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'stack' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'stack', fallback: 0 } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_2' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_fire: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: 0.1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1, stack: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: { finish: [{ $sequence: 'readBuffStackCount_4' }] },
+  actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_fire$actionGraph,
+};
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_natural$actionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_enemy_inflict_stack_dmg_down_natural',
+                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            count: { kind: 'valueNode', nodeId: 'data_1' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'applyBuff_1',
+      },
+      finishBuffsById_3: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_cc_enemy_inflict_stack_dmg_down_natural'],
+            reason: 'other',
+          },
+        },
+        next: 'checkCondition_2',
+      },
+      readBuffStackCount_4: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'stack',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+            },
+          },
+        },
+        next: 'finishBuffsById_3',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'stack' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'stack', fallback: 0 } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_2' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_natural: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: 0.1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1, stack: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: { finish: [{ $sequence: 'readBuffStackCount_4' }] },
+  actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_natural$actionGraph,
+};
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_phy$actionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_enemy_inflict_stack_dmg_down_phy',
+                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            count: { kind: 'valueNode', nodeId: 'data_1' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'applyBuff_1',
+      },
+      finishBuffsById_3: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_cc_enemy_inflict_stack_dmg_down_phy'],
+            reason: 'other',
+          },
+        },
+        next: 'checkCondition_2',
+      },
+      readBuffStackCount_4: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'stack',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/NoGuard'],
+            },
+          },
+        },
+        next: 'finishBuffsById_3',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'stack' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'stack', fallback: 0 } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_2' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_phy: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: 0.1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1, stack: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: { finish: [{ $sequence: 'readBuffStackCount_4' }] },
+  actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_phy$actionGraph,
+};
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_pulse$actionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_cc_enemy_inflict_stack_dmg_down_pulse',
+                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            count: { kind: 'valueNode', nodeId: 'data_1' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'applyBuff_1',
+      },
+      finishBuffsById_3: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_cc_enemy_inflict_stack_dmg_down_pulse'],
+            reason: 'other',
+          },
+        },
+        next: 'checkCondition_2',
+      },
+      readBuffStackCount_4: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'stack',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+            },
+          },
+        },
+        next: 'finishBuffsById_3',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'stack' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'stack', fallback: 0 } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_2' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_pulse: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: 0.1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1, stack: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: { finish: [{ $sequence: 'readBuffStackCount_4' }] },
+  actionGraph: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_pulse$actionGraph,
+};
+
+const commonBuff_buff_cc_eny_control_immune_abnormal$actionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_cc_eny_control_immune_abnormal: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 1,
+  applyTags: ['Immune/Frozen', 'Immune/Airborne', 'Immune/KnockDown', 'Immune/Static'],
+  extendTags: [],
+  blackboard: {},
+  attributeModifiers: [],
+  actionGraph: commonBuff_buff_cc_eny_control_immune_abnormal$actionGraph,
 };
 
 const commonBuff_buff_cc_eny_damage_resist$actionGraph = {
@@ -2211,6 +3907,31 @@ const commonBuff_buff_common_mini_poise_break_babyents: SkillBuffDefinition = {
   actionGraph: commonBuff_buff_common_mini_poise_break_babyents$actionGraph,
 };
 
+const commonBuff_buff_common_obtain_ultimate_sp$actionGraph = {
+  main: {
+    nodes: {
+      gainSquadUltimateEnergyFromSkillCost_1: {
+        action: { kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff_buff_common_obtain_ultimate_sp: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 0,
+  durationSeconds: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { ratio: 1, usp_everyone: 6.5, usp_self: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: { start: [{ $sequence: 'gainSquadUltimateEnergyFromSkillCost_1' }] },
+  actionGraph: commonBuff_buff_common_obtain_ultimate_sp$actionGraph,
+};
+
 const commonBuff_buff_common_vfx_eny_atk_down$actionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -2231,7 +3952,14 @@ export const contingencyContractBuffDefinitions: OperatorBuffDefinitions = Objec
   buff_cc_chr_combo_lock: commonBuff_buff_cc_chr_combo_lock,
   buff_cc_chr_combo_lock_instance: commonBuff_buff_cc_chr_combo_lock_instance,
   buff_cc_chr_combo_lock_stack: commonBuff_buff_cc_chr_combo_lock_stack,
+  buff_cc_chr_combo_skill_cost_atb: commonBuff_buff_cc_chr_combo_skill_cost_atb,
+  buff_cc_chr_combo_skill_cost_atb_effect: commonBuff_buff_cc_chr_combo_skill_cost_atb_effect,
   buff_cc_chr_combo_skill_dmg_up: commonBuff_buff_cc_chr_combo_skill_dmg_up,
+  buff_cc_chr_combo_skill_reset_cd: commonBuff_buff_cc_chr_combo_skill_reset_cd,
+  buff_cc_chr_combo_skill_reset_cd_delay_trigger:
+    commonBuff_buff_cc_chr_combo_skill_reset_cd_delay_trigger,
+  buff_cc_chr_combo_skill_reset_cd_extra_state:
+    commonBuff_buff_cc_chr_combo_skill_reset_cd_extra_state,
   buff_cc_chr_disable_normal_skill: commonBuff_buff_cc_chr_disable_normal_skill,
   buff_cc_chr_disable_same_normal_skill: commonBuff_buff_cc_chr_disable_same_normal_skill,
   buff_cc_chr_dmg_down_after_consume: commonBuff_buff_cc_chr_dmg_down_after_consume,
@@ -2248,6 +3976,26 @@ export const contingencyContractBuffDefinitions: OperatorBuffDefinitions = Objec
   buff_cc_chr_set_skill_atb_recover_ratio: commonBuff_buff_cc_chr_set_skill_atb_recover_ratio,
   buff_cc_chr_ult_skill_usp_clear: commonBuff_buff_cc_chr_ult_skill_usp_clear,
   buff_cc_enemy_common_hp_up_mult: commonBuff_buff_cc_enemy_common_hp_up_mult,
+  buff_cc_enemy_inflict_stack_dmg_down: commonBuff_buff_cc_enemy_inflict_stack_dmg_down,
+  buff_cc_enemy_inflict_stack_dmg_down_cryst: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_cryst,
+  buff_cc_enemy_inflict_stack_dmg_down_fire: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_fire,
+  buff_cc_enemy_inflict_stack_dmg_down_natural:
+    commonBuff_buff_cc_enemy_inflict_stack_dmg_down_natural,
+  buff_cc_enemy_inflict_stack_dmg_down_phy: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_phy,
+  buff_cc_enemy_inflict_stack_dmg_down_pulse: commonBuff_buff_cc_enemy_inflict_stack_dmg_down_pulse,
+  buff_cc_enemy_inflict_stack_dmg_down_stack_changed_listener:
+    commonBuff_buff_cc_enemy_inflict_stack_dmg_down_stack_changed_listener,
+  buff_cc_enemy_inflict_stack_dmg_down_sync_delay_cryst:
+    commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_cryst,
+  buff_cc_enemy_inflict_stack_dmg_down_sync_delay_fire:
+    commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_fire,
+  buff_cc_enemy_inflict_stack_dmg_down_sync_delay_natural:
+    commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_natural,
+  buff_cc_enemy_inflict_stack_dmg_down_sync_delay_phy:
+    commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_phy,
+  buff_cc_enemy_inflict_stack_dmg_down_sync_delay_pulse:
+    commonBuff_buff_cc_enemy_inflict_stack_dmg_down_sync_delay_pulse,
+  buff_cc_eny_control_immune_abnormal: commonBuff_buff_cc_eny_control_immune_abnormal,
   buff_cc_eny_damage_resist: commonBuff_buff_cc_eny_damage_resist,
   buff_cc_eny_half_hp_clear_inflict_and_abnormal:
     commonBuff_buff_cc_eny_half_hp_clear_inflict_and_abnormal,
@@ -2259,6 +4007,7 @@ export const contingencyContractBuffDefinitions: OperatorBuffDefinitions = Objec
   buff_cc_eny_numshield_on_dead_inst: commonBuff_buff_cc_eny_numshield_on_dead_inst,
   buff_common_enemy_numshield_zero: commonBuff_buff_common_enemy_numshield_zero,
   buff_common_mini_poise_break_babyents: commonBuff_buff_common_mini_poise_break_babyents,
+  buff_common_obtain_ultimate_sp: commonBuff_buff_common_obtain_ultimate_sp,
   buff_common_vfx_eny_atk_down: commonBuff_buff_common_vfx_eny_atk_down,
 });
 
@@ -2331,6 +4080,17 @@ export const contingencyContractTagDefinitions = Object.freeze<
     },
   },
   {
+    tagId: 113201,
+    columnId: '4',
+    conflictId: '',
+    score: 1,
+    keyId: '',
+    lockIds: [],
+    romanNumSuffix: '',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_401',
+    blackboard: {},
+  },
+  {
     tagId: 110703,
     columnId: '4',
     conflictId: '',
@@ -2351,8 +4111,8 @@ export const contingencyContractTagDefinitions = Object.freeze<
     romanNumSuffix: 'Ⅰ',
     icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_501',
     blackboard: {
-      duration: 10,
       dmg_scale: -0.3,
+      duration: 10,
     },
   },
   {
@@ -2417,8 +4177,8 @@ export const contingencyContractTagDefinitions = Object.freeze<
     romanNumSuffix: 'Ⅲ',
     icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_603',
     blackboard: {
-      hp_down_ratio_melee: 0.5,
       hp_down_ratio: 0.5,
+      hp_down_ratio_melee: 0.5,
       countdown: 6,
       heal_scale: -0.9,
     },
@@ -2434,8 +4194,8 @@ export const contingencyContractTagDefinitions = Object.freeze<
     icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_701',
     blackboard: {
       dash_count: 5,
-      recover_count: 1,
       interval: 8,
+      recover_count: 1,
     },
   },
   {
@@ -2501,6 +4261,19 @@ export const contingencyContractTagDefinitions = Object.freeze<
     },
   },
   {
+    tagId: 113803,
+    columnId: '11',
+    conflictId: 'c_cc002_time1',
+    score: 3,
+    keyId: '',
+    lockIds: [],
+    romanNumSuffix: 'Ⅲ',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1903',
+    blackboard: {
+      time: -180,
+    },
+  },
+  {
     tagId: 110302,
     columnId: '12',
     conflictId: 'c_cc002_key1',
@@ -2524,9 +4297,22 @@ export const contingencyContractTagDefinitions = Object.freeze<
     romanNumSuffix: '',
     icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key3',
     blackboard: {
-      max_stack: 2,
       duration: 10,
+      max_stack: 2,
       dmg_add: 0.5,
+    },
+  },
+  {
+    tagId: 110502,
+    columnId: '14',
+    conflictId: 'c_cc002_key1',
+    score: 2,
+    keyId: 'key1_v1d6',
+    lockIds: [],
+    romanNumSuffix: '',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key2',
+    blackboard: {
+      atb: 50,
     },
   },
   {
@@ -2625,6 +4411,19 @@ export const contingencyContractTagDefinitions = Object.freeze<
     },
   },
   {
+    tagId: 113402,
+    columnId: '19',
+    conflictId: '',
+    score: 2,
+    keyId: '',
+    lockIds: ['key1_v1d6'],
+    romanNumSuffix: '',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1402',
+    blackboard: {
+      dmg_taken_down: -0.9,
+    },
+  },
+  {
     tagId: 111703,
     columnId: '19',
     conflictId: '',
@@ -2639,6 +4438,32 @@ export const contingencyContractTagDefinitions = Object.freeze<
     },
   },
   {
+    tagId: 113701,
+    columnId: '20',
+    conflictId: 'c_cc002_c18',
+    score: 1,
+    keyId: '',
+    lockIds: ['key1_v1d6'],
+    romanNumSuffix: 'Ⅰ',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_2901',
+    blackboard: {
+      dmg_scale: -0.1,
+    },
+  },
+  {
+    tagId: 113702,
+    columnId: '20',
+    conflictId: 'c_cc002_c18',
+    score: 2,
+    keyId: '',
+    lockIds: ['key1_v1d6'],
+    romanNumSuffix: 'Ⅱ',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_2902',
+    blackboard: {
+      dmg_scale: -0.2,
+    },
+  },
+  {
     tagId: 112302,
     columnId: '21',
     conflictId: 'c_cc002_c19',
@@ -2647,6 +4472,17 @@ export const contingencyContractTagDefinitions = Object.freeze<
     lockIds: ['key1_v1d6'],
     romanNumSuffix: 'Ⅱ',
     icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1602',
+    blackboard: {},
+  },
+  {
+    tagId: 112303,
+    columnId: '21',
+    conflictId: 'c_cc002_c19',
+    score: 3,
+    keyId: '',
+    lockIds: ['key1_v1d6'],
+    romanNumSuffix: 'Ⅲ',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1603',
     blackboard: {},
   },
   {
@@ -2800,6 +4636,49 @@ export const contingencyContractInitializationPlans = Object.freeze<
     },
   },
   {
+    tagId: 110502,
+    sequence: { $sequence: 'applyBuff_2' },
+    actionGraph: {
+      main: {
+        nodes: {
+          applyBuff_1: {
+            action: {
+              kind: 'applyBuff',
+              parameters: {
+                targets: { kind: 'characterTeam', excludeOwner: false },
+                buffs: [
+                  {
+                    buffId: 'buff_cc_chr_combo_skill_reset_cd',
+                    blackboardAssignments: {},
+                    stringBlackboardAssignments: {},
+                  },
+                ],
+              },
+            },
+            next: null,
+          },
+          applyBuff_2: {
+            action: {
+              kind: 'applyBuff',
+              parameters: {
+                targets: { kind: 'characterTeam', excludeOwner: false },
+                buffs: [
+                  {
+                    buffId: 'buff_cc_chr_combo_skill_cost_atb',
+                    blackboardAssignments: { atb: { kind: 'constant', value: 50 } },
+                    stringBlackboardAssignments: {},
+                  },
+                ],
+              },
+            },
+            next: 'applyBuff_1',
+          },
+        },
+      },
+      macros: {},
+    },
+  },
+  {
     tagId: 110703,
     sequence: { $sequence: 'applyBuff_1' },
     actionGraph: {
@@ -2841,8 +4720,8 @@ export const contingencyContractInitializationPlans = Object.freeze<
                   {
                     buffId: 'buff_cc_chr_dmg_down_after_consume_inflict',
                     blackboardAssignments: {
-                      duration: { kind: 'constant', value: 10 },
                       dmg_scale: { kind: 'constant', value: -0.3 },
+                      duration: { kind: 'constant', value: 10 },
                     },
                     stringBlackboardAssignments: {},
                   },
@@ -2860,8 +4739,8 @@ export const contingencyContractInitializationPlans = Object.freeze<
                   {
                     buffId: 'buff_cc_chr_dmg_down_after_consume',
                     blackboardAssignments: {
-                      duration: { kind: 'constant', value: 10 },
                       dmg_scale: { kind: 'constant', value: -0.3 },
+                      duration: { kind: 'constant', value: 10 },
                     },
                     stringBlackboardAssignments: {},
                   },
@@ -3145,6 +5024,39 @@ export const contingencyContractInitializationPlans = Object.freeze<
     },
   },
   {
+    tagId: 113201,
+    sequence: { $sequence: 'applyBuff_1' },
+    actionGraph: {
+      main: {
+        nodes: {
+          applyBuff_1: {
+            action: {
+              kind: 'applyBuff',
+              parameters: {
+                targets: {
+                  kind: 'enemyByTags',
+                  scope: 'global',
+                  reverse: true,
+                  tagQueryType: 'hasAll',
+                  tags: [],
+                },
+                buffs: [
+                  {
+                    buffId: 'buff_cc_eny_control_immune_abnormal',
+                    blackboardAssignments: {},
+                    stringBlackboardAssignments: {},
+                  },
+                ],
+              },
+            },
+            next: null,
+          },
+        },
+      },
+      macros: {},
+    },
+  },
+  {
     tagId: 113302,
     sequence: { $sequence: 'applyBuff_1' },
     actionGraph: {
@@ -3206,8 +5118,8 @@ export const contingencyContractInitializationPlans = Object.freeze<
                   {
                     buffId: 'buff_cc_chr_combo_lock',
                     blackboardAssignments: {
-                      max_stack: { kind: 'constant', value: 2 },
                       duration: { kind: 'constant', value: 10 },
+                      max_stack: { kind: 'constant', value: 2 },
                     },
                     stringBlackboardAssignments: {},
                   },
@@ -3254,6 +5166,72 @@ export const contingencyContractInitializationPlans = Object.freeze<
       macros: {},
     },
   },
+  {
+    tagId: 113701,
+    sequence: { $sequence: 'applyBuff_1' },
+    actionGraph: {
+      main: {
+        nodes: {
+          applyBuff_1: {
+            action: {
+              kind: 'applyBuff',
+              parameters: {
+                targets: {
+                  kind: 'enemyByTags',
+                  scope: 'global',
+                  reverse: true,
+                  tagQueryType: 'hasAll',
+                  tags: [],
+                },
+                buffs: [
+                  {
+                    buffId: 'buff_cc_enemy_inflict_stack_dmg_down',
+                    blackboardAssignments: { dmg_scale: { kind: 'constant', value: -0.1 } },
+                    stringBlackboardAssignments: {},
+                  },
+                ],
+              },
+            },
+            next: null,
+          },
+        },
+      },
+      macros: {},
+    },
+  },
+  {
+    tagId: 113702,
+    sequence: { $sequence: 'applyBuff_1' },
+    actionGraph: {
+      main: {
+        nodes: {
+          applyBuff_1: {
+            action: {
+              kind: 'applyBuff',
+              parameters: {
+                targets: {
+                  kind: 'enemyByTags',
+                  scope: 'global',
+                  reverse: true,
+                  tagQueryType: 'hasAll',
+                  tags: [],
+                },
+                buffs: [
+                  {
+                    buffId: 'buff_cc_enemy_inflict_stack_dmg_down',
+                    blackboardAssignments: { dmg_scale: { kind: 'constant', value: -0.2 } },
+                    stringBlackboardAssignments: {},
+                  },
+                ],
+              },
+            },
+            next: null,
+          },
+        },
+      },
+      macros: {},
+    },
+  },
 ]);
 export const contingencyContractBlockedTagReasons = Object.freeze({}) as Readonly<
   Record<number, string>
@@ -3271,11 +5249,14 @@ export const contingencyContractOmittedTagReasons = Object.freeze({
   '111303': '依赖敌人对干员造成伤害',
   '111602': '依赖敌人主动技能或攻击目标选择',
   '112302': '依赖敌人主动技能或攻击目标选择',
+  '112303': '依赖敌人主动技能与关卡刷怪，不进入被动敌人模拟',
   '112402': '依赖敌人主动技能或攻击目标选择',
   '112501': '可避免的地面区域不进入模拟',
   '112701': '依赖敌人主动技能或攻击目标选择',
   '112801': '可避免的地面区域不进入模拟',
+  '113402': '按对玩家最有利的站位，主控处于光环内，不触发光环外减伤',
   '113801': '关卡挑战倒计时不参与伤害模拟',
   '113802': '关卡挑战倒计时不参与伤害模拟',
+  '113803': '关卡挑战倒计时不参与伤害模拟',
 }) as Readonly<Record<number, string>>;
 export const contingencyContractDefinitionRevision = 'indie_contract002';

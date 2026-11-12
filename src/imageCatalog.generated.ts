@@ -481,6 +481,11 @@ export const imageCatalog: readonly {
     category: 'contingency_contract',
   },
   {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1402',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1402.webp',
+    category: 'contingency_contract',
+  },
+  {
     ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1403',
     path: '/contingency_contract/2/icon_activity_contract_1_tag_1403.webp',
     category: 'contingency_contract',
@@ -488,6 +493,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1602',
     path: '/contingency_contract/2/icon_activity_contract_1_tag_1602.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1603',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1603.webp',
     category: 'contingency_contract',
   },
   {
@@ -511,6 +521,11 @@ export const imageCatalog: readonly {
     category: 'contingency_contract',
   },
   {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1903',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1903.webp',
+    category: 'contingency_contract',
+  },
+  {
     ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_201',
     path: '/contingency_contract/2/icon_activity_contract_1_tag_201.webp',
     category: 'contingency_contract',
@@ -518,6 +533,16 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_2201',
     path: '/contingency_contract/2/icon_activity_contract_1_tag_2201.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_2901',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_2901.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_2902',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_2902.webp',
     category: 'contingency_contract',
   },
   {
@@ -533,6 +558,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_302',
     path: '/contingency_contract/2/icon_activity_contract_1_tag_302.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_401',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_401.webp',
     category: 'contingency_contract',
   },
   {
@@ -588,6 +618,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key1',
     path: '/contingency_contract/2/icon_activity_contract_1_tag_key1.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key2',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_key2.webp',
     category: 'contingency_contract',
   },
   {

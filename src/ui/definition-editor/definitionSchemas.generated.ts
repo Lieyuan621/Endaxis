@@ -3253,6 +3253,7 @@ export const definitionSchemas = {
                     'outputBuff',
                     'finishedBuff',
                     'buffEndsEarly',
+                    'buffEnhanceChanged',
                     'afterOutputWeaknessTriggered',
                     'customAbilityEvent',
                     'afterKillEntity',
@@ -3262,6 +3263,7 @@ export const definitionSchemas = {
                   ],
                   semantics: {
                     unionVariants: [
+                      {},
                       {},
                       {},
                       {},

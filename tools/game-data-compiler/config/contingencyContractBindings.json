@@ -228,6 +228,59 @@
     "113802": {
       "omitted": "关卡挑战倒计时不参与伤害模拟",
       "buffs": []
+    },
+    "110502": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_chr_combo_skill_cost_atb",
+          "owner": "caster",
+          "blackboardIndex": 0
+        },
+        {
+          "buffId": "buff_cc_chr_combo_skill_reset_cd",
+          "owner": "caster",
+          "blackboardIndex": 1
+        }
+      ]
+    },
+    "112303": {
+      "omitted": "依赖敌人主动技能与关卡刷怪，不进入被动敌人模拟",
+      "buffs": []
+    },
+    "113201": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_eny_control_immune_abnormal",
+          "owner": "enemy",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "113402": {
+      "omitted": "按对玩家最有利的站位，主控处于光环内，不触发光环外减伤",
+      "buffs": []
+    },
+    "113701": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_enemy_inflict_stack_dmg_down",
+          "owner": "enemy",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "113702": {
+      "buffs": [
+        {
+          "buffId": "buff_cc_enemy_inflict_stack_dmg_down",
+          "owner": "enemy",
+          "blackboardIndex": 0
+        }
+      ]
+    },
+    "113803": {
+      "omitted": "关卡挑战倒计时不参与伤害模拟",
+      "buffs": []
     }
   }
 }

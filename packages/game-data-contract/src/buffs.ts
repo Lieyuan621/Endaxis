@@ -81,6 +81,7 @@ export const BUFF_ABILITY_EVENTS = [
   'addedBuff',
   'finishedBuff',
   'buffEndsEarly',
+  'buffEnhanceChanged',
   'afterOutputWeaknessTriggered',
   'customAbilityEvent',
   'afterKillEntity',
@@ -595,8 +596,7 @@ export interface BuffInstantAttributeProcessorDefinition extends InstantAttribut
 }
 
 export type CombatBuffDefinitionDamageProcessor =
-  | DamageScaleProcessorDefinition
-  | BuffInstantAttributeProcessorDefinition;
+  DamageScaleProcessorDefinition | BuffInstantAttributeProcessorDefinition;
 
 /** Buff 激活期间向伤害生命周期注册的一项纯数据修正。 */
 export interface CombatBuffDefinitionDamageModifier<Condition = ActionGraphReference> {
