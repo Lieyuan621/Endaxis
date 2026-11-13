@@ -1897,7 +1897,7 @@ export const zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.1,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'startTimeDilation_1',
@@ -1938,7 +1938,7 @@ export const zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.9,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'gainFinisherSp_4',
@@ -2783,7 +2783,14 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_68: {
+      addEntityTags_68: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: { targets: { kind: 'source' }, tags: ['Status/DisableCastComboSkill'] },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_69: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -2993,8 +3000,9 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill: SkillDefinition = {
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'ifElse_57' } },
     { startFrame: 123, endFrame: 126, sequence: { $sequence: 'checkCondition_51' } },
     { startFrame: 16, endFrame: 116, sequence: { $sequence: 'jumpTimeline_67' } },
-    { startFrame: 45, endFrame: 116, sequence: { $sequence: 'reachSkillOperableBoundary_68' } },
-    { startFrame: 120, endFrame: 147, sequence: { $sequence: 'reachSkillOperableBoundary_68' } },
+    { startFrame: 0, endFrame: 14, sequence: { $sequence: 'addEntityTags_68' } },
+    { startFrame: 45, endFrame: 116, sequence: { $sequence: 'reachSkillOperableBoundary_69' } },
+    { startFrame: 120, endFrame: 147, sequence: { $sequence: 'reachSkillOperableBoundary_69' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'enemy',
@@ -3563,7 +3571,14 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_72: {
+      addEntityTags_72: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: { targets: { kind: 'source' }, tags: ['Status/DisableCastComboSkill'] },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_73: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -3765,7 +3780,8 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ult: SkillDefinition = {
     { startFrame: 100, endFrame: 103, sequence: { $sequence: 'checkCondition_59' } },
     { startFrame: 16, endFrame: 100, sequence: { $sequence: 'jumpTimeline_63' } },
     { startFrame: 0, endFrame: 18, sequence: { $sequence: 'holdBuffsById_71' } },
-    { startFrame: 30, endFrame: 143, sequence: { $sequence: 'reachSkillOperableBoundary_72' } },
+    { startFrame: 0, endFrame: 16, sequence: { $sequence: 'addEntityTags_72' } },
+    { startFrame: 30, endFrame: 143, sequence: { $sequence: 'reachSkillOperableBoundary_73' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'enemy',
@@ -3980,8 +3996,7 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
             target: { kind: 'context', key: 'smart_target' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_9' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_10' },
           },
         },
@@ -4266,8 +4281,7 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph = {
             target: { kind: 'context', key: 'smart_target' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_6' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
@@ -4668,6 +4682,16 @@ export const zhuangFangyiChr_0030_zhuangfy_ultimate_skill_endActionGraph = {
         },
         next: null,
       },
+      addEntityTags_2: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: {
+            targets: { kind: 'source' },
+            tags: ['Status/DisableNormalSkill', 'Status/DisableCastComboSkill'],
+          },
+        },
+        next: null,
+      },
     },
   },
   macros: {},
@@ -4685,6 +4709,7 @@ export const zhuangFangyiChr_0030_zhuangfy_ultimate_skill_end: SkillDefinition =
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_1' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'addEntityTags_2' } },
   ],
   defaultTarget: 'owner',
   skillType: 'ultimate',
@@ -5247,8 +5272,7 @@ const zhuangFangyiBuff3ActionGraph = {
             target: { kind: 'owner' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_6' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
@@ -6016,8 +6040,7 @@ const zhuangFangyiBuff11ActionGraph = {
             target: { kind: 'context', key: 'thunderTarDmg' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_9' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['normalSkill', 'canBreakWeakness'],
           },
         },
         next: 'ifElse_18',
@@ -6114,8 +6137,7 @@ const zhuangFangyiBuff11ActionGraph = {
             target: { kind: 'context', key: 'thunderTarDmg' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_15' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['normalSkill', 'canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_16' },
           },
         },
@@ -7904,7 +7926,14 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              findTargets_6: {
+              addEntityTags_6: {
+                action: {
+                  kind: 'addEntityTags',
+                  parameters: { targets: { kind: 'source' }, tags: ['Status/DisableNormalSkill'] },
+                },
+                next: null,
+              },
+              findTargets_7: {
                 action: {
                   kind: 'findTargets',
                   parameters: {
@@ -7923,11 +7952,25 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              jumpTimeline_15: {
+              jumpTimeline_16: {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 64 },
                   condition: { kind: 'conditionNode', nodeId: 'data_5' },
+                },
+                next: null,
+              },
+              dealDamage_11: {
+                action: {
+                  kind: 'dealDamage',
+                  parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
+                    damageType: 'electric',
+                    attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+                    tags: ['normalSkill'],
+                  },
+                  key: 'abilityentity_chr_0030_zhuangfy_normal_skill_ult:chr_0030_zhuangfy_normal_skill_ult_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_11/action',
                 },
                 next: null,
               },
@@ -7939,28 +7982,13 @@ export const zhuangFangyi: OperatorDefinition = {
                     target: { kind: 'context', key: 'tar' },
                     damageType: 'electric',
                     attackScale: { kind: 'valueNode', nodeId: 'data_6' },
-                    tags: ['normalSkill'],
+                    tags: ['normalSkill', 'canBreakWeakness'],
                   },
                   key: 'abilityentity_chr_0030_zhuangfy_normal_skill_ult:chr_0030_zhuangfy_normal_skill_ult_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_10/action',
                 },
                 next: null,
               },
-              dealDamage_9: {
-                action: {
-                  kind: 'dealDamage',
-                  parameters: {
-                    attacker: 'actionSource',
-                    target: { kind: 'context', key: 'tar' },
-                    damageType: 'electric',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_6' },
-                    tags: ['normalSkill'],
-                    features: ['canBreakWeakness'],
-                  },
-                  key: 'abilityentity_chr_0030_zhuangfy_normal_skill_ult:chr_0030_zhuangfy_normal_skill_ult_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_9/action',
-                },
-                next: null,
-              },
-              modifyActionValue_12: {
+              modifyActionValue_13: {
                 action: {
                   kind: 'modifyActionValue',
                   parameters: {
@@ -7971,17 +7999,17 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              ifElse_13: {
+              ifElse_14: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
                   condition: { kind: 'conditionNode', nodeId: 'data_8' },
-                  whenTrue: { $sequence: 'dealDamage_9' },
-                  whenFalse: { $sequence: 'dealDamage_10' },
+                  whenTrue: { $sequence: 'dealDamage_10' },
+                  whenFalse: { $sequence: 'dealDamage_11' },
                 },
-                next: 'modifyActionValue_12',
+                next: 'modifyActionValue_13',
               },
-              applyBuff_14: {
+              applyBuff_15: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -7991,29 +8019,29 @@ export const zhuangFangyi: OperatorDefinition = {
                     inheritSourceSkillCastInfo: true,
                   },
                 },
-                next: 'ifElse_13',
+                next: 'ifElse_14',
               },
-              ifElse_16: {
+              ifElse_17: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
                   condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                  whenTrue: { $sequence: 'applyBuff_14' },
-                  whenFalse: { $sequence: 'jumpTimeline_15' },
+                  whenTrue: { $sequence: 'applyBuff_15' },
+                  whenFalse: { $sequence: 'jumpTimeline_16' },
                 },
                 next: null,
               },
-              repeatEachTick_17: {
+              repeatEachTick_18: {
                 action: {
                   kind: 'repeatEachTick',
                   parameters: {
                     nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.2 },
                   },
-                  body: { $sequence: 'ifElse_16' },
+                  body: { $sequence: 'ifElse_17' },
                 },
                 next: null,
               },
-              startTimeDilation_18: {
+              startTimeDilation_19: {
                 action: {
                   kind: 'startTimeDilation',
                   parameters: {
@@ -8028,7 +8056,7 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              dealDamage_19: {
+              dealDamage_20: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -8036,15 +8064,14 @@ export const zhuangFangyi: OperatorDefinition = {
                     target: { kind: 'context', key: 'tar' },
                     damageType: 'electric',
                     attackScale: { kind: 'valueNode', nodeId: 'data_6' },
-                    tags: ['normalSkill'],
-                    features: ['canBreakWeakness'],
+                    tags: ['normalSkill', 'canBreakWeakness'],
                     stagger: { kind: 'valueNode', nodeId: 'data_10' },
                   },
-                  key: 'abilityentity_chr_0030_zhuangfy_normal_skill_ult:chr_0030_zhuangfy_normal_skill_ult_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_19/action',
+                  key: 'abilityentity_chr_0030_zhuangfy_normal_skill_ult:chr_0030_zhuangfy_normal_skill_ult_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_20/action',
                 },
-                next: 'startTimeDilation_18',
+                next: 'startTimeDilation_19',
               },
-              applyElementalInfliction_20: {
+              applyElementalInfliction_21: {
                 action: {
                   kind: 'applyElementalInfliction',
                   parameters: {
@@ -8053,9 +8080,9 @@ export const zhuangFangyi: OperatorDefinition = {
                     target: { kind: 'context', key: 'tar' },
                   },
                 },
-                next: 'dealDamage_19',
+                next: 'dealDamage_20',
               },
-              calculateActionValue_21: {
+              calculateActionValue_22: {
                 action: {
                   kind: 'calculateActionValue',
                   parameters: {
@@ -8065,9 +8092,9 @@ export const zhuangFangyi: OperatorDefinition = {
                     right: { kind: 'valueNode', nodeId: 'data_11' },
                   },
                 },
-                next: 'applyElementalInfliction_20',
+                next: 'applyElementalInfliction_21',
               },
-              applyBuff_22: {
+              applyBuff_23: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -8077,16 +8104,16 @@ export const zhuangFangyi: OperatorDefinition = {
                     inheritSourceSkillCastInfo: true,
                   },
                 },
-                next: 'calculateActionValue_21',
+                next: 'calculateActionValue_22',
               },
-              checkCondition_23: {
+              checkCondition_24: {
                 action: {
                   kind: 'checkCondition',
                   parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
                 },
-                next: 'applyBuff_22',
+                next: 'applyBuff_23',
               },
-              modifyActionValue_25: {
+              modifyActionValue_26: {
                 action: {
                   kind: 'modifyActionValue',
                   parameters: {
@@ -8097,23 +8124,13 @@ export const zhuangFangyi: OperatorDefinition = {
                 },
                 next: null,
               },
-              ifElse_26: {
+              ifElse_27: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
                   condition: { kind: 'conditionNode', nodeId: 'data_14' },
-                  whenTrue: { $sequence: 'modifyActionValue_25' },
+                  whenTrue: { $sequence: 'modifyActionValue_26' },
                   whenFalse: { $sequence: null },
-                },
-                next: null,
-              },
-              repeatEachTick_27: {
-                action: {
-                  kind: 'repeatEachTick',
-                  parameters: {
-                    nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.2 },
-                  },
-                  body: { $sequence: 'ifElse_26' },
                 },
                 next: null,
               },
@@ -8123,11 +8140,21 @@ export const zhuangFangyi: OperatorDefinition = {
                   parameters: {
                     nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.2 },
                   },
+                  body: { $sequence: 'ifElse_27' },
+                },
+                next: null,
+              },
+              repeatEachTick_29: {
+                action: {
+                  kind: 'repeatEachTick',
+                  parameters: {
+                    nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.2 },
+                  },
                   body: { $sequence: null },
                 },
                 next: null,
               },
-              createTimedMarker_30: {
+              createTimedMarker_31: {
                 action: {
                   kind: 'createTimedMarker',
                   parameters: {
@@ -8238,14 +8265,15 @@ export const zhuangFangyi: OperatorDefinition = {
         scheduledSequences: [
           { startFrame: 0, endFrame: 12, sequence: { $sequence: 'calculateActionValue_2' } },
           { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_5' } },
-          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'findTargets_6' } },
-          { startFrame: 69, endFrame: 70, sequence: { $sequence: 'findTargets_6' } },
-          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_17' } },
-          { startFrame: 69, endFrame: 70, sequence: { $sequence: 'checkCondition_23' } },
-          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_27' } },
-          { startFrame: 15, endFrame: 64, sequence: { $sequence: 'repeatEachTick_28' } },
-          { startFrame: 67, endFrame: 71, sequence: { $sequence: 'repeatEachTick_28' } },
-          { startFrame: 67, endFrame: 70, sequence: { $sequence: 'createTimedMarker_30' } },
+          { startFrame: 0, endFrame: 71, sequence: { $sequence: 'addEntityTags_6' } },
+          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'findTargets_7' } },
+          { startFrame: 69, endFrame: 70, sequence: { $sequence: 'findTargets_7' } },
+          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_18' } },
+          { startFrame: 69, endFrame: 70, sequence: { $sequence: 'checkCondition_24' } },
+          { startFrame: 12, endFrame: 64, sequence: { $sequence: 'repeatEachTick_28' } },
+          { startFrame: 15, endFrame: 64, sequence: { $sequence: 'repeatEachTick_29' } },
+          { startFrame: 67, endFrame: 71, sequence: { $sequence: 'repeatEachTick_29' } },
+          { startFrame: 67, endFrame: 70, sequence: { $sequence: 'createTimedMarker_31' } },
         ],
       },
     },

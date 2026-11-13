@@ -1,5 +1,6 @@
 import { fixtureGameplayTagRegistry } from './gameplayTagFixtures.ts';
 import { parseTargetReferenceSource } from '../src/source/target.ts';
+import { gameplayTagIdFromPath } from '../src/source/nativeGameplayTags.ts';
 import { describe, expect, it } from 'vitest';
 
 import { compileBuffLeafNode } from '../src/compiler/actions/combatEntityAndTimeProjection.ts';
@@ -53,6 +54,73 @@ function createActiveSkillContext(): CombatActionProjectionContextSource {
 
 /** 每次叶子编译使用独立图构建器；结果中的分支引用在该图内解析。 */
 const leafContext = createActiveSkillContext;
+
+it('实体标签动作保留运行时目标查询，不能作为输入表现裁剪', () => {
+  const leaf = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.AddTagAction+Data, Gameplay.Beyond',
+      tagOwner: targetFixture('Owner'),
+      useBlackboard: false,
+      tags: [{ tagId: -496376350 }],
+      tag: { useBlackboardKey: false, value: '', blackboardKey: '' },
+    },
+    'fixture.AddTagAction',
+    {},
+  );
+  expect(compileActionNode(node(leaf), new Set(), new Map(), leafContext())).toEqual([
+    {
+      kind: 'addEntityTags',
+      parameters: { targets: { kind: 'owner' }, tags: ['Status/DisableCastComboSkill'] },
+    },
+  ]);
+});
+
+it.each([
+  ['仅过滤', ['Status/DisableRootMotionRotate'], []],
+  [
+    '混合标签',
+    ['Status/DisableRootMotionRotate', 'Status/DisableDash'],
+    [
+      {
+        kind: 'addEntityTags',
+        parameters: { targets: { kind: 'owner' }, tags: ['Status/DisableDash'] },
+      },
+    ],
+  ],
+] as const)('实体标签审查后再投影：%s', (_name, tags, expected) => {
+  const leaf = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.AddTagAction+Data, Gameplay.Beyond',
+      tagOwner: targetFixture('Owner'),
+      useBlackboard: false,
+      tags: tags.map(tag => ({ tagId: gameplayTagIdFromPath(tag) })),
+      tag: { useBlackboardKey: false, value: '', blackboardKey: '' },
+    },
+    'fixture.AddTagAction',
+    {},
+  );
+  expect(compileActionNode(node(leaf), new Set(), new Map(), leafContext())).toEqual(expected);
+});
+
+it('来源目录中已知但未审查的实体标签仍阻止编译', () => {
+  const leaf = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.AddTagAction+Data, Gameplay.Beyond',
+      tagOwner: targetFixture('Owner'),
+      useBlackboard: false,
+      tags: [{ tagId: gameplayTagIdFromPath('Status/Immobilized') }],
+      tag: { useBlackboardKey: false, value: '', blackboardKey: '' },
+    },
+    'fixture.AddTagAction',
+    {},
+  );
+  expect(() => compileActionNode(node(leaf), new Set(), new Map(), leafContext())).toThrow(
+    'unreviewed entity tag "Status/Immobilized"',
+  );
+});
 
 it('专属 HUD 通知保留 Context 查询，不限制为 Owner/Source 或静态单干员', () => {
   const action = parseKnownNativeActionLeafSource(
@@ -3095,8 +3163,8 @@ it.each([
     {},
   );
   expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
-    kind: 'eventDamageFeaturesMatch',
+    kind: 'eventDamageTagsMatch',
     match: 'hasAny',
-    features: [feature],
+    tags: [feature],
   });
 });

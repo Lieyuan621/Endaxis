@@ -426,16 +426,6 @@ export const imageCatalog: readonly {
     category: 'contingency_contract',
   },
   {
-    ref: 'endaxis:contingency_contract/2/dissipation',
-    path: '/contingency_contract/2/dissipation.webp',
-    category: 'contingency_contract',
-  },
-  {
-    ref: 'endaxis:contingency_contract/2/engorgement',
-    path: '/contingency_contract/2/engorgement.webp',
-    category: 'contingency_contract',
-  },
-  {
     ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1002',
     path: '/contingency_contract/2/icon_activity_contract_1_tag_1002.webp',
     category: 'contingency_contract',
@@ -628,16 +618,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key3',
     path: '/contingency_contract/2/icon_activity_contract_1_tag_key3.webp',
-    category: 'contingency_contract',
-  },
-  {
-    ref: 'endaxis:contingency_contract/2/lockdown',
-    path: '/contingency_contract/2/lockdown.webp',
-    category: 'contingency_contract',
-  },
-  {
-    ref: 'endaxis:contingency_contract/2/silence',
-    path: '/contingency_contract/2/silence.webp',
     category: 'contingency_contract',
   },
   {
@@ -3366,11 +3346,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/akekuri/portrait',
-    path: '/operators/akekuri/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/akekuri/talent_1',
     path: '/operators/akekuri/talent 1.webp',
     category: 'operators',
@@ -3401,11 +3376,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/alesh/portrait',
-    path: '/operators/alesh/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/alesh/talent_1',
     path: '/operators/alesh/talent 1.webp',
     category: 'operators',
@@ -3433,11 +3403,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/antal/combo_01',
     path: '/operators/antal/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/antal/portrait',
-    path: '/operators/antal/portrait.webp',
     category: 'operators',
   },
   {
@@ -3481,11 +3446,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/arcane/portrait',
-    path: '/operators/arcane/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/arcane/talent_1',
     path: '/operators/arcane/talent 1.webp',
     category: 'operators',
@@ -3526,11 +3486,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/arclight/portrait',
-    path: '/operators/arclight/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/arclight/talent_1',
     path: '/operators/arclight/talent 1.webp',
     category: 'operators',
@@ -3558,11 +3513,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/ardelia/combo_01',
     path: '/operators/ardelia/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/ardelia/portrait',
-    path: '/operators/ardelia/portrait.webp',
     category: 'operators',
   },
   {
@@ -3596,11 +3546,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/avywenna/portrait',
-    path: '/operators/avywenna/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/avywenna/talent_1',
     path: '/operators/avywenna/talent 1.webp',
     category: 'operators',
@@ -3628,11 +3573,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/camille/combo_01',
     path: '/operators/camille/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/camille/portrait',
-    path: '/operators/camille/portrait.webp',
     category: 'operators',
   },
   {
@@ -3666,11 +3606,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/catcher/portrait',
-    path: '/operators/catcher/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/catcher/talent_1',
     path: '/operators/catcher/talent 1.webp',
     category: 'operators',
@@ -3701,11 +3636,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/chen-qianyu/portrait',
-    path: '/operators/chen-qianyu/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/chen-qianyu/talent_1',
     path: '/operators/chen-qianyu/talent 1.webp',
     category: 'operators',
@@ -3733,11 +3663,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/da-pan/combo_01',
     path: '/operators/da-pan/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/da-pan/portrait',
-    path: '/operators/da-pan/portrait.webp',
     category: 'operators',
   },
   {
@@ -3776,11 +3701,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/ember/portrait',
-    path: '/operators/ember/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/ember/talent_1',
     path: '/operators/ember/talent 1.webp',
     category: 'operators',
@@ -3808,11 +3728,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/endministrator/combo_01',
     path: '/operators/endministrator/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/endministrator/portrait',
-    path: '/operators/endministrator/portrait.webp',
     category: 'operators',
   },
   {
@@ -3846,11 +3761,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/estella/portrait',
-    path: '/operators/estella/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/estella/talent_1',
     path: '/operators/estella/talent 1.webp',
     category: 'operators',
@@ -3881,11 +3791,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/fluorite/portrait',
-    path: '/operators/fluorite/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/fluorite/talent_1',
     path: '/operators/fluorite/talent 1.webp',
     category: 'operators',
@@ -3913,11 +3818,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/gilberta/combo_01',
     path: '/operators/gilberta/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/gilberta/portrait',
-    path: '/operators/gilberta/portrait.webp',
     category: 'operators',
   },
   {
@@ -3976,11 +3876,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/laevatain/portrait',
-    path: '/operators/laevatain/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/laevatain/talent_1',
     path: '/operators/laevatain/talent 1.webp',
     category: 'operators',
@@ -4016,11 +3911,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/last-rite/portrait',
-    path: '/operators/last-rite/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/last-rite/talent_1',
     path: '/operators/last-rite/talent 1.webp',
     category: 'operators',
@@ -4048,11 +3938,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/lifeng/combo_01',
     path: '/operators/lifeng/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/lifeng/portrait',
-    path: '/operators/lifeng/portrait.webp',
     category: 'operators',
   },
   {
@@ -4088,11 +3973,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/liino/combo_01',
     path: '/operators/liino/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/liino/portrait',
-    path: '/operators/liino/portrait.webp',
     category: 'operators',
   },
   {
@@ -4136,11 +4016,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/mifu/portrait',
-    path: '/operators/mifu/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/mifu/talent_1',
     path: '/operators/mifu/talent 1.webp',
     category: 'operators',
@@ -4176,11 +4051,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/minghe/portrait',
-    path: '/operators/minghe/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/minghe/talent_1',
     path: '/operators/minghe/talent 1.webp',
     category: 'operators',
@@ -4211,11 +4081,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/perlica/portrait',
-    path: '/operators/perlica/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/perlica/talent_1',
     path: '/operators/perlica/talent 1.webp',
     category: 'operators',
@@ -4243,11 +4108,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/pogranichnik/combo_01',
     path: '/operators/pogranichnik/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/pogranichnik/portrait',
-    path: '/operators/pogranichnik/portrait.webp',
     category: 'operators',
   },
   {
@@ -4286,11 +4146,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/purrchena/portrait',
-    path: '/operators/purrchena/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/purrchena/talent_1',
     path: '/operators/purrchena/talent 1.webp',
     category: 'operators',
@@ -4318,11 +4173,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/rossi/combo_01',
     path: '/operators/rossi/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/rossi/portrait',
-    path: '/operators/rossi/portrait.webp',
     category: 'operators',
   },
   {
@@ -4366,11 +4216,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/si/portrait',
-    path: '/operators/si/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/si/talent_1',
     path: '/operators/si/talent 1.webp',
     category: 'operators',
@@ -4398,11 +4243,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/snowshine/combo_01',
     path: '/operators/snowshine/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/snowshine/portrait',
-    path: '/operators/snowshine/portrait.webp',
     category: 'operators',
   },
   {
@@ -4441,11 +4281,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/tangtang/portrait',
-    path: '/operators/tangtang/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/tangtang/talent_1',
     path: '/operators/tangtang/talent 1.webp',
     category: 'operators',
@@ -4473,11 +4308,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/typhoeus/combo_01',
     path: '/operators/typhoeus/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/typhoeus/portrait',
-    path: '/operators/typhoeus/portrait.webp',
     category: 'operators',
   },
   {
@@ -4511,11 +4341,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/wulfgard/portrait',
-    path: '/operators/wulfgard/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/wulfgard/talent_1',
     path: '/operators/wulfgard/talent 1.webp',
     category: 'operators',
@@ -4543,11 +4368,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/xaihi/combo_01',
     path: '/operators/xaihi/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/xaihi/portrait',
-    path: '/operators/xaihi/portrait.webp',
     category: 'operators',
   },
   {
@@ -4581,11 +4401,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/yvonne/portrait',
-    path: '/operators/yvonne/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/yvonne/talent_1',
     path: '/operators/yvonne/talent 1.webp',
     category: 'operators',
@@ -4613,11 +4428,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/zhuang-fangyi/combo_01',
     path: '/operators/zhuang-fangyi/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/zhuang-fangyi/portrait',
-    path: '/operators/zhuang-fangyi/portrait.webp',
     category: 'operators',
   },
   {

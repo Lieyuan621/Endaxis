@@ -1,3 +1,4 @@
+import { isPhysicalInflictionDamage, isIgniteDamage } from './damageDecorationGroups';
 import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import type { CombatAttributeSet } from '../attributes/combatAttributes';
 
@@ -92,18 +93,6 @@ function appendAttributeDetails(
     result.push(zone === undefined ? item : { ...item, zone });
   }
 }
-
-// 原生 IgniteDamageSet：四种爆发、法术异常初次伤害、燃烧和碎冰。
-const IGNITE_DAMAGE_TAGS = new Set<string>([
-  'fireBurst',
-  'electricBurst',
-  'cryoBurst',
-  'natureBurst',
-  'fireAbnormal',
-  'electricAbnormal',
-  'cryoAbnormal',
-  'natureAbnormal',
-]);
 
 export const PLAYER_DAMAGE_PREPARATION_EVENTS = [
   'beforeDamageAction',
@@ -350,9 +339,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     emit('beforeDamageAction', {
       sourceId,
       partTransferInfo: resolveOperationPartTransferInfo(operationContext),
-      tags: step.kind === 'dealDamage' ? (step.parameters.tags ?? []) : [],
+      tags: step.parameters.tags ?? [],
       gameplayTags: step.kind === 'dealDamage' ? (step.parameters.gameplayTags ?? []) : [],
-      features: step.parameters.features ?? [],
       skillCastInfo: operationContext?.skillCastInfo ?? this.dependencies.skillCastInfo ?? null,
     });
   }
@@ -448,9 +436,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       sourceId: this.dependencies.sourceOperatorId,
       partTransferInfo,
       damageType: step.parameters.damageType,
-      tags: step.kind === 'dealDamage' ? (step.parameters.tags ?? []) : [],
+      tags: step.parameters.tags ?? [],
       gameplayTags: step.kind === 'dealDamage' ? (step.parameters.gameplayTags ?? []) : [],
-      features: step.parameters.features ?? [],
     });
     const context = new PlayerDamageContext({
       partTransferInfo,
@@ -458,9 +445,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       targetId: this.dependencies.targetId,
       damageType: step.parameters.damageType,
       targetHealthType: 'normal',
-      tags: step.parameters.tags,
+      tags: step.parameters.tags ?? [],
       gameplayTags: step.parameters.gameplayTags ?? [],
-      features: step.parameters.features ?? [],
       ...(skillCastInfo === undefined ? {} : { skillCastId: skillCastInfo.skillCastId }),
       skillCastInfo: skillCastInfo ?? null,
       ...(this.dependencies.skillId === undefined ? {} : { skillId: this.dependencies.skillId }),
@@ -534,7 +520,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         context.damageScales,
         {
           damageType: step.parameters.damageType,
-          classifications: classifyDamageTags(step.parameters.tags, step.parameters.features),
+          classifications: classifyDamageTags(step.parameters.tags),
           attacker: context.attackerAttributes,
           defender: context.defenderAttributes,
           defenderStaggered: this.dependencies.targetVitals.hasPoiseBrokenTag,
@@ -576,7 +562,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       }
       const finalAttackValue = context.resolveFinalAttackValue();
       const runtimeSnapshot = this.dependencies.resolveNonRandomRuntimeSnapshot(step);
-      const reactionKind = reactionDamageKind(step.parameters.tags, step.parameters.features);
+      const reactionKind = reactionDamageKind(step.parameters.tags);
       const reactionOverride =
         reactionKind === undefined
           ? undefined
@@ -609,12 +595,10 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
             ...runtimeSnapshot,
             // DamageEnums：Shatter 属于 IgniteDamageSet，不属于 PhysicalInfliction。
             appliesIgniteDamageMultiplier:
-              runtimeSnapshot.appliesIgniteDamageMultiplier ||
-              step.parameters.tags.some(tag => IGNITE_DAMAGE_TAGS.has(tag)) ||
-              (step.parameters.features ?? []).includes('shatter'),
+              runtimeSnapshot.appliesIgniteDamageMultiplier || isIgniteDamage(step.parameters.tags),
             appliesPhysicalInflictionDamageMultiplier:
               runtimeSnapshot.appliesPhysicalInflictionDamageMultiplier ||
-              (step.parameters.features ?? []).includes('physicalInfliction'),
+              isPhysicalInflictionDamage(step.parameters.tags),
             criticalSample:
               this.dependencies.randomMode !== 'expected' &&
               criticalOverride === undefined &&
@@ -760,9 +744,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         sourceId: this.dependencies.sourceOperatorId,
         targetId: this.dependencies.targetId,
         damageType: step.parameters.damageType,
-        tags: step.parameters.tags,
+        tags: step.parameters.tags ?? [],
         gameplayTags: step.parameters.gameplayTags ?? [],
-        features: step.parameters.features ?? [],
         result: appliedDamageResult,
         triggersCriticalEffects,
         detail: {
@@ -879,9 +862,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
             sourceId: this.dependencies.sourceOperatorId,
             targetId: transfer.partId,
             damageType: step.parameters.damageType,
-            tags: step.parameters.tags,
+            tags: step.parameters.tags ?? [],
             gameplayTags: step.parameters.gameplayTags ?? [],
-            features: step.parameters.features ?? [],
             result: appliedDamageResult,
             skillCastInfo: skillCastInfo ?? null,
             executingSkillId: this.dependencies.executingSkillId,
@@ -966,16 +948,14 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         damageType: 'lifeDrain',
         tags: step.parameters.tags ?? [],
         gameplayTags: step.parameters.gameplayTags ?? [],
-        features: step.parameters.features ?? [],
       });
       const context = new PlayerDamageContext({
         sourceId,
         targetId,
         damageType: 'lifeDrain',
         targetHealthType: 'normal',
-        tags: step.parameters.tags,
+        tags: step.parameters.tags ?? [],
         gameplayTags: step.parameters.gameplayTags,
-        features: step.parameters.features,
         skillCastId: skillCastInfo?.skillCastId,
         skillCastInfo: skillCastInfo ?? null,
         skillId: this.dependencies.skillId,
@@ -1010,9 +990,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         sourceId,
         targetId,
         damageType: 'lifeDrain',
-        tags: context.tags,
+        tags: context.tags ?? [],
         gameplayTags: context.gameplayTags,
-        features: context.features,
         skillCastInfo: skillCastInfo ?? null,
         executingSkillId: this.dependencies.executingSkillId,
         result,
@@ -1205,8 +1184,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     const poiseContext = new PoiseCalculationContext(
       this.dependencies.sourceOperatorId,
       this.dependencies.targetId,
-      step.kind === 'dealStagger' ? [] : step.parameters.tags,
-      step.kind === 'dealStagger' ? [] : (step.parameters.features ?? []),
+      step.parameters.tags ?? [],
       multipliers.output,
       multipliers.taken,
       multipliers.attributes,

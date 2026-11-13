@@ -164,7 +164,6 @@ describe('修正条件的公共动作宿主', () => {
                       attackerId: 'owner',
                       defenderId: 'other',
                       tags: matches ? ['normalAttackLastCombo'] : [],
-                      features: [],
                     },
                   },
           }),

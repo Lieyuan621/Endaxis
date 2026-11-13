@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { requireRecord, requireString } from '../src/source/primitives.ts';
 
 export const DEFAULT_CDN = 'https://data.akedata.wiki';
-export const DEFAULT_VFS_BASE = 'http://127.0.0.1:8765/api/endaxis-data';
+export const DEFAULT_LOCAL_BASE = 'http://127.0.0.1:8766/api/data';
 
 export interface AssetRecord {
   readonly size: number;
@@ -13,7 +13,7 @@ export interface AssetRecord {
 export interface ResourceBytes {
   readonly content: Uint8Array;
   readonly source: string;
-  readonly provider: 'akedb' | 'vfs-index-browser';
+  readonly provider: 'akedb' | 'ake-data-tool' | 'endaxis-data-tool';
   readonly version: string | null;
   readonly fallbackReason?: string;
 }
@@ -143,13 +143,20 @@ export function isMissingResource(error: unknown): boolean {
   return error instanceof ResourceHttpError && error.status === 404;
 }
 
-export async function vfsResource(
+export async function localResource(
   base: string,
   logicalPath: string,
   version: string | null,
 ): Promise<ResourceBytes> {
   const resource = await fetchBytes(base, safeAssetPath(logicalPath), false, undefined, true);
-  return { ...resource, provider: 'vfs-index-browser', version };
+  if (version !== null && version !== resource.localVersion)
+    throw new Error('local snapshot version mismatch');
+  return {
+    content: resource.content,
+    source: resource.source,
+    provider: resource.localProvider === 'ake-data-tool' ? 'ake-data-tool' : 'endaxis-data-tool',
+    version: resource.localVersion ?? version,
+  };
 }
 
 async function fetchBytes(
@@ -173,10 +180,15 @@ async function fetchBytes(
         signal: AbortSignal.timeout(30_000),
       });
       if (!response.ok) throw new ResourceHttpError(response.status, url.href);
-      if (vfs && response.headers.get('x-endaxis-source') !== 'vfs-index-browser') {
-        throw new Error(`${url}: response lacks the required vfs-index-browser source header`);
+      if (vfs && response.headers.get('x-endaxis-source') !== 'endaxis-data-tool') {
+        throw new Error(`${url}: response lacks the required endaxis-data-tool source header`);
       }
-      return { content: new Uint8Array(await response.arrayBuffer()), source: url.href };
+      return {
+        content: new Uint8Array(await response.arrayBuffer()),
+        source: url.href,
+        localProvider: vfs ? response.headers.get('x-endaxis-provider') : null,
+        localVersion: vfs ? response.headers.get('x-endaxis-version') : null,
+      };
     } catch (error) {
       const retryableHttpResponse = error instanceof ResourceHttpError && error.status === 570;
       if (!retryableHttpResponse && !isTransientTransportError(error)) throw error;

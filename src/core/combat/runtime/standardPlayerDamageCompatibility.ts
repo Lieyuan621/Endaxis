@@ -123,7 +123,6 @@ function inspectCondition(
     case 'eventDamageTagsMatch':
     case 'eventTransferredPartTagsMatch':
     case 'eventDamageGameplayTagsMatch':
-    case 'eventDamageFeaturesMatch':
     case 'eventDamageTypeIn':
     case 'eventHealTagsMatch':
     case 'eventInflictionElementIn':
@@ -390,6 +389,7 @@ function inspectSequenceBody(
       case 'boneAttach':
       case 'disableNormalSkill':
       case 'limitMovementGait':
+      case 'addEntityTags':
       case 'queueComboLock':
       case 'restrictUltimateEnergyRecovery':
       case 'openComboWindow':

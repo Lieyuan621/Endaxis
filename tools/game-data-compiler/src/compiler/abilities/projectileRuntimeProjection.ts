@@ -169,15 +169,15 @@ export function createProjectileProjectionExtensionSource(input: {
           isEmptyProjectileCollisionPopulation(runtime.targetFilter)
         ),
     );
-    const configuredSchedule: ProjectileLaunchSchedule = input.resolveSchedule?.(
+    const configuredSchedule = input.resolveSchedule?.(
       launch,
       sourcePath,
       routes.map(route => route.event),
-    ) ?? {
-      // 未配置时，启用的回调在发射当刻执行。
-      endFrame: 0,
-      callbacks: routes.map(route => ({ event: route.event, triggerFrames: [0] })),
-    };
+    );
+    if (!configuredSchedule)
+      throw new Error(
+        `${sourcePath}: missing projectile callback schedule for ${launch.projectileId} (serverActionIndex=${launch.serverActionIndex})`,
+      );
     const schedule = {
       ...configuredSchedule,
       callbacks: configuredSchedule.callbacks.map(entry => {

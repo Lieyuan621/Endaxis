@@ -17,13 +17,13 @@ it('具体发射覆盖优先于预设，Buff 来源同样能使用预设', () =>
   expect(
     configuredProjectileSchedule(launch, 'BuffData.fixture.action', ['hit'])?.callbacks,
   ).toEqual([{ event: 'hit', triggerFrames: [2] }]);
-  expect(
+  expect(() =>
     configuredProjectileSchedule(
       { ...launch, projectileId: 'unknown' },
       'BuffData.fixture.action',
       ['hit'],
     ),
-  ).toBeUndefined();
+  ).toThrow('missing projectile callback schedule');
 });
 
 it('同一投射物的实体起点与施放者起点使用各自的时间表', () => {
@@ -84,4 +84,45 @@ it('显式裁剪只作用于所列资源的无回调发射，不影响同资源�
     }),
   ).toBe(false);
   expect(shouldOmitProjectileLaunch({ projectileId: 'unknown', callbacks: [] })).toBe(false);
+});
+
+it('无回调也不能绕过配置要求，显式零帧发射回调仍然有效', () => {
+  expect(() =>
+    configuredProjectileSchedule(
+      { projectileId: 'unconfigured', serverActionIndex: 27 },
+      'SkillData.fixture.action',
+      [],
+    ),
+  ).toThrow('unconfigured (serverActionIndex=27)');
+  const projectileId = 'projectile_chr_0037_minghe_attack04_back';
+  expect(
+    configuredProjectileSchedule(
+      { projectileId, serverActionIndex: 30 },
+      'SkillData.chr_0037_minghe_attack4.action',
+      ['launch'],
+    ),
+  ).toEqual({ endFrame: 0, callbacks: [{ event: 'launch', triggerFrames: [0] }] });
+  expect(shouldOmitProjectileLaunch({ projectileId, callbacks: [] })).toBe(true);
+  expect(
+    shouldOmitProjectileLaunch({
+      projectileId,
+      callbacks: [{ event: 'launch', enabled: true, skillId: 'flysword' }],
+    }),
+  ).toBe(false);
+});
+
+it('明河末段命中延迟两帧，不在发射时伪造阻挡回调', () => {
+  expect(
+    configuredProjectileSchedule(
+      { projectileId: 'projectile_chr_0037_minghe_attack04_end', serverActionIndex: 33 },
+      'SkillData.chr_0037_minghe_attack4.action',
+      ['block', 'hit'],
+    ),
+  ).toEqual({
+    endFrame: 43,
+    callbacks: [
+      { event: 'block', triggerFrames: [] },
+      { event: 'hit', triggerFrames: [2] },
+    ],
+  });
 });

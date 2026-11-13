@@ -71,6 +71,8 @@ const warningKeys: Record<
   skillInputDuringPresentation: 'duringUltimate',
   skillCommonTagUnavailable: 'cannotUseSkills',
   skillTypeTagUnavailable: 'cannotUseSkillType',
+  controlSwitchOutUnavailable: 'controlSwitchOutUnavailable',
+  controlSwitchInUnavailable: 'controlSwitchInUnavailable',
   attackDuringDashWindow: 'afterDodge',
   costPaymentRejected: 'costRejected',
   windowMissing: 'comboUnavailable',

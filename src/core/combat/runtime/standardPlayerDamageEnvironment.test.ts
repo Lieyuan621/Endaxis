@@ -178,41 +178,37 @@ it('环境数据端口引用实际生命账本，保存后原分支受伤不改�
   expect(saved.enemyVitals.health).toBe(before);
 });
 
-it.each(['spellBurst', 'physicalInfliction'] as const)(
-  '环境将%s的逐次覆盖接入公共伤害执行器',
-  kind => {
-    const simulate = (overrides?: Record<string, boolean>) => {
-      const context = createContext();
-      const environment = new StandardPlayerDamageEnvironment({
-        ...createEnvironment().options,
-        randomMode: 'expected',
-        reactionCriticalOverrides: overrides,
-      });
-      const executor = environment.runtimeOptions.createOperationExecutor!(context);
-      executor.execute({
-        kind: 'dealDamage',
-        key: 'reaction-hit',
-        parameters: {
-          damageType: 'electric',
-          attackScale: 1,
-          tags: kind === 'spellBurst' ? ['electricBurst'] : [],
-          features: kind === 'physicalInfliction' ? ['physicalInfliction'] : [],
-        },
-      });
-      const hit = (context.receipt as CombatReceiptCollector).entries.find(
-        entry => entry.event === 'DamageApplied',
-      )!;
-      return hit.data!;
-    };
-    const ordinary = simulate();
-    expect(typeof ordinary.reactionCriticalKey).toBe('string');
-    const forced = simulate({ [String(ordinary.reactionCriticalKey)]: true });
-    expect(forced.reactionCriticalKey).toBe(ordinary.reactionCriticalKey);
-    expect(forced.isCritical).toBe(true);
-    expect(forced.value).toBe(forced.criticalDamage);
-    expect(simulate().value).toBe(ordinary.value);
-  },
-);
+it.each(['spellBurst'] as const)('环境将%s的逐次覆盖接入公共伤害执行器', kind => {
+  const simulate = (overrides?: Record<string, boolean>) => {
+    const context = createContext();
+    const environment = new StandardPlayerDamageEnvironment({
+      ...createEnvironment().options,
+      randomMode: 'expected',
+      reactionCriticalOverrides: overrides,
+    });
+    const executor = environment.runtimeOptions.createOperationExecutor!(context);
+    executor.execute({
+      kind: 'dealDamage',
+      key: 'reaction-hit',
+      parameters: {
+        damageType: 'electric',
+        attackScale: 1,
+        tags: kind === 'spellBurst' ? ['electricBurst'] : ['crush'],
+      },
+    });
+    const hit = (context.receipt as CombatReceiptCollector).entries.find(
+      entry => entry.event === 'DamageApplied',
+    )!;
+    return hit.data!;
+  };
+  const ordinary = simulate();
+  expect(typeof ordinary.reactionCriticalKey).toBe('string');
+  const forced = simulate({ [String(ordinary.reactionCriticalKey)]: true });
+  expect(forced.reactionCriticalKey).toBe(ordinary.reactionCriticalKey);
+  expect(forced.isCritical).toBe(true);
+  expect(forced.value).toBe(forced.criticalDamage);
+  expect(simulate().value).toBe(ordinary.value);
+});
 
 it('生命变化事件在写入生命后送给对应实体，零伤害不触发', () => {
   const environment = createEnvironment();
@@ -1342,7 +1338,6 @@ it.each([
                       damageType: 'electric',
                       attackScale: 1,
                       tags: ['electricAbnormal'],
-                      features: [],
                       canCritical,
                     },
                   ],
@@ -1649,7 +1644,6 @@ it.each(['burst', 'buff'] as const)(
                           damageType: 'electric',
                           attackScale: 1,
                           tags: [],
-                          features: [],
                           canCritical,
                         },
                       ],
@@ -3096,7 +3090,7 @@ describe('StandardPlayerDamageEnvironment', () => {
         expect(event).toBe(original);
         expect('event' in event && event.event).toBe('afterKillEntity');
         if ('event' in event && event.event === 'afterKillEntity') {
-          expect(event.payload.features).toEqual(['canBreakWeakness']);
+          expect(event.payload.tags).toEqual(['canBreakWeakness']);
         }
         events.push(`defeated:${environment.enemyVitals.health}`);
       },
@@ -3106,7 +3100,7 @@ describe('StandardPlayerDamageEnvironment', () => {
     expect(
       executor.execute({
         ...damageStep,
-        parameters: { ...damageStep.parameters, features: ['canBreakWeakness'] },
+        parameters: { ...damageStep.parameters, tags: ['canBreakWeakness'] },
       }),
     ).toBe(true);
 
@@ -4342,8 +4336,7 @@ it.each([
         ...(readTarget ? { attributeSource: 'target' as const } : {}),
         calculationAddition: 0,
         attackScale: numberInput({ kind: 'blackboard', key: 'drain' }),
-        tags: [],
-        features: ['dot' as const],
+        tags: ['dot' as const],
       },
     };
     expect(executor.execute(step, actionContext)).toBe(true);

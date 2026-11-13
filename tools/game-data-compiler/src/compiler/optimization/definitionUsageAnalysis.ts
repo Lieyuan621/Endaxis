@@ -423,7 +423,6 @@ function analyzeConditionOwnUsage(
     case 'targetStaggered':
     case 'eventDamageTagsMatch':
     case 'eventDamageGameplayTagsMatch':
-    case 'eventDamageFeaturesMatch':
     case 'eventDamageSkillCastRecorded':
     case 'eventDamageTypeIn':
     case 'eventSkillTagsMatch':
@@ -991,6 +990,8 @@ export function analyzeStepUsage(
         ? usage
         : { ...usage, unknownAccess: true };
     }
+    case 'addEntityTags':
+      return effect(targetQueryValueInputs(step.parameters.targets));
     case 'openComboWindow': {
       const parameters = step.parameters;
       const queries =

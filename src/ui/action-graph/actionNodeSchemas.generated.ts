@@ -18,6 +18,7 @@ const schema_4095d2f4d296 = {
   blackboardOrigin: 'contract',
   optional: true,
 } as const;
+const schema_9278d40a4674 = ['powerAttack', 'normalAttack', 'default', 'skill'] as const;
 const schema_e10611ee99c1 = ['physical', 'heat', 'cryo', 'electric', 'nature'] as const;
 const schema_11137cb3640f = [
   'physical',
@@ -63,24 +64,14 @@ const schema_f251bafe9db2 = ['parameters', 'target'] as const;
 const schema_8eeb58fbdb36 = ['parameters', 'durationSeconds'] as const;
 const schema_143db280d278 = ['parameters', 'inheritSourceSkillCastInfo'] as const;
 const schema_a13562facee4 = ['parameters', 'saveToContextKey'] as const;
-const schema_ccd8f1fa17ff = ['normalAttack', 'powerAttack', 'default', 'skill'] as const;
-const schema_71d38bb15a52 = [
-  'normalAttack',
-  'normalAttackLastCombo',
-  'powerAttack',
-  'normalSkill',
-  'comboSkill',
-  'ultimateSkill',
+const schema_bc9e68b5c915 = [
   'plungingAttack',
-  'dashAttack',
-  'fireBurst',
-  'electricBurst',
-  'cryoBurst',
-  'natureBurst',
-  'fireAbnormal',
-  'electricAbnormal',
-  'cryoAbnormal',
-  'natureAbnormal',
+  'comboSkill',
+  'basicAttack',
+  'battleSkill',
+  'ultimate',
+  'finisher',
+  'dodge',
 ] as const;
 const schema_2eb8cb87ac4f = [
   'equal',
@@ -90,22 +81,10 @@ const schema_2eb8cb87ac4f = [
   'less',
   'lessOrEqual',
 ] as const;
-const schema_9d2d7d8c9790 = [
-  'canBreakWeakness',
-  'crush',
-  'airborne',
-  'fracture',
-  'knockDown',
-  'shatter',
-  'dot',
-  'remainArea',
-  'talentDamage',
-  'physicalInfliction',
-] as const;
-const schema_85b910fa96f5 = [
+const schema_fe764d0b1934 = [
   'normalSkill',
-  'comboSkill',
   'ultimateSkill',
+  'comboSkill',
   'dodge',
   'breakingAttack',
   'passiveSkill',
@@ -121,18 +100,42 @@ const schema_f4ba428668ea = [
   'targetDied',
   'soulMainBodyDied',
 ] as const;
-const schema_43dd58bcb159 = [
-  'comboSkill',
-  'plungingAttack',
-  'basicAttack',
-  'battleSkill',
-  'ultimate',
-  'finisher',
-  'dodge',
-] as const;
 const schema_d581ca6507ef = ['invalid', 'unknown', 'good', 'bad', 'neutral'] as const;
+const schema_3647edd0c93c = [
+  'poiseBreak',
+  'ignoreGuardDodge',
+  'powerAttack',
+  'fireAbnormalInitial',
+  'electricAbnormal',
+  'cryoAbnormal',
+  'igniteByMud',
+  'normalAttack',
+  'normalSkill',
+  'ultimateSkill',
+  'plungingAttack',
+  'bomb',
+  'canBreakWeakness',
+  'comboSkill',
+  'crush',
+  'airborne',
+  'knockDown',
+  'dashAttack',
+  'ignoreDodgeImmune',
+  'ignoreSkillImmune',
+  'natureAbnormal',
+  'normalAttackLastCombo',
+  'fireBurst',
+  'cryoBurst',
+  'electricBurst',
+  'natureBurst',
+  'fireAbnormal',
+  'shatter',
+  'dot',
+  'remainArea',
+  'fracture',
+  'talentDamage',
+] as const;
 const schema_6184e5edaa83 = ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'] as const;
-const schema_505c3b18af15 = ['hasAny', 'hasAll', 'exceptAny', 'exceptAll', 'exact'] as const;
 const schema_96e0a1b7e0ea = ['heat', 'cryo', 'electric', 'nature'] as const;
 const schema_a13613527260 = [
   'default',
@@ -238,6 +241,42 @@ const schema_bd2dc972d7c3 = { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}
 const schema_12d2e6c473ae = { unionVariants: [{}, {}, {}, {}] } as const;
 const schema_84052e130a16 = { unionVariants: [{}, {}, {}, {}, {}, {}] } as const;
 const schema_ebdb00131bfd = { unionVariants: [{}, {}, {}, {}, {}, {}, {}] } as const;
+const schema_5b624994feca = {
+  unionVariants: [
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+  ],
+} as const;
 const schema_8959ee040d75 = { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}] } as const;
 const schema_da3ec022a2c5 = { kind: 'enum', options: ['exclude'] } as const;
 const schema_a9167de03017 = { kind: 'enum', options: ['distanceFilter'] } as const;
@@ -294,9 +333,9 @@ const schema_fb9acc9d77b1 = {
   options: ['launch', 'hit', 'block', 'reach', 'finish'],
   semantics: schema_8b5920c2fde6,
 } as const;
-const schema_cf3b028ef11e = {
+const schema_0c6017ad0ce2 = {
   kind: 'enum',
-  options: ['crush', 'airborne', 'fracture', 'knockDown'],
+  options: ['crush', 'airborne', 'knockDown', 'fracture'],
   semantics: schema_12d2e6c473ae,
 } as const;
 const schema_30dadad79116 = {
@@ -392,11 +431,15 @@ const schema_b9a93266cffd = {
   options: schema_6184e5edaa83,
 } as const;
 const schema_1f01ef5d6643 = {
-  valueSchema: { kind: 'enum', options: schema_505c3b18af15, semantics: schema_8b5920c2fde6 },
+  valueSchema: {
+    kind: 'enum',
+    options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll', 'exact'],
+    semantics: schema_8b5920c2fde6,
+  },
   path: ['match'],
   description: '标签集合匹配方式。',
   control: 'select',
-  options: schema_505c3b18af15,
+  options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll', 'exact'],
 } as const;
 const schema_d9b690cbb675 = {
   valueSchema: {
@@ -515,23 +558,10 @@ const schema_c5280b4ef04f = {
   fields: { kind: { kind: 'enum', options: ['context'] }, contextKey: { kind: 'string' } },
   optional: true,
 } as const;
-const schema_1390071e5d1e = {
+const schema_fd8681e4ef65 = {
   kind: 'array',
-  element: {
-    kind: 'enum',
-    options: schema_71d38bb15a52,
-    semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
-  },
-  semantics: {
-    arrayElement: {
-      unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
-    },
-  },
-} as const;
-const schema_9d1e951ab7b5 = {
-  kind: 'array',
-  element: { kind: 'enum', options: schema_43dd58bcb159, semantics: schema_ebdb00131bfd },
-  semantics: { arrayElement: schema_ebdb00131bfd },
+  element: { kind: 'enum', options: schema_3647edd0c93c, semantics: schema_5b624994feca },
+  semantics: { arrayElement: schema_5b624994feca },
 } as const;
 const schema_d693425033e9 = {
   kind: 'array',
@@ -548,11 +578,10 @@ const schema_d91410ccad46 = {
   element: schema_23bc76e1d0a0,
   semantics: { arrayElement: { aliases: ['CombatCondition'] } },
 } as const;
-const schema_033bf54469b1 = {
+const schema_be1070041d6e = {
   kind: 'array',
-  element: { kind: 'enum', options: schema_9d2d7d8c9790, semantics: schema_bd2dc972d7c3 },
-  semantics: { arrayElement: schema_bd2dc972d7c3 },
-  optional: true,
+  element: { kind: 'enum', options: schema_bc9e68b5c915, semantics: schema_ebdb00131bfd },
+  semantics: { arrayElement: schema_ebdb00131bfd },
 } as const;
 const schema_0f0b494ec253 = {
   kind: 'array',
@@ -561,6 +590,12 @@ const schema_0f0b494ec253 = {
   description: '参与匹配的标签路径。',
 } as const;
 const schema_dcc07c6f70b9 = { fields: [schema_087add57f9c6] } as const;
+const schema_ec51530a01b5 = {
+  valueSchema: schema_69c08dd2b579,
+  path: ['parameters', 'tags'],
+  description: '',
+  control: 'json',
+} as const;
 const schema_135e3f8c2eeb = {
   valueSchema: schema_69c08dd2b579,
   path: ['tags'],
@@ -646,25 +681,25 @@ const schema_0a8515965e74 = {
   semantics: schema_1e1a2aaef5c2,
   optional: true,
 } as const;
-const schema_1d2b437f101a = {
-  kind: schema_da3ec022a2c5,
-  targets: { kind: 'ref', ref: 'field_029151ca9fe4266462c1', semantics: schema_6a016609243e },
-  excludeTargets: {
-    kind: 'ref',
-    ref: 'field_dc404e00fef80ba7880b',
-    semantics: schema_6a016609243e,
-  },
-} as const;
-const schema_17bcf60054d2 = {
+const schema_81c8f480be06 = {
   kind: schema_da3ec022a2c5,
   targets: {
     kind: 'ref',
-    ref: '162a54f4b381f6848145_field_029151ca9fe4266462c1',
+    ref: '9340535fcf3ac8ccd495_field_581085efc2f91ef8b0f0',
     semantics: schema_6a016609243e,
   },
   excludeTargets: {
     kind: 'ref',
-    ref: '162a54f4b381f6848145_field_dc404e00fef80ba7880b',
+    ref: '9340535fcf3ac8ccd495_field_00d709a59fd459fa3c01',
+    semantics: schema_6a016609243e,
+  },
+} as const;
+const schema_5ace101cdc85 = {
+  kind: schema_da3ec022a2c5,
+  targets: { kind: 'ref', ref: 'field_581085efc2f91ef8b0f0', semantics: schema_6a016609243e },
+  excludeTargets: {
+    kind: 'ref',
+    ref: 'field_00d709a59fd459fa3c01',
     semantics: schema_6a016609243e,
   },
 } as const;
@@ -732,74 +767,74 @@ const schema_d0a5faa8cc2c = {
   variants: [schema_12874d6b1e8e, schema_8f9b6ad744f9, schema_362387e02fee],
   semantics: schema_5bafbc7424f4,
 } as const;
-const schema_71d2bc7769c8 = {
+const schema_efde6a099419 = {
   kind: 'object',
   fields: {
     kind: { kind: 'enum', options: ['limit'] },
-    targets: { kind: 'ref', ref: 'field_b75137d3e7f8c1c6100c', semantics: schema_6a016609243e },
+    targets: { kind: 'ref', ref: 'field_4780988aefed7fb7cfd6', semantics: schema_6a016609243e },
     count: { kind: 'number' },
   },
 } as const;
-const schema_2d9acc7341e8 = {
+const schema_e90ebdf8a7e0 = {
   kind: 'object',
   fields: {
     kind: schema_8072773b759d,
-    targets: {
-      kind: 'ref',
-      ref: '162a54f4b381f6848145_field_2dea29b3ddac6aba46c8',
-      semantics: schema_6a016609243e,
-    },
+    targets: { kind: 'ref', ref: 'field_462be686cc1ff4027ef8', semantics: schema_6a016609243e },
     parentTargets: {
       kind: 'ref',
-      ref: '162a54f4b381f6848145_field_d970ed5222b90b225ae0',
+      ref: 'field_9e6d654db881771e7d08',
       semantics: schema_6a016609243e,
     },
   },
 } as const;
-const schema_943051912610 = {
+const schema_4a2d82cb9ff9 = {
   kind: 'object',
   fields: {
     kind: { kind: 'enum', options: ['tagFilter'] },
     targets: {
       kind: 'ref',
-      ref: '162a54f4b381f6848145_field_4864f5b9fd6c686b34b8',
+      ref: '9340535fcf3ac8ccd495_field_fb598da27ea851176a6a',
       semantics: schema_6a016609243e,
     },
     tags: schema_69c08dd2b579,
     tagQueryType: schema_d865c3950c88,
   },
 } as const;
-const schema_1035ecccebf3 = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['tagFilter'] },
-    targets: { kind: 'ref', ref: 'field_4864f5b9fd6c686b34b8', semantics: schema_6a016609243e },
-    tags: schema_69c08dd2b579,
-    tagQueryType: schema_d865c3950c88,
-  },
-} as const;
-const schema_22f690aab4c3 = {
+const schema_9766dd93794a = {
   kind: 'object',
   fields: {
     kind: schema_8072773b759d,
-    targets: { kind: 'ref', ref: 'field_2dea29b3ddac6aba46c8', semantics: schema_6a016609243e },
+    targets: {
+      kind: 'ref',
+      ref: '9340535fcf3ac8ccd495_field_462be686cc1ff4027ef8',
+      semantics: schema_6a016609243e,
+    },
     parentTargets: {
       kind: 'ref',
-      ref: 'field_d970ed5222b90b225ae0',
+      ref: '9340535fcf3ac8ccd495_field_9e6d654db881771e7d08',
       semantics: schema_6a016609243e,
     },
   },
 } as const;
-const schema_3e00dd4f630d = {
+const schema_cc6161d3f009 = {
   kind: 'object',
   fields: {
     kind: { kind: 'enum', options: ['limit'] },
     targets: {
       kind: 'ref',
-      ref: '162a54f4b381f6848145_field_b75137d3e7f8c1c6100c',
+      ref: '9340535fcf3ac8ccd495_field_4780988aefed7fb7cfd6',
       semantics: schema_6a016609243e,
     },
     count: { kind: 'number' },
+  },
+} as const;
+const schema_ca5df45d2247 = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['tagFilter'] },
+    targets: { kind: 'ref', ref: 'field_fb598da27ea851176a6a', semantics: schema_6a016609243e },
+    tags: schema_69c08dd2b579,
+    tagQueryType: schema_d865c3950c88,
   },
 } as const;
 const schema_1150cb5b7660 = [
@@ -858,29 +893,29 @@ const schema_36cf7816b909 = {
   ],
   semantics: { unionVariants: [schema_a4c41ed6f378, {}] },
 } as const;
-const schema_28f2e8f96146 = {
+const schema_160444e1f85a = {
   kind: 'object',
   fields: {
     kind: schema_a9167de03017,
-    targets: { kind: 'ref', ref: 'field_ae81c49512ba69d988d2', semantics: schema_6a016609243e },
-    center: { kind: 'ref', ref: 'field_d2d5bbe88440034be08e', semantics: schema_6a016609243e },
+    targets: { kind: 'ref', ref: 'field_b744166c5373e3bdef01', semantics: schema_6a016609243e },
+    center: { kind: 'ref', ref: 'field_bdd4bd29d7ef4e7fbfbc', semantics: schema_6a016609243e },
     operator: schema_4d14c1b89218,
     threshold: schema_9b7ff1a12796,
     clampToXZ: { kind: 'boolean' },
   },
 } as const;
-const schema_e395e07091ee = {
+const schema_82c3ce7c9ffa = {
   kind: 'object',
   fields: {
     kind: schema_a9167de03017,
     targets: {
       kind: 'ref',
-      ref: '162a54f4b381f6848145_field_ae81c49512ba69d988d2',
+      ref: '9340535fcf3ac8ccd495_field_b744166c5373e3bdef01',
       semantics: schema_6a016609243e,
     },
     center: {
       kind: 'ref',
-      ref: '162a54f4b381f6848145_field_d2d5bbe88440034be08e',
+      ref: '9340535fcf3ac8ccd495_field_bdd4bd29d7ef4e7fbfbc',
       semantics: schema_6a016609243e,
     },
     operator: schema_4d14c1b89218,
@@ -971,24 +1006,24 @@ const schema_07c9b2197c35 = {
   kind: 'object',
   fields: { kind: { kind: 'enum', options: ['mainTarget'] }, owner: schema_d0a5faa8cc2c },
 } as const;
-const schema_a9df013d38bc = {
+const schema_95743af3c8a1 = {
   kind: 'object',
   fields: {
     kind: schema_4e0d4319dae9,
     targets: {
       kind: 'ref',
-      ref: '162a54f4b381f6848145_field_9cf512da906d4ab6f228',
+      ref: '9340535fcf3ac8ccd495_field_68f47136e8507044194d',
       semantics: schema_6a016609243e,
     },
     query: schema_c08c5d0f11be,
     requireBuff: { kind: 'boolean' },
   },
 } as const;
-const schema_53fc416f3b59 = {
+const schema_3c0f19f32cc8 = {
   kind: 'object',
   fields: {
     kind: schema_4e0d4319dae9,
-    targets: { kind: 'ref', ref: 'field_9cf512da906d4ab6f228', semantics: schema_6a016609243e },
+    targets: { kind: 'ref', ref: 'field_68f47136e8507044194d', semantics: schema_6a016609243e },
     query: schema_c08c5d0f11be,
     requireBuff: { kind: 'boolean' },
   },
@@ -1079,14 +1114,14 @@ const schema_e7201b85c519 = {
       '原生 KeywordAction.enhancingList：只附着到本次创建的关键词载体实例，不能改写共享模板。\nvalue 在创建边沿从当前动作黑板求值，随后由载体自身监听普通 Buff 的加入边沿。',
   },
 } as const;
-const schema_7dff494a1a30 = [
+const schema_471b8eefcd9b = [
   schema_12874d6b1e8e,
   schema_8f9b6ad744f9,
   schema_362387e02fee,
-  schema_2d9acc7341e8,
-  schema_3e00dd4f630d,
-  schema_e395e07091ee,
-  schema_a9df013d38bc,
+  schema_e90ebdf8a7e0,
+  schema_efde6a099419,
+  schema_160444e1f85a,
+  schema_3c0f19f32cc8,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -1094,8 +1129,42 @@ const schema_7dff494a1a30 = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_943051912610,
-  { kind: 'object', fields: schema_17bcf60054d2 },
+  schema_ca5df45d2247,
+  { kind: 'object', fields: schema_5ace101cdc85 },
+  schema_1e955dd87e64,
+  schema_70e94d8745d1,
+  schema_07c9b2197c35,
+  schema_21eb2dca017b,
+  schema_401604eaf122,
+  schema_6abd06827c44,
+  {
+    kind: 'object',
+    fields: {
+      kind: schema_fa5bef3852ca,
+      targets: { kind: 'ref', ref: 'field_6b6acb920459f17bf104', semantics: schema_6a016609243e },
+    },
+  },
+  schema_b517b2601f4a,
+  schema_72e932640842,
+  schema_863f5f4ab73f,
+] as const;
+const schema_c7c3b201071d = [
+  schema_12874d6b1e8e,
+  schema_8f9b6ad744f9,
+  schema_362387e02fee,
+  schema_9766dd93794a,
+  schema_cc6161d3f009,
+  schema_82c3ce7c9ffa,
+  schema_95743af3c8a1,
+  schema_b97694814d8a,
+  schema_f763c681ec46,
+  schema_655107ea48b8,
+  schema_4e88ad22f3d2,
+  schema_a88221068716,
+  schema_bdac7c504fcd,
+  schema_a2066dcb2253,
+  schema_4a2d82cb9ff9,
+  { kind: 'object', fields: schema_81c8f480be06 },
   schema_1e955dd87e64,
   schema_70e94d8745d1,
   schema_07c9b2197c35,
@@ -1108,43 +1177,9 @@ const schema_7dff494a1a30 = [
       kind: schema_fa5bef3852ca,
       targets: {
         kind: 'ref',
-        ref: '162a54f4b381f6848145_field_9f2c0bf3856200c731ba',
+        ref: '9340535fcf3ac8ccd495_field_6b6acb920459f17bf104',
         semantics: schema_6a016609243e,
       },
-    },
-  },
-  schema_b517b2601f4a,
-  schema_72e932640842,
-  schema_863f5f4ab73f,
-] as const;
-const schema_edf64119328b = [
-  schema_12874d6b1e8e,
-  schema_8f9b6ad744f9,
-  schema_362387e02fee,
-  schema_22f690aab4c3,
-  schema_71d2bc7769c8,
-  schema_28f2e8f96146,
-  schema_53fc416f3b59,
-  schema_b97694814d8a,
-  schema_f763c681ec46,
-  schema_655107ea48b8,
-  schema_4e88ad22f3d2,
-  schema_a88221068716,
-  schema_bdac7c504fcd,
-  schema_a2066dcb2253,
-  schema_1035ecccebf3,
-  { kind: 'object', fields: schema_1d2b437f101a },
-  schema_1e955dd87e64,
-  schema_70e94d8745d1,
-  schema_07c9b2197c35,
-  schema_21eb2dca017b,
-  schema_401604eaf122,
-  schema_6abd06827c44,
-  {
-    kind: 'object',
-    fields: {
-      kind: schema_fa5bef3852ca,
-      targets: { kind: 'ref', ref: 'field_9f2c0bf3856200c731ba', semantics: schema_6a016609243e },
     },
   },
   schema_b517b2601f4a,
@@ -1195,30 +1230,30 @@ const schema_1ef705aaa729 = {
   semantics: { arrayElement: schema_5bafbc7424f4 },
   optional: true,
 } as const;
-const schema_94904be0084f = {
+const schema_1e5a6dae5e0a = {
   kind: 'object',
   fields: {
     kind: schema_fa5bef3852ca,
-    targets: { kind: 'union', variants: schema_edf64119328b, semantics: schema_6a016609243e },
+    targets: { kind: 'union', variants: schema_c7c3b201071d, semantics: schema_6a016609243e },
   },
 } as const;
-const schema_b00e959e7b2f = {
+const schema_dcdca75e9d16 = {
   kind: 'object',
   fields: {
     kind: schema_fa5bef3852ca,
-    targets: { kind: 'union', variants: schema_7dff494a1a30, semantics: schema_6a016609243e },
+    targets: { kind: 'union', variants: schema_471b8eefcd9b, semantics: schema_6a016609243e },
   },
 } as const;
-const schema_34b6140d4034 = {
+const schema_9b5b3fecdb30 = {
   kind: 'union',
   variants: [
     schema_12874d6b1e8e,
     schema_8f9b6ad744f9,
     schema_362387e02fee,
-    schema_22f690aab4c3,
-    schema_71d2bc7769c8,
-    schema_28f2e8f96146,
-    schema_53fc416f3b59,
+    schema_e90ebdf8a7e0,
+    schema_efde6a099419,
+    schema_160444e1f85a,
+    schema_3c0f19f32cc8,
     schema_b97694814d8a,
     schema_f763c681ec46,
     schema_655107ea48b8,
@@ -1226,31 +1261,31 @@ const schema_34b6140d4034 = {
     schema_a88221068716,
     schema_bdac7c504fcd,
     schema_a2066dcb2253,
-    schema_1035ecccebf3,
-    { kind: 'object', fields: schema_1d2b437f101a },
+    schema_ca5df45d2247,
+    { kind: 'object', fields: schema_5ace101cdc85 },
     schema_1e955dd87e64,
     schema_70e94d8745d1,
     schema_07c9b2197c35,
     schema_21eb2dca017b,
     schema_401604eaf122,
     schema_6abd06827c44,
-    schema_94904be0084f,
+    schema_dcdca75e9d16,
     schema_b517b2601f4a,
     schema_72e932640842,
     schema_863f5f4ab73f,
   ],
   semantics: schema_6a016609243e,
 } as const;
-const schema_c6ac9aeaa313 = {
+const schema_5438c2ff9840 = {
   kind: 'union',
   variants: [
     schema_12874d6b1e8e,
     schema_8f9b6ad744f9,
     schema_362387e02fee,
-    schema_2d9acc7341e8,
-    schema_3e00dd4f630d,
-    schema_e395e07091ee,
-    schema_a9df013d38bc,
+    schema_9766dd93794a,
+    schema_cc6161d3f009,
+    schema_82c3ce7c9ffa,
+    schema_95743af3c8a1,
     schema_b97694814d8a,
     schema_f763c681ec46,
     schema_655107ea48b8,
@@ -1258,29 +1293,29 @@ const schema_c6ac9aeaa313 = {
     schema_a88221068716,
     schema_bdac7c504fcd,
     schema_a2066dcb2253,
-    schema_943051912610,
-    { kind: 'object', fields: schema_17bcf60054d2 },
+    schema_4a2d82cb9ff9,
+    { kind: 'object', fields: schema_81c8f480be06 },
     schema_1e955dd87e64,
     schema_70e94d8745d1,
     schema_07c9b2197c35,
     schema_21eb2dca017b,
     schema_401604eaf122,
     schema_6abd06827c44,
-    schema_b00e959e7b2f,
+    schema_1e5a6dae5e0a,
     schema_b517b2601f4a,
     schema_72e932640842,
     schema_863f5f4ab73f,
   ],
   semantics: schema_6a016609243e,
 } as const;
-const schema_5788b90b3cfd = [
+const schema_d44ce5219afa = [
   schema_12874d6b1e8e,
   schema_8f9b6ad744f9,
   schema_362387e02fee,
-  schema_2d9acc7341e8,
-  schema_3e00dd4f630d,
-  schema_e395e07091ee,
-  schema_a9df013d38bc,
+  schema_e90ebdf8a7e0,
+  schema_efde6a099419,
+  schema_160444e1f85a,
+  schema_3c0f19f32cc8,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -1288,17 +1323,52 @@ const schema_5788b90b3cfd = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_943051912610,
+  schema_ca5df45d2247,
+  {
+    kind: 'object',
+    fields: {
+      kind: schema_da3ec022a2c5,
+      targets: { kind: 'ref', ref: 'field_581085efc2f91ef8b0f0', semantics: schema_6a016609243e },
+      excludeTargets: schema_9b5b3fecdb30,
+    },
+  },
+  schema_1e955dd87e64,
+  schema_70e94d8745d1,
+  schema_07c9b2197c35,
+  schema_21eb2dca017b,
+  schema_401604eaf122,
+  schema_6abd06827c44,
+  schema_dcdca75e9d16,
+  schema_b517b2601f4a,
+  schema_72e932640842,
+  schema_863f5f4ab73f,
+] as const;
+const schema_8783384883f2 = [
+  schema_12874d6b1e8e,
+  schema_8f9b6ad744f9,
+  schema_362387e02fee,
+  schema_9766dd93794a,
+  schema_cc6161d3f009,
+  schema_82c3ce7c9ffa,
+  schema_95743af3c8a1,
+  schema_b97694814d8a,
+  schema_f763c681ec46,
+  schema_655107ea48b8,
+  schema_4e88ad22f3d2,
+  schema_a88221068716,
+  schema_bdac7c504fcd,
+  schema_a2066dcb2253,
+  schema_4a2d82cb9ff9,
   {
     kind: 'object',
     fields: {
       kind: schema_da3ec022a2c5,
       targets: {
         kind: 'ref',
-        ref: '162a54f4b381f6848145_field_029151ca9fe4266462c1',
+        ref: '9340535fcf3ac8ccd495_field_581085efc2f91ef8b0f0',
         semantics: schema_6a016609243e,
       },
-      excludeTargets: schema_c6ac9aeaa313,
+      excludeTargets: schema_5438c2ff9840,
     },
   },
   schema_1e955dd87e64,
@@ -1307,19 +1377,35 @@ const schema_5788b90b3cfd = [
   schema_21eb2dca017b,
   schema_401604eaf122,
   schema_6abd06827c44,
-  schema_b00e959e7b2f,
+  schema_1e5a6dae5e0a,
   schema_b517b2601f4a,
   schema_72e932640842,
   schema_863f5f4ab73f,
 ] as const;
-const schema_a21edc3a8b0a = [
+const schema_3284d888ae25 = {
+  kind: 'object',
+  fields: {
+    kind: schema_da3ec022a2c5,
+    targets: { kind: 'union', variants: schema_d44ce5219afa, semantics: schema_6a016609243e },
+    excludeTargets: schema_9b5b3fecdb30,
+  },
+} as const;
+const schema_b67b12e0c8fa = {
+  kind: 'object',
+  fields: {
+    kind: schema_da3ec022a2c5,
+    targets: { kind: 'union', variants: schema_8783384883f2, semantics: schema_6a016609243e },
+    excludeTargets: schema_5438c2ff9840,
+  },
+} as const;
+const schema_ddca89f8ffe9 = [
   schema_12874d6b1e8e,
   schema_8f9b6ad744f9,
   schema_362387e02fee,
-  schema_22f690aab4c3,
-  schema_71d2bc7769c8,
-  schema_28f2e8f96146,
-  schema_53fc416f3b59,
+  schema_e90ebdf8a7e0,
+  schema_efde6a099419,
+  schema_160444e1f85a,
+  schema_3c0f19f32cc8,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -1327,50 +1413,221 @@ const schema_a21edc3a8b0a = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_1035ecccebf3,
+  schema_ca5df45d2247,
+  schema_3284d888ae25,
+  schema_1e955dd87e64,
+  schema_70e94d8745d1,
+  schema_07c9b2197c35,
+  schema_21eb2dca017b,
+  schema_401604eaf122,
+  schema_6abd06827c44,
+  schema_dcdca75e9d16,
+  schema_b517b2601f4a,
+  schema_72e932640842,
+  schema_863f5f4ab73f,
+] as const;
+const schema_7d981560ffa5 = [
+  schema_12874d6b1e8e,
+  schema_8f9b6ad744f9,
+  schema_362387e02fee,
+  schema_9766dd93794a,
+  schema_cc6161d3f009,
+  schema_82c3ce7c9ffa,
+  schema_95743af3c8a1,
+  schema_b97694814d8a,
+  schema_f763c681ec46,
+  schema_655107ea48b8,
+  schema_4e88ad22f3d2,
+  schema_a88221068716,
+  schema_bdac7c504fcd,
+  schema_a2066dcb2253,
+  schema_4a2d82cb9ff9,
+  schema_b67b12e0c8fa,
+  schema_1e955dd87e64,
+  schema_70e94d8745d1,
+  schema_07c9b2197c35,
+  schema_21eb2dca017b,
+  schema_401604eaf122,
+  schema_6abd06827c44,
+  schema_1e5a6dae5e0a,
+  schema_b517b2601f4a,
+  schema_72e932640842,
+  schema_863f5f4ab73f,
+] as const;
+const schema_28816794323c = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['tagFilter'] },
+    targets: { kind: 'union', variants: schema_7d981560ffa5, semantics: schema_6a016609243e },
+    tags: schema_69c08dd2b579,
+    tagQueryType: schema_d865c3950c88,
+  },
+} as const;
+const schema_99f9099953d6 = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['tagFilter'] },
+    targets: { kind: 'union', variants: schema_ddca89f8ffe9, semantics: schema_6a016609243e },
+    tags: schema_69c08dd2b579,
+    tagQueryType: schema_d865c3950c88,
+  },
+} as const;
+const schema_bd30d781e45f = [
+  schema_12874d6b1e8e,
+  schema_8f9b6ad744f9,
+  schema_362387e02fee,
+  schema_e90ebdf8a7e0,
+  schema_efde6a099419,
+  schema_160444e1f85a,
+  schema_3c0f19f32cc8,
+  schema_b97694814d8a,
+  schema_f763c681ec46,
+  schema_655107ea48b8,
+  schema_4e88ad22f3d2,
+  schema_a88221068716,
+  schema_bdac7c504fcd,
+  schema_a2066dcb2253,
+  schema_99f9099953d6,
+  schema_3284d888ae25,
+  schema_1e955dd87e64,
+  schema_70e94d8745d1,
+  schema_07c9b2197c35,
+  schema_21eb2dca017b,
+  schema_401604eaf122,
+  schema_6abd06827c44,
+  schema_dcdca75e9d16,
+  schema_b517b2601f4a,
+  schema_72e932640842,
+  schema_863f5f4ab73f,
+] as const;
+const schema_e02010a2b38c = [
+  schema_12874d6b1e8e,
+  schema_8f9b6ad744f9,
+  schema_362387e02fee,
+  schema_9766dd93794a,
+  schema_cc6161d3f009,
+  schema_82c3ce7c9ffa,
+  schema_95743af3c8a1,
+  schema_b97694814d8a,
+  schema_f763c681ec46,
+  schema_655107ea48b8,
+  schema_4e88ad22f3d2,
+  schema_a88221068716,
+  schema_bdac7c504fcd,
+  schema_a2066dcb2253,
+  schema_28816794323c,
+  schema_b67b12e0c8fa,
+  schema_1e955dd87e64,
+  schema_70e94d8745d1,
+  schema_07c9b2197c35,
+  schema_21eb2dca017b,
+  schema_401604eaf122,
+  schema_6abd06827c44,
+  schema_1e5a6dae5e0a,
+  schema_b517b2601f4a,
+  schema_72e932640842,
+  schema_863f5f4ab73f,
+] as const;
+const schema_448a37a0345a = {
+  kind: 'object',
+  fields: {
+    kind: schema_4e0d4319dae9,
+    targets: { kind: 'union', variants: schema_bd30d781e45f, semantics: schema_6a016609243e },
+    query: schema_c08c5d0f11be,
+    requireBuff: { kind: 'boolean' },
+  },
+} as const;
+const schema_a6fd6460467e = {
+  kind: 'object',
+  fields: {
+    kind: schema_4e0d4319dae9,
+    targets: { kind: 'union', variants: schema_e02010a2b38c, semantics: schema_6a016609243e },
+    query: schema_c08c5d0f11be,
+    requireBuff: { kind: 'boolean' },
+  },
+} as const;
+const schema_5b68f1196c9f = {
+  kind: 'union',
+  variants: [
+    schema_12874d6b1e8e,
+    schema_8f9b6ad744f9,
+    schema_362387e02fee,
+    schema_e90ebdf8a7e0,
+    schema_efde6a099419,
+    schema_160444e1f85a,
+    schema_448a37a0345a,
+    schema_b97694814d8a,
+    schema_f763c681ec46,
+    schema_655107ea48b8,
+    schema_4e88ad22f3d2,
+    schema_a88221068716,
+    schema_bdac7c504fcd,
+    schema_a2066dcb2253,
+    schema_99f9099953d6,
+    schema_3284d888ae25,
+    schema_1e955dd87e64,
+    schema_70e94d8745d1,
+    schema_07c9b2197c35,
+    schema_21eb2dca017b,
+    schema_401604eaf122,
+    schema_6abd06827c44,
+    schema_dcdca75e9d16,
+    schema_b517b2601f4a,
+    schema_72e932640842,
+    schema_863f5f4ab73f,
+  ],
+  semantics: schema_6a016609243e,
+} as const;
+const schema_026e419c7499 = {
+  kind: 'union',
+  variants: [
+    schema_12874d6b1e8e,
+    schema_8f9b6ad744f9,
+    schema_362387e02fee,
+    schema_9766dd93794a,
+    schema_cc6161d3f009,
+    schema_82c3ce7c9ffa,
+    schema_a6fd6460467e,
+    schema_b97694814d8a,
+    schema_f763c681ec46,
+    schema_655107ea48b8,
+    schema_4e88ad22f3d2,
+    schema_a88221068716,
+    schema_bdac7c504fcd,
+    schema_a2066dcb2253,
+    schema_28816794323c,
+    schema_b67b12e0c8fa,
+    schema_1e955dd87e64,
+    schema_70e94d8745d1,
+    schema_07c9b2197c35,
+    schema_21eb2dca017b,
+    schema_401604eaf122,
+    schema_6abd06827c44,
+    schema_1e5a6dae5e0a,
+    schema_b517b2601f4a,
+    schema_72e932640842,
+    schema_863f5f4ab73f,
+  ],
+  semantics: schema_6a016609243e,
+} as const;
+const schema_719ebeef95e1 = [
+  schema_12874d6b1e8e,
+  schema_8f9b6ad744f9,
+  schema_362387e02fee,
+  schema_e90ebdf8a7e0,
+  schema_efde6a099419,
   {
     kind: 'object',
     fields: {
-      kind: schema_da3ec022a2c5,
-      targets: { kind: 'ref', ref: 'field_029151ca9fe4266462c1', semantics: schema_6a016609243e },
-      excludeTargets: schema_34b6140d4034,
+      kind: schema_a9167de03017,
+      targets: { kind: 'ref', ref: 'field_b744166c5373e3bdef01', semantics: schema_6a016609243e },
+      center: schema_5b68f1196c9f,
+      operator: schema_4d14c1b89218,
+      threshold: schema_9b7ff1a12796,
+      clampToXZ: { kind: 'boolean' },
     },
   },
-  schema_1e955dd87e64,
-  schema_70e94d8745d1,
-  schema_07c9b2197c35,
-  schema_21eb2dca017b,
-  schema_401604eaf122,
-  schema_6abd06827c44,
-  schema_94904be0084f,
-  schema_b517b2601f4a,
-  schema_72e932640842,
-  schema_863f5f4ab73f,
-] as const;
-const schema_0005d2625132 = {
-  kind: 'object',
-  fields: {
-    kind: schema_da3ec022a2c5,
-    targets: { kind: 'union', variants: schema_5788b90b3cfd, semantics: schema_6a016609243e },
-    excludeTargets: schema_c6ac9aeaa313,
-  },
-} as const;
-const schema_902e26529ecb = {
-  kind: 'object',
-  fields: {
-    kind: schema_da3ec022a2c5,
-    targets: { kind: 'union', variants: schema_a21edc3a8b0a, semantics: schema_6a016609243e },
-    excludeTargets: schema_34b6140d4034,
-  },
-} as const;
-const schema_4f415c6e8d11 = [
-  schema_12874d6b1e8e,
-  schema_8f9b6ad744f9,
-  schema_362387e02fee,
-  schema_2d9acc7341e8,
-  schema_3e00dd4f630d,
-  schema_e395e07091ee,
-  schema_a9df013d38bc,
+  schema_448a37a0345a,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -1378,225 +1635,41 @@ const schema_4f415c6e8d11 = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_943051912610,
-  schema_0005d2625132,
+  schema_99f9099953d6,
+  schema_3284d888ae25,
   schema_1e955dd87e64,
   schema_70e94d8745d1,
   schema_07c9b2197c35,
   schema_21eb2dca017b,
   schema_401604eaf122,
   schema_6abd06827c44,
-  schema_b00e959e7b2f,
+  schema_dcdca75e9d16,
   schema_b517b2601f4a,
   schema_72e932640842,
   schema_863f5f4ab73f,
 ] as const;
-const schema_9de55d1818c8 = [
+const schema_27a113f1e1f7 = [
   schema_12874d6b1e8e,
   schema_8f9b6ad744f9,
   schema_362387e02fee,
-  schema_22f690aab4c3,
-  schema_71d2bc7769c8,
-  schema_28f2e8f96146,
-  schema_53fc416f3b59,
-  schema_b97694814d8a,
-  schema_f763c681ec46,
-  schema_655107ea48b8,
-  schema_4e88ad22f3d2,
-  schema_a88221068716,
-  schema_bdac7c504fcd,
-  schema_a2066dcb2253,
-  schema_1035ecccebf3,
-  schema_902e26529ecb,
-  schema_1e955dd87e64,
-  schema_70e94d8745d1,
-  schema_07c9b2197c35,
-  schema_21eb2dca017b,
-  schema_401604eaf122,
-  schema_6abd06827c44,
-  schema_94904be0084f,
-  schema_b517b2601f4a,
-  schema_72e932640842,
-  schema_863f5f4ab73f,
-] as const;
-const schema_710be03a535a = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['tagFilter'] },
-    targets: { kind: 'union', variants: schema_9de55d1818c8, semantics: schema_6a016609243e },
-    tags: schema_69c08dd2b579,
-    tagQueryType: schema_d865c3950c88,
-  },
-} as const;
-const schema_964c2f8f3121 = {
-  kind: 'object',
-  fields: {
-    kind: { kind: 'enum', options: ['tagFilter'] },
-    targets: { kind: 'union', variants: schema_4f415c6e8d11, semantics: schema_6a016609243e },
-    tags: schema_69c08dd2b579,
-    tagQueryType: schema_d865c3950c88,
-  },
-} as const;
-const schema_d0e43fa06b54 = [
-  schema_12874d6b1e8e,
-  schema_8f9b6ad744f9,
-  schema_362387e02fee,
-  schema_2d9acc7341e8,
-  schema_3e00dd4f630d,
-  schema_e395e07091ee,
-  schema_a9df013d38bc,
-  schema_b97694814d8a,
-  schema_f763c681ec46,
-  schema_655107ea48b8,
-  schema_4e88ad22f3d2,
-  schema_a88221068716,
-  schema_bdac7c504fcd,
-  schema_a2066dcb2253,
-  schema_964c2f8f3121,
-  schema_0005d2625132,
-  schema_1e955dd87e64,
-  schema_70e94d8745d1,
-  schema_07c9b2197c35,
-  schema_21eb2dca017b,
-  schema_401604eaf122,
-  schema_6abd06827c44,
-  schema_b00e959e7b2f,
-  schema_b517b2601f4a,
-  schema_72e932640842,
-  schema_863f5f4ab73f,
-] as const;
-const schema_0c7f311b15eb = [
-  schema_12874d6b1e8e,
-  schema_8f9b6ad744f9,
-  schema_362387e02fee,
-  schema_22f690aab4c3,
-  schema_71d2bc7769c8,
-  schema_28f2e8f96146,
-  schema_53fc416f3b59,
-  schema_b97694814d8a,
-  schema_f763c681ec46,
-  schema_655107ea48b8,
-  schema_4e88ad22f3d2,
-  schema_a88221068716,
-  schema_bdac7c504fcd,
-  schema_a2066dcb2253,
-  schema_710be03a535a,
-  schema_902e26529ecb,
-  schema_1e955dd87e64,
-  schema_70e94d8745d1,
-  schema_07c9b2197c35,
-  schema_21eb2dca017b,
-  schema_401604eaf122,
-  schema_6abd06827c44,
-  schema_94904be0084f,
-  schema_b517b2601f4a,
-  schema_72e932640842,
-  schema_863f5f4ab73f,
-] as const;
-const schema_299a11ef750e = {
-  kind: 'object',
-  fields: {
-    kind: schema_4e0d4319dae9,
-    targets: { kind: 'union', variants: schema_0c7f311b15eb, semantics: schema_6a016609243e },
-    query: schema_c08c5d0f11be,
-    requireBuff: { kind: 'boolean' },
-  },
-} as const;
-const schema_1d642f59c372 = {
-  kind: 'object',
-  fields: {
-    kind: schema_4e0d4319dae9,
-    targets: { kind: 'union', variants: schema_d0e43fa06b54, semantics: schema_6a016609243e },
-    query: schema_c08c5d0f11be,
-    requireBuff: { kind: 'boolean' },
-  },
-} as const;
-const schema_401a2a390e49 = {
-  kind: 'union',
-  variants: [
-    schema_12874d6b1e8e,
-    schema_8f9b6ad744f9,
-    schema_362387e02fee,
-    schema_22f690aab4c3,
-    schema_71d2bc7769c8,
-    schema_28f2e8f96146,
-    schema_299a11ef750e,
-    schema_b97694814d8a,
-    schema_f763c681ec46,
-    schema_655107ea48b8,
-    schema_4e88ad22f3d2,
-    schema_a88221068716,
-    schema_bdac7c504fcd,
-    schema_a2066dcb2253,
-    schema_710be03a535a,
-    schema_902e26529ecb,
-    schema_1e955dd87e64,
-    schema_70e94d8745d1,
-    schema_07c9b2197c35,
-    schema_21eb2dca017b,
-    schema_401604eaf122,
-    schema_6abd06827c44,
-    schema_94904be0084f,
-    schema_b517b2601f4a,
-    schema_72e932640842,
-    schema_863f5f4ab73f,
-  ],
-  semantics: schema_6a016609243e,
-} as const;
-const schema_38e7f7723ff6 = {
-  kind: 'union',
-  variants: [
-    schema_12874d6b1e8e,
-    schema_8f9b6ad744f9,
-    schema_362387e02fee,
-    schema_2d9acc7341e8,
-    schema_3e00dd4f630d,
-    schema_e395e07091ee,
-    schema_1d642f59c372,
-    schema_b97694814d8a,
-    schema_f763c681ec46,
-    schema_655107ea48b8,
-    schema_4e88ad22f3d2,
-    schema_a88221068716,
-    schema_bdac7c504fcd,
-    schema_a2066dcb2253,
-    schema_964c2f8f3121,
-    schema_0005d2625132,
-    schema_1e955dd87e64,
-    schema_70e94d8745d1,
-    schema_07c9b2197c35,
-    schema_21eb2dca017b,
-    schema_401604eaf122,
-    schema_6abd06827c44,
-    schema_b00e959e7b2f,
-    schema_b517b2601f4a,
-    schema_72e932640842,
-    schema_863f5f4ab73f,
-  ],
-  semantics: schema_6a016609243e,
-} as const;
-const schema_3e8e0da88d91 = [
-  schema_12874d6b1e8e,
-  schema_8f9b6ad744f9,
-  schema_362387e02fee,
-  schema_2d9acc7341e8,
-  schema_3e00dd4f630d,
+  schema_9766dd93794a,
+  schema_cc6161d3f009,
   {
     kind: 'object',
     fields: {
       kind: schema_a9167de03017,
       targets: {
         kind: 'ref',
-        ref: '162a54f4b381f6848145_field_ae81c49512ba69d988d2',
+        ref: '9340535fcf3ac8ccd495_field_b744166c5373e3bdef01',
         semantics: schema_6a016609243e,
       },
-      center: schema_38e7f7723ff6,
+      center: schema_026e419c7499,
       operator: schema_4d14c1b89218,
       threshold: schema_9b7ff1a12796,
       clampToXZ: { kind: 'boolean' },
     },
   },
-  schema_1d642f59c372,
+  schema_a6fd6460467e,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -1604,87 +1677,49 @@ const schema_3e8e0da88d91 = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_964c2f8f3121,
-  schema_0005d2625132,
+  schema_28816794323c,
+  schema_b67b12e0c8fa,
   schema_1e955dd87e64,
   schema_70e94d8745d1,
   schema_07c9b2197c35,
   schema_21eb2dca017b,
   schema_401604eaf122,
   schema_6abd06827c44,
-  schema_b00e959e7b2f,
+  schema_1e5a6dae5e0a,
   schema_b517b2601f4a,
   schema_72e932640842,
   schema_863f5f4ab73f,
 ] as const;
-const schema_1aa40a3d5ffc = [
-  schema_12874d6b1e8e,
-  schema_8f9b6ad744f9,
-  schema_362387e02fee,
-  schema_22f690aab4c3,
-  schema_71d2bc7769c8,
-  {
-    kind: 'object',
-    fields: {
-      kind: schema_a9167de03017,
-      targets: { kind: 'ref', ref: 'field_ae81c49512ba69d988d2', semantics: schema_6a016609243e },
-      center: schema_401a2a390e49,
-      operator: schema_4d14c1b89218,
-      threshold: schema_9b7ff1a12796,
-      clampToXZ: { kind: 'boolean' },
-    },
-  },
-  schema_299a11ef750e,
-  schema_b97694814d8a,
-  schema_f763c681ec46,
-  schema_655107ea48b8,
-  schema_4e88ad22f3d2,
-  schema_a88221068716,
-  schema_bdac7c504fcd,
-  schema_a2066dcb2253,
-  schema_710be03a535a,
-  schema_902e26529ecb,
-  schema_1e955dd87e64,
-  schema_70e94d8745d1,
-  schema_07c9b2197c35,
-  schema_21eb2dca017b,
-  schema_401604eaf122,
-  schema_6abd06827c44,
-  schema_94904be0084f,
-  schema_b517b2601f4a,
-  schema_72e932640842,
-  schema_863f5f4ab73f,
-] as const;
-const schema_0782086a2eaa = {
+const schema_beca5d1b071b = {
   kind: 'object',
   fields: {
     kind: schema_a9167de03017,
-    targets: { kind: 'union', variants: schema_3e8e0da88d91, semantics: schema_6a016609243e },
-    center: schema_38e7f7723ff6,
+    targets: { kind: 'union', variants: schema_27a113f1e1f7, semantics: schema_6a016609243e },
+    center: schema_026e419c7499,
     operator: schema_4d14c1b89218,
     threshold: schema_9b7ff1a12796,
     clampToXZ: { kind: 'boolean' },
   },
 } as const;
-const schema_e5ef9281650e = {
+const schema_fe5063c26ab3 = {
   kind: 'object',
   fields: {
     kind: schema_a9167de03017,
-    targets: { kind: 'union', variants: schema_1aa40a3d5ffc, semantics: schema_6a016609243e },
-    center: schema_401a2a390e49,
+    targets: { kind: 'union', variants: schema_719ebeef95e1, semantics: schema_6a016609243e },
+    center: schema_5b68f1196c9f,
     operator: schema_4d14c1b89218,
     threshold: schema_9b7ff1a12796,
     clampToXZ: { kind: 'boolean' },
   },
 } as const;
-const schema_e943e2f90b63 = [
+const schema_53d7e8e6d274 = [
   schema_12874d6b1e8e,
   schema_8f9b6ad744f9,
   schema_362387e02fee,
-  schema_2d9acc7341e8,
-  schema_3e00dd4f630d,
-  schema_0782086a2eaa,
-  schema_1d642f59c372,
+  schema_e90ebdf8a7e0,
+  schema_efde6a099419,
+  schema_fe5063c26ab3,
+  schema_448a37a0345a,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -1692,27 +1727,27 @@ const schema_e943e2f90b63 = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_964c2f8f3121,
-  schema_0005d2625132,
+  schema_99f9099953d6,
+  schema_3284d888ae25,
   schema_1e955dd87e64,
   schema_70e94d8745d1,
   schema_07c9b2197c35,
   schema_21eb2dca017b,
   schema_401604eaf122,
   schema_6abd06827c44,
-  schema_b00e959e7b2f,
+  schema_dcdca75e9d16,
   schema_b517b2601f4a,
   schema_72e932640842,
   schema_863f5f4ab73f,
 ] as const;
-const schema_856a2828b515 = [
+const schema_1b44c0a7e20e = [
   schema_12874d6b1e8e,
   schema_8f9b6ad744f9,
   schema_362387e02fee,
-  schema_22f690aab4c3,
-  schema_71d2bc7769c8,
-  schema_e5ef9281650e,
-  schema_299a11ef750e,
+  schema_9766dd93794a,
+  schema_cc6161d3f009,
+  schema_beca5d1b071b,
+  schema_a6fd6460467e,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -1720,45 +1755,45 @@ const schema_856a2828b515 = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_710be03a535a,
-  schema_902e26529ecb,
+  schema_28816794323c,
+  schema_b67b12e0c8fa,
   schema_1e955dd87e64,
   schema_70e94d8745d1,
   schema_07c9b2197c35,
   schema_21eb2dca017b,
   schema_401604eaf122,
   schema_6abd06827c44,
-  schema_94904be0084f,
+  schema_1e5a6dae5e0a,
   schema_b517b2601f4a,
   schema_72e932640842,
   schema_863f5f4ab73f,
 ] as const;
-const schema_6c105ca9ff9d = {
+const schema_8e48c313acb8 = {
   kind: 'object',
   fields: {
     kind: { kind: 'enum', options: ['limit'] },
-    targets: { kind: 'union', variants: schema_e943e2f90b63, semantics: schema_6a016609243e },
+    targets: { kind: 'union', variants: schema_1b44c0a7e20e, semantics: schema_6a016609243e },
     count: { kind: 'number' },
   },
 } as const;
-const schema_333e4bb48340 = {
+const schema_4877a60d8d50 = {
   kind: 'object',
   fields: {
     kind: { kind: 'enum', options: ['limit'] },
-    targets: { kind: 'union', variants: schema_856a2828b515, semantics: schema_6a016609243e },
+    targets: { kind: 'union', variants: schema_53d7e8e6d274, semantics: schema_6a016609243e },
     count: { kind: 'number' },
   },
 } as const;
-const schema_1c3fd5b7df2c = {
+const schema_3aeee96c6e4a = {
   kind: 'union',
   variants: [
     schema_12874d6b1e8e,
     schema_8f9b6ad744f9,
     schema_362387e02fee,
-    schema_22f690aab4c3,
-    schema_333e4bb48340,
-    schema_e5ef9281650e,
-    schema_299a11ef750e,
+    schema_9766dd93794a,
+    schema_8e48c313acb8,
+    schema_beca5d1b071b,
+    schema_a6fd6460467e,
     schema_b97694814d8a,
     schema_f763c681ec46,
     schema_655107ea48b8,
@@ -1766,31 +1801,31 @@ const schema_1c3fd5b7df2c = {
     schema_a88221068716,
     schema_bdac7c504fcd,
     schema_a2066dcb2253,
-    schema_710be03a535a,
-    schema_902e26529ecb,
+    schema_28816794323c,
+    schema_b67b12e0c8fa,
     schema_1e955dd87e64,
     schema_70e94d8745d1,
     schema_07c9b2197c35,
     schema_21eb2dca017b,
     schema_401604eaf122,
     schema_6abd06827c44,
-    schema_94904be0084f,
+    schema_1e5a6dae5e0a,
     schema_b517b2601f4a,
     schema_72e932640842,
     schema_863f5f4ab73f,
   ],
   semantics: schema_6a016609243e,
 } as const;
-const schema_b5803e388056 = {
+const schema_3d73cdadca3e = {
   kind: 'union',
   variants: [
     schema_12874d6b1e8e,
     schema_8f9b6ad744f9,
     schema_362387e02fee,
-    schema_2d9acc7341e8,
-    schema_6c105ca9ff9d,
-    schema_0782086a2eaa,
-    schema_1d642f59c372,
+    schema_e90ebdf8a7e0,
+    schema_4877a60d8d50,
+    schema_fe5063c26ab3,
+    schema_448a37a0345a,
     schema_b97694814d8a,
     schema_f763c681ec46,
     schema_655107ea48b8,
@@ -1798,22 +1833,22 @@ const schema_b5803e388056 = {
     schema_a88221068716,
     schema_bdac7c504fcd,
     schema_a2066dcb2253,
-    schema_964c2f8f3121,
-    schema_0005d2625132,
+    schema_99f9099953d6,
+    schema_3284d888ae25,
     schema_1e955dd87e64,
     schema_70e94d8745d1,
     schema_07c9b2197c35,
     schema_21eb2dca017b,
     schema_401604eaf122,
     schema_6abd06827c44,
-    schema_b00e959e7b2f,
+    schema_dcdca75e9d16,
     schema_b517b2601f4a,
     schema_72e932640842,
     schema_863f5f4ab73f,
   ],
   semantics: schema_6a016609243e,
 } as const;
-const schema_b8f645bdd02e = [
+const schema_9b800c588e03 = [
   schema_12874d6b1e8e,
   schema_8f9b6ad744f9,
   schema_362387e02fee,
@@ -1823,15 +1858,15 @@ const schema_b8f645bdd02e = [
       kind: schema_8072773b759d,
       targets: {
         kind: 'ref',
-        ref: '162a54f4b381f6848145_field_2dea29b3ddac6aba46c8',
+        ref: '9340535fcf3ac8ccd495_field_462be686cc1ff4027ef8',
         semantics: schema_6a016609243e,
       },
-      parentTargets: schema_b5803e388056,
+      parentTargets: schema_3aeee96c6e4a,
     },
   },
-  schema_6c105ca9ff9d,
-  schema_0782086a2eaa,
-  schema_1d642f59c372,
+  schema_8e48c313acb8,
+  schema_beca5d1b071b,
+  schema_a6fd6460467e,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -1839,20 +1874,20 @@ const schema_b8f645bdd02e = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_964c2f8f3121,
-  schema_0005d2625132,
+  schema_28816794323c,
+  schema_b67b12e0c8fa,
   schema_1e955dd87e64,
   schema_70e94d8745d1,
   schema_07c9b2197c35,
   schema_21eb2dca017b,
   schema_401604eaf122,
   schema_6abd06827c44,
-  schema_b00e959e7b2f,
+  schema_1e5a6dae5e0a,
   schema_b517b2601f4a,
   schema_72e932640842,
   schema_863f5f4ab73f,
 ] as const;
-const schema_32e338a3ed76 = [
+const schema_58ab1c3a7257 = [
   schema_12874d6b1e8e,
   schema_8f9b6ad744f9,
   schema_362387e02fee,
@@ -1860,13 +1895,13 @@ const schema_32e338a3ed76 = [
     kind: 'object',
     fields: {
       kind: schema_8072773b759d,
-      targets: { kind: 'ref', ref: 'field_2dea29b3ddac6aba46c8', semantics: schema_6a016609243e },
-      parentTargets: schema_1c3fd5b7df2c,
+      targets: { kind: 'ref', ref: 'field_462be686cc1ff4027ef8', semantics: schema_6a016609243e },
+      parentTargets: schema_3d73cdadca3e,
     },
   },
-  schema_333e4bb48340,
-  schema_e5ef9281650e,
-  schema_299a11ef750e,
+  schema_4877a60d8d50,
+  schema_fe5063c26ab3,
+  schema_448a37a0345a,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -1874,121 +1909,121 @@ const schema_32e338a3ed76 = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_710be03a535a,
-  schema_902e26529ecb,
+  schema_99f9099953d6,
+  schema_3284d888ae25,
   schema_1e955dd87e64,
   schema_70e94d8745d1,
   schema_07c9b2197c35,
   schema_21eb2dca017b,
   schema_401604eaf122,
   schema_6abd06827c44,
-  schema_94904be0084f,
+  schema_dcdca75e9d16,
   schema_b517b2601f4a,
   schema_72e932640842,
   schema_863f5f4ab73f,
 ] as const;
-const schema_435dad4cfb5b = {
+const schema_dc27f144d231 = {
   kind: schema_8072773b759d,
-  targets: { kind: 'union', variants: schema_b8f645bdd02e, semantics: schema_6a016609243e },
-  parentTargets: schema_b5803e388056,
+  targets: { kind: 'union', variants: schema_9b800c588e03, semantics: schema_6a016609243e },
+  parentTargets: schema_3aeee96c6e4a,
 } as const;
-const schema_43d800fc9731 = {
-  field_9f2c0bf3856200c731ba: {
+const schema_93fb59dbbf9b = {
+  field_6b6acb920459f17bf104: {
     kind: 'union',
-    variants: schema_edf64119328b,
+    variants: schema_471b8eefcd9b,
     semantics: schema_6a016609243e,
   },
-  field_dc404e00fef80ba7880b: schema_34b6140d4034,
-  field_029151ca9fe4266462c1: {
+  field_00d709a59fd459fa3c01: schema_9b5b3fecdb30,
+  field_581085efc2f91ef8b0f0: {
     kind: 'union',
-    variants: schema_a21edc3a8b0a,
+    variants: schema_d44ce5219afa,
     semantics: schema_6a016609243e,
   },
-  field_4864f5b9fd6c686b34b8: {
+  field_fb598da27ea851176a6a: {
     kind: 'union',
-    variants: schema_9de55d1818c8,
+    variants: schema_ddca89f8ffe9,
     semantics: schema_6a016609243e,
   },
-  field_9cf512da906d4ab6f228: {
+  field_68f47136e8507044194d: {
     kind: 'union',
-    variants: schema_0c7f311b15eb,
+    variants: schema_bd30d781e45f,
     semantics: schema_6a016609243e,
   },
-  field_d2d5bbe88440034be08e: schema_401a2a390e49,
-  field_ae81c49512ba69d988d2: {
+  field_bdd4bd29d7ef4e7fbfbc: schema_5b68f1196c9f,
+  field_b744166c5373e3bdef01: {
     kind: 'union',
-    variants: schema_1aa40a3d5ffc,
+    variants: schema_719ebeef95e1,
     semantics: schema_6a016609243e,
   },
-  field_b75137d3e7f8c1c6100c: {
+  field_4780988aefed7fb7cfd6: {
     kind: 'union',
-    variants: schema_856a2828b515,
+    variants: schema_53d7e8e6d274,
     semantics: schema_6a016609243e,
   },
-  field_d970ed5222b90b225ae0: schema_1c3fd5b7df2c,
-  field_2dea29b3ddac6aba46c8: {
+  field_9e6d654db881771e7d08: schema_3d73cdadca3e,
+  field_462be686cc1ff4027ef8: {
     kind: 'union',
-    variants: schema_32e338a3ed76,
-    semantics: schema_6a016609243e,
-  },
-} as const;
-const schema_d78d2295a12b = {
-  '162a54f4b381f6848145_field_9f2c0bf3856200c731ba': {
-    kind: 'union',
-    variants: schema_7dff494a1a30,
-    semantics: schema_6a016609243e,
-  },
-  '162a54f4b381f6848145_field_dc404e00fef80ba7880b': schema_c6ac9aeaa313,
-  '162a54f4b381f6848145_field_029151ca9fe4266462c1': {
-    kind: 'union',
-    variants: schema_5788b90b3cfd,
-    semantics: schema_6a016609243e,
-  },
-  '162a54f4b381f6848145_field_4864f5b9fd6c686b34b8': {
-    kind: 'union',
-    variants: schema_4f415c6e8d11,
-    semantics: schema_6a016609243e,
-  },
-  '162a54f4b381f6848145_field_9cf512da906d4ab6f228': {
-    kind: 'union',
-    variants: schema_d0e43fa06b54,
-    semantics: schema_6a016609243e,
-  },
-  '162a54f4b381f6848145_field_d2d5bbe88440034be08e': schema_38e7f7723ff6,
-  '162a54f4b381f6848145_field_ae81c49512ba69d988d2': {
-    kind: 'union',
-    variants: schema_3e8e0da88d91,
-    semantics: schema_6a016609243e,
-  },
-  '162a54f4b381f6848145_field_b75137d3e7f8c1c6100c': {
-    kind: 'union',
-    variants: schema_e943e2f90b63,
-    semantics: schema_6a016609243e,
-  },
-  '162a54f4b381f6848145_field_d970ed5222b90b225ae0': schema_b5803e388056,
-  '162a54f4b381f6848145_field_2dea29b3ddac6aba46c8': {
-    kind: 'union',
-    variants: schema_b8f645bdd02e,
+    variants: schema_58ab1c3a7257,
     semantics: schema_6a016609243e,
   },
 } as const;
-const schema_1c364b5f299b = {
+const schema_26c687084452 = {
+  '9340535fcf3ac8ccd495_field_6b6acb920459f17bf104': {
+    kind: 'union',
+    variants: schema_c7c3b201071d,
+    semantics: schema_6a016609243e,
+  },
+  '9340535fcf3ac8ccd495_field_00d709a59fd459fa3c01': schema_5438c2ff9840,
+  '9340535fcf3ac8ccd495_field_581085efc2f91ef8b0f0': {
+    kind: 'union',
+    variants: schema_8783384883f2,
+    semantics: schema_6a016609243e,
+  },
+  '9340535fcf3ac8ccd495_field_fb598da27ea851176a6a': {
+    kind: 'union',
+    variants: schema_7d981560ffa5,
+    semantics: schema_6a016609243e,
+  },
+  '9340535fcf3ac8ccd495_field_68f47136e8507044194d': {
+    kind: 'union',
+    variants: schema_e02010a2b38c,
+    semantics: schema_6a016609243e,
+  },
+  '9340535fcf3ac8ccd495_field_bdd4bd29d7ef4e7fbfbc': schema_026e419c7499,
+  '9340535fcf3ac8ccd495_field_b744166c5373e3bdef01': {
+    kind: 'union',
+    variants: schema_27a113f1e1f7,
+    semantics: schema_6a016609243e,
+  },
+  '9340535fcf3ac8ccd495_field_4780988aefed7fb7cfd6': {
+    kind: 'union',
+    variants: schema_1b44c0a7e20e,
+    semantics: schema_6a016609243e,
+  },
+  '9340535fcf3ac8ccd495_field_9e6d654db881771e7d08': schema_3aeee96c6e4a,
+  '9340535fcf3ac8ccd495_field_462be686cc1ff4027ef8': {
+    kind: 'union',
+    variants: schema_9b800c588e03,
+    semantics: schema_6a016609243e,
+  },
+} as const;
+const schema_3d465cbf2aab = {
   kind: 'object',
   fields: {
     kind: schema_8072773b759d,
-    targets: { kind: 'union', variants: schema_32e338a3ed76, semantics: schema_6a016609243e },
-    parentTargets: schema_1c3fd5b7df2c,
+    targets: { kind: 'union', variants: schema_58ab1c3a7257, semantics: schema_6a016609243e },
+    parentTargets: schema_3d73cdadca3e,
   },
 } as const;
-const schema_f503b87dca79 = [
+const schema_711c6647288a = [
   { kind: 'enum', options: schema_93267e3ce338, semantics: schema_bd2dc972d7c3 },
   schema_12874d6b1e8e,
   schema_8f9b6ad744f9,
   schema_362387e02fee,
-  schema_1c364b5f299b,
-  schema_333e4bb48340,
-  schema_e5ef9281650e,
-  schema_299a11ef750e,
+  schema_3d465cbf2aab,
+  schema_4877a60d8d50,
+  schema_fe5063c26ab3,
+  schema_448a37a0345a,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -1996,27 +2031,27 @@ const schema_f503b87dca79 = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_710be03a535a,
-  schema_902e26529ecb,
+  schema_99f9099953d6,
+  schema_3284d888ae25,
   schema_1e955dd87e64,
   schema_70e94d8745d1,
   schema_07c9b2197c35,
   schema_21eb2dca017b,
   schema_401604eaf122,
   schema_6abd06827c44,
-  schema_94904be0084f,
+  schema_dcdca75e9d16,
   schema_b517b2601f4a,
   schema_72e932640842,
   schema_863f5f4ab73f,
 ] as const;
-const schema_47736080397f = [
+const schema_def79c30c645 = [
   schema_12874d6b1e8e,
   schema_8f9b6ad744f9,
   schema_362387e02fee,
-  schema_1c364b5f299b,
-  schema_333e4bb48340,
-  schema_e5ef9281650e,
-  schema_299a11ef750e,
+  { kind: 'object', fields: schema_dc27f144d231 },
+  schema_8e48c313acb8,
+  schema_beca5d1b071b,
+  schema_a6fd6460467e,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -2024,27 +2059,27 @@ const schema_47736080397f = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_710be03a535a,
-  schema_902e26529ecb,
+  schema_28816794323c,
+  schema_b67b12e0c8fa,
   schema_1e955dd87e64,
   schema_70e94d8745d1,
   schema_07c9b2197c35,
   schema_21eb2dca017b,
   schema_401604eaf122,
   schema_6abd06827c44,
-  schema_94904be0084f,
+  schema_1e5a6dae5e0a,
   schema_b517b2601f4a,
   schema_72e932640842,
   schema_863f5f4ab73f,
 ] as const;
-const schema_3910558495c4 = [
+const schema_d7e5f1247277 = [
   schema_12874d6b1e8e,
   schema_8f9b6ad744f9,
   schema_362387e02fee,
-  { kind: 'object', fields: schema_435dad4cfb5b },
-  schema_6c105ca9ff9d,
-  schema_0782086a2eaa,
-  schema_1d642f59c372,
+  schema_3d465cbf2aab,
+  schema_4877a60d8d50,
+  schema_fe5063c26ab3,
+  schema_448a37a0345a,
   schema_b97694814d8a,
   schema_f763c681ec46,
   schema_655107ea48b8,
@@ -2052,30 +2087,30 @@ const schema_3910558495c4 = [
   schema_a88221068716,
   schema_bdac7c504fcd,
   schema_a2066dcb2253,
-  schema_964c2f8f3121,
-  schema_0005d2625132,
+  schema_99f9099953d6,
+  schema_3284d888ae25,
   schema_1e955dd87e64,
   schema_70e94d8745d1,
   schema_07c9b2197c35,
   schema_21eb2dca017b,
   schema_401604eaf122,
   schema_6abd06827c44,
-  schema_b00e959e7b2f,
+  schema_dcdca75e9d16,
   schema_b517b2601f4a,
   schema_72e932640842,
   schema_863f5f4ab73f,
 ] as const;
-const schema_c2182f092498 = {
+const schema_cb07e3aab186 = {
   kind: 'union',
   variants: [
     { kind: 'enum', options: ['enemy', 'caster', 'controlled'], semantics: schema_5bafbc7424f4 },
     schema_12874d6b1e8e,
     schema_8f9b6ad744f9,
     schema_362387e02fee,
-    schema_1c364b5f299b,
-    schema_333e4bb48340,
-    schema_e5ef9281650e,
-    schema_299a11ef750e,
+    schema_3d465cbf2aab,
+    schema_4877a60d8d50,
+    schema_fe5063c26ab3,
+    schema_448a37a0345a,
     schema_b97694814d8a,
     schema_f763c681ec46,
     schema_655107ea48b8,
@@ -2083,38 +2118,44 @@ const schema_c2182f092498 = {
     schema_a88221068716,
     schema_bdac7c504fcd,
     schema_a2066dcb2253,
-    schema_710be03a535a,
-    schema_902e26529ecb,
+    schema_99f9099953d6,
+    schema_3284d888ae25,
     schema_1e955dd87e64,
     schema_70e94d8745d1,
     schema_07c9b2197c35,
     schema_21eb2dca017b,
     schema_401604eaf122,
     schema_6abd06827c44,
-    schema_94904be0084f,
+    schema_dcdca75e9d16,
     schema_b517b2601f4a,
     schema_72e932640842,
     schema_863f5f4ab73f,
   ],
   semantics: { unionVariants: [schema_5bafbc7424f4, schema_6a016609243e] },
 } as const;
-const schema_c88d483f2d78 = {
+const schema_5b1a372b4af5 = {
   kind: 'union',
-  variants: schema_f503b87dca79,
-  semantics: { unionVariants: [schema_6a016609243e, schema_bd2dc972d7c3] },
-  references: schema_43d800fc9731,
+  variants: schema_def79c30c645,
+  semantics: schema_6a016609243e,
+  references: schema_26c687084452,
 } as const;
-const schema_1bf04ad2d6ef = {
+const schema_740094310b29 = {
+  kind: 'union',
+  variants: schema_d7e5f1247277,
+  semantics: schema_6a016609243e,
+  references: schema_93fb59dbbf9b,
+} as const;
+const schema_f986917b4f8b = {
   kind: 'union',
   variants: [
     { kind: 'enum', options: ['caster'], semantics: { unionVariants: [{}] } },
     schema_12874d6b1e8e,
     schema_8f9b6ad744f9,
     schema_362387e02fee,
-    schema_1c364b5f299b,
-    schema_333e4bb48340,
-    schema_e5ef9281650e,
-    schema_299a11ef750e,
+    schema_3d465cbf2aab,
+    schema_4877a60d8d50,
+    schema_fe5063c26ab3,
+    schema_448a37a0345a,
     schema_b97694814d8a,
     schema_f763c681ec46,
     schema_655107ea48b8,
@@ -2122,87 +2163,39 @@ const schema_1bf04ad2d6ef = {
     schema_a88221068716,
     schema_bdac7c504fcd,
     schema_a2066dcb2253,
-    schema_710be03a535a,
-    schema_902e26529ecb,
+    schema_99f9099953d6,
+    schema_3284d888ae25,
     schema_1e955dd87e64,
     schema_70e94d8745d1,
     schema_07c9b2197c35,
     schema_21eb2dca017b,
     schema_401604eaf122,
     schema_6abd06827c44,
-    schema_94904be0084f,
+    schema_dcdca75e9d16,
     schema_b517b2601f4a,
     schema_72e932640842,
     schema_863f5f4ab73f,
   ],
   semantics: { unionVariants: [{}, schema_6a016609243e] },
-  references: schema_43d800fc9731,
+  references: schema_93fb59dbbf9b,
 } as const;
-const schema_a13ad28baeec = {
+const schema_497051f53439 = {
   kind: 'union',
-  variants: schema_47736080397f,
-  semantics: schema_6a016609243e,
-  references: schema_43d800fc9731,
+  variants: schema_711c6647288a,
+  semantics: { unionVariants: [schema_6a016609243e, schema_bd2dc972d7c3] },
+  references: schema_93fb59dbbf9b,
 } as const;
-const schema_f799c5afa3c5 = {
-  kind: 'union',
-  variants: schema_3910558495c4,
-  semantics: schema_6a016609243e,
-  references: schema_d78d2295a12b,
-} as const;
-const schema_ea3a5ad5d424 = {
-  kind: 'union',
-  variants: [
-    { kind: 'enum', options: ['caster', 'currentAbilityEntity'], semantics: schema_a4c41ed6f378 },
-    schema_12874d6b1e8e,
-    schema_8f9b6ad744f9,
-    schema_362387e02fee,
-    schema_1c364b5f299b,
-    schema_333e4bb48340,
-    schema_e5ef9281650e,
-    schema_299a11ef750e,
-    schema_b97694814d8a,
-    schema_f763c681ec46,
-    schema_655107ea48b8,
-    schema_4e88ad22f3d2,
-    schema_a88221068716,
-    schema_bdac7c504fcd,
-    schema_a2066dcb2253,
-    schema_710be03a535a,
-    schema_902e26529ecb,
-    schema_1e955dd87e64,
-    schema_70e94d8745d1,
-    schema_07c9b2197c35,
-    schema_21eb2dca017b,
-    schema_401604eaf122,
-    schema_6abd06827c44,
-    schema_94904be0084f,
-    schema_b517b2601f4a,
-    schema_72e932640842,
-    schema_863f5f4ab73f,
-  ],
-  semantics: { unionVariants: [{}, {}, schema_6a016609243e] },
-  references: schema_43d800fc9731,
-  optional: true,
-} as const;
-const schema_82396a7d0369 = {
-  kind: 'union',
-  variants: schema_47736080397f,
-  semantics: schema_6a016609243e,
-  references: schema_43d800fc9731,
-  optional: true,
-} as const;
-const schema_194de14f2a05 = {
+const schema_d67ada59627b = {
   kind: 'union',
   variants: [
     { kind: 'enum', options: ['enemy', 'actionInputTarget'], semantics: schema_a4c41ed6f378 },
     schema_12874d6b1e8e,
     schema_8f9b6ad744f9,
     schema_362387e02fee,
-    schema_1c364b5f299b,
-    schema_333e4bb48340,
-    schema_e5ef9281650e,
-    schema_299a11ef750e,
+    schema_3d465cbf2aab,
+    schema_4877a60d8d50,
+    schema_fe5063c26ab3,
+    schema_448a37a0345a,
     schema_b97694814d8a,
     schema_f763c681ec46,
     schema_655107ea48b8,
@@ -2210,77 +2203,119 @@ const schema_194de14f2a05 = {
     schema_a88221068716,
     schema_bdac7c504fcd,
     schema_a2066dcb2253,
-    schema_710be03a535a,
-    schema_902e26529ecb,
+    schema_99f9099953d6,
+    schema_3284d888ae25,
     schema_1e955dd87e64,
     schema_70e94d8745d1,
     schema_07c9b2197c35,
     schema_21eb2dca017b,
     schema_401604eaf122,
     schema_6abd06827c44,
-    schema_94904be0084f,
+    schema_dcdca75e9d16,
     schema_b517b2601f4a,
     schema_72e932640842,
     schema_863f5f4ab73f,
   ],
   semantics: { unionVariants: [{}, {}, schema_6a016609243e] },
-  references: schema_43d800fc9731,
+  references: schema_93fb59dbbf9b,
   optional: true,
 } as const;
-const schema_708e1581a3df = {
-  valueSchema: schema_a13ad28baeec,
+const schema_acbbdd9c298d = {
+  kind: 'union',
+  variants: schema_d7e5f1247277,
+  semantics: schema_6a016609243e,
+  references: schema_93fb59dbbf9b,
+  optional: true,
+} as const;
+const schema_4eca3d63c346 = {
+  kind: 'union',
+  variants: [
+    { kind: 'enum', options: ['caster', 'currentAbilityEntity'], semantics: schema_a4c41ed6f378 },
+    schema_12874d6b1e8e,
+    schema_8f9b6ad744f9,
+    schema_362387e02fee,
+    schema_3d465cbf2aab,
+    schema_4877a60d8d50,
+    schema_fe5063c26ab3,
+    schema_448a37a0345a,
+    schema_b97694814d8a,
+    schema_f763c681ec46,
+    schema_655107ea48b8,
+    schema_4e88ad22f3d2,
+    schema_a88221068716,
+    schema_bdac7c504fcd,
+    schema_a2066dcb2253,
+    schema_99f9099953d6,
+    schema_3284d888ae25,
+    schema_1e955dd87e64,
+    schema_70e94d8745d1,
+    schema_07c9b2197c35,
+    schema_21eb2dca017b,
+    schema_401604eaf122,
+    schema_6abd06827c44,
+    schema_dcdca75e9d16,
+    schema_b517b2601f4a,
+    schema_72e932640842,
+    schema_863f5f4ab73f,
+  ],
+  semantics: { unionVariants: [{}, {}, schema_6a016609243e] },
+  references: schema_93fb59dbbf9b,
+  optional: true,
+} as const;
+const schema_277a2a20b67f = {
+  valueSchema: schema_740094310b29,
   path: schema_f251bafe9db2,
   description: '',
   control: 'json',
 } as const;
-const schema_7e3979bd7ee9 = {
-  valueSchema: schema_a13ad28baeec,
+const schema_21db30921e17 = {
+  valueSchema: schema_740094310b29,
   path: ['target'],
   description: '要检查的对象。',
   control: 'json',
 } as const;
-const schema_867146ac985d = {
-  valueSchema: schema_a13ad28baeec,
+const schema_44f281683048 = {
+  valueSchema: schema_740094310b29,
   path: ['target'],
   description: '要统计 Buff 的对象。',
   control: 'json',
 } as const;
-const schema_7f78bf9c7b2a = {
-  valueSchema: schema_a13ad28baeec,
+const schema_0fa1f1e95439 = {
+  valueSchema: schema_740094310b29,
   path: ['target'],
   description: '',
   control: 'json',
 } as const;
-const schema_5d159f048c2f = {
-  valueSchema: schema_a13ad28baeec,
+const schema_c847cb96d025 = {
+  valueSchema: schema_740094310b29,
   path: ['parameters', 'targets'],
   description: '按原生查询顺序逐个结束 Buff 的接收者；不另建遍历动作。',
   control: 'json',
 } as const;
-const schema_a2db168f8542 = {
-  valueSchema: schema_a13ad28baeec,
+const schema_ec24e3be63f8 = {
+  valueSchema: schema_740094310b29,
   path: ['parameters', 'targets'],
   description: '',
   control: 'json',
 } as const;
-const schema_97bc10e1fd06 = {
-  valueSchema: schema_a13ad28baeec,
+const schema_fefe327f780f = {
+  valueSchema: schema_740094310b29,
   path: ['parameters', 'finishSource'],
   description: 'Early/Absorbed 读取此查询的第一个对象；Other 不求值。',
   control: 'json',
 } as const;
-const schema_c742b42876f7 = {
-  valueSchema: schema_a13ad28baeec,
+const schema_d5935d5e414a = {
+  valueSchema: schema_740094310b29,
   path: ['parameters', 'source'],
   description: '',
   control: 'json',
 } as const;
-const schema_ed6d38b2a293 = [
+const schema_9f7b48440fbf = [
   schema_087add57f9c6,
-  schema_708e1581a3df,
+  schema_277a2a20b67f,
   schema_f189d7615296,
 ] as const;
-const schema_d94a91a56ef2 = { fields: [schema_087add57f9c6, schema_a2db168f8542] } as const;
+const schema_6611d85d97e8 = { fields: [schema_087add57f9c6, schema_ec24e3be63f8] } as const;
 export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSchema>> = {
   triggerSpellBurst: {
     fields: [
@@ -2301,7 +2336,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   physicsCast: {
     fields: [
       schema_087add57f9c6,
-      schema_c742b42876f7,
+      schema_d5935d5e414a,
       {
         valueSchema: { kind: 'number' },
         path: ['parameters', 'startHeightOffset'],
@@ -2327,7 +2362,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   copyContextTargets: {
     fields: [
       schema_087add57f9c6,
-      schema_c742b42876f7,
+      schema_d5935d5e414a,
       schema_a5276585b85e,
       {
         valueSchema: schema_f3dcc58b8fca,
@@ -2342,7 +2377,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'boolean',
       },
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'excludeTargets'],
         description: '原生普通目标排除；仅比较时归一化部位身份，保留未排除项的原始句柄。',
         control: 'json',
@@ -2365,13 +2400,13 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'number',
       },
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'center'],
         description: '显式搜索中心；无法解析时失败且保留旧目标组。省略时沿用宿主中心。',
         control: 'json',
       },
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'query'],
         description: '',
         control: 'json',
@@ -2391,9 +2426,9 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       {
         valueSchema: {
           kind: 'array',
-          element: { kind: 'union', variants: schema_47736080397f, semantics: schema_6a016609243e },
+          element: { kind: 'union', variants: schema_d7e5f1247277, semantics: schema_6a016609243e },
           semantics: { arrayElement: schema_6a016609243e },
-          references: schema_43d800fc9731,
+          references: schema_93fb59dbbf9b,
         },
         path: ['parameters', 'sources'],
         description: '按原生顺序查询各输入，合并时按目标身份去重。',
@@ -2468,8 +2503,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   blowOffEnemy: {
     fields: [
       schema_087add57f9c6,
-      schema_c742b42876f7,
-      schema_a2db168f8542,
+      schema_d5935d5e414a,
+      schema_ec24e3be63f8,
       {
         valueSchema: { kind: 'enum', options: ['OnlyDead'] },
         path: ['parameters', 'deadOption'],
@@ -2483,10 +2518,10 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   pushBack: {
     fields: [
       schema_087add57f9c6,
-      schema_c742b42876f7,
-      schema_a2db168f8542,
+      schema_d5935d5e414a,
+      schema_ec24e3be63f8,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'sourcePoint'],
         description: '',
         control: 'json',
@@ -2496,9 +2531,9 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   pull: {
     fields: [
       schema_087add57f9c6,
-      schema_a2db168f8542,
+      schema_ec24e3be63f8,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'destination'],
         description: '',
         control: 'json',
@@ -2518,13 +2553,13 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     ],
   },
   saveTargetDistance: {
-    fields: [schema_087add57f9c6, schema_c742b42876f7, schema_708e1581a3df, schema_f189d7615296],
+    fields: [schema_087add57f9c6, schema_d5935d5e414a, schema_277a2a20b67f, schema_f189d7615296],
   },
   createSpatialPointTargets: {
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'origin'],
         description: '来源不存在时不生成点；省略时直接生成。',
         control: 'json',
@@ -2574,7 +2609,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'json',
       },
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'owner'],
         description: '原生选择器的查询所有者，不等同于技能定义所属干员。',
         control: 'json',
@@ -2635,12 +2670,12 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     ],
   },
   saveTransferredSource: {
-    fields: [schema_087add57f9c6, schema_c742b42876f7, schema_a5276585b85e],
+    fields: [schema_087add57f9c6, schema_d5935d5e414a, schema_a5276585b85e],
   },
   forEachContextTarget: {
     fields: [
       schema_087add57f9c6,
-      schema_a2db168f8542,
+      schema_ec24e3be63f8,
       {
         valueSchema: schema_510f6b76edbb,
         path: ['body'],
@@ -2653,7 +2688,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: schema_f251bafe9db2,
         description: '读取目标组的首个实体；空目标或非能力实体不执行赋值。',
         control: 'json',
@@ -2666,9 +2701,9 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       },
     ],
   },
-  setAbilityEntityTarget: schema_d94a91a56ef2,
-  finishOwner: schema_d94a91a56ef2,
-  interruptCurrentSkill: schema_d94a91a56ef2,
+  setAbilityEntityTarget: schema_6611d85d97e8,
+  finishOwner: schema_6611d85d97e8,
+  interruptCurrentSkill: schema_6611d85d97e8,
   startCurrentAbilityEntityChildSkillById: {
     fields: [
       schema_087add57f9c6,
@@ -2684,7 +2719,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'bornAt'],
         description: '每个出生目标各生成一个实体；空目标组不生成。',
         control: 'json',
@@ -2886,7 +2921,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'string',
       },
       {
-        valueSchema: schema_ea3a5ad5d424,
+        valueSchema: schema_4eca3d63c346,
         path: ['parameters', 'source'],
         description:
           '原生 setAbilityEntitySource 的来源身份。省略表示施术者；投射物/能力实体子技能中的\nActionOwner 必须显式保留为当前能力实体，不能在生成期压平成施术者。',
@@ -2904,10 +2939,10 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_12874d6b1e8e,
             schema_8f9b6ad744f9,
             schema_362387e02fee,
-            schema_1c364b5f299b,
-            schema_333e4bb48340,
-            schema_e5ef9281650e,
-            schema_299a11ef750e,
+            schema_3d465cbf2aab,
+            schema_4877a60d8d50,
+            schema_fe5063c26ab3,
+            schema_448a37a0345a,
             schema_b97694814d8a,
             schema_f763c681ec46,
             schema_655107ea48b8,
@@ -2915,21 +2950,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_a88221068716,
             schema_bdac7c504fcd,
             schema_a2066dcb2253,
-            schema_710be03a535a,
-            schema_902e26529ecb,
+            schema_99f9099953d6,
+            schema_3284d888ae25,
             schema_1e955dd87e64,
             schema_70e94d8745d1,
             schema_07c9b2197c35,
             schema_21eb2dca017b,
             schema_401604eaf122,
             schema_6abd06827c44,
-            schema_94904be0084f,
+            schema_dcdca75e9d16,
             schema_b517b2601f4a,
             schema_72e932640842,
             schema_863f5f4ab73f,
           ],
           semantics: { unionVariants: [schema_a4c41ed6f378, {}, {}, schema_6a016609243e] },
-          references: schema_43d800fc9731,
+          references: schema_93fb59dbbf9b,
           optional: true,
         },
         path: schema_f251bafe9db2,
@@ -3041,8 +3076,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       schema_e26d27d562fd,
-      schema_c742b42876f7,
-      schema_708e1581a3df,
+      schema_d5935d5e414a,
+      schema_277a2a20b67f,
       {
         valueSchema: schema_9b7ff1a12796,
         path: ['parameters', 'count'],
@@ -3099,10 +3134,10 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_12874d6b1e8e,
             schema_8f9b6ad744f9,
             schema_362387e02fee,
-            schema_1c364b5f299b,
-            schema_333e4bb48340,
-            schema_e5ef9281650e,
-            schema_299a11ef750e,
+            schema_3d465cbf2aab,
+            schema_4877a60d8d50,
+            schema_fe5063c26ab3,
+            schema_448a37a0345a,
             schema_b97694814d8a,
             schema_f763c681ec46,
             schema_655107ea48b8,
@@ -3110,21 +3145,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_a88221068716,
             schema_bdac7c504fcd,
             schema_a2066dcb2253,
-            schema_710be03a535a,
-            schema_902e26529ecb,
+            schema_99f9099953d6,
+            schema_3284d888ae25,
             schema_1e955dd87e64,
             schema_70e94d8745d1,
             schema_07c9b2197c35,
             schema_21eb2dca017b,
             schema_401604eaf122,
             schema_6abd06827c44,
-            schema_94904be0084f,
+            schema_dcdca75e9d16,
             schema_b517b2601f4a,
             schema_72e932640842,
             schema_863f5f4ab73f,
           ],
           semantics: { unionVariants: [{}, {}, schema_6a016609243e] },
-          references: schema_43d800fc9731,
+          references: schema_93fb59dbbf9b,
           optional: true,
         },
         path: schema_f251bafe9db2,
@@ -3133,7 +3168,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'json',
       },
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'source'],
         description: '原生附着来源独立于技能定义宿主；省略时使用定义所属干员。',
         control: 'json',
@@ -3156,13 +3191,13 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'json',
       },
       {
-        valueSchema: schema_1bf04ad2d6ef,
+        valueSchema: schema_f986917b4f8b,
         path: schema_f251bafe9db2,
         description: '逐个接收事件的目标；空集合不发布事件。',
         control: 'json',
       },
       {
-        valueSchema: schema_ea3a5ad5d424,
+        valueSchema: schema_4eca3d63c346,
         path: ['parameters', 'source'],
         description: '事件来源取查询的第一个目标；省略时使用施放者。',
         control: 'json',
@@ -3173,7 +3208,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'caster'],
         description: '实际接受延迟施法请求的宿主；省略时沿用定义所属干员。',
         control: 'json',
@@ -3205,10 +3240,10 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_12874d6b1e8e,
             schema_8f9b6ad744f9,
             schema_362387e02fee,
-            schema_1c364b5f299b,
-            schema_333e4bb48340,
-            schema_e5ef9281650e,
-            schema_299a11ef750e,
+            schema_3d465cbf2aab,
+            schema_4877a60d8d50,
+            schema_fe5063c26ab3,
+            schema_448a37a0345a,
             schema_b97694814d8a,
             schema_f763c681ec46,
             schema_655107ea48b8,
@@ -3216,21 +3251,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_a88221068716,
             schema_bdac7c504fcd,
             schema_a2066dcb2253,
-            schema_710be03a535a,
-            schema_902e26529ecb,
+            schema_99f9099953d6,
+            schema_3284d888ae25,
             schema_1e955dd87e64,
             schema_70e94d8745d1,
             schema_07c9b2197c35,
             schema_21eb2dca017b,
             schema_401604eaf122,
             schema_6abd06827c44,
-            schema_94904be0084f,
+            schema_dcdca75e9d16,
             schema_b517b2601f4a,
             schema_72e932640842,
             schema_863f5f4ab73f,
           ],
           semantics: { unionVariants: [{}, {}, {}, {}, schema_6a016609243e] },
-          references: schema_43d800fc9731,
+          references: schema_93fb59dbbf9b,
         },
         path: schema_f251bafe9db2,
         description: '延迟请求的目标；actionInputTarget 读取当前动作输入，事件回调中由事件绑定。',
@@ -3266,13 +3301,13 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_f799c5afa3c5,
+        valueSchema: schema_5b1a372b4af5,
         path: ['parameters', 'source'],
         description: '取首目标作为本次物理异常的来源。',
         control: 'json',
       },
       {
-        valueSchema: schema_f799c5afa3c5,
+        valueSchema: schema_5b1a372b4af5,
         path: schema_f251bafe9db2,
         description: '在动作内部依次处理查询得到的接收目标。',
         control: 'json',
@@ -3364,7 +3399,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'source'],
         description: '原生施加来源，取查询的第一个实体。旧定义省略时沿用动作来源。',
         control: 'json',
@@ -3377,10 +3412,10 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_12874d6b1e8e,
             schema_8f9b6ad744f9,
             schema_362387e02fee,
-            schema_1c364b5f299b,
-            schema_333e4bb48340,
-            schema_e5ef9281650e,
-            schema_299a11ef750e,
+            schema_3d465cbf2aab,
+            schema_4877a60d8d50,
+            schema_fe5063c26ab3,
+            schema_448a37a0345a,
             schema_b97694814d8a,
             schema_f763c681ec46,
             schema_655107ea48b8,
@@ -3388,21 +3423,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_a88221068716,
             schema_bdac7c504fcd,
             schema_a2066dcb2253,
-            schema_710be03a535a,
-            schema_902e26529ecb,
+            schema_99f9099953d6,
+            schema_3284d888ae25,
             schema_1e955dd87e64,
             schema_70e94d8745d1,
             schema_07c9b2197c35,
             schema_21eb2dca017b,
             schema_401604eaf122,
             schema_6abd06827c44,
-            schema_94904be0084f,
+            schema_dcdca75e9d16,
             schema_b517b2601f4a,
             schema_72e932640842,
             schema_863f5f4ab73f,
           ],
           semantics: { unionVariants: [schema_6a016609243e, {}] },
-          references: schema_43d800fc9731,
+          references: schema_93fb59dbbf9b,
         },
         path: schema_f251bafe9db2,
         description: '接收反应的目标。',
@@ -3452,7 +3487,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'boolean',
       },
       {
-        valueSchema: schema_194de14f2a05,
+        valueSchema: schema_d67ada59627b,
         path: schema_f251bafe9db2,
         description: '缺省为转换时已证明的敌人；动态目标显式读取动作输入，不以动作宿主代替。',
         control: 'json',
@@ -3538,11 +3573,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'levelValues',
       },
       {
-        valueSchema: schema_1390071e5d1e,
+        valueSchema: schema_fd8681e4ef65,
         path: ['parameters', 'tags'],
         description: '本次伤害携带的技能和爆发分类标签。',
         control: 'multiselect',
-        options: schema_71d38bb15a52,
+        options: schema_3647edd0c93c,
       },
       {
         valueSchema: {
@@ -3555,13 +3590,6 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         description:
           'DamageUnit.damageTags 携带的原生 GameplayTag；与 damageDecorateMask 分类位分开。',
         control: 'json',
-      },
-      {
-        valueSchema: schema_033bf54469b1,
-        path: ['parameters', 'features'],
-        description: '原生伤害位中与技能分类无关的行为特征。',
-        control: 'multiselect',
-        options: schema_9d2d7d8c9790,
       },
       {
         valueSchema: schema_4af9a3af2e9c,
@@ -3684,7 +3712,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'boolean',
       },
       {
-        valueSchema: schema_194de14f2a05,
+        valueSchema: schema_d67ada59627b,
         path: schema_f251bafe9db2,
         description: '与生命伤害相同的目标绑定，缺省为已证明的敌人。',
         control: 'json',
@@ -3702,11 +3730,16 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'levelValues',
       },
       {
-        valueSchema: schema_033bf54469b1,
-        path: ['parameters', 'features'],
+        valueSchema: {
+          kind: 'array',
+          element: { kind: 'enum', options: schema_3647edd0c93c, semantics: schema_5b624994feca },
+          semantics: { arrayElement: schema_5b624994feca },
+          optional: true,
+        },
+        path: ['parameters', 'tags'],
         description: '保留原生 PoisePack 的装饰位；当前木桩没有弱点窗口，但不能从数据中丢弃。',
         control: 'multiselect',
-        options: schema_9d2d7d8c9790,
+        options: schema_3647edd0c93c,
       },
     ],
   },
@@ -3714,7 +3747,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_f799c5afa3c5,
+        valueSchema: schema_5b1a372b4af5,
         path: schema_f251bafe9db2,
         description: '按原生目标查询顺序逐个治疗。',
         control: 'json',
@@ -3775,7 +3808,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_f799c5afa3c5,
+        valueSchema: schema_5b1a372b4af5,
         path: schema_f251bafe9db2,
         description: '按原生目标查询顺序逐个失衡恢复。',
         control: 'json',
@@ -3836,7 +3869,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'number',
       },
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'targets'],
         description: '零空间下的候选集合；排除的是动作 Owner。',
         control: 'json',
@@ -3857,7 +3890,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'json',
       },
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'source'],
         description: '区域 Buff 的来源，不改写回调环境的 Owner/Source。',
         control: 'json',
@@ -3924,7 +3957,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'json',
       },
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'targets'],
         description: '原生接收者查询；动作内部按查询顺序处理全部实体，跳过位置目标。',
         control: 'json',
@@ -3937,7 +3970,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'operand',
       },
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'source'],
         description:
           '每个接收者处理前读取查询首项作为 Buff 来源；省略时读取动作 Source。\n空结果或首项为位置目标时跳过该接收者，不读取 Buff ID 和赋值。',
@@ -4325,7 +4358,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_c88d483f2d78,
+        valueSchema: schema_497051f53439,
         path: schema_f251bafe9db2,
         description: '要查找 Buff 的对象。',
         control: 'json',
@@ -4397,7 +4430,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   readBuffRemainingDuration: {
     fields: [
       schema_087add57f9c6,
-      schema_708e1581a3df,
+      schema_277a2a20b67f,
       {
         valueSchema: schema_36cf7816b909,
         path: ['parameters', 'query'],
@@ -4411,7 +4444,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: schema_f251bafe9db2,
         description: '原生只查询首个目标上的 Buff。',
         control: 'json',
@@ -4474,7 +4507,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_c88d483f2d78,
+        valueSchema: schema_497051f53439,
         path: schema_f251bafe9db2,
         description: '要统计 Buff 的对象。',
         control: 'json',
@@ -4514,8 +4547,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   dispelBuffs: {
     fields: [
       schema_087add57f9c6,
-      schema_c742b42876f7,
-      schema_a2db168f8542,
+      schema_d5935d5e414a,
+      schema_ec24e3be63f8,
       {
         valueSchema: { kind: 'number' },
         path: ['parameters', 'level'],
@@ -4537,8 +4570,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   finishBuffsByTag: {
     fields: [
       schema_087add57f9c6,
-      schema_5d159f048c2f,
-      schema_97bc10e1fd06,
+      schema_c847cb96d025,
+      schema_fefe327f780f,
       {
         valueSchema: schema_d865c3950c88,
         path: ['parameters', 'tagQueryType'],
@@ -4565,8 +4598,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   finishBuffsById: {
     fields: [
       schema_087add57f9c6,
-      schema_5d159f048c2f,
-      schema_97bc10e1fd06,
+      schema_c847cb96d025,
+      schema_fefe327f780f,
       {
         valueSchema: schema_e973cdb6b41f,
         path: ['parameters', 'buffIds'],
@@ -4616,9 +4649,9 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       {
         valueSchema: {
           kind: 'union',
-          variants: schema_f503b87dca79,
+          variants: schema_711c6647288a,
           semantics: { unionVariants: [schema_bd2dc972d7c3, schema_6a016609243e] },
-          references: schema_43d800fc9731,
+          references: schema_93fb59dbbf9b,
         },
         path: schema_f251bafe9db2,
         description: '要查找点燃响应的对象。',
@@ -4648,10 +4681,10 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_12874d6b1e8e,
             schema_8f9b6ad744f9,
             schema_362387e02fee,
-            schema_1c364b5f299b,
-            schema_333e4bb48340,
-            schema_e5ef9281650e,
-            schema_299a11ef750e,
+            schema_3d465cbf2aab,
+            schema_4877a60d8d50,
+            schema_fe5063c26ab3,
+            schema_448a37a0345a,
             schema_b97694814d8a,
             schema_f763c681ec46,
             schema_655107ea48b8,
@@ -4659,21 +4692,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_a88221068716,
             schema_bdac7c504fcd,
             schema_a2066dcb2253,
-            schema_710be03a535a,
-            schema_902e26529ecb,
+            schema_99f9099953d6,
+            schema_3284d888ae25,
             schema_1e955dd87e64,
             schema_70e94d8745d1,
             schema_07c9b2197c35,
             schema_21eb2dca017b,
             schema_401604eaf122,
             schema_6abd06827c44,
-            schema_94904be0084f,
+            schema_dcdca75e9d16,
             schema_b517b2601f4a,
             schema_72e932640842,
             schema_863f5f4ab73f,
           ],
           semantics: { unionVariants: [schema_bd2dc972d7c3, {}, schema_6a016609243e] },
-          references: schema_43d800fc9731,
+          references: schema_93fb59dbbf9b,
         },
         path: ['parameters', 'source'],
         description: '点燃事件记录的来源对象。',
@@ -4697,7 +4730,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_1bf04ad2d6ef,
+        valueSchema: schema_f986917b4f8b,
         path: schema_f251bafe9db2,
         description: '施法者或在执行点解析的目标集合。',
         control: 'json',
@@ -4712,7 +4745,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
                 kind: { kind: 'enum', options: ['type'], description: '按技能分类选择。' },
                 skillType: {
                   kind: 'enum',
-                  options: schema_43dd58bcb159,
+                  options: schema_bc9e68b5c915,
                   semantics: schema_ebdb00131bfd,
                   description: '目标技能分类。',
                 },
@@ -4837,9 +4870,9 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   boneAttach: {
     fields: [
       schema_087add57f9c6,
-      schema_708e1581a3df,
+      schema_277a2a20b67f,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'anchor'],
         description: '',
         control: 'json',
@@ -4869,7 +4902,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: schema_f251bafe9db2,
         description: '需要限制回能的原生查询目标。',
         control: 'json',
@@ -4892,7 +4925,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: schema_f251bafe9db2,
         description: '取首目标的实体身份；没有有效首目标时成功返回，不写入。',
         control: 'json',
@@ -4915,7 +4948,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'targets'],
         description: '逐目标创建标记；空目标组返回失败。',
         control: 'json',
@@ -4970,7 +5003,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         options: ['hitStop', 'global', 'entity'],
       },
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'attacker'],
         description: '',
         control: 'json',
@@ -4979,7 +5012,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         valueSchema: {
           kind: 'union',
           variants: [
-            { kind: 'union', variants: schema_3910558495c4, semantics: schema_6a016609243e },
+            { kind: 'union', variants: schema_def79c30c645, semantics: schema_6a016609243e },
             {
               kind: 'array',
               element: {
@@ -4993,10 +5026,10 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
                   schema_12874d6b1e8e,
                   schema_8f9b6ad744f9,
                   schema_362387e02fee,
-                  { kind: 'object', fields: schema_435dad4cfb5b },
-                  schema_6c105ca9ff9d,
-                  schema_0782086a2eaa,
-                  schema_1d642f59c372,
+                  { kind: 'object', fields: schema_dc27f144d231 },
+                  schema_8e48c313acb8,
+                  schema_beca5d1b071b,
+                  schema_a6fd6460467e,
                   schema_b97694814d8a,
                   schema_f763c681ec46,
                   schema_655107ea48b8,
@@ -5004,15 +5037,15 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
                   schema_a88221068716,
                   schema_bdac7c504fcd,
                   schema_a2066dcb2253,
-                  schema_964c2f8f3121,
-                  schema_0005d2625132,
+                  schema_28816794323c,
+                  schema_b67b12e0c8fa,
                   schema_1e955dd87e64,
                   schema_70e94d8745d1,
                   schema_07c9b2197c35,
                   schema_21eb2dca017b,
                   schema_401604eaf122,
                   schema_6abd06827c44,
-                  schema_b00e959e7b2f,
+                  schema_1e5a6dae5e0a,
                   schema_b517b2601f4a,
                   schema_72e932640842,
                   schema_863f5f4ab73f,
@@ -5024,7 +5057,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
               },
             },
           ],
-          references: schema_d78d2295a12b,
+          references: schema_26c687084452,
           optional: true,
         },
         path: ['parameters', 'targets'],
@@ -5080,11 +5113,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       {
         valueSchema: {
           kind: 'array',
-          element: schema_c2182f092498,
+          element: schema_cb07e3aab186,
           semantics: {
             arrayElement: { unionVariants: [schema_5bafbc7424f4, schema_6a016609243e] },
           },
-          references: schema_43d800fc9731,
+          references: schema_93fb59dbbf9b,
           optional: true,
         },
         path: ['parameters', 'ignoredTargets'],
@@ -5135,11 +5168,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       {
         valueSchema: {
           kind: 'array',
-          element: schema_c2182f092498,
+          element: schema_cb07e3aab186,
           semantics: {
             arrayElement: { unionVariants: [schema_5bafbc7424f4, schema_6a016609243e] },
           },
-          references: schema_43d800fc9731,
+          references: schema_93fb59dbbf9b,
         },
         path: ['parameters', 'ignoredTargets'],
         description: '除施法者外还要排除的角色目标。',
@@ -5170,7 +5203,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'targets'],
         description: '原生通用查询；与旧版 abilityEntityTargets 二选一。',
         control: 'json',
@@ -5214,9 +5247,9 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       schema_f189d7615296,
     ],
   },
-  storeSquadSlot: { fields: schema_ed6d38b2a293 },
-  storeProfession: { fields: schema_ed6d38b2a293 },
-  storeCharacterTypeCode: { fields: schema_ed6d38b2a293 },
+  storeSquadSlot: { fields: schema_9f7b48440fbf },
+  storeProfession: { fields: schema_9f7b48440fbf },
+  storeCharacterTypeCode: { fields: schema_9f7b48440fbf },
   storeCharacterTypeId: {
     fields: [
       schema_087add57f9c6,
@@ -5300,7 +5333,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: schema_f251bafe9db2,
         description: '按原生通用查询取得首个目标；空目标成功且不写入。',
         control: 'json',
@@ -5413,7 +5446,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: schema_f251bafe9db2,
         description: '查询首目标；旧定义省略时沿用 Buff 来源或施术干员。空查询不写入。',
         control: 'json',
@@ -5486,10 +5519,10 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_12874d6b1e8e,
             schema_8f9b6ad744f9,
             schema_362387e02fee,
-            schema_1c364b5f299b,
-            schema_333e4bb48340,
-            schema_e5ef9281650e,
-            schema_299a11ef750e,
+            schema_3d465cbf2aab,
+            schema_4877a60d8d50,
+            schema_fe5063c26ab3,
+            schema_448a37a0345a,
             schema_b97694814d8a,
             schema_f763c681ec46,
             schema_655107ea48b8,
@@ -5497,21 +5530,21 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             schema_a88221068716,
             schema_bdac7c504fcd,
             schema_a2066dcb2253,
-            schema_710be03a535a,
-            schema_902e26529ecb,
+            schema_99f9099953d6,
+            schema_3284d888ae25,
             schema_1e955dd87e64,
             schema_70e94d8745d1,
             schema_07c9b2197c35,
             schema_21eb2dca017b,
             schema_401604eaf122,
             schema_6abd06827c44,
-            schema_94904be0084f,
+            schema_dcdca75e9d16,
             schema_b517b2601f4a,
             schema_72e932640842,
             schema_863f5f4ab73f,
           ],
           semantics: { unionVariants: [{}, schema_6a016609243e] },
-          references: schema_43d800fc9731,
+          references: schema_93fb59dbbf9b,
         },
         path: schema_f251bafe9db2,
         description: '读取动作所有者，或查询结果的首个目标；空查询不写入。',
@@ -5584,7 +5617,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'targets'],
         description: '采用原生通用目标查询。',
         control: 'json',
@@ -5641,13 +5674,13 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'levelValues',
       },
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'source'],
         description: '取首个对象作为资源获取来源。',
         control: 'json',
       },
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'targets'],
         description: '每个接收对象分别执行一次资源获取。',
         control: 'json',
@@ -5667,14 +5700,14 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       {
         valueSchema: {
           kind: 'enum',
-          options: schema_ccd8f1fa17ff,
+          options: schema_9278d40a4674,
           semantics: schema_12d2e6c473ae,
           optional: true,
         },
         path: ['parameters', 'spGainSource'],
         description: '正向技力变化来自普攻、重击、技能或默认来源。',
         control: 'select',
-        options: schema_ccd8f1fa17ff,
+        options: schema_9278d40a4674,
       },
       {
         valueSchema: schema_f3dcc58b8fca,
@@ -5739,13 +5772,13 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parameters', 'source'],
         description: '取查询首项作为来源；没有有效实体时失败。',
         control: 'json',
       },
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: schema_f251bafe9db2,
         description: '只读取首目标的敌人属性模板；无模板时失败，不读取倍率。',
         control: 'json',
@@ -5923,7 +5956,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
             },
             target: {
               kind: 'union',
-              variants: schema_47736080397f,
+              variants: schema_d7e5f1247277,
               semantics: schema_6a016609243e,
               description: '每轮重新解析的目标；Target 使用动作启动时捕获的输入。',
             },
@@ -5935,7 +5968,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
               description: '同一目标再次触发前等待的秒数。',
             },
           },
-          references: schema_43d800fc9731,
+          references: schema_93fb59dbbf9b,
           optional: true,
         },
         path: ['parameters', 'nativeChanneling'],
@@ -6051,7 +6084,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'string',
       },
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'onlyHitTargets'],
         description: '发射时解析的碰撞白名单；空间点不具备可命中的实体身份。',
         control: 'json',
@@ -6180,19 +6213,19 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         options: ['comboSkill'],
       },
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'owner'],
         description: '原生 owner 查询的首个角色；新转换必须显式保留。',
         control: 'json',
       },
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: schema_f251bafe9db2,
         description: '本次候选的输入目标；当前单目标执行模型要求恰有一个结果。',
         control: 'json',
       },
       {
-        valueSchema: schema_82396a7d0369,
+        valueSchema: schema_acbbdd9c298d,
         path: ['parameters', 'trigger'],
         description: 'needTrigger=true 时保存的触发目标；缺省时不执行触发目标查询。',
         control: 'json',
@@ -6356,11 +6389,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         control: 'string',
       },
       {
-        valueSchema: { kind: 'enum', options: schema_85b910fa96f5, semantics: schema_8959ee040d75 },
+        valueSchema: { kind: 'enum', options: schema_fe764d0b1934, semantics: schema_8959ee040d75 },
         path: ['parameters', 'nativeSkillType'],
         description: '新的原生技能类型。',
         control: 'select',
-        options: schema_85b910fa96f5,
+        options: schema_fe764d0b1934,
       },
     ],
   },
@@ -6368,7 +6401,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: schema_f251bafe9db2,
         description: '要显示次数盾的能力系统目标。',
         control: 'json',
@@ -6397,7 +6430,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
     fields: [
       schema_087add57f9c6,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: schema_f251bafe9db2,
         description: '查询首个能力系统目标；空查询不写入。',
         control: 'json',
@@ -6563,7 +6596,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
                       },
                       source: {
                         kind: 'enum',
-                        options: schema_ccd8f1fa17ff,
+                        options: schema_9278d40a4674,
                         semantics: schema_12d2e6c473ae,
                         optional: true,
                         description: '只监听指定的技力来源。',
@@ -6587,27 +6620,8 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
                       },
                       tag: {
                         kind: 'enum',
-                        options: schema_71d38bb15a52,
-                        semantics: {
-                          unionVariants: [
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
-                          ],
-                        },
+                        options: schema_3647edd0c93c,
+                        semantics: schema_5b624994feca,
                         description: '要匹配的伤害标签。',
                       },
                       scope: schema_8f29ced630df,
@@ -6653,10 +6667,10 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
                       types: {
                         kind: 'union',
                         variants: [
-                          schema_cf3b028ef11e,
+                          schema_0c6017ad0ce2,
                           {
                             kind: 'array',
-                            element: schema_cf3b028ef11e,
+                            element: schema_0c6017ad0ce2,
                             semantics: schema_66a2df19b08f,
                           },
                         ],
@@ -6733,15 +6747,11 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       },
     ],
   },
+  addEntityTags: { fields: [schema_087add57f9c6, schema_ec24e3be63f8, schema_ec51530a01b5] },
   listenForTagQuery: {
     fields: [
       schema_087add57f9c6,
-      {
-        valueSchema: schema_69c08dd2b579,
-        path: ['parameters', 'tags'],
-        description: '',
-        control: 'json',
-      },
+      schema_ec51530a01b5,
       {
         valueSchema: schema_d865c3950c88,
         path: ['parameters', 'tagQueryType'],
@@ -6835,7 +6845,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:entityCountCompare': {
     fields: [
-      schema_7f78bf9c7b2a,
+      schema_0fa1f1e95439,
       {
         valueSchema: { kind: 'boolean' },
         path: ['containsHittableTarget'],
@@ -6855,8 +6865,8 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:targetDistance': {
     fields: [
-      { valueSchema: schema_a13ad28baeec, path: ['source'], description: '', control: 'json' },
-      schema_7f78bf9c7b2a,
+      { valueSchema: schema_740094310b29, path: ['source'], description: '', control: 'json' },
+      schema_0fa1f1e95439,
       { valueSchema: { kind: 'number' }, path: ['distance'], description: '', control: 'number' },
       { valueSchema: { kind: 'boolean' }, path: ['lessThan'], description: '', control: 'boolean' },
       {
@@ -6883,7 +6893,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   'boolean:checkMainCharacter': {
     fields: [
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['target'],
         description: '对应原生 checkTarget；Owner 和 Source 不可互换。',
         control: 'json',
@@ -6915,7 +6925,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   'boolean:operatorRoleIn': {
     fields: [
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['target'],
         description: '要检查的干员身份。',
         control: 'json',
@@ -6940,7 +6950,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:operatorWeaponTypeIn': {
     fields: [
-      schema_7f78bf9c7b2a,
+      schema_0fa1f1e95439,
       {
         valueSchema: {
           kind: 'array',
@@ -6960,7 +6970,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:enemyRankIn': {
     fields: [
-      schema_7f78bf9c7b2a,
+      schema_0fa1f1e95439,
       {
         valueSchema: {
           kind: 'array',
@@ -6980,7 +6990,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:enemySuperArmorCompare': {
     fields: [
-      schema_7f78bf9c7b2a,
+      schema_0fa1f1e95439,
       schema_e92d2f0718ad,
       {
         valueSchema: schema_9b7ff1a12796,
@@ -7003,7 +7013,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:healthCompare': {
     fields: [
-      schema_7e3979bd7ee9,
+      schema_21db30921e17,
       {
         valueSchema: {
           kind: 'enum',
@@ -7027,7 +7037,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   'boolean:poiseCompare': {
     fields: [
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['target'],
         description: '原生 poiseOwner 查询，读取首个目标。',
         control: 'json',
@@ -7182,7 +7192,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   'boolean:targetObjectTypeMatch': {
     fields: [
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['target'],
         description: '原生查询结果中任一对象匹配即成立。',
         control: 'json',
@@ -7228,7 +7238,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   'boolean:abilityEntityRemainingDurationCompare': {
     fields: [
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['target'],
         description: '对应原生 abilityEntity 目标查询。',
         control: 'json',
@@ -7267,7 +7277,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:buffStackCompare': {
     fields: [
-      schema_867146ac985d,
+      schema_44f281683048,
       schema_e14121f63eb5,
       schema_d15269949758,
       schema_0d61f0a9d44e,
@@ -7283,7 +7293,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:buffTagIdCountCompare': {
     fields: [
-      schema_867146ac985d,
+      schema_44f281683048,
       schema_e14121f63eb5,
       schema_d15269949758,
       schema_0d61f0a9d44e,
@@ -7310,7 +7320,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
         description: '原生 CheckPartTagMatch 直接检查部位；缺省按 CheckTagMatch 解析部位标签归属。',
         control: 'boolean',
       },
-      schema_7e3979bd7ee9,
+      schema_21db30921e17,
       schema_d15269949758,
       {
         valueSchema: schema_69c08dd2b579,
@@ -7322,7 +7332,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:buffIdStackCompare': {
     fields: [
-      schema_867146ac985d,
+      schema_44f281683048,
       schema_e14121f63eb5,
       {
         valueSchema: schema_e973cdb6b41f,
@@ -7343,7 +7353,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   'boolean:globalCooldownPresent': {
     fields: [
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['target'],
         description: '全局冷却所属对象。',
         control: 'json',
@@ -7362,7 +7372,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
       },
     ],
   },
-  'boolean:comboSkillPending': { fields: [schema_7f78bf9c7b2a] },
+  'boolean:comboSkillPending': { fields: [schema_0fa1f1e95439] },
   'boolean:timedMarkerPresent': {
     fields: [
       {
@@ -7372,7 +7382,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
         control: 'boolean',
       },
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['target'],
         description: '定时标记所属对象。',
         control: 'json',
@@ -7389,11 +7399,11 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
     fields: [
       schema_1f01ef5d6643,
       {
-        valueSchema: schema_1390071e5d1e,
+        valueSchema: schema_fd8681e4ef65,
         path: ['tags'],
         description: '参与匹配的伤害标签。',
         control: 'multiselect',
-        options: schema_71d38bb15a52,
+        options: schema_3647edd0c93c,
       },
     ],
   },
@@ -7417,28 +7427,6 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
         path: ['tags'],
         description: '参与匹配的原生伤害 GameplayTag。',
         control: 'json',
-      },
-    ],
-  },
-  'boolean:eventDamageFeaturesMatch': {
-    fields: [
-      {
-        valueSchema: { kind: 'enum', options: schema_505c3b18af15, semantics: schema_8b5920c2fde6 },
-        path: ['match'],
-        description: '特征集合匹配方式。',
-        control: 'select',
-        options: schema_505c3b18af15,
-      },
-      {
-        valueSchema: {
-          kind: 'array',
-          element: { kind: 'enum', options: schema_9d2d7d8c9790, semantics: schema_bd2dc972d7c3 },
-          semantics: { arrayElement: schema_bd2dc972d7c3 },
-        },
-        path: ['features'],
-        description: '参与匹配的伤害特征。',
-        control: 'multiselect',
-        options: schema_9d2d7d8c9790,
       },
     ],
   },
@@ -7484,13 +7472,13 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
       {
         valueSchema: {
           kind: 'array',
-          element: schema_cf3b028ef11e,
+          element: schema_0c6017ad0ce2,
           semantics: schema_66a2df19b08f,
         },
         path: ['types'],
         description: '任一匹配即可成立的物理异常类型。',
         control: 'multiselect',
-        options: ['crush', 'airborne', 'fracture', 'knockDown'],
+        options: ['crush', 'airborne', 'knockDown', 'fracture'],
       },
       {
         valueSchema: schema_b168dffc75ec,
@@ -7504,11 +7492,11 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
     fields: [
       schema_14299a80c9ab,
       {
-        valueSchema: schema_9d1e951ab7b5,
+        valueSchema: schema_be1070041d6e,
         path: ['skillTypes'],
         description: '任一匹配即可成立的技能分类。',
         control: 'multiselect',
-        options: schema_43dd58bcb159,
+        options: schema_bc9e68b5c915,
       },
     ],
   },
@@ -7544,28 +7532,28 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
     fields: [
       schema_14299a80c9ab,
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['target'],
         description: '查询首个目标当前执行的技能。',
         control: 'json',
       },
       {
-        valueSchema: schema_9d1e951ab7b5,
+        valueSchema: schema_be1070041d6e,
         path: ['skillTypes'],
         description: '任一匹配即可成立的当前技能分类。',
         control: 'multiselect',
-        options: schema_43dd58bcb159,
+        options: schema_bc9e68b5c915,
       },
     ],
   },
   'boolean:originSkillTypeIn': {
     fields: [
       {
-        valueSchema: schema_9d1e951ab7b5,
+        valueSchema: schema_be1070041d6e,
         path: ['skillTypes'],
         description: '任一匹配即可成立的来源技能分类。',
         control: 'multiselect',
-        options: schema_43dd58bcb159,
+        options: schema_bc9e68b5c915,
       },
     ],
   },
@@ -7591,13 +7579,13 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   'boolean:targetContains': {
     fields: [
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['parent'],
         description: '用于查找的父目标组。',
         control: 'json',
       },
       {
-        valueSchema: schema_a13ad28baeec,
+        valueSchema: schema_740094310b29,
         path: ['child'],
         description: '要检查的子目标组。',
         control: 'json',
@@ -7606,8 +7594,8 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:targetsEqual': {
     fields: [
-      { valueSchema: schema_a13ad28baeec, path: ['first'], description: '', control: 'json' },
-      { valueSchema: schema_a13ad28baeec, path: ['second'], description: '', control: 'json' },
+      { valueSchema: schema_740094310b29, path: ['first'], description: '', control: 'json' },
+      { valueSchema: schema_740094310b29, path: ['second'], description: '', control: 'json' },
     ],
   },
   'boolean:eventSkillIdIn': {
@@ -7671,14 +7659,14 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
       {
         valueSchema: {
           kind: 'array',
-          element: { kind: 'enum', options: schema_ccd8f1fa17ff, semantics: schema_12d2e6c473ae },
+          element: { kind: 'enum', options: schema_9278d40a4674, semantics: schema_12d2e6c473ae },
           semantics: schema_66a2df19b08f,
           optional: true,
         },
         path: ['sources'],
         description: '允许的技力来源；省略时不筛选来源。',
         control: 'multiselect',
-        options: schema_ccd8f1fa17ff,
+        options: schema_9278d40a4674,
       },
       {
         valueSchema: {
@@ -7778,7 +7766,7 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:deckAttributeCompare': {
     fields: [
-      schema_7f78bf9c7b2a,
+      schema_0fa1f1e95439,
       {
         valueSchema: schema_91713925e672,
         path: ['left'],

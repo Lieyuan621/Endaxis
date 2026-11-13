@@ -701,7 +701,7 @@
       "electricBurst": "电磁爆发",
       "cryoBurst": "寒冷爆发",
       "natureBurst": "自然爆发",
-      "fireAbnormal": "灼热异常",
+      "fireAbnormal": "燃烧",
       "electricAbnormal": "电磁异常",
       "cryoAbnormal": "寒冷异常",
       "natureAbnormal": "自然异常",
@@ -870,7 +870,14 @@
       "Character": "干员",
       "OnlyDead": "仅死亡目标",
       "poise": "失衡值",
-      "MaxUltimateSp": "终结技能量上限"
+      "MaxUltimateSp": "终结技能量上限",
+      "poiseBreak": "失衡击破",
+      "ignoreGuardDodge": "忽略护卫闪避",
+      "fireAbnormalInitial": "灼热异常初始伤害",
+      "igniteByMud": "IgniteByMud",
+      "bomb": "爆炸",
+      "ignoreDodgeImmune": "忽略闪避免疫",
+      "ignoreSkillImmune": "忽略技能免疫"
     },
     "optional": "可选",
     "unset": "未设置",
@@ -1274,10 +1281,6 @@
       "gameplayTags": {
         "name": "效果标签",
         "help": "供效果条件检查的附加标签。"
-      },
-      "features": {
-        "name": "行为特征",
-        "help": "设置或筛选这个效果的行为特征。"
       },
       "stagger": {
         "name": "失衡值"
@@ -2634,10 +2637,6 @@
         "name": "伤害转移部位标签匹配？",
         "help": "读取当前事件中主体对应的转移部位，检查标签；成功时可保存部位目标，失败保留原目标组。"
       },
-      "eventDamageFeaturesMatch": {
-        "name": "本次伤害特征匹配？",
-        "help": "检查触发事件的伤害特征。"
-      },
       "eventDamageTypeIn": {
         "name": "本次伤害类型匹配？",
         "help": "检查触发事件的物理或法术伤害类型。"
@@ -2793,6 +2792,10 @@
       "disableNormalSkill": {
         "name": "禁用战技",
         "help": "在动作生效期间添加战技禁用标签，可允许追加战技继续释放。"
+      },
+      "addEntityTags": {
+        "name": "添加实体标签",
+        "help": "在动作有效期间给所选实体添加标签；结束或中断时仅撤销本次添加的计数。"
       },
       "limitMovementGait": {
         "name": "限制步态",

@@ -433,36 +433,7 @@ export const mingheChr_0037_minghe_attack4ActionGraph = {
         },
         next: null,
       },
-      launchProjectile_4: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            schedule: { endFrame: 0, callbacks: [] },
-            inheritActionBlackboard: true,
-            projectileId: 'projectile_chr_0037_minghe_attack04_back_2',
-            syncTimeScale: true,
-            recycleDelaySeconds: 0,
-            entityInitialValues: {},
-          },
-          callbacks: [],
-        },
-        next: null,
-      },
-      launchProjectile_7: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            schedule: { endFrame: 0, callbacks: [] },
-            inheritActionBlackboard: true,
-            projectileId: 'projectile_chr_0037_minghe_attack04_back',
-            recycleDelaySeconds: 0,
-            entityInitialValues: {},
-          },
-          callbacks: [],
-        },
-        next: null,
-      },
-      launchProjectile_9: {
+      launchProjectile_6: {
         action: {
           kind: 'launchProjectile',
           parameters: {
@@ -470,6 +441,7 @@ export const mingheChr_0037_minghe_attack4ActionGraph = {
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0037_minghe_attack04_back',
             syncTimeScale: true,
+            faction: 'good',
             recycleDelaySeconds: 2,
             entityInitialValues: {},
           },
@@ -521,46 +493,32 @@ export const mingheChr_0037_minghe_attack4ActionGraph = {
         },
         next: null,
       },
-      finishOwner_12: {
+      finishOwner_9: {
         action: { kind: 'finishOwner', parameters: { targets: { kind: 'context', key: 'ab' } } },
         next: null,
       },
-      findOwnerSpawnedAbilityEntities_13: {
+      findOwnerSpawnedAbilityEntities_10: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: { saveToContextKey: 'ab', tagFilters: [], owner: { kind: 'owner' } },
         },
-        next: 'finishOwner_12',
+        next: 'finishOwner_9',
       },
-      launchProjectile_14: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            schedule: { endFrame: 0, callbacks: [] },
-            inheritActionBlackboard: true,
-            projectileId: 'projectile_chr_0037_minghe_attack04_1',
-            syncTimeScale: true,
-            recycleDelaySeconds: 0,
-            entityInitialValues: {},
-          },
-          callbacks: [],
-        },
-        next: null,
-      },
-      launchProjectile_17: {
+      launchProjectile_11: {
         action: {
           kind: 'launchProjectile',
           parameters: {
             schedule: {
-              endFrame: 0,
+              endFrame: 43,
               callbacks: [
-                { event: 'block', triggerFrames: [0] },
-                { event: 'hit', triggerFrames: [0], hitKind: 'collision' },
+                { event: 'block', triggerFrames: [] },
+                { event: 'hit', triggerFrames: [2], hitKind: 'collision' },
               ],
             },
             inheritActionBlackboard: true,
             projectileId: 'projectile_chr_0037_minghe_attack04_end',
             syncTimeScale: true,
+            faction: 'good',
             recycleDelaySeconds: 3,
             entityInitialValues: {},
             hit: {},
@@ -671,7 +629,7 @@ export const mingheChr_0037_minghe_attack4ActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_18: {
+      startTimeDilation_12: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -724,9 +682,9 @@ export const mingheChr_0037_minghe_attack4ActionGraph = {
             },
           },
         },
-        next: 'launchProjectile_17',
+        next: 'launchProjectile_11',
       },
-      applyBuff_19: {
+      applyBuff_13: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -739,14 +697,14 @@ export const mingheChr_0037_minghe_attack4ActionGraph = {
         },
         next: null,
       },
-      overrideBasicAttackMapping_20: {
+      overrideBasicAttackMapping_14: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0037_minghe_attack5'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_21: {
+      reachSkillOperableBoundary_15: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0037_minghe_attack5'] },
@@ -777,22 +735,16 @@ export const mingheChr_0037_minghe_attack4: SkillDefinition = {
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_1' } },
     { startFrame: 15, endFrame: 16, sequence: { $sequence: 'dealDamage_1' } },
     { startFrame: 20, endFrame: 21, sequence: { $sequence: 'dealDamage_1' } },
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'launchProjectile_9' } },
+    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'launchProjectile_6' } },
     {
       startFrame: 98,
       endFrame: 100,
-      sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_13' },
+      sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_10' },
     },
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'launchProjectile_14' } },
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'launchProjectile_14' } },
-    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'launchProjectile_14' } },
-    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'startTimeDilation_18' } },
-    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'applyBuff_19' } },
-    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'overrideBasicAttackMapping_20' } },
-    { startFrame: 34, endFrame: 75, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'startTimeDilation_12' } },
+    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'applyBuff_13' } },
+    { startFrame: 0, endFrame: 75, sequence: { $sequence: 'overrideBasicAttackMapping_14' } },
+    { startFrame: 34, endFrame: 75, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -934,7 +886,7 @@ export const mingheChr_0037_minghe_powerattackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.2,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: null,
@@ -949,7 +901,7 @@ export const mingheChr_0037_minghe_powerattackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.1,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: null,
@@ -979,7 +931,7 @@ export const mingheChr_0037_minghe_powerattackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.2,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'startTimeDilation_9',
@@ -1045,7 +997,7 @@ export const mingheChr_0037_minghe_powerattackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.5,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: null,
@@ -1307,8 +1259,7 @@ export const mingheChr_0037_minghe_normalskill_1ActionGraph = {
             target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['normalSkill', 'canBreakWeakness'],
           },
         },
         next: null,
@@ -1731,8 +1682,7 @@ export const mingheChr_0037_minghe_normalskill_2ActionGraph = {
             target: { kind: 'context', key: 'targets' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_9' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['normalSkill', 'canBreakWeakness'],
           },
         },
         next: null,
@@ -2029,8 +1979,7 @@ export const mingheChr_0037_minghe_combo_skillActionGraph = {
             target: { kind: 'context', key: 'targets' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
           },
         },
         next: null,
@@ -2119,8 +2068,7 @@ export const mingheChr_0037_minghe_combo_skillActionGraph = {
             target: { kind: 'context', key: 'targets' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_6' },
           },
         },
@@ -2436,8 +2384,7 @@ export const mingheChr_0037_minghe_ultimate_skillActionGraph = {
             target: { kind: 'inputTarget' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_6' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['ultimateSkill', 'canBreakWeakness'],
           },
         },
         next: 'ifElse_12',
@@ -2509,8 +2456,7 @@ export const mingheChr_0037_minghe_ultimate_skillActionGraph = {
             target: { kind: 'context', key: 'targets' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_8' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['ultimateSkill', 'canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_9' },
           },
         },
@@ -3684,7 +3630,7 @@ const mingheBuff10ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'eventDamageFeaturesMatch', match: 'hasAll', features: ['crush'] },
+        expression: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['crush'] },
       },
       data_2: {
         type: 'boolean',
@@ -3709,7 +3655,7 @@ const mingheBuff10ActionGraph = {
       },
       data_5: {
         type: 'boolean',
-        expression: { kind: 'eventDamageFeaturesMatch', match: 'hasAll', features: ['crush'] },
+        expression: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['crush'] },
       },
       data_6: {
         type: 'boolean',
@@ -4278,8 +4224,7 @@ export const minghe: OperatorDefinition = {
                     target: { kind: 'inputTarget' },
                     damageType: 'electric',
                     attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-                    tags: [],
-                    features: ['talentDamage'],
+                    tags: ['talentDamage'],
                   },
                   key: 'abilityentity_chr_0037_minghe_specialfracture_thunder:chr_0037_minghe_specialfracture_thunderskill:/childSkill/actionGraph/main/nodes/dealDamage_6/action',
                 },

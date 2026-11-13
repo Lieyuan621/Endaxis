@@ -328,7 +328,7 @@ describe('compileSkill', () => {
       skillType: 'battleSkill',
       skillLevel: 2,
       skill: linearSkill({
-        key: 'features',
+        key: 'tags',
         dataNodes: {
           critical: { type: 'number', expression: { kind: 'blackboard', key: 'crit_delta' } },
         },
@@ -339,8 +339,7 @@ describe('compileSkill', () => {
             parameters: {
               damageType: 'physical',
               attackScale: [1, 2],
-              tags: [],
-              features: ['shatter', 'dot'],
+              tags: ['shatter', 'dot'],
               target: 'actionInputTarget',
               instantAttributeModifiers,
             },
@@ -350,8 +349,7 @@ describe('compileSkill', () => {
             parameters: {
               damageType: 'physical',
               attackScale: [50, 100],
-              tags: [],
-              features: ['knockDown', 'physicalInfliction'],
+              tags: ['knockDown'],
             },
           },
         ],
@@ -364,8 +362,7 @@ describe('compileSkill', () => {
       {
         damageType: 'physical',
         attackScale: 2,
-        tags: [],
-        features: ['shatter', 'dot'],
+        tags: ['shatter', 'dot'],
         target: 'actionInputTarget',
         instantAttributeModifiers: [
           expect.objectContaining({
@@ -380,8 +377,7 @@ describe('compileSkill', () => {
       {
         damageType: 'physical',
         attackScale: 100,
-        tags: [],
-        features: ['knockDown', 'physicalInfliction'],
+        tags: ['knockDown'],
       },
     ]);
   });

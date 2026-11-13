@@ -2,6 +2,7 @@ import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { gameDataRepository } from '../../../data/gameDataRepository';
 import { createScenarioSimulationService } from '../createScenarioSimulationService';
+import { projectSkillAvailabilityDiagnostics } from '../../../core/projection/skillAvailabilityDiagnostics';
 
 it.each([
   ['laevatain', 'chr_0016_laevat_ultimate_skill'],
@@ -66,6 +67,107 @@ function createControlSwitchScenario(slug: string) {
     };
   return scenario;
 }
+
+it.each(['manual', 'automatic', 'skill'] as const)(
+  '切换标签仅诊断，不改变主控或技能执行：%s',
+  kind => {
+    const scenario = createControlSwitchScenario('laevatain');
+    scenario.battle.automaticControlSwitches = kind === 'automatic';
+    const runtime =
+      createScenarioSimulationService(gameDataRepository).createBuildAttributeRuntime(scenario);
+    runtime.applyInitialInput({});
+    runtime.stateGraph.operators
+      .get('track:0')!
+      .buffs!.entityTagCounts.set('Status/CantSwitchOutCenter', 1);
+    runtime.stateGraph.operators
+      .get('track:1')!
+      .buffs!.entityTagCounts.set('Status/Ability/Skill/CantSwitchTocCenter', 1);
+    if (kind === 'manual') runtime.advanceInputFrame({ controlledOperatorId: 'track:1' });
+    else
+      expect(
+        runtime.tryStartPlayerInput(
+          'track:1',
+          kind === 'skill' ? 'chr_0016_laevat_ultimate_skill' : 'chr_0016_laevat_attack1',
+          'cast:switch',
+          kind === 'skill' ? 'ultimate' : 'basicAttack',
+        ),
+      ).toBe(true);
+    expect(runtime.stateGraph.inputs.control.get('track:1')).toBe(true);
+    expect(runtime.stateGraph.inputs.control.get('track:0')).toBe(false);
+    const warnings = runtime.receipt.entries.filter(
+      entry => entry.event === 'ControlSwitchBlockedByTag',
+    );
+    expect(warnings.map(entry => [entry.targetId, entry.data?.blocker])).toEqual(
+      kind === 'skill'
+        ? [['track:1', 'CantSwitchToCenter']]
+        : [
+            ['track:0', 'CantMainCharSwitched'],
+            ['track:1', 'CantSwitchToCenter'],
+          ],
+    );
+    expect(
+      warnings.every(entry => entry.sourceId === 'track:1' && entry.data?.switchKind === kind),
+    ).toBe(true);
+    if (kind !== 'manual') {
+      expect(warnings.every(entry => entry.data?.castId === 'cast:switch')).toBe(true);
+      expect(projectSkillAvailabilityDiagnostics(warnings)[0]?.reasons).toEqual(
+        kind === 'skill'
+          ? ['controlSwitchInUnavailable']
+          : ['controlSwitchOutUnavailable', 'controlSwitchInUnavailable'],
+      );
+    } else expect(projectSkillAvailabilityDiagnostics(warnings)).toEqual([]);
+    const count = warnings.length;
+    runtime.advanceInputFrame({ controlledOperatorId: 'track:1' });
+    expect(
+      runtime.receipt.entries.filter(entry => entry.event === 'ControlSwitchBlockedByTag'),
+    ).toHaveLength(count);
+    runtime.stateGraph.operators.get('track:0')!.buffs!.entityTagCounts.clear();
+    runtime.stateGraph.operators.get('track:1')!.buffs!.entityTagCounts.clear();
+    runtime.advanceInputFrame({ controlledOperatorId: 'track:0' });
+    expect(
+      runtime.receipt.entries.filter(entry => entry.event === 'ControlSwitchBlockedByTag'),
+    ).toHaveLength(count);
+  },
+);
+
+it('切面恢复后仍诊断卡缪终结技禁止切入，保持事件和主控一致', () => {
+  const scenario = createControlSwitchScenario('camille');
+  scenario.battle.controlSwitches = [{ id: 'switch:camille', frame: 2, trackIndex: 1 }];
+  scenario.tracks[1]!.skillCasts = [
+    {
+      id: 'camille:ultimate',
+      source: {
+        kind: 'operatorSkill',
+        skillGroupKey: 'ultimate',
+        skillKey: 'chr_0033_camille_ultimate_skill',
+      },
+      placement: { startFrame: 0 },
+    },
+  ];
+  const session = createScenarioSimulationService(gameDataRepository).createCombatSession(scenario);
+  session.advanceToFrame(1);
+  expect(
+    session.runtime
+      .readState()
+      .operators.get('track:1')!
+      .buffs!.entityTagCounts.get('Status/Ability/Skill/CantSwitchTocCenter'),
+  ).toBe(1);
+  const restored = session.fork(session.runtime.save());
+  for (const branch of [session, restored]) branch.advanceToFrame(3);
+  expect(restored.runtime.readReceipts().entries).toEqual(session.runtime.readReceipts().entries);
+  expect(restored.runtime.readState().inputs.control.get('track:1')).toBe(true);
+  expect(
+    restored.runtime
+      .readReceipts()
+      .entries.filter(entry => entry.event === 'ControlSwitchBlockedByTag'),
+  ).toEqual([
+    expect.objectContaining({
+      sourceId: 'track:1',
+      targetId: 'track:1',
+      data: { blocker: 'CantSwitchToCenter', switchKind: 'manual' },
+    }),
+  ]);
+});
 
 it.each([
   ['manual', false, true],

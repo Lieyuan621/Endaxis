@@ -649,7 +649,7 @@ export const snowshineChr_0014_aurora_power_attackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             calculation: 'breakingAttack',
             calculationMultiplier: 1,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'gainFinisherSp_6',
@@ -953,7 +953,11 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
             buffs: [
               {
                 buffId: 'buff_chr_0014_aurora_reduce_damage',
-                blackboardAssignments: { taken_dmg: { kind: 'valueNode', nodeId: 'data_7' } },
+                blackboardAssignments: {
+                  taken_dmg: { kind: 'valueNode', nodeId: 'data_7' },
+                  potential_1: { kind: 'valueNode', nodeId: 'data_8' },
+                },
+                stringBlackboardAssignments: {},
               },
             ],
           },
@@ -966,7 +970,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 107 },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
         },
         next: null,
       },
@@ -980,21 +984,21 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
       checkCondition_42: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
         },
         next: 'copyContextTargets_41',
       },
       checkCondition_43: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
         },
         next: 'checkCondition_42',
       },
       checkCondition_39: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
         },
         next: 'copyContextTargets_41',
       },
@@ -1082,7 +1086,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_12' },
+            amount: { kind: 'valueNode', nodeId: 'data_13' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1111,7 +1115,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
           whenTrue: { $sequence: 'startTimeDilation_50' },
           whenFalse: { $sequence: null },
         },
@@ -1124,10 +1128,9 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_14' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_15' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_15' },
+            tags: ['normalSkill', 'canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_16' },
           },
         },
         next: 'ifElse_51',
@@ -1266,7 +1269,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_16' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
           whenTrue: { $sequence: 'copyContextTargets_26' },
           whenFalse: { $sequence: 'copyContextTargets_26' },
         },
@@ -1276,7 +1279,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_17' },
+          condition: { kind: 'conditionNode', nodeId: 'data_18' },
           whenTrue: { $sequence: 'findTargets_opt3' },
           whenFalse: { $sequence: 'ifElse_opt4' },
         },
@@ -1313,11 +1316,12 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         },
       },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'taken_dmg' } },
-      data_8: {
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'potential_1' } },
+      data_9: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_9: {
+      data_10: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -1329,20 +1333,20 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_10: {
+      data_11: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
       },
-      data_11: {
+      data_12: {
         type: 'boolean',
         expression: {
-          kind: 'eventDamageFeaturesMatch',
+          kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          features: ['dot', 'remainArea'],
+          tags: ['dot', 'remainArea'],
         },
       },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'potential_5_atb' } },
-      data_13: {
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'potential_5_atb' } },
+      data_14: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1353,13 +1357,13 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
           value: 1,
         },
       },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_16: {
+      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_17: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_17: {
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -1698,8 +1702,7 @@ export const snowshineChr_0014_aurora_ultimate_skillActionGraph = {
             target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['ultimateSkill', 'canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
@@ -2069,7 +2072,17 @@ const snowshineBuff2: SkillBuffDefinition = {
 };
 
 const snowshineBuff3ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      addEntityTags_1: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: { targets: { kind: 'owner' }, tags: ['Immune/SpellInflictOnChar'] },
+        },
+        next: null,
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -2082,6 +2095,7 @@ const snowshineBuff3: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0.05 },
   attributeModifiers: [],
+  lifecycleSequences: { enable: [{ $sequence: 'addEntityTags_1' }] },
   actionGraph: snowshineBuff3ActionGraph,
 };
 
@@ -2145,7 +2159,21 @@ const snowshineBuff4: SkillBuffDefinition = {
 const snowshineBuff5ActionGraph = {
   main: {
     nodes: {
-      applyBuff_1: {
+      addEntityTags_1: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: { targets: { kind: 'owner' }, tags: ['Immune/SpellInflictOnChar'] },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'addEntityTags_1',
+      },
+      applyBuff_3: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2154,7 +2182,7 @@ const snowshineBuff5ActionGraph = {
                 buffId: 'buff_common_affixes_shelter',
                 blackboardAssignments: {
                   duration: { kind: 'constant', value: 9999999 },
-                  rate: { kind: 'valueNode', nodeId: 'data_1' },
+                  rate: { kind: 'valueNode', nodeId: 'data_3' },
                 },
               },
             ],
@@ -2166,7 +2194,7 @@ const snowshineBuff5ActionGraph = {
         },
         next: null,
       },
-      applyBuff_2: {
+      applyBuff_4: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2174,7 +2202,7 @@ const snowshineBuff5ActionGraph = {
               {
                 buffId: 'buff_chr_0014_aurora_reduce_damage_remain',
                 blackboardAssignments: { duration: { kind: 'constant', value: 0.5 } },
-                copiedBlackboardAssignments: { taken_dmg: 'taken_dmg' },
+                copiedBlackboardAssignments: { potential_1: 'potential_1', taken_dmg: 'taken_dmg' },
               },
             ],
             targets: { kind: 'owner' },
@@ -2185,7 +2213,22 @@ const snowshineBuff5ActionGraph = {
         next: null,
       },
     },
-    dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'taken_dmg' } } },
+    dataNodes: {
+      data_1: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_1', fallback: 0 },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'taken_dmg' } },
+    },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
@@ -2197,11 +2240,11 @@ const snowshineBuff5: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: ['Skill/Character/Common/Shielded'],
   extendTags: [],
-  blackboard: { duration: 9999, taken_dmg: 0.1 },
+  blackboard: { duration: 9999, potential_1: 0, taken_dmg: 0.1 },
   attributeModifiers: [],
   lifecycleSequences: {
-    enable: [{ $sequence: 'applyBuff_1' }],
-    finish: [{ $sequence: 'applyBuff_2' }],
+    enable: [{ $sequence: 'checkCondition_2' }, { $sequence: 'applyBuff_3' }],
+    finish: [{ $sequence: 'applyBuff_4' }],
   },
   actionGraph: snowshineBuff5ActionGraph,
 };
@@ -2209,7 +2252,21 @@ const snowshineBuff5: SkillBuffDefinition = {
 const snowshineBuff6ActionGraph = {
   main: {
     nodes: {
-      applyBuff_1: {
+      addEntityTags_1: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: { targets: { kind: 'owner' }, tags: ['Immune/SpellInflictOnChar'] },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'addEntityTags_1',
+      },
+      applyBuff_3: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2218,7 +2275,7 @@ const snowshineBuff6ActionGraph = {
                 buffId: 'buff_common_affixes_shelter',
                 blackboardAssignments: {
                   duration: { kind: 'constant', value: 9999999 },
-                  rate: { kind: 'valueNode', nodeId: 'data_1' },
+                  rate: { kind: 'valueNode', nodeId: 'data_3' },
                 },
               },
             ],
@@ -2231,7 +2288,22 @@ const snowshineBuff6ActionGraph = {
         next: null,
       },
     },
-    dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'taken_dmg' } } },
+    dataNodes: {
+      data_1: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_1', fallback: 0 },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'taken_dmg' } },
+    },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
@@ -2243,9 +2315,9 @@ const snowshineBuff6: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { duration: 0.5, taken_dmg: 0.1 },
+  blackboard: { duration: 0.5, potential_1: 0, taken_dmg: 0.1 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
+  lifecycleSequences: { enable: [{ $sequence: 'checkCondition_2' }, { $sequence: 'applyBuff_3' }] },
   actionGraph: snowshineBuff6ActionGraph,
 };
 

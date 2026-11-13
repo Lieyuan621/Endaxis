@@ -684,7 +684,7 @@
       "electricBurst": "Electric burst",
       "cryoBurst": "Cryo burst",
       "natureBurst": "Nature burst",
-      "fireAbnormal": "Heat reaction",
+      "fireAbnormal": "Burning",
       "electricAbnormal": "Electric reaction",
       "cryoAbnormal": "Cryo reaction",
       "natureAbnormal": "Nature reaction",
@@ -727,7 +727,7 @@
       "successAndInterrupted": "Succeeded and interrupted",
       "success": "Succeeded",
       "interrupted": "Interrupted",
-      "fracture": "Breach",
+      "fracture": "Fracture",
       "crush": "Crush",
       "airborne": "Launch",
       "electrification": "Electrification",
@@ -853,7 +853,14 @@
       "Character": "Character",
       "OnlyDead": "Dead targets only",
       "poise": "Poise",
-      "MaxUltimateSp": "Maximum ultimate energy"
+      "MaxUltimateSp": "Maximum ultimate energy",
+      "poiseBreak": "Poise break",
+      "ignoreGuardDodge": "Ignore guard dodge",
+      "fireAbnormalInitial": "Initial fire abnormal damage",
+      "igniteByMud": "IgniteByMud",
+      "bomb": "Bomb",
+      "ignoreDodgeImmune": "Ignore dodge immunity",
+      "ignoreSkillImmune": "Ignore skill immunity"
     },
     "optional": "Optional",
     "unset": "Not set",
@@ -1257,10 +1264,6 @@
       "gameplayTags": {
         "name": "Effect Tags",
         "help": "Additional tags for effect conditions."
-      },
-      "features": {
-        "name": "Features",
-        "help": "Set or filter behavioral features of this effect."
       },
       "stagger": {
         "name": "Stagger"
@@ -2617,10 +2620,6 @@
         "name": "Transferred Part Tags Match?",
         "help": "Check the part mapped to the current main body in the event. Save the part target only on success; otherwise preserve the existing target group."
       },
-      "eventDamageFeaturesMatch": {
-        "name": "Event Damage Features Match?",
-        "help": "Check features of the event damage."
-      },
       "eventDamageTypeIn": {
         "name": "Event Damage Type Matches?",
         "help": "Check the event damage’s physical or Arts type."
@@ -2776,6 +2775,10 @@
       "disableNormalSkill": {
         "name": "Disable battle skill",
         "help": "Apply a battle-skill restriction while the action is active, optionally allowing additional stages."
+      },
+      "addEntityTags": {
+        "name": "Add entity tags",
+        "help": "Add tags to the selected entities for the action's lifetime. Ending or interrupting it removes only its own contributions."
       },
       "limitMovementGait": {
         "name": "Limit movement gait",

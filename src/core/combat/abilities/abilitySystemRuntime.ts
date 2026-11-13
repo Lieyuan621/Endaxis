@@ -906,7 +906,10 @@ export class AbilitySystemRuntime implements FrameRuntime {
   activatePlayerActionMode(modeId: string): { readonly registrationId: number; finish(): void } {
     const mode = this.#playerActionModes.get(modeId);
     if (mode === undefined) throw new Error(`unknown player-action mode '${modeId}'`);
+    const previousModeId = this.runtimeState.activePlayerActionModeByLayer.get(mode.modeLayer);
     const id = activateAbilityPlayerActionMode(this.runtimeState, mode.modeLayer, modeId);
+    // 原生 _ApplyModeChange 对角色调用 ClearOffsetModifier(true)，模式变化后不沿用旧普攻序列。
+    if (previousModeId !== modeId) this.#clearComboOffset(true);
     return this.bindPlayerActionModeActivation(id);
   }
 
@@ -925,7 +928,17 @@ export class AbilitySystemRuntime implements FrameRuntime {
 
   /** 按当前分支的数据结束登记，重复结束不产生副作用。 */
   finishPlayerActionModeActivation(registrationId: number): void {
+    const activation = this.runtimeState.playerActionModeActivations.get(registrationId);
+    const previousModeId =
+      activation === undefined
+        ? undefined
+        : this.runtimeState.activePlayerActionModeByLayer.get(activation.layer);
     finishAbilityPlayerActionMode(this.runtimeState, registrationId);
+    if (
+      activation !== undefined &&
+      this.runtimeState.activePlayerActionModeByLayer.get(activation.layer) !== previousModeId
+    )
+      this.#clearComboOffset(true);
   }
 
   evaluatePlayerInputInterruption(

@@ -148,7 +148,7 @@ describe('伤害动作公共载荷', () => {
           calculation: 'attribute',
           calculationAttribute: 'MaxHp',
           ...(valueSource === 'Target' ? { attributeSource: 'target' } : {}),
-          features: ['dot'],
+          tags: ['dot'],
         },
       });
     },

@@ -275,7 +275,8 @@ describe('从原始文件独立编译定义', () => {
     expect(compiled.initializationPlans.map(plan => plan.tagId)).toEqual([1, 2]);
     expect(compiled.buffDefinitions.buff_cc_enemy_common_hp_up).toBeDefined();
     expect(compiled.scope.supportedTagIds).toEqual(new Set([1, 2]));
-    expect(compiled.revision).toBe('fixture@1');
+    expect(compiled.gameId).toBe('contract');
+    expect(compiled).not.toHaveProperty('revision');
     expect(fs.readdirSync(root, { recursive: true })).toEqual(before);
     // 同一词条仅省略范围外的入口，其他词条、GlobalBuff 的共享技力修正和有效子项继续保留。
     writeJson(scope, {

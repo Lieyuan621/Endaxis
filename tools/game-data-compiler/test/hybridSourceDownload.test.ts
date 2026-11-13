@@ -51,16 +51,14 @@ async function setup() {
     '/asset-sync-index.json': JSON.stringify(index),
     '/public/1.5.3/4/TableCfg/CharacterTable.json': '{}',
     '/public/Json/SkillData/a.json': skill,
-    '/api/endaxis-data/SkillData/manifest.json': JSON.stringify([
+    '/api/data/SkillData/manifest.json': JSON.stringify([
       { contentFile: 'a.json' },
       { contentFile: 'b.json' },
     ]),
-    '/api/endaxis-data/SkillData/a.json': JSON.stringify({ castType: 0 }),
-    '/api/endaxis-data/SkillData/b.json': JSON.stringify({ castType: 'Passive' }),
-    '/api/endaxis-data/AbilityEntityData/manifest.json': JSON.stringify([
-      { contentFile: 'entity.json' },
-    ]),
-    '/api/endaxis-data/AbilityEntityData/entity.json': '{}',
+    '/api/data/SkillData/a.json': JSON.stringify({ castType: 0 }),
+    '/api/data/SkillData/b.json': JSON.stringify({ castType: 'Passive' }),
+    '/api/data/AbilityEntityData/manifest.json': JSON.stringify([{ contentFile: 'entity.json' }]),
+    '/api/data/AbilityEntityData/entity.json': '{}',
   };
   const requests: URL[] = [];
   vi.stubGlobal(
@@ -70,7 +68,9 @@ async function setup() {
       requests.push(url);
       const body = bodies[url.pathname] ?? 404;
       const headers: Record<string, string> =
-        url.hostname === 'vfs.test' ? { 'X-Endaxis-Source': 'vfs-index-browser' } : {};
+        url.hostname === 'vfs.test'
+          ? { 'X-Endaxis-Source': 'endaxis-data-tool', 'X-Endaxis-Version': '1.5.3@3' }
+          : {};
       return new Response(
         typeof body === 'number' ? null : typeof body === 'string' ? body : new Uint8Array(body),
         { status: typeof body === 'number' ? body : 200, headers },
@@ -79,8 +79,8 @@ async function setup() {
   );
   const args = {
     cdn: 'https://cdn.test',
-    vfsBase: 'http://vfs.test/api/endaxis-data',
-    vfsVersion: '1.5.3@3',
+    localBase: 'http://vfs.test/api/data',
+    localVersion: '1.5.3@3',
     sourceCatalog: catalog,
     output: path.join(root, 'snapshot'),
     workers: 2,
@@ -107,17 +107,17 @@ describe('AKEDB 优先、VFS 补缺', () => {
         }),
         expect.objectContaining({
           logicalPath: 'SkillData/b.json',
-          provider: 'vfs-index-browser',
+          provider: 'endaxis-data-tool',
           fallbackReason: 'not-in-akedb-index',
         }),
         expect.objectContaining({
           logicalPath: 'AbilityEntityData/entity.json',
-          provider: 'vfs-index-browser',
+          provider: 'endaxis-data-tool',
         }),
       ]),
     );
     expect(ledger.snapshotSha256).toMatch(/^[a-f0-9]{64}$/);
-    expect(requests.some(u => u.pathname === '/api/endaxis-data/SkillData/a.json')).toBe(false);
+    expect(requests.some(u => u.pathname === '/api/data/SkillData/a.json')).toBe(false);
     expect(
       requests
         .filter(u => ['/manifest.json', '/asset-sync-index.json'].includes(u.pathname))
@@ -125,7 +125,7 @@ describe('AKEDB 优先、VFS 补缺', () => {
     ).toBe(true);
   });
 
-  it('BuffData 只使用 AKEDB 清单和文件，不查询 VFS 补缺', async () => {
+  it('BuffData 同名文件优先使用 AKEDB，清单仍检查本地 AKE 导出', async () => {
     const { args, bodies, index, record, requests } = await setup();
     await fs.writeFile(
       args.sourceCatalog,
@@ -137,9 +137,8 @@ describe('AKEDB 优先、VFS 补缺', () => {
     ] = record(buff);
     bodies['/asset-sync-index.json'] = JSON.stringify(index);
     bodies['/public/Json/BuffData/buff_akedb.json'] = buff;
-    bodies['/api/endaxis-data/BuffData/manifest.json'] = JSON.stringify([
+    bodies['/api/data/BuffData/manifest.json'] = JSON.stringify([
       { contentFile: 'buff_akedb.json' },
-      { contentFile: 'buff_vfs_only.json' },
     ]);
     await downloadGameDataSources(args);
     const ledger = JSON.parse(
@@ -148,12 +147,13 @@ describe('AKEDB 优先、VFS 补缺', () => {
     expect(ledger.entries).toEqual([
       expect.objectContaining({ logicalPath: 'BuffData/buff_akedb.json', provider: 'akedb' }),
     ]);
-    expect(ledger.inventories).toEqual([{ collection: 'BuffData', vfs: 'not-used', files: 1 }]);
-    expect(requests.some(url => url.pathname.includes('/api/endaxis-data/BuffData/'))).toBe(false);
+    expect(ledger.inventories).toEqual([{ collection: 'BuffData', vfs: 'available', files: 1 }]);
+    expect(requests.some(url => url.pathname === '/api/data/BuffData/manifest.json')).toBe(true);
+    expect(requests.some(url => url.pathname === '/api/data/BuffData/buff_akedb.json')).toBe(false);
   });
 
   it.each(['not-in-index', 'http-404'] as const)(
-    'BuffData 在 AKEDB %s 时明确失败，不退到 VFS',
+    'BuffData 在 AKEDB %s 时拒绝非 AKE 解码的本地数据',
     async missing => {
       const { args, bodies, index, record, requests } = await setup();
       await fs.writeFile(
@@ -168,13 +168,11 @@ describe('AKEDB 优先、VFS 补缺', () => {
         bodies['/asset-sync-index.json'] = JSON.stringify(index);
         bodies['/public/Json/BuffData/missing.json'] = 404;
       }
-      bodies['/api/endaxis-data/BuffData/missing.json'] = buff;
+      bodies['/api/data/BuffData/missing.json'] = buff;
       await expect(
         downloadGameDataSources({ ...args, jsonFile: 'BuffData/missing.json' }),
-      ).rejects.toThrow('AKEDB BuffData is unavailable');
-      expect(requests.some(url => url.pathname === '/api/endaxis-data/BuffData/missing.json')).toBe(
-        false,
-      );
+      ).rejects.toThrow('local fallback must be an AKE export');
+      expect(requests.some(url => url.pathname === '/api/data/BuffData/missing.json')).toBe(true);
     },
   );
 
@@ -187,7 +185,7 @@ describe('AKEDB 优先、VFS 补缺', () => {
     );
     expect(
       ledger.entries.find((e: { logicalPath: string }) => e.logicalPath === 'SkillData/a.json'),
-    ).toMatchObject({ provider: 'vfs-index-browser', fallbackReason: 'akedb-http-404' });
+    ).toMatchObject({ provider: 'endaxis-data-tool', fallbackReason: 'akedb-http-404' });
   });
 
   it.each(['server', 'integrity', 'json'] as const)(
@@ -202,13 +200,13 @@ describe('AKEDB 优先、VFS 补缺', () => {
       }
       await expect(downloadGameDataSources(args)).rejects.toThrow();
       await expect(fs.stat(args.output)).rejects.toMatchObject({ code: 'ENOENT' });
-      expect(requests.some(u => u.pathname === '/api/endaxis-data/SkillData/a.json')).toBe(false);
+      expect(requests.some(u => u.pathname === '/api/data/SkillData/a.json')).toBe(false);
     },
   );
 
   it('VFS 清单损坏不能当成空集合', async () => {
     const { args, bodies } = await setup();
-    bodies['/api/endaxis-data/SkillData/manifest.json'] = '{}';
+    bodies['/api/data/SkillData/manifest.json'] = '{}';
     await expect(downloadGameDataSources(args)).rejects.toThrow('expected array');
   });
 

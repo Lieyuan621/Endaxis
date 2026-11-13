@@ -24,7 +24,6 @@ import type {
   CombatEventTrigger,
   CombatResource,
   CombatStepKind,
-  DamageFeature,
   DamageTag,
   DamageType,
   ElementalReaction,
@@ -189,7 +188,6 @@ export interface ResolvedCombatStepParameters {
     calculationValueScale?: number | CompiledValueInput;
     tags: readonly DamageTag[];
     gameplayTags?: readonly GameplayTag[];
-    features?: readonly DamageFeature[];
     stagger?: number | CompiledValueInput;
     staggerMultiplier?: number | CompiledValueInput;
     staggerOnlyWhenCasterControlled?: boolean;
@@ -202,7 +200,7 @@ export interface ResolvedCombatStepParameters {
     target?: CompiledStepParameters['dealStagger']['target'];
     value: number | CompiledValueInput;
     valueMultiplier?: number | CompiledValueInput;
-    features?: readonly DamageFeature[];
+    tags?: readonly DamageTag[];
   };
   heal: {
     target: CompiledStepParameters['heal']['target'];
@@ -319,6 +317,7 @@ export interface ResolvedCombatStepParameters {
   disableNormalSkill: CompiledStepParameters['disableNormalSkill'];
   boneAttach: CompiledStepParameters['boneAttach'];
   limitMovementGait: CompiledStepParameters['limitMovementGait'];
+  addEntityTags: CompiledStepParameters['addEntityTags'];
   queueComboLock: CompiledStepParameters['queueComboLock'];
   restrictUltimateEnergyRecovery: Omit<
     CompiledStepParameters['restrictUltimateEnergyRecovery'],
@@ -495,6 +494,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   disableNormalSkill: 'operation',
   boneAttach: 'operation',
   limitMovementGait: 'operation',
+  addEntityTags: 'operation',
   queueComboLock: 'operation',
   restrictUltimateEnergyRecovery: 'operation',
   createTimedMarker: 'operation',

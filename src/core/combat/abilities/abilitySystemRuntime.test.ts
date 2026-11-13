@@ -1696,14 +1696,61 @@ it('切主控清除普攻目标与临时接续，保留强化模式映射', () =
       },
     ],
   });
+  ability.activatePlayerActionMode('enhanced');
   ability.tryStartSkill('attack1');
   ability.interruptCurrentSkillForDash();
   expect(ability.runtimeState.comboOffsetModifier).not.toBeNull();
-  ability.activatePlayerActionMode('enhanced');
   ability.resetComboOnControlChange();
   expect(ability.runtimeState.comboOffsetModifier).toBeNull();
   expect(ability.runtimeState.comboOffsetTargetSkillKey).toBeNull();
   expect(ability.resolvePlayerInputSkill('enhanced', 'basicAttack')).toMatchObject({
     actualSkillKey: 'enhanced',
   });
+});
+
+it('进入和退出模式都清除旧普攻序列的连段缓存', () => {
+  const ability = new AbilitySystemRuntime({
+    skills: ['attack1', 'attack2', 'enhanced1', 'enhanced2'].map(id =>
+      Object.assign(new FixtureRuntime(id, [], 'basicAttack'), {
+        nativeSkillType: 'attack' as const,
+        offsetRecordFrame: 0,
+      }),
+    ),
+    dashOffsetFrames: 30,
+    playerActionRoutes: {
+      basicAttack: {
+        kind: 'basicAttack',
+        skillKeys: ['attack1', 'attack2', 'enhanced1', 'enhanced2'],
+        normalAttackSkillKeys: ['attack1', 'attack2'],
+        defaultSkillKey: 'attack1',
+      },
+    },
+    playerActionModes: [
+      {
+        modeId: 'enhanced',
+        modeLayer: 'mode',
+        defaultEnabled: false,
+        normalAttackSkillKeys: ['enhanced1', 'enhanced2'],
+        commandMappings: { basicAttack: { skillId: 'enhanced1' } },
+      },
+    ],
+  });
+  ability.tryStartSkill('attack1');
+  ability.interruptCurrentSkillForDash();
+  expect(ability.runtimeState.comboOffsetModifier?.targetSkillKey).toBe('attack2');
+  const mode = ability.activatePlayerActionMode('enhanced');
+  expect(ability.runtimeState.comboOffsetTargetSkillKey).toBeNull();
+  expect(ability.runtimeState.comboOffsetModifier).toBeNull();
+  expect(ability.resolvePlayerInputSkill('enhanced1', 'basicAttack').status).toBe('matched');
+  ability.tryStartSkill('enhanced1');
+  ability.interruptCurrentSkillForDash();
+  expect(ability.runtimeState.comboOffsetModifier?.targetSkillKey).toBe('enhanced2');
+  mode.finish();
+  expect(ability.runtimeState.comboOffsetTargetSkillKey).toBeNull();
+  expect(ability.runtimeState.comboOffsetModifier).toBeNull();
+  expect(ability.resolvePlayerInputSkill('attack1', 'basicAttack').status).toBe('matched');
+  ability.tryStartSkill('attack1');
+  ability.interruptCurrentSkillForDash();
+  mode.finish();
+  expect(ability.runtimeState.comboOffsetModifier?.targetSkillKey).toBe('attack2');
 });

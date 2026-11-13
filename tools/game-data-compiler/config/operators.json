@@ -2937,7 +2937,7 @@
     {
       "slug": "endministrator",
       "assets": {
-        "portraitCharacterId": "chr_0003_endminf"
+        "avatarCharacterId": "chr_0003_endminf"
       },
       "excludedLocaleCharIds": ["chr_0002_endminm", "chr_0003_endminf"],
       "exportName": "endministratorGeneratedSource",

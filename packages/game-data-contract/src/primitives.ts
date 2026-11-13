@@ -173,71 +173,76 @@ export const ELEMENTAL_REACTIONS = [
 /** 元素附着组合形成、可被状态和事件引用的复合反应。 */
 export type ElementalReaction = (typeof ELEMENTAL_REACTIONS)[number];
 
-/** 已解析伤害命中携带的可叠加分类。 */
+/** 原生 DamageDecorateMask 的单个位标记，按位值升序排列。 */
 export const DAMAGE_TAGS = [
-  /** 普通攻击伤害。 */
-  'normalAttack',
-  /** 普通攻击连段最后一击。 */
-  'normalAttackLastCombo',
+  /** 失衡击破标记。 */
+  'poiseBreak',
+  /** 忽略护卫闪避标记。 */
+  'ignoreGuardDodge',
   /** 重击伤害。 */
   'powerAttack',
-  /** 战技伤害。 */
-  'normalSkill',
-  /** 连携技伤害。 */
-  'comboSkill',
-  /** 终结技伤害。 */
-  'ultimateSkill',
-  /** 下落攻击伤害。 */
-  'plungingAttack',
-  /** 冲刺攻击伤害。 */
-  'dashAttack',
-  /** 灼热爆发伤害。 */
-  'fireBurst',
-  /** 电磁爆发伤害。 */
-  'electricBurst',
-  /** 寒冷爆发伤害。 */
-  'cryoBurst',
-  /** 自然爆发伤害。 */
-  'natureBurst',
-  /** 灼热异常伤害。 */
-  'fireAbnormal',
+  /** 灼热异常初始伤害。 */
+  'fireAbnormalInitial',
   /** 电磁异常伤害。 */
   'electricAbnormal',
   /** 寒冷异常伤害。 */
   'cryoAbnormal',
-  /** 自然异常伤害。 */
-  'natureAbnormal',
-] as const;
-
-/** 单次伤害携带的可叠加语义分类，供公式、事件和机制筛选。 */
-export type DamageTag = (typeof DAMAGE_TAGS)[number];
-
-/** 不参与技能类型归类，但会影响命中处理或事件筛选的伤害特征。 */
-export const DAMAGE_FEATURES = [
+  /** 原生 IgniteByMud 标记。 */
+  'igniteByMud',
+  /** 普通攻击伤害。 */
+  'normalAttack',
+  /** 战技伤害。 */
+  'normalSkill',
+  /** 终结技伤害。 */
+  'ultimateSkill',
+  /** 下落攻击伤害。 */
+  'plungingAttack',
+  /** 爆炸标记。 */
+  'bomb',
   /** 可以削减弱点值。 */
   'canBreakWeakness',
+  /** 连携技伤害。 */
+  'comboSkill',
   /** 具有粉碎效果。 */
   'crush',
   /** 具有击飞效果。 */
   'airborne',
-  /** 碎甲伤害。 */
-  'fracture',
   /** 具有击倒效果。 */
   'knockDown',
+  /** 冲刺攻击伤害。 */
+  'dashAttack',
+  /** 忽略闪避免疫的基础位。 */
+  'ignoreDodgeImmune',
+  /** 忽略技能免疫标记。 */
+  'ignoreSkillImmune',
+  /** 自然异常伤害。 */
+  'natureAbnormal',
+  /** 普通攻击连段最后一击。 */
+  'normalAttackLastCombo',
+  /** 灼热爆发伤害。 */
+  'fireBurst',
+  /** 寒冷爆发伤害。 */
+  'cryoBurst',
+  /** 电磁爆发伤害。 */
+  'electricBurst',
+  /** 自然爆发伤害。 */
+  'natureBurst',
+  /** 燃烧伤害。 */
+  'fireAbnormal',
   /** 具有碎冰效果。 */
   'shatter',
   /** 持续伤害。 */
   'dot',
   /** 残留区域造成的伤害。 */
   'remainArea',
+  /** 碎甲伤害。 */
+  'fracture',
   /** 天赋造成的伤害。 */
   'talentDamage',
-  /** 物理异常造成的伤害。 */
-  'physicalInfliction',
 ] as const;
 
-/** 单次伤害携带的一种处理特征。 */
-export type DamageFeature = (typeof DAMAGE_FEATURES)[number];
+/** 单次伤害携带的可叠加语义分类，供公式、事件和机制筛选。 */
+export type DamageTag = (typeof DAMAGE_TAGS)[number];
 
 /** 技能在构筑、事件和伤害分类中使用的大类。 */
 export const SKILL_TYPES = [

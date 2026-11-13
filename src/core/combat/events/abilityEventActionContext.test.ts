@@ -137,7 +137,6 @@ function createDamagePayload(pair: { readonly sourceId: string; readonly targetI
     ...pair,
     damageType: 'physical' as const,
     tags: [],
-    features: [],
     result: {
       value: 1,
       isCritical: true,

@@ -37,7 +37,6 @@ import {
   type CombatTarget,
   type ComparisonOperator,
   type DamageElement,
-  type DamageFeature,
   type DamageTag,
   type DamageType,
   type EnemyRank,
@@ -527,14 +526,6 @@ export type CombatConditionExpression =
       tags: readonly GameplayTag[];
     }
   | {
-      /** 匹配触发当前响应的伤害行为特征；普通技能步骤没有事件上下文。 */
-      kind: 'eventDamageFeaturesMatch';
-      /** 特征集合匹配方式。 */
-      match: GameplayTagMatchType;
-      /** 参与匹配的伤害特征。 */
-      features: readonly DamageFeature[];
-    }
-  | {
       /** 匹配触发当前响应的伤害类型；未声明类型的外部事实不会命中。 */
       kind: 'eventDamageTypeIn';
       /** 任一匹配即可成立的伤害类型。 */
@@ -772,7 +763,7 @@ export const COMBAT_CONDITION_KINDS = [
   'eventDamageTagsMatch',
   'eventTransferredPartTagsMatch',
   'eventDamageGameplayTagsMatch',
-  'eventDamageFeaturesMatch',
+  'eventDamageTagsMatch',
   'eventDamageTypeIn',
   'eventDamageSkillCastRecorded',
   'eventInflictionElementIn',

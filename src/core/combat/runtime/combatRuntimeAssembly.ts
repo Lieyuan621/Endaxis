@@ -1,4 +1,5 @@
 import { CountShieldUiOperationExecutor } from '../skills/countShieldUiOperationExecutor';
+import { EntityTagOperationExecutor } from '../tags/entityTagOperationExecutor';
 import { selectMainEnemyTarget, type EnemyTargetSelection } from '../enemies/enemyTargetSelection';
 import type { TyphoeaArcheryRuntime } from '../abilities/typhoeaArcherySelection';
 import { TyphoeaArcheryOperationExecutor } from '../abilities/typhoeaArcheryOperationExecutor';
@@ -1110,6 +1111,7 @@ export class CombatRuntimeAssembly {
         configuration: options.operatorControl,
         readControl: externalControlQuery,
         controlChanged: (id, controlled) => this.#onOperatorControlChanged(id, controlled),
+        controlSwitchBlocker: (id, entering) => this.#operatorControlSwitchBlocker(id, entering),
         emit: options.emitAbilityEvent,
         receipt: this.receipt,
       });
@@ -1610,6 +1612,7 @@ export class CombatRuntimeAssembly {
       configuration: options.operatorControl,
       readControl: externalControlQuery,
       controlChanged: (id, controlled) => this.#onOperatorControlChanged(id, controlled),
+      controlSwitchBlocker: (id, entering) => this.#operatorControlSwitchBlocker(id, entering),
       emit: options.emitAbilityEvent,
       receipt: this.receipt,
     });
@@ -2255,6 +2258,7 @@ export class CombatRuntimeAssembly {
       program?.skillType,
       castId,
       program?.switchToCenterBeforeCast,
+      expectedSkillId,
     );
     const center = this.#operatorCenters.get(operatorId);
     const centerState = this.#operatorCenterStates.get(operatorId);
@@ -5611,6 +5615,20 @@ export class CombatRuntimeAssembly {
     queryTargets?: CombatOperationExecutor['queryTargets'],
   ): CombatOperationExecutor {
     delegate = new CountShieldUiOperationExecutor(this.clock, this.receipt, queryTargets, delegate);
+    delegate = new EntityTagOperationExecutor(
+      queryTargets,
+      target => {
+        const entity = this.#entityTagTarget(target);
+        if (entity === undefined) return undefined;
+        if (!entity.addEntityTags || !entity.removeEntityTags)
+          throw new Error(`entity '${entity.ownerId}' does not support tag mutations`);
+        return {
+          addEntityTags: entity.addEntityTags.bind(entity),
+          removeEntityTags: entity.removeEntityTags.bind(entity),
+        };
+      },
+      delegate,
+    );
     delegate = new HideUiOperationExecutor(
       this.ultimatePresentation,
       operatorId,
@@ -5867,6 +5885,13 @@ export class CombatRuntimeAssembly {
     );
   }
 
+  #operatorControlSwitchBlocker(operatorId: string, entering: boolean) {
+    return this.#options.skillAvailabilityTags?.getControlSwitchBlocker(
+      this.#resolveBuffTarget('caster', operatorId),
+      entering,
+    );
+  }
+
   /** 进入主控默认进入 Free；原生保留技能标签命中时才进入保留当前技能的 Skill 状态。 */
   #onOperatorControlChanged(operatorId: string, controlled: boolean): void {
     const ability = this.#requireAbilitySystem(operatorId);
@@ -6016,7 +6041,6 @@ export class CombatRuntimeAssembly {
             sourceId: runtimeTargetEntityId(source)!,
             targetId: input.operatorId,
             tags: [],
-            features: [],
           });
           const pending = ability.runtimeState.postSkillCastRequest;
           if (
@@ -6160,15 +6184,24 @@ export class CombatRuntimeAssembly {
 
   /** Selector 的 Buff/标签过滤共用原生部位 Buff 归属。 */
   #selectorBuffTarget(target: RuntimeTargetRef): BuffOperationTarget | undefined {
-    if (target.kind === 'spatialPoint') return undefined;
-    if (target.kind === 'abilityEntity') {
-      if (
-        !this.abilityEntities.isActive(target) &&
-        this.projectileLifetimes.findSource(target.instanceId) === undefined
-      )
-        return undefined;
-      target = this.abilityEntities.resolvePartBuffSource(target);
-    }
+    if (!this.#canResolveEntityTags(target)) return undefined;
+    return this.#entityTagTarget(
+      target.kind === 'abilityEntity' ? this.abilityEntities.resolvePartBuffSource(target) : target,
+    );
+  }
+
+  #canResolveEntityTags(target: RuntimeTargetRef): boolean {
+    return (
+      target.kind !== 'spatialPoint' &&
+      (target.kind !== 'abilityEntity' ||
+        this.abilityEntities.isActive(target) ||
+        this.projectileLifetimes.findSource(target.instanceId) !== undefined)
+    );
+  }
+
+  /** 直接标签动作修改所选实体，不把部位或能力实体改成其来源。 */
+  #entityTagTarget(target: RuntimeTargetRef): BuffOperationTarget | undefined {
+    if (!this.#canResolveEntityTags(target)) return undefined;
     const id = runtimeTargetEntityId(target);
     if (id === undefined) return undefined;
     return this.#resolveBuffTargetById(id);

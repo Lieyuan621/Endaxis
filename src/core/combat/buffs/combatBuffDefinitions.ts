@@ -37,11 +37,9 @@ import type {
   PoiseModifierDefinition,
 } from '../../../../packages/game-data-contract/src/modifiers';
 import {
-  DAMAGE_FEATURES,
   DAMAGE_TAGS,
   DAMAGE_TYPES,
   INFLICTION_ELEMENTS,
-  type DamageFeature,
   type DamageTag,
   type DamageType,
   type InflictionElement,
@@ -106,7 +104,6 @@ export interface CombatBuffDefinitionCompilerPorts<Key extends string> {
     readonly damageType: DamageType;
     readonly attackScale: number;
     readonly tags: readonly DamageTag[];
-    readonly features: readonly DamageFeature[];
     readonly canCritical: boolean;
     readonly sourceId: string;
     readonly skillCastInfo?: CombatSkillCastInfo;
@@ -1223,16 +1220,13 @@ function parseOptionalDefinitionActionList(
           'damageType',
           'attackScale',
           'tags',
-          'features',
+          'tags',
           'canCritical',
         ]);
         if (action.canCritical !== true && action.canCritical !== false) {
           throw new Error(`${actionPath}.canCritical: expected boolean`);
         }
         if (!Array.isArray(action.tags)) throw new Error(`${actionPath}.tags: expected array`);
-        if (!Array.isArray(action.features)) {
-          throw new Error(`${actionPath}.features: expected array`);
-        }
         return {
           kind: action.kind,
           damageType: requireEnum(action.damageType, DAMAGE_TYPES, `${actionPath}.damageType`),
@@ -1240,11 +1234,8 @@ function parseOptionalDefinitionActionList(
             action.attackScale,
             `${actionPath}.attackScale`,
           ),
-          tags: action.tags.map((tag, tagIndex) =>
-            requireEnum(tag, DAMAGE_TAGS, `${actionPath}.tags[${tagIndex}]`),
-          ),
-          features: action.features.map((feature, featureIndex) =>
-            requireEnum(feature, DAMAGE_FEATURES, `${actionPath}.features[${featureIndex}]`),
+          tags: action.tags.map((tag, index) =>
+            requireEnum(tag, DAMAGE_TAGS, `${actionPath}.tags[${index}]`),
           ),
           canCritical: action.canCritical,
         };
@@ -1570,8 +1561,7 @@ function compileDefinitionActionList<Key extends string>(
           onTriggered({
             damageType: action.damageType,
             attackScale: resolveBuffBlackboardOperand(buff, action.attackScale),
-            tags: action.tags,
-            features: action.features,
+            tags: action.tags ?? [],
             canCritical: action.canCritical,
             sourceId: buff.sourceId,
             buffId: buff.definition.id,

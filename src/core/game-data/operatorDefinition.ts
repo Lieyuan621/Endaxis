@@ -19,8 +19,6 @@ export {
   type ElementalReaction,
   DAMAGE_TAGS,
   type DamageTag,
-  DAMAGE_FEATURES,
-  type DamageFeature,
   SKILL_TYPES,
   type SkillType,
   OPERATION_TYPES,

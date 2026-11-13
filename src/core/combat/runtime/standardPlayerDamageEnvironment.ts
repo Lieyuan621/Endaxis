@@ -1,3 +1,4 @@
+import { isPhysicalInflictionDamage } from '../damage/damageDecorationGroups';
 import { RecoverPoiseOperationExecutor } from '../heal/recoverPoiseOperationExecutor';
 import type { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
 import type { EnemyLifecycle } from '../enemies/enemyLifecycle';
@@ -1864,8 +1865,7 @@ export class StandardPlayerDamageEnvironment {
       resolveNonRandomRuntimeSnapshot: step => ({
         runtimeExtensionMultiplier: 1,
         appliesIgniteDamageMultiplier: step.parameters.tags.includes('fireAbnormal'),
-        appliesPhysicalInflictionDamageMultiplier:
-          step.parameters.features?.includes('physicalInfliction') ?? false,
+        appliesPhysicalInflictionDamageMultiplier: isPhysicalInflictionDamage(step.parameters.tags),
       }),
       ...this.#damagePoisePorts(sourceId, panel, operatorBuffs),
       emitHealthSourceEvent: (event, payload) => this.#emit(sourceId, event, payload),
@@ -2076,8 +2076,7 @@ export class StandardPlayerDamageEnvironment {
       parameters: {
         damageType: payload.damageType,
         attackScale: payload.attackScale,
-        tags: payload.tags,
-        features: payload.features,
+        tags: payload.tags ?? [],
       },
     });
     if (applied === undefined) return;

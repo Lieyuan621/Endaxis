@@ -1,3 +1,4 @@
+import { prepareContractSources, verifyContractSources } from './contractSources.ts';
 import {
   GAME_LOCALE_FILES,
   GAME_LOCALE_REBUILD_OUTPUTS,
@@ -13,7 +14,7 @@ import {
   loadSourceCatalog,
   writeAtomicJson,
 } from './downloadGameDataSources.ts';
-import { DEFAULT_CDN, DEFAULT_VFS_BASE } from './gameDataProviders.ts';
+import { DEFAULT_CDN, DEFAULT_LOCAL_BASE, localResource, parseJson } from './gameDataProviders.ts';
 import { generateGearDefinitions } from './generateGearDefinitions.ts';
 import { exportGameplayTagConfigSet } from './exportGameplayTagConfigSet.ts';
 import { generateGameplayTagCatalog } from './generateGameplayTagCatalog.ts';
@@ -64,18 +65,18 @@ const CONTINGENCY_CONTRACT_OUTPUTS = [
 
 export interface RebuildArguments {
   /** 与来源同版本的字段/枚举目录；数字枚举只在读取视图中解码。 */
+  readonly contractValuesRoot?: string;
   readonly nativeJsonSchema?: string;
   readonly sourceRoot?: string;
   readonly version?: string;
   readonly cdn: string;
-  readonly vfsBase: string;
+  readonly localBase: string;
+  readonly sourceMode?: 'hybrid' | 'local-only';
   readonly workers: number;
   readonly tablesOnly: boolean;
   readonly publish: boolean;
   /** 保留已发布的合约定义、文本及图标，其余领域仍完整生成和验收。 */
   readonly skipContingencyContract?: boolean;
-  /** 显式本机 VFS 通用 worker，不执行 HTTP 响应中的命令。 */
-  readonly unityWorker?: string;
 }
 
 export const GAME_DATA_CANDIDATE_TSCONFIG = 'tsconfig.app.json';
@@ -204,6 +205,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
     : path.join(runRoot, 'sources');
   const sourceCatalogPath = path.join(root, 'tools/game-data-compiler/game-data-sources.json');
   const stages: RebuildStage[] = [];
+  let contractSources: Awaited<ReturnType<typeof prepareContractSources>>;
   let snapshot: Awaited<ReturnType<typeof verifyGameDataSnapshot>> | undefined;
   const stage = async (id: string, action: () => Promise<unknown>) => {
     try {
@@ -223,8 +225,9 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
     if (!args.sourceRoot) {
       await downloadGameDataSources({
         cdn: args.cdn,
-        vfsBase: args.vfsBase,
-        sourceMode: 'hybrid',
+        localBase: args.localBase,
+        sourceMode: args.sourceMode ?? 'hybrid',
+        localVersion: args.sourceMode === 'local-only' ? args.version : undefined,
         version: args.version ?? 'latest',
         sourceCatalog: sourceCatalogPath,
         output: sourceRoot,
@@ -250,7 +253,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
       detail: { missingInputs: missingRequestedInputs },
     });
     await stage('content-inventory', () => inspectSourceIdentities(sourceRoot, root));
-    if (args.tablesOnly || missingRequestedInputs.length !== 0 || !args.unityWorker) {
+    if (args.tablesOnly || missingRequestedInputs.length !== 0) {
       await stage('gears', async () => {
         const relativeOutput = 'src/data/equipment/generated';
         const generationArgs = {
@@ -281,7 +284,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
         };
       });
     }
-    if (!args.tablesOnly && missingRequestedInputs.length === 0 && args.unityWorker) {
+    if (!args.tablesOnly && missingRequestedInputs.length === 0) {
       const generateEnemies = () =>
         stage('enemies', async () => {
           const relativeOutput = 'src/data/enemies/generated';
@@ -289,9 +292,9 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
           try {
             const rankInput = {
               tablesDirectory: path.join(sourceRoot, 'TableCfg-current'),
-              unityWorker: args.unityWorker!,
               output: rankOutput,
-              vfsUrl: args.vfsBase.replace(/\/api\/endaxis-data\/?$/, ''),
+              localBase: args.localBase,
+              version: snapshot!.version,
               workers: Math.min(args.workers, 4),
             };
             const ranks = await extractEnemyRankEvidence(rankInput);
@@ -344,10 +347,9 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
       const tagsOkay = await stage('gameplay-tags', async () => {
         const exported = await exportGameplayTagConfigSet({
           output: tagRoot,
-          vfsBase: args.vfsBase,
+          localBase: args.localBase,
           cdn: args.cdn,
           version: snapshot!.version,
-          unityWorker: args.unityWorker!,
         });
         const input = {
           dump: exported.manifestPath,
@@ -404,26 +406,35 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
             }
             return { preserved: CONTINGENCY_CONTRACT_OUTPUTS, regenerated: false };
           }
+          contractSources = await prepareContractSources(
+            path.join(sourceRoot, 'TableCfg-current'),
+            path.join(runRoot, 'contract-values'),
+            args.cdn,
+            args.contractValuesRoot,
+          );
           const input = {
-            tableRoot: path.join(sourceRoot, 'TableCfg-current'),
+            tableRoot: contractSources?.localeRoot ?? path.join(sourceRoot, 'TableCfg-current'),
             revision: snapshot!.version,
             output: contingencyContractLocaleRoot,
             check: false,
           };
           const generated = await generateContingencyContractLocales(input);
           await generateContingencyContractLocales({ ...input, check: true });
-          contingencyContractGlobalBuffIds = generated.globalBuffIds;
+          contingencyContractGlobalBuffIds =
+            contractSources?.globalBuffIds ?? generated.globalBuffIds;
           return {
             ...generated,
+            supplementarySources: contractSources?.receipts,
             deterministicCheck: 'passed',
             note: 'termType 只按当前程序集显式枚举分类；目录尚不表示对应 Buff 已全部进入模拟。',
           };
         });
         const timeDilationOkay = await stage('time-dilation', async () => {
           const sourceUrl = await resolveNamedManifestAssetPreview(
-            args.vfsBase,
+            args.localBase,
             'timedilationconfig.asset',
             'assets/beyond/dynamicassets/gamedata/gameplayconfig/timedilationconfig.asset',
+            snapshot!.version,
           );
           const input = {
             sourceUrl,
@@ -442,9 +453,10 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
         });
         const battleCommandMappingOkay = await stage('battle-command-mapping', async () => {
           const sourceUrl = await resolveNamedManifestAssetPreview(
-            args.vfsBase,
+            args.localBase,
             'battlecommandmappingconfig.asset',
             'assets/beyond/dynamicassets/gamedata/gameplayconfig/battlecommandmappingconfig.asset',
+            snapshot!.version,
           );
           const input = { sourceUrl, output: battleCommandMappingCatalog, check: false };
           const generated = await generateBattleCommandMappingCatalog(input);
@@ -458,14 +470,16 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
         });
         const movementSettingOkay = await stage('movement-setting', async () => {
           const sourceUrl = await resolveNamedManifestAssetPreview(
-            args.vfsBase,
+            args.localBase,
             'movementsetting_default.asset',
             'assets/beyond/dynamicassets/gamedata/gameplayconfig/movementsetting/movementsetting_default.asset',
+            snapshot!.version,
           );
           const miscSourceUrl = await resolveNamedManifestAssetPreview(
-            args.vfsBase,
+            args.localBase,
             'gameplaymiscsetting.asset',
             'assets/beyond/dynamicassets/gamedata/gameplayconfig/gameplaymiscsetting.asset',
+            snapshot!.version,
           );
           const input = { sourceUrl, miscSourceUrl, output: movementSettingCatalog, check: false };
           const generated = await generateMovementSettingCatalog(input);
@@ -479,9 +493,10 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
         });
         const hitStopOkay = await stage('hit-stop', async () => {
           const sourceUrl = await resolveNamedManifestAssetPreview(
-            args.vfsBase,
+            args.localBase,
             'hitstopconfig.asset',
             'assets/beyond/dynamicassets/gamedata/gameplayconfig/hitstopconfig.asset',
+            snapshot!.version,
           );
           const input = { sourceUrl, output: hitStopCurveCatalog, check: false };
           const generated = await generateHitStopCurveCatalog(input);
@@ -495,9 +510,10 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
         });
         const skillSettingOkay = await stage('skill-setting', async () => {
           const sourceUrl = await resolveNamedManifestAssetPreview(
-            args.vfsBase,
+            args.localBase,
             'skillsetting.asset',
             'assets/beyond/dynamicassets/gamedata/gameplayconfig/skillsetting.asset',
+            snapshot!.version,
           );
           const input = {
             sourceUrl,
@@ -520,7 +536,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
             throw new Error('Contingency Contract catalog is unavailable');
           }
           const input = {
-            vfsBase: args.vfsBase,
+            localBase: args.localBase,
             revision: snapshot!.version,
             identities: path.join(
               root,
@@ -547,6 +563,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
             sourceRoot,
             'GameplayConfig/GameplayTagPredefineTable.json',
           ),
+          contractPeriods: contractSources?.periods,
           manifest: path.join(root, 'tools/game-data-compiler/config/operators.json'),
           sourceRoot,
           tableRoot: path.join(sourceRoot, 'TableCfg-current'),
@@ -651,7 +668,6 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
           const params = [
             path.join(sourceRoot, 'GameplayConfig/GameplayTagPredefineTable.json'),
             path.join(candidateRoot, 'src/data/combat/gameplayTagPredefine.generated.ts'),
-            snapshot!.version,
             tags,
           ] as const;
           const generated = await generateGameplayTagPredefine(...params);
@@ -697,18 +713,18 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
           await stage('icons', async () => ({
             ...(await exportReferencedGameIcons({
               workers: args.workers,
-              sourceMode: 'hybrid',
+              sourceMode: args.sourceMode ?? 'hybrid',
               cdn: args.cdn,
               overwrite: false,
               dryRun: false,
               prune: false,
-              vfsBaseUrl: args.vfsBase.replace(/\/api\/endaxis-data\/?$/, ''),
+              localBase: args.localBase,
               gameDataSourceRoot: sourceRoot,
               outputRoot: path.join(candidateRoot, 'public'),
               additionalReferenceRoots: [path.join(candidateRoot, 'src')],
               auditOutput: path.join(runRoot, 'audit', 'referenced-game-icons.json'),
             })),
-            note: '扫描正式运行源码与同批候选，向隔离 public 根只补缺漏；游戏图经 AKEDB 优先/VFS 补缺导出，项目占位图只复制并标记 kept-local。',
+            note: '扫描正式运行源码与同批候选，向隔离 public 根补齐图片；按来源模式读取 AKEDB 或 AKE 本地图片，项目占位图复制并标记 kept-local。',
           }));
         } else {
           for (const id of ['locales', 'icons'])
@@ -860,7 +876,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
       stages.push({
         id: 'gameplay-tags',
         status: 'blocked',
-        detail: '需要完整来源快照及显式 --unity-worker；不会使用旧标签目录。',
+        detail: '需要完整来源快照及 endaxis-data-tool 补充导出。',
       });
       stages.push({
         id: 'candidate-type-check',
@@ -890,7 +906,10 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
       );
       if (after.snapshotSha256 !== snapshot!.snapshotSha256)
         throw new Error('source snapshot changed during generation');
-      return { snapshotSha256: after.snapshotSha256 };
+      const contracts = contractSources
+        ? await verifyContractSources(path.join(runRoot, 'contract-values'))
+        : undefined;
+      return { snapshotSha256: after.snapshotSha256, contracts };
     });
   } else {
     for (const id of ['content-inventory', 'gears']) {
@@ -940,7 +959,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
             sha256: createHash('sha256').update(schemaText).digest('hex'),
           },
         }),
-    sourcePolicy: 'akedb-primary-vfs-fallback',
+    sourcePolicy: args.sourceMode === 'local-only' ? 'local-only' : 'akedb-primary-local-fallback',
     fullRebuild: published && !args.skipContingencyContract,
     published,
     preservedOutputs: args.skipContingencyContract ? CONTINGENCY_CONTRACT_OUTPUTS : [],
@@ -1187,12 +1206,13 @@ export function parseRebuildArguments(values: readonly string[]): RebuildArgumen
   let skipContingencyContract = false;
   const allowed = new Set([
     '--native-json-schema',
+    '--contract-values-root',
     '--source-root',
     '--version',
     '--cdn',
-    '--vfs-base',
+    '--local-base',
+    '--source-mode',
     '--workers',
-    '--unity-worker',
   ]);
   for (let i = 0; i < values.length; i++) {
     const flag = values[i]!;
@@ -1215,10 +1235,16 @@ export function parseRebuildArguments(values: readonly string[]): RebuildArgumen
     entries.set(flag, value);
   }
   const workers = Number(entries.get('--workers') ?? 6);
+  const sourceMode = entries.get('--source-mode') ?? 'hybrid';
+  if (sourceMode !== 'hybrid' && sourceMode !== 'local-only')
+    throw new Error('invalid source mode');
   if (!Number.isInteger(workers) || workers <= 0)
     throw new Error('--workers: expected positive integer');
   if (tablesOnly && publish) throw new Error('--publish cannot be combined with --tables-only');
   return {
+    ...(entries.has('--contract-values-root')
+      ? { contractValuesRoot: path.resolve(entries.get('--contract-values-root')!) }
+      : {}),
     ...(entries.has('--native-json-schema')
       ? { nativeJsonSchema: path.resolve(entries.get('--native-json-schema')!) }
       : {}),
@@ -1227,33 +1253,28 @@ export function parseRebuildArguments(values: readonly string[]): RebuildArgumen
       : {}),
     ...(entries.has('--version') ? { version: entries.get('--version')! } : {}),
     cdn: entries.get('--cdn') ?? DEFAULT_CDN,
-    vfsBase: entries.get('--vfs-base') ?? DEFAULT_VFS_BASE,
+    localBase: entries.get('--local-base') ?? DEFAULT_LOCAL_BASE,
+    ...(entries.has('--source-mode') ? { sourceMode } : {}),
     workers,
     tablesOnly,
     publish,
     skipContingencyContract,
-    ...(entries.has('--unity-worker')
-      ? { unityWorker: path.resolve(entries.get('--unity-worker')!) }
-      : {}),
   };
 }
 
 async function resolveNamedManifestAssetPreview(
-  vfsBase: string,
+  localBase: string,
   name: string,
   expectedPath: string,
+  version: string,
 ): Promise<string> {
-  const endpoint = new URL('/api/manifest-assets/by-name', vfsBase);
-  endpoint.searchParams.set('name', name);
-  const response = await fetch(endpoint);
-  if (!response.ok) throw new Error(`${endpoint}: HTTP ${response.status}`);
-  const document = (await response.json()) as {
-    candidates?: readonly { path?: unknown; previewUrl?: unknown }[];
-  };
-  const matches = (document.candidates ?? []).filter(item => item.path === expectedPath);
-  if (matches.length !== 1 || typeof matches[0]!.previewUrl !== 'string')
-    throw new Error(`${endpoint}: expected exactly one ${expectedPath}`);
-  return new URL(matches[0]!.previewUrl, vfsBase).href;
+  const file = name.replace(/\.asset$/, '.json');
+  const endpoint = new URL('NativeConfig/' + file, localBase.replace(/\/?$/, '/'));
+  const resource = await localResource(localBase, 'NativeConfig/' + file, version);
+  const document = parseJson(resource.content) as { asset?: { Container?: unknown } };
+  if (document.asset?.Container !== expectedPath)
+    throw new Error(endpoint + ': unexpected native configuration identity');
+  return endpoint.href;
 }
 
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {

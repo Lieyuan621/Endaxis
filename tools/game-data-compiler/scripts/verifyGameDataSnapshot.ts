@@ -4,18 +4,26 @@ import path from 'node:path';
 import { runConcurrent, type GameDataSourceCatalog } from './downloadGameDataSources.ts';
 import { requireArray, requireNonEmptyString, requireRecord } from '../src/source/primitives.ts';
 
-/** 只核对输入身份/完整性，不据此声明 AKEDB 与 VFS 来自同一客户端版本。 */
+/** 核对输入身份和完整性；来源版本声明由调用者提供。 */
 export async function verifyGameDataSnapshot(root: string, catalog: GameDataSourceCatalog) {
   if ((await fs.lstat(root)).isSymbolicLink()) throw new Error('snapshot root is a link');
   const ledger = requireRecord(
     JSON.parse(await fs.readFile(path.join(root, 'source-provenance.json'), 'utf8')),
     'source-provenance',
   );
-  if (ledger.schemaVersion !== 2 || ledger.mode !== 'hybrid') {
-    throw new Error('rebuild requires a schemaVersion=2 hybrid snapshot (AKEDB primary)');
+  if (ledger.schemaVersion !== 2 || (ledger.mode !== 'hybrid' && ledger.mode !== 'local-only')) {
+    throw new Error('rebuild requires a schemaVersion=2 hybrid or local-only snapshot');
   }
-  const akedb = requireRecord(ledger.akedb, 'source-provenance.akedb');
-  const version = requireNonEmptyString(akedb.version, 'source-provenance.akedb.version');
+  const version =
+    ledger.mode === 'hybrid'
+      ? requireNonEmptyString(
+          requireRecord(ledger.akedb, 'source-provenance.akedb').version,
+          'source-provenance.akedb.version',
+        )
+      : requireNonEmptyString(
+          requireRecord(ledger.vfs, 'source-provenance.vfs').declaredVersion,
+          'source-provenance.vfs.declaredVersion',
+        );
   const byPath = new Map<string, { sha256: string; byteLength: number; provider: string }>();
   const entries = requireArray(ledger.entries, 'source-provenance.entries');
   const relativeFiles = new Map<string, string>();
@@ -52,23 +60,34 @@ export async function verifyGameDataSnapshot(root: string, catalog: GameDataSour
     ) {
       throw new Error(`invalid source integrity record: ${logicalPath}`);
     }
-    if (entry.provider !== 'akedb' && entry.provider !== 'vfs-index-browser') {
+    if (
+      entry.provider !== 'akedb' &&
+      entry.provider !== 'ake-data-tool' &&
+      entry.provider !== 'vfs-index-browser' &&
+      entry.provider !== 'endaxis-data-tool'
+    ) {
       throw new Error(`unknown source provider: ${logicalPath}`);
     }
     if (
       (collection === 'BuffData' || collection === 'SpawnerConfig') &&
-      entry.provider !== 'akedb'
+      entry.provider !== 'akedb' &&
+      entry.provider !== 'ake-data-tool'
     ) {
       throw new Error(`${collection} must come from AKEDB: ${logicalPath}`);
     }
     if (
-      entry.provider === 'vfs-index-browser' &&
+      ledger.mode === 'hybrid' &&
+      (entry.provider === 'vfs-index-browser' ||
+        entry.provider === 'endaxis-data-tool' ||
+        entry.provider === 'ake-data-tool') &&
       entry.fallbackReason !== 'not-in-akedb-index' &&
       entry.fallbackReason !== 'akedb-http-404' &&
       entry.fallbackReason !== 'akedb-missing-required-field'
     ) {
       throw new Error(`VFS source lacks a hybrid fallback reason: ${logicalPath}`);
     }
+    if (ledger.mode === 'local-only' && (entry.provider === 'akedb' || entry.version !== version))
+      throw new Error(`local source version/provider mismatch: ${logicalPath}`);
     const relativeFile = directory ? `${directory}/${file}` : logicalPath;
     if (destinations.has(relativeFile)) {
       throw new Error(`duplicate source destination: ${relativeFile}`);
@@ -134,9 +153,14 @@ export async function verifyGameDataSnapshot(root: string, catalog: GameDataSour
     resourceCount: byPath.size,
     providerCounts: {
       akedb: ordered.filter(([, entry]) => entry.provider === 'akedb').length,
-      vfs: ordered.filter(([, entry]) => entry.provider === 'vfs-index-browser').length,
+      vfs: ordered.filter(
+        ([, entry]) =>
+          entry.provider === 'vfs-index-browser' ||
+          entry.provider === 'endaxis-data-tool' ||
+          entry.provider === 'ake-data-tool',
+      ).length,
     },
-    vfsVersionVerified: false as const,
+    localVersionVerified: false as const,
     missingInputs,
     logicalPaths: [...byPath.keys()].sort(),
   };

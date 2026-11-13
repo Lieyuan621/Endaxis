@@ -32,7 +32,7 @@ import {
  * 该执行器只读取当前调用的事件或伤害、治疗、失衡修正临时上下文，不持有事件实例。
  * 技能临时监听器、常驻监听器与同步伤害条件共用；普通技能步骤误用事件条件时会明确失败。
  */
-import type { DamageFeature, DamageTag } from '../../game-data/operatorDefinition';
+import type { DamageTag } from '../../game-data/operatorDefinition';
 import { compareCombatNumbers } from '../../math/combatNumbers.ts';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
 import { NATIVE_ELEMENT_VALUES, spellBurstElement } from '../infliction/elementalInfliction';
@@ -217,8 +217,7 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       if (
         condition.kind === 'eventDamageTypeIn' ||
         condition.kind === 'eventDamageTagsMatch' ||
-        condition.kind === 'eventDamageGameplayTagsMatch' ||
-        condition.kind === 'eventDamageFeaturesMatch'
+        condition.kind === 'eventDamageGameplayTagsMatch'
       ) {
         return matchDamageCondition(condition, modifier);
       }
@@ -229,15 +228,12 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
     if (modifierContext?.kind === 'poise') {
       if (condition.kind === 'eventDamageTagsMatch')
         return matchValues(modifierContext.input.tags, condition.tags, condition.match);
-      if (condition.kind === 'eventDamageFeaturesMatch')
-        return matchValues(modifierContext.input.features, condition.features, condition.match);
     }
     // 原生检查遇到其他修正上下文时返回 false，不读取外层事件或中止模拟。
     if (
       modifierContext !== undefined &&
       (condition.kind === 'eventDamageTypeIn' ||
         condition.kind === 'eventDamageTagsMatch' ||
-        condition.kind === 'eventDamageFeaturesMatch' ||
         condition.kind === 'eventDamageGameplayTagsMatch' ||
         condition.kind === 'eventHealTagsMatch' ||
         condition.kind === 'eventSkillCastMatchesBuffSource')
@@ -246,7 +242,6 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
     if (
       condition.kind !== 'eventDamageTagsMatch' &&
       condition.kind !== 'eventDamageGameplayTagsMatch' &&
-      condition.kind !== 'eventDamageFeaturesMatch' &&
       condition.kind !== 'eventDamageTypeIn' &&
       condition.kind !== 'eventInflictionElementIn' &&
       condition.kind !== 'eventPhysicalInflictionTypeIn' &&
@@ -561,11 +556,7 @@ function matchDamageCondition(
   condition: Extract<
     CompiledCondition,
     {
-      kind:
-        | 'eventDamageTypeIn'
-        | 'eventDamageTagsMatch'
-        | 'eventDamageGameplayTagsMatch'
-        | 'eventDamageFeaturesMatch';
+      kind: 'eventDamageTypeIn' | 'eventDamageTagsMatch' | 'eventDamageGameplayTagsMatch';
     }
   >,
   damage: NonNullable<ReturnType<typeof eventDamageProperties>>,
@@ -579,9 +570,7 @@ function matchDamageCondition(
       tags !== undefined && tags.length > 0 && matchValues(tags, condition.tags, condition.match)
     );
   }
-  return condition.kind === 'eventDamageTagsMatch'
-    ? matchValues(damage.tags, condition.tags, condition.match)
-    : matchValues(damage.features, condition.features, condition.match);
+  return matchValues(damage.tags, condition.tags, condition.match);
 }
 
 /** 只读取现有事件中的 Buff 数据，不重建或规范化通知对象。 */
@@ -593,7 +582,6 @@ function eventBuffData(event: NonNullable<CombatOperationContext['event']>) {
 function eventDamageProperties(event: NonNullable<CombatOperationContext['event']>): {
   readonly tags: readonly DamageTag[];
   readonly gameplayTags?: readonly GameplayTag[];
-  readonly features: readonly DamageFeature[];
   readonly damageType?: DamageType;
 } | null {
   if ('event' in event && event.event === 'afterKillEntity') return event.payload;

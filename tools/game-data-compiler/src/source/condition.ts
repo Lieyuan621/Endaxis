@@ -9,7 +9,6 @@ import {
   requireExactFields,
   requireInteger,
   requireNonEmptyString,
-  requireNonNegativeInteger,
   requireNumber,
   requireRecord,
   requireString,
@@ -1149,7 +1148,7 @@ export function parseConditionLeafSource(
         kind: 'damageDecorateMask',
         sourceType,
         checkType: readDamageDecorateMaskCheckType(condition.checkType, `${path}.checkType`),
-        mask: requireNonNegativeInteger(condition.mask, `${path}.mask`),
+        mask: requireInteger(condition.mask, `${path}.mask`),
       };
     case 'CheckDamageTag':
       requireExactFields(

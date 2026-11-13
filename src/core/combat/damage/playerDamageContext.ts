@@ -19,12 +19,7 @@ export {
  * 单次玩家伤害包跨原生处理阶段传递的唯一上下文。
  * 每次命中都应新建实例；处理器只能在自己的阶段修改允许的字段。
  */
-import type {
-  DamageFeature,
-  DamageTag,
-  DamageType,
-  SkillType,
-} from '../../game-data/operatorDefinition';
+import type { DamageTag, DamageType, SkillType } from '../../game-data/operatorDefinition';
 import type {
   AttributeModifierTiming,
   AttributeModifierValues,
@@ -83,7 +78,6 @@ interface PlayerDamageContextInput {
   readonly targetHealthType: DamageTargetHealthType;
   readonly tags?: readonly DamageTag[];
   readonly gameplayTags?: readonly GameplayTag[];
-  readonly features?: readonly DamageFeature[];
   readonly skillCastId?: number;
   readonly skillCastInfo?: CombatSkillCastInfo | null;
   readonly skillId?: string;
@@ -101,7 +95,6 @@ export class PlayerDamageContext {
   readonly targetHealthType: DamageTargetHealthType;
   readonly tags: readonly DamageTag[];
   readonly gameplayTags: readonly GameplayTag[];
-  readonly features: readonly DamageFeature[];
   readonly skillCastId: number | null;
   readonly skillCastInfo: CombatSkillCastInfo | null | undefined;
   readonly skillId?: string;
@@ -125,7 +118,6 @@ export class PlayerDamageContext {
     this.targetHealthType = input.targetHealthType;
     this.tags = input.tags ?? [];
     this.gameplayTags = input.gameplayTags ?? [];
-    this.features = input.features ?? [];
     this.skillCastId = input.skillCastId ?? null;
     this.skillCastInfo = input.skillCastInfo;
     this.skillId = input.skillId;

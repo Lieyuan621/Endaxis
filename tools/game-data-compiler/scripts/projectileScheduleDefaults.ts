@@ -10,7 +10,7 @@ import {
 } from '../src/compiler/abilities/projectileScheduleConfiguration.ts';
 import type { ProjectileLaunchActionSource } from '../src/source/referenceActions.ts';
 
-/** 可选时延覆盖；未配置时由投影器将启用回调设为发射当刻执行。 */
+/** 具体发射覆盖优先于资源预设；每个保留的发射必须显式配置时间表。 */
 export function configuredProjectileSchedule(
   launch: Pick<ProjectileLaunchActionSource, 'projectileId' | 'serverActionIndex'>,
   sourcePath: string,
@@ -24,7 +24,10 @@ export function configuredProjectileSchedule(
       return resolveProjectileScheduleConfiguration(projectileSchedules, key);
   }
   const preset = projectileSchedulePresets[launch.projectileId];
-  if (!preset) return undefined;
+  if (!preset)
+    throw new Error(
+      `${sourcePath}: missing projectile callback schedule for ${launch.projectileId} (serverActionIndex=${launch.serverActionIndex})`,
+    );
   const callbacks = events.map(event => {
     const triggerFrames = preset.callbacks[event];
     if (!triggerFrames)

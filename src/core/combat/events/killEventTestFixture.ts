@@ -8,8 +8,7 @@ export function createKillEvent(sourceId = 'operator'): CombatAbilityEvent<'afte
       sourceId,
       targetId: 'enemy',
       damageType: 'physical',
-      tags: ['comboSkill'],
-      features: ['canBreakWeakness'],
+      tags: ['comboSkill', 'canBreakWeakness'],
       skillCastInfo: null,
       result: {
         value: 100,

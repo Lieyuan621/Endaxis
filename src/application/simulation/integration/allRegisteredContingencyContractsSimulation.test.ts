@@ -348,7 +348,7 @@ describe('危机合约生效词条的开局装配', () => {
       expect.objectContaining({
         buffId: 'buff_cc_chr_disable_normal_skill',
         targetId: 'track:0',
-        icon: 'endaxis:contingency_contract/2/silence',
+        icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key1',
         showInSquadIcon: true,
       }),
     );
@@ -362,7 +362,7 @@ describe('危机合约生效词条的开局装配', () => {
     );
     expect(locks.map(segment => segment.targetId).sort()).toEqual(['track:0', 'track:1']);
     for (const lock of locks) {
-      expect(lock.icon).toBe('endaxis:contingency_contract/2/lockdown');
+      expect(lock.icon).toBe('endaxis:contingency_contract/2/icon_activity_contract_1_tag_key3');
       expect(lock.showInSquadIcon).toBe(true);
       expect(lock.endFrame).toBeGreaterThan(lock.startFrame);
     }

@@ -46,6 +46,16 @@ export class GameplayTagPredefine {
     return query;
   }
 
+  /** CheckCanSwitchCenter 的实体标签检查；是否忽略当前主控由切换入口决定。 */
+  getControlSwitchBlocker(
+    entity: Pick<EntityTags, 'matchesEntityTags'>,
+    entering: boolean,
+  ): 'CantSwitchToCenter' | 'CantMainCharSwitched' | undefined {
+    const name = entering ? 'CantSwitchToCenter' : 'CantMainCharSwitched';
+    const query = this.getQuery(name);
+    return entity.matchesEntityTags(query.tags, query.queryType) ? name : undefined;
+  }
+
   /** Skill.CheckTag 的公共前缀；类型专用检查不在此冒充完成。 */
   getCommonSkillCastBlocker(
     entity: Pick<EntityTags, 'matchesEntityTags'>,

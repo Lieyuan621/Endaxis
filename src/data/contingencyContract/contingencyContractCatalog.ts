@@ -4,7 +4,7 @@ import {
   contingencyContractOmittedTagReasons,
   contingencyContractTagDefinitions,
   contingencyContractInitializationPlans,
-} from './generated/contingencyContractDefinitions.generated';
+} from './generated/contingencyContract.indie_contract001.generated';
 import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from './contingencyContractAdapter';
 import {
   contingencyContractTagDefinitions as seasonTwoTags,

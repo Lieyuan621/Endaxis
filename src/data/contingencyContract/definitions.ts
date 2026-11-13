@@ -2,7 +2,7 @@ import { commonBuffDefinitions } from '../buffs/commonDefinitions';
 import {
   contingencyContractBuffDefinitions as generatedBuffs,
   contingencyContractInitializationPlans as generatedPlans,
-} from './generated/contingencyContractDefinitions.generated';
+} from './generated/contingencyContract.indie_contract001.generated';
 import {
   contingencyContractBuffDefinitions as seasonTwoBuffs,
   contingencyContractInitializationPlans as seasonTwoPlans,

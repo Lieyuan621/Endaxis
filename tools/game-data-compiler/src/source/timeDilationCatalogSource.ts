@@ -187,7 +187,6 @@ export function renderTimeDilationCatalogModule(
   }
   const encoded = encode({ priorities, slots, curves: source.curves, slotSpecialConfigs });
   return `/** 由当前版本 TimeDilationConfig TypeTree dump 与同批 GameplayTag 目录生成；不要手工编辑。
- * Source SHA-256: ${source.sha256}
  */
 import type { TimeScaleCurveKeyDefinition } from '../../core/game-data/operatorDefinition';
 import type { TimeDilationPriorityDefinition, TimeDilationSlotDefinition, TimeDilationSlotSpecialConfigDefinition } from './timeDilationCatalog';

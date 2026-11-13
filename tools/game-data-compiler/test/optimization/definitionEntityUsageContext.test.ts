@@ -892,7 +892,6 @@ describe('跨技能黑板用途', () => {
                     damageType: 'physical',
                     attackScale: { blackboardKey: 'systemValue' },
                     tags: [],
-                    features: [],
                     canCritical: false,
                   },
                 ],

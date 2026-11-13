@@ -31,7 +31,7 @@ const commonBuff_buff_cc02_eny_numshield$actionGraph = {
         expression: {
           kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          tags: ['normalAttackLastCombo', 'normalSkill', 'ultimateSkill', 'comboSkill'],
+          tags: ['normalSkill', 'ultimateSkill', 'comboSkill', 'normalAttackLastCombo'],
         },
       },
       data_2: {
@@ -50,7 +50,7 @@ const commonBuff_buff_cc02_eny_numshield: SkillBuffDefinition = {
   durationSeconds: -1,
   applyTags: ['Visual/ShowHPBar/ShowWhenFullHp', 'Visual/ShowHPBar/HideLevel', 'Immune/Damage'],
   extendTags: [],
-  blackboard: { behit: 0, shield_num: 1, shield_num_max: 2 },
+  blackboard: {},
   attributeModifiers: [],
   damageModifiers: [
     {
@@ -258,7 +258,7 @@ const commonBuff_buff_cc_chr_combo_lock_instance: SkillBuffDefinition = {
     visible: true,
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
-    icon: 'endaxis:contingency_contract/2/lockdown',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key3',
     showInSquadIcon: true,
     nameKey: 'contingencyContract.buffs.comboLock',
   },
@@ -415,7 +415,7 @@ const commonBuff_buff_cc_chr_combo_skill_cost_atb: SkillBuffDefinition = {
   maxStackCount: 1,
   applyTags: [],
   extendTags: [],
-  blackboard: { atb: 25, rate: 0 },
+  blackboard: { atb: 25 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'applyBuff_1' }] },
   abilityEventResponses: [
@@ -1157,7 +1157,7 @@ const commonBuff_buff_cc_chr_disable_normal_skill: SkillBuffDefinition = {
     visible: true,
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
-    icon: 'endaxis:contingency_contract/2/silence',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key1',
     showInSquadIcon: true,
     nameKey: 'contingencyContract.buffs.battleLock',
   },
@@ -1564,7 +1564,7 @@ const commonBuff_buff_cc_chr_no_lastcombo_weak$actionGraph = {
         expression: {
           kind: 'eventDamageTagsMatch',
           match: 'hasAny',
-          tags: ['normalAttackLastCombo', 'powerAttack'],
+          tags: ['powerAttack', 'normalAttackLastCombo'],
         },
       },
       data_3: {
@@ -3750,7 +3750,7 @@ const commonBuff_buff_common_enemy_numshield_zero: SkillBuffDefinition = {
   maxStackCount: 0,
   applyTags: [],
   extendTags: [],
-  blackboard: { offset_x: 0, offset_y: 0 },
+  blackboard: {},
   attributeModifiers: [],
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_1' } },
@@ -3825,7 +3825,7 @@ const commonBuff_buff_common_mini_poise_break_babyents: SkillBuffDefinition = {
   maxTriggerCount: 1,
   applyTags: [],
   extendTags: [],
-  blackboard: { poise_value: 0 },
+  blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { trigger: [{ $sequence: 'startTimeDilation_1' }] },
   actionGraph: commonBuff_buff_common_mini_poise_break_babyents$actionGraph,
@@ -3850,7 +3850,7 @@ const commonBuff_buff_common_obtain_ultimate_sp: SkillBuffDefinition = {
   durationSeconds: 1,
   applyTags: [],
   extendTags: [],
-  blackboard: { ratio: 1, usp_everyone: 6.5, usp_self: 0 },
+  blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'gainSquadUltimateEnergyFromSkillCost_1' }] },
   actionGraph: commonBuff_buff_common_obtain_ultimate_sp$actionGraph,
@@ -5144,4 +5144,3 @@ export const contingencyContractOmittedTagReasons = Object.freeze({
   '113802': '关卡挑战倒计时不参与伤害模拟',
   '113803': '关卡挑战倒计时不参与伤害模拟',
 }) as Readonly<Record<number, string>>;
-export const contingencyContractDefinitionRevision = 'indie_contract002';

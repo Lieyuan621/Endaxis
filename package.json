@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "download:game-data:sources": "node --experimental-strip-types tools/game-data-compiler/scripts/downloadGameDataSources.ts",
     "rebuild:game-data": "node --experimental-strip-types tools/game-data-compiler/scripts/rebuildGameData.ts",
+    "rebuild:game-data:local": "node --experimental-strip-types tools/game-data-compiler/scripts/rebuildLocalGameData.ts",
     "convert:legacy-timeline": "node --experimental-strip-types tools/legacy-timeline/cli.ts",
     "generate:game-data:operator-active-skill": "node --experimental-strip-types tools/game-data-compiler/scripts/generateOperatorActiveSkillRuntime.ts",
     "generate:game-data:operator-active-skills": "node --experimental-strip-types tools/game-data-compiler/scripts/generateOperatorActiveSkillRuntimeBatch.ts",

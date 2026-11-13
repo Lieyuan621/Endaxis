@@ -1,5 +1,4 @@
 /** 由当前版本 TimeDilationConfig TypeTree dump 与同批 GameplayTag 目录生成；不要手工编辑。
- * Source SHA-256: db931557146d6250c646817f38db53974be8887fe0bcd8796c7d858cf7d2a936
  */
 import type { TimeScaleCurveKeyDefinition } from '../../core/game-data/operatorDefinition';
 import type {

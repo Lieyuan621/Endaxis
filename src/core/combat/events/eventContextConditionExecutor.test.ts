@@ -123,7 +123,6 @@ describe('EventContextConditionExecutor', () => {
           skillCastId,
           damageType: 'physical' as const,
           tags: [],
-          features: [],
         },
       },
       hasCurrentBuffDamageSkillCastId: (id: number) => ids.has(id),
@@ -363,7 +362,6 @@ describe('EventContextConditionExecutor', () => {
       skillCastId: null,
       damageType: 'physical' as const,
       tags: [],
-      features: [],
       gameplayTags: [] as string[],
     };
     const context = {
@@ -519,7 +517,6 @@ describe('EventContextConditionExecutor', () => {
           targetId: 'old',
           damageType: 'heat' as const,
           tags: ['ultimateSkill'] as const,
-          features: [],
         },
       },
       modifierContext: {
@@ -530,9 +527,8 @@ describe('EventContextConditionExecutor', () => {
           targetId: 'enemy',
           skillCastId: 42,
           damageType: 'physical' as const,
-          tags: ['normalSkill'] as const,
+          tags: ['normalSkill', 'dot'] as const,
           gameplayTags: ['Damage/TyphoeaSkill/FloatingHit_Weak'] as const,
-          features: ['dot'] as const,
         },
       },
     };
@@ -555,10 +551,7 @@ describe('EventContextConditionExecutor', () => {
       ),
     ).toBe(false);
     expect(
-      executor.evaluate(
-        { kind: 'eventDamageFeaturesMatch', match: 'hasAll', features: ['dot'] },
-        context,
-      ),
+      executor.evaluate({ kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['dot'] }, context),
     ).toBe(true);
     expect(
       executor.evaluate(
@@ -693,7 +686,6 @@ describe('EventContextConditionExecutor', () => {
           sourceId: 'operator',
           targetId: 'enemy',
           tags: ['normalSkill'] as const,
-          features: [],
         },
       },
     };
@@ -906,7 +898,6 @@ describe('EventContextConditionExecutor', () => {
             targetId: 'operator',
             damageType: 'heat',
             tags: [],
-            features: [],
           },
         },
       }),
@@ -921,7 +912,6 @@ describe('EventContextConditionExecutor', () => {
             sourceId: 'enemy',
             targetId: 'operator',
             tags: [],
-            features: [],
           },
         },
       }),
@@ -1043,7 +1033,8 @@ describe('EventContextConditionExecutor', () => {
   });
 
   it.each([
-    ['exact', ['comboSkill'], true],
+    ['exact', ['comboSkill'], false],
+    ['exact', ['comboSkill', 'canBreakWeakness'], true],
     ['exact', ['comboSkill', 'powerAttack'], false],
     ['hasAny', ['normalSkill', 'comboSkill'], true],
     ['hasAll', ['comboSkill', 'powerAttack'], false],
@@ -1089,14 +1080,14 @@ describe('EventContextConditionExecutor', () => {
     ).toBe(false);
   });
 
-  it('evaluates damage features independently from skill tags', () => {
+  it('evaluates damage tags independently from skill tags', () => {
     const executor = new EventContextConditionExecutor(terminal);
     expect(
       executor.evaluate(
         {
-          kind: 'eventDamageFeaturesMatch',
+          kind: 'eventDamageTagsMatch',
           match: 'hasAll',
-          features: ['airborne', 'canBreakWeakness'],
+          tags: ['airborne', 'canBreakWeakness'],
         },
         {
           blackboard: new ActionBlackboard(),
@@ -1106,8 +1097,7 @@ describe('EventContextConditionExecutor', () => {
               external: true,
               sourceId: 'enemy',
               targetId: 'operator',
-              tags: ['ultimateSkill'],
-              features: ['airborne', 'canBreakWeakness'],
+              tags: ['ultimateSkill', 'airborne', 'canBreakWeakness'],
             },
           },
         },

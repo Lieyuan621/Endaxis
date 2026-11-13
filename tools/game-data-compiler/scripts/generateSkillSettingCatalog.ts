@@ -37,10 +37,7 @@ export async function generateSkillSettingCatalog(args: {
   const runtimeContent =
     args.runtimeOutput === undefined
       ? undefined
-      : await formatGeneratedSource(
-          renderRuntimeSkillSettings(source, args.revision),
-          args.runtimeOutput,
-        );
+      : await formatGeneratedSource(renderRuntimeSkillSettings(source), args.runtimeOutput);
   if (args.check) {
     if ((await fs.readFile(args.output, 'utf8')).replaceAll('\r\n', '\n') !== content)
       throw new Error(`${args.output}: generated SkillSetting catalog is stale`);
@@ -79,7 +76,6 @@ const RUNTIME_SETTING_KEYS = [
 
 function renderRuntimeSkillSettings(
   source: ReturnType<typeof parseSkillSettingDumpSource>,
-  revision: string,
 ): string {
   const data = RUNTIME_SETTING_KEYS.map(key => {
     const entry = source.data.find(candidate => candidate.key === key);
@@ -106,7 +102,7 @@ function renderRuntimeSkillSettings(
     });
   const document = {
     schemaVersion: 1,
-    revision,
+    revision: 'builtin',
     data,
     enhanceFormulas,
     resources: source.resources,

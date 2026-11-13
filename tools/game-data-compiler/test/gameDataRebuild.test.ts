@@ -12,6 +12,10 @@ import {
 import { verifyGameDataSnapshot } from '../scripts/verifyGameDataSnapshot.ts';
 
 const roots: string[] = [];
+it('支持完全本地来源，并拒绝未知来源模式', () => {
+  expect(parseRebuildArguments(['--source-mode', 'local-only']).sourceMode).toBe('local-only');
+  expect(() => parseRebuildArguments(['--source-mode', 'other'])).toThrow('invalid source mode');
+});
 afterEach(async () => {
   vi.unstubAllGlobals();
   for (const root of roots.splice(0)) await fs.rm(root, { recursive: true, force: true });
@@ -74,6 +78,26 @@ async function setup() {
 }
 
 describe('从无产物工作树重建装备候选', () => {
+  it('纯本地快照校验来源版本并拒绝混入线上数据', async () => {
+    const { sourceRoot, catalog, ledger, ledgerPath } = await setup();
+    const local = {
+      ...ledger,
+      mode: 'local-only',
+      akedb: null,
+      vfs: { declaredVersion: 'test@1' },
+      entries: ledger.entries.map(entry => ({ ...entry, provider: 'ake-data-tool' })),
+    };
+    await json(ledgerPath, local);
+    expect(await verifyGameDataSnapshot(sourceRoot, catalog)).toMatchObject({
+      version: 'test@1',
+      providerCounts: { akedb: 0, vfs: 5 },
+    });
+    local.entries[0]!.version = 'other';
+    await json(ledgerPath, local);
+    await expect(verifyGameDataSnapshot(sourceRoot, catalog)).rejects.toThrow(
+      'local source version/provider mismatch',
+    );
+  });
   it('发布必须显式开启，不能与部分重建同时使用，也不能指定正式输出路径', () => {
     expect(() => parseRebuildArguments(['--publish', '--tables-only'])).toThrow();
     expect(() => parseRebuildArguments(['--output', 'src'])).toThrow();
@@ -177,7 +201,7 @@ describe('从无产物工作树重建装备候选', () => {
       status: 'failed',
       detail: expect.stringContaining('does not match'),
     });
-    await json(ledgerPath, { ...ledger, mode: 'vfs-only' });
+    await json(ledgerPath, { ...ledger, mode: 'local-only' });
     result = await rebuildGameData(parseRebuildArguments(['--source-root', sourceRoot]), root);
     expect(result.exitCode).toBe(1);
     expect(result.report.stages.find(s => s.id === 'gears')?.status).toBe('blocked');
@@ -242,7 +266,7 @@ describe('本地来源快照重新核验', () => {
     await json(path.join(sourceRoot, logicalPath), {});
     ledger.entries.push({
       logicalPath,
-      provider: 'vfs-index-browser',
+      provider: 'endaxis-data-tool',
       version: 'unknown',
       byteLength: 2,
       sha256: hash('{}'),
@@ -289,7 +313,7 @@ describe('本地来源快照重新核验', () => {
       missingInputs: [],
       resourceCount: 6,
     });
-    entry.provider = 'vfs-index-browser';
+    entry.provider = 'endaxis-data-tool';
     await json(ledgerPath, ledger);
     await expect(verifyGameDataSnapshot(sourceRoot, completeCatalog)).rejects.toThrow(
       'SpawnerConfig must come from AKEDB',
@@ -302,7 +326,7 @@ describe('本地来源快照重新核验', () => {
       resourceCount: 5,
       providerCounts: { akedb: 5, vfs: 0 },
       missingInputs: ['SkillData/<inventory>'],
-      vfsVersionVerified: false,
+      localVersionVerified: false,
     });
   });
 
@@ -326,7 +350,7 @@ describe('本地来源快照重新核验', () => {
     if (kind === 'hash') ledger.snapshotSha256 = '0'.repeat(64);
     if (kind === 'traversal') first.logicalPath = 'TableCfg-current/../escape.json';
     if (kind === 'provider') first.provider = 'old-cache';
-    if (kind === 'fallback') first.provider = 'vfs-index-browser';
+    if (kind === 'fallback') first.provider = 'endaxis-data-tool';
     if (kind === 'count')
       (ledger.inventories as unknown[]).push({
         collection: 'SkillData',
@@ -342,7 +366,7 @@ describe('本地来源快照重新核验', () => {
     await json(path.join(sourceRoot, 'SkillData/new.json'), {});
     ledger.entries.push({
       logicalPath: 'SkillData/new.json',
-      provider: 'vfs-index-browser',
+      provider: 'endaxis-data-tool',
       version: 'unknown',
       byteLength: 2,
       sha256: hash('{}'),

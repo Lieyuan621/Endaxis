@@ -239,17 +239,6 @@ export function compileEventTargetSimpleDamageOperationSource(
   // DamageUnit 对目标的结算；Endaxis 没有可破坏环境，只投影目标伤害。
   // 用安全整数和减法验剩余位，避免 JS 位运算把高位截断后误当作已覆盖。
   const decoration = projectDamageDecorateMask(unit.damageDecorateMask, sourcePath);
-  const features = [...decoration.features];
-  if (
-    features.some(
-      feature =>
-        feature === 'crush' ||
-        feature === 'airborne' ||
-        feature === 'knockDown' ||
-        feature === 'fracture',
-    )
-  )
-    features.push('physicalInfliction');
   const staggerCalculation =
     poiseUnit === undefined ? undefined : compileSimplePoiseOperand(poiseUnit, sourcePath, 1);
   return {
@@ -299,7 +288,6 @@ export function compileEventTargetSimpleDamageOperationSource(
               `${sourcePath}.units[0].damageTags`,
             ),
           }),
-      ...(features.length === 0 ? {} : { features }),
       ...(instantAttributeModifiers.length === 0 ? {} : { instantAttributeModifiers }),
       ...(instantDamageScaleModifiers.length === 0 ? {} : { instantDamageScaleModifiers }),
       ...(staggerCalculation === undefined ? {} : { stagger: staggerCalculation.value }),
@@ -330,17 +318,7 @@ export function compileEventTargetSimplePoiseOperationSource(
     `${sourcePath}.effectSource`,
   );
   const unit = action.units[0]!;
-  const features =
-    unit.damageDecorateMask === 0
-      ? []
-      : unit.damageDecorateMask === 4096
-        ? (['canBreakWeakness'] as const)
-        : null;
-  if (features === null) {
-    throw new Error(
-      `${sourcePath}: unsupported event Poise decorate mask ${unit.damageDecorateMask}`,
-    );
-  }
+  const { tags } = projectDamageDecorateMask(unit.damageDecorateMask, sourcePath);
   const calculation = compileSimplePoiseOperand(unit, sourcePath, 0, unit.damageDecorateMask);
   return {
     kind: 'dealStagger',
@@ -348,9 +326,9 @@ export function compileEventTargetSimplePoiseOperationSource(
       attacker: action.attacker === 'ActionOwner' ? 'actionOwner' : 'actionSource',
       ...(!action.alwaysNext ? { alwaysNext: false } : {}),
       target: projectActionTargetQuery(action.target, context, `${sourcePath}.target`),
+      ...(tags.length === 0 ? {} : { tags }),
       value: calculation.value,
       ...(calculation.multiplier === undefined ? {} : { valueMultiplier: calculation.multiplier }),
-      ...(features.length === 0 ? {} : { features }),
     },
   };
 }

@@ -6,7 +6,7 @@ import { compileGraphEntry } from '../../../test/compiledGraphEntry';
 import { numberInput } from '../../../test/compiledGraphInputs';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
-import type { DamageFeature, DamageTag } from '../../game-data/operatorDefinition';
+import type { DamageTag } from '../../game-data/operatorDefinition';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
@@ -743,7 +743,7 @@ describe('PlayerDamageOperationExecutor', () => {
       parameters: {
         ...DAMAGE_STEP.parameters,
         ...(reaction === 'spellBurst' ? { tags: ['electricBurst'] as const } : {}),
-        ...(reaction === 'physicalInfliction' ? { features: ['physicalInfliction'] as const } : {}),
+        ...(reaction === 'physicalInfliction' ? { tags: ['crush'] as const } : {}),
       },
     });
     const damage = receipt.entries.find(entry => entry.event === 'DamageApplied')!;
@@ -781,27 +781,24 @@ describe('PlayerDamageOperationExecutor', () => {
     });
   });
 
-  it.each(['spellBurst', 'physicalInfliction'] as const)(
-    '%s强制暴击在两种模式中生效，取消后恢复原策略',
-    reaction => {
-      for (const mode of ['expected', 'sampled'] as const) {
-        expect(runCriticalPolicy(mode, true, true, reaction)).toMatchObject({
-          damage: 600,
-          isCritical: true,
-          samples: 0,
-        });
-      }
-      expect(runCriticalPolicy('expected', undefined, true, reaction)).toMatchObject({
-        damage: 500,
-        isCritical: false,
+  it.each(['spellBurst'] as const)('%s强制暴击在两种模式中生效，取消后恢复原策略', reaction => {
+    for (const mode of ['expected', 'sampled'] as const) {
+      expect(runCriticalPolicy(mode, true, true, reaction)).toMatchObject({
+        damage: 600,
+        isCritical: true,
+        samples: 0,
       });
-      expect(runCriticalPolicy('sampled', undefined, true, reaction).samples).toBe(1);
-      expect(runCriticalPolicy('expected', true, false, reaction)).toMatchObject({
-        damage: 400,
-        isCritical: false,
-      });
-    },
-  );
+    }
+    expect(runCriticalPolicy('expected', undefined, true, reaction)).toMatchObject({
+      damage: 500,
+      isCritical: false,
+    });
+    expect(runCriticalPolicy('sampled', undefined, true, reaction).samples).toBe(1);
+    expect(runCriticalPolicy('expected', true, false, reaction)).toMatchObject({
+      damage: 400,
+      isCritical: false,
+    });
+  });
 
   it('lets an explicit hit result override sampling in either direction', () => {
     expect(runCriticalPolicy('sampled', false)).toEqual({
@@ -1270,7 +1267,7 @@ describe('PlayerDamageOperationExecutor', () => {
   });
 
   it.each([
-    { tags: ['normalSkill'], features: [], multiplier: 1 },
+    { tags: ['normalSkill'], multiplier: 1 },
     ...[
       'fireBurst',
       'electricBurst',
@@ -1282,89 +1279,88 @@ describe('PlayerDamageOperationExecutor', () => {
       'natureAbnormal',
     ].map(tag => ({
       tags: [tag],
-      features: [],
       multiplier: 1.5,
     })),
-    { tags: [], features: ['shatter'], multiplier: 1.5 },
-    { tags: ['normalSkill'], features: ['physicalInfliction'], multiplier: 2 },
-    { tags: ['cryoAbnormal'], features: ['shatter'], multiplier: 1.5 },
-  ])(
-    'applies reaction multipliers once for $tags / $features',
-    ({ tags, features, multiplier }) => {
-      const targetVitals = new CombatVitals({
-        health: 1000,
-        maxHealth: 1000,
-        maxPoise: 0,
-        poise: 0,
-        poiseRecoveryTime: 0,
-        poiseRecoveryTimeMultiplier: 1,
-        poiseBrokenEndTime: 0,
-        poiseImmune: false,
-      });
-      const snapshots = createAttributeSnapshots(100);
-      const receipt = new CombatReceiptCollector();
-      const executor = new PlayerDamageOperationExecutor({
-        sourceOperatorId: 'antal',
-        targetId: 'enemy',
-        targetVitals,
-        clock: new CombatClock(),
-        receipt,
-        captureAttributeSnapshots: () => ({
-          ...snapshots,
-          attacker: {
-            ...snapshots.attacker,
-            physicalInflictionDamageMultiplier: 2,
-            igniteDamageMultiplier: 1.5,
-          },
-          defender: {
-            ...snapshots.defender,
-            resistances: {
-              ...snapshots.defender.resistances,
-              physical: { percent: 20, damageTakenMultiplier: 1.25 },
-            },
-          },
-        }),
-        criticalSamples: { nextCriticalSample: () => 1 },
-        resolveNonRandomRuntimeSnapshot: () => ({
-          runtimeExtensionMultiplier: 1,
-          appliesIgniteDamageMultiplier: false,
-          appliesPhysicalInflictionDamageMultiplier: false,
-        }),
-        applyDamageModifiers: () => undefined,
-        addInstantAttributeModifier: () => undefined,
-        clearInstantAttributeModifiers: () => undefined,
-        emitPreparationEvent: () => undefined,
-        resolvePoiseMultipliers: () => ({ output: 1, taken: 1 }),
-        emitHealthSourceEvent: () => undefined,
-        emitHealthTargetEvent: () => undefined,
-        emitPoiseSourceEvent: () => undefined,
-        emitPoiseTargetEvent: () => undefined,
-        delegate: { execute: vi.fn(() => true), evaluate: vi.fn(() => false) },
-      });
-
-      executor.execute({
-        kind: 'dealDamage',
-        parameters: {
-          damageType: 'physical',
-          attackScale: 1,
-          tags: tags as DamageTag[],
-          features: features as DamageFeature[],
+    { tags: ['shatter'], multiplier: 1.5 },
+    { tags: ['normalSkill', 'crush'], multiplier: 2 },
+    { tags: ['cryoAbnormal', 'shatter'], multiplier: 1.5 },
+  ])('applies reaction multipliers once for $tags / $tags', ({ tags, multiplier }) => {
+    const targetVitals = new CombatVitals({
+      health: 1000,
+      maxHealth: 1000,
+      maxPoise: 0,
+      poise: 0,
+      poiseRecoveryTime: 0,
+      poiseRecoveryTimeMultiplier: 1,
+      poiseBrokenEndTime: 0,
+      poiseImmune: false,
+    });
+    const snapshots = createAttributeSnapshots(100);
+    const receipt = new CombatReceiptCollector();
+    const executor = new PlayerDamageOperationExecutor({
+      sourceOperatorId: 'antal',
+      targetId: 'enemy',
+      targetVitals,
+      clock: new CombatClock(),
+      receipt,
+      captureAttributeSnapshots: () => ({
+        ...snapshots,
+        attacker: {
+          ...snapshots.attacker,
+          physicalInflictionDamageMultiplier: 2,
+          igniteDamageMultiplier: 1.5,
         },
-      });
+        defender: {
+          ...snapshots.defender,
+          resistances: {
+            ...snapshots.defender.resistances,
+            physical: { percent: 20, damageTakenMultiplier: 1.25 },
+          },
+        },
+      }),
+      criticalSamples: { nextCriticalSample: () => 1 },
+      resolveNonRandomRuntimeSnapshot: () => ({
+        runtimeExtensionMultiplier: 1,
+        appliesIgniteDamageMultiplier: false,
+        appliesPhysicalInflictionDamageMultiplier: false,
+      }),
+      applyDamageModifiers: () => undefined,
+      addInstantAttributeModifier: () => undefined,
+      clearInstantAttributeModifiers: () => undefined,
+      emitPreparationEvent: () => undefined,
+      resolvePoiseMultipliers: () => ({ output: 1, taken: 1 }),
+      emitHealthSourceEvent: () => undefined,
+      emitHealthTargetEvent: () => undefined,
+      emitPoiseSourceEvent: () => undefined,
+      emitPoiseTargetEvent: () => undefined,
+      delegate: { execute: vi.fn(() => true), evaluate: vi.fn(() => false) },
+    });
 
-      expect(targetVitals.health).toBe(1000 - 100 * multiplier);
-      expect(receipt.entries[0]?.data).toMatchObject({
-        physicalInflictionMultiplier: features.includes('physicalInfliction') ? 2 : 1,
-        directDamageMultiplier: 1,
-        criticalExpectationMultiplier: 1,
-        enemyResistancePercent: 20,
-        resistancePercentMultiplier: 0.8,
-        damageTakenMultiplier: 1.25,
-      });
-      if (multiplier !== 1) expect(receipt.entries[0]?.data?.levelCoefficient).toBe(multiplier);
-      else expect(receipt.entries[0]?.data?.levelCoefficient).toBeUndefined();
-    },
-  );
+    executor.execute({
+      kind: 'dealDamage',
+      parameters: {
+        damageType: 'physical',
+        attackScale: 1,
+        tags: (tags as DamageTag[]) ?? [],
+      },
+    });
+
+    expect(targetVitals.health).toBe(1000 - 100 * multiplier);
+    expect(receipt.entries[0]?.data).toMatchObject({
+      physicalInflictionMultiplier: tags.some(tag =>
+        ['crush', 'airborne', 'knockDown', 'fracture'].includes(tag),
+      )
+        ? 2
+        : 1,
+      directDamageMultiplier: 1,
+      criticalExpectationMultiplier: 1,
+      enemyResistancePercent: 20,
+      resistancePercentMultiplier: 0.8,
+      damageTakenMultiplier: 1.25,
+    });
+    if (multiplier !== 1) expect(receipt.entries[0]?.data?.levelCoefficient).toBe(multiplier);
+    else expect(receipt.entries[0]?.data?.levelCoefficient).toBeUndefined();
+  });
 
   it('executes a standalone stagger step without entering the health damage path', () => {
     const targetVitals = new CombatVitals({
@@ -1407,7 +1403,7 @@ describe('PlayerDamageOperationExecutor', () => {
     expect(captureAttributeSnapshots).not.toHaveBeenCalled();
     expect(emitPreparationEvent).toHaveBeenCalledExactlyOnceWith(
       'beforeDamageAction',
-      expect.objectContaining({ sourceId: 'mifu', tags: [], gameplayTags: [], features: [] }),
+      expect.objectContaining({ sourceId: 'mifu', tags: [], gameplayTags: [] }),
     );
     expect(receipt.entries.map(entry => entry.event)).toEqual(['PoiseApplied']);
   });

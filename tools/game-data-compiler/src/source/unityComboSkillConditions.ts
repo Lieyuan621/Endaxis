@@ -496,12 +496,14 @@ function normalizeSelectorReference(
   if (
     reference.rid !== rid ||
     reference.assembly !== 'Gameplay.Beyond' ||
-    reference.decodeStatus !== 'raw' ||
+    (reference.decodeStatus !== 'raw' && reference.decodeStatus !== 'complete') ||
     reference.length !== 0 ||
     reference.rawBase64 !== ''
   ) {
     throw new Error(`${path} RID ${rid}: expected audited empty selector reference`);
   }
+  if (reference.decodeStatus === 'complete')
+    requireExactFields(requireRecord(reference.data, `${path}.data`), new Set(), `${path}.data`);
   const type = `${requireString(reference.namespace, `${path}.namespace`)}.${requireString(reference.class, `${path}.class`)}`;
   const normalizedType = EMPTY_SELECTOR_COMPONENT_TYPES[role].get(type);
   if (normalizedType === undefined)

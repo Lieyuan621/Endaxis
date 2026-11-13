@@ -1114,7 +1114,7 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.1,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'ifElse_10',
@@ -1181,7 +1181,7 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.8,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: null,
@@ -1572,8 +1572,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
             target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['normalSkill', 'canBreakWeakness'],
           },
         },
         next: 'ifElse_30',
@@ -1740,8 +1739,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
             target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['normalSkill', 'canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_8' },
           },
         },
@@ -1889,8 +1887,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                             target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
+                            tags: ['normalSkill', 'canBreakWeakness'],
                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                           },
                         },
@@ -2355,8 +2352,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                             target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
+                            tags: ['normalSkill', 'canBreakWeakness'],
                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                           },
                         },
@@ -2821,8 +2817,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                             target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
+                            tags: ['normalSkill', 'canBreakWeakness'],
                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                           },
                         },
@@ -3300,8 +3295,7 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                             target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
+                            tags: ['normalSkill', 'canBreakWeakness'],
                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                           },
                         },
@@ -3802,7 +3796,14 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_94: {
+      addEntityTags_94: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: { targets: { kind: 'owner' }, tags: ['Status/DisableCastComboSkill'] },
+        },
+        next: null,
+      },
+      applyBuff_95: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -3958,7 +3959,8 @@ export const rossiChr_0028_wulfa_normal_skill: SkillDefinition = {
     { startFrame: 38, endFrame: 56, sequence: { $sequence: 'reachSkillOperableBoundary_89' } },
     { startFrame: 258, endFrame: 277, sequence: { $sequence: 'reachSkillOperableBoundary_89' } },
     { startFrame: 37, endFrame: 72, sequence: { $sequence: 'ifElse_93' } },
-    { startFrame: 215, endFrame: 272, sequence: { $sequence: 'applyBuff_94' } },
+    { startFrame: 215, endFrame: 248, sequence: { $sequence: 'addEntityTags_94' } },
+    { startFrame: 215, endFrame: 272, sequence: { $sequence: 'applyBuff_95' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'enemy',
@@ -4092,8 +4094,7 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
             target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_8' },
             staggerOnlyWhenCasterControlled: true,
           },
@@ -4206,8 +4207,7 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
             target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_8' },
             staggerOnlyWhenCasterControlled: true,
           },
@@ -5111,8 +5111,7 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_12' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_13' },
           },
         },
@@ -6481,8 +6480,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_10' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['ultimateSkill', 'canBreakWeakness'],
           },
         },
         next: 'modifyActionValue_35',
@@ -6523,8 +6521,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_11' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['ultimateSkill', 'canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_12' },
           },
         },
@@ -6617,8 +6614,15 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      hideUi_54: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_55: {
+      addEntityTags_54: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: { targets: { kind: 'owner' }, tags: ['Status/CantSwitchOutCenter'] },
+        },
+        next: null,
+      },
+      hideUi_55: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_56: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -6629,7 +6633,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      calculateActionValue_56: {
+      calculateActionValue_57: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
@@ -6641,7 +6645,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      calculateActionValue_57: {
+      calculateActionValue_58: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
@@ -6651,9 +6655,9 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             right: { kind: 'valueNode', nodeId: 'data_17' },
           },
         },
-        next: 'calculateActionValue_56',
+        next: 'calculateActionValue_57',
       },
-      calculateActionValue_58: {
+      calculateActionValue_59: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
@@ -6663,9 +6667,9 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             right: { kind: 'valueNode', nodeId: 'data_17' },
           },
         },
-        next: 'calculateActionValue_57',
+        next: 'calculateActionValue_58',
       },
-      calculateActionValue_59: {
+      calculateActionValue_60: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
@@ -6675,16 +6679,16 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             right: { kind: 'valueNode', nodeId: 'data_17' },
           },
         },
-        next: 'calculateActionValue_58',
+        next: 'calculateActionValue_59',
       },
-      checkCondition_60: {
+      checkCondition_61: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
         },
-        next: 'calculateActionValue_59',
+        next: 'calculateActionValue_60',
       },
-      applyBuff_61: {
+      applyBuff_62: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -6704,7 +6708,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      dealDamage_69: {
+      dealDamage_70: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -6712,23 +6716,22 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_18' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['ultimateSkill', 'canBreakWeakness'],
           },
         },
         next: null,
       },
-      ifElse_74: {
+      ifElse_75: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_21' },
-          whenTrue: { $sequence: 'dealDamage_69' },
-          whenFalse: { $sequence: 'dealDamage_69' },
+          whenTrue: { $sequence: 'dealDamage_70' },
+          whenFalse: { $sequence: 'dealDamage_70' },
         },
         next: null,
       },
-      findTargets_75: {
+      findTargets_76: {
         action: {
           kind: 'findTargets',
           parameters: {
@@ -6745,9 +6748,9 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             saveToContextKey: 'tar',
           },
         },
-        next: 'ifElse_74',
+        next: 'ifElse_75',
       },
-      createSpatialPointTargets_76: {
+      createSpatialPointTargets_77: {
         action: {
           kind: 'createSpatialPointTargets',
           parameters: {
@@ -6756,16 +6759,16 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             origin: { kind: 'context', key: 'pos1' },
           },
         },
-        next: 'findTargets_75',
+        next: 'findTargets_76',
       },
-      checkCondition_487: {
+      checkCondition_488: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_22' } },
         },
         next: null,
       },
-      repeatEachTick_488: {
+      repeatEachTick_489: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
@@ -6778,7 +6781,7 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
               targetTriggerIntervalSeconds: 0.03333,
             },
           },
-          body: { $sequence: 'checkCondition_487' },
+          body: { $sequence: 'checkCondition_488' },
         },
         next: null,
       },
@@ -6825,8 +6828,8 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_24' },
-          whenTrue: { $sequence: 'createSpatialPointTargets_76' },
-          whenFalse: { $sequence: 'createSpatialPointTargets_76' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_77' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_77' },
         },
         next: null,
       },
@@ -7023,10 +7026,11 @@ export const rossiChr_0028_wulfa_ultimate_skill: SkillDefinition = {
     { startFrame: 1, endFrame: 4, sequence: { $sequence: 'copyContextTargets_49' } },
     { startFrame: 134, endFrame: 135, sequence: { $sequence: 'ifElse_52' } },
     { startFrame: 0, endFrame: 155, sequence: { $sequence: 'applyBuff_53' } },
-    { startFrame: 0, endFrame: 57, sequence: { $sequence: 'hideUi_54' } },
-    { startFrame: 0, endFrame: 57, sequence: { $sequence: 'startUltimateTimeDilation_55' } },
-    { startFrame: 58, endFrame: 208, sequence: { $sequence: 'checkCondition_60' } },
-    { startFrame: 58, endFrame: 208, sequence: { $sequence: 'applyBuff_61' } },
+    { startFrame: 0, endFrame: 155, sequence: { $sequence: 'addEntityTags_54' } },
+    { startFrame: 0, endFrame: 57, sequence: { $sequence: 'hideUi_55' } },
+    { startFrame: 0, endFrame: 57, sequence: { $sequence: 'startUltimateTimeDilation_56' } },
+    { startFrame: 58, endFrame: 208, sequence: { $sequence: 'checkCondition_61' } },
+    { startFrame: 58, endFrame: 208, sequence: { $sequence: 'applyBuff_62' } },
     { startFrame: 63, endFrame: 64, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
     { startFrame: 65, endFrame: 66, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
     { startFrame: 66, endFrame: 67, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
@@ -7052,7 +7056,7 @@ export const rossiChr_0028_wulfa_ultimate_skill: SkillDefinition = {
     { startFrame: 106, endFrame: 107, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
     { startFrame: 108, endFrame: 109, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
     { startFrame: 111, endFrame: 112, sequence: { $sequence: 'createSpatialPointTargets_opt5' } },
-    { startFrame: 63, endFrame: 131, sequence: { $sequence: 'repeatEachTick_488' } },
+    { startFrame: 63, endFrame: 131, sequence: { $sequence: 'repeatEachTick_489' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'enemy',
@@ -7262,8 +7266,7 @@ const rossiBuff1ActionGraph = {
             target: { kind: 'owner' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
           },
         },
         next: null,
@@ -7780,8 +7783,7 @@ const rossiBuff9ActionGraph = {
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             takeAttackSnapshot: true,
-            tags: [],
-            features: ['dot', 'talentDamage'],
+            tags: ['dot', 'talentDamage'],
           },
         },
         next: 'applyBuff_1',
@@ -8000,8 +8002,7 @@ const rossiBuff10ActionGraph = {
             target: { kind: 'owner' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
-            tags: [],
-            features: ['talentDamage'],
+            tags: ['talentDamage'],
           },
         },
         next: 'heal_14',

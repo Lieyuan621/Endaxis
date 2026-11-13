@@ -36,6 +36,7 @@ const LEAF_ACTION_KINDS = [
   'disableNormalSkill',
   'boneAttach',
   'limitMovementGait',
+  'addEntityTags',
   'queueComboLock',
   'restrictUltimateEnergyRecovery',
   'readBuffBlackboard',
@@ -231,7 +232,6 @@ export function compileLeafAction(
           ...(step.parameters.gameplayTags === undefined
             ? {}
             : { gameplayTags: step.parameters.gameplayTags }),
-          ...(step.parameters.features === undefined ? {} : { features: step.parameters.features }),
           ...(step.parameters.instantAttributeModifiers === undefined
             ? {}
             : { instantAttributeModifiers: step.parameters.instantAttributeModifiers }),
@@ -285,7 +285,7 @@ export function compileLeafAction(
                   `${path}.parameters.valueMultiplier`,
                 ),
               }),
-          ...(step.parameters.features === undefined ? {} : { features: step.parameters.features }),
+          ...(step.parameters.tags === undefined ? {} : { tags: step.parameters.tags }),
         },
       };
     case 'heal': {
@@ -397,6 +397,8 @@ export function compileLeafAction(
     case 'disableNormalSkill':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'limitMovementGait':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'addEntityTags':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'queueComboLock':
       return { ...keyed, kind: step.kind, parameters: step.parameters };

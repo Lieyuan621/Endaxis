@@ -2098,7 +2098,7 @@ function isCombatInvisibleTogglable(
     actionNodes.every(
       child =>
         child.body.kind === 'leaf' &&
-        ((child.body.value.family === 'inputControl' && !isBuffAttackMapping(child)) ||
+        ((child.body.value.family === 'inputControl' && !isRetainedInputControlAction(child)) ||
           child.body.value.family === 'presentation' ||
           (onlyReadsMoveInput &&
             ['spatial', 'presentationCalculation'].includes(child.body.value.family))),
@@ -2106,13 +2106,16 @@ function isCombatInvisibleTogglable(
   );
 }
 
-function isBuffAttackMapping(node: NativeActionNodeSource<KnownNativeActionLeafSource>): boolean {
+function isRetainedInputControlAction(
+  node: NativeActionNodeSource<KnownNativeActionLeafSource>,
+): boolean {
   return (
     node.metadata.enabled &&
     node.body.kind === 'leaf' &&
     node.body.value.family === 'inputControl' &&
-    node.body.value.action.kind === 'comboCache' &&
-    node.body.value.action.mappings.some(mapping => mapping.commandType === 'Attack')
+    (node.body.value.action.kind === 'addEntityControlTags' ||
+      (node.body.value.action.kind === 'comboCache' &&
+        node.body.value.action.mappings.some(mapping => mapping.commandType === 'Attack')))
   );
 }
 

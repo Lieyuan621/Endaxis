@@ -78,7 +78,6 @@ const bounceBookkeepingInvocation = (withDamage = true) =>
                 damageType: 'electric',
                 attackScale: { kind: 'constant', value: 1 },
                 tags: [],
-                features: [],
                 stagger: { kind: 'constant', value: 0 },
               },
             } satisfies CompiledBuffStepSource,

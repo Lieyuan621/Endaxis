@@ -719,6 +719,14 @@ export const projectileSchedulePresets: Readonly<Record<string, ProjectileSchedu
       hit: [2],
     },
   },
+  // 卡缪｜战技「驱火焚影」：衔火血翼重新选择敌人后发射的转移弹体。
+  // 发射来源：buff_chr_0033_camille_normal_skill_reset_target:6；Owner 是能力实体，终点是 resettar，不是干员到敌人的 3 米。
+  // 简化模型将敌方位置重合、源实体挂点忽略为地面，保留终点 [0,1.3,0]；原生直线速度25、恒定速度曲线、无距离倍率，无碰撞形状且hitOnReach=true。
+  // 按0.5米到达阈值，ceil((1.3-0.5)/25*30)=1帧。敌人实际分散时转移时延不同，本值不代表实战固定时延。
+  projectile_chr_0033_camille_normal_skill_last: {
+    endFrame: 1,
+    callbacks: { hit: [1] },
+  },
   // 卡缪｜普攻（重击）「歃血涤罪」：曲线路径的攻击弹体。
   // 发射来源：chr_0033_camille_power_attack。
   // 取值依据：原生仅使用T1、T3两段二次贝塞尔，未启用资源中的Default/T2。敌我3米，保留发射固定偏移；MidPoint1按目标为中心、TargetToSource方向转换。控制点随机角取中值，忽略挂点；Shape=None且hitOnReach=true，以0.5米阈值切段，并从实际切段位置初始化后段。两段原生速度曲线分别积分 0.370614 + 0.147560 秒，总计0.518174秒，取16帧触发Hit，不按直线3米航程估算。
@@ -1169,6 +1177,20 @@ export const projectileSchedulePresets: Readonly<Record<string, ProjectileSchedu
     endFrame: 13,
     callbacks: { block: [13], reach: [] },
   },
+  // 明河｜普攻第4段：回收剑的发射回调，立即生成飞剑能力实体。
+  // 发射来源：chr_0037_minghe_attack4:30；只有Launch回调，不等待飞行命中。
+  projectile_chr_0037_minghe_attack04_back: {
+    endFrame: 0,
+    callbacks: { launch: [0] },
+  },
+  // 明河｜普攻第4段：末段飞剑命中，执行 attack4_endprojectilehit 伤害。
+  // 发射来源：chr_0037_minghe_attack4。原生直线速度70米/秒、速度曲线恒1、无距离倍率；碰撞半径0.2，hitOnReach=false。
+  // 沿用直射的3米有效命中路程，不还原WepR/VBHit挂点及高度；ceil(3/70*30)=2帧。无遮挡模型不触发Block，不能在发射当刻伪造落地回调。
+  // 原生命中次数不限，finishOnReach=false；按100米行程上限与2秒时限取先者，ceil(min(100/70,2)*30)=43帧结束。
+  projectile_chr_0037_minghe_attack04_end: {
+    endFrame: 43,
+    callbacks: { hit: [2], block: [] },
+  },
 };
 
 /** Explicit dummy-model omission: also removes the instance from SkillAffix lifetime tracking.
@@ -1192,4 +1214,8 @@ export const omittedCallbacklessProjectileIds: ReadonlySet<string> = new Set([
   'projectile_chr_0030_zhuangfy_air_attack',
   // 梨诺｜「怦然星动」下落攻击；仅裁剪无回调发射，有到达回调的发射保留。
   'projectile_chr_0035_liino_plunging_attack',
+  // 明河｜普攻第4段：无回调的往返剑弹体；有Launch回调的同资源入口保留。
+  'projectile_chr_0037_minghe_attack04_1',
+  'projectile_chr_0037_minghe_attack04_back',
+  'projectile_chr_0037_minghe_attack04_back_2',
 ]);

@@ -93,7 +93,7 @@ export interface CompiledContingencyContractDefinitions {
   readonly buffDefinitions: OperatorBuffDefinitions;
   readonly initializationPlans: readonly ContingencyContractInitializationPlan[];
   readonly scope: ContingencyContractSimulationScope;
-  readonly revision: string;
+  readonly gameId: string;
 }
 
 function readJson(file: string): unknown {
@@ -271,11 +271,12 @@ export function compileBoundContingencyContractDefinitionsFromFiles(
 }
 
 /** 人工绑定与原生词条沿用同一个图优化、校验和源码渲染流程。 */
-export async function renderBoundContingencyContractDefinitionsFromFiles(
+export function compileBoundContingencyContractPublicationFromFiles(
   args: BoundContingencyContractSourceArguments,
   iconDirectory: string,
-) {
+): CompiledContingencyContractDefinitions {
   const compiled = compileBoundContingencyContractDefinitionsFromFiles(args);
+  if (!/^[a-zA-Z0-9_-]+$/.test(compiled.contract.id)) throw new Error('unsafe contract ID');
   const supplement = requireRecord(readJson(args.supplement), args.supplement);
   const published = requireRecord(supplement.tags, 'supplement.tags');
   const byId = new Map(compiled.tags.map(tag => [tag.tagId, tag]));
@@ -313,25 +314,26 @@ export async function renderBoundContingencyContractDefinitionsFromFiles(
       !compiled.omitted.has(tag.tagId)
     )
       throw new Error(`published tag ${tag.tagId} has no binding or explicit scope decision`);
-  const rendered = await renderContingencyContractDefinitionsFromCompiled({
+  return {
+    gameId: compiled.contract.id,
     tags,
     buffDefinitions: compiled.buffDefinitions,
     initializationPlans: plans,
-    revision: String(supplement.gameId),
     scope: {
       supportedTagIds: new Set(plans.map(plan => plan.tagId)),
       blockedTagReasons: compiled.pending,
       omittedTagReasons: compiled.omitted,
     },
-  });
-  if (!/^[a-zA-Z0-9_-]+$/.test(compiled.contract.id)) throw new Error('unsafe contract ID');
-  return {
-    ...rendered,
-    files: rendered.files.map(file => ({
-      ...file,
-      relativePath: `contingencyContract.${compiled.contract.id}.generated.ts`,
-    })),
   };
+}
+
+export async function renderBoundContingencyContractDefinitionsFromFiles(
+  args: BoundContingencyContractSourceArguments,
+  iconDirectory: string,
+) {
+  return renderContingencyContractDefinitionsFromCompiled(
+    compileBoundContingencyContractPublicationFromFiles(args, iconDirectory),
+  );
 }
 
 function readScope(file: string): ContingencyContractSimulationScope {
@@ -451,11 +453,9 @@ export function compileContingencyContractDefinitionsFromFiles(
     readJson(path.join(args.tableRoot, 'ContingencyContractTable.json')),
   );
   const globalBuffCatalogValue = readJson(args.globalBuffCatalog);
-  const globalBuffCatalogRecord = requireRecord(globalBuffCatalogValue, args.globalBuffCatalog);
-  const revision = requireNonEmptyString(
-    globalBuffCatalogRecord.version,
-    `${args.globalBuffCatalog}.version`,
-  );
+  if (catalog.contracts.length !== 1)
+    throw new Error('contract compilation requires exactly one period');
+  const gameId = catalog.contracts[0]!.id;
   const scope = readScope(args.scope);
   validateScope(catalog, scope);
   const globalBuffCatalog = parseGlobalBuffTemplateCatalogSource(globalBuffCatalogValue);
@@ -572,7 +572,7 @@ export function compileContingencyContractDefinitionsFromFiles(
     tags: compileContingencyContractTagDefinitions(catalog),
     initializationPlans: plans,
     scope,
-    revision,
+    gameId,
   };
 }
 
@@ -598,13 +598,14 @@ async function publishContractFiles(
   }
 }
 
-/** 保留已验证的范围和版本，只渲染文件内容，不重新读取或编译机制来源。 */
+/** 保留已验证的范围和期数，只渲染文件内容，不重新读取或编译机制来源。 */
 export async function renderContingencyContractDefinitionsFromCompiled(
   compiled: CompiledContingencyContractDefinitions,
   optimization: DefinitionOptimizationMode = 'apply',
   sharedUsage?: GraphSharedEntityValueUsage,
 ) {
-  const { buffDefinitions, initializationPlans: plans, scope, revision } = compiled;
+  const { buffDefinitions, initializationPlans: plans, scope, gameId } = compiled;
+  if (!/^[a-zA-Z0-9_-]+$/.test(gameId)) throw new Error('unsafe contract ID');
   const { value: finalized, report } = finalizeDefinitionResources<{
     readonly buffDefinitions: Contract.OperatorBuffDefinitions;
     readonly initializationPlans: readonly {
@@ -631,11 +632,10 @@ export const contingencyContractTagDefinitions = Object.freeze<readonly Continge
 export const contingencyContractInitializationPlans = Object.freeze<readonly { readonly tagId: number; readonly sequence: ActionGraphReference; readonly actionGraph: ActionGraphResourceDefinition }[]>(${renderGraphValue(graphPlans)});
 export const contingencyContractBlockedTagReasons = Object.freeze(${JSON.stringify(Object.fromEntries(scope.blockedTagReasons), null, 2)}) as Readonly<Record<number, string>>;
 export const contingencyContractOmittedTagReasons = Object.freeze(${JSON.stringify(Object.fromEntries(scope.omittedTagReasons), null, 2)}) as Readonly<Record<number, string>>;
-export const contingencyContractDefinitionRevision = ${JSON.stringify(revision)};
 `,
     { ...prettierConfig, parser: 'typescript' },
   );
-  const files = [{ relativePath: 'contingencyContractDefinitions.generated.ts', content }];
+  const files = [{ relativePath: `contingencyContract.${gameId}.generated.ts`, content }];
   return {
     files,
     summary: {

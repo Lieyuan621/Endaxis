@@ -23,6 +23,11 @@ const mocks = vi.hoisted(() => ({
   locales: vi.fn(),
 }));
 
+vi.mock('../scripts/contractSources.ts', () => ({
+  prepareContractSources: async () => undefined,
+  verifyContractSources: async () => ({ verified: 0 }),
+}));
+
 vi.mock('../scripts/generateCombatDefinitionCandidates.ts', () => ({
   generateCombatDefinitionCandidates: mocks.combat,
 }));
@@ -217,16 +222,17 @@ beforeEach(() => {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: URL) => {
-      const name = new URL(input).searchParams.get('name');
+      const name = new URL(input).pathname
+        .split('/')
+        .at(-1)!
+        .replace(/\.json$/, '.asset');
       return new Response(
         JSON.stringify({
-          candidates: [
-            {
-              path: `assets/beyond/dynamicassets/gamedata/gameplayconfig/${name === 'movementsetting_default.asset' ? 'movementsetting/' : ''}${name}`,
-              previewUrl: `/fixture/${name}`,
-            },
-          ],
+          asset: {
+            Container: `assets/beyond/dynamicassets/gamedata/gameplayconfig/${name === 'movementsetting_default.asset' ? 'movementsetting/' : ''}${name}`,
+          },
         }),
+        { headers: { 'X-Endaxis-Source': 'endaxis-data-tool', 'X-Endaxis-Version': 'fixture@1' } },
       );
     }),
   );
@@ -272,13 +278,7 @@ async function setup() {
   });
   for (const directory of ['CharacterData', 'SkillData'])
     await fs.mkdir(path.join(sourceRoot, directory), { recursive: true });
-  const args = parseRebuildArguments([
-    '--source-root',
-    sourceRoot,
-    '--unity-worker',
-    'fixture-worker.exe',
-    '--publish',
-  ]);
+  const args = parseRebuildArguments(['--source-root', sourceRoot, '--publish']);
   return { root, sourceRoot, args };
 }
 

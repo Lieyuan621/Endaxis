@@ -405,8 +405,7 @@ describe('CombatSemanticEventRuntime', () => {
           external: true,
           sourceId: 'enemy',
           targetId: 'operator:b',
-          tags: ['normalAttack'],
-          features: ['crush'],
+          tags: ['normalAttack', 'crush'],
         },
       },
       [],
@@ -982,7 +981,6 @@ it('外部受击只在 takeDamage 响应一次，保留原对象且没有伪造�
     sourceId: 'enemy' as const,
     targetId: 'operator',
     tags: [],
-    features: [],
   };
   const published = { event: 'takeDamage' as const, payload };
   const received: unknown[] = [];

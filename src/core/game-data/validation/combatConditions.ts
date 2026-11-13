@@ -38,7 +38,6 @@ import {
   validateLevelValuesOrActionValueOperand,
   validateNonEmptyStringArray,
   validateDamageTags,
-  validateDamageFeatures,
   validateGameplayTags,
 } from './definitionValues';
 
@@ -304,7 +303,7 @@ export function validateCombatCondition(
       break;
     case 'eventDamageTagsMatch':
       requireEnum(record, 'match', TAG_QUERY_TYPES_WITH_EXACT_SET, path, out);
-      validateDamageTags(record.tags, `${path}.tags`, out);
+      validateDamageTags(record.tags, `${path}.tags`, out, false);
       break;
     case 'eventSkillTagsMatch':
       requireEnum(record, 'tagQueryType', TAG_QUERY_TYPES_SET, path, out);
@@ -319,10 +318,6 @@ export function validateCombatCondition(
     case 'eventDamageGameplayTagsMatch':
       requireEnum(record, 'match', TAG_QUERY_TYPES_WITH_EXACT_SET, path, out);
       validateGameplayTags(record.tags, `${path}.tags`, out);
-      break;
-    case 'eventDamageFeaturesMatch':
-      requireEnum(record, 'match', TAG_QUERY_TYPES_WITH_EXACT_SET, path, out);
-      validateDamageFeatures(record.features, `${path}.features`, out);
       break;
     case 'skillDamageTypeIn':
     case 'eventDamageTypeIn':

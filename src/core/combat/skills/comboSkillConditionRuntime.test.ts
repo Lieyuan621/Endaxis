@@ -83,7 +83,6 @@ function takeDamageEvent() {
       targetId: 'enemy',
       damageType: 'cryo' as const,
       tags: ['cryoBurst'] as const,
-      features: [] as const,
       result: {
         value: 1,
         isCritical: false,

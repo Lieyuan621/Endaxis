@@ -75,7 +75,6 @@ it('别礼正式战技条件：潜能、主控、重击缺一不可，连续命�
           skillCastId: 1,
           damageType: 'cryo' as const,
           tags: heavy ? ['normalAttackLastCombo' as const] : ['normalAttack' as const],
-          features: [],
         };
         const saved = structuredClone(condition.runtimeState);
         const expected = potential === 1 && controlled && heavy;
@@ -252,7 +251,6 @@ function fixture(
             sourceId: 'old',
             targetId: 'old',
             tags: ['ultimateSkill'],
-            features: [],
           },
         },
       },
@@ -373,7 +371,6 @@ describe('Buff 同步伤害条件程序', () => {
       skillCastId: null,
       damageType: 'physical' as const,
       tags: [],
-      features: [],
     };
     expect(restricted.damageTypes).toEqual(['cryo']);
     expect(restricted.execute(input)).toBe(false);
@@ -435,7 +432,6 @@ describe('Buff 同步伤害条件程序', () => {
           sourceId: 'old',
           targetId: 'old',
           tags: [],
-          features: [],
         },
       },
     };
@@ -472,7 +468,6 @@ describe('Buff 同步伤害条件程序', () => {
         skillCastId: 1,
         damageType: 'physical',
         tags: [],
-        features: [],
       }),
     ).toBe(true);
     expect(observed?.actionInputTargets?.[0]).toEqual({ kind: 'operator', operatorId: 'attacker' });

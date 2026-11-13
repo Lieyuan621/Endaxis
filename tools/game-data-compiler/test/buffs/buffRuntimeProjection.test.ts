@@ -838,11 +838,11 @@ describe('公共 Buff 运行时投影', () => {
   });
 
   it.each([
-    ['HasAny', 'any', 'hasAny'],
-    ['HasAll', 'all', 'hasAll'],
-    ['ExceptAny', 'all', 'exceptAny'],
-    ['ExceptAll', 'any', 'exceptAll'],
-  ] as const)('伤害修正的 %s 混合位掩码复用公共标签/特征转换', (checkType, kind, match) => {
+    ['HasAny', 'hasAny'],
+    ['HasAll', 'hasAll'],
+    ['ExceptAny', 'exceptAny'],
+    ['ExceptAll', 'exceptAll'],
+  ] as const)('伤害修正的 %s 混合位掩码使用统一标签查询', (checkType, match) => {
     const source = sourceFixture();
     const seed = source.graph.abilityEvents[0]!.actions[0]!;
     const condition: NativeSequenceSource<KnownNativeActionLeafSource> = {
@@ -887,11 +887,9 @@ describe('公共 Buff 运行时投影', () => {
       kind: 'checkCondition',
       parameters: {
         condition: {
-          kind,
-          conditions: [
-            { kind: 'eventDamageTagsMatch', match, tags: ['normalSkill'] },
-            { kind: 'eventDamageFeaturesMatch', match, features: ['dot'] },
-          ],
+          kind: 'eventDamageTagsMatch',
+          match,
+          tags: ['normalSkill', 'dot'],
         },
       },
     });
@@ -1609,9 +1607,9 @@ describe('公共 Buff 运行时投影', () => {
         kind: 'checkCondition',
         parameters: {
           condition: {
-            kind: 'eventDamageFeaturesMatch',
+            kind: 'eventDamageTagsMatch',
             match: 'exceptAny',
-            features: ['dot', 'remainArea'],
+            tags: ['dot', 'remainArea'],
           },
         },
       },
@@ -1754,7 +1752,7 @@ describe('公共 Buff 运行时投影', () => {
       );
       expect(lifecycleSteps(projected, 'start')[0]).toMatchObject({
         kind: 'dealDamage',
-        parameters: { features: [feature, 'physicalInfliction'] },
+        parameters: { tags: [feature] },
       });
     }
     const knockdown = {
@@ -1771,8 +1769,7 @@ describe('公共 Buff 运行时投影', () => {
           attacker: 'actionSource',
           damageType: 'physical',
           attackScale: { kind: 'blackboard', key: 'atk_scale' },
-          tags: [],
-          features: ['knockDown', 'physicalInfliction'],
+          tags: ['knockDown'],
           target: { kind: 'owner' },
           stagger: { kind: 'blackboard', key: 'poise' },
         },
@@ -1812,7 +1809,7 @@ describe('公共 Buff 运行时投影', () => {
           attacker: 'actionSource',
           target: { kind: 'owner' },
           value: { kind: 'blackboard', key: 'poise' },
-          features: ['canBreakWeakness'],
+          tags: ['canBreakWeakness'],
         },
       },
     ]);
@@ -1835,7 +1832,7 @@ describe('公共 Buff 运行时投影', () => {
       )[0],
     ).toMatchObject({
       kind: 'dealDamage',
-      parameters: { features: ['crush', 'knockDown', 'physicalInfliction'] },
+      parameters: { tags: ['crush', 'knockDown'] },
     });
   });
 

@@ -1,5 +1,4 @@
 /** 由当前版本 HitStopConfig TypeTree dump 生成；不要手工编辑。
- * Source SHA-256: 45b132032c043ac6f7d7703338d0b17cf513799f5a79697772d3f807c6ca17f8
  */
 import type { TimeScaleCurveKeyDefinition } from '../../core/game-data/operatorDefinition';
 

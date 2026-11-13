@@ -2,7 +2,7 @@
  * 属性快照与七区间伤害倍率之间的原生映射层。
  * 只接受同一伤害包已经冻结的快照；调用过程中修改属性会破坏阶段语义。
  */
-import type { DamageFeature, DamageTag, DamageType } from '../../game-data/operatorDefinition';
+import type { DamageTag, DamageType } from '../../game-data/operatorDefinition';
 import type { DamageScaleSide, DamageScaleZone } from './damageScale';
 import { DamageScaleAccumulator } from './damageScale';
 
@@ -180,19 +180,10 @@ export function injectDamageScaleAttributes(
 /** 转换新版干员 DSL 表达的主动技能分类。 */
 export function classifyDamageTags(
   tags: readonly DamageTag[],
-  features: readonly DamageFeature[] = [],
 ): readonly DamageScaleClassification[] {
   const classifications: DamageScaleClassification[] = [];
   if (
-    tags.some(tag =>
-      [
-        'normalAttack',
-        'normalAttackLastCombo',
-        'powerAttack',
-        'plungingAttack',
-        'dashAttack',
-      ].includes(tag),
-    )
+    tags.some(tag => ['normalAttack', 'powerAttack', 'plungingAttack', 'dashAttack'].includes(tag))
   ) {
     classifications.push('normalAttack');
   }
@@ -203,10 +194,11 @@ export function classifyDamageTags(
   if (tags.includes('electricBurst')) classifications.push('electricBurst');
   if (tags.includes('cryoBurst')) classifications.push('cryoBurst');
   if (tags.includes('natureBurst')) classifications.push('natureBurst');
-  if (tags.includes('fireAbnormal')) classifications.push('fireAbnormal');
+  if (tags.includes('fireAbnormal') || tags.includes('fireAbnormalInitial'))
+    classifications.push('fireAbnormal');
   if (tags.includes('electricAbnormal')) classifications.push('electricAbnormal');
-  // 原生 CrystAbnormalInitial | Shatter 共用一次属性注入；不能因同时携带分类和特征而翻倍。
-  if (tags.includes('cryoAbnormal') || features.includes('shatter'))
+  // 原生 CrystAbnormalInitial | Shatter 共用一次属性注入；不能因同时携带两个标记而翻倍。
+  if (tags.includes('cryoAbnormal') || tags.includes('shatter'))
     classifications.push('cryoAbnormal');
   if (tags.includes('natureAbnormal')) classifications.push('natureAbnormal');
   return classifications;

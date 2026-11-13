@@ -7,7 +7,6 @@ import type {
 } from '../../../../packages/game-data-contract/src/conditions';
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
 import type {
-  DamageFeature,
   DamageTag,
   DamageType,
   InflictionElement,
@@ -507,7 +506,6 @@ export interface BeforeDamageActionPayload {
   readonly partTransferInfo?: EnemyPartTransferInfo;
   readonly tags: readonly DamageTag[];
   readonly gameplayTags: readonly GameplayTag[];
-  readonly features: readonly DamageFeature[];
   readonly skillCastInfo: CombatSkillCastInfo | null;
 }
 
@@ -516,7 +514,6 @@ export interface BeforeCalculateDamagePayload {
   readonly partTransferInfo?: EnemyPartTransferInfo;
   readonly tags: readonly DamageTag[];
   readonly gameplayTags: readonly GameplayTag[];
-  readonly features: readonly DamageFeature[];
   readonly damageType: DamageType;
 }
 
@@ -555,7 +552,6 @@ export interface ExternalOperatorHitPayload {
   readonly targetId: string;
   readonly damageType?: DamageType;
   readonly tags: readonly DamageTag[];
-  readonly features: readonly DamageFeature[];
   readonly result?: never;
   readonly skillCastInfo?: never;
 }

@@ -91,25 +91,25 @@ const schema_a356e6cf2c40 = [
   'baseFinalAddition',
   'baseFinalMultiplier',
 ] as const;
-const schema_85b910fa96f5 = [
-  'normalSkill',
+const schema_bc9e68b5c915 = [
+  'plungingAttack',
   'comboSkill',
+  'basicAttack',
+  'battleSkill',
+  'ultimate',
+  'finisher',
+  'dodge',
+] as const;
+const schema_fe764d0b1934 = [
+  'normalSkill',
   'ultimateSkill',
+  'comboSkill',
   'dodge',
   'breakingAttack',
   'passiveSkill',
   'attack',
   'attachSkill',
   'extraActiveSkill',
-] as const;
-const schema_43dd58bcb159 = [
-  'comboSkill',
-  'plungingAttack',
-  'basicAttack',
-  'battleSkill',
-  'ultimate',
-  'finisher',
-  'dodge',
 ] as const;
 const schema_a4c41ed6f378 = { unionVariants: [{}, {}] } as const;
 const schema_5bafbc7424f4 = { unionVariants: [{}, {}, {}] } as const;
@@ -200,9 +200,9 @@ const schema_002db450baab = {
   description:
     '技能释放条件只生成合法性诊断；不成立也不会阻止技能进入模拟。\n模拟层将用户排入时间轴的动作视为已经成功释放，不得改写或跳过。',
 } as const;
-const schema_aac7be82c2ed = {
+const schema_2201e3c164af = {
   kind: 'enum',
-  options: schema_43dd58bcb159,
+  options: schema_bc9e68b5c915,
   semantics: schema_ebdb00131bfd,
 } as const;
 const schema_ace0d6305f0f = {
@@ -243,6 +243,12 @@ const schema_d85fe0b7e328 = {
   semantics: schema_a4c41ed6f378,
   optional: true,
   description: '默认施放的目标；省略时由调用方提供，不能回退到敌人。',
+} as const;
+const schema_5d8c4751285a = {
+  kind: 'enum',
+  options: schema_fe764d0b1934,
+  semantics: schema_8959ee040d75,
+  description: '`_InitSkills` 创建实例时得到的原生初值；之后可由 ChangeSkillType 改写。',
 } as const;
 const schema_5d82a3eec7ef = {
   kind: 'enum',
@@ -293,12 +299,6 @@ const schema_134a25aba753 = {
   options: ['assign', 'add', 'multiply'],
   semantics: schema_5bafbc7424f4,
   description: '对原值执行加算、乘算或直接赋值。',
-} as const;
-const schema_c086d3ad2f21 = {
-  kind: 'enum',
-  options: schema_85b910fa96f5,
-  semantics: schema_8959ee040d75,
-  description: '`_InitSkills` 创建实例时得到的原生初值；之后可由 ChangeSkillType 改写。',
 } as const;
 const schema_506790f83195 = {
   kind: 'enum',
@@ -507,11 +507,11 @@ const schema_ed542e0d6573 = {
   optional: true,
   description: '每个 Buff 实例的初始黑板值；施加动作可以覆盖这些值，其他字段也可从中取数。',
 } as const;
-const schema_db93c34a3530 = {
+const schema_208b628cf592 = {
   kind: { kind: 'enum', options: ['spGained'], description: '触发器种类判别值。' },
   source: {
     kind: 'enum',
-    options: ['normalAttack', 'powerAttack', 'default', 'skill'],
+    options: ['powerAttack', 'normalAttack', 'default', 'skill'],
     semantics: schema_12d2e6c473ae,
     optional: true,
     description: '只监听指定的技力来源。',
@@ -748,12 +748,12 @@ const schema_3d4731d744e3 = {
   semantics: schema_a4c41ed6f378,
   optional: true,
 } as const;
-const schema_19225484aa38 = {
+const schema_dda7b9bafc89 = {
   kind: 'object',
   fields: {
     currentSkillTypes: {
       kind: 'array',
-      element: schema_aac7be82c2ed,
+      element: schema_2201e3c164af,
       semantics: schema_ddf983961ab1,
       optional: true,
       description: '只在当前技能属于这些分类时启用旁路。',
@@ -931,7 +931,7 @@ const schema_a4cf7dc9e341 = {
   optional: true,
   description: '跟随本体同时出现和消失的额外显示图标；它们没有独立战斗效果和生命周期。',
 } as const;
-const schema_e05c65bfa2a5 = {
+const schema_00c954c71749 = {
   placementPolicy: {
     kind: 'object',
     fields: schema_ed4ef47e3f5d,
@@ -941,7 +941,7 @@ const schema_e05c65bfa2a5 = {
   key: { kind: 'string', description: '技能组在干员定义中的唯一名称。' },
   operationType: {
     kind: 'enum',
-    options: schema_43dd58bcb159,
+    options: schema_bc9e68b5c915,
     semantics: schema_ebdb00131bfd,
     description: '玩家操作类别；技能库与轴上技能块均据此展示，实际执行读取具体技能的 skillType。',
   },
@@ -999,7 +999,7 @@ const schema_e05c65bfa2a5 = {
     description: '同一稳定技能组的 UI 变体，不会产生独立的释放身份。',
   },
 } as const;
-const schema_dddd96c65a04 = [
+const schema_f26a8de7d3f7 = [
   {
     kind: 'object',
     fields: {
@@ -1065,7 +1065,7 @@ const schema_dddd96c65a04 = [
       kind: { kind: 'enum', options: ['knockDownOutput'], description: '触发器种类判别值。' },
     },
   },
-  { kind: 'object', fields: schema_db93c34a3530 },
+  { kind: 'object', fields: schema_208b628cf592 },
   {
     kind: 'object',
     fields: {
@@ -1073,25 +1073,74 @@ const schema_dddd96c65a04 = [
       tag: {
         kind: 'enum',
         options: [
-          'normalAttack',
-          'normalAttackLastCombo',
+          'poiseBreak',
+          'ignoreGuardDodge',
           'powerAttack',
-          'normalSkill',
-          'comboSkill',
-          'ultimateSkill',
-          'plungingAttack',
-          'dashAttack',
-          'fireBurst',
-          'electricBurst',
-          'cryoBurst',
-          'natureBurst',
-          'fireAbnormal',
+          'fireAbnormalInitial',
           'electricAbnormal',
           'cryoAbnormal',
+          'igniteByMud',
+          'normalAttack',
+          'normalSkill',
+          'ultimateSkill',
+          'plungingAttack',
+          'bomb',
+          'canBreakWeakness',
+          'comboSkill',
+          'crush',
+          'airborne',
+          'knockDown',
+          'dashAttack',
+          'ignoreDodgeImmune',
+          'ignoreSkillImmune',
           'natureAbnormal',
+          'normalAttackLastCombo',
+          'fireBurst',
+          'cryoBurst',
+          'electricBurst',
+          'natureBurst',
+          'fireAbnormal',
+          'shatter',
+          'dot',
+          'remainArea',
+          'fracture',
+          'talentDamage',
         ],
         semantics: {
-          unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
+          unionVariants: [
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+          ],
         },
         description: '要匹配的伤害标签。',
       },
@@ -1135,14 +1184,14 @@ const schema_dddd96c65a04 = [
         variants: [
           {
             kind: 'enum',
-            options: ['crush', 'airborne', 'fracture', 'knockDown'],
+            options: ['crush', 'airborne', 'knockDown', 'fracture'],
             semantics: schema_12d2e6c473ae,
           },
           {
             kind: 'array',
             element: {
               kind: 'enum',
-              options: ['crush', 'airborne', 'fracture', 'knockDown'],
+              options: ['crush', 'airborne', 'knockDown', 'fracture'],
               semantics: schema_12d2e6c473ae,
             },
             semantics: { arrayElement: schema_12d2e6c473ae },
@@ -1163,7 +1212,7 @@ const schema_dddd96c65a04 = [
     },
   },
 ] as const;
-const schema_16efb99386c1 = [
+const schema_3fb995a4a0db = [
   {
     kind: 'object',
     fields: {
@@ -1229,8 +1278,8 @@ const schema_16efb99386c1 = [
       skillTypes: {
         kind: 'union',
         variants: [
-          schema_aac7be82c2ed,
-          { kind: 'array', element: schema_aac7be82c2ed, semantics: schema_ddf983961ab1 },
+          schema_2201e3c164af,
+          { kind: 'array', element: schema_2201e3c164af, semantics: schema_ddf983961ab1 },
         ],
         semantics: { unionVariants: [schema_ebdb00131bfd, schema_ddf983961ab1] },
         optional: true,
@@ -1296,8 +1345,8 @@ const schema_16efb99386c1 = [
       skillTypes: {
         kind: 'union',
         variants: [
-          schema_aac7be82c2ed,
-          { kind: 'array', element: schema_aac7be82c2ed, semantics: schema_ddf983961ab1 },
+          schema_2201e3c164af,
+          { kind: 'array', element: schema_2201e3c164af, semantics: schema_ddf983961ab1 },
         ],
         semantics: { unionVariants: [schema_ebdb00131bfd, schema_ddf983961ab1] },
         description: '此倍率覆盖的技能类型。',
@@ -1610,9 +1659,9 @@ const schema_362e3fdd1461 = {
   semantics: { arrayElement: schema_a4c41ed6f378 },
   description: '按顺序执行的治疗处理器。',
 } as const;
-const schema_72930dbfd226 = {
+const schema_ddc6c7823daa = {
   kind: 'array',
-  element: { kind: 'union', variants: schema_16efb99386c1, semantics: schema_84052e130a16 },
+  element: { kind: 'union', variants: schema_3fb995a4a0db, semantics: schema_84052e130a16 },
   semantics: { arrayElement: schema_84052e130a16 },
   optional: true,
   description: '构筑阶段持续生效的属性修正。',
@@ -1720,7 +1769,7 @@ const schema_a5af08cb3292 = {
   optional: true,
   description: 'Buff 启用时创建的护盾；护盾的数值、吸收范围、次数和销毁行为由条目配置。',
 } as const;
-const schema_bd9bad30daa5 = {
+const schema_cd63b86fdb1b = {
   kind: 'array',
   element: {
     kind: 'object',
@@ -1728,7 +1777,7 @@ const schema_bd9bad30daa5 = {
       key: { kind: 'string', description: '事件响应在当前技能中的唯一名称。' },
       event: {
         kind: 'union',
-        variants: schema_dddd96c65a04,
+        variants: schema_f26a8de7d3f7,
         semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
         description: '要监听的战斗事件及其筛选参数。',
       },
@@ -1843,7 +1892,7 @@ const schema_68e0682e1a9f = {
   semantics: { arrayElement: schema_a4c41ed6f378 },
   description: '条件成立时按顺序执行的伤害处理器。',
 } as const;
-const schema_4e7580a01f85 = {
+const schema_4516d6212e95 = {
   kind: 'array',
   element: {
     kind: 'union',
@@ -1861,7 +1910,7 @@ const schema_4e7580a01f85 = {
           sequence: schema_0164b02b9dc4,
           event: {
             kind: 'union',
-            variants: schema_dddd96c65a04,
+            variants: schema_f26a8de7d3f7,
             semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
             description: '监听一项语义战斗事件。',
           },
@@ -1924,10 +1973,10 @@ const schema_4e7580a01f85 = {
   optional: true,
   description: '装备能力注册的战斗事件响应。',
 } as const;
-const schema_bc897d7cc886 = {
+const schema_69db5e8f45f1 = {
   key: { kind: 'string', description: '词条在该装备中的唯一名称。' },
   levelCount: { kind: 'number', description: '这条词条可以解析的精锻等级数量。' },
-  modifiers: schema_72930dbfd226,
+  modifiers: schema_ddc6c7823daa,
   display: {
     kind: 'union',
     variants: [
@@ -1941,7 +1990,7 @@ const schema_bc897d7cc886 = {
           },
           modifier: {
             kind: 'union',
-            variants: schema_16efb99386c1,
+            variants: schema_3fb995a4a0db,
             semantics: schema_84052e130a16,
             description: '用于显示的修正定义。',
           },
@@ -2114,7 +2163,7 @@ export const definitionSchemas = {
       },
       skillGroups: {
         kind: 'array',
-        element: { kind: 'object', fields: schema_e05c65bfa2a5 },
+        element: { kind: 'object', fields: schema_00c954c71749 },
         semantics: { arrayElement: {} },
         description: '干员技能库的操作组集合；不包含切人、闪避、跳跃。组成员只引用本干员的技能。',
       },
@@ -2584,7 +2633,7 @@ export const definitionSchemas = {
       baseDefense: { kind: 'number', description: '装备提供的基础防御力。' },
       traits: {
         kind: 'array',
-        element: { kind: 'object', fields: schema_bc897d7cc886 },
+        element: { kind: 'object', fields: schema_69db5e8f45f1 },
         semantics: { arrayElement: {} },
         description: '按词条槽顺序保存的装备能力。',
       },
@@ -2624,8 +2673,8 @@ export const definitionSchemas = {
         description: '套装效果在时间轴上的展示图标；独立于效果自身的原生图标。',
       },
       actionGraph: schema_a20dbc08091b,
-      modifiers: schema_72930dbfd226,
-      eventHandlers: schema_4e7580a01f85,
+      modifiers: schema_ddc6c7823daa,
+      eventHandlers: schema_4516d6212e95,
       blackboard: schema_04ac62f53921,
       enableSequence: schema_78022e2596fd,
       initializationSequence: schema_b983f675c8a2,
@@ -2799,7 +2848,7 @@ export const definitionSchemas = {
             description: '该技能完整的节点和宏；所有入口均在此图中解析。',
           },
           key: schema_4b5650c0718c,
-          nativeSkillType: schema_c086d3ad2f21,
+          nativeSkillType: schema_5d8c4751285a,
           normalSkillSubType: schema_637a8acdcad5,
           enhancementStateBuffId: schema_0c9d2b973894,
           defaultTarget: schema_d85fe0b7e328,
@@ -2822,8 +2871,8 @@ export const definitionSchemas = {
           cooldownFrames: schema_fe7885c54dab,
           costs: schema_558c826756dd,
           costFrame: schema_df06170b65b5,
-          switchToBuffCast: schema_19225484aa38,
-          eventHandlers: schema_bd9bad30daa5,
+          switchToBuffCast: schema_dda7b9bafc89,
+          eventHandlers: schema_cd63b86fdb1b,
           skillTags: schema_54f3a28a51c4,
           blackboard: schema_338b4f4fde4d,
           scheduledSequences: schema_f6b9a1dd719e,
@@ -2836,8 +2885,8 @@ export const definitionSchemas = {
           skillType: {
             kind: 'enum',
             options: [
-              'comboSkill',
               'plungingAttack',
+              'comboSkill',
               'basicAttack',
               'battleSkill',
               'ultimate',
@@ -2869,7 +2918,7 @@ export const definitionSchemas = {
             description: '该技能完整的节点和宏；所有入口均在此图中解析。',
           },
           key: schema_4b5650c0718c,
-          nativeSkillType: schema_c086d3ad2f21,
+          nativeSkillType: schema_5d8c4751285a,
           normalSkillSubType: schema_637a8acdcad5,
           enhancementStateBuffId: schema_0c9d2b973894,
           defaultTarget: schema_d85fe0b7e328,
@@ -2892,8 +2941,8 @@ export const definitionSchemas = {
           cooldownFrames: schema_fe7885c54dab,
           costs: schema_558c826756dd,
           costFrame: schema_df06170b65b5,
-          switchToBuffCast: schema_19225484aa38,
-          eventHandlers: schema_bd9bad30daa5,
+          switchToBuffCast: schema_dda7b9bafc89,
+          eventHandlers: schema_cd63b86fdb1b,
           skillTags: schema_54f3a28a51c4,
           blackboard: schema_338b4f4fde4d,
           scheduledSequences: schema_f6b9a1dd719e,
@@ -2911,7 +2960,7 @@ export const definitionSchemas = {
     ],
     semantics: schema_a4c41ed6f378,
   },
-  skillGroup: { kind: 'object', fields: schema_e05c65bfa2a5 },
+  skillGroup: { kind: 'object', fields: schema_00c954c71749 },
   skillGroupVariant: { kind: 'object', fields: schema_bc8f71886914 },
   buff: {
     kind: 'union',
@@ -3386,7 +3435,7 @@ export const definitionSchemas = {
       skillId: { kind: 'string', referenceKind: 'skill', description: '子技能的原生 ID。' },
       nativeSkillType: {
         kind: 'enum',
-        options: schema_85b910fa96f5,
+        options: schema_fe764d0b1934,
         semantics: schema_8959ee040d75,
         description: '实体注册表确定的原生技能类型。',
       },
@@ -3824,7 +3873,7 @@ export const definitionSchemas = {
             event: {
               kind: 'union',
               variants: [
-                { kind: 'object', fields: schema_db93c34a3530 },
+                { kind: 'object', fields: schema_208b628cf592 },
                 { kind: 'object', fields: schema_098418fd701a },
                 {
                   kind: 'object',
@@ -3924,12 +3973,12 @@ export const definitionSchemas = {
       },
       levelCount: { kind: 'number', description: '这条词条可以解析的等级数量。' },
       actionGraph: schema_a20dbc08091b,
-      modifiers: schema_72930dbfd226,
-      eventHandlers: schema_4e7580a01f85,
+      modifiers: schema_ddc6c7823daa,
+      eventHandlers: schema_4516d6212e95,
       blackboard: schema_04ac62f53921,
       enableSequence: schema_78022e2596fd,
       initializationSequence: schema_b983f675c8a2,
     },
   },
-  gearTrait: { kind: 'object', fields: schema_bc897d7cc886 },
+  gearTrait: { kind: 'object', fields: schema_69db5e8f45f1 },
 } as const satisfies DefinitionSchemaCatalog;

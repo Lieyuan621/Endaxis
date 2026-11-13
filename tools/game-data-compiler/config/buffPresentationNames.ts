@@ -54,12 +54,12 @@ export const buffPresentationOverrides: Readonly<Record<string, CombatBuffPresen
     showInHeadBarCommon: true,
   },
   buff_cc_chr_combo_lock_instance: {
-    icon: 'endaxis:contingency_contract/2/lockdown',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key3',
     visible: true,
     showInSquadIcon: true,
   },
   buff_cc_chr_disable_normal_skill: {
-    icon: 'endaxis:contingency_contract/2/silence',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key1',
     visible: true,
     showInSquadIcon: true,
   },

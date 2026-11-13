@@ -7,7 +7,6 @@ import {
   TIMED_MARKER_TARGETS,
   DAMAGE_TAGS,
   DAMAGE_ELEMENTS,
-  DAMAGE_FEATURES,
   DAMAGE_TYPES,
   INFLICTION_ELEMENTS,
   OPERATOR_ATTRIBUTES,
@@ -15,7 +14,7 @@ import {
   SKILL_TYPES,
 } from '../operatorDefinition';
 
-export const DAMAGE_FEATURES_SET = new Set<string>(DAMAGE_FEATURES);
+export const DAMAGE_TAGS_SET = new Set<string>(DAMAGE_TAGS);
 export const DAMAGE_ELEMENTS_SET = new Set<string>(DAMAGE_ELEMENTS);
 
 export interface SkillDefinitionValidationIssue {
@@ -24,8 +23,6 @@ export interface SkillDefinitionValidationIssue {
 }
 
 export const DAMAGE_TYPES_SET = new Set<string>(DAMAGE_TYPES);
-
-export const DAMAGE_TAGS_SET = new Set<string>(DAMAGE_TAGS);
 
 export const INFLICTION_ELEMENTS_SET = new Set<string>(INFLICTION_ELEMENTS);
 
@@ -250,22 +247,6 @@ export function validateDamageTags(
   value.forEach((entry, index) => {
     if (typeof entry !== 'string' || !DAMAGE_TAGS_SET.has(entry)) {
       push(out, `${path}[${index}]`, 'unknown damage tag');
-    }
-  });
-}
-
-export function validateDamageFeatures(
-  value: unknown,
-  path: string,
-  out: SkillDefinitionValidationIssue[],
-): void {
-  if (!Array.isArray(value) || value.length === 0) {
-    push(out, path, 'expected a non-empty array');
-    return;
-  }
-  value.forEach((entry, index) => {
-    if (typeof entry !== 'string' || !DAMAGE_FEATURES_SET.has(entry)) {
-      push(out, `${path}[${index}]`, 'unknown damage feature');
     }
   });
 }

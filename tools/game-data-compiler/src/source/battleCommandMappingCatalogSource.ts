@@ -85,5 +85,5 @@ export function renderBattleCommandMappingCatalogModule(
   source: BattleCommandMappingCatalogSource,
 ): string {
   const { sha256, ...config } = source;
-  return `/** 由当前版本 BattleCommandMappingConfig TypeTree dump 生成；不要手工编辑。\n * Source SHA-256: ${sha256}\n */\nexport const BATTLE_COMMAND_MAPPING_CONFIG = ${JSON.stringify(config, null, 2)} as const;\n`;
+  return `/** 由当前版本 BattleCommandMappingConfig TypeTree dump 生成；不要手工编辑。\n */\nexport const BATTLE_COMMAND_MAPPING_CONFIG = ${JSON.stringify(config, null, 2)} as const;\n`;
 }

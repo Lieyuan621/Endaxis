@@ -35,9 +35,8 @@ export function applyDamageModifier(
       targetId: context.targetId,
       skillCastId: context.skillCastId,
       damageType: context.damageType,
-      tags: context.tags,
+      tags: context.tags ?? [],
       gameplayTags: context.gameplayTags,
-      features: context.features,
     })
   )
     return;

@@ -17,8 +17,8 @@ function attributes(
 
 describe('injectDamageScaleAttributes', () => {
   it('Shatter 单独携带或与晶异常标签并存，都只注入一次晶异常增伤', () => {
-    expect(classifyDamageTags([], ['shatter'])).toEqual(['cryoAbnormal']);
-    expect(classifyDamageTags(['cryoAbnormal'], ['shatter'])).toEqual(['cryoAbnormal']);
+    expect(classifyDamageTags(['shatter'])).toEqual(['cryoAbnormal']);
+    expect(classifyDamageTags(['cryoAbnormal', 'shatter'])).toEqual(['cryoAbnormal']);
   });
   it('classifies native burst and abnormal damage tags', () => {
     expect(
@@ -86,5 +86,9 @@ describe('injectDamageScaleAttributes', () => {
     expect(
       classifyDamageTags(['normalAttackLastCombo', 'powerAttack', 'plungingAttack', 'dashAttack']),
     ).toEqual(['normalAttack']);
+  });
+  it('普攻末段位不单独属于原生 NormalAttackDamageSet', () => {
+    expect(classifyDamageTags(['normalAttackLastCombo'])).toEqual([]);
+    expect(classifyDamageTags(['normalAttack', 'normalAttackLastCombo'])).toEqual(['normalAttack']);
   });
 });

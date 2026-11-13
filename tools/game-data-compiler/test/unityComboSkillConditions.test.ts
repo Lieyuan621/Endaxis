@@ -226,141 +226,152 @@ describe('Unity RID 条件适配', () => {
     });
   });
 
-  it.each([0, 2])('零载荷 selector RID 进入公共目标语义，TargetSource=%s', targetSource => {
-    const leafRid = '2708501211437858912';
-    const finderRid = '2708501211437858915';
-    const validatorRid = '2708501211437858916';
-    const target = (targetSource: number, targetGroupKey: string, selectorData: object) => ({
-      targetSource,
-      targetGroupKey,
-      selectorOwner: 1,
-      ownerContextKey: '',
-      centerType: 0,
-      centerContextKey: '',
-      centerToGround: false,
-      selectorData,
-      enableAdvancedDirection: false,
-      advancedDirection: {
-        directionType: 0,
-        source: '-2',
-        target: '-2',
-        sourceMountPoint: 0,
-        targetMountPoint: 0,
-        customSourceAndTarget: false,
-        clampToXZ: true,
-        invertDirection: false,
-      },
-      selectorDirection: 0,
-      target: 0,
-      targetContextKey: '',
-    });
-    const source = parseUnityComboSkillConditionsSource(
-      [
-        {
-          comboSkillEvent: 101,
-          comboSkillConditionImmediately: false,
-          comboSkillCheckAction: {
-            onlyExecuteWhenSourceIsMainChar: false,
-            onlyExecuteWhenSourceIsGuard: false,
-            actionData: [leafRid],
-          },
+  it.each([
+    [0, 'raw'],
+    [0, 'complete'],
+    [2, 'raw'],
+    [2, 'complete'],
+  ] as const)(
+    '零载荷 selector RID 进入公共目标语义，TargetSource=%s，解码=%s',
+    (targetSource, decodeStatus) => {
+      const leafRid = '2708501211437858912';
+      const finderRid = '2708501211437858915';
+      const validatorRid = '2708501211437858916';
+      const target = (targetSource: number, targetGroupKey: string, selectorData: object) => ({
+        targetSource,
+        targetGroupKey,
+        selectorOwner: 1,
+        ownerContextKey: '',
+        centerType: 0,
+        centerContextKey: '',
+        centerToGround: false,
+        selectorData,
+        enableAdvancedDirection: false,
+        advancedDirection: {
+          directionType: 0,
+          source: '-2',
+          target: '-2',
+          sourceMountPoint: 0,
+          targetMountPoint: 0,
+          customSourceAndTarget: false,
+          clampToXZ: true,
+          invertDirection: false,
         },
-      ],
-      {
-        [leafRid]: {
-          rid: leafRid,
-          class: 'CheckTargetsEqual/Data',
-          namespace: 'Beyond.Gameplay.Core.Conditions',
-          assembly: 'Gameplay.Beyond',
-          decodeStatus: 'complete',
-          data: {
-            isEnable: true,
-            priorityLevel: 0,
-            priorityOffset: 0,
-            serverActionIndex: 1001,
-            firstTargetSettings: target(targetSource, 'trigger', {
-              finderData: '-2',
-              validatorData: [],
-              postProcessorData: [],
-            }),
-            secondTargetSettings: target(3, '', {
-              finderData: finderRid,
-              validatorData: [validatorRid],
-              postProcessorData: [],
-            }),
-          },
-        },
-        [finderRid]: {
-          rid: finderRid,
-          class: 'Selector/CharacterTeamFinder/Data',
-          namespace: 'Beyond.Gameplay.Core',
-          assembly: 'Gameplay.Beyond',
-          decodeStatus: 'raw',
-          length: 0,
-          rawBase64: '',
-        },
-        [validatorRid]: {
-          rid: validatorRid,
-          class: 'Selector/MainCharacterValidator/Data',
-          namespace: 'Beyond.Gameplay.Core',
-          assembly: 'Gameplay.Beyond',
-          decodeStatus: 'raw',
-          length: 0,
-          rawBase64: '',
-        },
-      },
-      'character.combo',
-    );
-
-    expect(source.referenceSources.map(reference => reference.rid)).toEqual([
-      leafRid,
-      finderRid,
-      validatorRid,
-    ]);
-    expect(source.conditions[0]).toMatchObject({
-      nativeEvent: 101,
-      sequence: {
-        actions: [
+        selectorDirection: 0,
+        target: 0,
+        targetContextKey: '',
+      });
+      const source = parseUnityComboSkillConditionsSource(
+        [
           {
-            body: {
-              value: {
-                action: {
-                  kind: 'targetIdentity',
-                  first: {
-                    targetSource: targetSource === 0 ? 'Target' : 'Context',
-                    targetGroupKey: 'trigger',
-                  },
-                  second: {
-                    targetSource: 'InstantSearch',
-                    finderType: 'CharacterTeamFinder',
-                    validatorTypes: ['MainCharacterValidator'],
+            comboSkillEvent: 101,
+            comboSkillConditionImmediately: false,
+            comboSkillCheckAction: {
+              onlyExecuteWhenSourceIsMainChar: false,
+              onlyExecuteWhenSourceIsGuard: false,
+              actionData: [leafRid],
+            },
+          },
+        ],
+        {
+          [leafRid]: {
+            rid: leafRid,
+            class: 'CheckTargetsEqual/Data',
+            namespace: 'Beyond.Gameplay.Core.Conditions',
+            assembly: 'Gameplay.Beyond',
+            decodeStatus: 'complete',
+            data: {
+              isEnable: true,
+              priorityLevel: 0,
+              priorityOffset: 0,
+              serverActionIndex: 1001,
+              firstTargetSettings: target(targetSource, 'trigger', {
+                finderData: '-2',
+                validatorData: [],
+                postProcessorData: [],
+              }),
+              secondTargetSettings: target(3, '', {
+                finderData: finderRid,
+                validatorData: [validatorRid],
+                postProcessorData: [],
+              }),
+            },
+          },
+          [finderRid]: {
+            rid: finderRid,
+            class: 'Selector/CharacterTeamFinder/Data',
+            namespace: 'Beyond.Gameplay.Core',
+            assembly: 'Gameplay.Beyond',
+            decodeStatus,
+            ...(decodeStatus === 'complete' ? { data: {} } : {}),
+            length: 0,
+            rawBase64: '',
+          },
+          [validatorRid]: {
+            rid: validatorRid,
+            class: 'Selector/MainCharacterValidator/Data',
+            namespace: 'Beyond.Gameplay.Core',
+            assembly: 'Gameplay.Beyond',
+            decodeStatus,
+            ...(decodeStatus === 'complete' ? { data: {} } : {}),
+            length: 0,
+            rawBase64: '',
+          },
+        },
+        'character.combo',
+      );
+
+      expect(source.referenceSources.map(reference => reference.rid)).toEqual([
+        leafRid,
+        finderRid,
+        validatorRid,
+      ]);
+      expect(source.conditions[0]).toMatchObject({
+        nativeEvent: 101,
+        sequence: {
+          actions: [
+            {
+              body: {
+                value: {
+                  action: {
+                    kind: 'targetIdentity',
+                    first: {
+                      targetSource: targetSource === 0 ? 'Target' : 'Context',
+                      targetGroupKey: 'trigger',
+                    },
+                    second: {
+                      targetSource: 'InstantSearch',
+                      finderType: 'CharacterTeamFinder',
+                      validatorTypes: ['MainCharacterValidator'],
+                    },
                   },
                 },
               },
             },
-          },
-        ],
-      },
-    });
-    const boundProjection = {
-      ...projection,
-      contextTargetGroupTargets: new Map([['trigger', 'eventTarget'] as const]),
-    };
-    const boundCompiled = compilePendingComboConditionSource(
-      source.conditions[0]!,
-      boundProjection,
-    );
-    expect(boundCompiled.event).toBe('beforeTakeDamage');
-    expect(chainOf(boundCompiled)[0]).toMatchObject({
-      parameters: {
-        condition: {
-          kind: 'targetsEqual',
-          first: targetSource === 0 ? { kind: 'inputTarget' } : { kind: 'context', key: 'trigger' },
-          second: { kind: 'mainCharacter' },
+          ],
         },
-      },
-    });
-  });
+      });
+      const boundProjection = {
+        ...projection,
+        contextTargetGroupTargets: new Map([['trigger', 'eventTarget'] as const]),
+      };
+      const boundCompiled = compilePendingComboConditionSource(
+        source.conditions[0]!,
+        boundProjection,
+      );
+      expect(boundCompiled.event).toBe('beforeTakeDamage');
+      expect(chainOf(boundCompiled)[0]).toMatchObject({
+        parameters: {
+          condition: {
+            kind: 'targetsEqual',
+            first:
+              targetSource === 0 ? { kind: 'inputTarget' } : { kind: 'context', key: 'trigger' },
+            second: { kind: 'mainCharacter' },
+          },
+        },
+      });
+    },
+  );
 
   it('真实五条最小切片的 14 个叶子进入同一公共编译入口并保留来源', () => {
     const fixture = unityComboConditionFixture();
@@ -450,7 +461,13 @@ describe('Unity RID 条件适配', () => {
     const f = unityComboConditionFixture();
     f.references['2708501211437859826']!.data.buffStackNumType = 1;
     const compiled = compilePendingComboConditionSource(parse(f).conditions[1]!, projection);
-    expect(chainOf(compiled).some(step => step.kind === 'checkCondition' && step.parameters.condition.kind === 'buffTagIdCountCompare')).toBe(true);
+    expect(
+      chainOf(compiled).some(
+        step =>
+          step.kind === 'checkCondition' &&
+          step.parameters.condition.kind === 'buffTagIdCountCompare',
+      ),
+    ).toBe(true);
   });
   it.each([
     [16, 16],

@@ -17,11 +17,9 @@ const GAMEPLAY_TAG_CONTRACT_IMPORT = '../../../packages/game-data-contract/src/g
 export async function generateGameplayTagPredefine(
   input: string,
   output: string,
-  revision: string,
   catalog: string,
   check = false,
 ) {
-  if (!revision.trim()) throw new Error('GameplayTagPredefine revision must not be empty');
   if (!output.endsWith('.ts')) throw new Error('GameplayTagPredefine output must be a .ts module');
   const bytes = await fs.readFile(input);
   const definition = compileGameplayTagPredefine(
@@ -30,8 +28,6 @@ export async function generateGameplayTagPredefine(
   );
   const document: GameplayTagPredefineDocument = {
     schemaVersion: 1,
-    revision,
-    sourceSha256: createHash('sha256').update(bytes).digest('hex'),
     ...definition,
   };
   const content = await formatGeneratedSource(
@@ -49,7 +45,7 @@ export async function generateGameplayTagPredefine(
     tags: Object.keys(document.tags).length,
     queries: Object.keys(document.queries).length,
     immunityQueries: document.immunityQueries.length,
-    sourceSha256: document.sourceSha256,
+    sourceSha256: createHash('sha256').update(bytes).digest('hex'),
   };
 }
 
@@ -57,9 +53,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const args = process.argv.slice(2);
   const check = args.at(-1) === '--check';
   if (check) args.pop();
-  if (args.length !== 4 || args.some(arg => arg.startsWith('--')))
-    throw new Error(
-      'expected <source JSON> <output TS> <revision> <tag-path-catalog TS> [--check]',
-    );
-  console.log(await generateGameplayTagPredefine(args[0]!, args[1]!, args[2]!, args[3]!, check));
+  if (args.length !== 3 || args.some(arg => arg.startsWith('--')))
+    throw new Error('expected <source JSON> <output TS> <tag-path-catalog TS> [--check]');
+  console.log(await generateGameplayTagPredefine(args[0]!, args[1]!, args[2]!, check));
 }

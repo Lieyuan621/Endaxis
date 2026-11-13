@@ -155,7 +155,6 @@ const invalidExternalHit: ExternalOperatorHitPayload = {
   sourceId: 'enemy',
   targetId: 'operator',
   tags: [],
-  features: [],
   // @ts-expect-error 外部输入不是伤害结算。
   result: { value: 100 },
 };

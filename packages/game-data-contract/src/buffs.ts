@@ -19,7 +19,6 @@ import type {
 } from './modifiers.ts';
 import type {
   ActionBlackboardValue,
-  DamageFeature,
   DamageTag,
   DamageType,
   ImageRef,
@@ -530,8 +529,6 @@ export type CombatBuffDefinitionAction =
       readonly attackScale: CombatBuffDefinitionNumberOperand;
       /** 伤害携带的分类标签。 */
       readonly tags: readonly DamageTag[];
-      /** 伤害携带的处理特征。 */
-      readonly features: readonly DamageFeature[];
       /** 本次伤害是否可以暴击。 */
       readonly canCritical: boolean;
     }

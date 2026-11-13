@@ -1519,9 +1519,9 @@ describe('主动技能正式时间轴投影', () => {
         kind: 'checkCondition',
         parameters: {
           condition: {
-            kind: 'eventDamageFeaturesMatch',
+            kind: 'eventDamageTagsMatch',
             match: 'exceptAny',
-            features: ['dot', 'remainArea'],
+            tags: ['dot', 'remainArea'],
           },
         },
       },

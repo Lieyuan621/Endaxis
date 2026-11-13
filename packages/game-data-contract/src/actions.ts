@@ -36,7 +36,6 @@ import type {
   CombatTarget,
   DamageCalculation,
   DamageElement,
-  DamageFeature,
   DamageTag,
   DamageType,
   MultiplyAttributeCalculationAttribute,
@@ -119,8 +118,6 @@ export interface DealDamageParameters {
   tags: readonly DamageTag[];
   /** DamageUnit.damageTags 携带的原生 GameplayTag；与 damageDecorateMask 分类位分开。 */
   gameplayTags?: readonly GameplayTag[];
-  /** 原生伤害位中与技能分类无关的行为特征。 */
-  features?: readonly DamageFeature[];
   /** 同一次命中在生命伤害之后结算的失衡伤害；原生同样允许从动作黑板读取。 */
   stagger?: LevelValues | ActionValueOperand;
   /** DefiniteValueCalculation.applyScale 启用时在失衡基础值之后乘用的倍率。 */
@@ -570,7 +567,7 @@ export interface CombatStepParameters {
     /** DefiniteValueCalculation.applyScale 启用时乘用的倍率。 */
     valueMultiplier?: LevelValues | ActionValueOperand;
     /** 保留原生 PoisePack 的装饰位；当前木桩没有弱点窗口，但不能从数据中丢弃。 */
-    features?: readonly DamageFeature[];
+    tags?: readonly DamageTag[];
   };
   /** 按施法者属性计算，并写入干员生命账本的普通治疗。 */
   heal: {
@@ -1512,6 +1509,11 @@ export interface CombatStepParameters {
     /** 当前区间内注册的事件响应。 */
     responses: readonly CombatEventResponseDefinition[];
   };
+  /** 原生 AddTagAction：给查询到的实体添加标签，动作结束时仅撤销本次添加的计数。 */
+  addEntityTags: {
+    targets: ActionTargetQuery;
+    tags: readonly GameplayTag[];
+  };
   /** 原生 TagQueryListenerAction：监听动作宿主的标签查询结果变化。 */
   listenForTagQuery: {
     tags: readonly GameplayTag[];
@@ -1647,6 +1649,7 @@ export const COMBAT_STEP_KINDS = [
   'startTyphoeaArchery',
   'listenForCombatEvents',
   'listenForTagQuery',
+  'addEntityTags',
 ] as const satisfies readonly (keyof CombatStepParameters)[];
 
 /** 步骤按 kind 区分类型，编译和执行靠它精确分支。 */

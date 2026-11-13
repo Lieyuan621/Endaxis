@@ -23,6 +23,7 @@ import type {
   BoneAttachState,
   ActionBuffReferencesState,
   ActionRegistrationState,
+  ActionEntityTagsState,
 } from '../state/actionState';
 import type { ActionBlackboardState } from '../state/foundationState';
 import type { TimelineActionProcessor } from '../timeline/timelineActionProcessor';
@@ -138,6 +139,7 @@ export interface CombatOperationContext {
   /** 仅在执行持有登记的步骤时挂接，实际数据由动作树持有。 */
   actionRegistrationState?: ActionRegistrationState;
   actionBuffReferencesState?: ActionBuffReferencesState;
+  actionEntityTagsState?: ActionEntityTagsState;
   boneAttachState?: BoneAttachState;
   /** 三类结算互斥的临时上下文；不冒充能力事件，也不覆盖 Buff 的来源身份。 */
   readonly modifierContext?:

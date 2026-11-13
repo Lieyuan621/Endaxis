@@ -20,23 +20,12 @@ describe('GlobalBuff catalog reference closure', () => {
       await fs.writeFile(path.join(root, 'ids.json'), '[]');
       vi.stubGlobal(
         'fetch',
-        vi.fn(async (url: string | URL) => {
-          if (String(url).includes('/by-name'))
-            return new Response(
-              JSON.stringify({
-                candidates: [
-                  {
-                    path: `assets/beyond/dynamicassets/gameplay/globalbuff/${id}.asset`,
-                    previewUrl: '/broken',
-                  },
-                ],
-              }),
-            );
+        vi.fn(async () => {
           throw new TypeError('fetch failed');
         }),
       );
       const args = {
-        vfsBase: 'http://localhost',
+        localBase: 'http://localhost',
         revision: 'test',
         identities: path.join(root, 'ids.json'),
         output: path.join(root, 'catalog.json'),
@@ -51,6 +40,19 @@ describe('GlobalBuff catalog reference closure', () => {
       ).rejects.toThrow('fetch failed');
       await fs.writeFile(args.identities, JSON.stringify([id]));
       await expect(generateGlobalBuffCatalog(args)).rejects.toThrow('fetch failed');
+      await fs.writeFile(args.identities, '[]');
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(
+          async () =>
+            new Response('{}', {
+              headers: { 'X-Endaxis-Source': 'endaxis-data-tool', 'X-Endaxis-Version': 'other' },
+            }),
+        ),
+      );
+      await expect(generateGlobalBuffCatalog(args)).rejects.toThrow(
+        'local snapshot version mismatch',
+      );
     } finally {
       vi.unstubAllGlobals();
       await fs.rm(root, { recursive: true, force: true });

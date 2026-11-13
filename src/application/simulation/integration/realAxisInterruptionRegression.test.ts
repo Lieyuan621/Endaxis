@@ -1224,6 +1224,87 @@ it('retains inputs but interrupts A4 before its first hit during another operato
   ).toBe(true);
 });
 
+it.each([true, false])('提弗洛斯强化重击的连携禁用标签遵守主控条件并支持恢复：%s', controlled => {
+  const scenario = createEmptyScenario('typhoeus-heavy-combo-lock', '强化重击禁止连携');
+  scenario.battle.automaticControlSwitches = false;
+  const owner = track('typhoeus', [
+    ['battleSkill', 'battleSkill', 0],
+    ['enhancedBasicAttack', 'basicAttack1', 28],
+    ['enhancedBasicAttack', 'basicAttack2', 47],
+    ['enhancedBasicAttack', 'basicAttack3', 66],
+    ['enhancedBasicAttack', 'basicAttack4', 85],
+    ['enhancedBasicAttack', 'basicAttack5', 114],
+    ['floatingComboSkill', 'comboSkill', 116],
+  ]);
+  owner.skillCasts.forEach((cast, index) => {
+    cast.id = `typhoeus:${index}`;
+  });
+  scenario.tracks[0] = controlled ? owner : track('perlica', []);
+  if (!controlled) scenario.tracks[1] = owner;
+  const session = createEditorSimulationService().createCombatSession(scenario);
+  session.advanceToFrame(115);
+  const restored = session.fork(session.runtime.save());
+  session.advanceToFrame(230);
+  restored.advanceToFrame(230);
+  const run = session.collectResult();
+  expect(restored.collectResult()).toEqual(run);
+  const blocked = run.receiptEntries.filter(
+    entry => entry.event === 'SkillInputBlockedByTypeTag' && entry.data?.castId === 'typhoeus:6',
+  );
+  expect(blocked).toHaveLength(controlled ? 1 : 0);
+  if (controlled) expect(blocked[0]?.data?.blocker).toBe('DisableCastComboSkill');
+});
+
+it('提弗洛斯强化末段退出浮空后接连携，不沿用浮空普攻缓存', () => {
+  const scenario = createEmptyScenario('typhoeus-mode-combo-offset', '退出浮空后接普攻');
+  scenario.tracks[0] = track('typhoeus', [
+    ['battleSkill', 'battleSkill', 0],
+    ['enhancedBasicAttack', 'basicAttack1', 28],
+    ['enhancedBasicAttack', 'basicAttack2', 47],
+    ['enhancedBasicAttack', 'basicAttack3', 66],
+    ['enhancedBasicAttack', 'basicAttack4', 85],
+    ['enhancedBasicAttack', 'basicAttack5', 114],
+    ['comboSkill', 'comboSkill', 160],
+    ['basicAttack', 'basicAttack1', 222],
+  ]);
+  scenario.tracks[0]!.skillCasts.forEach((cast, index) => {
+    cast.id = `typhoeus:${index}`;
+  });
+  const session = createEditorSimulationService().createCombatSession(scenario);
+  session.advanceToFrame(145);
+  const restored = session.fork(session.runtime.save());
+  session.advanceToFrame(250);
+  restored.advanceToFrame(250);
+  const run = session.collectResult();
+  expect(restored.collectResult()).toEqual(run);
+  expect(
+    run.receiptEntries.some(
+      entry =>
+        entry.event === 'BuffFinished' &&
+        entry.data?.buffId === 'buff_chr_0034_typhoea_floatingmode' &&
+        entry.frame < 160,
+    ),
+  ).toBe(true);
+  expect(
+    run.receiptEntries.some(
+      entry => entry.event === 'SkillInputBlockedByTypeTag' && entry.data?.castId === 'typhoeus:6',
+    ),
+  ).toBe(false);
+  expect(
+    run.receiptEntries.filter(
+      entry =>
+        entry.event === 'SkillInputResolvedToDifferentSkill' && entry.data?.castId === 'typhoeus:7',
+    ),
+  ).toEqual([]);
+  expect(run.receiptEntries).toContainEqual(
+    expect.objectContaining({
+      event: 'SkillInputProcessed',
+      frame: 222,
+      data: expect.objectContaining({ skillId: 'chr_0034_typhoea_attack1', accepted: true }),
+    }),
+  );
+});
+
 it.each([true, false])(
   '提弗洛斯浮空连携在单敌人模型中瞄准敌人并支持切面恢复：主控 %s',
   async controlled => {

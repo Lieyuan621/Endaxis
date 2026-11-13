@@ -551,28 +551,16 @@ function compileConditionLeaf(
   }
   if (condition.kind === 'damageDecorateMask') {
     const match = {
+      Exact: 'exact',
       HasAny: 'hasAny',
       HasAll: 'hasAll',
       ExceptAny: 'exceptAny',
       ExceptAll: 'exceptAll',
-    }[condition.checkType] as 'hasAny' | 'hasAll' | 'exceptAny' | 'exceptAll' | undefined;
-    const { tags, features } = projectDamageDecorateMask(condition.mask, sourcePath);
-    if (match === undefined || tags.length + features.length === 0) {
+    }[condition.checkType] as 'exact' | 'hasAny' | 'hasAll' | 'exceptAny' | 'exceptAll' | undefined;
+    const { tags } = projectDamageDecorateMask(condition.mask, sourcePath);
+    if (match === undefined)
       throw new Error(`${sourcePath}: unsupported damage decorate mask ${condition.mask}`);
-    }
-    const projected = [
-      ...(tags.length === 0 ? [] : [{ kind: 'eventDamageTagsMatch' as const, match, tags }]),
-      ...(features.length === 0
-        ? []
-        : [{ kind: 'eventDamageFeaturesMatch' as const, match, features }]),
-    ];
-    if (projected.length === 1) return projected[0]!;
-    // 位掩码跨 Tag/Feature 两个公共域时还原同一个原生位判断：HasAny/ExceptAll
-    // 是域间“或”，HasAll/ExceptAny 是域间“且”。
-    return {
-      kind: condition.checkType === 'HasAny' || condition.checkType === 'ExceptAll' ? 'any' : 'all',
-      conditions: projected,
-    };
+    return { kind: 'eventDamageTagsMatch', match, tags };
   }
   if (condition.kind === 'damageGameplayTag') {
     return {

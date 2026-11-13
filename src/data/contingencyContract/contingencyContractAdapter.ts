@@ -6,10 +6,9 @@ import type {
 import type { MechanicContribution } from '../../core/scenarioMechanics/mechanicContribution';
 import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 import {
-  contingencyContractDefinitionRevision,
   contingencyContractBlockedTagReasons as seasonOneBlocked,
   contingencyContractOmittedTagReasons as seasonOneOmitted,
-} from './generated/contingencyContractDefinitions.generated';
+} from './generated/contingencyContract.indie_contract001.generated';
 import {
   contingencyContractBlockedTagReasons as seasonTwoBlocked,
   contingencyContractOmittedTagReasons as seasonTwoOmitted,
@@ -46,7 +45,7 @@ export const contingencyContractMechanicDefinitions: readonly MechanicDefinition
       Object.freeze({
         id: `${CONTINGENCY_CONTRACT_MECHANIC_PREFIX}${tagId}`,
         family: 'contingencyContract' as const,
-        revision: contingencyContractDefinitionRevision,
+        revision: 'builtin',
         parameters: Object.freeze(
           contractInitialVariables(tagId).map(field => ({
             ...field,
@@ -60,7 +59,7 @@ export const contingencyContractMechanicDefinitions: readonly MechanicDefinition
 
 export const contingencyContractMechanicAdapter: MechanicAdapter = Object.freeze({
   family: 'contingencyContract',
-  revision: contingencyContractDefinitionRevision,
+  revision: 'builtin',
   compile(input: MechanicAdapterInput): readonly MechanicContribution[] {
     const plan = planByMechanicId.get(input.definition.id);
     if (plan === undefined) {

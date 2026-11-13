@@ -1131,7 +1131,7 @@ export const purrchenaChr_0038_purrche_power_attackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 1,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'startTimeDilation_2',
@@ -1874,9 +1874,9 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
       data_3: {
         type: 'boolean',
         expression: {
-          kind: 'eventDamageFeaturesMatch',
+          kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          features: ['dot', 'remainArea'],
+          tags: ['dot', 'remainArea'],
         },
       },
       data_4: {
@@ -1902,9 +1902,9 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
       data_7: {
         type: 'boolean',
         expression: {
-          kind: 'eventDamageFeaturesMatch',
+          kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          features: ['dot', 'remainArea'],
+          tags: ['dot', 'remainArea'],
         },
       },
       data_8: {
@@ -2224,8 +2224,7 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
             target: { kind: 'inputTarget' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['normalSkill', 'canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_8' },
           },
         },
@@ -2784,9 +2783,9 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
       data_5: {
         type: 'boolean',
         expression: {
-          kind: 'eventDamageFeaturesMatch',
+          kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          features: ['dot', 'remainArea'],
+          tags: ['dot', 'remainArea'],
         },
       },
       data_6: {
@@ -3329,9 +3328,9 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
       data_6: {
         type: 'boolean',
         expression: {
-          kind: 'eventDamageFeaturesMatch',
+          kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          features: ['dot', 'remainArea'],
+          tags: ['dot', 'remainArea'],
         },
       },
       data_7: {
@@ -3641,9 +3640,9 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
       data_6: {
         type: 'boolean',
         expression: {
-          kind: 'eventDamageFeaturesMatch',
+          kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          features: ['dot', 'remainArea'],
+          tags: ['dot', 'remainArea'],
         },
       },
       data_7: {
@@ -3967,9 +3966,9 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
       data_6: {
         type: 'boolean',
         expression: {
-          kind: 'eventDamageFeaturesMatch',
+          kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          features: ['dot', 'remainArea'],
+          tags: ['dot', 'remainArea'],
         },
       },
       data_7: {
@@ -5183,9 +5182,9 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
       data_29: {
         type: 'boolean',
         expression: {
-          kind: 'eventDamageFeaturesMatch',
+          kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          features: ['dot', 'remainArea'],
+          tags: ['dot', 'remainArea'],
         },
       },
       data_30: {
@@ -5207,9 +5206,9 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
       data_32: {
         type: 'boolean',
         expression: {
-          kind: 'eventDamageFeaturesMatch',
+          kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          features: ['dot', 'remainArea'],
+          tags: ['dot', 'remainArea'],
         },
       },
       data_33: {
@@ -5302,8 +5301,7 @@ const purrchenaChr_0038_purrche_ultimate_skillActionGraphCallback1 = {
               target: { kind: 'context', key: 'tar' },
               damageType: 'physical',
               attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-              tags: ['ultimateSkill'],
-              features: ['canBreakWeakness'],
+              tags: ['ultimateSkill', 'canBreakWeakness'],
               stagger: { kind: 'valueNode', nodeId: 'data_2' },
             },
           },
@@ -5551,8 +5549,7 @@ const purrchenaChr_0038_purrche_ultimate_skillActionGraphCallback2 = {
               target: { kind: 'context', key: 'tar' },
               damageType: 'physical',
               attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-              tags: ['ultimateSkill'],
-              features: ['canBreakWeakness'],
+              tags: ['ultimateSkill', 'canBreakWeakness'],
               stagger: { kind: 'valueNode', nodeId: 'data_2' },
             },
           },
@@ -9262,8 +9259,7 @@ export const purrchena: OperatorDefinition = {
                                     target: { kind: 'context', key: 'tar' },
                                     damageType: 'physical',
                                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                                    tags: ['comboSkill'],
-                                    features: ['canBreakWeakness'],
+                                    tags: ['canBreakWeakness', 'comboSkill'],
                                     stagger: { kind: 'valueNode', nodeId: 'data_2' },
                                   },
                                   key: 'abilityentity_chr_0038_purrche_combo:chr_0038_purrche_combo_skill_giftbox_abilityrange:/childSkill/actionGraph/main/nodes/launchProjectile_32/action/callbacks/0/skill/actionGraph/main/nodes/dealDamage_1/action',
@@ -9331,8 +9327,7 @@ export const purrchena: OperatorDefinition = {
                                     target: { kind: 'context', key: 'tar' },
                                     damageType: 'physical',
                                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                                    tags: ['comboSkill'],
-                                    features: ['canBreakWeakness'],
+                                    tags: ['canBreakWeakness', 'comboSkill'],
                                     stagger: { kind: 'valueNode', nodeId: 'data_2' },
                                   },
                                   key: 'abilityentity_chr_0038_purrche_combo:chr_0038_purrche_combo_skill_giftbox_abilityrange:/childSkill/actionGraph/main/nodes/launchProjectile_32/action/callbacks/1/skill/actionGraph/main/nodes/dealDamage_1/action',
@@ -9434,8 +9429,7 @@ export const purrchena: OperatorDefinition = {
                                     target: { kind: 'context', key: 'tar' },
                                     damageType: 'physical',
                                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                                    tags: ['comboSkill'],
-                                    features: ['canBreakWeakness'],
+                                    tags: ['canBreakWeakness', 'comboSkill'],
                                     stagger: { kind: 'valueNode', nodeId: 'data_2' },
                                   },
                                   key: 'abilityentity_chr_0038_purrche_combo:chr_0038_purrche_combo_skill_giftbox_abilityrange:/childSkill/actionGraph/main/nodes/launchProjectile_28/action/callbacks/0/skill/actionGraph/main/nodes/dealDamage_1/action',
@@ -9503,8 +9497,7 @@ export const purrchena: OperatorDefinition = {
                                     target: { kind: 'context', key: 'tar' },
                                     damageType: 'physical',
                                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                                    tags: ['comboSkill'],
-                                    features: ['canBreakWeakness'],
+                                    tags: ['canBreakWeakness', 'comboSkill'],
                                     stagger: { kind: 'valueNode', nodeId: 'data_2' },
                                   },
                                   key: 'abilityentity_chr_0038_purrche_combo:chr_0038_purrche_combo_skill_giftbox_abilityrange:/childSkill/actionGraph/main/nodes/launchProjectile_28/action/callbacks/1/skill/actionGraph/main/nodes/dealDamage_1/action',
@@ -9606,8 +9599,7 @@ export const purrchena: OperatorDefinition = {
                                     target: { kind: 'context', key: 'tar' },
                                     damageType: 'physical',
                                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                                    tags: ['comboSkill'],
-                                    features: ['canBreakWeakness'],
+                                    tags: ['canBreakWeakness', 'comboSkill'],
                                     stagger: { kind: 'valueNode', nodeId: 'data_2' },
                                   },
                                   key: 'abilityentity_chr_0038_purrche_combo:chr_0038_purrche_combo_skill_giftbox_abilityrange:/childSkill/actionGraph/main/nodes/launchProjectile_27/action/callbacks/0/skill/actionGraph/main/nodes/dealDamage_1/action',
@@ -9675,8 +9667,7 @@ export const purrchena: OperatorDefinition = {
                                     target: { kind: 'context', key: 'tar' },
                                     damageType: 'physical',
                                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                                    tags: ['comboSkill'],
-                                    features: ['canBreakWeakness'],
+                                    tags: ['canBreakWeakness', 'comboSkill'],
                                     stagger: { kind: 'valueNode', nodeId: 'data_2' },
                                   },
                                   key: 'abilityentity_chr_0038_purrche_combo:chr_0038_purrche_combo_skill_giftbox_abilityrange:/childSkill/actionGraph/main/nodes/launchProjectile_27/action/callbacks/1/skill/actionGraph/main/nodes/dealDamage_1/action',
@@ -10823,8 +10814,7 @@ export const purrchena: OperatorDefinition = {
                       target: { kind: 'context', key: 'tar' },
                       damageType: 'physical',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['ultimateSkill', 'canBreakWeakness'],
                     },
                     key: 'abilityentity_chr_0038_purrche_combo_item_1:chr_0038_purrche_ultimate_skill_abilityrange_blackhole|chr_0038_purrche_combo_skill_abilityrange_1_1|chr_0038_purrche_combo_skill_abilityrange_1_1_potential_3:/childSkills/chr_0038_purrche_ultimate_skill_abilityrange_blackhole/actionGraph/main/nodes/dealDamage_1/action',
                   },
@@ -10948,8 +10938,7 @@ export const purrchena: OperatorDefinition = {
                       target: { kind: 'context', key: 'tar' },
                       damageType: 'physical',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['comboSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['canBreakWeakness', 'comboSkill'],
                     },
                     key: 'abilityentity_chr_0038_purrche_combo_item_1:chr_0038_purrche_ultimate_skill_abilityrange_blackhole|chr_0038_purrche_combo_skill_abilityrange_1_1|chr_0038_purrche_combo_skill_abilityrange_1_1_potential_3:/childSkills/chr_0038_purrche_combo_skill_abilityrange_1_1/actionGraph/main/nodes/dealDamage_1/action',
                   },
@@ -11073,8 +11062,7 @@ export const purrchena: OperatorDefinition = {
                       target: { kind: 'context', key: 'tar' },
                       damageType: 'physical',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['comboSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['canBreakWeakness', 'comboSkill'],
                     },
                     key: 'abilityentity_chr_0038_purrche_combo_item_1:chr_0038_purrche_ultimate_skill_abilityrange_blackhole|chr_0038_purrche_combo_skill_abilityrange_1_1|chr_0038_purrche_combo_skill_abilityrange_1_1_potential_3:/childSkills/chr_0038_purrche_combo_skill_abilityrange_1_1_potential_3/actionGraph/main/nodes/dealDamage_1/action',
                   },

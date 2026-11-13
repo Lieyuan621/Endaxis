@@ -11,6 +11,7 @@ import {
   type AbilityEventSubscriptionReference,
 } from './foundationState';
 import { type RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
 import { type SkillCastInheritanceRegistration } from './environmentState';
 
 export const STEP_RESULT_MODE = {
@@ -285,6 +286,11 @@ export interface ActionRegistrationState {
   registrationIds: number[];
 }
 
+/** 本次加标签动作实际命中的实体；结束时不重新查询，恢复时不重复加标签。 */
+export interface ActionEntityTagsState {
+  references: { target: RuntimeTargetRef; tag: GameplayTag }[];
+}
+
 /** 动作负责结束或转交的 Buff；对象句柄由当前分支按引用重新解析。 */
 export interface ActionBuffReferencesState {
   active: boolean;
@@ -293,6 +299,7 @@ export interface ActionBuffReferencesState {
 
 /** 叶子操作的登记与句柄数据，图执行器按调用实例持有，不含子程序状态。 */
 export type OperationStepData =
+  | { readonly kind: 'entityTags'; readonly entityTags: ActionEntityTagsState }
   | { readonly kind: 'allowedNextSkills'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'playerActionMode'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'basicAttackMapping'; readonly activation: ActionRegistrationState }

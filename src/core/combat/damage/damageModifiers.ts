@@ -23,7 +23,6 @@ export interface DamageModifierConditionInput {
   readonly damageType: PlayerDamageContext['damageType'];
   readonly tags: PlayerDamageContext['tags'];
   readonly gameplayTags?: PlayerDamageContext['gameplayTags'];
-  readonly features: PlayerDamageContext['features'];
 }
 
 /** 已编译动作程序的运行端口，不属于可保存的游戏数据协议。 */

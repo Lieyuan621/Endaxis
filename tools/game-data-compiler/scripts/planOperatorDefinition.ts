@@ -71,6 +71,11 @@ export function projectOperatorDefinition(
     /** 默认应用已验证的优化；report 仅报告候选，off 用于生成对照。 */
     readonly optimization?: DefinitionOptimizationMode;
     readonly skipContingencyContract?: boolean;
+    readonly contractPeriods?: readonly {
+      gameId: string;
+      tableRoot: string;
+      supplement: string;
+    }[];
   },
 ) {
   const args = { ...input, sources: input.sources ?? new OperatorPlanningSources(input) };

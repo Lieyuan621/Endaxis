@@ -41,6 +41,13 @@ describe('黑板用途的读取对象', () => {
     const cases: [ActionGraphStep, string[]][] = [
       [
         {
+          kind: 'addEntityTags',
+          parameters: { targets: query('tagRange'), tags: ['Status/DisableCastComboSkill'] },
+        },
+        ['tagRange'],
+      ],
+      [
+        {
           kind: 'copyContextTargets',
           parameters: {
             source: query('source'),

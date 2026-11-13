@@ -31,7 +31,7 @@ const commonBuff_buff_cc02_eny_numshield$actionGraph = {
         expression: {
           kind: 'eventDamageTagsMatch',
           match: 'exceptAny',
-          tags: ['normalAttackLastCombo', 'normalSkill', 'ultimateSkill', 'comboSkill'],
+          tags: ['normalSkill', 'ultimateSkill', 'comboSkill', 'normalAttackLastCombo'],
         },
       },
       data_2: {
@@ -320,7 +320,7 @@ const commonBuff_buff_cc_chr_combo_lock_instance: SkillBuffDefinition = {
     visible: true,
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
-    icon: 'endaxis:contingency_contract/2/lockdown',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key3',
     showInSquadIcon: true,
     nameKey: 'contingencyContract.buffs.comboLock',
   },
@@ -682,7 +682,7 @@ const commonBuff_buff_cc_chr_disable_normal_skill: SkillBuffDefinition = {
     visible: true,
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
-    icon: 'endaxis:contingency_contract/2/silence',
+    icon: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key1',
     showInSquadIcon: true,
     nameKey: 'contingencyContract.buffs.battleLock',
   },
@@ -2389,7 +2389,7 @@ const commonBuff_buff_cc_chr_no_lastcombo_stop_atb_recover$actionGraph = {
         expression: {
           kind: 'eventDamageTagsMatch',
           match: 'hasAny',
-          tags: ['normalAttackLastCombo', 'powerAttack'],
+          tags: ['powerAttack', 'normalAttackLastCombo'],
         },
       },
       data_2: {
@@ -2616,7 +2616,7 @@ const commonBuff_buff_cc_chr_no_lastcombo_weak$actionGraph = {
         expression: {
           kind: 'eventDamageTagsMatch',
           match: 'hasAny',
-          tags: ['normalAttackLastCombo', 'powerAttack'],
+          tags: ['powerAttack', 'normalAttackLastCombo'],
         },
       },
       data_3: {
@@ -8283,4 +8283,3 @@ export const contingencyContractOmittedTagReasons = Object.freeze({
   '102201': 'changes stage wave enemy composition rather than the selected fixed target',
   '102202': 'changes stage wave enemy composition rather than the selected fixed target',
 }) as Readonly<Record<number, string>>;
-export const contingencyContractDefinitionRevision = 'local-index-20261030';

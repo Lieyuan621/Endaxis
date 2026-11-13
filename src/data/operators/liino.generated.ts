@@ -49,8 +49,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             target: { kind: 'context', key: 'tar' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
           },
         },
         next: 'startTimeDilation_4',
@@ -105,8 +104,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
             target: { kind: 'context', key: 'tar' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_6' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
@@ -2040,7 +2038,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.1,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: null,
@@ -2072,7 +2070,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.7,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: null,
@@ -3166,8 +3164,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                             target: { kind: 'context', key: 'tar' },
                                             damageType: 'electric',
                                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                                            tags: ['normalSkill'],
-                                            features: ['canBreakWeakness'],
+                                            tags: ['normalSkill', 'canBreakWeakness'],
                                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                                           },
                                         },
@@ -3277,8 +3274,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                                             target: { kind: 'context', key: 'tar' },
                                             damageType: 'electric',
                                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                                            tags: ['normalSkill'],
-                                            features: ['canBreakWeakness'],
+                                            tags: ['normalSkill', 'canBreakWeakness'],
                                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                                           },
                                         },
@@ -4541,7 +4537,17 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: 'applyBuff_26',
       },
-      reachSkillOperableBoundary_28: {
+      addEntityTags_28: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: {
+            targets: { kind: 'owner' },
+            tags: ['Status/DisableDash', 'Status/DontInterruptSkillBySwitchIn'],
+          },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_29: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -4550,7 +4556,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_30: {
+      reachSkillOperableBoundary_31: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -4563,7 +4569,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_34: {
+      applyBuff_35: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4581,7 +4587,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_33: {
+      inheritBuffById_34: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -4598,7 +4604,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_37: {
+      applyBuff_38: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4616,7 +4622,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_36: {
+      inheritBuffById_37: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -4633,27 +4639,27 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_38: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'inheritBuffById_36' },
-          whenFalse: { $sequence: 'applyBuff_37' },
-        },
-        next: null,
-      },
       ifElse_39: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'inheritBuffById_33' },
-          whenFalse: { $sequence: 'applyBuff_34' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
+          whenTrue: { $sequence: 'inheritBuffById_37' },
+          whenFalse: { $sequence: 'applyBuff_38' },
         },
-        next: 'ifElse_38',
+        next: null,
       },
-      applyBuff_40: {
+      ifElse_40: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'inheritBuffById_34' },
+          whenFalse: { $sequence: 'applyBuff_35' },
+        },
+        next: 'ifElse_39',
+      },
+      applyBuff_41: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4671,7 +4677,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_43: {
+      applyBuff_44: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4691,7 +4697,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_42: {
+      inheritBuffById_43: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -4710,17 +4716,17 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_44: {
+      ifElse_45: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'inheritBuffById_42' },
-          whenFalse: { $sequence: 'applyBuff_43' },
+          whenTrue: { $sequence: 'inheritBuffById_43' },
+          whenFalse: { $sequence: 'applyBuff_44' },
         },
         next: null,
       },
-      applyBuff_45: {
+      applyBuff_46: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4738,7 +4744,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      changeResource_47: {
+      changeResource_48: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -4753,14 +4759,14 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_48: {
+      checkCondition_49: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'constant', value: true } },
         },
-        next: 'changeResource_47',
+        next: 'changeResource_48',
       },
-      finishBuffsById_49: {
+      finishBuffsById_50: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -4770,19 +4776,19 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
             reason: 'other',
           },
         },
-        next: 'checkCondition_48',
+        next: 'checkCondition_49',
       },
-      ifElse_50: {
+      ifElse_51: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_9' },
-          whenTrue: { $sequence: 'finishBuffsById_49' },
+          whenTrue: { $sequence: 'finishBuffsById_50' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      applyBuff_51: {
+      applyBuff_52: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4794,12 +4800,12 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_52: {
+      checkCondition_53: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'constant', value: true } },
         },
-        next: 'applyBuff_51',
+        next: 'applyBuff_52',
       },
     },
     dataNodes: {
@@ -4909,16 +4915,17 @@ export const liinoChr_0035_liino_normal_skill: SkillDefinition = {
     { startFrame: 45, endFrame: 1691, sequence: { $sequence: 'repeatEachTick_23' } },
     { startFrame: 45, endFrame: 1691, sequence: { $sequence: 'aura_25' } },
     { startFrame: 15, endFrame: 1815, sequence: { $sequence: 'applyBuff_27' } },
-    { startFrame: 50, endFrame: 1872, sequence: { $sequence: 'reachSkillOperableBoundary_28' } },
-    { startFrame: 1959, endFrame: 2092, sequence: { $sequence: 'reachSkillOperableBoundary_28' } },
-    { startFrame: 1817, endFrame: 1872, sequence: { $sequence: 'reachSkillOperableBoundary_30' } },
-    { startFrame: 2024, endFrame: 2092, sequence: { $sequence: 'reachSkillOperableBoundary_30' } },
-    { startFrame: 0, endFrame: 1804, sequence: { $sequence: 'ifElse_39' } },
-    { startFrame: 6, endFrame: 1804, sequence: { $sequence: 'applyBuff_40' } },
-    { startFrame: 0, endFrame: 1804, sequence: { $sequence: 'ifElse_44' } },
-    { startFrame: 6, endFrame: 1804, sequence: { $sequence: 'applyBuff_45' } },
-    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'ifElse_50' } },
-    { startFrame: 15, endFrame: 18, sequence: { $sequence: 'checkCondition_52' } },
+    { startFrame: 15, endFrame: 1815, sequence: { $sequence: 'addEntityTags_28' } },
+    { startFrame: 50, endFrame: 1872, sequence: { $sequence: 'reachSkillOperableBoundary_29' } },
+    { startFrame: 1959, endFrame: 2092, sequence: { $sequence: 'reachSkillOperableBoundary_29' } },
+    { startFrame: 1817, endFrame: 1872, sequence: { $sequence: 'reachSkillOperableBoundary_31' } },
+    { startFrame: 2024, endFrame: 2092, sequence: { $sequence: 'reachSkillOperableBoundary_31' } },
+    { startFrame: 0, endFrame: 1804, sequence: { $sequence: 'ifElse_40' } },
+    { startFrame: 6, endFrame: 1804, sequence: { $sequence: 'applyBuff_41' } },
+    { startFrame: 0, endFrame: 1804, sequence: { $sequence: 'ifElse_45' } },
+    { startFrame: 6, endFrame: 1804, sequence: { $sequence: 'applyBuff_46' } },
+    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'ifElse_51' } },
+    { startFrame: 15, endFrame: 18, sequence: { $sequence: 'checkCondition_53' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 25 }],
@@ -5173,11 +5180,12 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         },
         next: 'inheritBuffById_19',
       },
-      reachSkillOperableBoundary_21: {
+      addEntityTags_21: {
         action: {
-          kind: 'reachSkillOperableBoundary',
+          kind: 'addEntityTags',
           parameters: {
-            skillIds: ['chr_0035_liino_normal_skill_end', 'chr_0035_liino_combo_skill'],
+            targets: { kind: 'owner' },
+            tags: ['Status/DisableDash', 'Status/DontInterruptSkillBySwitchIn'],
           },
         },
         next: null,
@@ -5186,12 +5194,21 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
+            skillIds: ['chr_0035_liino_normal_skill_end', 'chr_0035_liino_combo_skill'],
+          },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_23: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
             skillIds: ['chr_0035_liino_normal_skill_end', 'chr_0035_liino_normal_skill'],
           },
         },
         next: null,
       },
-      applyBuff_25: {
+      applyBuff_26: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5205,7 +5222,7 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_24: {
+      inheritBuffById_25: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -5218,17 +5235,17 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         },
         next: null,
       },
-      ifElse_26: {
+      ifElse_27: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'inheritBuffById_24' },
-          whenFalse: { $sequence: 'applyBuff_25' },
+          whenTrue: { $sequence: 'inheritBuffById_25' },
+          whenFalse: { $sequence: 'applyBuff_26' },
         },
         next: null,
       },
-      applyBuff_27: {
+      applyBuff_28: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5242,7 +5259,7 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         },
         next: null,
       },
-      applyBuff_28: {
+      applyBuff_29: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5260,7 +5277,7 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         },
         next: null,
       },
-      applyBuff_32: {
+      applyBuff_33: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5280,7 +5297,7 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_31: {
+      inheritBuffById_32: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -5299,17 +5316,17 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         },
         next: null,
       },
-      ifElse_33: {
+      ifElse_34: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'inheritBuffById_31' },
-          whenFalse: { $sequence: 'applyBuff_32' },
+          whenTrue: { $sequence: 'inheritBuffById_32' },
+          whenFalse: { $sequence: 'applyBuff_33' },
         },
         next: null,
       },
-      applyBuff_36: {
+      applyBuff_37: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5330,7 +5347,7 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         },
         next: null,
       },
-      inheritBuffById_35: {
+      inheritBuffById_36: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -5350,17 +5367,17 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         },
         next: null,
       },
-      ifElse_37: {
+      ifElse_38: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'inheritBuffById_35' },
-          whenFalse: { $sequence: 'applyBuff_36' },
+          whenTrue: { $sequence: 'inheritBuffById_36' },
+          whenFalse: { $sequence: 'applyBuff_37' },
         },
         next: null,
       },
-      applyBuff_38: {
+      applyBuff_39: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5452,16 +5469,17 @@ export const liinoChr_0035_liino_normal_skill_combo: SkillDefinition = {
     { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'listenForCombatEvents_13' } },
     { startFrame: 0, endFrame: 1801, sequence: { $sequence: 'repeatEachTick_16' } },
     { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'inheritBuffById_20' } },
-    { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
-    { startFrame: 1723, endFrame: 1800, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
-    { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'ifElse_26' } },
-    { startFrame: 1862, endFrame: 1962, sequence: { $sequence: 'applyBuff_27' } },
-    { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'applyBuff_28' } },
-    { startFrame: 1862, endFrame: 1961, sequence: { $sequence: 'applyBuff_28' } },
-    { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'ifElse_33' } },
-    { startFrame: 1862, endFrame: 1962, sequence: { $sequence: 'ifElse_37' } },
-    { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'applyBuff_38' } },
-    { startFrame: 1862, endFrame: 1961, sequence: { $sequence: 'applyBuff_38' } },
+    { startFrame: 0, endFrame: 1801, sequence: { $sequence: 'addEntityTags_21' } },
+    { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
+    { startFrame: 1723, endFrame: 1800, sequence: { $sequence: 'reachSkillOperableBoundary_23' } },
+    { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'ifElse_27' } },
+    { startFrame: 1862, endFrame: 1962, sequence: { $sequence: 'applyBuff_28' } },
+    { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'applyBuff_29' } },
+    { startFrame: 1862, endFrame: 1961, sequence: { $sequence: 'applyBuff_29' } },
+    { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'ifElse_34' } },
+    { startFrame: 1862, endFrame: 1962, sequence: { $sequence: 'ifElse_38' } },
+    { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'applyBuff_39' } },
+    { startFrame: 1862, endFrame: 1961, sequence: { $sequence: 'applyBuff_39' } },
   ],
   defaultTarget: 'enemy',
   timelineBlockFollowUpSkillId: 'chr_0035_liino_normal_skill_end',
@@ -5818,7 +5836,17 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_22: {
+      addEntityTags_20: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: {
+            targets: { kind: 'owner' },
+            tags: ['Status/DisableDash', 'Status/DontInterruptSkillBySwitchIn'],
+          },
+        },
+        next: null,
+      },
+      applyBuff_23: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5844,7 +5872,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      modifyActionValue_23: {
+      modifyActionValue_24: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -5853,19 +5881,19 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
-        next: 'applyBuff_22',
+        next: 'applyBuff_23',
       },
-      ifElse_24: {
+      ifElse_25: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'applyBuff_22' },
-          whenFalse: { $sequence: 'modifyActionValue_23' },
+          whenTrue: { $sequence: 'applyBuff_23' },
+          whenFalse: { $sequence: 'modifyActionValue_24' },
         },
         next: null,
       },
-      storeSourceAttributeValue_25: {
+      storeSourceAttributeValue_26: {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
@@ -5879,9 +5907,9 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
             targetKey: 'fnlatk_up',
           },
         },
-        next: 'ifElse_24',
+        next: 'ifElse_25',
       },
-      applyBuff_26: {
+      applyBuff_27: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5906,21 +5934,21 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_27: {
+      reachSkillOperableBoundary_28: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0035_liino_normal_skill_end'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_28: {
+      reachSkillOperableBoundary_29: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0035_liino_combo_skill'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_29: {
+      reachSkillOperableBoundary_30: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: {
@@ -5933,7 +5961,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_30: {
+      applyBuff_31: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5951,7 +5979,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_31: {
+      applyBuff_32: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5970,7 +5998,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_32: {
+      applyBuff_33: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5988,7 +6016,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_33: {
+      applyBuff_34: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -6001,14 +6029,24 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      hideUi_34: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_35: {
+      hideUi_35: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_36: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
             priority: 100,
             targetScale: { kind: 'constant', value: 0 },
             ignoredTargets: [],
+          },
+        },
+        next: null,
+      },
+      addEntityTags_37: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: {
+            targets: { kind: 'owner' },
+            tags: ['Status/Ability/Skill/CantSwitchTocCenter'],
           },
         },
         next: null,
@@ -6100,17 +6138,19 @@ export const liinoChr_0035_liino_ultimate_skill: SkillDefinition = {
     { startFrame: 77, endFrame: 527, sequence: { $sequence: 'applyBuff_13' } },
     { startFrame: 77, endFrame: 527, sequence: { $sequence: 'changeSkillSlot_14' } },
     { startFrame: 137, endFrame: 527, sequence: { $sequence: 'listenForCombatEvents_19' } },
-    { startFrame: 77, endFrame: 527, sequence: { $sequence: 'storeSourceAttributeValue_25' } },
-    { startFrame: 77, endFrame: 477, sequence: { $sequence: 'applyBuff_26' } },
-    { startFrame: 77, endFrame: 527, sequence: { $sequence: 'reachSkillOperableBoundary_27' } },
-    { startFrame: 163, endFrame: 527, sequence: { $sequence: 'reachSkillOperableBoundary_28' } },
-    { startFrame: 527, endFrame: 580, sequence: { $sequence: 'reachSkillOperableBoundary_29' } },
-    { startFrame: 77, endFrame: 520, sequence: { $sequence: 'applyBuff_30' } },
-    { startFrame: 64, endFrame: 523, sequence: { $sequence: 'applyBuff_31' } },
-    { startFrame: 77, endFrame: 520, sequence: { $sequence: 'applyBuff_32' } },
-    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'applyBuff_33' } },
-    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'hideUi_34' } },
-    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'startUltimateTimeDilation_35' } },
+    { startFrame: 77, endFrame: 539, sequence: { $sequence: 'addEntityTags_20' } },
+    { startFrame: 77, endFrame: 527, sequence: { $sequence: 'storeSourceAttributeValue_26' } },
+    { startFrame: 77, endFrame: 477, sequence: { $sequence: 'applyBuff_27' } },
+    { startFrame: 77, endFrame: 527, sequence: { $sequence: 'reachSkillOperableBoundary_28' } },
+    { startFrame: 163, endFrame: 527, sequence: { $sequence: 'reachSkillOperableBoundary_29' } },
+    { startFrame: 527, endFrame: 580, sequence: { $sequence: 'reachSkillOperableBoundary_30' } },
+    { startFrame: 77, endFrame: 520, sequence: { $sequence: 'applyBuff_31' } },
+    { startFrame: 64, endFrame: 523, sequence: { $sequence: 'applyBuff_32' } },
+    { startFrame: 77, endFrame: 520, sequence: { $sequence: 'applyBuff_33' } },
+    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'applyBuff_34' } },
+    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'hideUi_35' } },
+    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'startUltimateTimeDilation_36' } },
+    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'addEntityTags_37' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -6678,8 +6718,7 @@ const liinoBuff4ActionGraph = {
             target: { kind: 'context', key: 'tar' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
           },
         },
         next: 'startTimeDilation_9',
@@ -6734,8 +6773,7 @@ const liinoBuff4ActionGraph = {
             target: { kind: 'context', key: 'tar' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_8' },
           },
         },
@@ -12276,8 +12314,7 @@ export const liino: OperatorDefinition = {
                                     damageType: 'electric',
                                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                                     takeAttackSnapshot: true,
-                                    tags: ['ultimateSkill'],
-                                    features: ['canBreakWeakness'],
+                                    tags: ['ultimateSkill', 'canBreakWeakness'],
                                     stagger: { kind: 'valueNode', nodeId: 'data_2' },
                                   },
                                   key: 'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/actionGraph/main/nodes/launchProjectile_45/action/callbacks/0/skill/actionGraph/main/nodes/dealDamage_3/action',
@@ -12403,8 +12440,7 @@ export const liino: OperatorDefinition = {
                                     damageType: 'electric',
                                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                                     takeAttackSnapshot: true,
-                                    tags: ['ultimateSkill'],
-                                    features: ['canBreakWeakness'],
+                                    tags: ['ultimateSkill', 'canBreakWeakness'],
                                     stagger: { kind: 'valueNode', nodeId: 'data_2' },
                                   },
                                   key: 'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/actionGraph/main/nodes/launchProjectile_46/action/callbacks/0/skill/actionGraph/main/nodes/dealDamage_3/action',

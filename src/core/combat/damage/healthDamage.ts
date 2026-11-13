@@ -2,7 +2,7 @@
  * 已计算生命伤害与目标生命状态之间的写入边界。
  * 只能在承伤事件完成后的正确阶段调用，避免提前改变后续监听器看到的生命值。
  */
-import type { DamageFeature, DamageTag, DamageType } from '../../game-data/operatorDefinition';
+import type { DamageTag, DamageType } from '../../game-data/operatorDefinition';
 import type { CombatObjectRef, CombatReceiptSink } from '../receipt/combatReceipt';
 import type { CombatVitals, HealthDamageResult } from '../resources/combatVitals';
 import type {
@@ -46,7 +46,6 @@ export interface HealthDamageEventPayload {
   readonly damageType: DamageType;
   readonly tags: readonly DamageTag[];
   readonly gameplayTags?: readonly GameplayTag[];
-  readonly features: readonly DamageFeature[];
   readonly result: PlayerActiveDamageResult;
   /** 结算后 Take/OutputDamageContext 的实际扣血值；结算前事件尚无此值。 */
   readonly actualDamage?: number;
@@ -150,7 +149,6 @@ export interface ExecuteHealthDamageInput {
   readonly damageType: DamageType;
   readonly tags: readonly DamageTag[];
   readonly gameplayTags?: readonly GameplayTag[];
-  readonly features?: readonly DamageFeature[];
   readonly result: PlayerActiveDamageResult;
   /** 缺省沿用实际暴击结果；期望模式由伤害执行器显式给出确定性的后续效果策略。 */
   readonly triggersCriticalEffects?: boolean;
@@ -189,9 +187,8 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
     sourceId: input.sourceId,
     targetId: input.targetId,
     damageType: input.damageType,
-    tags: input.tags,
+    tags: input.tags ?? [],
     gameplayTags: input.gameplayTags ?? [],
-    features: input.features ?? [],
     result: input.result,
     triggersCriticalEffects: input.triggersCriticalEffects ?? input.result.isCritical,
   };

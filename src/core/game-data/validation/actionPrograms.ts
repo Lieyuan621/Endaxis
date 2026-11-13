@@ -47,7 +47,6 @@ import {
   validateLevelValuesOrActionValueOperand,
   validateNonEmptyStringArray,
   validateDamageTags,
-  validateDamageFeatures,
   validateElements,
   validateGameplayTag,
   validateGameplayTags,
@@ -1050,9 +1049,6 @@ function validateCombatStep(
         push(out, `${path}.parameters.calculationValue`, 'required for definite calculation');
       if (parameters.gameplayTags !== undefined) {
         validateGameplayTags(parameters.gameplayTags, `${path}.parameters.gameplayTags`, out, true);
-      }
-      if (parameters.features !== undefined) {
-        validateDamageFeatures(parameters.features, `${path}.parameters.features`, out);
       }
       if (parameters.stagger !== undefined) {
         validateLevelValuesOrActionValueOperand(
@@ -2299,6 +2295,10 @@ function validateCombatStep(
     case 'limitMovementGait':
       requireEnum(parameters, 'min', new Set(['Walk', 'Run', 'Sprint']), `${path}.parameters`, out);
       requireEnum(parameters, 'max', new Set(['Walk', 'Run', 'Sprint']), `${path}.parameters`, out);
+      break;
+    case 'addEntityTags':
+      validateTargetQuery(parameters.targets, `${path}.parameters.targets`, out);
+      validateGameplayTags(parameters.tags, `${path}.parameters.tags`, out);
       break;
     case 'changePlayerActionMode':
       requireString(parameters, 'modeId', `${path}.parameters`, out);

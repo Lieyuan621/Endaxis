@@ -34,6 +34,7 @@ import {
 } from '../combatProjectionCommon.ts';
 import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
 import { standardStumpBuffAbilityEventOmissionReason } from '../scenario/standardStumpScenarioPolicy.ts';
+import { retainReviewedEntityTags } from '../scenario/entityTagPolicy.ts';
 import { isPresentationOnlyActionSequence } from '../skills/skillPresentationTargets.ts';
 import type {
   CompiledActionValueOperandSource,
@@ -1776,6 +1777,24 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'inputControl') {
     const action = node.body.value.action;
+    if (action.kind === 'addEntityControlTags') {
+      if (action.useBlackboard)
+        throw new Error(`${node.sourcePath}: dynamic entity tag requires a runtime string binding`);
+      const tags = retainReviewedEntityTags(
+        projectGameplayTags(action.tagIds, context, `${node.sourcePath}.tags`),
+        `${node.sourcePath}.tags`,
+      );
+      if (tags.length === 0) return [];
+      return [
+        {
+          kind: 'addEntityTags',
+          parameters: {
+            targets: projectActionTargetQuery(action.owner, context, `${node.sourcePath}.owner`),
+            tags,
+          },
+        },
+      ];
+    }
     if (action.kind === 'markCanDash') {
       return [{ kind: 'markCurrentSkillCanDash', parameters: {} }];
     }

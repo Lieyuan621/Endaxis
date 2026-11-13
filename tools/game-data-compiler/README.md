@@ -1,141 +1,157 @@
 # 游戏数据编译器
 
-本工具把游戏表格和 Unity 资源转换成 Endaxis 使用的定义、本地化文本和 WebP 图片。先生成隔离候选并验证，再发布到正式目录。普通网页开发不需要运行它。
+将游戏数据转换为 Endaxis 使用的干员、武器、装备、敌人、关卡、合约等定义，以及本地化文本和 WebP 图片。更新游戏资源或修改转换规则时使用；普通网页开发直接使用仓库已有产物即可。
 
-npm 入口保留来源下载、完整重建、干员及装备等领域生成和候选验证。版本更新统一使用 `rebuild:game-data`，涵盖基础配置目录、敌人品阶、图标和本地化等步骤，不需要逐个运行。`scripts/` 中的内部阶段和专项诊断可直接用 Node.js 调用，不全部挂到根目录任务列表。
+## 游戏资源生成
 
-## 前提与输入
+### 准备环境
 
-在仓库根目录安装开发依赖，使用 Node.js 22.12 或更高版本。完整资源更新还需要可用的 Unity worker 及对应游戏资源。游戏文本与其他定义共用冻结的 TableCfg 来源，不需要 Python。
+需要 Windows x64、Node.js ≥22.12、Python ≥3.11，以及本机已安装的游戏和两个工具仓库：
 
-本地化由 `src/domains/locales` 编译，`src/domains/locales/gameLocaleCandidate.ts` 负责读取候选资源身份并写入候选目录。统一重建校验语言文件集合、双语身份数量与重复生成一致性后发布。文本编译不自行下载，也不合并旧语言文件；富文本图标保留原生文件名，统一生成 `/icons/<文件名>.webp`，无需人工映射；同名图片共用一份，导出按目录偏好及完整路径排序稳定选取 AKEDB 资源，缺失即失败。未指定格式的数字使用简洁表示（如 `15`），显式的小数位和百分比格式则按源文本保留。
+- [AKE Data Tool](https://github.com/NagiYume/AKEDatabase/tree/main/tools/ake-data-tool)：导出 TableCfg、Json 和图片。
+- [endaxis-data-tool](https://github.com/SQwatermark/endaxis-data-tool)：导出编译器需要的补充数据，并提供本地来源服务。
 
-确认表格快照、客户端资源和原生行为依据的版本。BuffData 只采用 AKEDB 解码；缺件应报告给来源维护者，不能用 VFS 版本补齐。其他允许补缺的资源仍记录逐文件来源；文件哈希只能证明取到哪些内容，不能证明不同来源属于同一版本。
+运行前，按照本仓库及两个工具仓库的说明准备运行环境。脚本不代为安装依赖或初始化子模块。默认使用两个工具目录各自的 `.venv/Scripts/python.exe`；其他环境可通过 `--ake-python` 和 `--python` 指定。
 
-冻结来源目录必须包含下载器生成的 `source-provenance.json`。来源路径与服务地址通过命令参数指定。
+### 执行
 
-## 更新一个游戏版本
+在 Endaxis 仓库根目录运行，替换下面三个路径：
 
-### 1. 生成候选
-
-检查并保留工作树修改后，在仓库根目录执行：
-
-```sh
-npm run rebuild:game-data -- --version '<版本>' --unity-worker '<worker路径>' --workers 2
+```powershell
+npm run rebuild:game-data:local -- --game-root "<游戏安装目录>" --ake-tool-root "<AKEDatabase目录>/tools/ake-data-tool" --data-tool-root "<endaxis-data-tool目录>" --publish
 ```
 
-结果写入 `tmp/game-data-rebuild/run-*`，包括来源、候选、审计和 `report.json`，不直接覆盖正式产物。已有冻结来源可这样重跑：
+脚本复制并缓存 VFS，调用两个工具导出数据，自动启动来源服务，生成候选并验证，最后将结果写入本地工作树。游戏安装目录只读。`--publish` 表示写入仓库的正式资源目录，不会提交 Git 或部署网站。
 
-```sh
-npm run rebuild:game-data -- --source-root '<冻结来源目录>' --version '<版本>' --unity-worker '<worker路径>' --workers 2
-```
+去掉 `--publish` 可只生成候选；将其换成 `--check-inputs` 可只检查环境。完整参数、缓存和执行说明见[入口脚本注释](scripts/rebuildFromInstalledGame.ts)，也可运行 `npm run rebuild:game-data:local -- --help`。
 
-`--tables-only` 仅检查表格和单件装备，不能完成版本更新，也不能与发布组合使用。
+危机合约的服务端效果配置仍可能需要从 AKEDATA 下载，因此本机导出流程不保证完全离线。已有这些补充文件时，可通过 `--contract-values-root` 指定目录。
 
-SkillData/BuffData 使用数字枚举编码时，通过 `--native-json-schema '<同版本 schema-enums.json>'` 指定字段与枚举目录。干员、装备、消耗品、合约和技能库审计共用此读取规则；下载原文不变，未知字段及未知枚举值仍交给领域校验，不能按序号猜测。类型目录副本及 SHA-256 写入本轮临时输出与报告，版本一致性须由操作者核实。
+### 确认结果
 
-单干员完整生成入口 `generateOperatorActiveSkillRuntimeBatch.ts --complete` 支持
-`--skip-contingency-contract`：合约不在更新范围时，保留现有合约产物，不读取或重新编译
-合约来源。该模式将公共实体变量的外部读取视为未知，保守保留可能被合约读取的字段；
-不能据此声称已验证新版合约，统一完整重建仍默认包含合约。
+编译阶段的输出位于 `tmp/game-data-rebuild/run-*`，终端会打印本次报告路径：
 
-统一重建也支持显式 `--skip-contingency-contract`，用于无法获取服务端合约配置时更新其余全部领域。
-该模式将当前合约定义、双语文本和专属图标复制到候选中参与校验，但排除在发布清单之外；
-报告通过 `preservedOutputs` 列明保留范围，`fullRebuild` 保持 false，`published` 表示其余领域是否发布成功。
+| 内容          | 用途                                     |
+| ------------- | ---------------------------------------- |
+| `report.json` | 查看各阶段状态、来源、候选路径和发布结果 |
+| `candidate/`  | 查看生成的定义、文本和图片               |
+| `audit/`      | 查看内容变化、引用及模拟检查结果         |
+| `sources/`    | 保存本次使用的来源，供排查和重跑         |
 
-### 2. 审阅范围与配置
+完整生成并写入成功时，报告中所有阶段为 `passed`，`fullRebuild` 和 `published` 为 `true`，`remaining` 为空。仅生成候选时，`published` 为 `false`。
 
-先看报告中的 `sources`、`source-coverage`、`content-inventory`、`operator-refresh-review` 及各领域 `comparison`。逐项核对新增、修改、删除与阻塞项；非玩家记录、表现变体和未知技能不能自动当作可用内容加入。
+| 退出码 | 完整生成入口的含义                   |
+| ------ | ------------------------------------ |
+| `0`    | 已通过验证并写入正式目录             |
+| `1`    | 执行失败，查看终端错误及对应阶段报告 |
+| `2`    | 候选通过验证，尚未写入正式目录       |
 
-| 配置                                             | 何时修改                                         |
-| ------------------------------------------------ | ------------------------------------------------ |
-| `game-data-sources.json`                         | 新增所需表、集合或单文件                         |
-| `config/operators.json`                          | 新干员、技能组、变体、养成关联或对象展示信息变化 |
-| `config/gearSetIdentities.json`                  | 新增产品支持的套装身份                           |
-| `config/gearSetIcons.json`                       | 指定套装中一件装备 ID 作为图标来源               |
-| `config/equipmentAssets.json`                    | 对象资源有歧义，需要明确别名                     |
-| `config/systemBuffRoots.json`                    | 自动引用范围之外还需要的系统根 Buff              |
-| `config/globalBuffIdentities.json`               | 新增全局 Buff 身份                               |
-| `config/buffPresentationNames.ts`                | Buff 自身需要明确本地化名称或补充展示图标        |
-| `config/contingencyContractSimulationScope.json` | 确认合约效果的模拟范围                           |
-| `config/enemies/runtime-defaults.json`           | 有依据的敌人运行默认值变化                       |
-| `config/enemies/hidden-enemies.json`             | 敌人隐藏状态；分类与顺序由原生图鉴表生成         |
+生成后审阅 Git 差异，并用受影响的技能、配装和时间轴检查数值、时序及展示。自动验收通过不代表新机制已全部得到模拟支持。提交正式产物和必要的代码、配置；原始导出、缓存、审计及备份不提交。
 
-普通技能、天赋和潜能不逐项配置编译器，编译路径从原始动作推断。路由关系和递归技能组等确需人工确认的配置保留在对象定义中。递归放置策略必须校验起止技能、段数预算和回退序列，不按干员名称分派。
+### 失败时从哪里查
 
-Buff 的 `presentation` 只发布界面使用的字段，省略等价默认值。保留显式隐藏、无图标的显式显示，以及两个头顶栏标志均为 `false` 的排除语义；原生动画、特效和图标排序配置不进入正式定义。完整原生字段仍在来源解析层读取和校验。
+- **环境或导出失败**：查看终端错误和本次导出目录。核对工具环境及游戏是否更新完成；此时可能尚未生成编译报告。
+- **编译或验证受阻**：从 `report.json` 中第一个 `failed` 或 `blocked` 阶段开始，查看其错误与审计文件，区分输入缺失、待审阅配置、转换未支持和产物验证失败。
+- **新增内容未出现**：检查内容清单及干员更新审计，确认来源已包含该内容、配置已关联到正确身份，以及该内容是否在产品支持范围内。
 
-投射物的固定距离模型将干员和敌人视为两个端点，近似双方相向、镜头朝向敌人。
-目标固定偏移按其方向投影，纯垂直偏移不依赖水平朝向；不还原骨骼挂点或角色转身。
-我方能力实体朝向沿用干员朝向，不模拟实体转向；无实体的固定点使用原生默认朝向。
-随机目标偏移统一取范围中点 0，不在发射时随机取样。
-位置查询器与发射动作的目标偏移分别保留，不能用其中一个覆盖另一个。
+缺失动作、引用或未知字段需要核实后补齐解析、转换及必要的运行支持。不要填零或复制旧产物来绕过检查。修复转换规则后，优先用同一份来源重跑，便于区分代码变化和游戏数据变化。
 
-`config/operators.json` 的技能项可声明 `timelineBlockFollowUpSkillId`，以同干员另一技能
-可接续的时刻作为块宽边界，覆盖默认接续目标。此项专用于显示，不要求目标是结束技能，
-不改变释放规则或技能寿命。转换器校验原生接续窗口与可放置引用，运行时检查当前路由；
-未配置时使用默认规则，不配置固定结束帧。
+## 游戏更新：接入新增内容
 
-游戏文本优先来自输入表格；表格没有的产品术语维护在应用语言文件的 `enumTerms`。所有配置引用必须在输入来源中有效。
+完整生成会更新已有配置覆盖的内容，但不会替维护者决定哪些新身份应该进入产品，也不会自动补齐新机制。更新应按下面的流程完成。
 
-### 3. 修复并验证
+### 1. 导出新版来源并盘点变化
 
-缺失动作、未知字段、引用或时间语义应先核对原生行为，再补转换与运行支持。不能填零、跳过对象或复制旧正式产物放行。
+先更新本机游戏和两个工具仓库，按各仓库说明更新环境，再运行上面的完整生成命令，**暂时不带 `--publish`**。这轮用于获取新版来源、生成候选和暴露缺口；遇到未配置身份或新动作导致阻塞是需要处理的结果。
 
-修改后用同一冻结来源重跑，检查联合战斗定义、敌人、物品、文本、图标、格式、类型、资源引用、技能与装备模拟、生成后来源核验均通过。候选独立重编译检查确定性，不拿首轮编译对象代替第二轮。
+查看 `report.json` 的以下阶段，而不只看命令是否成功：
 
-还要以受影响的技能、配装和真实轴检查数值、时序、名称、图标和富文本。自动检查不能证明新游戏机制已全部支持。
+| 阶段或报告                    | 需要检查什么                                                                                                      |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `sources`、`source-coverage`  | 新版所需表格、集合和补充文件是否已取到                                                                            |
+| `content-inventory`           | `characters`、`gearSets` 的 `unconfiguredSourceIds` 和 `configuredIdsMissingFromSource`；武器、单件装备的来源数量 |
+| `audit/operator-refresh.json` | 新的角色模板、已有模板变化、技能库缺口及关联失效                                                                  |
+| 各领域阶段的 `comparison`     | 候选相对正式产物新增、修改和删除了哪些文件                                                                        |
 
-### 4. 发布与复核
+`unconfiguredSourceIds` 是“来源有而清单未登记”，不等于“新增可玩内容”。需要区分别名、表现变体和非玩家记录。武器与单件装备的数量也不能代替身份差异检查；应结合来源表和候选差异确认具体新增项。
 
-```sh
-npm run rebuild:game-data -- --source-root '<冻结来源目录>' --version '<版本>' --publish --unity-worker '<worker路径>' --workers 2
-```
+### 2. 确认新增资源已经被导出和读取
 
-发布会重新生成并验证，不直接复制上次候选。成功后检查报告中 `fullRebuild`、`published` 为 `true`，`remaining` 为空，再审阅正式产物差异和相关回归。
+同一类资源中的新增文件通常会自动进入导出；新增资源类别、目录或数据结构则可能需要扩展读取范围。按下面顺序定位，避免在编译器里配置一个根本没有导出的身份：
 
-| 退出码 | 含义                   |
-| ------ | ---------------------- |
-| `0`    | 完整发布成功           |
-| `1`    | 有阶段失败             |
-| `2`    | 候选有效但尚未完整发布 |
+| 层次与位置                                                                                                     | 自动覆盖范围                                                                 | 什么时候需要修改                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| AKE Data Tool 的 `ake_tool/json_host/schemas.py`                                                               | 已知 Json 数据集中的新文件；TableCfg 由 AKE 表格导出器读取                   | 新 Json 数据集或游戏格式变化，先检查 AKE 是否已支持，再更新工具或补其解析                                                                |
+| endaxis-data-tool 的 `src/endaxis_data_tool/prepare.py`（`wanted`、`CONFIGS`），以及 `extract.py`、`decoders/` | 已选择目录内的新角色、实体、投射物和敌人模板，以及已登记的全局配置           | 需要新的补充资源类别或字段时，补资源选择、提取和解码；普通新增干员不需要逐个登记资源路径                                                 |
+| [game-data-sources.json](game-data-sources.json)                                                               | 所列 TableCfg、Json 集合的全部条目，以及明确列出的单文件                     | 新功能需要额外表、集合或单文件时添加；它控制编译器取哪些来源，不控制游戏最初导出了什么                                                   |
+| [exportInstalledGame.py](scripts/exportInstalledGame.py) 的图片目录选择                                        | AKE `ake_tool/image_paths.py` 的 `IMAGE_SOURCE_ROOTS` 加脚本补充目录中的图片 | 新图标位于未覆盖目录时扩展导出范围；随后在 [exportReferencedGameIcons.ts](scripts/exportReferencedGameIcons.ts) 核对引用到来源的定位规则 |
 
-发布只替换登记的派生文件，混合目录保留手写成员。安装失败尝试回滚，回滚不完整时保留备份；这是可恢复文件事务，不是所有目录瞬间原子切换。
+如果修改了导出范围，需要重新导出来源；如果只修改下节的身份或转换配置，可以复用本轮来源。外部工具的路径相对于各自仓库，不要求把它们放在特定本地目录。
 
-## 输出与边界
+### 3. 按新增内容补配置与支持
 
-完整干员生成到 `src/data/operators/<slug>.generated.ts`。武器、装备、套装、系统机制、Buff、敌人及物品写入各自登记的正式目录；本地化与图片随候选一起验证。
+以下路径均相对于本编译器目录。已有内容的数值变化通常直接重编译；新增身份和机制按对应行处理。
 
-生成与全量格式化共用 `src/compiler/publication/formatGeneratedSource.ts`，领域生成器不另设排版后处理。统一入口先应用仓库 Prettier 规则，再将干员文本的等级及数值数组保持横排；重复生成和全量格式化必须得到相同文本，不在发布后单独修格式。
+| 新增或变化内容              | 配置及处理方式                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | 检查结果                                                                                                                                                               |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **干员、技能形态**          | 在 [operators.json](config/operators.json) 登记 `slug`、`gameId`、`charId`、`exportName`，关联 `skills` 的来源与等级轴、`skillGroups`、天赋、潜能及 `runtimeTemplate`。多段、路由和替换技能按实际来源补关联，不按现有干员照抄技能数量。已有模板摘要变化时，核对差异后再更新 `sourceSha256`；明确不接入的模板才列入 `ignoredRuntimeTemplateSourceFiles`。                                                                                                                                                          | `operator-refresh` 无未处理模板、摘要变化或技能库阻塞；候选包含完整养成和技能。发布后在应用的 [干员装配入口](../../src/data/operators/index.ts) 登记通过验收的新干员。 |
+| **武器、单件装备**          | 从 `WeaponBasicTable`、`EquipTable` 自动枚举，通常不需要逐个加白名单。标准武器排除 `_ink` 场景变体。资源歧义在 [equipmentAssets.json](config/equipmentAssets.json) 补别名；新动作或词条类型需要补转换和运行支持。                                                                                                                                                                                                                                                                                                 | 候选新增身份与来源一致，装备模拟通过，名称与图标可显示。                                                                                                               |
+| **套装**                    | 从 `EquipSuitTable` 自动编译。在 [gearSetIdentities.json](config/gearSetIdentities.json) 更新已审阅身份清单，并在 [gearSetIcons.json](config/gearSetIcons.json) 为套装选择一件所属装备作为图标来源。身份清单用于内容盘点，不是编译白名单。                                                                                                                                                                                                                                                                        | 无未审阅套装；图标关联的装备确属该套装，套装效果模拟通过。                                                                                                             |
+| **敌人、关卡变种**          | 基础数据和出生配置从敌人表、模板及 SpawnerConfig 读取。检查 [enemies/hidden-enemies.json](config/enemies/hidden-enemies.json) 的隐藏范围；[runtime-defaults.json](config/enemies/runtime-defaults.json) 只补有依据的运行默认值。新增出生 Buff 先核对作用，在 [birthBuffExclusions.ts](config/enemies/birthBuffExclusions.ts) 明确排除模拟范围外内容，其余补齐转换与执行支持。                                                                                                                                     | 基础敌人与关卡变种的等级、属性、出生 Buff、数量和名称符合来源，未支持机制有明确诊断。                                                                                  |
+| **关卡系列、合约关卡**      | 已支持类别由 [generateEnemyStageCatalog.ts](scripts/generateEnemyStageCatalog.ts) 按 DungeonTable 和刷怪器生成。新类别需要补筛选、分组和输出分类逻辑；[enemyStageNames.ts](config/enemyStageNames.ts) 为原生关卡名不足以区分的情况补文本 ID。                                                                                                                                                                                                                                                                     | 关卡选择器中能找到新关卡；系列、难度、敌人名单和出生配置正确。                                                                                                         |
+| **合约新词条、新一期**      | [contingencyContractBindings.json](config/contingencyContractBindings.json) 按合约 ID、词条 ID 关联 Buff、宿主和参数；[contingencyContractSimulationScope.json](config/contingencyContractSimulationScope.json) 声明支持、阻塞和裁剪范围。先核对词条描述、补充文件和实际 Buff，不能只凭名称猜。新一期还需核对 [compileEntityValueConsumers.ts](scripts/compileEntityValueConsumers.ts) 的分期编译、图标目录，以及应用的 [合约目录](../../src/data/contingencyContract/contingencyContractCatalog.ts) 等分期入口。 | 每个词条的效果及参数有对应依据；选择、图标、初始化、分享布局和模拟均覆盖该期。客户端缺少效果配置时，确认 AKEDATA 的补充文件已更新。                                    |
+| **系统 Buff、特殊状态展示** | 引用闭包外的系统根在 [systemBuffRoots.json](config/systemBuffRoots.json) 登记；全局身份在 [globalBuffIdentities.json](config/globalBuffIdentities.json) 登记。名称和图标补充分别见 [buffPresentationNames.ts](config/buffPresentationNames.ts)、[abilityEntityPresentations.ts](config/abilityEntityPresentations.ts)。                                                                                                                                                                                           | 效果可编译、可触发，状态展示符合配置；展示配置不代替效果实现。                                                                                                         |
+| **投射物**                  | 在 [projectileSchedulePresets.ts](config/projectileSchedulePresets.ts) 配置默认回调时序，具体发射入口的覆盖在 [projectileSchedules.ts](config/projectileSchedules.ts)。核对来源技能、回调种类、次数及端点模型；保留的发射必须有显式时间表，缺失配置会阻止生成；无需保留的无回调入口应明确配置裁剪。                                                                                                                                                                                                               | 命中、到达、结束等回调及伤害次数符合配置，相关时间轴时序已检查。                                                                                                       |
+| **文本、图标**              | 本地化随候选身份从输入表生成；游戏名称和描述使用来源文本。新图片目录先补导出范围，再核对资源映射；产品术语维护在应用语言文件中。                                                                                                                                                                                                                                                                                                                                                                                  | 中英文身份一致，新增内容没有缺失文本或图标引用。                                                                                                                       |
 
-`npm run format:game-data` 按正式发布清单格式化全部游戏产物；加 `-- --check` 只检查，不写文件。仓库的 `format`、`format:check` 也包含此步骤，使用同一份发布清单，不另维护待格式化文件列表。
+实体标签动作 `AddTagAction` 的审查配置在 [entityTagPolicies.ts](config/entityTagPolicies.ts)。每个标签必须显式声明保留或过滤并说明依据；目录中已知但未审查的标签也会阻止生成，不继承父标签的处理结论。审查时需追踪原生代码和数据查询的消费者，判断是否影响模拟范围内的行为；保留标签后还需确认对应运行时消费者已实现。该配置不用于裁剪技能事件的 `skillTags`。
 
-所有游戏图片输出 WebP；时间轴导出 PNG 不属于本工具。套装最终定义保存图标路径，配置只选择装备 ID，不覆盖原生 Buff 图标。
+普通技能、天赋和潜能按原始动作结构选择编译路径。配置负责提供身份和关联；遇到未知动作、条件或属性类型，要在解析、公共定义及运行时的相应层补支持，不能通过配置伪装为已实现。
 
-干员技能图标存放在 `public/operators/<slug>/`，命名为 `battle 01.webp`、`combo 01.webp`、`ultimate 01.webp`，变体沿用原生编号。战技、连携、终结技默认使用对应的 01 号图标；普攻、下落攻击和处决始终使用武器类型的公共动作图标。定义只为非默认图标保存 `icon: ImageRef`，例如 `endaxis:operators/arcane/ultimate_02`；条件形态同样使用资源 ID。图片导出同步生成资源目录，UI 根据目录解析路径。统一导出流程同时收集默认图标与显式引用，并按原生角色标识和编号定位来源。通用武器动作、属性和状态图标存放在 `public/icons/`。
+### 4. 验证并写入正式产物
 
-中间模板、原始 JSON、审计、暂存和备份不提交。正式目录不能反向提供候选缺失的内容。
+配置和代码改好后，先跑相关测试，再用同一批来源重跑候选。确认新增清单中每项都有处理结论：已接入、明确不在模拟范围，或仍然阻塞；仅检查已有对象生成成功会漏掉新内容。
 
-完整重建只覆盖登记领域。新增物品、敌人行为或 HUD 不会仅因下载成功就得到模拟支持；需按明确范围补齐生成与消费。
+候选验收通过后，使用下面“使用已有来源重跑”的命令加 `--publish`，或重新执行完整本机生成命令。确认报告满足前面的完整成功条件，审阅 Git 差异，并在应用里验证新对象可选、属性与技能正确、图标文本完整。新增应用注册或加载入口也要随生成产物一并检查；文件生成成功不等于界面已接入。
 
-## 定向检查与优化
+最后提交必要的配置、转换或运行时代码、应用入口及正式生成产物。缓存和研究过程的中间文件不进入提交。
+
+## 修改转换规则
+
+### 代码入口
+
+| 位置                           | 职责                                       |
+| ------------------------------ | ------------------------------------------ |
+| [scripts/](scripts/)           | 完整流程、领域生成及审计的命令入口         |
+| [src/source/](src/source/)     | 读取和校验原生来源格式                     |
+| [src/compiler/](src/compiler/) | 转换公共动作、分析依赖、优化和输出代码     |
+| [src/domains/](src/domains/)   | 组装干员、装备、敌人、合约、文本等领域产物 |
+| [config/](config/)             | 身份关联、模拟范围及展示等人工配置         |
+| [test/](test/)                 | 转换及生成流程测试                         |
+
+公共定义类型位于 [packages/game-data-contract](../../packages/game-data-contract/)。原生输入、公共定义与应用运行时的职责，以及优化和资源约定，见[游戏数据架构](../../docs/architecture/game-data.md)。
+
+### 验证修改
+
+在仓库根目录运行类型检查和相关测试：
 
 ```sh
 npm run type-check:game-data
-npx vitest run tools/game-data-compiler --maxWorkers=1
-npm run audit:game-data:candidate-operator-skills -- --candidate-root '<候选目录>' --potential 0 --end-frame 3600
-npm run audit:game-data:candidate-equipment -- --candidate-root '<候选目录>' --end-frame 300
+npm run test:game-data
 ```
 
-生成优化的内部模式为 `off`、`report`、`apply`，默认 `apply`。比较同批冻结来源的两个候选可使用：
+开发时先运行与修改有关的测试。需要验收完整更新时再执行全量生成；它包含格式、类型、资源引用、干员技能和装备模拟等检查。单独调用领域生成脚本不等于完成全量验收。
+
+正式产物由生成器维护，不直接手改生成文件。格式化统一使用 `npm run format:game-data`；加 `-- --check` 只检查格式。
+
+## 使用已有来源重跑
+
+已有来源服务或冻结来源、只需调试编译器时，可以使用较底层的 `rebuild:game-data`，避免重复导出游戏资源：
 
 ```sh
-node --max-old-space-size=2048 --experimental-strip-types tools/game-data-compiler/scripts/auditDefinitionOptimizationCandidates.ts --before-root '<优化前候选>' --after-root '<优化后候选>'
+npm run rebuild:game-data -- --source-root "<上次运行的sources目录>" --version "<来源版本标识>" --local-base "<来源服务的/api/data地址>" --source-mode local-only
 ```
 
-检查串行加载两路，比较完整模拟事实而不持有整批回执。优化规则和公共类型归属见[游戏数据架构](../../docs/architecture/game-data.md)。
+来源目录必须包含 `source-provenance.json`；来源服务仍需提供图片。目录、版本标识和服务应对应同一批数据。加 `--publish` 会重新生成并验证后写入正式目录，不直接复制上次候选。
 
-## 投射物回调时序
-
-投射物使用 `config/projectileSchedulePresets.ts` 配置回调时序及结束帧；运行时按 schedule 推进，
-不再计算飞行路径与敌人碰撞体。梨诺上射中转弹仅配置到达回调，不需要额外的跳过碰撞补丁。
+更多底层选项见 [rebuildGameData.ts](scripts/rebuildGameData.ts)。其中 `--tables-only` 仅检查部分表格和装备，`--skip-contingency-contract` 保留现有合约产物、只更新其他领域；两者都不能作为完整版本更新的验收结果。

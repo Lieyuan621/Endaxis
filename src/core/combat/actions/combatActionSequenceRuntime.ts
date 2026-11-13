@@ -9,6 +9,7 @@ import type {
   BoneAttachState,
   ActionBuffReferencesState,
   ActionRegistrationState,
+  ActionEntityTagsState,
   ActionSequenceState,
   ActionStepData,
   GraphLeafStepData,
@@ -73,6 +74,7 @@ class OperationStep extends StatelessCombatStep {
   #attachment: BoneAttachState | null = null;
   #registrationState: ActionRegistrationState | null = null;
   #buffReferencesState: ActionBuffReferencesState | null = null;
+  #entityTagsState: ActionEntityTagsState | null = null;
 
   constructor(
     readonly step: ResolvedCombatOperationStep,
@@ -80,6 +82,7 @@ class OperationStep extends StatelessCombatStep {
     readonly operationContext: CombatOperationContext,
   ) {
     super();
+    if (step.kind === 'addEntityTags') this.#entityTagsState = { references: [] };
     if (step.kind === 'boneAttach') this.#attachment = { targetId: null };
     if (
       step.kind === 'changePlayerActionMode' ||
@@ -101,6 +104,7 @@ class OperationStep extends StatelessCombatStep {
   }
 
   override get executionData(): OperationStepData {
+    if (this.#entityTagsState) return { kind: 'entityTags', entityTags: this.#entityTagsState };
     if (this.#attachment) return { kind: 'boneAttach', attachment: this.#attachment };
 
     if (this.#registrationState !== null) {
@@ -119,6 +123,11 @@ class OperationStep extends StatelessCombatStep {
   }
 
   override bindExecutionData(data: ActionStepData | null): void {
+    if (this.#entityTagsState) {
+      if (data?.kind !== 'entityTags') throw new Error('expected entity tag action data');
+      this.#entityTagsState = data.entityTags;
+      return;
+    }
     if (this.#attachment) {
       if (data?.kind !== 'boneAttach') throw new Error('expected bone attachment data');
       this.#attachment = data.attachment;
@@ -151,6 +160,7 @@ class OperationStep extends StatelessCombatStep {
     if (
       this.#registrationState === null &&
       this.#buffReferencesState === null &&
+      this.#entityTagsState === null &&
       this.#attachment === null
     )
       return operation();
@@ -159,12 +169,16 @@ class OperationStep extends StatelessCombatStep {
     if (this.#attachment) context.boneAttachState = this.#attachment;
     const previous = context.actionRegistrationState;
     const previousBuffs = context.actionBuffReferencesState;
+    const previousTags = context.actionEntityTagsState;
+    if (this.#entityTagsState) context.actionEntityTagsState = this.#entityTagsState;
     if (this.#registrationState !== null) context.actionRegistrationState = this.#registrationState;
     if (this.#buffReferencesState !== null)
       context.actionBuffReferencesState = this.#buffReferencesState;
     try {
       return operation();
     } finally {
+      if (previousTags === undefined) delete context.actionEntityTagsState;
+      else context.actionEntityTagsState = previousTags;
       if (previousAttachment === undefined) delete context.boneAttachState;
       else context.boneAttachState = previousAttachment;
       if (previous === undefined) delete context.actionRegistrationState;

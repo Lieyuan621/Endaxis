@@ -47,7 +47,11 @@ function projectFixture(
 ) {
   const graph = input.hitGraph ?? input.reachGraph;
   const project = createProjectileProjectionExtensionSource({
-    ...(input.schedule ? { resolveSchedule: () => input.schedule! } : {}),
+    resolveSchedule: (_launch, _path, events) =>
+      input.schedule ?? {
+        endFrame: 0,
+        callbacks: events.map(event => ({ event, triggerFrames: [0] })),
+      },
     catalog: {
       runtimes: new Map([[input.runtime.projectileId, input.runtime]]),
       templates: new Map([[input.template.projectileId, input.template]]),
@@ -382,6 +386,10 @@ it.each([false, true])('命中回调保留目标标签过滤：%s', filtered => 
     },
   };
   const project = createProjectileProjectionExtensionSource({
+    resolveSchedule: (_launch, _path, events) => ({
+      endFrame: 0,
+      callbacks: events.map(event => ({ event, triggerFrames: [0] })),
+    }),
     catalog: {
       runtimes: new Map([['projectile', runtime]]),
       templates: new Map([['projectile', input.template!]]),
@@ -698,6 +706,27 @@ describe('complete projectile callback skill source', () => {
       }),
     ).toThrow('invalid callback durationFrame');
   });
+});
+
+it('缺少时间表解析器或解析器未返回配置时阻止生成', () => {
+  const input = reachInput();
+  for (const resolveSchedule of [undefined, () => undefined]) {
+    const project = createProjectileProjectionExtensionSource({
+      resolveSchedule,
+      catalog: {
+        runtimes: new Map([['projectile', input.runtime]]),
+        templates: new Map([['projectile', input.template]]),
+        callbackGraphs: new Map([['callback', input.reachGraph]]),
+      },
+      callbackContext: input.callbackContext,
+    });
+    expect(() =>
+      project(input.launch, input.sourcePath, {
+        ...input.projectionContext,
+        graph: createActionGraphBuilder<CompiledBuffStepSource>(),
+      }),
+    ).toThrow('missing projectile callback schedule');
+  }
 });
 
 it('明确裁剪的发射不生成节点、回调或实例寿命', () => {

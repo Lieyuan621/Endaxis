@@ -24,8 +24,7 @@ export function applyPoiseModifier(
       side,
       attackerId: context.attackerId,
       defenderId: context.defenderId,
-      tags: context.tags,
-      features: context.features,
+      tags: context.tags ?? [],
     })
   )
     return;

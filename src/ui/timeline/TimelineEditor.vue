@@ -7,6 +7,7 @@ import {
 } from './interaction/enemyTrackClipboard';
 import TimelineEnemyEffectMarkers from './results/TimelineEnemyEffectMarkers.vue';
 import TimelineDamageHit from './results/TimelineDamageHit.vue';
+import TimelineControlSwitchMarker from './results/TimelineControlSwitchMarker.vue';
 import { firstScenarioEnemy, levelEnemies, mapLevelEnemies } from '../../core/project/level';
 import { roundHitDamage } from './results/hitDamageDisplay';
 import {
@@ -53,7 +54,11 @@ import type { OperatorPanelContributionReceipt } from '../../core/compiler/resol
 import type { SkillGraphPresentation } from '../../core/project/graphPresentation';
 import { getSkillCastPlacementAnchor } from '../../core/project/skillCastPlacement';
 import { projectPublishedEnemyCurves } from './results/publishedEnemyCurves';
-import { projectControlSwitchMarkers } from './results/controlSwitchMarkers';
+import {
+  projectControlSwitchMarkers,
+  projectControlSwitchWarnings,
+  controlSwitchDiagnosticKey,
+} from './results/controlSwitchMarkers';
 import { projectCombatHudSnapshot } from '../../core/projection/combatHudSnapshot';
 import { projectDodgeMarkerDiagnostics } from '../../core/projection/dodgeMarkerDiagnostics';
 import { projectDodgeMarkerEffects } from '../../core/projection/dodgeMarkerEffects';
@@ -74,7 +79,6 @@ import {
 } from '../../data/contingencyContract/contingencyContractCatalog';
 import { ALL_GAME_TEXT_FAMILIES, setLocale } from '../../i18n';
 import { useAppearance } from '../appearance/useAppearance';
-import OperatorAvatar from '../components/OperatorAvatar.vue';
 import { ELEMENT_COLORS } from '../gameColors';
 import {
   getConsumableGameDescription,
@@ -1816,6 +1820,20 @@ const projectedControlSwitches = computed(() =>
     scenario.value.battle.automaticControlSwitches !== false,
   ),
 );
+const controlSwitchWarnings = computed(() =>
+  projectControlSwitchWarnings(publishedReceiptEntries.value, scenario.value.tracks),
+);
+function controlSwitchWarning(
+  trackIndex: number,
+  frame: number,
+  kind: 'manual' | 'automatic' | 'skill',
+) {
+  return (
+    controlSwitchWarnings.value.get(controlSwitchDiagnosticKey(trackIndex, frame, kind)) ?? []
+  )
+    .map(reason => t(`timeline.skillWarnings.${reason}`))
+    .join('\n');
+}
 const skillCastDefinitionDurations = computed(
   () =>
     new Map(
@@ -8271,7 +8289,7 @@ function setMobileGuideFrame(frame: number | null): void {
                     aria-hidden="true"
                   />
                 </EaButton>
-                <div
+                <TimelineControlSwitchMarker
                   v-if="
                     timelineViewLayers.switchMarkers && isOperatorEffectsVisible(track.trackIndex)
                   "
@@ -8279,17 +8297,20 @@ function setMobileGuideFrame(frame: number | null): void {
                     item => item.trackIndex === track.trackIndex,
                   )"
                   :key="marker.id"
-                  class="timeline-marker track-switch-marker"
                   :data-timeline-item-key="
                     timelineItemKey({ kind: 'controlSwitch', id: marker.id })
                   "
-                  :class="{
-                    selected: isItemSelected('controlSwitch', marker.id),
-                    dragging: itemDragging('controlSwitch', marker.id),
-                  }"
-                  :style="{
-                    left: `${timelineFramePx(marker.frame)}px`,
-                  }"
+                  :selected="isItemSelected('controlSwitch', marker.id)"
+                  :dragging="itemDragging('controlSwitch', marker.id)"
+                  :warning="!!controlSwitchWarning(track.trackIndex, marker.frame, 'manual')"
+                  :title="controlSwitchWarning(track.trackIndex, marker.frame, 'manual')"
+                  :left="timelineFramePx(marker.frame)"
+                  :avatar="
+                    track.operatorSlug
+                      ? getOperatorAvatarPath(track.operatorAssetSlug ?? track.operatorSlug)
+                      : undefined
+                  "
+                  :time-label="formatGuideFrame(marker.frame)"
                   @pointerdown="
                     beginItemMove($event, timelineItemKey({ kind: 'controlSwitch', id: marker.id }))
                   "
@@ -8304,18 +8325,8 @@ function setMobileGuideFrame(frame: number | null): void {
                       t('timeline.markerLabels.controlSwitch'),
                     )
                   "
-                >
-                  <OperatorAvatar
-                    v-if="track.operatorSlug"
-                    class="track-switch-marker__avatar"
-                    :src="getOperatorAvatarPath(track.operatorAssetSlug ?? track.operatorSlug)"
-                  />
-                  <span class="track-switch-marker__time">
-                    {{ formatGuideFrame(marker.frame) }}
-                  </span>
-                  <i class="track-switch-marker__pointer"></i>
-                </div>
-                <div
+                />
+                <TimelineControlSwitchMarker
                   v-if="
                     timelineViewLayers.switchMarkers && isOperatorEffectsVisible(track.trackIndex)
                   "
@@ -8323,33 +8334,35 @@ function setMobileGuideFrame(frame: number | null): void {
                     item => item.trackIndex === track.trackIndex,
                   )"
                   :key="marker.id"
-                  class="timeline-marker track-switch-marker track-switch-marker--automatic"
-                  :style="{ left: `${timelineFramePx(marker.frame)}px` }"
-                  :title="
-                    t(
-                      marker.kind === 'skill'
-                        ? 'timeline.markerLabels.skillControlSwitch'
-                        : 'timeline.header.automaticControlSwitchesHelp',
-                    )
+                  projected
+                  :warning="!!controlSwitchWarning(track.trackIndex, marker.frame, marker.kind)"
+                  :left="timelineFramePx(marker.frame)"
+                  :avatar="
+                    track.operatorSlug
+                      ? getOperatorAvatarPath(track.operatorAssetSlug ?? track.operatorSlug)
+                      : undefined
                   "
-                  :aria-label="
+                  :time-label="formatGuideFrame(marker.frame)"
+                  :title="
+                    [
+                      t(
+                        marker.kind === 'skill'
+                          ? 'timeline.markerLabels.skillControlSwitch'
+                          : 'timeline.header.automaticControlSwitchesHelp',
+                      ),
+                      controlSwitchWarning(track.trackIndex, marker.frame, marker.kind),
+                    ]
+                      .filter(Boolean)
+                      .join('\n')
+                  "
+                  :label="
                     t(
                       marker.kind === 'skill'
                         ? 'timeline.markerLabels.skillControlSwitch'
                         : 'timeline.markerLabels.automaticControlSwitch',
                     )
                   "
-                >
-                  <OperatorAvatar
-                    v-if="track.operatorSlug"
-                    class="track-switch-marker__avatar"
-                    :src="getOperatorAvatarPath(track.operatorAssetSlug ?? track.operatorSlug)"
-                  />
-                  <span class="track-switch-marker__time">{{
-                    formatGuideFrame(marker.frame)
-                  }}</span>
-                  <i class="track-switch-marker__pointer"></i>
-                </div>
+                />
                 <div
                   v-if="timelineViewLayers.dodgeMarkers"
                   v-for="marker in (scenario.battle.dodgeMarkers ?? []).filter(
@@ -10365,69 +10378,6 @@ button:disabled {
   text-shadow: 0 0 2px color-mix(in srgb, var(--combo-control-color) 50%, transparent);
 }
 
-.track-switch-marker {
-  top: calc(var(--timeline-action-top, 55px) - 42px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  z-index: 30;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  transform: translateX(-50%);
-  transition: transform 0.1s;
-  cursor: grab;
-}
-
-.track-switch-marker.dragging {
-  transition: none;
-  cursor: grabbing;
-}
-
-.track-switch-marker--automatic {
-  opacity: 0.48;
-  pointer-events: none;
-}
-
-.track-switch-marker--automatic .track-switch-marker__avatar,
-.track-switch-marker--automatic .track-switch-marker__time {
-  border-style: dashed;
-  box-shadow: none;
-}
-
-.track-switch-marker__avatar.operator-avatar-crop {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid #d3adff;
-  background: #222;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 50%);
-}
-
-.track-switch-marker__time {
-  padding: 1px 5px;
-  border: 1px solid rgb(211 173 255 / 65%);
-  border-radius: 10px;
-  background: rgb(24 18 30 / 92%);
-  box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
-  color: #f0dcff;
-  font-size: 9px;
-  font-weight: bold;
-  line-height: 1.2;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
-  white-space: nowrap;
-}
-
-.track-switch-marker__pointer {
-  width: 0;
-  height: 0;
-  border-top: 7px solid #d3adff;
-  border-right: 5px solid transparent;
-  border-left: 5px solid transparent;
-  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 40%));
-}
-
 .dodge-marker {
   top: calc(var(--timeline-action-top, 55px) - 34px);
   width: 24px;
@@ -10502,24 +10452,6 @@ button:disabled {
 .dodge-marker.selected {
   border-color: #fff;
   box-shadow: 0 0 7px currentColor;
-}
-
-.timeline-marker.track-switch-marker.selected {
-  outline: 0;
-}
-
-.track-switch-marker.selected .track-switch-marker__avatar {
-  border-color: #fff;
-  box-shadow: 0 0 8px #fff;
-}
-
-.track-switch-marker.selected .track-switch-marker__time {
-  border-color: rgb(255 255 255 / 85%);
-  color: #fff;
-}
-
-.track-switch-marker.selected .track-switch-marker__pointer {
-  border-top-color: #fff;
 }
 
 .timeline-marker.selected:not(.simulation-range-marker):not(.cycle-boundary-marker):not(

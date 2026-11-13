@@ -27,7 +27,7 @@ describe('poise modifiers', () => {
       'runtime',
     );
     taken.addModifier(permanent);
-    const context = new PoiseCalculationContext('operator', 'enemy', [], [], 1, 1, {
+    const context = new PoiseCalculationContext('operator', 'enemy', [], 1, 1, {
       output,
       taken,
     });
@@ -40,7 +40,7 @@ describe('poise modifiers', () => {
     expect(context.takenMultiplier).toBe(0);
     expect(context.outputMultiplier).toBe(1);
     expect(taken.get('PoiseDamageTakenScalar')).toBe(4);
-    const next = new PoiseCalculationContext('operator', 'enemy', [], [], 1, 1, { output, taken });
+    const next = new PoiseCalculationContext('operator', 'enemy', [], 1, 1, { output, taken });
     expect(next.takenMultiplier).toBe(4);
   });
 
@@ -84,9 +84,9 @@ describe('poise modifiers', () => {
                     feature: {
                       type: 'boolean',
                       expression: {
-                        kind: 'eventDamageFeaturesMatch',
+                        kind: 'eventDamageTagsMatch',
                         match: 'hasAny',
-                        features: ['talentDamage'],
+                        tags: ['talentDamage'],
                       },
                     },
                     tag: {
@@ -138,16 +138,14 @@ describe('poise modifiers', () => {
     const matching = new PoiseCalculationContext(
       'operator',
       'enemy',
-      ['normalAttack', 'normalAttackLastCombo'],
-      ['talentDamage'],
+      ['normalAttack', 'normalAttackLastCombo', 'talentDamage'],
       1,
       1,
     );
     const uncontrolled = new PoiseCalculationContext(
       'operator',
       'enemy',
-      ['normalAttackLastCombo'],
-      ['talentDamage'],
+      ['normalAttackLastCombo', 'talentDamage'],
       1,
       1,
     );
@@ -164,7 +162,6 @@ describe('poise modifiers', () => {
       'operator',
       'enemy',
       ['normalAttackLastCombo'],
-      [],
       1,
       1,
     );
@@ -175,7 +172,6 @@ describe('poise modifiers', () => {
       'operator',
       'enemy',
       ['normalAttackLastCombo'],
-      ['talentDamage'],
       1,
       1,
     );

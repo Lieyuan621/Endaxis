@@ -24,7 +24,7 @@ afterEach(async () => {
 async function isolatedArguments(flags: string[] = []) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'endaxis-icons-'));
   temporaryRoots.push(root);
-  return parseArguments(['--output-root', root, '--source-mode', 'vfs-only', ...flags]);
+  return parseArguments(['--output-root', root, '--source-mode', 'local-only', ...flags]);
 }
 
 const reference = {
@@ -172,7 +172,7 @@ describe('全量图片隔离导出', () => {
             charId: 'chr_9000_sample',
             skillGroups: [{ operationType: 'battleSkill' }],
             assets: {
-              portraitCharacterId: 'chr_0001_portrait',
+              avatarCharacterId: 'chr_0001_avatar',
               icons: {
                 charge: { sourceName: 'custom_charge', preferredPathSegment: '/bufficon/' },
               },
@@ -184,8 +184,10 @@ describe('全量图片隔离导出', () => {
     const references = new Map<string, Set<string>>();
     const overrides = await addOperatorImpliedReferences(references, root, manifest);
     expect(overrides.get('/operators/custom/avatar.webp')?.sourceNames).toEqual([
-      'icon_round_chr_0001_portrait.png',
+      'icon_round_chr_0001_avatar.png',
     ]);
+    expect(overrides.has('/operators/custom/portrait.webp')).toBe(false);
+    expect(references.has('/operators/custom/portrait.webp')).toBe(false);
     expect(overrides.has('/operators/custom/battle.webp')).toBe(false);
     expect(overrides.get('/operators/custom/battle 01.webp')?.sourceNames).toEqual([
       'icon_skill_sample_01.png',
@@ -209,10 +211,10 @@ describe('全量图片隔离导出', () => {
       .png()
       .toBuffer();
     const request = vi.fn(async (url: URL) =>
-      url.pathname.includes('/by-name')
-        ? Response.json({
-            candidates: [{ assetIndex: 1, path: 'assets/fixture.png', rawUrl: '/fixture.png' }],
-          })
+      url.pathname.endsWith('/api/images/manifest.json')
+        ? Response.json([
+            { path: 'assets/fixture.png', contentFile: '/api/images/assets/fixture.png' },
+          ])
         : new Response(new Uint8Array(png)),
     );
     vi.stubGlobal('fetch', request);

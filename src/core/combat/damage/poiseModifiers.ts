@@ -15,7 +15,7 @@ import { resolveBuffModifierNumber } from '../buffs/buffModifierNumberSource';
 import type { PoiseModifier as PoiseModifierState } from '../state/foundationState';
 import { applyPoiseModifier } from './poiseModifierExecution';
 
-import type { DamageFeature, DamageTag } from '../../game-data/operatorDefinition';
+import type { DamageTag } from '../../game-data/operatorDefinition';
 import type { BuffModifierNumberSource } from '../state/foundationState';
 
 /** 同一次失衡计算持有的可变倍率快照。 */
@@ -28,7 +28,6 @@ export class PoiseCalculationContext {
     readonly attackerId: string,
     readonly defenderId: string,
     readonly tags: readonly DamageTag[],
-    readonly features: readonly DamageFeature[],
     outputMultiplier: number,
     takenMultiplier: number,
     attributes?: {
@@ -78,7 +77,6 @@ export interface PoiseModifierConditionInput {
   readonly attackerId: string;
   readonly defenderId: string;
   readonly tags: readonly DamageTag[];
-  readonly features: readonly DamageFeature[];
 }
 export class PoiseModifier {
   readonly runtimeState: PoiseModifierState;

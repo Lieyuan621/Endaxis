@@ -92,7 +92,7 @@ export type CompiledBuffConditionSource =
       | 'eventProjectileIgnoreImmuneLevelCompare'
     >
   | Condition<'healthCompare'>
-  | Condition<'eventDamageTagsMatch' | 'eventDamageGameplayTagsMatch' | 'eventDamageFeaturesMatch'>
+  | Condition<'eventDamageTagsMatch' | 'eventDamageGameplayTagsMatch' | 'eventDamageTagsMatch'>
   | Condition<'eventSpGainMatch'>
   | Condition<'skillDamageTypeIn'>
   | Condition<'eventSkillTagsMatch'>
@@ -148,7 +148,7 @@ type DamageParameters = Pick<
   | 'calculationValue'
   | 'calculationValueScale'
   | 'tags'
-  | 'features'
+  | 'tags'
   | 'stagger'
   | 'staggerMultiplier'
   | 'staggerOnlyWhenCasterControlled'
@@ -164,7 +164,6 @@ type DamageParameters = Pick<
   readonly calculationValueScale?: CompiledActionValueOperandSource;
   readonly tags: Parameters<'dealDamage'>['tags'];
   readonly gameplayTags?: Parameters<'dealDamage'>['gameplayTags'];
-  readonly features?: Parameters<'dealDamage'>['features'];
   readonly stagger?: CompiledActionValueOperandSource;
   readonly staggerMultiplier?: CompiledActionValueOperandSource;
 };
@@ -420,6 +419,7 @@ export type CompiledBuffStepSource =
   | Step<'disableNormalSkill'>
   | Step<'boneAttach'>
   | Step<'limitMovementGait'>
+  | Step<'addEntityTags'>
   | Step<'queueComboLock'>
   | Step<'restrictUltimateEnergyRecovery'>
   | Step<'adjustSkillCooldown'>
