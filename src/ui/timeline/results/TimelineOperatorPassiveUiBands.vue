@@ -10,6 +10,8 @@ import { passiveUiSkins } from '../../operators/passive-ui/registry';
 import { numericPassiveUiText } from '../../operators/passive-ui/state';
 import { frameToTimelinePx } from '../timelineGeometry';
 import { timelineUpperBuffTop } from './timelineTrackEffectLayout';
+import { useDurationBarColor } from './durationBarColorContext';
+import { resolveDurationBarColor } from './durationBarColor';
 
 const props = defineProps<{
   segments: readonly PositionedOperatorPassiveUiTimelineSegment[];
@@ -34,6 +36,7 @@ const props = defineProps<{
   }[];
 }>();
 const { t } = useI18n({ useScope: 'global' });
+const durationBarColor = useDurationBarColor();
 
 const emit = defineEmits<{
   'open-detail': [segment: PositionedOperatorPassiveUiTimelineSegment, title: string];
@@ -122,6 +125,14 @@ const items = computed(() =>
               : `${segment.operatorId}:${segment.kind}:${segment.kind === 'abilityEntityCount' ? `${segment.abilityEntityId}:${segment.entities.map(entity => entity.instanceId).join(',')}` : ''}:${segment.startFrame}`,
         title,
         name: segmentName(segment),
+        color: resolveDurationBarColor(durationBarColor.value, 'track', {
+          buffId:
+            segment.kind === 'abilityEntityCount'
+              ? segment.abilityEntityId
+              : segment.kind === 'buffProgress'
+                ? segment.buffId
+                : segment.appearance,
+        }),
         left,
         top: timelineUpperBuffTop(segment.lane),
         iconWidth: renderedIconWidth,
@@ -192,6 +203,7 @@ const hitItems = computed(() => {
       :top="item.top"
       :width="item.width"
       :title="item.title"
+      :duration-color="item.color"
       :count="
         item.kind === 'abilityEntityCount'
           ? item.entities.length
