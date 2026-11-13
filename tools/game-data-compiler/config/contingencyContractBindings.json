@@ -61,11 +61,6 @@
     "110801": {
       "buffs": [
         {
-          "buffId": "buff_cc_chr_dmg_down_after_consume",
-          "owner": "caster",
-          "blackboardIndex": 0
-        },
-        {
           "buffId": "buff_cc_chr_dmg_down_after_consume_inflict",
           "owner": "caster",
           "blackboardIndex": 0
@@ -74,11 +69,6 @@
     },
     "110802": {
       "buffs": [
-        {
-          "buffId": "buff_cc_chr_dmg_down_after_consume",
-          "owner": "caster",
-          "blackboardIndex": 0
-        },
         {
           "buffId": "buff_cc_chr_dmg_down_after_consume_inflict",
           "owner": "caster",

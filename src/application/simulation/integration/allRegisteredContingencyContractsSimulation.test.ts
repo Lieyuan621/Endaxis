@@ -15,6 +15,7 @@ import {
   contingencyContractInitializationPlans,
 } from '../../../data/contingencyContract/definitions';
 import { ScenarioSimulationService } from '../scenarioSimulationService';
+import { skillFixture } from '../../../test/skillFixture';
 
 const supportedTags = contingencyContractTags.filter(tag => tag.support === 'supported');
 const initializationTagIds = new Set(
@@ -76,6 +77,84 @@ function createContractSkillScenario(
 }
 
 describe('危机合约生效词条的开局装配', () => {
+  it.each([
+    [110801, 0.3],
+    [110802, 0.8],
+  ])('肌肉溶解仅在消费附着的延迟结束后减伤：%s', async (tagId, reduction) => {
+    const scenario = createContractSkillScenario(tagId, 'battleSkill', [1]);
+    scenario.tracks[0]!.skillCasts[0]!.customDefinition = skillFixture({
+      key: 'chr_0004_pelica_normal_skill',
+      skillType: 'battleSkill',
+      levelSource: 'battleSkill',
+      timelineBlockFrames: 21,
+      scheduledSequences: [
+        { startFrame: 0, sequence: { $sequence: 'hit' } },
+        { startFrame: 10, sequence: { $sequence: 'consume' } },
+        { startFrame: 20, sequence: { $sequence: 'hit' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            hit: {
+              action: {
+                kind: 'dealDamage',
+                key: 'probe',
+                parameters: { damageType: 'physical', attackScale: 1, tags: ['normalAttack'] },
+              },
+              next: null,
+            },
+            consume: {
+              action: {
+                kind: 'applyElementalInfliction',
+                parameters: { element: 'heat', isExtra: false },
+              },
+              next: 'finish',
+            },
+            finish: {
+              action: {
+                kind: 'finishBuffsByTag',
+                parameters: {
+                  targets: { kind: 'fixed', target: 'enemy' },
+                  finishSource: { kind: 'source' },
+                  tagQueryType: 'hasAny',
+                  buffTags: ['Skill/Character/Common/SpellInflict'],
+                  reason: 'early',
+                },
+              },
+              next: 'hit',
+            },
+          },
+        },
+        macros: {},
+      },
+    });
+    const service = new ScenarioSimulationService({
+      index: gameDataRepository,
+      resources,
+      spellInflictionSettings: skillSettings,
+    });
+    const result = await service.simulate(scenario, 30);
+    const appliedBuffs = result.receiptEntries.filter(entry => entry.event === 'BuffApplied');
+    expect(
+      appliedBuffs.some(entry => entry.data?.buffId === 'buff_cc_chr_dmg_down_after_consume'),
+    ).toBe(false);
+    const delay = appliedBuffs.find(
+      entry => entry.data?.buffId === 'buff_cc_chr_dmg_down_after_consume_inflict_delay',
+    );
+    const reductionBuff = appliedBuffs.find(
+      entry => entry.data?.buffId === 'buff_cc_chr_dmg_down_after_consume_instance',
+    );
+    expect(delay).toBeDefined();
+    expect(reductionBuff?.frame).toBe(delay!.frame + 3);
+    const damage = result.receiptEntries.filter(entry => entry.event === 'DamageApplied');
+    expect(damage).toHaveLength(3);
+    expect(damage[1]!.data?.value).toBe(damage[0]!.data?.value);
+    expect(Number(damage[2]!.data?.value)).toBeCloseTo(
+      Number(damage[0]!.data?.value) * (1 - reduction),
+      5,
+    );
+  });
+
   it.each([113701, 113702])('裹附按服务器参数降低对应属性的实际伤害：%s', async tagId => {
     const scenario = createContractSkillScenario(tagId, 'battleSkill', [0, 150, 300]);
     const service = new ScenarioSimulationService({

@@ -1323,82 +1323,6 @@ const commonBuff_buff_cc_chr_disable_same_normal_skill: SkillBuffDefinition = {
   actionGraph: commonBuff_buff_cc_chr_disable_same_normal_skill$actionGraph,
 };
 
-const commonBuff_buff_cc_chr_dmg_down_after_consume$actionGraph = {
-  main: {
-    nodes: {
-      applyBuff_1: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_cc_chr_dmg_down_after_consume_instance',
-                copiedBlackboardAssignments: { dmg_scale: 'dmg_scale', duration: 'duration' },
-              },
-            ],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: 'applyBuff_1',
-      },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: 'checkCondition_2',
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'eventConsumedBuffLayerCompare',
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-        },
-      },
-      data_2: {
-        type: 'boolean',
-        expression: {
-          kind: 'eventBuffTagsMatch',
-          match: 'hasAny',
-          buffTags: [
-            'Skill/Character/Common/NoGuard',
-            'Skill/Character/Common/SpellInflict',
-            'Skill/Character/Common/SpellStatus',
-          ],
-        },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const commonBuff_buff_cc_chr_dmg_down_after_consume: SkillBuffDefinition = {
-  stackingType: 'unlimited',
-  priority: 0,
-  maxStackCount: 1,
-  applyTags: [],
-  extendTags: [],
-  blackboard: { dmg_scale: -0.9, duration: 10 },
-  attributeModifiers: [],
-  abilityEventResponses: [
-    { event: 'buffConsumed', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
-    { event: 'buffAbsorbed', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
-  ],
-  actionGraph: commonBuff_buff_cc_chr_dmg_down_after_consume$actionGraph,
-};
-
 const commonBuff_buff_cc_chr_dmg_down_after_consume_inflict$actionGraph = {
   main: {
     nodes: {
@@ -3962,7 +3886,6 @@ export const contingencyContractBuffDefinitions: OperatorBuffDefinitions = Objec
     commonBuff_buff_cc_chr_combo_skill_reset_cd_extra_state,
   buff_cc_chr_disable_normal_skill: commonBuff_buff_cc_chr_disable_normal_skill,
   buff_cc_chr_disable_same_normal_skill: commonBuff_buff_cc_chr_disable_same_normal_skill,
-  buff_cc_chr_dmg_down_after_consume: commonBuff_buff_cc_chr_dmg_down_after_consume,
   buff_cc_chr_dmg_down_after_consume_inflict: commonBuff_buff_cc_chr_dmg_down_after_consume_inflict,
   buff_cc_chr_dmg_down_after_consume_inflict_delay:
     commonBuff_buff_cc_chr_dmg_down_after_consume_inflict_delay,
@@ -4707,7 +4630,7 @@ export const contingencyContractInitializationPlans = Object.freeze<
   },
   {
     tagId: 110801,
-    sequence: { $sequence: 'applyBuff_2' },
+    sequence: { $sequence: 'applyBuff_1' },
     actionGraph: {
       main: {
         nodes: {
@@ -4729,25 +4652,6 @@ export const contingencyContractInitializationPlans = Object.freeze<
               },
             },
             next: null,
-          },
-          applyBuff_2: {
-            action: {
-              kind: 'applyBuff',
-              parameters: {
-                targets: { kind: 'characterTeam', excludeOwner: false },
-                buffs: [
-                  {
-                    buffId: 'buff_cc_chr_dmg_down_after_consume',
-                    blackboardAssignments: {
-                      dmg_scale: { kind: 'constant', value: -0.3 },
-                      duration: { kind: 'constant', value: 10 },
-                    },
-                    stringBlackboardAssignments: {},
-                  },
-                ],
-              },
-            },
-            next: 'applyBuff_1',
           },
         },
       },
@@ -4756,7 +4660,7 @@ export const contingencyContractInitializationPlans = Object.freeze<
   },
   {
     tagId: 110802,
-    sequence: { $sequence: 'applyBuff_2' },
+    sequence: { $sequence: 'applyBuff_1' },
     actionGraph: {
       main: {
         nodes: {
@@ -4778,25 +4682,6 @@ export const contingencyContractInitializationPlans = Object.freeze<
               },
             },
             next: null,
-          },
-          applyBuff_2: {
-            action: {
-              kind: 'applyBuff',
-              parameters: {
-                targets: { kind: 'characterTeam', excludeOwner: false },
-                buffs: [
-                  {
-                    buffId: 'buff_cc_chr_dmg_down_after_consume',
-                    blackboardAssignments: {
-                      duration: { kind: 'constant', value: 10 },
-                      dmg_scale: { kind: 'constant', value: -0.8 },
-                    },
-                    stringBlackboardAssignments: {},
-                  },
-                ],
-              },
-            },
-            next: 'applyBuff_1',
           },
         },
       },
