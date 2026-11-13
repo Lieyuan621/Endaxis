@@ -21,6 +21,8 @@ export interface OperatorControlRuntimeOptions {
   readonly configuration?: OperatorControlConfiguration;
   /** 未提供场景配置的独立运行环境可以直接提供控制查询。 */
   readonly readControl?: (operatorId: string, frame: number) => boolean;
+  /** 实际进入或退出主控时清理角色输入状态；先于切人事件执行。 */
+  readonly controlChanged?: (operatorId: string, controlled: boolean) => void;
   readonly emit?: (
     operatorId: string,
     event: 'ownerSwitchToCenter' | 'ownerSwitchToGuard',
@@ -54,16 +56,19 @@ export class OperatorControlRuntime implements FrameRuntime {
     action: PlayerSkillInput | undefined,
     skillType: SkillType | undefined,
     castId?: string,
+    switchToCenterBeforeCast = false,
   ): void {
-    if (!this.options.configuration?.automaticSwitches) return;
-    if (action !== 'basicAttack' && skillType !== 'finisher' && skillType !== 'plungingAttack')
-      return;
+    if (!switchToCenterBeforeCast) {
+      if (!this.options.configuration?.automaticSwitches) return;
+      if (action !== 'basicAttack' && skillType !== 'finisher' && skillType !== 'plungingAttack')
+        return;
+    }
     if (this.runtimeState.get(operatorId) === true) return;
     this.applyInput(operatorId);
     this.options.receipt.record({
       frame: this.options.clock.frame,
       time: this.options.clock.time,
-      event: 'AutomaticControlSwitched',
+      event: switchToCenterBeforeCast ? 'SkillControlSwitched' : 'AutomaticControlSwitched',
       sourceId: operatorId,
       ...(castId === undefined ? {} : { data: { castId } }),
     });
@@ -85,6 +90,7 @@ export class OperatorControlRuntime implements FrameRuntime {
     }
     // 先完整更新身份，再发通知，避免监听器读到半次切人。
     for (const [id, current] of changes) this.runtimeState.set(id, current);
+    for (const [id, current] of changes) this.options.controlChanged?.(id, current);
     for (const [id, current] of changes) {
       this.options.emit?.(id, current ? 'ownerSwitchToCenter' : 'ownerSwitchToGuard', {
         sourceId: id,

@@ -196,6 +196,8 @@ export function validateSkillDefinition(
   }
   requireNonNegativeInteger(record, 'exclusiveFrame', path, out);
   requireNonNegativeInteger(record, 'offsetRecordFrame', path, out);
+  if (record.switchToCenterBeforeCast !== undefined)
+    requireBoolean(record, 'switchToCenterBeforeCast', path, out);
   if (record.dontInterruptCombo !== undefined)
     requireBoolean(record, 'dontInterruptCombo', path, out);
   if (record.switchToBuffCast !== undefined) {

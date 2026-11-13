@@ -41,6 +41,16 @@ const ACTIVE_CONTEXT = {
 } as const;
 
 describe('HideUI active source projection', () => {
+  it.each([false, true])('保留原生施放前切主控标志：%s', switchToCenterBeforeCast => {
+    const compiled = compileActiveSkillRuntimeProjectionSource({
+      value: { ...activeWithActions([]), switchToCenterBeforeCast },
+      sourcePath: 'fixture',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+    });
+    expect(compiled.switchToCenterBeforeCast).toBe(switchToCenterBeforeCast ? true : undefined);
+  });
+
   it('保留原生追加战技身份，不改变技能执行图和时长', () => {
     const source = activeWithActions([]);
     const compile = (normalSkillSubType: string | number) =>

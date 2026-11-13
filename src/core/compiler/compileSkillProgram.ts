@@ -125,6 +125,7 @@ export function compileSkillProgram(
       ? {}
       : { offsetRecordFrame: input.skill.offsetRecordFrame }),
     ...(input.skill.dontInterruptCombo ? { dontInterruptCombo: true } : {}),
+    ...(input.skill.switchToCenterBeforeCast ? { switchToCenterBeforeCast: true } : {}),
     ...(cooldownFrames === undefined ? {} : { cooldownFrames }),
     ...(input.skill.costFrame === undefined ? {} : { costFrame: input.skill.costFrame }),
     costs,

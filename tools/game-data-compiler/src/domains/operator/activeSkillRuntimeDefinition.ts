@@ -32,6 +32,7 @@ export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
     | 'cooldownFrames'
     | 'enhancementStateBuffId'
     | 'dontInterruptCombo'
+    | 'switchToCenterBeforeCast'
   > &
     Required<
       Pick<
@@ -105,6 +106,7 @@ export function compileOperatorActiveSkillRuntimeDefinitionSource(input: {
     exclusiveFrame: runtime.exclusiveFrame,
     offsetRecordFrame: runtime.offsetRecordFrame,
     ...(runtime.dontInterruptCombo ? { dontInterruptCombo: true } : {}),
+    ...(runtime.switchToCenterBeforeCast ? { switchToCenterBeforeCast: true } : {}),
     allowNextSkillTransitions: runtime.allowNextSkillTransitions,
     costFrame,
     scheduledSequences: runtime.scheduledSequences.map(item => ({

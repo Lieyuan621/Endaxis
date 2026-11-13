@@ -2813,6 +2813,11 @@ export const definitionSchemas = {
           exclusiveFrame: schema_01537cfa8ef5,
           offsetRecordFrame: schema_6a3fe46fd6d4,
           dontInterruptCombo: schema_a8f26ec29414,
+          switchToCenterBeforeCast: {
+            kind: 'boolean',
+            optional: true,
+            description: '原生施放前切为主控；不受编辑器自动切人偏好控制。',
+          },
           availability: schema_002db450baab,
           cooldownFrames: schema_fe7885c54dab,
           costs: schema_558c826756dd,
@@ -2878,6 +2883,11 @@ export const definitionSchemas = {
           exclusiveFrame: schema_01537cfa8ef5,
           offsetRecordFrame: schema_6a3fe46fd6d4,
           dontInterruptCombo: schema_a8f26ec29414,
+          switchToCenterBeforeCast: {
+            kind: 'boolean',
+            optional: true,
+            description: '原生施放前切为主控；不受编辑器自动切人偏好控制。',
+          },
           availability: schema_002db450baab,
           cooldownFrames: schema_fe7885c54dab,
           costs: schema_558c826756dd,

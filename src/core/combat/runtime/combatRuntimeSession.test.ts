@@ -331,6 +331,7 @@ function createFixture(
     inputs,
     externalEvents,
     operators,
+    skillPrograms,
   };
 }
 
@@ -958,4 +959,29 @@ it('试探分支独立推进，显式丢弃检查点后不再保留历史入口'
   session.discardCheckpoint(checkpoint);
   expect(() => session.restore(checkpoint)).toThrow('does not belong');
   expect(() => session.fork(checkpoint)).toThrow('does not belong');
+});
+
+it('恢复装配后切主控仍清理普攻接续，恢复本身不清理', () => {
+  const { session, createRestore, skillPrograms } = createFixture(
+    undefined,
+    true,
+    true,
+    false,
+    false,
+    {
+      initialOperatorId: 'operator',
+      automaticSwitches: false,
+      scheduledSwitches: [],
+    },
+  );
+  const graph = session.readState();
+  graph.operators.get('operator')!.ability.comboOffsetTargetSkillKey = 'skill';
+  const restored = createRestore()(graph, skillPrograms.fork(), session.readHistory());
+  expect(restored.stateGraph.operators.get('operator')!.ability.comboOffsetTargetSkillKey).toBe(
+    'skill',
+  );
+  restored.applyInitialInput({ controlledOperatorId: null });
+  expect(
+    restored.stateGraph.operators.get('operator')!.ability.comboOffsetTargetSkillKey,
+  ).toBeNull();
 });

@@ -1109,6 +1109,7 @@ export class CombatRuntimeAssembly {
         state: controlState,
         configuration: options.operatorControl,
         readControl: externalControlQuery,
+        controlChanged: (id, controlled) => this.#onOperatorControlChanged(id, controlled),
         emit: options.emitAbilityEvent,
         receipt: this.receipt,
       });
@@ -1608,6 +1609,7 @@ export class CombatRuntimeAssembly {
       state: controlState,
       configuration: options.operatorControl,
       readControl: externalControlQuery,
+      controlChanged: (id, controlled) => this.#onOperatorControlChanged(id, controlled),
       emit: options.emitAbilityEvent,
       receipt: this.receipt,
     });
@@ -2247,7 +2249,13 @@ export class CombatRuntimeAssembly {
     const program = this.#skillPrograms.get(
       `${operatorId}\u0000${expectedSkillId}\u0000${castId ?? ''}`,
     );
-    this.#operatorControl.beforeSkillInput(operatorId, action, program?.skillType, castId);
+    this.#operatorControl.beforeSkillInput(
+      operatorId,
+      action,
+      program?.skillType,
+      castId,
+      program?.switchToCenterBeforeCast,
+    );
     const center = this.#operatorCenters.get(operatorId);
     const centerState = this.#operatorCenterStates.get(operatorId);
     if (
@@ -5857,6 +5865,24 @@ export class CombatRuntimeAssembly {
         },
       }),
     );
+  }
+
+  /** 进入主控默认进入 Free；原生保留技能标签命中时才进入保留当前技能的 Skill 状态。 */
+  #onOperatorControlChanged(operatorId: string, controlled: boolean): void {
+    const ability = this.#requireAbilitySystem(operatorId);
+    ability.resetComboOnControlChange();
+    if (controlled) {
+      const query = this.#options.skillAvailabilityTags?.getQuery('DontInterruptSkillBySwitchIn');
+      const keepSkill =
+        query !== undefined &&
+        this.#resolveBuffTarget('caster', operatorId).matchesEntityTags(
+          query.tags,
+          query.queryType,
+        );
+      if (!keepSkill) ability.interruptCurrentSkill('enterFreeState');
+    }
+    const state = this.#operatorCenterStates.get(operatorId);
+    if (!controlled && state !== undefined) this.#operatorCenters.get(operatorId)?.leaveDash(state);
   }
 
   #createDodgeInputRuntime(options: CombatRuntimeAssemblyOptions): DodgeInputRuntime {

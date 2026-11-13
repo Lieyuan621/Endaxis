@@ -935,6 +935,7 @@
       "simulationStart": "模拟起始线",
       "simulationEnd": "模拟终止线",
       "controlSwitch": "切入干员",
+      "skillControlSwitch": "技能切换主控",
       "automaticControlSwitch": "自动切换主控（模拟投影）",
       "dodge": "闪避",
       "perfectDodge": "极限闪避",

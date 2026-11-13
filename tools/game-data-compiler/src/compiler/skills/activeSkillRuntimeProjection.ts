@@ -83,6 +83,7 @@ export interface CompiledActiveSkillRuntimeProjectionSource {
   readonly exclusiveFrame: number;
   readonly offsetRecordFrame: number;
   readonly dontInterruptCombo?: boolean;
+  readonly switchToCenterBeforeCast?: boolean;
   /**
    * 原生输入窗口的编译期证据。它只供最终技能组装配选择“下一段”窗口，
    * 不属于 Endaxis 运行时技能契约，也不能直接按最早帧压成技能块宽度。
@@ -1323,6 +1324,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     ...(requireBoolean(prepared.root.dontInterruptCombo, `${input.sourcePath}.dontInterruptCombo`)
       ? { dontInterruptCombo: true }
       : {}),
+    ...(prepared.root.switchToCenterBeforeCast === true ? { switchToCenterBeforeCast: true } : {}),
     allowNextSkillTransitions,
     // 动态声明也进入技能实例初值；补丁同名键后覆盖。
     // 此处位于动作投影输出边界，不能回灌到上面的静态解析环境消除动态引用。

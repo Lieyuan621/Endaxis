@@ -1669,3 +1669,41 @@ describe('AbilitySystemRuntime', () => {
     expect(ability.currentSkillId).toBe('battleSkillCombo');
   });
 });
+
+it('切主控清除普攻目标与临时接续，保留强化模式映射', () => {
+  const ability = new AbilitySystemRuntime({
+    skills: ['attack1', 'attack2', 'enhanced'].map(id =>
+      Object.assign(new FixtureRuntime(id, [], 'basicAttack'), {
+        nativeSkillType: 'attack' as const,
+        offsetRecordFrame: 0,
+      }),
+    ),
+    dashOffsetFrames: 30,
+    playerActionRoutes: {
+      basicAttack: {
+        kind: 'basicAttack',
+        skillKeys: ['attack1', 'attack2', 'enhanced'],
+        normalAttackSkillKeys: ['attack1', 'attack2'],
+        defaultSkillKey: 'attack1',
+      },
+    },
+    playerActionModes: [
+      {
+        modeId: 'enhanced',
+        modeLayer: 'mode',
+        defaultEnabled: false,
+        commandMappings: { basicAttack: { skillId: 'enhanced' } },
+      },
+    ],
+  });
+  ability.tryStartSkill('attack1');
+  ability.interruptCurrentSkillForDash();
+  expect(ability.runtimeState.comboOffsetModifier).not.toBeNull();
+  ability.activatePlayerActionMode('enhanced');
+  ability.resetComboOnControlChange();
+  expect(ability.runtimeState.comboOffsetModifier).toBeNull();
+  expect(ability.runtimeState.comboOffsetTargetSkillKey).toBeNull();
+  expect(ability.resolvePlayerInputSkill('enhanced', 'basicAttack')).toMatchObject({
+    actualSkillKey: 'enhanced',
+  });
+});

@@ -116,7 +116,7 @@ import { SkillTimelineJumpGate } from './skillTimelineJump';
 
 /** 技能实例从可释放到结束的运行时生命周期状态。 */
 /** 当前已闭环、会改变技能结束事实的中断来源。 */
-export type RuntimeSkillInterruptReason = 'default' | 'dash' | 'castNextSkill';
+export type RuntimeSkillInterruptReason = 'default' | 'enterFreeState' | 'dash' | 'castNextSkill';
 
 /** CastEnd 在结束时间轴动作期间暴露的唯一技能转场输入。 */
 export interface RuntimeSkillTransition {

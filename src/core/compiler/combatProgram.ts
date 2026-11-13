@@ -661,6 +661,7 @@ export interface CompiledSkillExecutionProgram extends CompiledSkillActionProgra
   /** 原生普攻连段身份提交点；到达后下一次 Dash 可保存该目标。 */
   readonly offsetRecordFrame?: number;
   readonly dontInterruptCombo?: boolean;
+  readonly switchToCenterBeforeCast?: boolean;
   readonly cooldownFrames?: number;
   readonly costFrame?: number;
   readonly costs: readonly CompiledSkillCost[];

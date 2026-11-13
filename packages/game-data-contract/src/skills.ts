@@ -327,6 +327,8 @@ export interface SkillDefinitionProperties extends SkillActionProgramDefinition 
   offsetRecordFrame: number;
   /** 原生 SkillData.dontInterruptCombo；主控插入此技能时保留普攻连段。缺省为 false。 */
   dontInterruptCombo?: boolean;
+  /** 原生施放前切为主控；不受编辑器自动切人偏好控制。 */
+  switchToCenterBeforeCast?: boolean;
   /**
    * 技能释放条件只生成合法性诊断；不成立也不会阻止技能进入模拟。
    * 模拟层将用户排入时间轴的动作视为已经成功释放，不得改写或跳过。

@@ -935,6 +935,7 @@
       "simulationStart": "Simulation start",
       "simulationEnd": "Simulation end",
       "controlSwitch": "Operator switch",
+      "skillControlSwitch": "Skill control switch",
       "automaticControlSwitch": "Automatic control switch (simulation projection)",
       "dodge": "Dodge",
       "perfectDodge": "Perfect dodge",

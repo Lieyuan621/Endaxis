@@ -2917,6 +2917,7 @@ export const laevatainChr_0016_laevat_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 245,
   exclusiveFrame: 73,
   offsetRecordFrame: 0,
+  switchToCenterBeforeCast: true,
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_1' } },

@@ -2295,6 +2295,7 @@ export const yvonneChr_0017_yvonne_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 126,
   exclusiveFrame: 64,
   offsetRecordFrame: 0,
+  switchToCenterBeforeCast: true,
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 16, sequence: { $sequence: 'finishBuffsById_1' } },

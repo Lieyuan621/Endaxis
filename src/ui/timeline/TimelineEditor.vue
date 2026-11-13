@@ -53,6 +53,7 @@ import type { OperatorPanelContributionReceipt } from '../../core/compiler/resol
 import type { SkillGraphPresentation } from '../../core/project/graphPresentation';
 import { getSkillCastPlacementAnchor } from '../../core/project/skillCastPlacement';
 import { projectPublishedEnemyCurves } from './results/publishedEnemyCurves';
+import { projectControlSwitchMarkers } from './results/controlSwitchMarkers';
 import { projectCombatHudSnapshot } from '../../core/projection/combatHudSnapshot';
 import { projectDodgeMarkerDiagnostics } from '../../core/projection/dodgeMarkerDiagnostics';
 import { projectDodgeMarkerEffects } from '../../core/projection/dodgeMarkerEffects';
@@ -1694,20 +1695,13 @@ const viewModel = computed(() => {
   void operatorDefinitionRevision.value;
   return projectTimelineEditor(scenario.value, editorGameDataRepository);
 });
-const projectedControlSwitches = computed(() => {
-  if (scenario.value.battle.automaticControlSwitches === false) return [];
-  const tracksById = new Map(
-    scenario.value.tracks.flatMap((track, index) =>
-      track === null ? [] : [[track.id, index] as const],
-    ),
-  );
-  return publishedReceiptEntries.value.flatMap(entry => {
-    if (entry.event !== 'AutomaticControlSwitched' || entry.sourceId === undefined) return [];
-    const trackIndex = tracksById.get(entry.sourceId);
-    if (trackIndex === undefined) return [];
-    return [{ id: `automatic-control:${entry.sequence}`, frame: entry.frame, trackIndex }];
-  });
-});
+const projectedControlSwitches = computed(() =>
+  projectControlSwitchMarkers(
+    publishedReceiptEntries.value,
+    scenario.value.tracks,
+    scenario.value.battle.automaticControlSwitches !== false,
+  ),
+);
 const skillCastDefinitionDurations = computed(
   () =>
     new Map(
@@ -8226,8 +8220,20 @@ function setMobileGuideFrame(frame: number | null): void {
                   :key="marker.id"
                   class="timeline-marker track-switch-marker track-switch-marker--automatic"
                   :style="{ left: `${timelineFramePx(marker.frame)}px` }"
-                  :title="t('timeline.header.automaticControlSwitchesHelp')"
-                  :aria-label="t('timeline.markerLabels.automaticControlSwitch')"
+                  :title="
+                    t(
+                      marker.kind === 'skill'
+                        ? 'timeline.markerLabels.skillControlSwitch'
+                        : 'timeline.header.automaticControlSwitchesHelp',
+                    )
+                  "
+                  :aria-label="
+                    t(
+                      marker.kind === 'skill'
+                        ? 'timeline.markerLabels.skillControlSwitch'
+                        : 'timeline.markerLabels.automaticControlSwitch',
+                    )
+                  "
                 >
                   <OperatorAvatar
                     v-if="track.operatorSlug"

@@ -625,18 +625,23 @@ export class AbilitySystemRuntime implements FrameRuntime {
       : undefined;
   }
 
-  /** 控制标签新增时的原生中断；移除标签不会恢复此前技能。 */
-  /** 按原生默认原因中断当前施法；结束回调可能已切换到另一技能，不能清除新实例。 */
-  interruptCurrentSkill(): void {
+  /** 结束回调可能已切换到另一技能，不能清除新实例。 */
+  interruptCurrentSkill(reason: 'default' | 'enterFreeState' = 'default'): void {
     this.#cancelPlungingAttack();
     const current = this.#currentSkill;
-    if (current?.state === 'casting') current.interrupt('default');
+    if (current?.state === 'casting') current.interrupt(reason);
     if (this.#currentSkill === current && current?.state !== 'casting') this.#currentSkill = null;
   }
 
+  /** 控制标签新增时的原生中断；移除标签不会恢复此前技能。 */
   applyControlTagChange(interrupt: boolean, clearCombo: boolean): void {
     if (interrupt) this.interruptCurrentSkill();
     if (clearCombo) this.#clearComboOffset(true);
+  }
+
+  /** CharacterMainCtrlSystem 进入/退出均调用 ClearOffsetModifier(true)，不移除普攻模式。 */
+  resetComboOnControlChange(): void {
+    this.#clearComboOffset(true);
   }
 
   /** CenterDashState.OnEnter：Dash 独立于技能接续许可，直接以 Dash 原因结束当前技能。 */
