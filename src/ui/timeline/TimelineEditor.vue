@@ -8539,6 +8539,10 @@ function setMobileGuideFrame(frame: number | null): void {
                       :top="statusTop + 2"
                       :frame-px="timelineFramePx"
                       :burst-label="t('timeline.effect.burst')"
+                      @open-damage-detail="
+                        hitDetailTarget = null;
+                        enemyDamageDetailSequence = $event;
+                      "
                     />
                     <TimelineDamageHit
                       v-for="hit in enemyOverviewDamageHits.get(id) ?? []"
@@ -9258,6 +9262,7 @@ function setMobileGuideFrame(frame: number | null): void {
     :force-critical="hitDetailForceCritical"
     :result-force-critical="hitDetailResultForceCritical"
     :entries="hitDetailEntries"
+    :initial-sequence="enemyDamageDetailSequence ?? undefined"
     :contribution-source-label="hitDetailContributionSourceLabel"
     :damage-type-label="damageElementLabel"
     :skill-type-label="skillTypeLabel"

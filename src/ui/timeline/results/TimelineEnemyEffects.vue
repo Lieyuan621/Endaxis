@@ -451,6 +451,7 @@ function scrollEffects(event: WheelEvent) {
           :top="ICON_TOP"
           :frame-px="pointX"
           :burst-label="labels.burst"
+          @open-damage-detail="emit('open-damage-detail', $event)"
         />
         <div
           v-for="segment in entitySegments"

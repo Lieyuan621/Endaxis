@@ -15,6 +15,7 @@ const props = defineProps<{
   framePx: (frame: number) => number;
   burstLabel: string;
 }>();
+const emit = defineEmits<{ 'open-damage-detail': [sequence: number] }>();
 const { t, te } = useI18n();
 function spellBurstTitle(burstType: string | undefined): string {
   if (burstType === undefined) return props.burstLabel;
@@ -42,6 +43,7 @@ const markers = computed(() =>
     return {
       key: `${index}:${marker.kind}:${marker.frame}:${marker.burstType ?? ''}`,
       icon,
+      damageSequence: marker.damageSequence,
       // 瞬时标记的角标表示一次触发，不表示新增持续附着层数。
       badge: 1,
       x: props.framePx(marker.frame) + (props.positions[index]?.slot ?? 0) * (props.iconSize + 2),
@@ -61,5 +63,23 @@ const markers = computed(() =>
     :icon="marker.icon"
     :title="marker.title"
     :badge="marker.badge"
+    :class="{ 'is-clickable': marker.damageSequence !== undefined }"
+    :role="marker.damageSequence === undefined ? undefined : 'button'"
+    :tabindex="marker.damageSequence === undefined ? undefined : 0"
+    @click.stop="
+      marker.damageSequence !== undefined && emit('open-damage-detail', marker.damageSequence)
+    "
+    @keydown.enter.stop.prevent="
+      marker.damageSequence !== undefined && emit('open-damage-detail', marker.damageSequence)
+    "
+    @keydown.space.stop.prevent="
+      marker.damageSequence !== undefined && emit('open-damage-detail', marker.damageSequence)
+    "
   />
 </template>
+
+<style scoped>
+.is-clickable {
+  cursor: pointer;
+}
+</style>

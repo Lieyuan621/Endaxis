@@ -48,6 +48,7 @@ const props = defineProps<{
   damageZoneLabel?: (zone: DamageScaleZone) => string;
   buffLabel?: (item: AppliedDamageModifier) => string;
   entries: readonly CombatReceiptEntry[];
+  initialSequence?: number;
   receiptEntries?: readonly CombatReceiptEntry[];
   operatorLabel?: (operatorId: string) => string;
   objectName?: CombatObjectOwnName;
@@ -203,13 +204,17 @@ const openCriticalDetails = ref<ReadonlySet<number>>(new Set());
 const openSkillMultiplierDetails = ref<ReadonlySet<number>>(new Set());
 // 回执序号只在当前结果内有效；换一组结果后不能继承上一组的展开状态。
 watch(
-  () => props.entries,
+  () => [props.entries, props.initialSequence] as const,
   () => {
-    damageIndex.value = 0;
+    const index = props.entries
+      .filter(entry => entry.event === 'DamageApplied')
+      .findIndex(entry => entry.sequence === props.initialSequence);
+    damageIndex.value = Math.max(0, index);
     openAttackDetails.value = new Set();
     openCriticalDetails.value = new Set();
     openSkillMultiplierDetails.value = new Set();
   },
+  { immediate: true },
 );
 
 function finiteNumber(value: unknown, fallback = 0): number {

@@ -92,7 +92,8 @@ it('按旧版顺序展示独立乘区，失衡只从独立增伤中拆出一次'
             randomMode: 'expected',
             forceCritical: false,
             resultForceCritical: false,
-            entries: [entry],
+            entries: [entry, { ...entry, sequence: 2 }],
+            initialSequence: 2,
             targetLabel: '伤害对象',
             operatorLabel: (id: string) => (id === 'enemy:second' ? '第二目标' : id),
             contributionSourceLabel: () => '',
@@ -118,6 +119,7 @@ it('按旧版顺序展示独立乘区，失衡只从独立增伤中拆出一次'
         ),
     }),
   );
+  expect(state.damageIndex.value).toBe(1);
   const rows = state.damageDetails.value[0].multiplierRows;
   expect(state.damageDetails.value[0].contextRows).toContainEqual({
     label: '伤害对象',

@@ -34,6 +34,7 @@ describe('projectEnemyEffectViz', () => {
     expect(result.damageHits).toEqual([first, second]);
     expect(result.damageHits?.[0]).toBe(first);
     expect(result.markers).toHaveLength(2);
+    expect(result.markers.map(marker => marker.damageSequence)).toEqual([1, 2]);
     expect(result.markers.every(marker => marker.frame === 20)).toBe(true);
   });
   it('只显示复合附着的触发标记，不伪造持续时间', () => {

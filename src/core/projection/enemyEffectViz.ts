@@ -56,6 +56,7 @@ export function isSkillFollowupBuffDamageReceipt(
 
 /** 一个不由持续 Buff 段表达的瞬时效果标记。 */
 export interface EnemyEffectMarker {
+  readonly damageSequence?: number;
   readonly frame: number;
   readonly kind: 'burst' | 'attachmentTrigger';
   /** 只参与转换的输入元素，不代表创建了持续附着。 */
@@ -320,6 +321,7 @@ export function projectEnemyEffectVizesForTargets(
         result.markers.push({
           frame: entry.frame,
           kind: 'burst',
+          damageSequence: entry.sequence,
           burstType: entry.data.spellBurstType,
         });
       }
