@@ -264,6 +264,47 @@
   box-shadow: var(--ea-floating-shadow) !important;
 }
 
+/* Single-value editors used by the timeline's compact controls. */
+.ea-compact-number-popover,
+.ea-compact-number-popover__content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ea-compact-number-popover {
+  padding: 6px 8px;
+  --ea-number-input-accent: var(--ea-compact-number-accent, var(--ea-gold));
+}
+
+.ea-compact-number-popover.el-popover {
+  width: max-content !important;
+  min-width: 0 !important;
+}
+
+.ea-compact-number-popover--energy {
+  --ea-compact-number-accent: #7dd3fc;
+}
+
+html[data-theme='light'] .ea-compact-number-popover--energy {
+  --ea-compact-number-accent: #0b6e99;
+}
+
+.ea-compact-number-popover .ea-number-input {
+  --ea-number-input-compact-height: 24px;
+  --ea-number-input-compact-controls-width: 16px;
+  width: 72px;
+}
+
+.ea-compact-number-popover__unit {
+  color: var(--ea-fg-muted);
+  font:
+    11px/1 'Roboto Mono',
+    Consolas,
+    monospace;
+  white-space: nowrap;
+}
+
 /* Shared section/table treatment for stat and damage breakdown dialogs. */
 .ea-detail-breakdown {
   color: var(--ea-fg);

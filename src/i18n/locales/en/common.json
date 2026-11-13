@@ -1986,7 +1986,7 @@
       "title": "Global stat modifiers"
     },
     "panel": {
-      "trustNode": "Talent Array {node}",
+      "trustNode": "Trust node {node}",
       "staggerDamage": "Stagger Damage Bonus",
       "unavailable": "Stats unavailable: {reason}"
     },

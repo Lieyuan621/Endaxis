@@ -288,22 +288,22 @@ function seek(event: MouseEvent): void {
       </span>
       <form
         v-if="durationEditorOpen"
-        class="axis-editor"
-        :style="{ left: `${Math.max(8, totalWidth - 88)}px` }"
+        class="axis-editor ea-floating-surface ea-compact-number-popover"
+        :style="{ left: `${Math.max(144, totalWidth - 8)}px` }"
         @submit.prevent="applyDurationDraft"
         @pointerdown.stop
       >
         <EaNumberInput
           ref="durationInput"
           v-model="durationDraftSeconds"
-          size="sm"
-          controls-position="right"
+          compact
           :min="30"
           :max="600"
           :step="1"
+          :aria-label="t('timelineGrid.battle.setDurationTitle')"
           @blur="applyDurationDraft"
         />
-        <span>s</span>
+        <span class="ea-compact-number-popover__unit">s</span>
       </form>
     </div>
   </div>
@@ -571,24 +571,6 @@ function seek(event: MouseEvent): void {
   position: absolute;
   z-index: 50;
   top: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  border: 1px solid var(--ea-border-strong);
-  background: var(--ea-tooltip-bg);
-  box-shadow: 0 10px 25px var(--ea-shadow-strong);
-}
-
-.axis-editor :deep(.ea-number-input) {
-  width: 72px;
-}
-
-.axis-editor span {
-  color: var(--ea-fg-muted);
-  font:
-    12px 'Roboto Mono',
-    Consolas,
-    monospace;
+  transform: translateX(-100%);
 }
 </style>

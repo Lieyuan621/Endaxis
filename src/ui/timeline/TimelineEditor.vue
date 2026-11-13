@@ -418,7 +418,9 @@ import {
   capturePublishedEquipmentSources,
   resolvePublishedBuffSource,
   resolvePublishedEquipmentTrait,
+  type PublishedBuffSource,
 } from './results/publishedBuffSource';
+import { capturePublishedOperatorMetadata } from './results/publishedOperatorMetadata';
 import { projectPublishedHitDetail } from './results/publishedHitDetail';
 import {
   projectTimelineHitOccurrences,
@@ -1532,6 +1534,11 @@ const operatorBuffDisplayNameKeys = computed(() => {
     if (name !== null) names.set(`scenario:effect:${reference.effectId}`, { text: name });
   }
   return names;
+});
+
+const buildSourceOperators = computed(() => {
+  operatorDefinitionRevision.value;
+  return capturePublishedOperatorMetadata(scenario.value, editorGameDataRepository);
 });
 
 const {
@@ -4488,7 +4495,24 @@ function buffSourceName(segment: BuffPresentationSource): string | undefined {
     publishedOperators.value,
     publishedWeaponSources.value,
   );
-  if (source === undefined) return undefined;
+  return source === undefined ? undefined : publishedBuffSourceName(source);
+}
+
+function buildModifierSourceName(source: {
+  sourceId: string;
+  sourceActionId: string;
+}): string | undefined {
+  const origin = resolvePublishedBuffSource(
+    source,
+    scenario.value,
+    buildSourceOperators.value,
+    capturePublishedEquipmentSources(editorGameDataRepository.getWeapons()),
+    capturePublishedEquipmentSources(editorGameDataRepository.getGears(), 'gear'),
+  );
+  return origin === undefined ? undefined : publishedBuffSourceName(origin);
+}
+
+function publishedBuffSourceName(source: PublishedBuffSource): string {
   switch (source.kind) {
     case 'custom':
       return source.name;
@@ -7964,6 +7988,7 @@ function setMobileGuideFrame(frame: number | null): void {
                 "
                 @reorder-drop="dropTrackOrder($event, track.trackIndex)"
                 @stats="openPanelDialog(track.trackIndex)"
+                @presets="openOperatorPresets(track.trackIndex)"
                 @weapon="openWeaponDialog(track.trackIndex)"
                 @gear="openGearDialog(track.trackIndex, $event)"
                 @update-initial-ultimate-energy="
@@ -9217,6 +9242,7 @@ function setMobileGuideFrame(frame: number | null): void {
     :build-modifiers="
       selectedPanel ? buildAttributes.operatorModifiers.get(selectedPanel.operatorId) : undefined
     "
+    :build-modifier-source-name="buildModifierSourceName"
     :mechanic-selections="scenario.mechanics.selections"
     :build-attributes="
       selectedPanel ? buildAttributes.operators.get(selectedPanel.operatorId) : undefined

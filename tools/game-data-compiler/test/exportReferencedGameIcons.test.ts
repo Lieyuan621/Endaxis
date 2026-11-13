@@ -55,6 +55,7 @@ describe('全量图片隔离导出', () => {
     for (const publicPath of [
       '/contingency_contract/deco_contract_0.webp',
       '/contingency_contract/deco_contract_1.webp',
+      '/icons/icon_equipmake.webp',
     ]) {
       expect(sourcePlanForReference(publicPath, new Map())).toMatchObject({ localOnly: true });
     }

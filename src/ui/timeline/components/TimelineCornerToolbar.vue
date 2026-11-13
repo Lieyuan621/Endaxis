@@ -143,14 +143,13 @@ function applyGaugeDraft(): void {
         <form
           v-if="gaugeEditorOpen"
           id="timeline-initial-gauge-editor"
-          class="gauge-popover ea-floating-surface"
+          class="gauge-popover ea-floating-surface ea-compact-number-popover ea-compact-number-popover--energy"
           @submit.prevent="applyGaugeDraft"
         >
           <EaNumberInput
             ref="gaugeInput"
             v-model="gaugeDraft"
-            size="sm"
-            controls-position="right"
+            compact
             :min="0"
             :step="1"
             :aria-label="labels.initialGauge"
@@ -190,7 +189,7 @@ function applyGaugeDraft(): void {
         <form
           v-if="prepEditorOpen"
           id="timeline-prep-editor"
-          class="prep-popover ea-floating-surface"
+          class="prep-popover ea-floating-surface ea-compact-number-popover"
           @submit.prevent="applyPrepDraft"
           @pointerdown.stop
           @click.stop
@@ -198,14 +197,13 @@ function applyGaugeDraft(): void {
           <EaNumberInput
             ref="prepInput"
             v-model="prepDraft"
-            size="sm"
-            controls-position="right"
+            compact
             :min="0"
             :step="1"
             :aria-label="labels.prepDuration"
             @blur="applyPrepDraft"
           />
-          <span>f</span>
+          <span class="ea-compact-number-popover__unit">f</span>
         </form>
       </div>
     </div>
@@ -341,22 +339,6 @@ function applyGaugeDraft(): void {
   z-index: 25;
   top: 24px;
   left: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-}
-
-.prep-popover :deep(.ea-number-input) {
-  width: 72px;
-}
-
-.prep-popover > span {
-  color: var(--ea-fg-muted);
-  font:
-    12px 'Roboto Mono',
-    Consolas,
-    monospace;
 }
 
 .initial-gauge-tool .mini-tool-button {
@@ -377,16 +359,8 @@ function applyGaugeDraft(): void {
 .gauge-popover {
   position: absolute;
   z-index: 20;
-  top: 6px;
-  left: calc(100% + 4px);
-  display: flex;
-  align-items: center;
-  padding: 6px 8px;
-  transform: translateY(-50%);
-}
-
-.gauge-popover :deep(.ea-number-input) {
-  width: 72px;
+  top: 24px;
+  left: 0;
 }
 
 .gauge-tool-value {

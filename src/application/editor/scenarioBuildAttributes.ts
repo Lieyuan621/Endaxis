@@ -15,6 +15,7 @@ import { createScenarioSimulationService } from '../simulation/createScenarioSim
 
 export interface BuildAttributeModifier {
   readonly buffId: string;
+  readonly sourceId: string;
   readonly sourceActionId: string;
   readonly attribute: string;
   readonly slot: AttributeModifierSlot;
@@ -64,6 +65,7 @@ export function resolveScenarioBuildAttributes(
                 : [
                     {
                       buffId: buff.identity.definitionId,
+                      sourceId: buff.identity.sourceId,
                       sourceActionId: buff.sourceActionId,
                       attribute: modifier.attribute,
                       slot,

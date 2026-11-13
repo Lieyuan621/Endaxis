@@ -448,6 +448,7 @@ export function sourcePlanForReference(
     stem === 'default' ||
     stem === 'default_icon' ||
     publicPath === '/icons/global_config.webp' ||
+    publicPath === '/icons/icon_equipmake.webp' ||
     /^\/contingency_contract\/deco_contract_[01]\.webp$/.test(publicPath) ||
     /^\/contingency_contract\/[1-9]\d*\/deco_contingency\.webp$/.test(publicPath)
   ) {

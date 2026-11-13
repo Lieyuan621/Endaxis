@@ -3,12 +3,16 @@
  * 时间轴单轨固定头部，只展示定义身份和稳定配装槽位。
  * 选择、排序和编辑动作由父层 command 处理，本组件不修改项目对象。
  */
+import { nextTick, ref, watch } from 'vue';
 import type { TimelineTrackViewModel } from '../timelineEditorViewModel';
 import type { LoadoutGearSlot } from '../library/loadoutBuildViewModel';
 import OperatorSupportNotice from '../library/OperatorSupportNotice.vue';
 import { getOperatorAvatarPath } from '../../gameAssetPaths';
+import { publicAssetUrl } from '../../../utils/publicAssetUrl';
 import OperatorAvatar from '../../components/OperatorAvatar.vue';
-import { EaButton, EaChevronIcon, EaNumberInput } from '@/design-system';
+import { useInteractionSession } from '../../interaction/interactionSessionContext';
+import { usePopoverInteractionBoundary } from '../../interaction/usePopoverInteractionBoundary';
+import { EaButton, EaChevronIcon, EaNumberInput, EaPopover } from '@/design-system';
 
 const props = defineProps<{
   readOnly?: boolean;
@@ -39,10 +43,40 @@ const emit = defineEmits<{
   reorderDragLeave: [];
   reorderDrop: [event: DragEvent];
   stats: [];
+  presets: [];
   weapon: [];
   gear: [slot: LoadoutGearSlot];
   updateInitialUltimateEnergy: [value: number];
 }>();
+
+const initialGaugeEditorOpen = ref(false);
+const initialGaugeInput = ref<{ focus: () => void; select: () => void } | null>(null);
+const trackHeader = ref<HTMLElement | null>(null);
+const initialGaugeEditor = ref<HTMLElement | null>(null);
+usePopoverInteractionBoundary(
+  useInteractionSession(),
+  () => initialGaugeEditorOpen.value,
+  () => {
+    initialGaugeEditorOpen.value = false;
+  },
+);
+
+watch(initialGaugeEditorOpen, (open, _previous, onCleanup) => {
+  if (!open) return;
+  const closeOutside = (event: PointerEvent) => {
+    const target = event.target;
+    if (!(target instanceof Node)) return;
+    if (initialGaugeEditor.value?.contains(target)) return;
+    if (trackHeader.value?.querySelector('.initial-gauge-button')?.contains(target)) return;
+    initialGaugeEditorOpen.value = false;
+  };
+  document.addEventListener('pointerdown', closeOutside, true);
+  onCleanup(() => document.removeEventListener('pointerdown', closeOutside, true));
+  void nextTick(() => {
+    initialGaugeInput.value?.focus();
+    initialGaugeInput.value?.select();
+  });
+});
 
 function selectHeader(): void {
   emit('select');
@@ -88,6 +122,7 @@ function startReorder(event: DragEvent): void {
 
 <template>
   <div
+    ref="trackHeader"
     class="track-header"
     :class="{
       'is-selected': selected,
@@ -145,23 +180,62 @@ function startReorder(event: DragEvent): void {
       </EaButton>
     </span>
     <span class="identity-body">
-      <div v-if="track.operatorSlug" class="initial-gauge-control" @click.stop>
-        <span class="initial-gauge-label">{{ $t('timelineGrid.track.initialGaugeShort') }}</span>
-        <span class="initial-gauge-input-wrap">
-          <span v-if="readOnly">{{ track.initialUltimateEnergy }}</span>
+      <EaPopover
+        v-if="track.operatorSlug"
+        v-model:visible="initialGaugeEditorOpen"
+        placement="bottom-start"
+        trigger="click"
+        :disabled="readOnly"
+        :show-arrow="false"
+        :popper-style="{ padding: '6px 8px' }"
+        popper-class="ea-compact-number-popover ea-compact-number-popover--energy"
+      >
+        <template #reference>
+          <EaButton
+            variant="ghost"
+            size="sm"
+            type="button"
+            class="initial-gauge-button"
+            :disabled="readOnly"
+            :title="`${$t('timelineGrid.track.initialGaugeShort')}: ${track.initialUltimateEnergy}/${track.maxUltimateEnergy ?? '?'}`"
+            :aria-label="`${$t('timelineGrid.track.initialGaugeShort')}: ${track.initialUltimateEnergy}/${track.maxUltimateEnergy ?? '?'}`"
+            :aria-expanded="initialGaugeEditorOpen"
+            :data-keyboard-shortcut-scope="initialGaugeEditorOpen ? 'overlay' : undefined"
+            @click.stop
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M13 2 4 14h7l-1 8L20 9h-7V2Z"
+                :fill="
+                  track.initialUltimateEnergy >= (track.maxUltimateEnergy ?? Infinity)
+                    ? 'currentColor'
+                    : 'none'
+                "
+              />
+            </svg>
+            <span class="initial-gauge-value">{{ track.initialUltimateEnergy }}</span>
+            <span class="initial-gauge-max">/{{ track.maxUltimateEnergy ?? '?' }}</span>
+          </EaButton>
+        </template>
+        <div
+          ref="initialGaugeEditor"
+          class="ea-compact-number-popover__content"
+          data-keyboard-shortcut-scope="overlay"
+        >
           <EaNumberInput
-            v-else
+            ref="initialGaugeInput"
             :model-value="track.initialUltimateEnergy"
             :min="0"
             :max="track.maxUltimateEnergy ?? 0"
             :step="1"
             compact
+            :aria-label="$t('timelineGrid.track.initialGaugeShort')"
             @update:model-value="updateInitialUltimateEnergy"
           />
-        </span>
-        <span class="initial-gauge-max">/{{ track.maxUltimateEnergy ?? '?' }}</span>
-      </div>
-      <span class="operator-row">
+          <span class="ea-compact-number-popover__unit">/{{ track.maxUltimateEnergy ?? '?' }}</span>
+        </div>
+      </EaPopover>
+      <span class="operator-row" :class="{ 'has-header-actions': track.operatorSlug }">
         <button
           v-if="track.operatorSlug"
           type="button"
@@ -212,10 +286,12 @@ function startReorder(event: DragEvent): void {
       <EaButton
         variant="ghost"
         size="sm"
+        icon-only
         v-if="track.operatorSlug"
         type="button"
         class="stat-detail-button"
         :disabled="!statDetailsAvailable"
+        :aria-label="$t('statDetail.button')"
         :title="
           statDetailsError
             ? $t('timeline.panel.unavailable', { reason: statDetailsError })
@@ -223,7 +299,25 @@ function startReorder(event: DragEvent): void {
         "
         @click.stop="$emit('stats')"
       >
-        {{ $t('statDetail.button') }}
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="13" width="4" height="7" />
+          <rect x="10" y="8" width="4" height="12" />
+          <rect x="17" y="4" width="4" height="16" />
+        </svg>
+      </EaButton>
+      <EaButton
+        v-if="track.operatorSlug"
+        variant="ghost"
+        size="sm"
+        icon-only
+        type="button"
+        class="operator-presets-button"
+        :disabled="readOnly"
+        :title="$t('operatorPresets.title')"
+        :aria-label="$t('operatorPresets.title')"
+        @click.stop="$emit('presets')"
+      >
+        <img :src="publicAssetUrl('/icons/icon_equipmake.webp')" alt="" />
       </EaButton>
       <span v-if="track.operatorSlug" class="loadout-row">
         <button
@@ -378,59 +472,45 @@ function startReorder(event: DragEvent): void {
   box-sizing: border-box;
 }
 
-.initial-gauge-control {
-  --initial-gauge-accent: #7dd3fc;
-  --initial-gauge-input-width: 54px;
+.initial-gauge-button.ea-button {
   position: absolute;
   z-index: 3;
   top: calc(50% - 54px);
   left: 6px;
-  width: calc(100% - 13px);
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 4px;
-  color: var(--initial-gauge-accent);
+  min-width: 0;
+  height: 18px;
+  gap: 3px;
+  padding: 0 5px;
+  border: 1px solid var(--ea-keycap-border, var(--ea-border-strong));
+  border-radius: 0;
+  color: #7dd3fc;
   font-size: 10px;
-  font-weight: 800;
-  line-height: 1;
+  font-weight: 700;
 }
 
-.initial-gauge-label,
+.initial-gauge-button svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+}
+
+.initial-gauge-button:hover:not(:disabled),
+.initial-gauge-button[aria-expanded='true'] {
+  border-color: #7dd3fc;
+  background: rgb(125 211 252 / 10%);
+}
+
+.initial-gauge-value,
 .initial-gauge-max {
-  flex: 0 0 auto;
-  user-select: none;
-}
-
-.initial-gauge-label {
-  color: var(--initial-gauge-accent);
-  opacity: 0.92;
-}
-
-.initial-gauge-input-wrap {
-  flex: 0 0 var(--initial-gauge-input-width);
-  width: var(--initial-gauge-input-width);
-  height: 20px;
-}
-
-.initial-gauge-input-wrap :deep(.ea-number-input) {
-  --ea-number-input-compact-height: 20px;
-  --ea-number-input-compact-controls-width: 14px;
-  --ea-number-input-bg: rgb(0 0 0 / 20%);
-  --ea-number-input-focus-bg: color-mix(in srgb, var(--initial-gauge-accent) 12%, transparent);
-  --ea-number-input-border: color-mix(in srgb, var(--initial-gauge-accent) 38%, transparent);
-  --ea-number-input-accent: color-mix(in srgb, var(--initial-gauge-accent) 90%, transparent);
-}
-
-.initial-gauge-input-wrap :deep(.el-input__inner) {
-  color: var(--ea-fg, #e0f2fe);
-  font-size: 10px;
-  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .initial-gauge-max {
-  color: var(--ea-fg-muted, rgb(186 230 253 / 62%));
+  color: var(--ea-fg-muted);
 }
 
 .operator-row {
@@ -440,6 +520,11 @@ function startReorder(event: DragEvent): void {
   align-items: center;
   color: inherit;
   text-align: left;
+}
+
+.operator-row.has-header-actions {
+  box-sizing: border-box;
+  padding-right: 28px;
 }
 
 .avatar-shell {
@@ -581,23 +666,24 @@ function startReorder(event: DragEvent): void {
   padding-right: 20px;
 }
 
-.stat-detail-button {
+.stat-detail-button.ea-button {
   position: absolute;
-  top: calc(50% - 29px);
-  left: 62px;
-  max-width: calc(100% - 64px);
+  top: calc(50% - 27px);
+  right: 6px;
+  width: 20px;
   height: 18px;
-  padding: 0 7px;
+  min-width: 20px;
+  padding: 1px;
   border: 1px solid color-mix(in srgb, var(--ea-gold) 40%, transparent);
   border-radius: 0;
   background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
   color: var(--ea-gold);
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 16px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.stat-detail-button svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
 }
 
 .stat-detail-button:disabled {
@@ -643,6 +729,31 @@ function startReorder(event: DragEvent): void {
   white-space: nowrap;
   opacity: 0.6;
   user-select: none;
+}
+
+.operator-presets-button.ea-button {
+  position: absolute;
+  top: calc(50% - 49px);
+  right: 6px;
+  width: 20px;
+  height: 18px;
+  min-width: 20px;
+  padding: 1px;
+  border: 1px solid var(--ea-keycap-border, var(--ea-border-strong));
+  border-radius: 0;
+  color: var(--ea-icon-muted);
+}
+
+.operator-presets-button img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.operator-presets-button:hover:not(:disabled) {
+  border-color: var(--ea-gold);
+  color: var(--ea-gold);
 }
 
 .set-bonus-hint.is-hidden {
@@ -748,15 +859,8 @@ function startReorder(event: DragEvent): void {
   height: 22px;
 }
 
-:global(html[data-theme='light'] .track-header .initial-gauge-control) {
-  --initial-gauge-accent: #0b6e99;
-}
-
-:global(html[data-theme='light'] .track-header .initial-gauge-input-wrap .ea-number-input) {
-  --ea-number-input-bg: var(--ea-surface-row);
-  --ea-number-input-focus-bg: #fff;
-  --ea-number-input-border: rgb(11 110 153 / 35%);
-  --ea-number-input-accent: rgb(11 110 153 / 75%);
+:global(html[data-theme='light'] .track-header .initial-gauge-button) {
+  color: #0b6e99;
 }
 
 :global(html[data-theme='light'] .track-header .stat-detail-button) {

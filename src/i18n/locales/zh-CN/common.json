@@ -1986,7 +1986,7 @@
       "title": "全局属性修正"
     },
     "panel": {
-      "trustNode": "天赋阵列 {node}",
+      "trustNode": "信赖节点 {node}",
       "staggerDamage": "失衡伤害加成",
       "unavailable": "属性详情暂不可用：{reason}"
     },

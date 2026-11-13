@@ -34,6 +34,7 @@ const props = defineProps<{
   visible: boolean;
   panel: ResolvedOperatorPanel | null;
   buildModifiers?: readonly BuildAttributeModifier[];
+  buildModifierSourceName?: (source: BuildAttributeModifier) => string | undefined;
   mechanicSelections?: readonly MechanicSelectionDocument[];
   buildAttributes?: Readonly<Record<string, number>>;
   operator: OperatorDefinition | null;
@@ -142,7 +143,8 @@ function buildSourceLabel(source: BuildAttributeModifier): string {
     source.sourceActionId,
     props.mechanicSelections ?? [],
   );
-  return contract ? localizedContingencyContractTagName(contract.tag, locale.value) : source.buffId;
+  if (contract) return localizedContingencyContractTagName(contract.tag, locale.value);
+  return props.buildModifierSourceName?.(source) ?? source.buffId;
 }
 function buildSourceValue(source: BuildAttributeModifier): string {
   const multiplicative = source.slot.toLowerCase().includes('multiplier');

@@ -7,6 +7,10 @@ import { firstScenarioEnemy } from '../../core/project/level';
 import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from '../../data/contingencyContract/contingencyContractAdapter';
 import { operatorDefinitions } from '../../data/operators';
 import { createScenarioSimulationService } from '../simulation/createScenarioSimulationService';
+import { capturePublishedOperatorMetadata } from '../../ui/timeline/results/publishedOperatorMetadata';
+import { resolvePublishedBuffSource } from '../../ui/timeline/results/publishedBuffSource';
+import { getOperatorTalentName } from '../../ui/gameText';
+import { ensureLocaleResources } from '../../i18n';
 
 it.each([false, true])('captures opening combo cooldown multiplier with gear set=%s', withGear => {
   const scenario = createTimelineSampleScenario();
@@ -97,6 +101,36 @@ it.each([
     expect(result.operators.get('track:guard')?.UltimateSpGainScalar).toBeCloseTo(expected);
   },
 );
+
+it('traces Gilberta teammate charging bonus back to the localized talent', () => {
+  ensureLocaleResources('zh-CN', ['operators']);
+  const scenario = createTimelineSampleScenario();
+  const owner = scenario.tracks[0]!;
+  owner.operator!.operatorSlug = 'gilberta';
+  owner.operator!.talentStates = { '0': 2 };
+  const teammate = scenario.tracks[1]!;
+  teammate.operator!.operatorSlug = 'perlica';
+  teammate.initialState.ultimateEnergy = 0;
+  teammate.skillCasts = [];
+
+  const modifier = resolveScenarioBuildAttributes(scenario, gameDataRepository)
+    .operatorModifiers.get(teammate.id)
+    ?.find(entry => entry.buffId === 'buff_chr_0013_aglina_talent_0_effectbuff_Add');
+  expect(modifier).toMatchObject({
+    sourceId: owner.id,
+    sourceActionId: 'passive:chr_0013_aglina_talent_0',
+    attribute: 'UltimateSpGainScalar',
+  });
+  const source = resolvePublishedBuffSource(
+    modifier!,
+    scenario,
+    capturePublishedOperatorMetadata(scenario, gameDataRepository),
+  );
+  expect(source).toEqual({ kind: 'talent', slug: 'gilberta', index: 0 });
+  if (source?.kind === 'talent') {
+    expect(getOperatorTalentName(source.slug, source.index, 0, 'zh-CN')).toBe('信使的歌声');
+  }
+});
 
 it.each(operatorDefinitions)(
   'initializes static passive attributes for $slug without skill inputs',
