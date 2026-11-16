@@ -624,17 +624,26 @@ function formatDurationFrames(frames: number): string {
 .connection-port {
   position: absolute;
   z-index: 3;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--action-accent);
-  box-shadow: 0 0 0 1px var(--ea-workbench-main);
+  width: 16px;
+  height: 16px;
   cursor: crosshair;
 }
 
-.connection-port:hover {
+.connection-port::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  box-sizing: border-box;
+  border: 1px solid var(--action-accent);
+  background: var(--action-surface);
+  box-shadow: 0 0 0 1px var(--action-surface);
+  content: '';
+  transform: translate(-50%, -50%);
+}
+
+.connection-port:hover::before {
   background: var(--ea-gold);
-  transform: scale(1.2);
+  border-color: var(--ea-gold);
 }
 
 .connection-port.is-invalid-target {
@@ -644,27 +653,39 @@ function formatDurationFrames(frames: number): string {
 }
 
 .connection-port--top {
-  top: -5px;
+  top: -9px;
   left: 50%;
   translate: -50% 0;
 }
 
 .connection-port--right {
   top: 50%;
-  right: -5px;
+  right: -9px;
   translate: 0 -50%;
 }
 
 .connection-port--bottom {
-  bottom: -5px;
+  bottom: -9px;
   left: 50%;
   translate: -50% 0;
 }
 
 .connection-port--left {
   top: 50%;
-  left: -5px;
+  left: -9px;
   translate: 0 -50%;
+}
+
+.connection-port--top::before,
+.connection-port--bottom::before {
+  width: 10px;
+  height: 5px;
+}
+
+.connection-port--left::before,
+.connection-port--right::before {
+  width: 5px;
+  height: 10px;
 }
 
 .timeline-action-block:not(.is-disabled)[data-operation-type='ultimate'] {

@@ -2,6 +2,7 @@
 import { EaButton } from '@/design-system';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import OperatorAvatar from '../../components/OperatorAvatar.vue';
 
 const props = defineProps<{
   enabled: boolean;
@@ -152,12 +153,12 @@ function keyboardMove(event: KeyboardEvent, index: number): void {
         @keydown="keyboardMove($event, index)"
         @dragstart.prevent
       >
-        <img
+        <OperatorAvatar
           v-if="operator.avatar"
           :src="operator.avatar"
           :alt="operator.name"
-          class="operator-avatar-crop"
-          draggable="false"
+          class="combo-priority__avatar"
+          framed
         />
         <span v-else class="combo-priority__empty" aria-hidden="true">—</span>
         <span class="combo-priority__rank">{{ index + 1 }}</span>
@@ -170,15 +171,15 @@ function keyboardMove(event: KeyboardEvent, index: number): void {
 .combo-priority__portraits {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   padding: 8px 10px;
   user-select: none;
   -webkit-user-select: none;
 }
 .combo-priority__operator {
   position: relative;
-  width: 52px;
-  height: 64px;
+  width: 44px;
+  height: 58px;
   padding: 0 0 12px;
   border: 0;
   background: transparent;
@@ -188,16 +189,11 @@ function keyboardMove(event: KeyboardEvent, index: number): void {
   user-select: none;
   -webkit-user-select: none;
 }
-.combo-priority__operator img {
-  width: 52px;
-  height: 52px;
-  object-fit: cover;
-  border: 1px solid var(--ea-border);
-  border-radius: 50%;
+.combo-priority__avatar {
   pointer-events: none;
 }
-.combo-priority__operator:hover img,
-.combo-priority__operator.dragging img {
+.combo-priority__operator:hover .combo-priority__avatar,
+.combo-priority__operator.dragging .combo-priority__avatar {
   border-color: var(--ea-gold);
 }
 .combo-priority__operator.dragging {
@@ -210,9 +206,12 @@ function keyboardMove(event: KeyboardEvent, index: number): void {
 .combo-priority__empty {
   display: grid;
   place-items: center;
-  height: 52px;
-  border: 1px dashed var(--ea-border);
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  border: 2px dashed var(--ea-keycap-border);
   border-radius: 50%;
+  background: var(--ea-keycap-bg, var(--ea-fill-soft));
   opacity: 0.5;
 }
 .combo-priority__rank {

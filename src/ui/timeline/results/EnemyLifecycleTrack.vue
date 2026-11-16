@@ -6,6 +6,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { EaButton, EaCloseIcon, EaInput, EaNumberInput, EaPlusIcon } from '../../../design-system';
 import TimelineMenuActionIcon from '../interaction/TimelineMenuActionIcon.vue';
+import TimelineContextMenuPortal from '../interaction/TimelineContextMenuPortal.vue';
 import EnemyLifecycleMenuIcon from './EnemyLifecycleMenuIcon.vue';
 import type { EnemyLifecycleDocument } from '../../../core/project/schema';
 import type { InteractionLease } from '../../interaction/interactionSession';
@@ -389,7 +390,7 @@ onBeforeUnmount(() => {
         >{{ (drag.frame / 30).toFixed(2) }}s</span
       >
     </component>
-    <Teleport to="body">
+    <TimelineContextMenuPortal>
       <div
         v-if="menu"
         ref="menuElement"
@@ -540,7 +541,7 @@ onBeforeUnmount(() => {
           </template>
         </template>
       </div>
-    </Teleport>
+    </TimelineContextMenuPortal>
   </div>
 </template>
 <style scoped>

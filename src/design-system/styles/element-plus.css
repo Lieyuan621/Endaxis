@@ -366,3 +366,135 @@ html
   > .el-popper__arrow::before {
   clip-path: polygon(100% 0, 0 50%, 100% 100%);
 }
+.ea-color-picker-popper.el-popper {
+  --el-color-primary: var(--ea-gold);
+  border-color: var(--ea-floating-border);
+  border-radius: var(--ea-control-radius);
+  background: var(--ea-floating-bg);
+  box-shadow: var(--ea-floating-shadow);
+  color: var(--ea-floating-fg);
+}
+
+.ea-color-picker-popper .el-color-picker-panel {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+}
+
+.ea-color-picker-popper .el-color-svpanel {
+  width: 206px;
+  height: 150px;
+}
+
+.ea-color-picker-popper .el-color-hue-slider.is-vertical {
+  height: 150px;
+}
+
+.ea-color-picker-popper .el-color-picker-panel__footer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ea-color-picker-popper .el-color-picker-panel__footer > .el-input {
+  order: 2;
+  width: 100%;
+}
+
+.ea-color-picker-popper--rgb .el-color-picker-panel__footer > .el-input {
+  display: none;
+}
+
+.ea-color-picker-popper .el-color-picker-panel__footer .el-input__wrapper {
+  background: var(--ea-fill-input);
+  box-shadow: 0 0 0 1px var(--ea-control-border) inset;
+}
+
+.ea-color-picker-popper .el-color-picker-panel__footer .el-input__inner {
+  color: var(--ea-fg);
+}
+
+.ea-color-picker-popper .ea-color-picker__footer {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb label {
+  position: relative;
+  color: var(--ea-floating-fg);
+  font-size: 10px;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb label span {
+  position: absolute;
+  top: 50%;
+  left: 7px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb .ea-number-input {
+  width: 100%;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb .el-input,
+.ea-color-picker-popper .ea-color-picker__rgb .el-input__wrapper,
+.ea-color-picker-popper .ea-color-picker__rgb .el-input__inner {
+  width: 100%;
+  min-width: 0;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb .el-input__inner {
+  text-align: right;
+}
+
+.ea-color-picker-popper .ea-color-picker__actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ea-color-picker-popper .ea-color-picker__formats {
+  display: flex;
+  border: 1px solid var(--ea-control-border);
+}
+
+.ea-color-picker-popper .ea-color-picker__formats button,
+.ea-color-picker-popper .ea-color-picker__eyedropper {
+  min-height: 24px;
+  padding: 0 5px;
+  border: 0;
+  background: transparent;
+  color: var(--ea-floating-fg);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.ea-color-picker-popper .ea-color-picker__formats button[aria-pressed='true'] {
+  background: var(--ea-control-bg-hover);
+  color: var(--ea-gold);
+}
+
+.ea-color-picker-popper .ea-color-picker__eyedropper {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  padding: 0;
+}
+
+.ea-color-picker-popper .ea-color-picker__eyedropper:hover {
+  color: var(--ea-gold);
+}

@@ -2,6 +2,7 @@ export { default as EaActivityRailButton } from './components/EaActivityRailButt
 export { default as EaButton } from './components/EaButton/EaButton.vue';
 export { default as EaChevronIcon } from './components/EaChevronIcon/EaChevronIcon.vue';
 export { default as EaCheckbox } from './components/EaCheckbox/EaCheckbox.vue';
+export { default as EaColorPicker } from './components/EaColorPicker/EaColorPicker.vue';
 export { default as EaCloseButton } from './components/EaCloseButton/EaCloseButton.vue';
 export { default as EaCloseIcon } from './components/EaCloseIcon/EaCloseIcon.vue';
 export { default as EaCopyIcon } from './components/EaCopyIcon/EaCopyIcon.vue';

@@ -17,6 +17,8 @@ import type { TimelineTrackViewModel } from '../timelineEditorViewModel';
 import { frameToTimelinePx } from '../timelineGeometry';
 import type { TimelineTrackEffectLayout } from '../results/timelineTrackEffectLayout';
 import TimelineConnectorStroke from '../components/TimelineConnectorStroke.vue';
+import { useAppearance } from '../../appearance/useAppearance';
+import { adaptColorForLightSurface } from '../../gameColors';
 
 interface Point {
   readonly x: number;
@@ -43,6 +45,7 @@ const props = withDefaults(
     trackHeaderWidth: number;
     castActualStartFrames: ReadonlyMap<string, number>;
     castActualDurationFrames: ReadonlyMap<string, number>;
+    skillAccentColor: (operationType: string | null, operatorSlug: string | null) => string;
     selectedConnectionId?: string | null;
     hoveredSkillCastId?: string | null;
     draggingConnection?: boolean;
@@ -69,18 +72,18 @@ const emit = defineEmits<{
   retarget: [event: PointerEvent, connectionId: string];
 }>();
 const { t } = useI18n({ useScope: 'global' });
-
-const skillColors: Record<string, string> = {
-  basicAttack: '#a5a5a8',
-  battleSkill: '#ff5a5f',
-  comboSkill: '#facc15',
-  ultimate: '#22c55e',
-};
+const { appearance } = useAppearance();
 
 function skillColor(skillCastId: string): string {
   const found = findSkillCast(skillCastId);
   if (found === null) return '#ccc';
-  return found.skillCast.color ?? skillColors[found.skillCast.operationType ?? ''] ?? '#ccc';
+  const accent =
+    found.skillCast.color ??
+    props.skillAccentColor(
+      found.skillCast.operationType,
+      props.tracks[found.trackIndex]?.operatorSlug ?? null,
+    );
+  return appearance.value === 'light' ? adaptColorForLightSurface(accent) : accent;
 }
 
 const ports: Record<TimelineConnectionPort, { x: number; y: number }> = {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import TimelineMenuActionIcon from './TimelineMenuActionIcon.vue';
 import TimelineMarkerMenuIcon from './TimelineMarkerMenuIcon.vue';
+import TimelineContextMenuPortal from './TimelineContextMenuPortal.vue';
+import OperatorAvatar from '../../components/OperatorAvatar.vue';
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton, EaChevronIcon } from '../../../design-system/index';
@@ -91,19 +93,19 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Teleport to="body">
+  <TimelineContextMenuPortal>
     <div
       v-if="visible"
       ref="menu"
-      class="marker-context-menu"
+      class="marker-context-menu timeline-context-menu"
       role="menu"
       :aria-label="labels.title"
       :style="{ left: `${left}px`, top: `${top}px` }"
       @pointerdown.stop
       @contextmenu.prevent
     >
-      <header v-if="!inheritanceBoundary">
-        {{ existingLabel ?? t('contextMenu.timelineOps') }}
+      <header v-if="existingLabel && !inheritanceBoundary" class="menu-header">
+        {{ existingLabel }}
       </header>
       <template v-if="inheritanceBoundary">
         <EaButton
@@ -176,7 +178,12 @@ onBeforeUnmount(() => {
               existingDodgeMode === 'dodge' ? labels.switchToPerfectDodge : labels.switchToDodge
             }}</span>
           </EaButton>
-          <EaButton type="button" role="menuitem" class="menu-item danger" @click="$emit('delete')">
+          <EaButton
+            type="button"
+            role="menuitem"
+            class="menu-item delete-item"
+            @click="$emit('delete')"
+          >
             <TimelineMenuActionIcon action="delete" />
             <span>{{ labels.deleteMarker }}</span>
             <kbd>Delete</kbd>
@@ -185,11 +192,11 @@ onBeforeUnmount(() => {
         <template v-else>
           <div class="menu-group" role="group" :aria-label="t('contextMenu.trackActions')">
             <small class="menu-label">{{ t('contextMenu.trackActions') }}</small>
-            <div class="menu-item has-submenu" role="menuitem" aria-haspopup="menu">
+            <div class="menu-item has-submenu" role="menuitem" aria-haspopup="menu" tabindex="0">
               <TimelineMarkerMenuIcon kind="switchOperator" />
               <span>{{ labels.switchOperator }}</span>
               <EaChevronIcon class="arrow" :size="12" :stroke-width="3" />
-              <div class="submenu-list" role="menu">
+              <div class="submenu-list timeline-context-submenu" role="menu">
                 <EaButton
                   v-for="target in switchTargets"
                   :key="target.trackIndex"
@@ -198,7 +205,12 @@ onBeforeUnmount(() => {
                   role="menuitem"
                   @click="$emit('addSwitch', target.trackIndex)"
                 >
-                  <img v-if="target.avatar" :src="target.avatar" alt="" />
+                  <OperatorAvatar
+                    v-if="target.avatar"
+                    class="submenu-avatar"
+                    :src="target.avatar"
+                    alt=""
+                  />
                   <span>{{ target.name }}</span>
                 </EaButton>
               </div>
@@ -289,7 +301,7 @@ onBeforeUnmount(() => {
         </template>
       </fieldset>
     </div>
-  </Teleport>
+  </TimelineContextMenuPortal>
 </template>
 
 <style scoped>
@@ -304,121 +316,42 @@ onBeforeUnmount(() => {
   cursor: not-allowed;
 }
 .marker-context-menu {
-  position: fixed;
-  z-index: 10000;
   min-width: 212px;
-  padding: 6px 0;
-  border: 1px solid #444;
-  border-radius: 6px;
-  background: #2b2b2b;
-  box-shadow: 0 6px 16px rgb(0 0 0 / 60%);
-  color: #e0e0e0;
-  font-family: 'Segoe UI', Roboto, sans-serif;
-  font-size: 13px;
-  user-select: none;
-  animation: marker-menu-fade-in 0.1s ease-out;
-}
-.marker-context-menu header {
-  max-width: 200px;
-  margin-bottom: 4px;
-  padding: 6px 12px;
-  overflow: hidden;
-  border-bottom: 1px solid #3a3a3a;
-  color: #aaa;
-  font-size: 12px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.divider {
-  height: 1px;
-  margin: 4px 0;
-  background: #3a3a3a;
-}
-.menu-label {
-  display: block;
-  max-width: 280px;
-  padding: 5px 12px 3px;
-  color: #aaa;
-  font-size: 11px;
 }
 .menu-group + .menu-group {
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px solid #3a3a3a;
-}
-.menu-item {
-  position: relative;
-  width: 100%;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  border: 0;
-  background: transparent;
-  color: #ccc;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.menu-item > .menu-icon {
-  width: 20px;
-  margin-right: 8px;
-  flex: 0 0 20px;
-}
-.menu-item > span:not(.menu-icon):not(.arrow) {
-  flex-grow: 1;
-  white-space: nowrap;
-}
-.menu-item:hover:not(:disabled) {
-  background: #007fd4;
-  color: #fff;
-}
-.menu-item.danger:hover:not(:disabled) {
-  background: #ff7875;
-}
-.menu-item:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.menu-item kbd {
-  margin-left: 10px;
-  color: #888;
-  font:
-    11px/1 Consolas,
-    monospace;
-}
-.menu-item:hover kbd {
-  color: rgb(255 255 255 / 75%);
-}
-.menu-item.has-submenu {
-  justify-content: space-between;
-  gap: var(--ea-control-gap);
-}
-.menu-item .arrow {
-  margin-left: 10px;
-  color: #666;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--ea-border-soft);
 }
 .submenu-list {
   position: absolute;
   z-index: 100;
-  top: -4px;
-  left: 100%;
+  top: -5px;
+  left: calc(100% - 1px);
   min-width: 140px;
   padding: 4px 0;
-  display: none;
-  flex-direction: column;
-  border: 1px solid #444;
-  border-radius: 6px;
-  background: #2b2b2b;
-  box-shadow: 4px 4px 12px rgb(0 0 0 / 50%);
-}
-.menu-item.has-submenu:hover .submenu-list {
   display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(-4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 0s linear 120ms;
+}
+.menu-item.has-submenu:hover .submenu-list,
+.menu-item.has-submenu:focus-within .submenu-list {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(0);
+  transition-delay: 0s;
 }
 .submenu-list-item {
   width: 100%;
-  height: 32px;
+  height: 33px;
   padding: 0 12px;
   display: flex;
   align-items: center;
@@ -428,31 +361,20 @@ onBeforeUnmount(() => {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  color: #ccc;
+  color: var(--ea-fg-secondary);
   font: inherit;
   cursor: pointer;
   white-space: nowrap;
 }
 .submenu-list-item:hover {
-  background: #007fd4;
-  color: #fff;
+  background: var(--ea-menu-hover-bg);
+  color: var(--ea-fg);
 }
-.submenu-list-item img {
+.submenu-avatar {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  border: 1px solid #666;
+  border: 1px solid var(--ea-border-strong);
   border-radius: 50%;
-  object-fit: cover;
-}
-@keyframes marker-menu-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 </style>

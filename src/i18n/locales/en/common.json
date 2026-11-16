@@ -125,6 +125,8 @@
     "cancel": "Cancel",
     "close": "Close",
     "confirm": "Confirm",
+    "colorFormat": "Color format",
+    "pickFromScreen": "Pick color",
     "copy": "Copy",
     "delete": "Delete",
     "default": "Default",

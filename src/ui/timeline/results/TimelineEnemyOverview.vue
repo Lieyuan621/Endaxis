@@ -20,6 +20,7 @@ import { useInteractionSession } from '../../interaction/interactionSessionConte
 import { usePopoverInteractionBoundary } from '../../interaction/usePopoverInteractionBoundary';
 import { EaButton, EaCloseIcon, EaPlusIcon } from '../../../design-system';
 import TimelineMenuActionIcon from '../interaction/TimelineMenuActionIcon.vue';
+import TimelineContextMenuPortal from '../interaction/TimelineContextMenuPortal.vue';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import type { EnemyHealthCurve } from '../../../core/projection/enemyHealthCurves';
 import EnemyHealthMiniCurve from './EnemyHealthMiniCurve.vue';
@@ -437,8 +438,8 @@ const rows = computed(() =>
         <EaPlusIcon />
       </EaButton>
     </header>
-    <Teleport to="body"
-      ><div
+    <TimelineContextMenuPortal>
+      <div
         v-if="menu"
         ref="menuElement"
         class="enemy-overview-menu timeline-context-menu"
@@ -495,8 +496,8 @@ const rows = computed(() =>
           ><TimelineMenuActionIcon action="delete" />
           <span>{{ t('common.delete') }}</span></EaButton
         >
-      </div></Teleport
-    >
+      </div>
+    </TimelineContextMenuPortal>
     <div class="enemy-overview__rows">
       <div
         v-for="(row, index) in rows"

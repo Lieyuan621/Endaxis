@@ -5,6 +5,9 @@ import { useI18n } from 'vue-i18n';
 import {
   EaButton,
   EaCheckbox,
+  EaChevronIcon,
+  EaCloseIcon,
+  EaColorPicker,
   EaDiceIcon,
   EaDeleteIcon,
   EaNumberInput,
@@ -291,36 +294,46 @@ function setInitialValue(key: string, value: number | undefined) {
       </section>
       <section class="section-container">
         <div class="panel-tag-mini">{{ t('timeline.inspector.sections.presentation') }}</div>
-        <div class="attribute-grid">
-          <div class="form-group toggle-field">
-            <span>{{ t('timeline.inspector.labels.locked') }}</span>
+        <div class="presentation-settings">
+          <div class="presentation-toggle-row">
             <EaCheckbox
+              class="presentation-toggle"
               :model-value="cast.presentation?.locked ?? false"
               @change="$emit('setLocked', $event)"
-            />
-          </div>
-          <div class="form-group toggle-field">
-            <span>{{ t('timeline.inspector.labels.disabled') }}</span>
+            >
+              {{ t('timeline.inspector.labels.locked') }}
+            </EaCheckbox>
             <EaCheckbox
+              class="presentation-toggle"
               :model-value="cast.presentation?.disabled ?? false"
               @change="$emit('setDisabled', $event)"
               :disabled="inputReadOnly"
-            />
+            >
+              {{ t('timeline.inspector.labels.disabled') }}
+            </EaCheckbox>
           </div>
-          <label class="form-group attribute-grid__wide">
+          <div class="presentation-color">
             <span>{{ t('timeline.inspector.labels.color') }}</span>
-            <div class="color-editor">
-              <input
-                type="color"
-                :value="cast.presentation?.color ?? '#8c8c8c'"
-                @change="$emit('setColor', ($event.target as HTMLInputElement).value)"
-              />
-              <code>{{ cast.presentation?.color ?? '—' }}</code>
-              <EaButton size="sm" type="button" @click="$emit('setColor', null)">
-                {{ t('battleLog.ui.clear') }}
-              </EaButton>
-            </div>
-          </label>
+            <code>{{ cast.presentation?.color ?? t('common.default') }}</code>
+            <EaColorPicker
+              :label="t('timeline.inspector.labels.color')"
+              :model-value="cast.presentation?.color ?? '#8c8c8c'"
+              @change="$emit('setColor', $event)"
+            />
+            <EaButton
+              variant="ghost"
+              size="sm"
+              icon-only
+              type="button"
+              class="presentation-color__clear"
+              :title="t('battleLog.ui.clear')"
+              :aria-label="t('battleLog.ui.clear')"
+              :disabled="!cast.presentation?.color"
+              @click="$emit('setColor', null)"
+            >
+              <EaCloseIcon :size="12" />
+            </EaButton>
+          </div>
         </div>
       </section>
 
@@ -359,16 +372,28 @@ function setInitialValue(key: string, value: number | undefined) {
               <span class="connection-node">{{
                 connection.outgoing ? label : connection.otherLabel
               }}</span>
-              <b
+              <EaChevronIcon
                 class="connection-direction"
-                :class="connection.outgoing ? 'is-outgoing' : 'is-incoming'"
-                >{{
+                :size="14"
+                :title="
                   t(connection.outgoing ? 'connection.direction.to' : 'connection.direction.from')
-                }}</b
-              >
+                "
+              />
               <span class="connection-node is-target">{{
                 connection.outgoing ? connection.otherLabel : label
               }}</span>
+              <EaButton
+                variant="ghost"
+                size="sm"
+                icon-only
+                type="button"
+                class="connection-remove"
+                :title="t('common.delete')"
+                :aria-label="t('common.delete')"
+                @click="$emit('removeConnection', connection.id)"
+              >
+                <EaDeleteIcon />
+              </EaButton>
             </div>
             <div class="connection-ports">
               <label>
@@ -385,7 +410,6 @@ function setInitialValue(key: string, value: number | undefined) {
                   "
                 />
               </label>
-              <b class="connection-port-arrow">&gt;&gt;</b>
               <label>
                 <span>{{ t('propertiesPanel.connections.inPort') }}</span>
                 <EaSelect
@@ -400,18 +424,6 @@ function setInitialValue(key: string, value: number | undefined) {
                   "
                 />
               </label>
-            </div>
-            <div class="connection-actions">
-              <EaButton
-                variant="danger"
-                size="sm"
-                icon-only
-                type="button"
-                :title="t('common.delete')"
-                @click="$emit('removeConnection', connection.id)"
-              >
-                <EaDeleteIcon />
-              </EaButton>
             </div>
           </article>
         </div>
@@ -497,8 +509,7 @@ function setInitialValue(key: string, value: number | undefined) {
 }
 
 .connection-summary,
-.connection-card__title,
-.connection-ports {
+.connection-card__title {
   min-width: 0;
   display: flex;
   align-items: center;
@@ -519,28 +530,26 @@ function setInitialValue(key: string, value: number | undefined) {
 }
 
 .connection-card {
+  --connection-accent: var(--ea-gold);
   min-width: 0;
-  padding: var(--ea-space-2);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-left: 3px solid var(--ea-gold);
-  background: var(--ea-fill-soft);
-  transition:
-    background-color var(--ea-control-transition),
-    border-color var(--ea-control-transition);
+  padding: 8px;
+  border: 1px solid var(--ea-border-soft);
+  border-left: 3px solid var(--connection-accent);
+  background: var(--ea-workbench-panel);
 }
 
 .connection-card.is-incoming {
-  border-left-color: #00e5ff;
+  --connection-accent: #00e5ff;
 }
 
 .connection-card__title {
-  justify-content: space-between;
-  padding-bottom: 4px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 14px minmax(0, 1fr) 24px;
+  gap: 5px;
 }
 
 .connection-node {
   min-width: 0;
-  width: 38%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -553,70 +562,48 @@ function setInitialValue(key: string, value: number | undefined) {
 }
 
 .connection-direction {
-  min-width: 40px;
-  padding: 2px 6px;
-  text-align: center;
-  font-size: 10px;
-  letter-spacing: 0.5px;
-  border: 1px solid;
+  color: var(--connection-accent);
   opacity: 0.8;
 }
 
-.connection-direction.is-outgoing {
-  color: var(--ea-gold);
-  background: color-mix(in srgb, var(--ea-gold) 10%, transparent);
-  border-color: color-mix(in srgb, var(--ea-gold) 20%, transparent);
-}
-
-.connection-direction.is-incoming {
-  color: #00e5ff;
-  background: rgba(0, 229, 255, 0.1);
-  border-color: rgba(0, 229, 255, 0.2);
+.connection-remove.ea-button {
+  width: 24px;
+  height: 24px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ea-fg-muted);
 }
 
 .connection-ports {
-  width: fit-content;
-  max-width: 100%;
-  margin: 4px auto 2px;
-  padding: 2px 10px;
-  gap: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.4);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid var(--ea-border-soft);
 }
 
 .connection-ports label {
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #666;
-  font-size: 9px;
-  font-weight: 700;
-}
-
-.connection-ports :deep(.ea-select) {
-  width: 72px;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--ea-fg-muted);
   font-size: 10px;
 }
 
-.connection-port-arrow {
-  font-size: 8px;
-  letter-spacing: -1px;
-  color: #444;
-}
-
-.connection-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  height: 24px;
-  margin-top: 2px;
+.connection-ports :deep(.ea-select) {
+  width: 100%;
+  min-width: 0;
+  font-size: 11px;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .connection-card:hover {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.06);
+  .connection-remove.ea-button:hover:not(:disabled) {
+    border-color: transparent;
+    background: color-mix(in srgb, var(--ea-danger) 14%, transparent);
+    color: var(--ea-danger);
   }
 }
 
@@ -664,36 +651,76 @@ function setInitialValue(key: string, value: number | undefined) {
   font-size: 10px;
 }
 
-.toggle-field {
-  min-height: 48px;
-  flex-direction: row;
+.presentation-settings {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 6px;
+}
+
+.presentation-toggle-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  border-bottom: 1px solid var(--ea-border-soft);
+}
+
+.presentation-toggle.ea-checkbox {
+  min-height: 34px;
+  width: 100%;
+  box-sizing: border-box;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px;
-  border: 1px solid var(--ea-border);
-  background: var(--ea-fill-input, #16161a);
+  padding: 0 6px;
+  font-size: 11px;
 }
 
-.color-editor {
+.presentation-toggle :deep(.ea-checkbox__label) {
+  order: 1;
+}
+
+.presentation-toggle :deep(.ea-checkbox__box) {
+  order: 2;
+}
+
+.presentation-color {
   min-width: 0;
+  min-height: 38px;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) 24px 24px;
   align-items: center;
   gap: 6px;
+  padding: 0 6px;
+  color: var(--ea-fg-secondary);
+  font-size: 11px;
 }
 
-.color-editor input {
-  width: 34px;
-  height: 28px;
-  padding: 1px;
-  border: 1px solid var(--ea-border);
-  background: var(--ea-fill-input);
-}
-
-.color-editor code {
+.presentation-color code {
   min-width: 0;
   overflow: hidden;
-  color: var(--ea-fg-secondary);
+  justify-self: end;
+  color: var(--ea-fg-muted);
+  font-size: 10px;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.presentation-color__clear.ea-button {
+  width: 24px;
+  height: 24px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ea-fg-muted);
+}
+
+.presentation-color__clear :deep(svg) {
+  transform: translateX(4px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .presentation-color__clear.ea-button:hover:not(:disabled) {
+    border-color: transparent;
+    background: transparent;
+    color: var(--ea-gold);
+  }
 }
 </style>

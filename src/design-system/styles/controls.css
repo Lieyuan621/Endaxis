@@ -613,7 +613,7 @@ html[data-theme='light']
 
 .ea-select--inline .el-select__wrapper {
   min-height: var(--ea-control-height-sm);
-  padding: 0 20px 0 4px;
+  padding: 0 6px;
   background: transparent;
   box-shadow: 0 -1px 0 var(--ea-control-border) inset;
 }

@@ -248,6 +248,7 @@ function startReorder(event: DragEvent): void {
           <OperatorAvatar
             class="avatar"
             :src="getOperatorAvatarPath(track.operatorAssetSlug ?? track.operatorSlug)"
+            framed
           />
           <span class="avatar-change-hint" aria-hidden="true">
             <svg viewBox="0 0 24 24">
@@ -551,7 +552,6 @@ function startReorder(event: DragEvent): void {
   cursor: default;
 }
 
-.avatar,
 .empty-avatar {
   display: block;
   width: 44px;
@@ -624,10 +624,6 @@ function startReorder(event: DragEvent): void {
 .avatar-trigger:hover:not(:disabled) .empty-avatar::before,
 .avatar-trigger:hover:not(:disabled) .empty-avatar::after {
   background: var(--ea-gold);
-}
-
-.avatar {
-  border-color: #555;
 }
 
 .operator-name {
