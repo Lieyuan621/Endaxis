@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
-defineProps<{ text?: string }>();
+const props = defineProps<{ text?: string }>();
+const tooltipLines = computed(() => props.text?.split('\n') ?? []);
+const tooltipDetails = computed(() => tooltipLines.value.slice(1).join('\n'));
 const tooltipVisible = ref(false);
 const pointerX = ref(0);
 const pointerY = ref(0);
@@ -58,11 +60,15 @@ const events = {
   <Teleport to="body">
     <span
       v-if="text && tooltipVisible"
-      class="timeline-status-pointer-tooltip"
+      class="ea-floating-surface ea-tooltip-surface timeline-status-pointer-tooltip"
       :style="tooltipStyle"
       role="tooltip"
     >
-      {{ text }}
+      <template v-if="tooltipDetails">
+        <strong class="timeline-status-pointer-tooltip__title">{{ tooltipLines[0] }}</strong>
+        <span class="timeline-status-pointer-tooltip__detail">{{ tooltipDetails }}</span>
+      </template>
+      <template v-else>{{ text }}</template>
     </span>
   </Teleport>
 </template>
@@ -71,16 +77,18 @@ const events = {
   position: fixed;
   z-index: 10000;
   max-width: min(320px, calc(100vw - 16px));
-  box-sizing: border-box;
-  padding: var(--ea-space-2) 10px;
-  border: 1px solid var(--ea-floating-border);
-  border-radius: var(--ea-control-radius);
-  background: var(--ea-floating-bg);
-  color: var(--ea-floating-fg);
-  box-shadow: var(--ea-floating-shadow);
-  font-size: var(--ea-control-font-size-sm);
-  line-height: 1.4;
-  white-space: pre-line;
   pointer-events: none;
+}
+
+:global(.timeline-status-pointer-tooltip__title) {
+  display: block;
+  color: var(--ea-fg);
+  font-weight: 600;
+}
+
+:global(.timeline-status-pointer-tooltip__detail) {
+  display: block;
+  margin-top: 2px;
+  color: var(--ea-fg-secondary);
 }
 </style>

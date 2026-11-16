@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton, EaDialog, EaDialogActions } from '@/design-system';
+import { EaButton, EaDialog } from '@/design-system';
 import type { GlobalConfigDocument } from '../../../core/project/schema';
 import type { CombatBuffDefinitionAttributeModifier } from '../../../../packages/game-data-contract/src/buffs';
 import ScenarioBuffAttributeFields from '../../editor/ScenarioBuffAttributeFields.vue';
@@ -133,11 +133,6 @@ function removeEffectReference(effectId: string) {
           :read-only="readOnly"
           @change="emit('setModifiers', $event)"
         />
-        <template #footer>
-          <EaDialogActions>
-            <EaButton size="sm" @click="editorVisible = false">{{ t('common.close') }}</EaButton>
-          </EaDialogActions>
-        </template>
       </EaDialog>
     </InputRegionBoundary>
   </section>

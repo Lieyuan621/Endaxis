@@ -9165,9 +9165,7 @@ function setMobileGuideFrame(frame: number | null): void {
       }),
       searchPlaceholder: t('timelineGrid.equipmentDialog.searchPlaceholder'),
       unequip: t('common.unequip'),
-      close: t('common.close'),
       empty: t('timelineGrid.equipmentDialog.empty'),
-      defense: t('timeline.gearDialog.defense'),
       noSet: t('timeline.gearDialog.noSet'),
     }"
     @close="gearDialogTarget = null"

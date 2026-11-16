@@ -6,7 +6,7 @@ import { EaTooltip, EaMinusIcon, EaPlusIcon } from '@/design-system';
  * 组件沿用旧版干员编辑器的布局与节点交互，但只读取 Next 的 Build 投影；所有修改都通过
  * `change` 事件交给父层持久化。这里不访问旧 Store，也不会为定义尚未提供的详情补造文本。
  */
-import { EaButton, EaDialog, EaDialogActions } from '../../../design-system/index';
+import { EaButton, EaDialog, EaDialogActions, EaFilterChip } from '../../../design-system/index';
 import { computed } from 'vue';
 import type { Modifier } from '@popperjs/core/index.d.ts';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
@@ -434,25 +434,17 @@ function maxOut(): void {
           </div>
 
           <div class="level-selector">
-            <EaButton
+            <EaFilterChip
               size="sm"
               v-for="level in LEVELS"
               :key="level"
-              type="button"
               class="level-btn"
-              :style="
-                operator.level === level
-                  ? {
-                      borderColor: rarityColor,
-                      color: rarityColor,
-                      background: `color-mix(in srgb, ${rarityColor} 18%, var(--ea-dialog-bg, #fff))`,
-                    }
-                  : {}
-              "
+              :accent="rarityColor"
+              :selected="operator.level === level"
               @click="handleLevelChange(level)"
             >
               Lv{{ level }}
-            </EaButton>
+            </EaFilterChip>
           </div>
 
           <div class="section">
@@ -639,9 +631,6 @@ function maxOut(): void {
             @click="maxOut"
           >
             {{ t('common.max') }}
-          </EaButton>
-          <EaButton size="sm" type="button" @click="emit('update:visible', false)">
-            {{ t('common.close') }}
           </EaButton>
         </EaDialogActions>
       </template>
@@ -931,14 +920,6 @@ function maxOut(): void {
 }
 :global(.operator-edit-tooltip-popper.el-popper.is-dark) {
   padding: 0 !important;
-  background: #202126;
-  color: #f1f1f1;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
-}
-:global(.operator-edit-tooltip-popper.el-popper.is-dark .el-popper__arrow::before) {
-  background: #202126;
-  border-color: rgba(255, 255, 255, 0.16);
 }
 :global(.operator-edit-tooltip) {
   box-sizing: border-box;

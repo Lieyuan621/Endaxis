@@ -237,12 +237,6 @@ html.dark .ea-select-popper .el-select-dropdown__item.hover {
   line-height: var(--ea-control-height-lg) !important;
 }
 
-.ea-tooltip-popper.el-popper {
-  padding: var(--ea-space-2) 10px;
-  font-size: var(--ea-control-font-size-sm);
-  line-height: 1.4;
-}
-
 .ea-popover-popper.el-popover.el-popper {
   padding: var(--ea-space-3);
 }
@@ -265,7 +259,63 @@ html body .el-popper.el-popper.el-popper[data-popper-placement] > .el-popper__ar
 }
 
 .ea-floating-surface.el-popper > .el-popper__arrow::before {
-  background: var(--ea-floating-bg) !important;
+  background: var(--ea-floating-border) !important;
+}
+
+/* A smaller fill over the outer triangle draws the same border as the floating surface. */
+.ea-floating-surface.el-popper > .el-popper__arrow::after {
+  position: absolute;
+  content: '';
+  background: var(--ea-floating-surface-fill, var(--ea-floating-bg));
+}
+
+.ea-floating-surface.el-popper[data-popper-placement^='top'] > .el-popper__arrow::after {
+  inset: 0 1px 1.5px;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.ea-floating-surface.el-popper[data-popper-placement^='bottom'] > .el-popper__arrow::after {
+  inset: 1.5px 1px 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.ea-floating-surface.el-popper[data-popper-placement^='left'] > .el-popper__arrow::after {
+  inset: 1px 1.5px 1px 0;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.ea-floating-surface.el-popper[data-popper-placement^='right'] > .el-popper__arrow::after {
+  inset: 1px 0 1px 1.5px;
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+
+/* Override Element Plus's later high-specificity offsets so the fill covers the body seam. */
+html
+  body
+  .el-popper.el-popper.el-popper.ea-floating-surface[data-popper-placement^='top']
+  > .el-popper__arrow {
+  bottom: -6px !important;
+}
+
+html
+  body
+  .el-popper.el-popper.el-popper.ea-floating-surface[data-popper-placement^='bottom']
+  > .el-popper__arrow {
+  top: -6px !important;
+}
+
+html
+  body
+  .el-popper.el-popper.el-popper.ea-floating-surface[data-popper-placement^='left']
+  > .el-popper__arrow {
+  right: -6px !important;
+}
+
+html
+  body
+  .el-popper.el-popper.el-popper.ea-floating-surface[data-popper-placement^='right']
+  > .el-popper__arrow {
+  left: -6px !important;
 }
 
 html.dark .el-popper.is-dark {

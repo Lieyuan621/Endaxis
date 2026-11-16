@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EaButton, EaPopover } from '@/design-system';
+import { EaButton, EaTooltip } from '@/design-system';
 
 export interface TimelineCursorGaugeRow {
   readonly id: string;
@@ -80,21 +80,20 @@ withDefaults(
       class="guide-enemy-effects"
       @mousemove.stop
     >
-      <EaPopover
+      <EaTooltip
         v-for="effect in mobile ? enemyEffects : []"
         :key="effect.buffId"
         trigger="click"
         placement="top"
         :teleported="true"
+        :enterable="false"
         :content="effect.title"
       >
-        <template #reference>
-          <EaButton class="guide-enemy-effect" :aria-label="effect.title" @pointerdown.stop>
-            <img v-if="effect.icon !== null" :src="effect.icon" alt="" />
-            <span>{{ effect.layers }}</span>
-          </EaButton>
-        </template>
-      </EaPopover>
+        <EaButton class="guide-enemy-effect" :aria-label="effect.title" @pointerdown.stop>
+          <img v-if="effect.icon !== null" :src="effect.icon" alt="" />
+          <span>{{ effect.layers }}</span>
+        </EaButton>
+      </EaTooltip>
       <div
         v-for="effect in mobile ? [] : enemyEffects"
         :key="effect.buffId"

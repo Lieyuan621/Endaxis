@@ -7,7 +7,7 @@ import { resolveImage } from '../../imageResources';
  * 它不读取存档或旧 store，也不直接写入持久化数据。词条名称、当前数值和逐词条实例编辑均从
  * 当前 GearDefinition 投影。装备定义编辑待图数据和模拟流程稳定后重新设计。
  */
-import { EaButton, EaDialog, EaDialogActions } from '../../../design-system/index';
+import { EaButton, EaDialog, EaDialogActions, EaFilterChip } from '../../../design-system/index';
 import { computed, ref, watch } from 'vue';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import { useI18n } from 'vue-i18n';
@@ -265,21 +265,20 @@ const activeSetBonuses = computed(() => {
                 {{ slot.levels.join('/') }}
               </span>
               <div v-if="slot.isArtificable" class="refine-buttons">
-                <EaButton
+                <EaFilterChip
                   size="sm"
                   v-for="level in refineLevels(slot.build)"
                   :key="`${slot.slot}-${level}`"
-                  type="button"
                   class="refine-btn"
                   @click="setUniformLevel(slot.build, level)"
-                  :pressed="isUniformLevel(slot.build, level)"
+                  :selected="isUniformLevel(slot.build, level)"
                 >
                   {{
                     level === 0
                       ? translate('timelineGrid.equipmentDialog.refineBase', 'Base')
                       : level
                   }}
-                </EaButton>
+                </EaFilterChip>
               </div>
               <span v-else class="refine-locked">
                 {{ t('actionLibrary.hints.noRefineNonGold') }}
@@ -341,9 +340,6 @@ const activeSetBonuses = computed(() => {
         <EaDialogActions>
           <EaButton variant="primary" size="sm" @click="maxOut">
             {{ t('common.max') }}
-          </EaButton>
-          <EaButton size="sm" @click="emit('update:visible', false)">
-            {{ t('common.close') }}
           </EaButton>
         </EaDialogActions>
       </template>

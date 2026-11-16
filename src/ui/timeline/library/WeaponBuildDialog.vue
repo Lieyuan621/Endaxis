@@ -4,7 +4,7 @@ import { resolveImage } from '../../imageResources';
  * Next 时间轴的武器养成编辑弹窗。界面沿用旧版武器编辑器，但只读取稳定的 Build 投影，
  * 所有用户修改均通过事件交给父层持久化；组件本身不访问旧 Store，也不补造定义中不存在的数据。
  */
-import { EaButton, EaDialog, EaDialogActions } from '../../../design-system/index';
+import { EaButton, EaDialog, EaDialogActions, EaFilterChip } from '../../../design-system/index';
 import { computed } from 'vue';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import { useI18n } from 'vue-i18n';
@@ -282,24 +282,17 @@ function maxOut(): void {
           </div>
 
           <div class="level-selector">
-            <EaButton
+            <EaFilterChip
               size="sm"
               v-for="level in LEVELS"
               :key="level"
               class="level-btn"
-              :style="
-                weapon.level === level
-                  ? {
-                      borderColor: rarityColor,
-                      color: rarityColor,
-                      background: `color-mix(in srgb, ${rarityColor} 18%, var(--ea-dialog-bg, #fff))`,
-                    }
-                  : {}
-              "
+              :accent="rarityColor"
+              :selected="weapon.level === level"
               @click="handleLevelChange(level)"
             >
               Lv{{ level }}
-            </EaButton>
+            </EaFilterChip>
           </div>
 
           <div class="section">
@@ -342,9 +335,6 @@ function maxOut(): void {
         <EaDialogActions>
           <EaButton variant="primary" size="sm" :disabled="weapon === null" @click="maxOut">
             {{ t('common.max') }}
-          </EaButton>
-          <EaButton size="sm" @click="emit('update:visible', false)">
-            {{ t('common.close') }}
           </EaButton>
         </EaDialogActions>
       </template>

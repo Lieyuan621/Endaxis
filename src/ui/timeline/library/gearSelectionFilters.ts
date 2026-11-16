@@ -13,17 +13,16 @@ export interface GearAffixFilterGroup {
 }
 
 /**
- * 词条筛选的视觉分组沿用旧版已经验证过的认知顺序；匹配数据则完全来自当前 GearDefinition，
- * 不读取旧装备模板，也不让展示分组参与模拟。
+ * 只为选择器排版分组；匹配数据完全来自当前 GearDefinition，不读取旧装备模板。
  */
 export const GEAR_AFFIX_FILTER_GROUPS = Object.freeze([
   {
-    key: 'elementDamage',
+    key: 'damageTypes',
     items: [
-      { value: 'arts_dmg', accent: '#ef4444' },
+      { value: 'physical_dmg', accent: '#ef4444' },
       { value: 'cryo_electric_dmg_bonus', accent: '#ef4444' },
       { value: 'heat_nature_dmg_bonus', accent: '#ef4444' },
-      { value: 'physical_dmg', accent: '#ef4444' },
+      { value: 'arts_dmg', accent: '#ef4444' },
     ],
   },
   {
@@ -34,20 +33,20 @@ export const GEAR_AFFIX_FILTER_GROUPS = Object.freeze([
       { value: 'skill_dmg_bonus', accent: '#93c5fd' },
       { value: 'link_dmg_bonus', accent: '#facc15' },
       { value: 'ultimate_dmg_bonus', accent: '#38bdf8' },
+      { value: 'broken_dmg_bonus', accent: '#fb7185' },
     ],
   },
-  { key: 'brokenDamage', items: [{ value: 'broken_dmg_bonus', accent: '#fb7185' }] },
   {
-    key: 'ability',
+    key: 'attributes',
     items: [
       { value: 'primary_ability', accent: '#a3e635' },
       { value: 'secondary_ability', accent: '#84cc16' },
+      { value: 'attack', accent: '#991b1b' },
+      { value: 'crit_rate', accent: '#f43f5e' },
+      { value: 'originium_arts_power', accent: '#a78bfa' },
+      { value: 'ult_charge_eff', accent: '#38bdf8' },
     ],
   },
-  { key: 'attack', items: [{ value: 'attack', accent: '#991b1b' }] },
-  { key: 'crit', items: [{ value: 'crit_rate', accent: '#f43f5e' }] },
-  { key: 'artsPower', items: [{ value: 'originium_arts_power', accent: '#a78bfa' }] },
-  { key: 'ultimateCharge', items: [{ value: 'ult_charge_eff', accent: '#38bdf8' }] },
   {
     key: 'survival',
     items: [

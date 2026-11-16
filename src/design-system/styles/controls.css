@@ -21,6 +21,13 @@
     opacity var(--ea-control-transition);
 }
 
+.ea-button,
+.ea-filter-chip {
+  --ea-selection-border: color-mix(in srgb, var(--ea-selection-accent) 75%, transparent);
+  --ea-selection-bg: color-mix(in srgb, var(--ea-selection-accent) 18%, var(--ea-chip-fill));
+  --ea-selection-bg-hover: color-mix(in srgb, var(--ea-selection-accent) 25%, var(--ea-chip-fill));
+}
+
 .ea-button:focus-visible,
 .ea-filter-chip:focus-visible,
 .ea-switch:focus-visible,
@@ -37,6 +44,7 @@
 }
 
 .ea-button {
+  --ea-selection-accent: var(--ea-gold);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -72,9 +80,13 @@
 }
 
 .ea-button--primary {
-  border-color: var(--ea-gold);
-  background: var(--ea-gold);
-  color: var(--ea-on-accent);
+  border-color: var(--ea-primary-border);
+  background-color: var(--ea-control-bg);
+  color: var(--ea-primary-fg);
+}
+
+.ea-button--primary:not(.ea-button--icon-only) {
+  min-width: 64px;
 }
 
 .ea-button--danger {
@@ -86,13 +98,6 @@
 .ea-button--ghost {
   border-color: transparent;
   background: transparent;
-}
-
-.ea-button[aria-pressed='true'] {
-  border-color: var(--ea-gold);
-  background: color-mix(in srgb, var(--ea-gold) 16%, transparent);
-  color: var(--ea-gold);
-  box-shadow: inset 0 -2px 0 var(--ea-gold);
 }
 
 .ea-button--icon-only {
@@ -319,8 +324,8 @@ html[data-theme='light']
 
   .ea-button--primary:hover:not(:disabled) {
     border-color: var(--ea-gold-hover);
-    background: var(--ea-gold-hover);
-    color: var(--ea-on-accent);
+    background-color: color-mix(in srgb, var(--ea-gold) 10%, var(--ea-control-bg));
+    color: var(--ea-primary-fg);
   }
 
   .ea-button--danger:hover:not(:disabled) {
@@ -330,12 +335,9 @@ html[data-theme='light']
   }
 
   .ea-button[aria-pressed='true']:hover:not(:disabled) {
-    border-color: var(--ea-control-pressed-border-hover, var(--ea-gold));
-    background: var(
-      --ea-control-pressed-bg-hover,
-      color-mix(in srgb, var(--ea-gold) 22%, transparent)
-    );
-    color: var(--ea-control-pressed-fg-hover, var(--ea-gold));
+    border-color: var(--ea-control-pressed-border-hover, var(--ea-selection-accent));
+    background: var(--ea-control-pressed-bg-hover, var(--ea-selection-bg-hover));
+    color: var(--ea-control-pressed-fg-hover, var(--ea-selection-fg, var(--ea-selection-accent)));
   }
 
   .ea-activity-rail-button:hover {
@@ -359,17 +361,42 @@ html[data-theme='light']
 
 .ea-filter-chip {
   --ea-filter-accent: var(--ea-accent);
+  --ea-selection-accent: var(--ea-filter-accent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border-color: var(--ea-border-soft);
+  background: var(--ea-chip-fill);
+  color: var(--ea-fg-secondary);
+  font-weight: 600;
   white-space: nowrap;
 }
 
+.ea-button[aria-pressed='true'],
 .ea-filter-chip--selected {
-  border-color: var(--ea-filter-accent);
-  background: color-mix(in srgb, var(--ea-filter-accent) 16%, transparent);
-  color: var(--ea-filter-accent);
-  box-shadow: inset 0 -2px 0 var(--ea-filter-accent);
+  border-color: var(--ea-selection-border);
+  background: var(--ea-selection-bg);
+  color: var(--ea-selection-fg, var(--ea-selection-accent));
+  box-shadow: none;
+}
+
+html[data-theme='light'] .ea-button,
+html[data-theme='light'] .ea-filter-chip {
+  --ea-selection-fg: color-mix(in srgb, var(--ea-selection-accent) 45%, var(--ea-fg));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ea-filter-chip:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--ea-selection-accent) 55%, transparent);
+    background: color-mix(in srgb, var(--ea-selection-accent) 10%, var(--ea-chip-fill));
+    color: var(--ea-selection-fg, var(--ea-selection-accent));
+  }
+
+  .ea-filter-chip--selected:hover:not(:disabled) {
+    border-color: var(--ea-selection-accent);
+    background: var(--ea-selection-bg-hover);
+    color: var(--ea-selection-fg, var(--ea-selection-accent));
+  }
 }
 
 .ea-checkbox {

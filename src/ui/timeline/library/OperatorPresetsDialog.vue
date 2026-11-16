@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { EaButton, EaDialog, EaDialogActions, EaInput, EaDeleteIcon } from '@/design-system';
+import { EaButton, EaDialog, EaInput, EaDeleteIcon } from '@/design-system';
 import { getOperatorGameName, getWeaponGameName, getGearPieceGameName } from '../../gameText';
 import OperatorPresetTransferDialog from './OperatorPresetTransferDialog.vue';
 import {
@@ -274,13 +274,6 @@ async function apply(preset: OperatorBuildPreset) {
           </article>
         </div>
       </div>
-      <template #footer
-        ><EaDialogActions
-          ><EaButton @click="emit('close')">{{
-            t('operatorPresets.close')
-          }}</EaButton></EaDialogActions
-        ></template
-      >
     </EaDialog>
     <OperatorPresetTransferDialog
       v-if="transfer"

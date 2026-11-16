@@ -3,6 +3,7 @@ import { computed, nextTick, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   EaButton,
+  EaChevronIcon,
   EaFilterChip,
   EaInput,
   EaSelect,
@@ -55,6 +56,7 @@ const keyword = ref('');
 const selectedEvents = ref<ReadonlySet<string>>(new Set());
 const limit = ref<200 | 500 | 'all'>(200);
 const showDebugEvents = ref(false);
+const typesOpen = ref(false);
 const expandedRawSequences = ref<ReadonlySet<number>>(new Set());
 
 function setLimit(value: EaSelectValue | EaSelectValue[]): void {
@@ -161,10 +163,10 @@ watch(showDebugEvents, enabled => {
   if (!enabled) expandedRawSequences.value = new Set();
 });
 
-function toggleRawReceipt(sequence: number, event: Event): void {
+function toggleRawReceipt(sequence: number): void {
   const next = new Set(expandedRawSequences.value);
-  if ((event.currentTarget as HTMLDetailsElement).open) next.add(sequence);
-  else next.delete(sequence);
+  if (next.has(sequence)) next.delete(sequence);
+  else next.add(sequence);
   expandedRawSequences.value = next;
 }
 
@@ -401,22 +403,32 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
         </div>
       </div>
 
-      <details class="simlog-types-disclosure">
-        <summary class="simlog-filter-label">
+      <div class="simlog-types-disclosure">
+        <button
+          type="button"
+          class="simlog-types-toggle simlog-filter-label"
+          :aria-expanded="typesOpen"
+          @click="typesOpen = !typesOpen"
+        >
+          <EaChevronIcon :direction="typesOpen ? 'down' : 'right'" :size="12" />
           {{ $t('battleLog.ui.types') }} ({{ selectedEvents.size }}/{{ availableEvents.length }})
-        </summary>
-        <div class="simlog-types">
-          <EaFilterChip
-            v-for="event in availableEvents"
-            :key="event"
-            :selected="selectedEvents.has(event)"
-            :title="event"
-            @click="toggleEvent(event)"
-          >
-            {{ eventLabel(event) }}
-          </EaFilterChip>
-        </div>
-      </details>
+        </button>
+        <Transition name="simlog-disclosure">
+          <div v-if="typesOpen" class="simlog-disclosure-content">
+            <div class="simlog-types">
+              <EaFilterChip
+                v-for="event in availableEvents"
+                :key="event"
+                :selected="selectedEvents.has(event)"
+                :title="event"
+                @click="toggleEvent(event)"
+              >
+                {{ eventLabel(event) }}
+              </EaFilterChip>
+            </div>
+          </div>
+        </Transition>
+      </div>
 
       <div class="simlog-debug-row">
         <EaFilterChip :selected="showDebugEvents" @click="showDebugEvents = !showDebugEvents">
@@ -456,27 +468,28 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
         {{ $t('battleLog.ui.noResults') }}
       </div>
       <div v-else class="group-list">
-        <details
+        <div
           v-for="group in groupedEntries"
           :key="group.key"
           :ref="element => setGroupElement(group.key, element)"
           class="group simlog-block"
-          :open="openGroupKey === group.key"
           :style="{ '--group-accent': groupAccent(group) }"
         >
-          <summary
+          <button
+            type="button"
             class="group__summary"
             :class="{ 'is-jumpable': group.castId !== null }"
+            :aria-expanded="openGroupKey === group.key"
             :title="group.castId === null ? undefined : $t('battleLog.ui.jumpToTimeline')"
             @click="locateGroup(group, $event)"
           >
-            <div class="group__summary-main">
-              <div class="group__title-row">
+            <span class="group__summary-main">
+              <span class="group__title-row">
                 <span class="group__actor">{{ groupActorLabel(group) }}</span>
                 <span class="group__title-sep">·</span>
                 <span class="group__action">{{ groupActionLabel(group) }}</span>
-              </div>
-              <div class="group__timing">
+              </span>
+              <span class="group__timing">
                 <span class="group__timing-item">
                   <span class="group__timing-label">{{ $t('battleLog.ui.start') }}</span>
                   <span class="group__timing-value">{{ formatTime(group.firstFrame) }}</span>
@@ -485,8 +498,8 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
                   <span class="group__timing-label">{{ $t('battleLog.ui.end') }}</span>
                   <span class="group__timing-value">{{ formatTime(group.lastFrame) }}</span>
                 </span>
-              </div>
-              <div class="group__stats">
+              </span>
+              <span class="group__stats">
                 <span v-if="group.damage > 0" class="group__stat">
                   <span class="group__stat-label">{{ $t('battleLog.summary.damage') }}</span>
                   <span class="group__stat-sep">:</span>
@@ -497,89 +510,107 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
                   <span class="group__stat-sep">:</span>
                   <span class="group__stat-value">{{ group.entries.length }}</span>
                 </span>
+              </span>
+            </span>
+          </button>
+
+          <Transition name="simlog-disclosure">
+            <div v-if="openGroupKey === group.key" class="simlog-disclosure-content">
+              <div class="group__body">
+                <section
+                  v-for="section in groupSections(group.entries)"
+                  :key="section.kind"
+                  class="group-section"
+                  :class="`group-section--${section.kind}`"
+                >
+                  <div class="group-section__heading">
+                    <span class="group-section__title">{{
+                      $t(`battleLog.ui.sections.${section.kind}`)
+                    }}</span>
+                    <span class="group-section__count">{{ section.entries.length }}</span>
+                  </div>
+                  <div class="group-section__list">
+                    <div v-for="entry in section.entries" :key="entry.sequence" class="event-item">
+                      <EaButton
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        class="event-row"
+                        :class="{
+                          'is-jumpable': group.castId !== null,
+                          'event-row--damage': isDamageEntry(entry),
+                        }"
+                        :disabled="group.castId === null"
+                        :title="
+                          group.castId === null
+                            ? eventLabel(entry.event)
+                            : $t('battleLog.ui.jumpToTimeline')
+                        "
+                        @click="locateEntry(group, entry)"
+                      >
+                        <span v-if="isDamageEntry(entry)" class="event-row__main">
+                          <time class="event-row__time">{{ formatTime(entry.frame) }}</time>
+                          <span
+                            class="event-pill"
+                            :class="
+                              isEffectDamage(entry) ? 'event-pill--effect' : 'event-pill--skill'
+                            "
+                          >
+                            {{
+                              $t(
+                                isEffectDamage(entry)
+                                  ? 'battleLog.ui.effectDamage'
+                                  : 'battleLog.ui.skillDamage',
+                              )
+                            }}
+                          </span>
+                          <span v-if="damageAmount(entry) !== null" class="event-value">
+                            {{ formatDamageField('damage', damageAmount(entry)!) }}
+                          </span>
+                          <span v-if="damageElement(entry) !== null" class="event-value">
+                            {{ formatDamageField('element', damageElement(entry)!) }}
+                          </span>
+                        </span>
+                        <template v-else>
+                          <time class="event-row__time">{{ formatTime(entry.frame) }}</time>
+                          <span class="event-pill">{{ eventLabel(entry.event) }}</span>
+                          <span v-if="entrySummary(entry)" class="event-text">{{
+                            entrySummary(entry)
+                          }}</span>
+                        </template>
+                        <span v-if="entrySourceLabel(group, entry)" class="event-muted">
+                          {{ entrySourceLabel(group, entry) }}
+                        </span>
+                      </EaButton>
+                      <div v-if="showDebugEvents" class="event-raw">
+                        <button
+                          type="button"
+                          class="event-raw__toggle"
+                          :aria-expanded="expandedRawSequences.has(entry.sequence)"
+                          @click="toggleRawReceipt(entry.sequence)"
+                        >
+                          <EaChevronIcon
+                            :direction="expandedRawSequences.has(entry.sequence) ? 'down' : 'right'"
+                            :size="12"
+                          />
+                          {{ $t('battleLog.ui.rawReceipt') }}
+                        </button>
+                        <Transition name="simlog-disclosure">
+                          <div
+                            v-if="expandedRawSequences.has(entry.sequence)"
+                            class="simlog-disclosure-content"
+                          >
+                            <pre>{{ JSON.stringify(entry, null, 2) }}</pre>
+                          </div>
+                        </Transition>
+                      </div>
+                    </div>
+                  </div>
+                </section>
               </div>
             </div>
-          </summary>
-
-          <div class="group__body">
-            <section
-              v-for="section in groupSections(group.entries)"
-              :key="section.kind"
-              class="group-section"
-              :class="`group-section--${section.kind}`"
-            >
-              <div class="group-section__heading">
-                <span class="group-section__title">{{
-                  $t(`battleLog.ui.sections.${section.kind}`)
-                }}</span>
-                <span class="group-section__count">{{ section.entries.length }}</span>
-              </div>
-              <div class="group-section__list">
-                <div v-for="entry in section.entries" :key="entry.sequence" class="event-item">
-                  <EaButton
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    class="event-row"
-                    :class="{
-                      'is-jumpable': group.castId !== null,
-                      'event-row--damage': isDamageEntry(entry),
-                    }"
-                    :disabled="group.castId === null"
-                    :title="
-                      group.castId === null
-                        ? eventLabel(entry.event)
-                        : $t('battleLog.ui.jumpToTimeline')
-                    "
-                    @click="locateEntry(group, entry)"
-                  >
-                    <span v-if="isDamageEntry(entry)" class="event-row__main">
-                      <time class="event-row__time">{{ formatTime(entry.frame) }}</time>
-                      <span
-                        class="event-pill"
-                        :class="isEffectDamage(entry) ? 'event-pill--effect' : 'event-pill--skill'"
-                      >
-                        {{
-                          $t(
-                            isEffectDamage(entry)
-                              ? 'battleLog.ui.effectDamage'
-                              : 'battleLog.ui.skillDamage',
-                          )
-                        }}
-                      </span>
-                      <span v-if="damageAmount(entry) !== null" class="event-value">
-                        {{ formatDamageField('damage', damageAmount(entry)!) }}
-                      </span>
-                      <span v-if="damageElement(entry) !== null" class="event-value">
-                        {{ formatDamageField('element', damageElement(entry)!) }}
-                      </span>
-                    </span>
-                    <template v-else>
-                      <time class="event-row__time">{{ formatTime(entry.frame) }}</time>
-                      <span class="event-pill">{{ eventLabel(entry.event) }}</span>
-                      <span v-if="entrySummary(entry)" class="event-text">{{
-                        entrySummary(entry)
-                      }}</span>
-                    </template>
-                    <span v-if="entrySourceLabel(group, entry)" class="event-muted">
-                      {{ entrySourceLabel(group, entry) }}
-                    </span>
-                  </EaButton>
-                  <details
-                    v-if="showDebugEvents"
-                    class="event-raw"
-                    @toggle="toggleRawReceipt(entry.sequence, $event)"
-                  >
-                    <summary>{{ $t('battleLog.ui.rawReceipt') }}</summary>
-                    <pre v-if="expandedRawSequences.has(entry.sequence)">{{
-                      JSON.stringify(entry, null, 2)
-                    }}</pre>
-                  </details>
-                </div>
-              </div>
-            </section>
-          </div>
-        </details>
+          </Transition>
+        </div>
       </div>
     </div>
   </section>
@@ -672,12 +703,51 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
 .simlog-types-disclosure {
   min-width: 0;
 }
-.simlog-types-disclosure > summary {
-  display: list-item;
+.simlog-types-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ea-fg-muted, #999);
   cursor: pointer;
+  font-family: inherit;
 }
-.simlog-types-disclosure > summary:hover {
+.simlog-types-toggle:hover {
   color: var(--ea-fg);
+}
+.simlog-types-toggle :deep(.ea-chevron-icon),
+.event-raw__toggle :deep(.ea-chevron-icon) {
+  transition: transform 180ms ease;
+}
+.simlog-disclosure-content {
+  display: grid;
+  grid-template-rows: 1fr;
+  min-height: 0;
+  overflow: hidden;
+}
+.simlog-disclosure-content > * {
+  min-height: 0;
+}
+.simlog-disclosure-enter-active,
+.simlog-disclosure-leave-active {
+  transition:
+    grid-template-rows 180ms ease,
+    opacity 180ms ease;
+}
+.simlog-disclosure-enter-from,
+.simlog-disclosure-leave-to {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .simlog-disclosure-enter-active,
+  .simlog-disclosure-leave-active,
+  .simlog-types-toggle :deep(.ea-chevron-icon),
+  .event-raw__toggle :deep(.ea-chevron-icon) {
+    transition-duration: 0ms;
+  }
 }
 .simlog-presets {
   padding: 8px 10px;
@@ -751,15 +821,21 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
   border-left-color: color-mix(in srgb, var(--group-accent) 72%, rgba(255, 255, 255, 0.16));
 }
 .group__summary {
-  list-style: none;
   display: flex;
+  width: 100%;
   align-items: center;
   padding: 10px 12px 8px;
+  border: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: transparent;
+  color: inherit;
   cursor: pointer;
+  font: inherit;
+  text-align: left;
 }
-.group__summary::-webkit-details-marker {
-  display: none;
+.group__summary:focus-visible {
+  outline: 1px solid var(--ea-gold);
+  outline-offset: -1px;
 }
 .group__summary:hover {
   background: rgba(255, 255, 255, 0.025);
@@ -990,10 +1066,18 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
   color: var(--ea-fg-muted, #999);
   font-size: 11px;
 }
-.event-raw > summary {
+.event-raw__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
+  font: inherit;
 }
-.event-raw > pre {
+.event-raw pre {
   max-height: 220px;
   overflow: auto;
   padding: 8px;

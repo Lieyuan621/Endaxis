@@ -8,6 +8,8 @@ import { EaTooltip } from '@/design-system';
  */
 import {
   EaButton,
+  EaChevronIcon,
+  EaCloseIcon,
   EaDeleteIcon,
   EaDialog,
   EaFilterChip,
@@ -41,9 +43,7 @@ export interface GearSelectionDialogLabels {
   readonly title: string;
   readonly searchPlaceholder: string;
   readonly unequip: string;
-  readonly close: string;
   readonly empty: string;
-  readonly defense: string;
   readonly noSet: string;
 }
 
@@ -98,7 +98,9 @@ interface GearLevelGroup {
 const { locale, t } = useI18n({ useScope: 'global' });
 const searchQuery = ref('');
 const gearSetFilter = ref('ALL');
+const gearSetExpanded = ref(false);
 const affixFilter = ref('ALL');
+const affixExpanded = ref(false);
 const levelFilter = ref<number | 'ALL'>('ALL');
 const refineTier = ref(3);
 const refineTiers = [0, 1, 2, 3] as const;
@@ -110,7 +112,9 @@ watch(
     if (!visible) return;
     searchQuery.value = '';
     gearSetFilter.value = 'ALL';
+    gearSetExpanded.value = false;
     affixFilter.value = 'ALL';
+    affixExpanded.value = false;
     levelFilter.value = 'ALL';
     refineTier.value = props.selectedSlug === null ? 3 : currentArtificingTier.value;
   },
@@ -150,14 +154,40 @@ const gearItems = computed<readonly GearListItem[]>(() =>
 );
 
 const gearSets = computed(() => {
-  const names = new Map<string, string>();
+  const sets = new Map<string, { name: string; maxLevel: number }>();
   for (const item of gearItems.value) {
-    if (item.gearSetSlug !== null) names.set(item.gearSetSlug, item.gearSetName);
+    if (item.gearSetSlug === null) continue;
+    const previous = sets.get(item.gearSetSlug);
+    sets.set(item.gearSetSlug, {
+      name: item.gearSetName,
+      maxLevel: Math.max(previous?.maxLevel ?? 0, item.definition.levelRequirement),
+    });
   }
-  return [...names.entries()]
-    .map(([slug, name]) => ({ slug, name }))
-    .sort((left, right) => left.name.localeCompare(right.name));
+  return [...sets.entries()].map(([slug, set]) => ({ slug, ...set }));
 });
+
+const gearSetGroups = computed(() => {
+  const byLevel = new Map<number, (typeof gearSets.value)[number][]>();
+  for (const set of gearSets.value) {
+    const group = byLevel.get(set.maxLevel) ?? [];
+    group.push(set);
+    byLevel.set(set.maxLevel, group);
+  }
+  return [...byLevel.entries()]
+    .sort(([left], [right]) => right - left)
+    .map(([level, sets]) => ({
+      level,
+      sets: sets.sort((left, right) => left.name.localeCompare(right.name)),
+    }));
+});
+
+const selectedGearSetLabel = computed(
+  () =>
+    (gearSetFilter.value === NO_SET_FILTER
+      ? props.labels.noSet
+      : gearSets.value.find(set => set.slug === gearSetFilter.value)?.name) ??
+    t('timelineGrid.equipmentDialog.allCategories'),
+);
 
 const levels = computed(() =>
   [...new Set(gearItems.value.map(item => item.definition.levelRequirement))].sort(
@@ -173,6 +203,14 @@ const affixFilterGroups = computed(() =>
       label: getEquipmentModifierLabel(item.value, t),
     })),
   })),
+);
+
+const selectedAffixLabel = computed(
+  () =>
+    affixFilterGroups.value
+      .flatMap(group => group.items)
+      .find(item => item.value === affixFilter.value)?.label ??
+    t('timelineGrid.equipmentDialog.allAffixes'),
 );
 
 const groups = computed<readonly GearLevelGroup[]>(() => {
@@ -229,12 +267,12 @@ function clearGear(): void {
       :title="labels.title"
       width="600px"
       align-center
-      class="char-selector-dialog"
+      class="char-selector-dialog gear-selector-dialog"
       scroll-mode="body"
       append-to-body
       @close="emit('close')"
     >
-      <div class="selector-header">
+      <div class="selector-header gear-selector-header">
         <div class="header-left-group">
           <EaInput
             v-model="searchQuery"
@@ -256,77 +294,161 @@ function clearGear(): void {
           <div class="equipment-tier-picker">
             <span class="tier-label">{{ t('timelineGrid.equipmentDialog.refine') }}</span>
             <div class="equipment-refine-buttons">
-              <EaButton
+              <EaFilterChip
                 size="sm"
                 v-for="tier in refineTiers"
                 :key="tier"
-                type="button"
                 class="equipment-refine-btn"
                 @click="setRefineTier(tier)"
-                :pressed="refineTier === tier"
+                :selected="refineTier === tier"
               >
                 {{ tier === 0 ? t('timelineGrid.equipmentDialog.refineBase') : tier }}
-              </EaButton>
+              </EaFilterChip>
             </div>
           </div>
         </div>
-        <div class="element-filters">
-          <EaFilterChip
-            type="button"
-            :selected="gearSetFilter === 'ALL'"
-            accent="#2dd4bf"
-            @click="gearSetFilter = 'ALL'"
-          >
-            {{ t('timelineGrid.equipmentDialog.allCategories') }}
-          </EaFilterChip>
-          <EaFilterChip
-            type="button"
-            :selected="gearSetFilter === NO_SET_FILTER"
-            accent="#888"
-            @click="gearSetFilter = NO_SET_FILTER"
-          >
-            {{ labels.noSet }}
-          </EaFilterChip>
-          <EaFilterChip
-            v-for="gearSet in gearSets"
-            :key="gearSet.slug"
-            :selected="gearSetFilter === gearSet.slug"
-            accent="#2dd4bf"
-            @click="gearSetFilter = gearSet.slug"
-          >
-            {{ gearSet.name }}
-          </EaFilterChip>
+        <div class="equipment-set-filter-section">
+          <div class="equipment-affix-filter-heading">
+            <button
+              class="equipment-affix-filter-toggle"
+              type="button"
+              :aria-expanded="gearSetExpanded"
+              aria-controls="gear-set-filter-options"
+              @click="gearSetExpanded = !gearSetExpanded"
+            >
+              <EaChevronIcon :direction="gearSetExpanded ? 'up' : 'down'" :size="16" />
+              {{ t('timelineGrid.equipmentDialog.gearSetFilter') }}
+            </button>
+            <span
+              class="equipment-affix-filter-summary"
+              :class="{ 'is-selected': gearSetFilter !== 'ALL' }"
+              :title="selectedGearSetLabel"
+              >{{ selectedGearSetLabel }}</span
+            >
+            <button
+              v-if="gearSetFilter !== 'ALL'"
+              class="equipment-affix-filter-clear"
+              type="button"
+              :aria-label="t('timelineGrid.equipmentDialog.clearGearSetFilter')"
+              :title="t('timelineGrid.equipmentDialog.clearGearSetFilter')"
+              @click="gearSetFilter = 'ALL'"
+            >
+              <EaCloseIcon :size="14" />
+            </button>
+          </div>
+          <Transition name="gear-affix-expand">
+            <div
+              v-show="gearSetExpanded"
+              id="gear-set-filter-options"
+              class="equipment-affix-filter-panel"
+            >
+              <div class="equipment-affix-filter-reset">
+                <EaFilterChip
+                  type="button"
+                  :selected="gearSetFilter === 'ALL'"
+                  accent="#2dd4bf"
+                  @click="gearSetFilter = 'ALL'"
+                >
+                  {{ t('timelineGrid.equipmentDialog.allCategories') }}
+                </EaFilterChip>
+                <EaFilterChip
+                  type="button"
+                  :selected="gearSetFilter === NO_SET_FILTER"
+                  accent="#888"
+                  @click="gearSetFilter = NO_SET_FILTER"
+                >
+                  {{ labels.noSet }}
+                </EaFilterChip>
+              </div>
+              <div class="equipment-set-filter-strip">
+                <div
+                  v-for="group in gearSetGroups"
+                  :key="group.level"
+                  class="equipment-set-filter-group"
+                >
+                  <span class="equipment-set-filter-level">{{
+                    t('timelineGrid.equipmentDialog.gearSetMaxLevel', { level: group.level })
+                  }}</span>
+                  <div class="equipment-set-filter-options">
+                    <EaFilterChip
+                      v-for="gearSet in group.sets"
+                      :key="gearSet.slug"
+                      :selected="gearSetFilter === gearSet.slug"
+                      accent="#2dd4bf"
+                      @click="gearSetFilter = gearSet.slug"
+                    >
+                      {{ gearSet.name }}
+                    </EaFilterChip>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Transition>
         </div>
         <div class="equipment-affix-filter-section">
-          <div class="equipment-affix-filter-strip">
-            <EaFilterChip
+          <div class="equipment-affix-filter-heading">
+            <button
+              class="equipment-affix-filter-toggle"
               type="button"
-              :selected="affixFilter === 'ALL'"
-              accent="#2dd4bf"
+              :aria-expanded="affixExpanded"
+              aria-controls="gear-affix-filter-options"
+              @click="affixExpanded = !affixExpanded"
+            >
+              <EaChevronIcon :direction="affixExpanded ? 'up' : 'down'" :size="16" />
+              {{ t('timelineGrid.equipmentDialog.affixFilter') }}
+            </button>
+            <span
+              class="equipment-affix-filter-summary"
+              :class="{ 'is-selected': affixFilter !== 'ALL' }"
+              :title="selectedAffixLabel"
+              >{{ selectedAffixLabel }}</span
+            >
+            <button
+              v-if="affixFilter !== 'ALL'"
+              class="equipment-affix-filter-clear"
+              type="button"
+              :aria-label="t('timelineGrid.equipmentDialog.clearAffixFilter')"
+              :title="t('timelineGrid.equipmentDialog.clearAffixFilter')"
               @click="affixFilter = 'ALL'"
             >
-              {{ t('timelineGrid.equipmentDialog.allAffixes') }}
-            </EaFilterChip>
-            <template
-              v-for="(group, groupIndex) in affixFilterGroups"
-              :key="`next_gear_affix_group_${group.key}`"
-            >
-              <span
-                v-if="groupIndex > 0"
-                class="equipment-affix-filter-divider"
-                aria-hidden="true"
-              />
-              <EaFilterChip
-                v-for="option in group.items"
-                :key="`next_gear_affix_filter_${option.value}`"
-                :selected="affixFilter === option.value"
-                :accent="option.accent"
-                @click="affixFilter = option.value"
-              >
-                {{ option.label }}
-              </EaFilterChip>
-            </template>
+              <EaCloseIcon :size="14" />
+            </button>
           </div>
+          <Transition name="gear-affix-expand">
+            <div
+              v-show="affixExpanded"
+              id="gear-affix-filter-options"
+              class="equipment-affix-filter-panel"
+            >
+              <div class="equipment-affix-filter-reset">
+                <EaFilterChip
+                  type="button"
+                  :selected="affixFilter === 'ALL'"
+                  accent="#2dd4bf"
+                  @click="affixFilter = 'ALL'"
+                >
+                  {{ t('timelineGrid.equipmentDialog.allAffixes') }}
+                </EaFilterChip>
+              </div>
+              <div class="equipment-affix-filter-strip">
+                <div
+                  v-for="group in affixFilterGroups"
+                  :key="group.key"
+                  class="equipment-affix-filter-group"
+                >
+                  <EaFilterChip
+                    v-for="option in group.items"
+                    :key="`next_gear_affix_filter_${option.value}`"
+                    :selected="affixFilter === option.value"
+                    :accent="option.accent"
+                    @click="affixFilter = option.value"
+                  >
+                    {{ option.label }}
+                  </EaFilterChip>
+                </div>
+              </div>
+            </div>
+          </Transition>
         </div>
         <div class="element-filters">
           <EaFilterChip

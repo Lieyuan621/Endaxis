@@ -141,13 +141,10 @@ function maxOut(): void {
         </div>
       </template>
 
-      <template #footer>
+      <template v-if="isArtificable" #footer>
         <EaDialogActions>
-          <EaButton v-if="isArtificable" variant="primary" size="sm" type="button" @click="maxOut">
+          <EaButton variant="primary" size="sm" type="button" @click="maxOut">
             {{ t('common.max') }}
-          </EaButton>
-          <EaButton size="sm" type="button" @click="emit('update:visible', false)">
-            {{ t('common.close') }}
           </EaButton>
         </EaDialogActions>
       </template>

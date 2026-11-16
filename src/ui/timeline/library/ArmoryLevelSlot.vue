@@ -62,8 +62,7 @@ const emit = defineEmits<{
 }
 
 .armory-level-slot--active.ea-button {
-  background: color-mix(in srgb, var(--ea-gold) 22%, transparent);
-  color: var(--ea-gold);
+  border-color: var(--ea-selection-border);
 }
 
 .armory-level-slot--empty.ea-button {
@@ -89,13 +88,6 @@ const emit = defineEmits<{
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .armory-level-slot--active.ea-button:hover:not(:disabled) {
-    border-color: transparent;
-    background: color-mix(in srgb, var(--ea-gold-hover, var(--ea-gold)) 30%, transparent);
-    color: var(--ea-gold-hover, var(--ea-gold));
-    box-shadow: none;
-  }
-
   .armory-level-slot--empty.ea-button:hover:not(:disabled) {
     border-color: var(--ea-gold-hover, var(--ea-gold));
     background: color-mix(in srgb, var(--ea-gold-hover, var(--ea-gold)) 12%, transparent);

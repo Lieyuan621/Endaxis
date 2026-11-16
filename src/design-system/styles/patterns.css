@@ -259,9 +259,20 @@
 .ea-floating-surface {
   border: 1px solid var(--ea-floating-border) !important;
   border-radius: var(--ea-control-radius) !important;
-  background: var(--ea-floating-bg) !important;
+  background: var(--ea-floating-surface-fill, var(--ea-floating-bg)) !important;
   color: var(--ea-floating-fg) !important;
   box-shadow: var(--ea-floating-shadow) !important;
+}
+
+/* Shared visual language for short hints; pointer and Popper positioning stay independent. */
+.ea-tooltip-surface {
+  --ea-floating-surface-fill: var(--ea-tooltip-surface-bg);
+  box-sizing: border-box;
+  padding: 7px 10px;
+  box-shadow: 0 5px 16px var(--ea-shadow) !important;
+  font-size: var(--ea-control-font-size-sm);
+  line-height: 1.45;
+  white-space: pre-line;
 }
 
 /* Single-value editors used by the timeline's compact controls. */
