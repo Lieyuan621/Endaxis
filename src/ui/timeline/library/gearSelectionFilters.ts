@@ -1,5 +1,6 @@
 import type { GearDefinition } from '../../../core/game-data/equipmentDefinition';
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
+import { normalizeEquipmentAttributeId } from '../../../utils/equipmentEffectDisplay';
 import { getGearDefinitionSelectionAffixRows } from './gearAffixPresentation';
 
 export interface GearAffixFilterOption {
@@ -9,8 +10,18 @@ export interface GearAffixFilterOption {
 
 export interface GearAffixFilterGroup {
   readonly key: string;
+  readonly rowSize: number;
   readonly items: readonly GearAffixFilterOption[];
 }
+
+export const GEAR_ATTRIBUTE_FILTER_OPTIONS = Object.freeze([
+  { value: 'primary_ability', accent: '#a3e635' },
+  { value: 'secondary_ability', accent: '#84cc16' },
+  { value: 'strength', accent: '#a3e635' },
+  { value: 'agility', accent: '#a3e635' },
+  { value: 'intellect', accent: '#a3e635' },
+  { value: 'will', accent: '#a3e635' },
+] satisfies readonly GearAffixFilterOption[]);
 
 /**
  * 只为选择器排版分组；匹配数据完全来自当前 GearDefinition，不读取旧装备模板。
@@ -18,15 +29,17 @@ export interface GearAffixFilterGroup {
 export const GEAR_AFFIX_FILTER_GROUPS = Object.freeze([
   {
     key: 'damageTypes',
+    rowSize: 2,
     items: [
       { value: 'physical_dmg', accent: '#ef4444' },
       { value: 'cryo_electric_dmg_bonus', accent: '#ef4444' },
-      { value: 'heat_nature_dmg_bonus', accent: '#ef4444' },
       { value: 'arts_dmg', accent: '#ef4444' },
+      { value: 'heat_nature_dmg_bonus', accent: '#ef4444' },
     ],
   },
   {
     key: 'skillDamage',
+    rowSize: 3,
     items: [
       { value: 'all_skill_dmg_bonus', accent: '#ef4444' },
       { value: 'attack_dmg_bonus', accent: '#fde68a' },
@@ -38,6 +51,7 @@ export const GEAR_AFFIX_FILTER_GROUPS = Object.freeze([
   },
   {
     key: 'attributes',
+    rowSize: 3,
     items: [
       { value: 'primary_ability', accent: '#a3e635' },
       { value: 'secondary_ability', accent: '#84cc16' },
@@ -49,6 +63,7 @@ export const GEAR_AFFIX_FILTER_GROUPS = Object.freeze([
   },
   {
     key: 'survival',
+    rowSize: 3,
     items: [
       { value: 'hp', accent: '#4ade80' },
       { value: 'final_dmg_reduction', accent: '#4ade80' },
@@ -64,12 +79,39 @@ export function getGearAffixModifierIds(
   return new Set(getGearDefinitionSelectionAffixRows(definition, t).map(row => row.modifierId));
 }
 
+function hasDisplayedAttribute(
+  definition: GearDefinition,
+  filterId: string,
+  operation: 'flat' | 'percent',
+): boolean {
+  return definition.traits.some(trait => {
+    const display = trait.display;
+    return (
+      display.kind === 'modifier' &&
+      display.modifier.kind === 'attribute' &&
+      display.modifier.operation === operation &&
+      normalizeEquipmentAttributeId(display.modifier.attribute) === filterId
+    );
+  });
+}
+
+export function gearMatchesAttributeFilter(
+  definition: GearDefinition,
+  filterIds: readonly string[],
+): boolean {
+  return filterIds.every(filterId => hasDisplayedAttribute(definition, filterId, 'flat'));
+}
+
 export function gearMatchesAffixFilter(
   definition: GearDefinition,
   filterId: string,
   t: (key: string, named?: Record<string, unknown>) => string,
 ): boolean {
-  return filterId === 'ALL' || getGearAffixModifierIds(definition, t).has(filterId);
+  if (filterId === 'ALL') return true;
+  if (filterId === 'primary_ability' || filterId === 'secondary_ability') {
+    return hasDisplayedAttribute(definition, filterId, 'percent');
+  }
+  return getGearAffixModifierIds(definition, t).has(filterId);
 }
 
 export function gearMatchesOperatorAttributes(

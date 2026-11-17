@@ -2222,14 +2222,24 @@
       "all": "全部职业"
     },
     "equipmentDialog": {
+      "filters": "筛选",
+      "allFilters": "全部条件",
+      "clearFilters": "重置",
+      "clearAllFilters": "清空全部筛选",
+      "removeFilter": "移除筛选：{label}",
+      "levelFilter": "等级",
       "allCategories": "全部分类",
-      "gearSetFilter": "套装筛选",
-      "clearGearSetFilter": "清除套装筛选",
+      "gearSetFilter": "套装",
       "gearSetMaxLevel": "最高 Lv{level}",
       "allLevels": "全部等级",
+      "allAttributes": "全部属性",
       "allAffixes": "全部词条",
-      "affixFilter": "词条筛选",
-      "clearAffixFilter": "清除词条筛选",
+      "attributeFilter": "属性",
+      "affixGroup": "词条",
+      "percentAffixFilters": {
+        "primary_ability": "主能力%",
+        "secondary_ability": "副能力%"
+      },
       "affixFilters": {
         "arts_dmg": "法术伤害加成",
         "cryo_electric_dmg_bonus": "寒冷 / 电磁伤害加成",
@@ -2257,9 +2267,7 @@
       "setBonusTitle": "套组效果",
       "setBonusEquipped": "已装备：{count}/{required}",
       "searchPlaceholder": "搜索装备名称...",
-      "title": "选择装备 - {slot}",
-      "uncategorized": "未分类",
-      "unequipTooltip": "卸下当前装备"
+      "title": "选择装备 - {slot}"
     },
     "equipmentSlot": {
       "accessory1": "配件 1",
@@ -2311,13 +2319,10 @@
       "setBonusActive": "已激活套装效果"
     },
     "weaponDialog": {
-      "empty": "没有找到匹配的武器",
       "equipped": "已装备",
       "fullPotentialActive": "满潜效果",
       "fullPotentialHint": "按住 {key} 查看满潜效果",
-      "searchPlaceholder": "搜索武器名称...",
-      "title": "选择武器",
-      "unequipTooltip": "卸下当前武器"
+      "searchPlaceholder": "搜索武器名称..."
     }
   },
   "actionLibrary": {
@@ -2335,7 +2340,6 @@
     },
     "hints": {
       "noRefineNonGold": "非金色装备无精锻",
-      "adjustOperatorStatus": "调整属性、武器与装备套装；影响时间轴模拟结果",
       "clickOrDrag": "点击选中技能 / 拖出后放到时间轴"
     },
     "tabs": {

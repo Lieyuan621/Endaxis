@@ -2222,14 +2222,24 @@
       "all": "All Classes"
     },
     "equipmentDialog": {
+      "filters": "Filters",
+      "allFilters": "All filters",
+      "clearFilters": "Reset",
+      "clearAllFilters": "Clear all filters",
+      "removeFilter": "Remove filter: {label}",
+      "levelFilter": "Level",
       "allCategories": "All Categories",
-      "gearSetFilter": "Set filter",
-      "clearGearSetFilter": "Clear set filter",
+      "gearSetFilter": "Set",
       "gearSetMaxLevel": "Up to Lv{level}",
       "allLevels": "All Levels",
+      "allAttributes": "All Attributes",
       "allAffixes": "All Affixes",
-      "affixFilter": "Affix filter",
-      "clearAffixFilter": "Clear affix filter",
+      "attributeFilter": "Attributes",
+      "affixGroup": "Affixes",
+      "percentAffixFilters": {
+        "primary_ability": "Primary Ability%",
+        "secondary_ability": "Secondary Ability%"
+      },
       "affixFilters": {
         "arts_dmg": "Arts DMG Bonus",
         "cryo_electric_dmg_bonus": "Cryo / Electric DMG Bonus",
@@ -2257,9 +2267,7 @@
       "setBonusTitle": "Set Bonus",
       "setBonusEquipped": "Equipped: {count}/{required}",
       "searchPlaceholder": "Search equipment name...",
-      "title": "Select Equipment - {slot}",
-      "uncategorized": "Uncategorized",
-      "unequipTooltip": "Unequip current item"
+      "title": "Select Equipment - {slot}"
     },
     "equipmentSlot": {
       "accessory1": "Accessory 1",
@@ -2311,13 +2319,10 @@
       "setBonusActive": "Set bonus active"
     },
     "weaponDialog": {
-      "empty": "No matching weapon found",
       "equipped": "Equipped",
       "fullPotentialActive": "Full potential",
       "fullPotentialHint": "Hold {key} to preview full potential",
-      "searchPlaceholder": "Search weapon name...",
-      "title": "Select Weapon",
-      "unequipTooltip": "Unequip current weapon"
+      "searchPlaceholder": "Search weapon name..."
     }
   },
   "actionLibrary": {
@@ -2335,7 +2340,6 @@
     },
     "hints": {
       "noRefineNonGold": "No Artificing on non-gold gear",
-      "adjustOperatorStatus": "Tune attributes, weapons, and gear sets; changes affect timeline simulation",
       "clickOrDrag": "Click to select / Drag out then place on the timeline"
     },
     "tabs": {

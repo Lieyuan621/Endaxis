@@ -6,10 +6,11 @@ import { EaTooltip, EaMinusIcon, EaPlusIcon } from '@/design-system';
  * 组件沿用旧版干员编辑器的布局与节点交互，但只读取 Next 的 Build 投影；所有修改都通过
  * `change` 事件交给父层持久化。这里不访问旧 Store，也不会为定义尚未提供的详情补造文本。
  */
-import { EaButton, EaDialog, EaDialogActions, EaFilterChip } from '../../../design-system/index';
+import { EaButton, EaDialogActions, EaFilterChip } from '../../../design-system/index';
 import { computed } from 'vue';
 import type { Modifier } from '@popperjs/core/index.d.ts';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
+import BuildDialogSurface from './BuildDialogSurface.vue';
 import OperatorAvatar from '../../components/OperatorAvatar.vue';
 import { useI18n } from 'vue-i18n';
 import './armoryDialog.css';
@@ -105,6 +106,7 @@ const SKILL_ORDER = PLAYER_SKILL_INPUTS;
 
 const props = defineProps<{
   visible: boolean;
+  embedded?: boolean;
   operator: OperatorInstanceViewModel | null;
   customDefinition?: OperatorDefinition;
   buildAttributes?: OperatorPanelAttributes | null;
@@ -338,14 +340,13 @@ function maxOut(): void {
 </script>
 
 <template>
-  <InputRegionBoundary label="operator-build" :active="visible" modal>
-    <EaDialog
-      :model-value="visible"
+  <InputRegionBoundary label="operator-build" :active="visible && !embedded" :modal="!embedded">
+    <BuildDialogSurface
+      :visible="visible"
+      :embedded="embedded"
       width="760px"
-      append-to-body
-      align-center
-      class="armory-dialog next-armory-dialog"
-      @update:model-value="emit('update:visible', $event)"
+      panel-class="armory-dialog next-armory-dialog operator-build-dialog"
+      @update:visible="emit('update:visible', $event)"
     >
       <template v-if="operator && definition">
         <div class="layout">
@@ -383,22 +384,7 @@ function maxOut(): void {
                 <span class="tag">{{ getGameClassName(definition.role, locale) }}</span>
                 <span class="tag">{{ getGameWeaponTypeName(definition.weaponType, locale) }}</span>
               </div>
-              <div class="level-display">
-                <span class="level-num">{{ operator.level }}</span>
-                <span class="level-text">{{ t('armory.common.level') }}</span>
-              </div>
-              <div class="row row-actions">
-                <EaButton
-                  size="sm"
-                  type="button"
-                  :disabled="!canPromote"
-                  :style="operator.promoted ? { borderColor: rarityColor, color: rarityColor } : {}"
-                  @click="togglePromotion"
-                >
-                  {{ promotionLabel() }}
-                </EaButton>
-              </div>
-              <div v-if="potentialCount > 0" class="row">
+              <div v-if="potentialCount > 0" class="row potential-row">
                 <span class="section-label">{{ t('armory.common.potential') }}</span>
                 <div class="diamonds">
                   <EaTooltip
@@ -433,21 +419,37 @@ function maxOut(): void {
             </div>
           </div>
 
-          <div class="level-selector">
-            <EaFilterChip
+          <div class="build-progression-bar">
+            <div class="level-display">
+              <span class="level-num">{{ operator.level }}</span>
+              <span class="level-text">{{ t('armory.common.level') }}</span>
+            </div>
+            <div class="level-selector">
+              <EaFilterChip
+                size="sm"
+                v-for="level in LEVELS"
+                :key="level"
+                class="level-btn"
+                :accent="rarityColor"
+                :selected="operator.level === level"
+                @click="handleLevelChange(level)"
+              >
+                Lv{{ level }}
+              </EaFilterChip>
+            </div>
+            <EaButton
               size="sm"
-              v-for="level in LEVELS"
-              :key="level"
-              class="level-btn"
-              :accent="rarityColor"
-              :selected="operator.level === level"
-              @click="handleLevelChange(level)"
+              type="button"
+              class="build-progression-bar__action"
+              :disabled="!canPromote"
+              :style="operator.promoted ? { borderColor: rarityColor, color: rarityColor } : {}"
+              @click="togglePromotion"
             >
-              Lv{{ level }}
-            </EaFilterChip>
+              {{ promotionLabel() }}
+            </EaButton>
           </div>
 
-          <div class="section">
+          <div class="section operator-skills-section">
             <div class="section-title">{{ t('armory.common.skills') }}</div>
             <div class="skills-row">
               <div v-for="source in availableSkillSources" :key="source" class="skill-card">
@@ -506,7 +508,7 @@ function maxOut(): void {
             </div>
           </div>
 
-          <div class="section">
+          <div class="section operator-talents-section">
             <div class="section-title">{{ t('armory.common.talents') }}</div>
             <div class="talent-row">
               <div class="talent-info">
@@ -634,7 +636,7 @@ function maxOut(): void {
           </EaButton>
         </EaDialogActions>
       </template>
-    </EaDialog>
+    </BuildDialogSurface>
   </InputRegionBoundary>
 </template>
 
@@ -648,9 +650,6 @@ function maxOut(): void {
   display: flex;
   gap: 20px;
   align-items: flex-start;
-}
-.row-actions {
-  flex-wrap: wrap;
 }
 .portrait-frame {
   --armory-pad: var(--ea-keycap-bg, #1a1a1e);

@@ -7,9 +7,10 @@ import { resolveImage } from '../../imageResources';
  * 它不读取存档或旧 store，也不直接写入持久化数据。词条名称、当前数值和逐词条实例编辑均从
  * 当前 GearDefinition 投影。装备定义编辑待图数据和模拟流程稳定后重新设计。
  */
-import { EaButton, EaDialog, EaDialogActions, EaFilterChip } from '../../../design-system/index';
+import { EaButton, EaDialogActions, EaFilterChip } from '../../../design-system/index';
 import { computed, ref, watch } from 'vue';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
+import BuildDialogSurface from './BuildDialogSurface.vue';
 import { useI18n } from 'vue-i18n';
 import './armoryDialog.css';
 import {
@@ -35,6 +36,7 @@ import GearInstanceDialog from './GearInstanceDialog.vue';
 
 const props = defineProps<{
   visible: boolean;
+  embedded?: boolean;
   gears: GearSlotsViewModel;
   gearSetNames: Readonly<Record<string, string>>;
   gearSetTextSlugs: Readonly<Record<string, string>>;
@@ -204,14 +206,13 @@ const activeSetBonuses = computed(() => {
 </script>
 
 <template>
-  <InputRegionBoundary label="gear-build" :active="visible" modal>
-    <EaDialog
-      :model-value="visible"
+  <InputRegionBoundary label="gear-build" :active="visible && !embedded" :modal="!embedded">
+    <BuildDialogSurface
+      :visible="visible"
+      :embedded="embedded"
       width="980px"
-      append-to-body
-      align-center
-      class="gear-loadout-dialog next-armory-dialog"
-      @update:model-value="emit('update:visible', $event)"
+      panel-class="gear-loadout-dialog next-armory-dialog"
+      @update:visible="emit('update:visible', $event)"
     >
       <div class="loadout-layout">
         <div
@@ -257,37 +258,39 @@ const activeSetBonuses = computed(() => {
               </div>
             </div>
 
-            <div class="refine-row">
-              <span class="refine-label">
-                {{ translate('timelineGrid.equipmentDialog.refine', 'Refine') }}
-              </span>
-              <span v-if="slot.levels.length > 0" class="refine-mixed">
-                {{ slot.levels.join('/') }}
-              </span>
-              <div v-if="slot.isArtificable" class="refine-buttons">
-                <EaFilterChip
-                  size="sm"
-                  v-for="level in refineLevels(slot.build)"
-                  :key="`${slot.slot}-${level}`"
-                  class="refine-btn"
-                  @click="setUniformLevel(slot.build, level)"
-                  :selected="isUniformLevel(slot.build, level)"
-                >
-                  {{
-                    level === 0
-                      ? translate('timelineGrid.equipmentDialog.refineBase', 'Base')
-                      : level
-                  }}
-                </EaFilterChip>
+            <div class="gear-card-controls">
+              <div class="refine-row">
+                <span class="refine-label">
+                  {{ translate('timelineGrid.equipmentDialog.refine', 'Refine') }}
+                </span>
+                <span v-if="slot.levels.length > 0" class="refine-mixed">
+                  {{ slot.levels.join('/') }}
+                </span>
+                <div v-if="slot.isArtificable" class="refine-buttons">
+                  <EaFilterChip
+                    size="sm"
+                    v-for="level in refineLevels(slot.build)"
+                    :key="`${slot.slot}-${level}`"
+                    class="refine-btn"
+                    @click="setUniformLevel(slot.build, level)"
+                    :selected="isUniformLevel(slot.build, level)"
+                  >
+                    {{
+                      level === 0
+                        ? translate('timelineGrid.equipmentDialog.refineBase', 'Base')
+                        : level
+                    }}
+                  </EaFilterChip>
+                </div>
+                <span v-else class="refine-locked">
+                  {{ t('actionLibrary.hints.noRefineNonGold') }}
+                </span>
               </div>
-              <span v-else class="refine-locked">
-                {{ t('actionLibrary.hints.noRefineNonGold') }}
-              </span>
-            </div>
-            <div class="slot-actions">
-              <EaButton size="sm" type="button" @click="editingSlot = slot.slot">
-                {{ t('actionLibrary.buttons.editItem') }}
-              </EaButton>
+              <div class="slot-actions">
+                <EaButton size="sm" type="button" @click="editingSlot = slot.slot">
+                  {{ t('actionLibrary.buttons.editItem') }}
+                </EaButton>
+              </div>
             </div>
           </template>
 
@@ -343,7 +346,7 @@ const activeSetBonuses = computed(() => {
           </EaButton>
         </EaDialogActions>
       </template>
-    </EaDialog>
+    </BuildDialogSurface>
   </InputRegionBoundary>
 </template>
 
@@ -378,8 +381,19 @@ const activeSetBonuses = computed(() => {
 
 .slot-actions {
   display: flex;
-  align-self: flex-end;
   gap: 8px;
+}
+
+.gear-card-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.gear-card-controls .slot-actions {
+  margin-left: auto;
 }
 
 .slot-head {
@@ -475,7 +489,6 @@ const activeSetBonuses = computed(() => {
 
 .refine-row {
   min-height: 28px;
-  margin-top: auto;
   gap: 10px;
 }
 

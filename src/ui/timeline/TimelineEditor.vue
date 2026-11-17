@@ -576,6 +576,10 @@ const AssetWorkspace = defineLazyDialog(() => import('../asset-workspace/AssetWo
 const GearLoadoutBuildDialog = defineLazyDialog(
   () => import('./library/GearLoadoutBuildDialog.vue'),
 );
+const LoadoutBuildDialog = defineLazyDialog(() => import('./library/LoadoutBuildDialog.vue'));
+type LoadoutBuildTab = 'operator' | 'weapon' | 'gear';
+const showLoadoutBuildDialog = ref(false);
+const activeLoadoutBuildTab = ref<LoadoutBuildTab>('operator');
 const OperatorPanelDialog = defineLazyDialog(() => import('./library/OperatorPanelDialog.vue'));
 const OperatorPresetsDialog = defineLazyDialog(() => import('./library/OperatorPresetsDialog.vue'));
 const showOperatorPresets = ref(false);
@@ -623,6 +627,9 @@ const { t, te, locale } = useI18n({ useScope: 'global' });
 const { appearance, setAppearance } = useAppearance();
 const environment = useRuntimeEnvironment();
 const mobileLayout = computed(() => resolveTimelineLayout(environment.value) === 'mobile');
+watch(mobileLayout, isMobile => {
+  if (isMobile) showLoadoutBuildDialog.value = false;
+});
 const TIMELINE_TRACK_HEADER_WIDTH = 180;
 const TIMELINE_RULER_HEIGHT = 60;
 const TIMELINE_SCROLLBAR_SIZE = 12;
@@ -1636,6 +1643,13 @@ function openTrackOperator(trackIndex: TrackIndex, event?: MouseEvent): void {
 
 async function openOperatorDialog(trackIndex?: TrackIndex): Promise<void> {
   await openAfterGameDataLoad('operators', () => openOperatorDialogNow(trackIndex));
+}
+
+function openLoadoutBuildDialog(trackIndex: TrackIndex): void {
+  if (configurationReadOnly.value || scenario.value.tracks[trackIndex]?.operator == null) return;
+  selectTrack(trackIndex);
+  activeLoadoutBuildTab.value = 'operator';
+  showLoadoutBuildDialog.value = true;
 }
 
 async function openWeaponDialog(trackIndex?: TrackIndex): Promise<void> {
@@ -6048,6 +6062,7 @@ function resetTransientScenarioUi(): void {
   showOperatorBuildDialog.value = false;
   showWeaponBuildDialog.value = false;
   showGearBuildDialog.value = false;
+  showLoadoutBuildDialog.value = false;
   resetDialogVisible.value = false;
 }
 
@@ -7320,38 +7335,6 @@ function setMobileGuideFrame(frame: number | null): void {
             </h3>
           </div>
           <div class="library-header__divider"></div>
-          <div class="library-section-title library-section-title--status">
-            <strong>{{ t('actionLibrary.section.operatorStatusAdjust') }}</strong>
-            <span>{{ t('actionLibrary.hints.adjustOperatorStatus') }}</span>
-          </div>
-          <div class="sidebar-tabs" role="group">
-            <EaButton
-              variant="ghost"
-              type="button"
-              :disabled="configurationReadOnly || selectedLoadoutModel.operator === null"
-              @click="showOperatorBuildDialog = true"
-            >
-              {{ t('timeline.operatorTab') }}
-            </EaButton>
-            <EaButton
-              variant="ghost"
-              type="button"
-              :disabled="configurationReadOnly || selectedLoadoutModel.weapon === null"
-              @click="showWeaponBuildDialog = true"
-            >
-              {{ t('timeline.weaponTab') }}
-            </EaButton>
-            <EaButton
-              variant="ghost"
-              type="button"
-              :disabled="
-                configurationReadOnly || !Object.values(selectedLoadoutModel.gears).some(Boolean)
-              "
-              @click="showGearBuildDialog = true"
-            >
-              {{ t('timeline.gearTab') }}
-            </EaButton>
-          </div>
         </div>
         <div class="skill-section">
           <div class="library-section-title">
@@ -7990,6 +7973,7 @@ function setMobileGuideFrame(frame: number | null): void {
                 @reorder-drop="dropTrackOrder($event, track.trackIndex)"
                 @stats="openPanelDialog(track.trackIndex)"
                 @presets="openOperatorPresets(track.trackIndex)"
+                @adjust="openLoadoutBuildDialog(track.trackIndex)"
                 @weapon="openWeaponDialog(track.trackIndex)"
                 @gear="openGearDialog(track.trackIndex, $event)"
                 @update-initial-ultimate-energy="
@@ -9199,6 +9183,47 @@ function setMobileGuideFrame(frame: number | null): void {
     @update:visible="showWeaponBuildDialog = $event"
     @change="updateWeaponBuild"
   />
+  <LoadoutBuildDialog
+    v-if="showLoadoutBuildDialog && !mobileLayout"
+    :visible="showLoadoutBuildDialog"
+    :active-tab="activeLoadoutBuildTab"
+    :operator-name="operatorName(selectedTrackModel.operatorSlug)"
+    :has-weapon="selectedLoadoutModel.weapon !== null"
+    :has-gear="Object.values(selectedLoadoutModel.gears).some(Boolean)"
+    @update:visible="showLoadoutBuildDialog = $event"
+    @update:active-tab="activeLoadoutBuildTab = $event"
+  >
+    <template #operator>
+      <OperatorBuildDialog
+        embedded
+        :visible="showLoadoutBuildDialog"
+        :operator="selectedLoadoutModel.operator"
+        :custom-definition="selectedOperatorCustomDefinition"
+        :build-attributes="operatorBuildPanel?.attributes ?? null"
+        @change="updateOperatorBuild"
+      />
+    </template>
+    <template #weapon>
+      <WeaponBuildDialog
+        v-if="selectedLoadoutModel.weapon !== null"
+        embedded
+        :visible="showLoadoutBuildDialog"
+        :weapon="selectedLoadoutModel.weapon"
+        @change="updateWeaponBuild"
+      />
+    </template>
+    <template #gear>
+      <GearLoadoutBuildDialog
+        v-if="Object.values(selectedLoadoutModel.gears).some(Boolean)"
+        embedded
+        :visible="showLoadoutBuildDialog"
+        :gears="selectedLoadoutModel.gears"
+        :gear-set-names="gearSetNames"
+        :gear-set-text-slugs="gearSetTextSlugs"
+        @update="updateGearBuild"
+      />
+    </template>
+  </LoadoutBuildDialog>
   <OperatorPresetsDialog
     v-if="showOperatorPresets"
     :track="scenario.tracks[selectedTrack]"
@@ -9642,20 +9667,6 @@ button:disabled {
   white-space: nowrap;
 }
 
-.sidebar-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.sidebar-tabs button {
-  min-width: 0;
-  padding: 0 4px;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 .library-section-title {
   display: flex;
   flex-direction: column;
@@ -9671,10 +9682,6 @@ button:disabled {
 .library-section-title span {
   color: var(--ea-fg-secondary);
   font-size: 10px;
-}
-
-.library-section-title--status {
-  margin-top: 12px;
 }
 
 .skill-section {

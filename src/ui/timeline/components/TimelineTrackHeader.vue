@@ -44,6 +44,7 @@ const emit = defineEmits<{
   reorderDrop: [event: DragEvent];
   stats: [];
   presets: [];
+  adjust: [];
   weapon: [];
   gear: [slot: LoadoutGearSlot];
   updateInitialUltimateEnergy: [value: number];
@@ -235,7 +236,7 @@ function startReorder(event: DragEvent): void {
           <span class="ea-compact-number-popover__unit">/{{ track.maxUltimateEnergy ?? '?' }}</span>
         </div>
       </EaPopover>
-      <span class="operator-row" :class="{ 'has-header-actions': track.operatorSlug }">
+      <span class="operator-row">
         <button
           v-if="track.operatorSlug"
           type="button"
@@ -283,43 +284,62 @@ function startReorder(event: DragEvent): void {
             compact
           />
         </span>
+        <EaButton
+          v-if="track.operatorSlug"
+          variant="ghost"
+          size="sm"
+          icon-only
+          type="button"
+          class="loadout-adjust-button"
+          :disabled="readOnly"
+          :title="$t('actionLibrary.section.operatorStatusAdjust')"
+          :aria-label="$t('actionLibrary.section.operatorStatusAdjust')"
+          @click.stop="$emit('adjust')"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 6h5m4 0h9M3 12h11m4 0h3M3 18h2m4 0h12" />
+            <circle cx="10" cy="6" r="2" />
+            <circle cx="16" cy="12" r="2" />
+            <circle cx="7" cy="18" r="2" />
+          </svg>
+        </EaButton>
       </span>
-      <EaButton
-        variant="ghost"
-        size="sm"
-        icon-only
-        v-if="track.operatorSlug"
-        type="button"
-        class="stat-detail-button"
-        :disabled="!statDetailsAvailable"
-        :aria-label="$t('statDetail.button')"
-        :title="
-          statDetailsError
-            ? $t('timeline.panel.unavailable', { reason: statDetailsError })
-            : $t('statDetail.button')
-        "
-        @click.stop="$emit('stats')"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <rect x="3" y="13" width="4" height="7" />
-          <rect x="10" y="8" width="4" height="12" />
-          <rect x="17" y="4" width="4" height="16" />
-        </svg>
-      </EaButton>
-      <EaButton
-        v-if="track.operatorSlug"
-        variant="ghost"
-        size="sm"
-        icon-only
-        type="button"
-        class="operator-presets-button"
-        :disabled="readOnly"
-        :title="$t('operatorPresets.title')"
-        :aria-label="$t('operatorPresets.title')"
-        @click.stop="$emit('presets')"
-      >
-        <img :src="publicAssetUrl('/icons/icon_equipmake.webp')" alt="" />
-      </EaButton>
+      <span v-if="track.operatorSlug" class="track-header-actions">
+        <EaButton
+          variant="ghost"
+          size="sm"
+          icon-only
+          type="button"
+          class="operator-presets-button"
+          :disabled="readOnly"
+          :title="$t('operatorPresets.title')"
+          :aria-label="$t('operatorPresets.title')"
+          @click.stop="$emit('presets')"
+        >
+          <img :src="publicAssetUrl('/icons/icon_equipmake.webp')" alt="" />
+        </EaButton>
+        <EaButton
+          variant="ghost"
+          size="sm"
+          icon-only
+          type="button"
+          class="stat-detail-button"
+          :disabled="!statDetailsAvailable"
+          :aria-label="$t('statDetail.button')"
+          :title="
+            statDetailsError
+              ? $t('timeline.panel.unavailable', { reason: statDetailsError })
+              : $t('statDetail.button')
+          "
+          @click.stop="$emit('stats')"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="13" width="4" height="7" />
+            <rect x="10" y="8" width="4" height="12" />
+            <rect x="17" y="4" width="4" height="16" />
+          </svg>
+        </EaButton>
+      </span>
       <span v-if="track.operatorSlug" class="loadout-row">
         <button
           type="button"
@@ -476,12 +496,12 @@ function startReorder(event: DragEvent): void {
 .initial-gauge-button.ea-button {
   position: absolute;
   z-index: 3;
-  top: calc(50% - 54px);
+  top: max(2px, calc(50% - 54px));
   left: 6px;
   min-width: 0;
   height: 18px;
-  gap: 3px;
-  padding: 0 5px;
+  gap: 2px;
+  padding: 0 2px;
   border: 1px solid var(--ea-keycap-border, var(--ea-border-strong));
   border-radius: 0;
   color: #7dd3fc;
@@ -521,11 +541,6 @@ function startReorder(event: DragEvent): void {
   align-items: center;
   color: inherit;
   text-align: left;
-}
-
-.operator-row.has-header-actions {
-  box-sizing: border-box;
-  padding-right: 28px;
 }
 
 .avatar-shell {
@@ -662,16 +677,27 @@ function startReorder(event: DragEvent): void {
   padding-right: 20px;
 }
 
-.stat-detail-button.ea-button {
+.track-header-actions {
   position: absolute;
-  top: calc(50% - 27px);
+  z-index: 2;
+  top: max(2px, calc(50% - 54px));
   right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.track-header-actions .ea-button {
+  flex: 0 0 20px;
   width: 20px;
   height: 18px;
   min-width: 20px;
   padding: 1px;
-  border: 1px solid color-mix(in srgb, var(--ea-gold) 40%, transparent);
   border-radius: 0;
+}
+
+.stat-detail-button.ea-button {
+  border: 1px solid color-mix(in srgb, var(--ea-gold) 40%, transparent);
   background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
   color: var(--ea-gold);
 }
@@ -728,15 +754,7 @@ function startReorder(event: DragEvent): void {
 }
 
 .operator-presets-button.ea-button {
-  position: absolute;
-  top: calc(50% - 49px);
-  right: 6px;
-  width: 20px;
-  height: 18px;
-  min-width: 20px;
-  padding: 1px;
   border: 1px solid var(--ea-keycap-border, var(--ea-border-strong));
-  border-radius: 0;
   color: var(--ea-icon-muted);
 }
 
@@ -748,6 +766,33 @@ function startReorder(event: DragEvent): void {
 }
 
 .operator-presets-button:hover:not(:disabled) {
+  border-color: var(--ea-gold);
+  color: var(--ea-gold);
+}
+
+.loadout-adjust-button.ea-button {
+  flex: 0 0 20px;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 4px;
+  padding: 1px;
+  border: 1px solid var(--ea-keycap-border, var(--ea-border-strong));
+  border-radius: 0;
+  color: var(--ea-icon-muted);
+}
+
+.loadout-adjust-button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.loadout-adjust-button:hover:not(:disabled) {
   border-color: var(--ea-gold);
   color: var(--ea-gold);
 }
