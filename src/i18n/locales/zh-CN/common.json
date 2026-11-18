@@ -678,7 +678,8 @@
         "connection": "连线编辑"
       },
       "sectionDurationBarColor": "持续时间染色",
-      "coloredDurationBarsEnable": "启用染色",
+      "coloredDurationBarsEnable": "启用",
+      "durationBarColorDetails": "参数",
       "durationBarSaturation": "饱和度",
       "durationBarLightness": "明度",
       "durationBarColorSources": "按来源",
@@ -710,6 +711,7 @@
       "shortcutsLabel": "快捷键",
       "shortcutsTooltip": "查看全部快捷键",
       "languageTooltip": "切换语言",
+      "languageLabel": "语言",
       "loadTooltip": "导入 .json 项目文件",
       "receiveTooltip": "粘贴数据码导入项目",
       "resetTooltip": "选择重置范围"

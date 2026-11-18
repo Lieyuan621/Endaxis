@@ -382,7 +382,7 @@ function clearFilter(kind: FilterKind, value?: string): void {
       class="char-selector-dialog gear-selector-dialog"
       scroll-mode="body"
       append-to-body
-      @close="emit('close')"
+      @closed="emit('close')"
     >
       <div class="selector-header gear-selector-header">
         <EaTabs

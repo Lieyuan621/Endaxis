@@ -675,10 +675,11 @@
       "sectionViewOperators": "Operators",
       "editTools": {
         "boxSelect": "Box select",
-        "connection": "Connection editing"
+        "connection": "Connections"
       },
       "sectionDurationBarColor": "Duration bar tint",
-      "coloredDurationBarsEnable": "Enable tinting",
+      "coloredDurationBarsEnable": "Enable",
+      "durationBarColorDetails": "Details",
       "durationBarSaturation": "Saturation",
       "durationBarLightness": "Lightness",
       "durationBarColorSources": "By source",
@@ -710,6 +711,7 @@
       "shortcutsLabel": "Shortcuts",
       "shortcutsTooltip": "View all keyboard shortcuts",
       "languageTooltip": "Language",
+      "languageLabel": "Language",
       "loadTooltip": "Import .json project file",
       "receiveTooltip": "Paste data code to import project",
       "resetTooltip": "Choose reset scope"

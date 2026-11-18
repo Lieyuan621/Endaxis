@@ -38,6 +38,16 @@ test('通用弹窗标题与关闭按钮对齐，装备 Tab 支持键盘切换', 
   );
 });
 
+test('装备选择弹窗在退出过渡结束后卸载', async ({ page }) => {
+  await openPerlica(page);
+  await page.locator('.track-header .gear-slot').first().click();
+  const dialog = page.locator('.gear-selector-dialog');
+  await expect(dialog).toBeVisible();
+  await dialog.locator('.el-dialog__headerbtn').evaluate(button => (button as HTMLElement).click());
+  await expect(page.locator('.dialog-fade-leave-active .gear-selector-dialog')).toHaveCount(1);
+  await expect(dialog).toHaveCount(0);
+});
+
 test('干员资料与天赋并排、技能独占一行且窄屏不溢出', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 878 });
   await page.goto('/timeline');

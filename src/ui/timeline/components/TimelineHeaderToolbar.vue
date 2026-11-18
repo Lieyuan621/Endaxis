@@ -675,9 +675,9 @@ onBeforeUnmount(() => {
         v-model:visible="displayMenuOpen"
         placement="bottom-end"
         trigger="click"
-        :width="280"
+        :width="320"
         :show-arrow="true"
-        popper-class="header-more-popper"
+        popper-class="header-more-popper timeline-display-popper"
       >
         <template #reference>
           <EaButton
@@ -696,51 +696,51 @@ onBeforeUnmount(() => {
           </EaButton>
         </template>
         <div class="timeline-display-menu" data-keyboard-shortcut-scope="overlay">
-          <EaButton
-            type="button"
-            class="timeline-display-guide"
-            @click="$emit('toggleCursorGuide')"
-            :pressed="cursorGuideEnabled"
-          >
-            <svg
-              class="timeline-display-guide__icon"
-              viewBox="0 0 24 24"
-              width="22"
-              height="22"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 3v18M3 12h18" />
-              <path d="M7 6H5v2M17 6h2v2M7 18H5v-2M17 18h2v-2" />
-              <circle cx="12" cy="12" r="2.5" />
-            </svg>
-            <span class="timeline-display-guide__content"
-              ><strong>{{ t('display.cursorGuide') }}</strong
-              ><small>Ctrl + G</small></span
-            >
-            <svg
-              class="timeline-display-guide__check"
-              viewBox="0 0 16 16"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              aria-hidden="true"
-            >
-              <rect x="1" y="1" width="14" height="14" rx="2" />
-              <polyline v-if="cursorGuideEnabled" points="3,8 6.5,11.5 13,4.5" />
-            </svg>
-          </EaButton>
           <div class="timeline-display-scroll">
             <section class="timeline-display-section">
               <h4 class="timeline-display-section__title">
                 {{ t('timeline.header.sectionViewBehavior') }}
               </h4>
+              <EaButton
+                type="button"
+                class="timeline-display-guide"
+                @click="$emit('toggleCursorGuide')"
+                :pressed="cursorGuideEnabled"
+              >
+                <svg
+                  class="timeline-display-guide__icon"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 3v18M3 12h18" />
+                  <path d="M7 6H5v2M17 6h2v2M7 18H5v-2M17 18h2v-2" />
+                  <circle cx="12" cy="12" r="2.5" />
+                </svg>
+                <span class="timeline-display-guide__content"
+                  ><strong>{{ t('display.cursorGuide') }}</strong
+                  ><small>Ctrl + G</small></span
+                >
+                <svg
+                  class="timeline-display-guide__check"
+                  viewBox="0 0 16 16"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  aria-hidden="true"
+                >
+                  <rect x="1" y="1" width="14" height="14" rx="2" />
+                  <polyline v-if="cursorGuideEnabled" points="3,8 6.5,11.5 13,4.5" />
+                </svg>
+              </EaButton>
               <div class="header-more-mode-row">
                 <span>{{ t('display.buffLayout') }}</span>
                 <div class="header-more-segment" role="group" :aria-label="t('display.buffLayout')">
@@ -828,7 +828,7 @@ onBeforeUnmount(() => {
         v-model:visible="moreMenuOpen"
         placement="bottom-end"
         trigger="click"
-        :width="280"
+        :width="320"
         :show-arrow="true"
         popper-class="header-more-popper"
       >
@@ -854,10 +854,10 @@ onBeforeUnmount(() => {
             <h4 class="header-more-section__title">
               {{ t('timeline.header.sectionEditTools') }}
             </h4>
-            <div class="header-more-checklist header-more-checklist--grid">
+            <div class="header-tools-list">
               <EaButton
                 type="button"
-                class="header-more-check-row header-more-tool-row"
+                class="header-more-tool-tile"
                 @click="$emit('toggleBoxSelect')"
                 :pressed="boxSelectEnabled"
               >
@@ -879,23 +879,10 @@ onBeforeUnmount(() => {
                 <span class="header-more-tool-row__label">{{
                   t('timeline.header.editTools.boxSelect')
                 }}</span>
-                <svg
-                  class="header-more-tool-row__check"
-                  viewBox="0 0 16 16"
-                  width="13"
-                  height="13"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  aria-hidden="true"
-                >
-                  <rect x="1" y="1" width="14" height="14" rx="2" />
-                  <polyline v-if="boxSelectEnabled" points="3,8 6.5,11.5 13,4.5" />
-                </svg>
               </EaButton>
               <EaButton
                 type="button"
-                class="header-more-check-row header-more-tool-row"
+                class="header-more-tool-tile"
                 @click="$emit('toggleConnectionTool')"
                 :pressed="connectionToolEnabled"
               >
@@ -918,19 +905,6 @@ onBeforeUnmount(() => {
                 <span class="header-more-tool-row__label">{{
                   t('timeline.header.editTools.connection')
                 }}</span>
-                <svg
-                  class="header-more-tool-row__check"
-                  viewBox="0 0 16 16"
-                  width="13"
-                  height="13"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  aria-hidden="true"
-                >
-                  <rect x="1" y="1" width="14" height="14" rx="2" />
-                  <polyline v-if="connectionToolEnabled" points="3,8 6.5,11.5 13,4.5" />
-                </svg>
               </EaButton>
             </div>
           </section>
@@ -948,8 +922,32 @@ onBeforeUnmount(() => {
             </EaButton>
           </section>
           <section class="header-more-section">
-            <h4 class="header-more-section__title">{{ labels.preferences }}</h4>
-            <div class="header-more-mode-row">
+            <div class="header-tools-heading">
+              <h4 class="header-more-section__title">{{ labels.preferences }}</h4>
+              <EaButton
+                size="sm"
+                icon-only
+                type="button"
+                class="header-more-action header-more-action--icon"
+                :title="t('timeline.header.shortcutsTooltip')"
+                :aria-label="labels.shortcuts"
+                @click="$emit('shortcuts')"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M6 8h2m2 0h2m2 0h2m2 0h1M6 12h2m2 0h2m2 0h2M7 16h10" />
+                </svg>
+              </EaButton>
+            </div>
+            <div class="header-more-mode-row header-more-pref-row">
               <span>{{ labels.keycapMode }}</span>
               <div class="header-more-segment" role="group" :aria-label="labels.keycapMode">
                 <EaButton
@@ -964,7 +962,13 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div class="header-more-pref-row">
-              <div class="header-more-locale" :title="t('timeline.header.languageTooltip')">
+              <span class="header-more-pref-label">{{ t('timeline.header.languageLabel') }}</span>
+              <div
+                class="header-more-locale"
+                role="group"
+                :aria-label="t('timeline.header.languageLabel')"
+                :title="t('timeline.header.languageTooltip')"
+              >
                 <EaButton
                   size="sm"
                   v-for="localeId in localeIds"
@@ -978,31 +982,9 @@ onBeforeUnmount(() => {
                   {{ localeLabel(localeId) }}
                 </EaButton>
               </div>
-              <EaButton
-                size="sm"
-                icon-only
-                class="header-more-action header-more-action--icon"
-                type="button"
-                :title="t('timeline.header.shortcutsTooltip')"
-                :aria-label="labels.shortcuts"
-                @click="$emit('shortcuts')"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  aria-hidden="true"
-                >
-                  <rect x="2" y="4" width="20" height="16" rx="2" />
-                  <path d="M6 8h2m2 0h2m2 0h2m2 0h1M6 12h2m2 0h2m2 0h2M7 16h10" />
-                </svg>
-              </EaButton>
             </div>
-            <div class="header-more-pref-row header-more-pref-row--appearance">
-              <span class="header-more-appearance__label">{{ labels.appearance }}</span>
+            <div class="header-more-pref-row">
+              <span class="header-more-pref-label">{{ labels.appearance }}</span>
               <div class="header-more-appearance">
                 <EaButton
                   size="sm"
@@ -1255,6 +1237,68 @@ onBeforeUnmount(() => {
   letter-spacing: 0.5px;
 }
 
+.header-tools-panel .header-more-section__title {
+  color: var(--ea-fg-muted);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.header-tools-panel .header-more-section + .header-more-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top-color: var(--ea-border-soft);
+}
+
+.header-tools-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.header-more-tool-tile.ea-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  justify-content: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border: 1px solid var(--ea-border-soft);
+  background: var(--ea-fill-soft);
+  color: var(--ea-fg-secondary);
+  font-size: 11px;
+}
+
+.header-more-tool-tile .header-more-tool-row__label {
+  flex: 0 1 auto;
+  text-align: left;
+}
+
+.header-more-tool-tile.ea-button[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--ea-gold) 45%, var(--ea-border-soft));
+  background: color-mix(in srgb, var(--ea-gold) 5%, var(--ea-fill-soft));
+  color: var(--ea-fg);
+  box-shadow: none;
+}
+
+.header-more-tool-tile.ea-button[aria-pressed='true'] .header-more-tool-row__icon {
+  color: var(--ea-gold);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .header-more-tool-tile.ea-button:hover:not(:disabled) {
+    border-color: var(--ea-border-strong);
+    background: var(--ea-hover-fill);
+  }
+}
+
+.header-tools-heading {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .header-project-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1297,20 +1341,17 @@ onBeforeUnmount(() => {
 
 .header-more-locale {
   display: inline-grid;
-  grid-template-columns: repeat(3, 1.75rem);
+  grid-template-columns: repeat(2, 28px);
   gap: 4px;
 }
 
-.header-more-pref-row .header-more-action--icon {
-  margin-left: auto;
-}
-
-.header-more-pref-row--appearance {
+.header-tools-panel .header-more-pref-row {
+  min-height: 28px;
   justify-content: space-between;
-  margin-top: 2px;
+  flex-wrap: nowrap;
 }
 
-.header-more-appearance__label {
+.header-more-pref-label {
   color: var(--ea-fg-muted);
   font-size: 11px;
   font-weight: 600;
@@ -1333,7 +1374,14 @@ onBeforeUnmount(() => {
   --ea-control-fg: var(--ea-fg-secondary);
 }
 
-.header-more-appearance__btn.ea-button,
+.header-more-appearance__btn.ea-button {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+}
+
 .header-more-action--icon.ea-button {
   width: 28px;
   min-width: 28px;
@@ -1357,25 +1405,25 @@ onBeforeUnmount(() => {
   --ea-control-pressed-border-hover: var(--ea-border-strong);
   --ea-control-pressed-bg-hover: var(--ea-hover-fill);
   --ea-control-pressed-fg-hover: var(--ea-fg);
-  width: calc(100% - 4px);
-  min-height: 48px;
+  width: 100%;
+  min-height: 32px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 0 4px 10px 0;
-  padding: 8px 10px;
-  border: 1px solid var(--ea-border);
-  border-radius: 4px;
-  background: var(--ea-fill-soft);
+  gap: 8px;
+  margin: 0;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--ea-fg-secondary);
   text-align: left;
   cursor: pointer;
 }
 
 .timeline-display-guide.ea-button[aria-pressed='true'] {
-  border-color: var(--ea-border);
-  background: var(--ea-fill-soft);
+  border-color: transparent;
+  background: transparent;
   color: var(--ea-fg-secondary);
   box-shadow: none;
 }
@@ -1383,7 +1431,7 @@ onBeforeUnmount(() => {
 @media (hover: hover) and (pointer: fine) {
   .timeline-display-guide:hover,
   .timeline-display-guide.ea-button[aria-pressed='true']:hover:not(:disabled) {
-    border-color: var(--ea-border-strong);
+    border-color: transparent;
     background: var(--ea-hover-fill);
     color: var(--ea-fg);
     box-shadow: none;
@@ -1411,8 +1459,8 @@ onBeforeUnmount(() => {
   min-width: 0;
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 8px;
 }
 
 .timeline-display-guide__content strong {
@@ -1421,6 +1469,7 @@ onBeforeUnmount(() => {
 }
 
 .timeline-display-guide__content small {
+  margin-left: auto;
   color: var(--ea-fg-faint);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
@@ -1482,5 +1531,20 @@ onBeforeUnmount(() => {
 <style>
 .header-more-popper {
   padding: 12px;
+}
+
+.timeline-display-popper .timeline-display-menu .header-more-checklist--grid {
+  gap: 2px 6px;
+  border: 0;
+  background: transparent;
+}
+
+.timeline-display-popper
+  .timeline-display-menu
+  .header-more-checklist--grid
+  .header-more-check-row {
+  min-height: 28px;
+  padding: 4px 6px;
+  border: 0;
 }
 </style>
