@@ -2531,6 +2531,11 @@ export const imageCatalog: readonly {
     category: 'icons',
   },
   {
+    ref: 'endaxis:icons/icon_attribute_big_agi',
+    path: '/icons/icon_attribute_big_agi.webp',
+    category: 'icons',
+  },
+  {
     ref: 'endaxis:icons/icon_attribute_criticalDamageIncrease',
     path: '/icons/icon_attribute_criticalDamageIncrease.webp',
     category: 'icons',
@@ -3058,6 +3063,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:icons/icon_burst_fusion_pulse',
     path: '/icons/icon_burst_fusion_pulse.webp',
+    category: 'icons',
+  },
+  {
+    ref: 'endaxis:icons/icon_combo_skill_cooldown',
+    path: '/icons/icon_combo_skill_cooldown.webp',
     category: 'icons',
   },
   {

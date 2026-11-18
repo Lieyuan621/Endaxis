@@ -117,6 +117,7 @@ import TimelineCornerToolbar from './components/TimelineCornerToolbar.vue';
 import TimelineCursorGuide, {
   type TimelineCursorGaugeRow,
 } from './components/TimelineCursorGuide.vue';
+import TimelineDodgeIcon from './interaction/TimelineDodgeIcon.vue';
 import TimelineHeaderToolbar from './components/TimelineHeaderToolbar.vue';
 import TimelineRuler from './components/TimelineRuler.vue';
 import type { TimelineShareTrack } from './components/TimelineShareCard.vue';
@@ -2510,6 +2511,7 @@ async function openAssetWorkspace(): Promise<void> {
 const globalEffectChoices = computed(() => [
   ...gameDataRepository.getGlobalEffects().map(definition => ({
     id: definition.id,
+    icon: resolveImage(definition.buff.presentation?.icon),
     name: globalEffectDisplayName(definition.id) ?? definition.id,
     description:
       definition.descriptionKey !== undefined && te(definition.descriptionKey)
@@ -2519,6 +2521,7 @@ const globalEffectChoices = computed(() => [
   })),
   ...Object.values(projectDefinitionLibrary.value.globalEffects ?? {}).map(template => ({
     id: template.id,
+    icon: resolveImage(template.definition.buff.presentation?.icon),
     name: template.name,
     description: undefined,
     custom: true,
@@ -8292,13 +8295,7 @@ function setMobileGuideFrame(frame: number | null): void {
                     )
                   "
                 >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M4 15c4-7 9-8 16-6M13 5l7 4-5 6" />
-                    <path
-                      v-if="marker.mode.kind === 'perfectDodge'"
-                      d="m6 4 .8 2.2L9 7l-2.2.8L6 10l-.8-2.2L3 7l2.2-.8Z"
-                    />
-                  </svg>
+                  <TimelineDodgeIcon class="dodge-marker__icon" :kind="marker.mode.kind" />
                   <span v-if="dodgeMarkerWarningIds.has(marker.id)" class="dodge-marker__warning">{{
                     dodgeMarkerResults.get(marker.id)?.status === 'warning' ? '!' : '?'
                   }}</span>
@@ -10347,14 +10344,11 @@ button:disabled {
   color: #ffe69a;
 }
 
-.dodge-marker > svg {
+.dodge-marker__icon {
   width: 18px;
   height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .dodge-marker__pointer {

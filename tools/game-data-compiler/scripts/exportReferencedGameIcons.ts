@@ -34,6 +34,18 @@ const PUBLIC_ICON_SOURCE_ALIASES = new Map<
   { readonly sourceName: string; readonly preferredPathSegment: string }
 >([
   [
+    '/icons/icon_attribute_agi.webp',
+    { sourceName: 'icon_attribute_agi.png', preferredPathSegment: '/attributeicon/' },
+  ],
+  [
+    '/icons/icon_attribute_big_agi.webp',
+    { sourceName: 'icon_attribute_big_agi.png', preferredPathSegment: '/attributeicon/' },
+  ],
+  [
+    '/icons/icon_combo_skill_cooldown.webp',
+    { sourceName: 'icon_combo_skill_cooldown.png', preferredPathSegment: '/attributeicon/' },
+  ],
+  [
     '/icons/icon_battle_affix_combo.webp',
     { sourceName: 'icon_term_ba_combo.png', preferredPathSegment: '/termicon/' },
   ],

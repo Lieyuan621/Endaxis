@@ -11,6 +11,7 @@ export interface GlobalEffectChoice {
   readonly id: string;
   readonly name: string;
   readonly description?: string;
+  readonly icon?: string;
   readonly custom: boolean;
 }
 
@@ -76,8 +77,11 @@ function removeEffectReference(effectId: string) {
           :disabled="readOnly"
           @click="toggleEffect(effect.id)"
         >
-          <strong>{{ effect.name }}</strong
-          ><small v-if="effect.description">{{ effect.description }}</small>
+          <img v-if="effect.icon" class="preset-icon" :src="effect.icon" alt="" />
+          <span class="preset-copy">
+            <strong>{{ effect.name }}</strong>
+            <small v-if="effect.description">{{ effect.description }}</small>
+          </span>
         </EaButton>
         <div v-if="referenceFor(effect.id)" class="effect-actions">
           <EaButton
@@ -179,21 +183,34 @@ function removeEffectReference(effectId: string) {
 }
 .preset-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 160px));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
   gap: 8px;
-  max-width: none;
   align-items: start;
 }
 .preset-tile {
-  height: 64px;
-  min-height: 64px;
+  height: auto;
+  min-height: 68px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  text-align: start;
   white-space: normal;
   background: var(--ea-keycap-bg);
   border: 1px solid var(--ea-border-strong);
+}
+.preset-icon {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  object-fit: contain;
+}
+.preset-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  overflow-wrap: anywhere;
 }
 .preset-tile strong {
   font-size: 13px;

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import TimelineDodgeIcon from './TimelineDodgeIcon.vue';
+
 defineProps<{
   kind:
     | 'inherit'
@@ -16,7 +18,12 @@ defineProps<{
 
 <template>
   <span class="menu-icon" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none">
+    <TimelineDodgeIcon
+      v-if="kind === 'dodge' || kind === 'perfectDodge'"
+      class="dodge-icon"
+      :kind="kind"
+    />
+    <svg v-else viewBox="0 0 24 24" fill="none">
       <template v-if="kind === 'inherit'">
         <path d="M4 11a8 8 0 1 1 2.5 5.7M4 5v6h6" />
       </template>
@@ -42,10 +49,6 @@ defineProps<{
       <template v-else-if="kind === 'consumable'">
         <path d="M9 3h6M10 3v5l-3.5 5.5A4 4 0 0 0 10 20h4a4 4 0 0 0 3.5-6.5L14 8V3M8 14h8" />
       </template>
-      <template v-else-if="kind === 'dodge' || kind === 'perfectDodge'">
-        <path d="M4 17c3-7 8-10 16-8m-6-4 6 4-5 5" />
-        <path v-if="kind === 'perfectDodge'" d="m5 3 .8 2.2L8 6l-2.2.8L5 9l-.8-2.2L2 6l2.2-.8Z" />
-      </template>
     </svg>
   </span>
 </template>
@@ -59,9 +62,13 @@ defineProps<{
   flex: 0 0 20px;
 }
 
+.dodge-icon,
 svg {
   width: 16px;
   height: 16px;
+}
+
+svg {
   stroke: currentColor;
   stroke-width: 1.8;
   stroke-linecap: round;

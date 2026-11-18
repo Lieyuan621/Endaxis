@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../imageResources';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton, EaNumberInput } from '@/design-system';
@@ -16,6 +17,7 @@ interface ModifierChoice {
   attribute: string;
   slot: CombatBuffDefinitionAttributeModifier['slot'];
   nameKey: string;
+  icon?: string;
   percentage: boolean;
   reduction?: boolean;
 }
@@ -24,6 +26,7 @@ const choices: readonly ModifierChoice[] = [
     attribute: 'ComboSkillCooldownScalar',
     slot: 'finalMultiplier',
     nameKey: 'statDetail.comboCdReduction',
+    icon: resolveImage('endaxis:icons/icon_combo_skill_cooldown'),
     percentage: true,
     reduction: true,
   },
@@ -122,6 +125,7 @@ function removeModifier(modifier: CombatBuffDefinitionAttributeModifier) {
   <div v-if="summary" class="modifier-summary">
     <p v-if="modifiers.length === 0" class="empty-hint">{{ t('globalConfig.customEmpty') }}</p>
     <div v-for="(modifier, index) in modifiers" :key="index" class="summary-row">
+      <img v-if="choiceFor(modifier)?.icon" :src="choiceFor(modifier)?.icon" alt="" />
       <span>{{
         choiceFor(modifier)
           ? t(choiceFor(modifier)!.nameKey)
@@ -139,6 +143,7 @@ function removeModifier(modifier: CombatBuffDefinitionAttributeModifier) {
         :class="{ 'has-entries': group.entries.length }"
       >
         <div class="stat-block-head">
+          <img v-if="group.icon" :src="group.icon" alt="" />
           <span>{{ t(group.nameKey) }}</span>
           <EaButton size="sm" :disabled="readOnly" @click="addModifier(group)">{{
             t('globalConfig.addEntry')
@@ -185,6 +190,12 @@ function removeModifier(modifier: CombatBuffDefinitionAttributeModifier) {
   </template>
 </template>
 <style scoped>
+.summary-row > img,
+.stat-block-head > img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
 .modifier-summary {
   display: flex;
   flex-direction: column;
