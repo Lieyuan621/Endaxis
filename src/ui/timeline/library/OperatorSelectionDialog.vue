@@ -8,7 +8,7 @@ import SelectionIconFrame from './SelectionIconFrame.vue';
  */
 import {
   EaButton,
-  EaDeleteIcon,
+  EaUnequipIcon,
   EaDialog,
   EaFilterChip,
   EaInput,
@@ -32,6 +32,7 @@ import { matchesLocalizedNameSearch } from './localizedNameSearch';
 const props = defineProps<{
   visible: boolean;
   operators: readonly OperatorDefinition[];
+  selectedSlug: string | null;
   selectedSlugs: readonly string[];
 }>();
 
@@ -158,12 +159,13 @@ function clear(): void {
             style="width: 180px"
           />
           <EaButton
-            variant="danger"
+            class="selector-unequip-button"
             type="button"
+            :disabled="selectedSlug === null"
             :title="t('timelineGrid.operatorDialog.clearTrack')"
             @click="clear"
           >
-            <EaDeleteIcon />
+            <EaUnequipIcon />
             {{ t('common.unequip') }}
           </EaButton>
         </div>

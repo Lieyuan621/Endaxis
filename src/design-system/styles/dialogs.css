@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   max-width: calc(100vw - 32px);
+  padding: 0;
   border: 1px solid var(--ea-dialog-border);
   border-radius: var(--ea-control-radius);
   background: var(--ea-dialog-bg);
@@ -60,7 +61,7 @@
 }
 
 .ea-dialog .el-dialog__headerbtn {
-  top: 8px;
+  top: 12px;
   right: 8px;
 }
 

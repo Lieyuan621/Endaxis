@@ -241,6 +241,12 @@ export function useTimelineLoadoutEditor(options: TimelineLoadoutEditorOptions) 
     gearDialogTarget.value = { trackIndex, slot };
   }
 
+  function switchGearDialogSlot(slot: TrackGearSlot): void {
+    const target = gearDialogTarget.value;
+    if (target === null || target.slot === slot) return;
+    gearDialogTarget.value = { ...target, slot };
+  }
+
   function selectGear(slug: string, artificingTier: number): void {
     const target = gearDialogTarget.value;
     if (target === null) return;
@@ -343,6 +349,7 @@ export function useTimelineLoadoutEditor(options: TimelineLoadoutEditorOptions) 
     selectWeapon,
     clearWeapon,
     openGearDialog,
+    switchGearDialogSlot,
     selectGear,
     clearGear,
     changeGearRefineTier,

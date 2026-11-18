@@ -1575,6 +1575,7 @@ const {
   selectWeapon,
   clearWeapon,
   openGearDialog: openGearDialogNow,
+  switchGearDialogSlot,
   selectGear,
   clearGear,
   changeGearRefineTier,
@@ -9111,6 +9112,7 @@ function setMobileGuideFrame(frame: number | null): void {
     v-if="operatorDialogTrack !== null"
     :visible="operatorDialogTrack !== null"
     :operators="editorGameDataRepository.getOperators()"
+    :selected-slug="viewModel.tracks[operatorDialogTrack]?.operatorSlug ?? null"
     :selected-slugs="
       viewModel.tracks.flatMap(track => (track.operatorSlug === null ? [] : [track.operatorSlug]))
     "
@@ -9155,6 +9157,7 @@ function setMobileGuideFrame(frame: number | null): void {
     @close="gearDialogTarget = null"
     @select="selectGear"
     @clear="clearGear"
+    @change-slot="switchGearDialogSlot"
     @change-refine-tier="changeGearRefineTier"
   />
   <ExecutionTraceDialog

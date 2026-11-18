@@ -3,18 +3,19 @@ import SelectionIconFrame from './SelectionIconFrame.vue';
 import { resolveImage } from '../../imageResources';
 import { EaTooltip } from '@/design-system';
 /**
- * Next 时间轴的单槽装备选择器。父层决定正在编辑的轨道和槽位，并负责把选择、卸下及精锻档位写回项目；
+ * Next 时间轴的装备选择器。父层决定正在编辑的轨道和槽位，并负责把选择、卸下及精锻档位写回项目；
  * 本组件只复刻旧版装备选择弹窗的定义浏览流程，不读取旧 store，也不把适配状态写入存档。
  */
 import {
   EaButton,
   EaChevronIcon,
-  EaDeleteIcon,
   EaDialog,
   EaFilterChip,
   EaInput,
+  EaTabs,
+  EaUnequipIcon,
 } from '../../../design-system/index';
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import { Search } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
@@ -26,6 +27,7 @@ import {
 import { getEquipmentLevelColor } from '../../progression';
 import type { GearDefinition } from '../../../core/game-data/equipmentDefinition';
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
+import type { TrackGearSlot } from '../interaction/timelineDocumentCommands';
 import EquipmentSelectionTooltip from './EquipmentSelectionTooltip.vue';
 import './selectionDialog.css';
 import { getGearDefinitionSelectionAffixRows } from './gearAffixPresentation';
@@ -57,7 +59,7 @@ const props = withDefaults(
     /** 已装备 Build 的精锻档位；未装备时默认预选满精锻，与旧版一致。 */
     selectedArtificingLevels?: readonly number[];
     /** 当前槽位由父层指定，两个配件槽仍保留各自的稳定身份。 */
-    activeSlotKey?: string;
+    activeSlotKey?: TrackGearSlot;
     operatorDefinition?: OperatorDefinition | null;
     gearSetNames?: Readonly<Record<string, string>>;
     labels: GearSelectionDialogLabels;
@@ -73,6 +75,7 @@ const emit = defineEmits<{
   close: [];
   select: [slug: string, artificingTier: number];
   clear: [];
+  'change-slot': [slot: TrackGearSlot];
   'change-refine-tier': [tier: number];
 }>();
 
@@ -104,12 +107,27 @@ const attributeFilters = ref<string[]>([]);
 const affixFilter = ref('ALL');
 const levelFilter = ref<number | 'ALL'>('ALL');
 const refineTier = ref(3);
+const rosterScrollContainer = ref<HTMLElement | null>(null);
 const refineTiers = [0, 1, 2, 3] as const;
+const gearSlots: readonly TrackGearSlot[] = ['armor', 'gloves', 'accessory1', 'accessory2'];
+const slotTabs = computed(() =>
+  gearSlots.map(slot => ({
+    value: slot,
+    label: t(`timelineGrid.equipmentSlot.${slot}`),
+    id: `gear-selector-tab-${slot}`,
+    panelId: 'gear-selector-list',
+  })),
+);
 const NO_SET_FILTER = '__NO_SET__';
 
+const currentArtificingTier = computed(() => {
+  if (props.selectedArtificingLevels.length === 0) return 0;
+  return Math.max(0, Math.min(3, Math.max(...props.selectedArtificingLevels)));
+});
+
 watch(
-  () => [props.visible, props.activeSlotKey, props.selectedSlug] as const,
-  ([visible]) => {
+  () => props.visible,
+  visible => {
     if (!visible) return;
     searchQuery.value = '';
     gearSetFilter.value = 'ALL';
@@ -119,12 +137,36 @@ watch(
     levelFilter.value = 'ALL';
     refineTier.value = props.selectedSlug === null ? 3 : currentArtificingTier.value;
   },
+  { immediate: true },
 );
 
-const currentArtificingTier = computed(() => {
-  if (props.selectedArtificingLevels.length === 0) return 0;
-  return Math.max(0, Math.min(3, Math.max(...props.selectedArtificingLevels)));
-});
+watch(
+  () => props.activeSlotKey,
+  () => {
+    if (!props.visible) return;
+    searchQuery.value = '';
+    void nextTick(() => rosterScrollContainer.value?.scrollTo(0, 0));
+    if (
+      gearSetFilter.value !== 'ALL' &&
+      gearSetFilter.value !== NO_SET_FILTER &&
+      !gearSets.value.some(set => set.slug === gearSetFilter.value)
+    ) {
+      gearSetFilter.value = 'ALL';
+    }
+    if (levelFilter.value !== 'ALL' && !levels.value.includes(levelFilter.value)) {
+      levelFilter.value = 'ALL';
+    }
+  },
+);
+
+watch(
+  () => [props.activeSlotKey, props.selectedSlug, currentArtificingTier.value] as const,
+  () => {
+    if (props.visible) {
+      refineTier.value = props.selectedSlug === null ? 3 : currentArtificingTier.value;
+    }
+  },
+);
 
 const gearItems = computed<readonly GearListItem[]>(() =>
   props.gears.map(definition => {
@@ -295,12 +337,15 @@ function setRefineTier(tier: number): void {
 
 function selectGear(slug: string): void {
   emit('select', slug, refineTier.value);
-  emit('close');
 }
 
 function clearGear(): void {
   emit('clear');
-  emit('close');
+}
+
+function selectSlot(value: string): void {
+  const slot = gearSlots.find(item => item === value);
+  if (slot) emit('change-slot', slot);
 }
 
 function clearAllFilters(): void {
@@ -340,6 +385,13 @@ function clearFilter(kind: FilterKind, value?: string): void {
       @close="emit('close')"
     >
       <div class="selector-header gear-selector-header">
+        <EaTabs
+          :tabs="slotTabs"
+          :model-value="activeSlotKey"
+          :label="t('timelineGrid.equipmentSlot.equipment')"
+          size="sm"
+          @update:model-value="selectSlot"
+        />
         <div class="header-left-group">
           <EaInput
             v-model="searchQuery"
@@ -349,13 +401,13 @@ function clearFilter(kind: FilterKind, value?: string): void {
             style="width: 180px"
           />
           <EaButton
-            variant="danger"
+            class="selector-unequip-button"
             type="button"
             :disabled="selectedSlug === null"
             :title="labels.unequip"
             @click="clearGear"
           >
-            <EaDeleteIcon />
+            <EaUnequipIcon />
             {{ labels.unequip }}
           </EaButton>
           <div class="equipment-tier-picker">
@@ -559,7 +611,13 @@ function clearFilter(kind: FilterKind, value?: string): void {
         </div>
       </div>
 
-      <div class="roster-scroll-container">
+      <div
+        id="gear-selector-list"
+        ref="rosterScrollContainer"
+        class="roster-scroll-container"
+        role="tabpanel"
+        :aria-labelledby="`gear-selector-tab-${activeSlotKey}`"
+      >
         <template v-for="group in groups" :key="group.level">
           <div class="rarity-header" :style="{ color: getEquipmentLevelColor(group.level) }">
             <span class="rarity-label">Lv{{ group.level }}</span>
@@ -579,6 +637,7 @@ function clearFilter(kind: FilterKind, value?: string): void {
                 placement="top-start"
                 effect="dark"
                 :show-after="160"
+                :enterable="false"
                 popper-class="equipment-selection-preview-popper"
               >
                 <template #content>

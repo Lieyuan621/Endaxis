@@ -771,29 +771,31 @@ function startReorder(event: DragEvent): void {
 }
 
 .loadout-adjust-button.ea-button {
-  flex: 0 0 20px;
-  width: 20px;
-  min-width: 20px;
-  height: 20px;
+  flex: 0 0 22px;
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
   margin-left: 4px;
-  padding: 1px;
-  border: 1px solid var(--ea-keycap-border, var(--ea-border-strong));
+  padding: 2px;
+  border: 1px solid color-mix(in srgb, var(--ea-icon-strong) 48%, transparent);
   border-radius: 0;
-  color: var(--ea-icon-muted);
+  background: color-mix(in srgb, var(--ea-icon-strong) 8%, transparent);
+  color: var(--ea-icon-strong);
 }
 
 .loadout-adjust-button svg {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.8;
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .loadout-adjust-button:hover:not(:disabled) {
   border-color: var(--ea-gold);
+  background: color-mix(in srgb, var(--ea-gold) 14%, transparent);
   color: var(--ea-gold);
 }
 

@@ -22,6 +22,30 @@
   gap: 12px;
 }
 
+.selector-unequip-button.ea-button {
+  --selector-unequip-border: var(--ea-number-input-border, var(--ea-control-border));
+  min-width: 76px;
+  border: 0;
+  background: var(--ea-number-input-bg, var(--ea-fill-input));
+  box-shadow: 0 0 0 1px var(--selector-unequip-border) inset;
+  color: var(--ea-control-fg);
+  font-weight: 600;
+}
+
+.selector-unequip-button.ea-button:focus-visible {
+  box-shadow:
+    var(--ea-focus-ring),
+    0 0 0 1px var(--selector-unequip-border) inset;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .selector-unequip-button.ea-button:hover:not(:disabled) {
+    --selector-unequip-border: color-mix(in srgb, var(--ea-danger) 55%, var(--ea-control-border));
+    background: var(--ea-number-input-bg, var(--ea-fill-input));
+    color: var(--ea-danger-soft);
+  }
+}
+
 .element-filters,
 .class-filters {
   flex-wrap: wrap;

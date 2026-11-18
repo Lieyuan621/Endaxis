@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { EaDialog } from '../../../design-system/index';
+import { EaDialog, EaTabs } from '../../../design-system/index';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import { useI18n } from 'vue-i18n';
 
@@ -26,13 +26,24 @@ const tabs = [
   { key: 'gear', labelKey: 'timeline.gearTab' },
 ] as const;
 
+const tabItems = computed(() =>
+  tabs.map(tab => ({
+    value: tab.key,
+    label: t(tab.labelKey),
+    disabled: tabDisabled(tab.key),
+    id: `loadout-build-tab-${tab.key}`,
+    panelId: `loadout-build-panel-${tab.key}`,
+  })),
+);
+
 function tabDisabled(tab: LoadoutBuildTab): boolean {
   return (tab === 'weapon' && !props.hasWeapon) || (tab === 'gear' && !props.hasGear);
 }
 
 const currentTab = computed(() => (tabDisabled(props.activeTab) ? 'operator' : props.activeTab));
 
-function selectTab(tab: LoadoutBuildTab, event: MouseEvent): void {
+function selectTab(tab: string, event: MouseEvent | KeyboardEvent): void {
+  if (tab !== 'operator' && tab !== 'weapon' && tab !== 'gear') return;
   if (tabDisabled(tab) || tab === currentTab.value) return;
   (event.currentTarget as HTMLElement).closest('.el-dialog__body')?.scrollTo(0, 0);
   emit('update:activeTab', tab);
@@ -52,26 +63,12 @@ function selectTab(tab: LoadoutBuildTab, event: MouseEvent): void {
       @update:model-value="emit('update:visible', $event)"
     >
       <div class="loadout-build-tabbar">
-        <div
-          class="loadout-build-tabs"
-          role="tablist"
-          :aria-label="t('actionLibrary.section.operatorStatusAdjust')"
-        >
-          <button
-            v-for="tab in tabs"
-            :id="`loadout-build-tab-${tab.key}`"
-            :key="tab.key"
-            type="button"
-            role="tab"
-            :disabled="tabDisabled(tab.key)"
-            :aria-selected="currentTab === tab.key"
-            :aria-controls="`loadout-build-panel-${tab.key}`"
-            :class="{ 'is-active': currentTab === tab.key }"
-            @click="selectTab(tab.key, $event)"
-          >
-            {{ t(tab.labelKey) }}
-          </button>
-        </div>
+        <EaTabs
+          :tabs="tabItems"
+          :model-value="currentTab"
+          :label="t('actionLibrary.section.operatorStatusAdjust')"
+          @update:model-value="selectTab"
+        />
       </div>
       <section
         :id="`loadout-build-panel-${currentTab}`"
@@ -127,61 +124,6 @@ function selectTab(tab: LoadoutBuildTab, event: MouseEvent): void {
   margin: calc(-1 * var(--ea-dialog-padding-y)) 0 12px;
   padding: var(--ea-dialog-padding-y) 0 4px;
   background: var(--ea-dialog-bg);
-}
-
-.loadout-build-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  width: 100%;
-  gap: 2px;
-  padding: 2px;
-  border: 1px solid var(--ea-border-soft);
-  background: var(--ea-fill-soft);
-  box-sizing: border-box;
-}
-
-.loadout-build-tabs button {
-  min-width: 0;
-  min-height: 34px;
-  padding: 5px 14px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--ea-fg-secondary);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color 140ms ease,
-    color 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.loadout-build-tabs button:hover:not(:disabled) {
-  color: var(--ea-fg);
-  background: var(--ea-fill-muted);
-}
-
-.loadout-build-tabs button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.loadout-build-tabs button.is-active {
-  color: var(--ea-gold);
-  background: color-mix(in srgb, var(--ea-gold) 6%, var(--ea-dialog-bg));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ea-gold) 30%, transparent);
-}
-
-.loadout-build-tabs button.is-active:hover {
-  color: var(--ea-gold);
-  background: color-mix(in srgb, var(--ea-gold) 9%, var(--ea-dialog-bg));
-}
-
-.loadout-build-tabs button:focus-visible {
-  outline: 1px solid var(--ea-gold);
-  outline-offset: -2px;
 }
 
 .loadout-build-content--operator,

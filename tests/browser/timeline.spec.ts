@@ -1,6 +1,43 @@
 import { readFile } from 'node:fs/promises';
 import { test, expect, box, openPerlica, startPlacement, placeBasicGroup } from './helpers';
 
+test('通用弹窗标题与关闭按钮对齐，装备 Tab 支持键盘切换', async ({ page }) => {
+  await openPerlica(page);
+  await page.locator('.track-header .operator-presets-button').first().click();
+  const presetsDialog = page.locator('.operator-presets-dialog');
+  await expect(presetsDialog).toBeVisible();
+  const measureHeader = async (selector: string) =>
+    page.locator(selector).evaluate(dialog => {
+      const dialogBox = dialog.getBoundingClientRect();
+      const headerBox = dialog.querySelector('.el-dialog__header')!.getBoundingClientRect();
+      const titleBox = dialog.querySelector('.el-dialog__title')!.getBoundingClientRect();
+      const closeBox = dialog.querySelector('.el-dialog__headerbtn')!.getBoundingClientRect();
+      return {
+        topInset: headerBox.top - dialogBox.top,
+        centerGap: Math.abs(
+          titleBox.top + titleBox.height / 2 - closeBox.top - closeBox.height / 2,
+        ),
+      };
+    });
+  const presetsHeader = await measureHeader('.operator-presets-dialog');
+  expect(presetsHeader.topInset).toBeLessThan(2);
+  expect(presetsHeader.centerGap).toBeLessThan(2);
+  await presetsDialog.locator('.el-dialog__headerbtn').click();
+
+  await page.locator('.track-header .gear-slot').first().click();
+  const gearDialog = page.locator('.gear-selector-dialog');
+  await expect(gearDialog).toBeVisible();
+  const gearHeader = await measureHeader('.gear-selector-dialog');
+  expect(gearHeader.topInset).toBeLessThan(2);
+  expect(gearHeader.centerGap).toBeLessThan(2);
+  await gearDialog.getByRole('tab', { name: '护甲' }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(gearDialog.getByRole('tab', { name: '护手' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+});
+
 test('干员资料与天赋并排、技能独占一行且窄屏不溢出', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 878 });
   await page.goto('/timeline');
@@ -33,13 +70,24 @@ test('状态调整窗口在常见桌面高度下容纳四件装备与套装说�
   const weaponPicker = page.locator('.char-selector-dialog');
   await expect(weaponPicker).toBeVisible();
   await weaponPicker.locator('.roster-card').first().click();
-  for (let index = 0; index < 4; index++) {
-    await page.locator('.track-header .gear-slot').nth(index).click();
-    const gearPicker = page.locator('.gear-selector-dialog');
-    await expect(gearPicker).toBeVisible();
+  await page.locator('.track-header .gear-slot').first().click();
+  const gearPicker = page.locator('.gear-selector-dialog');
+  await expect(gearPicker).toBeVisible();
+  for (const slot of ['护甲', '护手', '配件 1', '配件 2']) {
+    await gearPicker.getByRole('tab', { name: slot }).click();
+    await expect(gearPicker.getByRole('tab', { name: slot })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
     await gearPicker.locator('.roster-card').first().click();
-    await expect(gearPicker).not.toBeVisible();
+    await expect(gearPicker).toBeVisible();
   }
+  await gearPicker.getByRole('tab', { name: '护甲' }).click();
+  await gearPicker.getByRole('button', { name: '卸下' }).click();
+  await expect(gearPicker).toBeVisible();
+  await gearPicker.locator('.roster-card').first().click();
+  await gearPicker.locator('.el-dialog__headerbtn').click();
+  await expect(gearPicker).not.toBeVisible();
   await page.locator('.track-header .loadout-adjust-button').first().click();
   const buildDialog = page.locator('.loadout-build-dialog');
   await buildDialog.getByRole('tab', { name: '装备' }).click();
@@ -119,6 +167,8 @@ test('状态窗口只调整已有配置，武器和装备从时间轴干员栏�
   const gearPicker = page.locator('.gear-selector-dialog');
   await expect(gearPicker).toBeVisible();
   await gearPicker.locator('.roster-card').first().click();
+  await expect(gearPicker).toBeVisible();
+  await gearPicker.locator('.el-dialog__headerbtn').click();
   await entry.click();
   await expect(buildDialog).toBeVisible();
   await buildDialog.getByRole('tab', { name: '装备' }).click();
