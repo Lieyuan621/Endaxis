@@ -1,3 +1,4 @@
+import { parseOperatorSkillGroupValidationOptions } from '../operator/skillGroups.ts';
 import { normalizeNativeTableNumbers } from '../../source/nativeTableNumbers.ts';
 import { ATTRIBUTE_TYPES } from '../../source/attributeModifiers.ts';
 import {
@@ -20,6 +21,7 @@ import {
 
 export interface LocaleIdentities {
   readonly operators: Readonly<Record<string, string>>;
+  readonly equivalentSkillIds: ReadonlySet<string>;
   readonly excludedOperators: ReadonlySet<string>;
   readonly weapons: Readonly<Record<string, string>>;
   readonly gearSets: Readonly<Record<string, string>>;
@@ -108,9 +110,10 @@ const joinDescriptions = (parts: string[]) => parts.filter(Boolean).join('\n').t
 
 export function operatorLocaleIdentities(
   source: unknown,
-): Pick<LocaleIdentities, 'operators' | 'excludedOperators'> {
+): Pick<LocaleIdentities, 'operators' | 'excludedOperators' | 'equivalentSkillIds'> {
   const manifest = requireRecord(source, 'operator manifest');
   const operators: Record<string, string> = {};
+  const equivalentSkillIds = new Set<string>();
   const excludedOperators = new Set<string>();
   for (const value of requireArray(manifest.operators, 'operator manifest.operators')) {
     const row = requireRecord(value, 'operator manifest entry');
@@ -121,12 +124,15 @@ export function operatorLocaleIdentities(
       excludedOperators.add(requireNonEmptyString(id, 'excludedLocaleCharIds string list'));
     const id = requireNonEmptyString(row.charId, 'operator charId');
     if (Object.hasOwn(operators, id)) throw new Error(`duplicate charId: ${id}`);
+    const options = parseOperatorSkillGroupValidationOptions(row, id);
+    for (const skillId of options.simulationEquivalentNativeSkillIds ?? [])
+      equivalentSkillIds.add(skillId);
     operators[id] = requireNonEmptyString(row.slug, 'operator slug');
   }
   for (const id of excludedOperators)
     if (Object.hasOwn(operators, id))
       throw new Error(`cannot exclude a canonical operator charId: ${id}`);
-  return { operators, excludedOperators };
+  return { operators, excludedOperators, equivalentSkillIds };
 }
 
 function effectValues(table: SourceRecord, id: string, context: string): Record<string, number> {
@@ -264,8 +270,11 @@ export function compileGameLocales(
       if (!key || !text(group.name)) continue;
       const context = `${slug} ${key}`;
       const values: Record<string, number> = {};
-      for (const skillId of array(group.skillIdList, context))
-        for (const bundle of bundles(requireNonEmptyString(skillId, context)))
+      const skillIds = array(group.skillIdList, context)
+        .map(id => requireNonEmptyString(id, context))
+        .filter(id => !identities.equivalentSkillIds.has(id));
+      for (const skillId of skillIds)
+        for (const bundle of bundles(skillId))
           addBlackboardEntries(values, bundle.blackboard, context);
       if (group.skillGroupId)
         for (const bundle of bundles(requireNonEmptyString(group.skillGroupId, context))) {
@@ -315,7 +324,7 @@ export function compileGameLocales(
         name: plain(text(group.name), context),
         description: baseDescription,
         details: compileOperatorSkillDetails(
-          array(group.skillIdList, context).map(id => bundles(requireNonEmptyString(id, context))),
+          skillIds.map(bundles),
           texts,
           conditionForms,
           text(group.name),

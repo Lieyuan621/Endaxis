@@ -122,8 +122,20 @@ it('统一候选生成读取本轮身份与精确文本 ID，不读取旧本地�
       CharacterTable: { chr_main: { name: 'Native' } },
       CharacterPotentialTable: {},
       PotentialTalentEffectTable: {},
-      CharGrowthTable: {},
+      CharGrowthTable: {
+        chr_main: {
+          skillGroupMap: {
+            battle: {
+              skillGroupType: 1,
+              name: 'Battle',
+              desc: 'Battle',
+              skillIdList: ['skill', 'alternate'],
+            },
+          },
+        },
+      },
       SkillPatchTable: {
+        alternate: { SkillPatchDataBundle: [{ level: 1, description: 'Alternate member' }] },
         skill: {
           SkillPatchDataBundle: [
             {
@@ -174,7 +186,15 @@ it('统一候选生成读取本轮身份与精确文本 ID，不读取旧本地�
     );
     for (const locale of ['CN', 'EN'])
       await write(`tables/I18nTextTable_${locale}.json`, { '9007199254740993': `${locale} enemy` });
-    await write('operators.json', { operators: [{ slug: 'configured', charId: 'chr_main' }] });
+    await write('operators.json', {
+      operators: [
+        {
+          slug: 'configured',
+          charId: 'chr_main',
+          simulationEquivalentNativeSkillIds: ['alternate'],
+        },
+      ],
+    });
     await write(
       'weapons/a.generated.ts',
       "const graph = { nested: { slug: 'wrong' } }; const definition = {slug:'wpn_test', assetSlug:'weapon-icon'} as const satisfies WeaponDefinition;",
@@ -198,7 +218,9 @@ it('统一候选生成读取本轮身份与精确文本 ID，不读取旧本地�
     await generateGameLocaleCandidate(input);
     const read = async (file: string) =>
       JSON.parse(await fs.readFile(path.join(input.output, file), 'utf8'));
-    expect(await read('zh/operators.json')).toHaveProperty('configured');
+    expect(
+      (await read('zh/operators.json')).configured.combatSkills.battleSkill.details.rows,
+    ).toEqual([{ label: 'Skill', values: ['Bonus 10%'] }]);
     expect(await read('en/enemies.json')).toEqual({
       eny_test: { name: 'EN enemy' },
       wiki_group_test: { name: 'Category' },
