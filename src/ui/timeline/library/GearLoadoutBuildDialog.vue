@@ -9,7 +9,6 @@ import { resolveImage } from '../../imageResources';
  */
 import { EaButton, EaDialogActions, EaFilterChip } from '../../../design-system/index';
 import { computed, ref, watch } from 'vue';
-import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import BuildDialogSurface from './BuildDialogSurface.vue';
 import { useI18n } from 'vue-i18n';
 import './armoryDialog.css';
@@ -206,148 +205,146 @@ const activeSetBonuses = computed(() => {
 </script>
 
 <template>
-  <InputRegionBoundary label="gear-build" :active="visible && !embedded" :modal="!embedded">
-    <BuildDialogSurface
-      :visible="visible"
-      :embedded="embedded"
-      width="980px"
-      panel-class="gear-loadout-dialog next-armory-dialog"
-      @update:visible="emit('update:visible', $event)"
-    >
-      <div class="loadout-layout">
-        <div
-          v-for="slot in slots"
-          :key="slot.slot"
-          class="gear-slot-card"
-          :class="{ 'is-empty': slot.build === null }"
-        >
-          <div class="slot-head">
-            <div class="slot-title">{{ translate(slot.labelKey, slot.fallback) }}</div>
-            <div v-if="slot.build !== null" class="slot-tags">
-              <span
-                class="slot-tag"
-                :style="{ color: slot.levelColor, borderColor: slot.levelColor }"
-              >
-                Lv{{ slot.build.definition.levelRequirement }}
-              </span>
-              <span class="slot-tag">{{ slot.slotTypeName }}</span>
-            </div>
-          </div>
-
-          <template v-if="slot.build !== null">
-            <div class="gear-main">
-              <div class="gear-icon-frame" :style="{ borderColor: slot.levelColor }">
-                <img
-                  :src="resolveImage(slot.build.definition.icon) || DEFAULT_GAME_ICON_PATH"
-                  :alt="slot.name"
-                  class="gear-icon"
-                />
-              </div>
-              <div class="gear-info">
-                <div class="gear-name">{{ slot.name }}</div>
-                <div class="gear-subline">
-                  Lv{{ slot.build.definition.levelRequirement
-                  }}<span v-if="slot.setName"> / {{ slot.setName }}</span>
-                </div>
-                <div v-if="slot.affixRows.length > 0" class="stat-list">
-                  <div v-for="row in slot.affixRows" :key="row.key" class="stat-row">
-                    <span>{{ row.label }}</span>
-                    <strong>{{ row.valueText }}</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="gear-card-controls">
-              <div class="refine-row">
-                <span class="refine-label">
-                  {{ translate('timelineGrid.equipmentDialog.refine', 'Refine') }}
-                </span>
-                <span v-if="slot.levels.length > 0" class="refine-mixed">
-                  {{ slot.levels.join('/') }}
-                </span>
-                <div v-if="slot.isArtificable" class="refine-buttons">
-                  <EaFilterChip
-                    size="sm"
-                    v-for="level in refineLevels(slot.build)"
-                    :key="`${slot.slot}-${level}`"
-                    class="refine-btn"
-                    @click="setUniformLevel(slot.build, level)"
-                    :selected="isUniformLevel(slot.build, level)"
-                  >
-                    {{
-                      level === 0
-                        ? translate('timelineGrid.equipmentDialog.refineBase', 'Base')
-                        : level
-                    }}
-                  </EaFilterChip>
-                </div>
-                <span v-else class="refine-locked">
-                  {{ t('actionLibrary.hints.noRefineNonGold') }}
-                </span>
-              </div>
-              <div class="slot-actions">
-                <EaButton size="sm" type="button" @click="editingSlot = slot.slot">
-                  {{ t('actionLibrary.buttons.editItem') }}
-                </EaButton>
-              </div>
-            </div>
-          </template>
-
-          <div v-else class="empty-slot">
-            {{ translate('actionLibrary.fallback.noEquip', 'No gear equipped') }}
+  <BuildDialogSurface
+    :visible="visible"
+    :embedded="embedded"
+    width="980px"
+    panel-class="gear-loadout-dialog next-armory-dialog"
+    @update:visible="emit('update:visible', $event)"
+  >
+    <div class="loadout-layout">
+      <div
+        v-for="slot in slots"
+        :key="slot.slot"
+        class="gear-slot-card"
+        :class="{ 'is-empty': slot.build === null }"
+      >
+        <div class="slot-head">
+          <div class="slot-title">{{ translate(slot.labelKey, slot.fallback) }}</div>
+          <div v-if="slot.build !== null" class="slot-tags">
+            <span
+              class="slot-tag"
+              :style="{ color: slot.levelColor, borderColor: slot.levelColor }"
+            >
+              Lv{{ slot.build.definition.levelRequirement }}
+            </span>
+            <span class="slot-tag">{{ slot.slotTypeName }}</span>
           </div>
         </div>
 
-        <div v-if="activeSetBonuses.length > 0" class="gear-set-bonus-panel">
-          <div class="gear-set-bonus-title">
-            {{ t('timelineGrid.equipmentDialog.setBonusTitle') }}
+        <template v-if="slot.build !== null">
+          <div class="gear-main">
+            <div class="gear-icon-frame" :style="{ borderColor: slot.levelColor }">
+              <img
+                :src="resolveImage(slot.build.definition.icon) || DEFAULT_GAME_ICON_PATH"
+                :alt="slot.name"
+                class="gear-icon"
+              />
+            </div>
+            <div class="gear-info">
+              <div class="gear-name">{{ slot.name }}</div>
+              <div class="gear-subline">
+                Lv{{ slot.build.definition.levelRequirement
+                }}<span v-if="slot.setName"> / {{ slot.setName }}</span>
+              </div>
+              <div v-if="slot.affixRows.length > 0" class="stat-list">
+                <div v-for="row in slot.affixRows" :key="row.key" class="stat-row">
+                  <span>{{ row.label }}</span>
+                  <strong>{{ row.valueText }}</strong>
+                </div>
+              </div>
+            </div>
           </div>
-          <div v-for="bonus in activeSetBonuses" :key="bonus.setSlug" class="gear-set-bonus-entry">
-            <div class="gear-set-bonus-head">
-              <span class="gear-set-bonus-name">{{ bonus.setName }}</span>
-              <span class="gear-set-bonus-count">
-                {{
-                  t('timelineGrid.equipmentDialog.setBonusEquipped', {
-                    count: bonus.equippedCount,
-                    required: SET_BONUS_REQUIRED_COUNT,
-                  })
-                }}
+
+          <div class="gear-card-controls">
+            <div class="refine-row">
+              <span class="refine-label">
+                {{ translate('timelineGrid.equipmentDialog.refine', 'Refine') }}
+              </span>
+              <span v-if="slot.levels.length > 0" class="refine-mixed">
+                {{ slot.levels.join('/') }}
+              </span>
+              <div v-if="slot.isArtificable" class="refine-buttons">
+                <EaFilterChip
+                  size="sm"
+                  v-for="level in refineLevels(slot.build)"
+                  :key="`${slot.slot}-${level}`"
+                  class="refine-btn"
+                  @click="setUniformLevel(slot.build, level)"
+                  :selected="isUniformLevel(slot.build, level)"
+                >
+                  {{
+                    level === 0
+                      ? translate('timelineGrid.equipmentDialog.refineBase', 'Base')
+                      : level
+                  }}
+                </EaFilterChip>
+              </div>
+              <span v-else class="refine-locked">
+                {{ t('actionLibrary.hints.noRefineNonGold') }}
               </span>
             </div>
-            <GameRichTextRenderer
-              class="gear-set-bonus-desc"
-              :text="bonus.description"
-              :locale="locale"
-            />
+            <div class="slot-actions">
+              <EaButton size="sm" type="button" @click="editingSlot = slot.slot">
+                {{ t('actionLibrary.buttons.editItem') }}
+              </EaButton>
+            </div>
           </div>
+        </template>
+
+        <div v-else class="empty-slot">
+          {{ translate('actionLibrary.fallback.noEquip', 'No gear equipped') }}
         </div>
       </div>
 
-      <GearInstanceDialog
-        :visible="visible && editingGear !== null"
-        :gear="editingGear?.build ?? null"
-        :name="editingGear?.name ?? ''"
-        :slot-type-name="editingGear?.slotTypeName ?? ''"
-        :set-name="editingGear?.setName ?? ''"
-        :level-color="editingGear?.levelColor ?? '#888'"
-        @update:visible="
-          value => {
-            if (!value) editingSlot = null;
-          }
-        "
-        @update="updateEditingGear"
-      />
+      <div v-if="activeSetBonuses.length > 0" class="gear-set-bonus-panel">
+        <div class="gear-set-bonus-title">
+          {{ t('timelineGrid.equipmentDialog.setBonusTitle') }}
+        </div>
+        <div v-for="bonus in activeSetBonuses" :key="bonus.setSlug" class="gear-set-bonus-entry">
+          <div class="gear-set-bonus-head">
+            <span class="gear-set-bonus-name">{{ bonus.setName }}</span>
+            <span class="gear-set-bonus-count">
+              {{
+                t('timelineGrid.equipmentDialog.setBonusEquipped', {
+                  count: bonus.equippedCount,
+                  required: SET_BONUS_REQUIRED_COUNT,
+                })
+              }}
+            </span>
+          </div>
+          <GameRichTextRenderer
+            class="gear-set-bonus-desc"
+            :text="bonus.description"
+            :locale="locale"
+          />
+        </div>
+      </div>
+    </div>
 
-      <template #footer>
-        <EaDialogActions>
-          <EaButton variant="primary" size="sm" @click="maxOut">
-            {{ t('common.max') }}
-          </EaButton>
-        </EaDialogActions>
-      </template>
-    </BuildDialogSurface>
-  </InputRegionBoundary>
+    <GearInstanceDialog
+      :visible="visible && editingGear !== null"
+      :gear="editingGear?.build ?? null"
+      :name="editingGear?.name ?? ''"
+      :slot-type-name="editingGear?.slotTypeName ?? ''"
+      :set-name="editingGear?.setName ?? ''"
+      :level-color="editingGear?.levelColor ?? '#888'"
+      @update:visible="
+        value => {
+          if (!value) editingSlot = null;
+        }
+      "
+      @update="updateEditingGear"
+    />
+
+    <template #footer>
+      <EaDialogActions>
+        <EaButton variant="primary" size="sm" @click="maxOut">
+          {{ t('common.max') }}
+        </EaButton>
+      </EaDialogActions>
+    </template>
+  </BuildDialogSurface>
 </template>
 
 <style scoped>

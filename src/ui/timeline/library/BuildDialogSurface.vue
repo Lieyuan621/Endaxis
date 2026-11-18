@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import { EaDialog } from '../../../design-system/index';
 
 withDefaults(
@@ -19,18 +20,19 @@ const emit = defineEmits<{ 'update:visible': [visible: boolean] }>();
     <slot />
     <div class="build-dialog-surface__footer"><slot name="footer" /></div>
   </div>
-  <EaDialog
-    v-else
-    :model-value="visible"
-    :width="width"
-    append-to-body
-    align-center
-    :class="panelClass"
-    @update:model-value="emit('update:visible', $event)"
-  >
-    <slot />
-    <template #footer><slot name="footer" /></template>
-  </EaDialog>
+  <InputRegionBoundary v-else label="build-dialog" :active="visible" modal>
+    <EaDialog
+      :model-value="visible"
+      :width="width"
+      append-to-body
+      align-center
+      :class="panelClass"
+      @update:model-value="emit('update:visible', $event)"
+    >
+      <slot />
+      <template #footer><slot name="footer" /></template>
+    </EaDialog>
+  </InputRegionBoundary>
 </template>
 
 <style scoped>
