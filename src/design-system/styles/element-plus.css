@@ -247,6 +247,14 @@ html body .el-popper.el-popper.el-popper[data-popper-placement] > .el-popper__ar
   background: transparent !important;
 }
 
+/* Keep the arrow above the surface border so the border does not cross its base. */
+html
+  body
+  .el-popper.el-popper.el-popper.ea-floating-surface[data-popper-placement]
+  > .el-popper__arrow {
+  z-index: 1 !important;
+}
+
 /* Keep the fill low-specificity so feature poppers can match their own surface color. */
 :where(.el-popper[data-popper-placement] > .el-popper__arrow)::before {
   inset: 0 !important;

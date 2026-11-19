@@ -13,7 +13,7 @@ import {
   EaFilterChip,
   EaInput,
   EaTabs,
-  EaUnequipIcon,
+  EaArrowOutIcon,
 } from '../../../design-system/index';
 import { computed, nextTick, ref, watch } from 'vue';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
@@ -407,7 +407,7 @@ function clearFilter(kind: FilterKind, value?: string): void {
             :title="labels.unequip"
             @click="clearGear"
           >
-            <EaUnequipIcon />
+            <EaArrowOutIcon />
             {{ labels.unequip }}
           </EaButton>
           <div class="equipment-tier-picker">

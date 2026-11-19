@@ -6,7 +6,7 @@ import { EaTooltip } from '@/design-system';
  * Next 时间轴的武器定义选择器。界面与旧时间轴保持一致，但只读取 Next 定义并返回稳定 slug；
  * 武器 Build 的创建和持久化仍由父层负责，组件内不依赖旧 store。
  */
-import { EaButton, EaDialog, EaInput, EaUnequipIcon } from '../../../design-system/index';
+import { EaArrowOutIcon, EaButton, EaDialog, EaInput } from '../../../design-system/index';
 import { computed, ref, watch } from 'vue';
 import { primaryModifier } from '../../keyboard/primaryModifier';
 import {
@@ -155,7 +155,7 @@ function handleDialogVisibility(value: boolean): void {
           :title="labels.unequip"
           @click="clear"
         >
-          <EaUnequipIcon />
+          <EaArrowOutIcon />
           {{ labels.unequip }}
         </EaButton>
       </div>

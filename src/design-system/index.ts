@@ -25,7 +25,7 @@ export { default as EaSwitch } from './components/EaSwitch/EaSwitch.vue';
 export { default as EaTabs } from './components/EaTabs/EaTabs.vue';
 export { default as EaTextarea } from './components/EaTextarea/EaTextarea.vue';
 export { default as EaTooltip } from './components/EaTooltip/EaTooltip.vue';
-export { default as EaUnequipIcon } from './components/EaUnequipIcon/EaUnequipIcon.vue';
+export { default as EaArrowOutIcon } from './components/EaArrowOutIcon/EaArrowOutIcon.vue';
 
 export type { EaSelectOption, EaSelectValue } from './components/EaSelect/EaSelect.vue';
 export type { EaButtonVariant, EaControlSize, EaFormFieldLayout } from './components/types';

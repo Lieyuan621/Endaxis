@@ -8,7 +8,7 @@ import SelectionIconFrame from './SelectionIconFrame.vue';
  */
 import {
   EaButton,
-  EaUnequipIcon,
+  EaArrowOutIcon,
   EaDialog,
   EaFilterChip,
   EaInput,
@@ -165,7 +165,7 @@ function clear(): void {
             :title="t('timelineGrid.operatorDialog.clearTrack')"
             @click="clear"
           >
-            <EaUnequipIcon />
+            <EaArrowOutIcon />
             {{ t('common.unequip') }}
           </EaButton>
         </div>

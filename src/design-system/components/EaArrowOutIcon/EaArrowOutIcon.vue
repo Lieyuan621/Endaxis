@@ -11,7 +11,7 @@ withDefaults(
 
 <template>
   <svg
-    class="ea-unequip-icon"
+    class="ea-arrow-out-icon"
     viewBox="0 0 24 24"
     :width="size"
     :height="size"
@@ -30,7 +30,7 @@ withDefaults(
 </template>
 
 <style scoped>
-.ea-unequip-icon {
+.ea-arrow-out-icon {
   display: block;
   flex: none;
 }
