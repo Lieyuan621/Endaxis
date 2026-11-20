@@ -4,11 +4,12 @@ import { useI18n } from 'vue-i18n';
 import {
   EaButton,
   EaChevronIcon,
+  EaCollapse,
   EaFilterChip,
   EaInput,
   EaSelect,
   type EaSelectValue,
-} from '../../../design-system/index';
+} from '@/design-system';
 import type {
   CombatReceiptEntry,
   CombatReceiptValue,
@@ -413,21 +414,19 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
           <EaChevronIcon :direction="typesOpen ? 'down' : 'right'" :size="12" />
           {{ $t('battleLog.ui.types') }} ({{ selectedEvents.size }}/{{ availableEvents.length }})
         </button>
-        <Transition name="simlog-disclosure">
-          <div v-if="typesOpen" class="simlog-disclosure-content">
-            <div class="simlog-types">
-              <EaFilterChip
-                v-for="event in availableEvents"
-                :key="event"
-                :selected="selectedEvents.has(event)"
-                :title="event"
-                @click="toggleEvent(event)"
-              >
-                {{ eventLabel(event) }}
-              </EaFilterChip>
-            </div>
+        <EaCollapse :expanded="typesOpen">
+          <div class="simlog-types">
+            <EaFilterChip
+              v-for="event in availableEvents"
+              :key="event"
+              :selected="selectedEvents.has(event)"
+              :title="event"
+              @click="toggleEvent(event)"
+            >
+              {{ eventLabel(event) }}
+            </EaFilterChip>
           </div>
-        </Transition>
+        </EaCollapse>
       </div>
 
       <div class="simlog-debug-row">
@@ -514,102 +513,95 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
             </span>
           </button>
 
-          <Transition name="simlog-disclosure">
-            <div v-if="openGroupKey === group.key" class="simlog-disclosure-content">
-              <div class="group__body">
-                <section
-                  v-for="section in groupSections(group.entries)"
-                  :key="section.kind"
-                  class="group-section"
-                  :class="`group-section--${section.kind}`"
-                >
-                  <div class="group-section__heading">
-                    <span class="group-section__title">{{
-                      $t(`battleLog.ui.sections.${section.kind}`)
-                    }}</span>
-                    <span class="group-section__count">{{ section.entries.length }}</span>
-                  </div>
-                  <div class="group-section__list">
-                    <div v-for="entry in section.entries" :key="entry.sequence" class="event-item">
-                      <EaButton
-                        variant="ghost"
-                        size="sm"
-                        type="button"
-                        class="event-row"
-                        :class="{
-                          'is-jumpable': group.castId !== null,
-                          'event-row--damage': isDamageEntry(entry),
-                        }"
-                        :disabled="group.castId === null"
-                        :title="
-                          group.castId === null
-                            ? eventLabel(entry.event)
-                            : $t('battleLog.ui.jumpToTimeline')
-                        "
-                        @click="locateEntry(group, entry)"
-                      >
-                        <span v-if="isDamageEntry(entry)" class="event-row__main">
-                          <time class="event-row__time">{{ formatTime(entry.frame) }}</time>
-                          <span
-                            class="event-pill"
-                            :class="
-                              isEffectDamage(entry) ? 'event-pill--effect' : 'event-pill--skill'
-                            "
-                          >
-                            {{
-                              $t(
-                                isEffectDamage(entry)
-                                  ? 'battleLog.ui.effectDamage'
-                                  : 'battleLog.ui.skillDamage',
-                              )
-                            }}
-                          </span>
-                          <span v-if="damageAmount(entry) !== null" class="event-value">
-                            {{ formatDamageField('damage', damageAmount(entry)!) }}
-                          </span>
-                          <span v-if="damageElement(entry) !== null" class="event-value">
-                            {{ formatDamageField('element', damageElement(entry)!) }}
-                          </span>
-                        </span>
-                        <template v-else>
-                          <time class="event-row__time">{{ formatTime(entry.frame) }}</time>
-                          <span class="event-pill">{{ eventLabel(entry.event) }}</span>
-                          <span v-if="entrySummary(entry)" class="event-text">{{
-                            entrySummary(entry)
-                          }}</span>
-                        </template>
-                        <span v-if="entrySourceLabel(group, entry)" class="event-muted">
-                          {{ entrySourceLabel(group, entry) }}
-                        </span>
-                      </EaButton>
-                      <div v-if="showDebugEvents" class="event-raw">
-                        <button
-                          type="button"
-                          class="event-raw__toggle"
-                          :aria-expanded="expandedRawSequences.has(entry.sequence)"
-                          @click="toggleRawReceipt(entry.sequence)"
+          <EaCollapse :expanded="openGroupKey === group.key">
+            <div class="group__body">
+              <section
+                v-for="section in groupSections(group.entries)"
+                :key="section.kind"
+                class="group-section"
+                :class="`group-section--${section.kind}`"
+              >
+                <div class="group-section__heading">
+                  <span class="group-section__title">{{
+                    $t(`battleLog.ui.sections.${section.kind}`)
+                  }}</span>
+                  <span class="group-section__count">{{ section.entries.length }}</span>
+                </div>
+                <div class="group-section__list">
+                  <div v-for="entry in section.entries" :key="entry.sequence" class="event-item">
+                    <EaButton
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      class="event-row"
+                      :class="{
+                        'is-jumpable': group.castId !== null,
+                        'event-row--damage': isDamageEntry(entry),
+                      }"
+                      :disabled="group.castId === null"
+                      :title="
+                        group.castId === null
+                          ? eventLabel(entry.event)
+                          : $t('battleLog.ui.jumpToTimeline')
+                      "
+                      @click="locateEntry(group, entry)"
+                    >
+                      <span v-if="isDamageEntry(entry)" class="event-row__main">
+                        <time class="event-row__time">{{ formatTime(entry.frame) }}</time>
+                        <span
+                          class="event-pill"
+                          :class="
+                            isEffectDamage(entry) ? 'event-pill--effect' : 'event-pill--skill'
+                          "
                         >
-                          <EaChevronIcon
-                            :direction="expandedRawSequences.has(entry.sequence) ? 'down' : 'right'"
-                            :size="12"
-                          />
-                          {{ $t('battleLog.ui.rawReceipt') }}
-                        </button>
-                        <Transition name="simlog-disclosure">
-                          <div
-                            v-if="expandedRawSequences.has(entry.sequence)"
-                            class="simlog-disclosure-content"
-                          >
-                            <pre>{{ JSON.stringify(entry, null, 2) }}</pre>
-                          </div>
-                        </Transition>
-                      </div>
+                          {{
+                            $t(
+                              isEffectDamage(entry)
+                                ? 'battleLog.ui.effectDamage'
+                                : 'battleLog.ui.skillDamage',
+                            )
+                          }}
+                        </span>
+                        <span v-if="damageAmount(entry) !== null" class="event-value">
+                          {{ formatDamageField('damage', damageAmount(entry)!) }}
+                        </span>
+                        <span v-if="damageElement(entry) !== null" class="event-value">
+                          {{ formatDamageField('element', damageElement(entry)!) }}
+                        </span>
+                      </span>
+                      <template v-else>
+                        <time class="event-row__time">{{ formatTime(entry.frame) }}</time>
+                        <span class="event-pill">{{ eventLabel(entry.event) }}</span>
+                        <span v-if="entrySummary(entry)" class="event-text">{{
+                          entrySummary(entry)
+                        }}</span>
+                      </template>
+                      <span v-if="entrySourceLabel(group, entry)" class="event-muted">
+                        {{ entrySourceLabel(group, entry) }}
+                      </span>
+                    </EaButton>
+                    <div v-if="showDebugEvents" class="event-raw">
+                      <button
+                        type="button"
+                        class="event-raw__toggle"
+                        :aria-expanded="expandedRawSequences.has(entry.sequence)"
+                        @click="toggleRawReceipt(entry.sequence)"
+                      >
+                        <EaChevronIcon
+                          :direction="expandedRawSequences.has(entry.sequence) ? 'down' : 'right'"
+                          :size="12"
+                        />
+                        {{ $t('battleLog.ui.rawReceipt') }}
+                      </button>
+                      <EaCollapse :expanded="expandedRawSequences.has(entry.sequence)">
+                        <pre>{{ JSON.stringify(entry, null, 2) }}</pre>
+                      </EaCollapse>
                     </div>
                   </div>
-                </section>
-              </div>
+                </div>
+              </section>
             </div>
-          </Transition>
+          </EaCollapse>
         </div>
       </div>
     </div>
@@ -721,29 +713,7 @@ function locateEntry(group: TimelineBattleLogGroup, entry: CombatReceiptEntry): 
 .event-raw__toggle :deep(.ea-chevron-icon) {
   transition: transform 180ms ease;
 }
-.simlog-disclosure-content {
-  display: grid;
-  grid-template-rows: 1fr;
-  min-height: 0;
-  overflow: hidden;
-}
-.simlog-disclosure-content > * {
-  min-height: 0;
-}
-.simlog-disclosure-enter-active,
-.simlog-disclosure-leave-active {
-  transition:
-    grid-template-rows 180ms ease,
-    opacity 180ms ease;
-}
-.simlog-disclosure-enter-from,
-.simlog-disclosure-leave-to {
-  grid-template-rows: 0fr;
-  opacity: 0;
-}
 @media (prefers-reduced-motion: reduce) {
-  .simlog-disclosure-enter-active,
-  .simlog-disclosure-leave-active,
   .simlog-types-toggle :deep(.ea-chevron-icon),
   .event-raw__toggle :deep(.ea-chevron-icon) {
     transition-duration: 0ms;

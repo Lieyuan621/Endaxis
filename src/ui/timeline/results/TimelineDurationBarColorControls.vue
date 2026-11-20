@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton, EaChevronIcon } from '../../../design-system/index';
+import { EaButton, EaChevronIcon, EaCollapse } from '@/design-system';
 import { useDurationBarColor } from './durationBarColorContext';
 import { DURATION_COLOR_SOURCES, DURATION_COLOR_SURFACES } from './durationBarColor';
 
@@ -53,82 +53,80 @@ function tune(field: 'saturation' | 'lightness', event: Event) {
         <EaChevronIcon :direction="detailsExpanded ? 'up' : 'down'" :size="14" />
       </EaButton>
     </div>
-    <Transition name="duration-color-expand">
-      <div
-        v-if="prefs.enabled && detailsExpanded"
-        id="duration-color-details"
-        class="duration-color-reveal"
-      >
-        <div class="timeline-display-color-controls">
-          <label
-            v-for="field in ['saturation', 'lightness'] as const"
-            :key="field"
-            class="timeline-display-tune-row"
+    <EaCollapse
+      :expanded="prefs.enabled && detailsExpanded"
+      id="duration-color-details"
+      class="duration-color-reveal"
+    >
+      <div class="timeline-display-color-controls">
+        <label
+          v-for="field in ['saturation', 'lightness'] as const"
+          :key="field"
+          class="timeline-display-tune-row"
+        >
+          <span class="timeline-display-tune-row__label"
+            >{{
+              t(
+                field === 'saturation'
+                  ? 'timeline.header.durationBarSaturation'
+                  : 'timeline.header.durationBarLightness',
+              )
+            }}<em>{{ prefs[field] }}%</em></span
           >
-            <span class="timeline-display-tune-row__label"
-              >{{
-                t(
-                  field === 'saturation'
-                    ? 'timeline.header.durationBarSaturation'
-                    : 'timeline.header.durationBarLightness',
-                )
-              }}<em>{{ prefs[field] }}%</em></span
-            >
-            <div class="ea-range-row">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                class="ea-range"
-                :value="prefs[field]"
-                @input="tune(field, $event)"
-              />
-            </div>
-          </label>
-          <h5 class="timeline-display-subsection__title">
-            {{ t('timeline.header.durationBarColorSources') }}
-          </h5>
-          <div class="header-more-checklist header-more-checklist--grid">
-            <EaButton
-              variant="ghost"
-              v-for="source in DURATION_COLOR_SOURCES"
-              :key="source"
-              type="button"
-              class="header-more-check-row header-more-check-row--compact"
-              :aria-pressed="prefs.sources[source]"
-              @click="prefs.sources[source] = !prefs.sources[source]"
-            >
-              <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-                <rect x="1" y="1" width="14" height="14" rx="2" />
-                <polyline v-if="prefs.sources[source]" points="3,8 6.5,11.5 13,4.5" />
-              </svg>
-              <span>{{ t(`timeline.header.durationBarColorSource.${source}`) }}</span>
-            </EaButton>
+          <div class="ea-range-row">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              class="ea-range"
+              :value="prefs[field]"
+              @input="tune(field, $event)"
+            />
           </div>
-          <h5 class="timeline-display-subsection__title">
-            {{ t('timeline.header.durationBarColorSurfaces') }}
-          </h5>
-          <div class="header-more-checklist header-more-checklist--grid">
-            <EaButton
-              variant="ghost"
-              v-for="surface in DURATION_COLOR_SURFACES"
-              :key="surface"
-              type="button"
-              class="header-more-check-row header-more-check-row--compact"
-              :aria-pressed="prefs.surfaces[surface]"
-              @click="prefs.surfaces[surface] = !prefs.surfaces[surface]"
-            >
-              <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-                <rect x="1" y="1" width="14" height="14" rx="2" />
-                <polyline v-if="prefs.surfaces[surface]" points="3,8 6.5,11.5 13,4.5" />
-              </svg>
-              <span>{{ t(`timeline.header.durationBarColorSurface.${surface}`) }}</span>
-            </EaButton>
-          </div>
+        </label>
+        <h5 class="timeline-display-subsection__title">
+          {{ t('timeline.header.durationBarColorSources') }}
+        </h5>
+        <div class="header-more-checklist header-more-checklist--grid">
+          <EaButton
+            variant="ghost"
+            v-for="source in DURATION_COLOR_SOURCES"
+            :key="source"
+            type="button"
+            class="header-more-check-row header-more-check-row--compact"
+            :aria-pressed="prefs.sources[source]"
+            @click="prefs.sources[source] = !prefs.sources[source]"
+          >
+            <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+              <rect x="1" y="1" width="14" height="14" rx="2" />
+              <polyline v-if="prefs.sources[source]" points="3,8 6.5,11.5 13,4.5" />
+            </svg>
+            <span>{{ t(`timeline.header.durationBarColorSource.${source}`) }}</span>
+          </EaButton>
+        </div>
+        <h5 class="timeline-display-subsection__title">
+          {{ t('timeline.header.durationBarColorSurfaces') }}
+        </h5>
+        <div class="header-more-checklist header-more-checklist--grid">
+          <EaButton
+            variant="ghost"
+            v-for="surface in DURATION_COLOR_SURFACES"
+            :key="surface"
+            type="button"
+            class="header-more-check-row header-more-check-row--compact"
+            :aria-pressed="prefs.surfaces[surface]"
+            @click="prefs.surfaces[surface] = !prefs.surfaces[surface]"
+          >
+            <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+              <rect x="1" y="1" width="14" height="14" rx="2" />
+              <polyline v-if="prefs.surfaces[surface]" points="3,8 6.5,11.5 13,4.5" />
+            </svg>
+            <span>{{ t(`timeline.header.durationBarColorSurface.${surface}`) }}</span>
+          </EaButton>
         </div>
       </div>
-    </Transition>
+    </EaCollapse>
   </section>
 </template>
 
@@ -197,34 +195,7 @@ function tune(field: 'saturation' | 'lightness', event: Event) {
   }
 }
 .duration-color-reveal {
-  display: grid;
-  grid-template-rows: 1fr;
-  min-height: 0;
-  overflow: hidden;
-  padding-top: 8px;
-}
-.duration-color-reveal > .timeline-display-color-controls {
-  min-height: 0;
-  overflow: hidden;
-}
-.duration-color-expand-enter-active,
-.duration-color-expand-leave-active {
-  transition:
-    grid-template-rows 200ms ease,
-    padding-top 200ms ease,
-    opacity 160ms ease;
-}
-.duration-color-expand-enter-from,
-.duration-color-expand-leave-to {
-  grid-template-rows: 0fr;
-  padding-top: 0;
-  opacity: 0;
-}
-@media (prefers-reduced-motion: reduce) {
-  .duration-color-expand-enter-active,
-  .duration-color-expand-leave-active {
-    transition: none;
-  }
+  padding-top: var(--ea-space-2);
 }
 .timeline-display-section__title {
   margin: 0;

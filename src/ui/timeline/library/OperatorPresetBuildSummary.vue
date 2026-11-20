@@ -156,8 +156,15 @@ const equipment = computed(() => {
           item.details[0]?.value
         }}</span>
       </div>
+      <div class="preset-build__sets">
+        <template v-if="activeSets.length">
+          <strong v-for="name in activeSets" :key="name">{{ name }}</strong>
+          <span>{{ t('operatorPresets.setActive') }}</span>
+        </template>
+        <span v-else>{{ t('operatorPresets.noActiveSet') }}</span>
+      </div>
     </div>
-    <EaCollapse :expanded="!!expanded" class="preset-build__expanded-container">
+    <EaCollapse :expanded="!!expanded">
       <div class="preset-build__expanded">
         <section v-for="item in equipment.filter(item => item.details.length)" :key="item.key">
           <header class="preset-build__detail-heading">
@@ -184,13 +191,6 @@ const equipment = computed(() => {
         </section>
       </div>
     </EaCollapse>
-    <div class="preset-build__sets">
-      <template v-if="activeSets.length">
-        <strong v-for="name in activeSets" :key="name">{{ name }}</strong>
-        <span>{{ t('operatorPresets.setActive') }}</span>
-      </template>
-      <span v-else>{{ t('operatorPresets.noActiveSet') }}</span>
-    </div>
   </div>
 </template>
 <style scoped>
@@ -199,9 +199,6 @@ const equipment = computed(() => {
   color: var(--ea-fg-secondary);
   text-align: center;
   overflow-wrap: anywhere;
-}
-.preset-build__expanded-container {
-  order: 3;
 }
 .preset-build__expanded {
   display: grid;
@@ -298,8 +295,10 @@ const equipment = computed(() => {
   color: var(--ea-fg-faint);
 }
 .preset-build__sets {
+  grid-column: 3 / -1;
   display: flex;
   align-items: baseline;
+  justify-content: center;
   flex-wrap: wrap;
   gap: var(--ea-space-2);
   font-size: 12px;
@@ -311,6 +310,9 @@ const equipment = computed(() => {
 @media (max-width: 600px) {
   .preset-build__equipment {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .preset-build__sets {
+    grid-column: 1 / -1;
   }
 }
 </style>

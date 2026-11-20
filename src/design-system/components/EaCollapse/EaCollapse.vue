@@ -15,6 +15,10 @@ const attrs = useAttrs();
 </template>
 
 <style scoped>
+/* Keep child margins inside the measured height; feature layouts can still override display. */
+:where(.ea-collapse) {
+  display: flow-root;
+}
 .ea-collapse.el-collapse-transition-enter-active,
 .ea-collapse.el-collapse-transition-leave-active {
   overflow: hidden;
