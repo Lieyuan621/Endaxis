@@ -259,7 +259,7 @@ test.describe('移动端原有养成入口', () => {
 
 test('桌面项目菜单集中加载、接收、导出与重置，并与显示菜单互斥', async ({ page }) => {
   await page.goto('/timeline');
-  const projectButton = page.getByRole('button', { name: '项目', exact: true });
+  const projectButton = page.getByRole('button', { name: '文件', exact: true });
   const displayButton = page.getByRole('button', { name: '显示', exact: true });
   const projectPanel = page.locator('.header-project-panel');
 
@@ -305,7 +305,7 @@ test('方案设置位于重命名按钮左侧，长方案名不会推移设置�
 
 test('拖入 JSON 项目文件会打开导入确认，并能覆盖当前项目', async ({ page }) => {
   await page.goto('/timeline');
-  await page.getByRole('button', { name: '项目', exact: true }).click();
+  await page.getByRole('button', { name: '文件', exact: true }).click();
   await page.locator('.header-project-panel').getByRole('button', { name: '导出' }).click();
   const downloadPromise = page.waitForEvent('download');
   await page.locator('.export-dialog-shell .export-action-card').first().click();

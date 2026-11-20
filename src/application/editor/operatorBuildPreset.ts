@@ -59,3 +59,21 @@ export function applyOperatorBuildPreset(
   resolveScenarioBuilds(result, gameData);
   return result;
 }
+
+/** 比较完整构筑内容，忽略对象键的插入顺序；名称和预设身份不参与比较。 */
+export function sameOperatorBuild(
+  a: OperatorBuildPreset['build'],
+  b: OperatorBuildPreset['build'],
+): boolean {
+  const normalize = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(normalize);
+    if (value !== null && typeof value === 'object')
+      return Object.fromEntries(
+        Object.entries(value)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([key, item]) => [key, normalize(item)]),
+      );
+    return value;
+  };
+  return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
+}

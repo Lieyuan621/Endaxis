@@ -186,6 +186,16 @@ import {
   resolveSkillGroupPlacementSkills,
   skillPlacementDisplayFrames,
 } from '../../application/editor/skillGroupPlacement';
+import {
+  loadOperatorBuildPresets,
+  saveOperatorBuildPresets,
+} from '../../data/browserOperatorBuildPresets';
+import {
+  readOperatorPresetFile,
+  serializeOperatorPresets,
+  operatorPresetFilename,
+} from '../../application/editor/operatorBuildPresetFile';
+import type { OperatorBuildPreset } from '../../application/editor/operatorBuildPreset';
 import { openProject } from '../../application/openProject';
 import { captureScenarioSimulationGameData } from '../../application/simulation/scenarioSimulationGameData';
 import type { CombatReceiptEntry } from '../../core/combat/receipt/combatReceipt';
@@ -389,7 +399,11 @@ import {
 import { useTimelineLoadoutEditor } from './library/useTimelineLoadoutEditor';
 import { embedProjectCodeInPng } from './pngProjectData';
 import { createProjectDocumentIdAllocator } from './projectDocumentIdAllocator';
-import { selectProjectExportScope, useProjectFileSession } from './projectFileSession';
+import {
+  downloadProjectJson,
+  selectProjectExportScope,
+  useProjectFileSession,
+} from './projectFileSession';
 import { projectOpenFailureMessage } from './projectOpenFailureMessage';
 import BattleLogPanel from './results/BattleLogPanel.vue';
 import {
@@ -584,6 +598,58 @@ const activeLoadoutBuildTab = ref<LoadoutBuildTab>('operator');
 const OperatorPanelDialog = defineLazyDialog(() => import('./library/OperatorPanelDialog.vue'));
 const OperatorPresetsDialog = defineLazyDialog(() => import('./library/OperatorPresetsDialog.vue'));
 const showOperatorPresets = ref(false);
+const OperatorPresetTransferDialog = defineLazyDialog(
+  () => import('./library/OperatorPresetTransferDialog.vue'),
+);
+const incomingPresets = shallowRef<OperatorBuildPreset[] | null>(null);
+const exportTarget = ref<'project' | 'presets'>('project');
+const exportOperatorSlug = ref<string>();
+const exportPresetItems = shallowRef<OperatorBuildPreset[]>([]);
+const exportPresetsReady = ref(false);
+const exportPresetsError = ref('');
+async function preparePresetExport(): Promise<void> {
+  exportPresetsReady.value = false;
+  exportPresetsError.value = '';
+  await openAfterGameDataLoad(['operators', 'weapons', 'gears'], () => {
+    try {
+      exportPresetItems.value = loadOperatorBuildPresets();
+      exportPresetsReady.value = true;
+    } catch {
+      exportPresetsError.value = t('operatorPresets.loadError');
+    }
+  });
+  if (!exportPresetsReady.value && !exportPresetsError.value)
+    exportPresetsError.value = t('operatorPresets.loadError');
+}
+function openFileExport(target: 'project' | 'presets' = 'project', operatorSlug?: string): void {
+  exportTarget.value = target;
+  exportOperatorSlug.value = operatorSlug;
+  exportPresetsReady.value = false;
+  exportPresetsError.value = '';
+  showExportDialog.value = true;
+}
+function exportPresetFile(presets: OperatorBuildPreset[]): void {
+  try {
+    downloadProjectJson(serializeOperatorPresets(presets), operatorPresetFilename());
+    showExportDialog.value = false;
+  } catch {
+    ElMessage.error(t('operatorPresets.exportError'));
+  }
+}
+function importPresetSelection(selected: OperatorBuildPreset[]): void {
+  try {
+    const previous = loadOperatorBuildPresets();
+    saveOperatorBuildPresets([
+      ...previous,
+      ...selected.map(p => ({ ...p, id: crypto.randomUUID() })),
+    ]);
+    incomingPresets.value = null;
+    ElMessage.success(t('operatorPresets.imported', { count: selected.length }));
+  } catch {
+    ElMessage.error(t('operatorPresets.saveError'));
+  }
+}
+
 const OperatorBuildDialog = defineLazyDialog(() => import('./library/OperatorBuildDialog.vue'));
 const WeaponBuildDialog = defineLazyDialog(() => import('./library/WeaponBuildDialog.vue'));
 const OperatorSelectionDialog = defineLazyDialog(
@@ -1156,7 +1222,27 @@ async function openProjectFile(file: File): Promise<void> {
       /\.png$/i.test(file.name) || file.type === 'image/png'
         ? await projectFileReader.readPng(file)
         : await projectFileReader.read(file);
-    if (content !== null) await openProjectContent(content);
+    if (content !== null) {
+      // 文件入口按显式 kind 分发；普通项目与个人预设继续使用原文件格式。
+      let kind: unknown;
+      try {
+        kind = (JSON.parse(content) as { kind?: unknown })?.kind;
+      } catch {
+        /* 旧项目由项目加载器解释 */
+      }
+      if (kind === 'EndaxisPresets') {
+        let presets: OperatorBuildPreset[];
+        try {
+          presets = readOperatorPresetFile(content);
+        } catch {
+          ElMessage.error(t('operatorPresets.importError'));
+          return;
+        }
+        await openAfterGameDataLoad(['operators', 'weapons', 'gears'], () => {
+          incomingPresets.value = presets;
+        });
+      } else await openProjectContent(content);
+    }
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '打开项目失败');
   }
@@ -1186,7 +1272,7 @@ function handleExternalProjectDrop(event: DragEvent): void {
   const file = event.dataTransfer?.files[0];
   if (file === undefined) return;
   if (!/\.(json|png)$/i.test(file.name) && !['application/json', 'image/png'].includes(file.type)) {
-    ElMessage.warning('仅支持 JSON 项目文件或带项目数据的 PNG 图片');
+    ElMessage.warning(t('fileTransfer.unsupported'));
     return;
   }
   void openProjectFile(file);
@@ -1228,6 +1314,11 @@ const pendingProjectImport = shallowRef<{
   project: EndaxisProjectDocument;
   resolve: (selection: ProjectImportSelection | null) => void;
 } | null>(null);
+// 文件面板期间保留预设筛选与草稿；确认面板和项目导入一样使用公共对话框边界。
+const presetManagerSuspended = computed(
+  () =>
+    showExportDialog.value || incomingPresets.value !== null || pendingProjectImport.value !== null,
+);
 function finishProjectImport(selection: ProjectImportSelection | null) {
   const pending = pendingProjectImport.value;
   pendingProjectImport.value = null;
@@ -7222,7 +7313,7 @@ function setMobileGuideFrame(frame: number | null): void {
     @redo="restoreEditorHistory('redo')"
     @open-project="requestOpenProject"
     @receive-project="requestReceiveProject"
-    @export-project="showExportDialog = true"
+    @export-project="openFileExport()"
     @reset-project="resetDialogVisible = true"
     @select-track="selectTrack"
     @swap-tracks="swapTrackOrder"
@@ -7539,7 +7630,7 @@ function setMobileGuideFrame(frame: number | null): void {
         @open="requestOpenProject"
         @receive="requestReceiveProject"
         @asset-workspace="openAssetWorkspace"
-        @export="showExportDialog = true"
+        @export="openFileExport()"
         @reset="resetDialogVisible = true"
         @toggle-view-layer="toggleTimelineViewLayer"
         @toggle-operator-effects="toggleOperatorEffectsVisibility"
@@ -9230,7 +9321,10 @@ function setMobileGuideFrame(frame: number | null): void {
     :game-data="editorGameDataRepository"
     :read-only="configurationReadOnly"
     :apply="applyBuildPreset"
-    @close="showOperatorPresets = false"
+    :suspended="presetManagerSuspended"
+    @import-file="requestOpenProject"
+    @export-presets="openFileExport('presets', $event)"
+    @close="!presetManagerSuspended && (showOperatorPresets = false)"
   />
   <OperatorBuildDialog
     v-if="showOperatorBuildDialog"
@@ -9448,6 +9542,13 @@ function setMobileGuideFrame(frame: number | null): void {
     @update:visible="showReceiveDialog = $event"
     @receive="receiveProjectCode"
   />
+  <OperatorPresetTransferDialog
+    v-if="incomingPresets"
+    :presets="incomingPresets"
+    :game-data="editorGameDataRepository"
+    @close="incomingPresets = null"
+    @confirm="importPresetSelection"
+  />
   <TimelineProjectImportDialog
     v-if="pendingProjectImport"
     :project="pendingProjectImport.project"
@@ -9457,6 +9558,14 @@ function setMobileGuideFrame(frame: number | null): void {
   <TimelineExportDialog
     v-if="showExportDialog"
     :visible="showExportDialog"
+    :initial-target="exportTarget"
+    :preset-operator-slug="exportOperatorSlug"
+    :presets="exportPresetItems"
+    :game-data="editorGameDataRepository"
+    :presets-ready="exportPresetsReady"
+    :presets-error="exportPresetsError"
+    @request-presets="preparePresetExport"
+    @export-presets="exportPresetFile"
     :current-scenario-name="scenario.name"
     :scenarios="projectScenarios"
     :max-duration="Math.max(10, Math.round(scenario.battle.durationFrames / PROJECT_FPS))"

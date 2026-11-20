@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaTooltip } from '@/design-system';
+import { EaCollapse, EaTooltip } from '@/design-system';
 import type { OperatorBuildPreset } from '../../../application/editor/operatorBuildPreset';
 import type { GameDataRepository } from '../../../core/game-data/gameDataRepository';
 import {
@@ -17,7 +17,11 @@ import { projectActiveGearSetLabels } from './activeGearSetHint';
 import SelectionIconFrame from './SelectionIconFrame.vue';
 import { getOperatorAvatarPath, DEFAULT_GAME_ICON_PATH } from '../../gameAssetPaths';
 
-const props = defineProps<{ build: OperatorBuildPreset['build']; gameData: GameDataRepository }>();
+const props = defineProps<{
+  build: OperatorBuildPreset['build'];
+  gameData: GameDataRepository;
+  expanded?: boolean;
+}>();
 const { t, locale } = useI18n();
 const operatorDetails = computed(() => {
   const build = props.build.operator;
@@ -114,7 +118,11 @@ const equipment = computed(() => {
   <div class="preset-build">
     <div class="preset-build__equipment">
       <div v-for="item in equipment" :key="item.key" class="preset-build__item">
-        <EaTooltip placement="top" :show-after="160">
+        <EaTooltip
+          placement="top"
+          :show-after="160"
+          :disabled="item.key !== 'operator' && item.key !== 'weapon'"
+        >
           <template #content>
             <div class="preset-build__details">
               <strong>{{ item.name }}</strong>
@@ -135,9 +143,47 @@ const equipment = computed(() => {
             <span v-else class="preset-build__empty">—</span>
           </SelectionIconFrame>
         </EaTooltip>
-        <span class="card-name">{{ item.name }}</span>
+        <span class="preset-build__name">{{ item.name }}</span>
+        <span v-if="item.key === 'operator'" class="preset-build__brief"
+          >{{ t('operatorPresets.levelValue', { level: build.operator.level }) }} ·
+          {{ t('armory.common.potential') }} {{ build.operator.potential }}</span
+        >
+        <span v-else-if="item.key === 'weapon' && build.weapon" class="preset-build__brief"
+          >{{ t('operatorPresets.levelValue', { level: build.weapon.level }) }} ·
+          {{ t('armory.common.potential') }} {{ build.weapon.potential }}</span
+        >
+        <span v-else-if="item.details.length" class="preset-build__brief">{{
+          item.details[0]?.value
+        }}</span>
       </div>
     </div>
+    <EaCollapse :expanded="!!expanded" class="preset-build__expanded-container">
+      <div class="preset-build__expanded">
+        <section v-for="item in equipment.filter(item => item.details.length)" :key="item.key">
+          <header class="preset-build__detail-heading">
+            <strong>{{ item.name }}</strong>
+            <span v-if="item.key !== 'operator' && item.key !== 'weapon'">
+              {{ t(`timelineGrid.equipmentSlot.${item.key}`) }}
+            </span>
+          </header>
+          <div v-for="row in item.details" :key="row.label" class="preset-build__detail-row">
+            <span>{{ row.label }}</span
+            ><span>{{ row.value }}</span>
+          </div>
+        </section>
+        <section v-if="build.operator.baseStatOverrides">
+          <strong>{{ t('operatorPresets.baseOverrides') }}</strong>
+          <div
+            v-for="(value, key) in build.operator.baseStatOverrides"
+            :key="key"
+            class="preset-build__detail-row"
+          >
+            <span>{{ key }}</span
+            ><span>{{ value }}</span>
+          </div>
+        </section>
+      </div>
+    </EaCollapse>
     <div class="preset-build__sets">
       <template v-if="activeSets.length">
         <strong v-for="name in activeSets" :key="name">{{ name }}</strong>
@@ -148,42 +194,102 @@ const equipment = computed(() => {
   </div>
 </template>
 <style scoped>
+.preset-build__brief {
+  font-size: 11px;
+  color: var(--ea-fg-secondary);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.preset-build__expanded-container {
+  order: 3;
+}
+.preset-build__expanded {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--ea-space-5);
+  row-gap: var(--ea-space-3);
+  padding-top: var(--ea-space-3);
+  border-top: 1px solid var(--ea-border-soft);
+  font-size: 12px;
+}
+.preset-build__expanded > section {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.preset-build__detail-heading,
+.preset-build__expanded > section > strong {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ea-space-1) var(--ea-space-2);
+  margin-bottom: var(--ea-space-1);
+  color: var(--ea-fg);
+}
+.preset-build__detail-heading > span {
+  color: var(--ea-fg-muted);
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .preset-build__expanded {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .preset-build__details {
   min-width: 180px;
 }
 .preset-build__details > strong {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: var(--ea-space-2);
 }
 .preset-build__detail-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+  gap: var(--ea-space-3);
   line-height: 1.8;
+}
+.preset-build__detail-row > :first-child {
+  color: var(--ea-fg-secondary);
+}
+.preset-build__detail-row > :last-child {
+  text-align: right;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
 }
 
 .preset-build {
-  display: grid;
-  grid-template-columns: minmax(0, 456px) minmax(90px, 1fr);
-  align-items: center;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   gap: var(--ea-space-3);
 }
 .preset-build__equipment {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--ea-space-1);
+  gap: var(--ea-space-2);
+  width: 100%;
 }
 .preset-build__item {
   display: flex;
   flex-direction: column;
   min-width: 0;
   align-items: center;
+  gap: var(--ea-space-1);
 }
 .preset-build__item .card-avatar-wrapper {
-  width: 68px;
-  height: 68px;
+  width: 72px;
+  height: 72px;
   max-width: 100%;
+}
+.preset-build__name {
+  max-width: 100%;
+  color: var(--ea-fg-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .preset-build__empty {
   display: grid;
@@ -193,18 +299,16 @@ const equipment = computed(() => {
 }
 .preset-build__sets {
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
+  flex-wrap: wrap;
   gap: var(--ea-space-2);
   font-size: 12px;
   color: var(--ea-fg-secondary);
 }
 .preset-build__sets strong {
-  color: var(--ea-fg);
+  color: var(--ea-gear-accent-fg);
 }
 @media (max-width: 600px) {
-  .preset-build {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .preset-build__equipment {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

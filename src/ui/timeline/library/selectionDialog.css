@@ -199,32 +199,6 @@
   scrollbar-width: thin;
 }
 
-.gear-filter-expand-enter-active,
-.gear-filter-expand-leave-active {
-  transition:
-    max-height 180ms ease,
-    opacity 180ms ease;
-}
-
-.gear-filter-expand-enter-from,
-.gear-filter-expand-leave-to {
-  max-height: 0;
-  opacity: 0;
-}
-
-.gear-filter-expand-enter-to,
-.gear-filter-expand-leave-from {
-  max-height: min(340px, 40dvh);
-  opacity: 1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gear-filter-expand-enter-active,
-  .gear-filter-expand-leave-active {
-    transition: none;
-  }
-}
-
 .equipment-filter-group {
   display: grid;
   grid-template-columns: 62px minmax(0, 1fr);

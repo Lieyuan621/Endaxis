@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import SelectionIconFrame from './SelectionIconFrame.vue';
 import { resolveImage } from '../../imageResources';
-import { EaTooltip } from '@/design-system';
 /**
  * Next 时间轴的装备选择器。父层决定正在编辑的轨道和槽位，并负责把选择、卸下及精锻档位写回项目；
  * 本组件只复刻旧版装备选择弹窗的定义浏览流程，不读取旧 store，也不把适配状态写入存档。
@@ -9,12 +8,14 @@ import { EaTooltip } from '@/design-system';
 import {
   EaButton,
   EaChevronIcon,
+  EaCollapse,
   EaDialog,
   EaFilterChip,
   EaInput,
   EaTabs,
   EaArrowOutIcon,
-} from '../../../design-system/index';
+  EaTooltip,
+} from '@/design-system';
 import { computed, nextTick, ref, watch } from 'vue';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import { Search } from '@element-plus/icons-vue';
@@ -466,8 +467,8 @@ function clearFilter(kind: FilterKind, value?: string): void {
               <span class="equipment-filter-tag-label">{{ filter.label }}</span>
             </button>
           </div>
-          <Transition name="gear-filter-expand">
-            <div v-show="filtersExpanded" id="gear-filter-options" class="equipment-filter-panel">
+          <EaCollapse :expanded="filtersExpanded" keep-mounted>
+            <div id="gear-filter-options" class="equipment-filter-panel">
               <div class="equipment-filter-group">
                 <span class="equipment-filter-label">{{
                   t('timelineGrid.equipmentDialog.attributeFilter')
@@ -607,7 +608,7 @@ function clearFilter(kind: FilterKind, value?: string): void {
                 </div>
               </div>
             </div>
-          </Transition>
+          </EaCollapse>
         </div>
       </div>
 

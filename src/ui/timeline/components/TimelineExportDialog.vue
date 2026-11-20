@@ -1,9 +1,10 @@
 <script setup lang="ts">
-/** 导出面板只收集范围、文件名和图片时长；文件生成由编辑器执行。 */
+/** 导出面板收集项目导出选项或预设选择；文件生成由编辑器执行。 */
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   EaButton,
+  EaTabs,
   EaCheckbox,
   EaDialog,
   EaFormField,
@@ -11,10 +12,19 @@ import {
   EaNumberInput,
 } from '@/design-system';
 
+import OperatorPresetSelection from '../library/OperatorPresetSelection.vue';
+import type { OperatorBuildPreset } from '../../../application/editor/operatorBuildPreset';
+import type { GameDataRepository } from '../../../core/game-data/gameDataRepository';
 import type { ExportScenarioScope } from '../../../application/editor/projectTransfer';
 
 const props = defineProps<{
   visible: boolean;
+  initialTarget?: 'project' | 'presets';
+  presetOperatorSlug?: string;
+  presets: readonly OperatorBuildPreset[];
+  gameData: GameDataRepository;
+  presetsReady: boolean;
+  presetsError?: string;
   currentScenarioName: string;
   scenarios: readonly { id: string; name: string }[];
   maxDuration: number;
@@ -23,6 +33,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:visible': [visible: boolean];
+  requestPresets: [];
+  exportPresets: [presets: OperatorBuildPreset[]];
   exportJson: [options: { filename: string; scope: ExportScenarioScope }];
   copyCode: [options: { scope: ExportScenarioScope }];
   exportSmallImage: [options: { filename: string; duration: number }];
@@ -30,6 +42,11 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n({ useScope: 'global' });
+const target = ref<'project' | 'presets'>(props.initialTarget ?? 'project');
+const chosenPresets = ref<OperatorBuildPreset[]>([]);
+watch(target, value => {
+  if (value === 'presets') emit('requestPresets');
+});
 const scope = ref<'all' | 'current' | 'selected'>('all');
 const selectedIds = ref<string[]>([]);
 const exportScope = computed<ExportScenarioScope>(() =>
@@ -67,6 +84,8 @@ watch(
   () => props.visible,
   visible => {
     if (!visible) return;
+    target.value = props.initialTarget ?? 'project';
+    if (target.value === 'presets') emit('requestPresets');
     scope.value = 'all';
     selectedIds.value = props.scenarios.map(scenario => scenario.id);
     filename.value = `Endaxis_Timeline_${new Date().toISOString().slice(0, 10)}`;
@@ -86,12 +105,39 @@ function imageOptions() {
 <template>
   <EaDialog
     v-model="dialogVisible"
-    :title="t('timeline.export.dialogTitle')"
+    :title="t('fileTransfer.exportTitle')"
     width="680px"
     align-center
     class="custom-dialog export-dialog-shell"
   >
-    <div class="export-dialog-content">
+    <EaTabs
+      :model-value="target"
+      :tabs="[
+        { value: 'project', label: t('fileTransfer.project') },
+        { value: 'presets', label: t('operatorPresets.title') },
+      ]"
+      :label="t('fileTransfer.content')"
+      @update:model-value="target = $event as 'project' | 'presets'"
+    />
+    <div v-if="target === 'presets'" class="export-dialog-content">
+      <p v-if="presetsError" role="alert">{{ presetsError }}</p>
+      <p v-else-if="!presetsReady">{{ t('fileTransfer.loading') }}</p>
+      <template v-else>
+        <OperatorPresetSelection
+          :presets="presets"
+          :game-data="gameData"
+          :initial-operator-slug="presetOperatorSlug"
+          @change="chosenPresets = $event"
+        />
+        <EaButton
+          variant="primary"
+          :disabled="!chosenPresets.length"
+          @click="emit('exportPresets', chosenPresets)"
+          >{{ t('operatorPresets.exportSelected') }}</EaButton
+        >
+      </template>
+    </div>
+    <div v-else class="export-dialog-content">
       <EaFormField
         control-id="export-filename"
         :label="t('timeline.export.filenameLabel')"

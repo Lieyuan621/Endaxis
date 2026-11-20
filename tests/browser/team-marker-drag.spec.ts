@@ -5,7 +5,7 @@ test('team cooldown markers can be dragged from their visible badges and labels'
   page,
 }) => {
   await page.goto('/timeline');
-  await page.getByRole('button', { name: '项目', exact: true }).click();
+  await page.getByRole('button', { name: '文件', exact: true }).click();
   await page.locator('.header-project-panel').getByRole('button', { name: '导出' }).click();
   const downloadPromise = page.waitForEvent('download');
   await page.locator('.export-dialog-shell .export-action-card').first().click();

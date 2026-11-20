@@ -4,7 +4,11 @@ import { createDefaultOperatorInstance } from './loadoutBuildFactory';
 import { zhuangFangyi } from '../../data/operators/zhuang-fangyi.generated';
 import { gameDataRepository } from '../../data/gameDataRepository';
 import { createScenarioEditorSession } from '../../test/scenarioEditorSession';
-import { applyOperatorBuildPreset, captureOperatorBuild } from './operatorBuildPreset';
+import {
+  applyOperatorBuildPreset,
+  captureOperatorBuild,
+  sameOperatorBuild,
+} from './operatorBuildPreset';
 
 function source() {
   const scenario = createEmptyScenario('preset-test', 'Preset test');
@@ -54,4 +58,24 @@ describe('干员预设应用', () => {
     expect(session.snapshot.scenario).toEqual(initial);
     expect(session.snapshot.revision).toBe(0);
   });
+});
+
+it('完整配置比较不受键顺序影响，但精锻和养成差异必须区分', () => {
+  const build = captureOperatorBuild(source().tracks[0]!);
+  const reordered = {
+    gears: { ...build.gears },
+    weapon: build.weapon,
+    operator: {
+      ...build.operator,
+      skillLevels: Object.fromEntries(Object.entries(build.operator.skillLevels).reverse()),
+    },
+  };
+  expect(sameOperatorBuild(build, reordered)).toBe(true);
+  reordered.operator.potential++;
+  expect(sameOperatorBuild(build, reordered)).toBe(false);
+  reordered.operator.potential--;
+  reordered.gears.armor = { gearSlug: 'gear', artificingLevels: [0, 1, 2] };
+  const other = structuredClone(reordered);
+  other.gears.armor!.artificingLevels[1] = 2;
+  expect(sameOperatorBuild(reordered, other)).toBe(false);
 });

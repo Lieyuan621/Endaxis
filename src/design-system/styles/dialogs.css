@@ -33,6 +33,7 @@
   flex: 0 1 auto;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .ea-dialog .el-dialog__header {
