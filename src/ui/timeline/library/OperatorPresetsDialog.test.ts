@@ -57,7 +57,7 @@ describe('预设管理', () => {
     expect(state.filteredPresets.value.map((p: { id: string }) => p.id)).toEqual(['a']);
     state.search.value = 'B';
     expect(state.filteredPresets.value).toEqual([]);
-    state.scope.value = 'all';
+    state.selectedOperator.value = 'all';
     expect(state.filteredPresets.value.map((p: { id: string }) => p.id)).toEqual(['b']);
   });
   it('更新只改目标构筑，保留名称与身份，取消更新不会写入', async () => {
@@ -83,6 +83,7 @@ describe('预设管理', () => {
   });
   it('存储写入失败不会更新列表或清除保存草稿', async () => {
     const { state } = await mount();
+    state.search.value = '保留筛选';
     state.beginSave();
     const name = state.name.value;
     localStorage.setItem = () => {
@@ -92,25 +93,42 @@ describe('预设管理', () => {
     expect(state.presets.value).toEqual([]);
     expect(state.name.value).toBe(name);
     expect(state.saving.value).toBe(true);
+    expect(state.search.value).toBe('保留筛选');
   });
-  it('重命名草稿提交后修剪并保存，空名或写入失败恢复原名', async () => {
+  it('保存成功后清除旧搜索条件，使新预设立即可见', async () => {
+    const { state } = await mount();
+    state.search.value = '不会匹配新预设的搜索';
+    state.beginSave();
+    state.name.value = '新配装';
+    state.save();
+    expect(loadOperatorBuildPresets()).toHaveLength(1);
+    expect(state.search.value).toBe('');
+    expect(state.filteredPresets.value.map((preset: { name: string }) => preset.name)).toEqual([
+      '新配装',
+    ]);
+  });
+  it('重命名需明确保存，空名和写入失败保留原记录与编辑草稿', async () => {
     saveOperatorBuildPresets([{ id: 'a', name: '原名', build: captureOperatorBuild(track()) }]);
     const { state } = await mount();
-    state.renameDrafts.value.a = '  新名称  ';
+    state.beginRename(state.presets.value[0]);
+    state.renameName.value = '  新名称  ';
     expect(loadOperatorBuildPresets()[0]!.name).toBe('原名');
-    state.commitRename(state.presets.value[0]);
+    state.commitRename();
     expect(loadOperatorBuildPresets()[0]!.name).toBe('新名称');
-    expect(state.renameDrafts.value.a).toBeUndefined();
-    state.renameDrafts.value.a = '  ';
-    state.commitRename(state.presets.value[0]);
+    expect(state.renaming.value).toBeNull();
+    state.beginRename(state.presets.value[0]);
+    state.renameName.value = '  ';
+    state.commitRename();
     expect(state.presets.value[0].name).toBe('新名称');
-    expect(state.renameDrafts.value.a).toBeUndefined();
+    expect(state.renameName.value).toBe('  ');
+    expect(state.renaming.value.id).toBe('a');
     localStorage.setItem = () => {
       throw new Error('quota');
     };
-    state.renameDrafts.value.a = '未保存';
-    state.commitRename(state.presets.value[0]);
+    state.renameName.value = '未保存';
+    state.commitRename();
     expect(state.presets.value[0].name).toBe('新名称');
-    expect(state.renameDrafts.value.a).toBeUndefined();
+    expect(state.renameName.value).toBe('未保存');
+    expect(state.renaming.value.id).toBe('a');
   });
 });

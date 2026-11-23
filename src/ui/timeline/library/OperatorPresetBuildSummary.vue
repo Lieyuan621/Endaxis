@@ -21,6 +21,7 @@ const props = defineProps<{
   build: OperatorBuildPreset['build'];
   gameData: GameDataRepository;
   expanded?: boolean;
+  detailsId?: string;
 }>();
 const { t, locale } = useI18n();
 const operatorDetails = computed(() => {
@@ -75,6 +76,7 @@ const equipment = computed(() => {
       equipmentLevel: undefined,
       name: getOperatorGameName(props.build.operator.operatorSlug, locale.value),
       icon: getOperatorAvatarPath(operator?.assetSlug ?? props.build.operator.operatorSlug),
+      brief: '',
       details: operatorDetails.value,
     },
     {
@@ -85,6 +87,7 @@ const equipment = computed(() => {
         ? getWeaponGameName(weapon.weaponSlug, locale.value)
         : t('operatorPresets.emptyWeapon'),
       icon: definition?.icon,
+      brief: '',
       details: weapon
         ? [
             {
@@ -102,76 +105,91 @@ const equipment = computed(() => {
       equipmentLevel: gear ? props.gameData.getGear(gear.gearSlug)?.levelRequirement : undefined,
       name: gear ? getGearPieceGameName(gear.gearSlug, locale.value) : t(`operatorPresets.${key}`),
       icon: gear && props.gameData.getGear(gear.gearSlug)?.icon,
-      details: gear
-        ? [
-            {
-              label: t('operatorPresets.refinementLevels'),
-              value: gear.artificingLevels.join(' / '),
-            },
-          ]
-        : [],
+      details: [],
+      brief: gear ? gear.artificingLevels.join(' / ') : '',
     })),
   ];
 });
+const equipmentGroups = computed(() => [
+  {
+    key: 'identity',
+    label: t('operatorPresets.operatorAndWeapon'),
+    items: equipment.value.slice(0, 2),
+  },
+  { key: 'gears', label: t('operatorPresets.gear'), items: equipment.value.slice(2) },
+]);
+const detailItems = computed(() => equipment.value.filter(item => item.details.length));
 </script>
 <template>
   <div class="preset-build">
     <div class="preset-build__equipment">
-      <div v-for="item in equipment" :key="item.key" class="preset-build__item">
-        <EaTooltip
-          placement="top"
-          :show-after="160"
-          :disabled="item.key !== 'operator' && item.key !== 'weapon'"
-        >
-          <template #content>
-            <div class="preset-build__details">
-              <strong>{{ item.name }}</strong>
-              <span v-if="!item.details.length">{{ t('operatorPresets.empty') }}</span>
-              <div v-for="row in item.details" :key="row.label" class="preset-build__detail-row">
-                <span>{{ row.label }}</span
-                ><span>{{ row.value }}</span>
-              </div>
-            </div>
-          </template>
-          <SelectionIconFrame :rarity="item.rarity" :equipment-level="item.equipmentLevel">
-            <OperatorAvatar v-if="item.key === 'operator' && item.icon" :src="item.icon" />
-            <img
-              v-else-if="item.icon"
-              :src="resolveImage(item.icon) || DEFAULT_GAME_ICON_PATH"
-              alt=""
-            />
-            <span v-else class="preset-build__empty">—</span>
-          </SelectionIconFrame>
-        </EaTooltip>
-        <span class="preset-build__name">{{ item.name }}</span>
-        <span v-if="item.key === 'operator'" class="preset-build__brief"
-          >{{ t('operatorPresets.levelValue', { level: build.operator.level }) }} ·
-          {{ t('armory.common.potential') }} {{ build.operator.potential }}</span
-        >
-        <span v-else-if="item.key === 'weapon' && build.weapon" class="preset-build__brief"
-          >{{ t('operatorPresets.levelValue', { level: build.weapon.level }) }} ·
-          {{ t('armory.common.potential') }} {{ build.weapon.potential }}</span
-        >
-        <span v-else-if="item.details.length" class="preset-build__brief">{{
-          item.details[0]?.value
-        }}</span>
-      </div>
-      <div class="preset-build__sets">
-        <template v-if="activeSets.length">
-          <strong v-for="name in activeSets" :key="name">{{ name }}</strong>
-          <span>{{ t('operatorPresets.setActive') }}</span>
-        </template>
-        <span v-else>{{ t('operatorPresets.noActiveSet') }}</span>
-      </div>
+      <section
+        v-for="group in equipmentGroups"
+        :key="group.key"
+        class="preset-build__group"
+        :class="`preset-build__group--${group.key}`"
+        :aria-label="group.label"
+      >
+        <header class="preset-build__group-heading">
+          <span>{{ group.label }}</span>
+          <div v-if="group.key === 'gears'" class="preset-build__sets">
+            <template v-if="activeSets.length">
+              <span v-for="name in activeSets" :key="name" class="preset-build__active-set"
+                >{{ name }} · {{ t('operatorPresets.setActive') }}</span
+              >
+            </template>
+            <span v-else>{{ t('operatorPresets.noActiveSet') }}</span>
+          </div>
+        </header>
+        <div class="preset-build__items">
+          <div v-for="item in group.items" :key="item.key" class="preset-build__item">
+            <EaTooltip
+              placement="top"
+              :show-after="160"
+              :disabled="!!expanded || !item.details.length"
+            >
+              <template #content>
+                <div class="preset-build__details">
+                  <strong>{{ item.name }}</strong>
+                  <div
+                    v-for="row in item.details"
+                    :key="row.label"
+                    class="preset-build__detail-row"
+                  >
+                    <span>{{ row.label }}</span
+                    ><span>{{ row.value }}</span>
+                  </div>
+                </div>
+              </template>
+              <SelectionIconFrame :rarity="item.rarity" :equipment-level="item.equipmentLevel">
+                <OperatorAvatar v-if="item.key === 'operator' && item.icon" :src="item.icon" />
+                <img
+                  v-else-if="item.icon"
+                  :src="resolveImage(item.icon) || DEFAULT_GAME_ICON_PATH"
+                  alt=""
+                />
+                <span v-else class="preset-build__empty">—</span>
+              </SelectionIconFrame>
+            </EaTooltip>
+            <span class="preset-build__name">{{ item.name }}</span>
+            <span v-if="item.key === 'operator'" class="preset-build__brief"
+              >{{ t('operatorPresets.levelValue', { level: build.operator.level }) }} ·
+              {{ t('armory.common.potential') }} {{ build.operator.potential }}</span
+            >
+            <span v-else-if="item.key === 'weapon' && build.weapon" class="preset-build__brief"
+              >{{ t('operatorPresets.levelValue', { level: build.weapon.level }) }} ·
+              {{ t('armory.common.potential') }} {{ build.weapon.potential }}</span
+            >
+            <span v-else-if="item.brief" class="preset-build__brief">{{ item.brief }}</span>
+          </div>
+        </div>
+      </section>
     </div>
-    <EaCollapse :expanded="!!expanded">
+    <EaCollapse :id="detailsId" :expanded="!!expanded">
       <div class="preset-build__expanded">
-        <section v-for="item in equipment.filter(item => item.details.length)" :key="item.key">
+        <section v-for="item in detailItems" :key="item.key">
           <header class="preset-build__detail-heading">
             <strong>{{ item.name }}</strong>
-            <span v-if="item.key !== 'operator' && item.key !== 'weapon'">
-              {{ t(`timelineGrid.equipmentSlot.${item.key}`) }}
-            </span>
           </header>
           <div v-for="row in item.details" :key="row.label" class="preset-build__detail-row">
             <span>{{ row.label }}</span
@@ -190,6 +208,7 @@ const equipment = computed(() => {
           </div>
         </section>
       </div>
+      <slot name="details-footer" />
     </EaCollapse>
   </div>
 </template>
@@ -215,17 +234,9 @@ const equipment = computed(() => {
 }
 .preset-build__detail-heading,
 .preset-build__expanded > section > strong {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--ea-space-1) var(--ea-space-2);
+  display: block;
   margin-bottom: var(--ea-space-1);
   color: var(--ea-fg);
-}
-.preset-build__detail-heading > span {
-  color: var(--ea-fg-muted);
-  font-size: 11px;
 }
 @media (max-width: 600px) {
   .preset-build__expanded {
@@ -263,9 +274,34 @@ const equipment = computed(() => {
 }
 .preset-build__equipment {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--ea-space-2);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 4fr);
+  gap: var(--ea-space-4);
   width: 100%;
+}
+.preset-build__group {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  gap: var(--ea-space-2);
+}
+.preset-build__group-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ea-space-1) var(--ea-space-2);
+  min-height: 20px;
+  font-size: 11px;
+  color: var(--ea-fg-muted);
+}
+.preset-build__items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ea-space-2);
+  align-content: start;
+}
+.preset-build__group--gears .preset-build__items {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .preset-build__item {
   display: flex;
@@ -295,24 +331,27 @@ const equipment = computed(() => {
   color: var(--ea-fg-faint);
 }
 .preset-build__sets {
-  grid-column: 3 / -1;
   display: flex;
   align-items: baseline;
-  justify-content: center;
+  justify-content: flex-end;
   flex-wrap: wrap;
-  gap: var(--ea-space-2);
-  font-size: 12px;
+  gap: var(--ea-space-1) var(--ea-space-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  text-align: right;
   color: var(--ea-fg-secondary);
 }
-.preset-build__sets strong {
+.preset-build__active-set {
   color: var(--ea-gear-accent-fg);
+  font-weight: 600;
 }
 @media (max-width: 600px) {
   .preset-build__equipment {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
-  .preset-build__sets {
-    grid-column: 1 / -1;
+  .preset-build__group--gears .preset-build__items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>

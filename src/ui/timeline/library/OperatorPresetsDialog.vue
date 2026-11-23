@@ -8,15 +8,16 @@ import {
   EaCollapse,
   EaDialog,
   EaDialogActions,
+  EaDeleteIcon,
   EaFormField,
   EaInput,
-  EaTabs,
+  EaTooltip,
 } from '@/design-system';
-import { Search } from '@element-plus/icons-vue';
+import { Download, EditPen, Refresh, Search, Upload } from '@element-plus/icons-vue';
 import { getOperatorGameName, getWeaponGameName, getGearPieceGameName } from '../../gameText';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import OperatorPresetBuildSummary from './OperatorPresetBuildSummary.vue';
-import OperatorPresetFileMenu from './OperatorPresetFileMenu.vue';
+import OperatorPresetOperatorFilter from './OperatorPresetOperatorFilter.vue';
 import {
   captureOperatorBuild,
   sameOperatorBuild,
@@ -48,31 +49,20 @@ const currentExpanded = ref(false);
 const search = ref('');
 const presets = ref<OperatorBuildPreset[]>([]);
 const name = ref('');
-const renameDrafts = ref<Record<string, string>>({});
+const renaming = ref<OperatorBuildPreset | null>(null);
+const renameName = ref('');
 const error = ref('');
 const current = computed(() => (props.track?.operator ? captureOperatorBuild(props.track) : null));
-const scope = ref<'operator' | 'all'>(props.track?.operator ? 'operator' : 'all');
+const selectedOperator = ref(props.track?.operator?.operatorSlug ?? 'all');
 const expanded = ref<string | null>(null);
 const saving = ref(false);
-const operatorPresets = computed(() =>
-  presets.value.filter(p => p.build.operator.operatorSlug === props.track?.operator?.operatorSlug),
-);
-const scopeTabs = computed(() => [
-  ...(current.value
-    ? [
-        {
-          value: 'operator',
-          label: `${getOperatorGameName(current.value.operator.operatorSlug, locale.value)} (${operatorPresets.value.length})`,
-        },
-      ]
-    : []),
-  { value: 'all', label: t('operatorPresets.all', { count: presets.value.length }) },
-]);
-function selectScope(value: string) {
-  if (value === 'operator' || value === 'all') scope.value = value;
-}
 const scopedPresets = computed(() =>
-  scope.value === 'operator' ? operatorPresets.value : presets.value,
+  selectedOperator.value === 'all'
+    ? presets.value
+    : presets.value.filter(p => p.build.operator.operatorSlug === selectedOperator.value),
+);
+const searchPlaceholder = computed(() =>
+  t(selectedOperator.value !== 'all' ? 'operatorPresets.searchOperator' : 'operatorPresets.search'),
 );
 const filteredPresets = computed(() => {
   const query = search.value.trim().toLocaleLowerCase();
@@ -164,6 +154,13 @@ function save() {
   if (!label || !current.value) return;
   const build = current.value;
   if (write(items => [...items, { id: crypto.randomUUID(), name: label, build }])) {
+    if (
+      selectedOperator.value !== 'all' &&
+      selectedOperator.value !== build.operator.operatorSlug
+    ) {
+      selectedOperator.value = build.operator.operatorSlug;
+    }
+    search.value = '';
     name.value = '';
     saving.value = false;
     ElMessage.success(t('operatorPresets.saved'));
@@ -185,15 +182,18 @@ async function remove(preset: OperatorBuildPreset) {
   if (await confirmChange(t('operatorPresets.deleteConfirm', { name: preset.name })))
     write(items => items.filter(p => p.id !== preset.id));
 }
-function rename(id: string, name: string) {
-  const label = name.trim();
-  if (!label || !write(items => items.map(p => (p.id === id ? { ...p, name: label } : p))))
-    refresh();
-  delete renameDrafts.value[id];
+function beginRename(preset: OperatorBuildPreset) {
+  renaming.value = preset;
+  renameName.value = preset.name;
 }
-function commitRename(preset: OperatorBuildPreset) {
-  const draft = renameDrafts.value[preset.id];
-  if (draft !== undefined) rename(preset.id, draft);
+function commitRename() {
+  const id = renaming.value?.id;
+  const label = renameName.value.trim();
+  if (!id || !label || label.length > 60) return;
+  if (write(items => items.map(p => (p.id === id ? { ...p, name: label } : p)))) {
+    renaming.value = null;
+    renameName.value = '';
+  }
 }
 async function apply(preset: OperatorBuildPreset) {
   if (props.readOnly) return;
@@ -226,30 +226,62 @@ async function apply(preset: OperatorBuildPreset) {
       scroll-mode="body"
       @update:model-value="!suspended && emit('close')"
     >
+      <template #header>
+        <div class="operator-presets__dialog-heading">
+          <span class="el-dialog__title">{{ t('operatorPresets.title') }}</span>
+          <div class="operator-presets__file-actions">
+            <EaButton
+              size="sm"
+              :disabled="!!error"
+              :aria-label="t('operatorPresets.import')"
+              :title="t('operatorPresets.import')"
+              @click="emit('importFile')"
+            >
+              <Upload width="14" height="14" aria-hidden="true" />{{
+                t('operatorPresets.importShort')
+              }}
+            </EaButton>
+            <EaButton
+              size="sm"
+              :disabled="!!error || !scopedPresets.length"
+              :aria-label="t('operatorPresets.export')"
+              :title="t('operatorPresets.export')"
+              @click="
+                emit('exportPresets', selectedOperator === 'all' ? undefined : selectedOperator)
+              "
+            >
+              <Download width="14" height="14" aria-hidden="true" />{{
+                t('operatorPresets.exportShort')
+              }}
+            </EaButton>
+          </div>
+        </div>
+      </template>
       <div ref="panel" class="operator-presets">
         <p v-if="error" role="alert" class="operator-presets__error">{{ error }}</p>
         <section v-if="current" class="operator-presets__current">
           <div class="operator-presets__heading">
-            <div class="operator-presets__identity">
-              <strong
-                >{{ t('operatorPresets.current') }} ·
-                {{ getOperatorGameName(current.operator.operatorSlug, locale) }}</strong
-              >
-              <span class="operator-presets__hint"
-                >{{ t('operatorPresets.levelValue', { level: current.operator.level }) }} ·
-                {{ t('armory.common.potential') }} {{ current.operator.potential }}</span
-              >
-            </div>
+            <EaButton
+              variant="ghost"
+              class="operator-presets__disclosure"
+              :aria-expanded="currentExpanded"
+              aria-controls="preset-current-details"
+              :aria-label="`${t(currentExpanded ? 'operatorPresets.collapse' : 'operatorPresets.details')} · ${t('operatorPresets.current')}`"
+              @click="currentExpanded = !currentExpanded"
+            >
+              <EaChevronIcon :direction="currentExpanded ? 'down' : 'right'" :size="16" />
+              <span class="operator-presets__identity">
+                <strong
+                  >{{ t('operatorPresets.current') }} ·
+                  {{ getOperatorGameName(current.operator.operatorSlug, locale) }}</strong
+                >
+                <span class="operator-presets__hint"
+                  >{{ t('operatorPresets.levelValue', { level: current.operator.level }) }} ·
+                  {{ t('armory.common.potential') }} {{ current.operator.potential }}</span
+                >
+              </span>
+            </EaButton>
             <div class="operator-presets__toolbar">
-              <EaButton
-                variant="ghost"
-                :aria-expanded="currentExpanded"
-                aria-controls="preset-current-details"
-                @click="currentExpanded = !currentExpanded"
-              >
-                <EaChevronIcon :direction="currentExpanded ? 'up' : 'down'" :size="16" />
-                {{ currentExpanded ? t('operatorPresets.collapse') : t('operatorPresets.details') }}
-              </EaButton>
               <EaButton :disabled="!!error" @click="beginSave">{{
                 t('operatorPresets.saveNew')
               }}</EaButton>
@@ -276,34 +308,28 @@ async function apply(preset: OperatorBuildPreset) {
           </div>
         </section>
         <div class="operator-presets__filters">
-          <EaTabs
-            :tabs="scopeTabs"
-            :model-value="scope"
-            :label="t('operatorPresets.filter')"
-            size="sm"
-            @update:model-value="selectScope"
-          />
-          <div class="operator-presets__toolbar">
+          <div class="operator-presets__filter-toolbar">
+            <OperatorPresetOperatorFilter
+              v-model="selectedOperator"
+              :presets="presets"
+              :game-data="gameData"
+              :current-operator-slug="current?.operator.operatorSlug"
+              :disabled="!!error"
+            />
             <EaInput
               v-model="search"
               :prefix-icon="Search"
               clearable
-              :placeholder="t('operatorPresets.search')"
+              :placeholder="searchPlaceholder"
               :aria-label="t('operatorPresets.search')"
             />
-            <OperatorPresetFileMenu
-              :import-disabled="!!error"
-              :export-disabled="!!error || !scopedPresets.length"
-              @import-file="emit('importFile')"
-              @export-presets="
-                emit(
-                  'exportPresets',
-                  scope === 'operator' ? current?.operator.operatorSlug : undefined,
-                )
-              "
-            />
           </div>
-          <p class="operator-presets__hint">{{ t('operatorPresets.applyInfo') }}</p>
+          <div class="operator-presets__filter-meta">
+            <p class="operator-presets__hint">{{ t('operatorPresets.applyInfo') }}</p>
+            <span v-if="search.trim()" class="operator-presets__result-count" role="status">{{
+              t('operatorPresets.resultCount', { count: filteredPresets.length })
+            }}</span>
+          </div>
         </div>
         <div class="operator-presets__list">
           <div v-if="!filteredPresets.length" class="operator-presets__empty">
@@ -311,46 +337,50 @@ async function apply(preset: OperatorBuildPreset) {
               {{
                 search.trim()
                   ? t('operatorPresets.noMatches')
-                  : scope === 'operator'
-                    ? t('operatorPresets.noOperatorPresets')
+                  : selectedOperator !== 'all'
+                    ? t(
+                        selectedOperator === current?.operator.operatorSlug
+                          ? 'operatorPresets.noOperatorPresets'
+                          : 'operatorPresets.noFilteredOperatorPresets',
+                      )
                     : t('operatorPresets.noPresets')
               }}
             </p>
             <EaButton
-              v-if="scope === 'operator'"
+              v-if="selectedOperator !== 'all'"
               @click="
-                scope = 'all';
+                selectedOperator = 'all';
                 search = '';
               "
               >{{ t('operatorPresets.viewAll') }}</EaButton
             >
           </div>
           <section v-for="group in groups" :key="group.slug" class="operator-presets__group">
-            <h3 v-if="scope === 'all'">
+            <h3 v-if="selectedOperator === 'all'">
               {{ getOperatorGameName(group.slug, locale) }} ({{ group.items.length }})
             </h3>
             <article v-for="preset in group.items" :key="preset.id" class="operator-presets__card">
               <header class="operator-presets__heading">
-                <div class="operator-presets__identity">
-                  <strong class="operator-presets__name">{{ preset.name }}</strong>
-                  <span v-if="matches(preset)" class="operator-presets__match">{{
-                    t('operatorPresets.matches')
-                  }}</span>
-                </div>
+                <EaButton
+                  variant="ghost"
+                  class="operator-presets__disclosure"
+                  :aria-expanded="expanded === preset.id"
+                  :aria-controls="`preset-details-${preset.id}`"
+                  :aria-label="`${t(expanded === preset.id ? 'operatorPresets.collapse' : 'operatorPresets.details')} · ${preset.name}`"
+                  @click="expanded = expanded === preset.id ? null : preset.id"
+                >
+                  <EaChevronIcon
+                    :direction="expanded === preset.id ? 'down' : 'right'"
+                    :size="16"
+                  />
+                  <span class="operator-presets__identity">
+                    <strong class="operator-presets__name">{{ preset.name }}</strong>
+                    <span v-if="matches(preset)" class="operator-presets__match">{{
+                      t('operatorPresets.matches')
+                    }}</span>
+                  </span>
+                </EaButton>
                 <div class="operator-presets__toolbar">
-                  <EaButton
-                    variant="ghost"
-                    :aria-expanded="expanded === preset.id"
-                    :aria-controls="`preset-build-${preset.id} preset-edit-${preset.id}`"
-                    @click="expanded = expanded === preset.id ? null : preset.id"
-                  >
-                    <EaChevronIcon :direction="expanded === preset.id ? 'up' : 'down'" :size="16" />
-                    {{
-                      expanded === preset.id
-                        ? t('operatorPresets.collapse')
-                        : t('operatorPresets.details')
-                    }}
-                  </EaButton>
                   <EaButton
                     variant="primary"
                     :disabled="readOnly || !!error"
@@ -366,53 +396,110 @@ async function apply(preset: OperatorBuildPreset) {
                 </div>
               </header>
               <OperatorPresetBuildSummary
-                :id="`preset-build-${preset.id}`"
                 :build="preset.build"
                 :game-data="gameData"
                 :expanded="expanded === preset.id"
-              />
-              <EaCollapse
-                :expanded="expanded === preset.id"
-                :id="`preset-edit-${preset.id}`"
-                class="operator-presets__editing"
+                :details-id="`preset-details-${preset.id}`"
               >
-                <EaFormField
-                  :control-id="`preset-name-${preset.id}`"
-                  :label="t('operatorPresets.name')"
-                >
-                  <EaInput
-                    :model-value="renameDrafts[preset.id] ?? preset.name"
-                    :maxlength="60"
-                    :disabled="!!error"
-                    @update:model-value="renameDrafts[preset.id] = $event"
-                    @blur="commitRename(preset)"
-                    @keydown.enter="commitRename(preset)"
-                  />
-                </EaFormField>
-                <EaDialogActions>
-                  <EaButton
-                    :disabled="
-                      !!error ||
-                      !current ||
-                      current.operator.operatorSlug !== group.slug ||
-                      matches(preset)
-                    "
-                    @click="updatePreset(preset)"
-                    >{{ t('operatorPresets.update') }}</EaButton
+                <template #details-footer>
+                  <div
+                    class="operator-presets__actions"
+                    role="group"
+                    :aria-label="t('operatorPresets.manage', { name: preset.name })"
                   >
-                  <EaButton variant="danger" :disabled="!!error" @click="remove(preset)">{{
-                    t('operatorPresets.delete')
-                  }}</EaButton>
-                </EaDialogActions>
-              </EaCollapse>
+                    <EaButton size="sm" :disabled="!!error" @click="beginRename(preset)">
+                      <EditPen width="14" height="14" aria-hidden="true" />
+                      {{ t('operatorPresets.rename') }}
+                    </EaButton>
+                    <EaTooltip
+                      :content="t('operatorPresets.update')"
+                      :show-after="300"
+                      placement="top"
+                    >
+                      <span class="operator-presets__action-tooltip">
+                        <EaButton
+                          size="sm"
+                          :disabled="
+                            !!error ||
+                            !current ||
+                            current.operator.operatorSlug !== group.slug ||
+                            matches(preset)
+                          "
+                          :aria-label="t('operatorPresets.update')"
+                          @click="updatePreset(preset)"
+                        >
+                          <Refresh width="14" height="14" aria-hidden="true" />
+                          {{ t('operatorPresets.updateShort') }}
+                        </EaButton>
+                      </span>
+                    </EaTooltip>
+                    <EaButton
+                      variant="danger"
+                      size="sm"
+                      :disabled="!!error"
+                      @click="remove(preset)"
+                    >
+                      <EaDeleteIcon :size="14" />{{ t('operatorPresets.delete') }}
+                    </EaButton>
+                  </div>
+                </template>
+              </OperatorPresetBuildSummary>
             </article>
           </section>
         </div>
       </div>
     </EaDialog>
+    <EaDialog
+      v-if="renaming && !suspended"
+      :model-value="true"
+      :title="t('operatorPresets.rename')"
+      width="420px"
+      @update:model-value="!$event && (renaming = null)"
+    >
+      <EaFormField control-id="preset-rename-name" :label="t('operatorPresets.name')">
+        <EaInput
+          id="preset-rename-name"
+          v-model="renameName"
+          :maxlength="60"
+          @keydown.enter="commitRename"
+        />
+      </EaFormField>
+      <template #footer>
+        <EaDialogActions>
+          <EaButton @click="renaming = null">{{ t('operatorPresets.cancel') }}</EaButton>
+          <EaButton
+            variant="primary"
+            :disabled="!renameName.trim() || !!error"
+            @click="commitRename"
+            >{{ t('operatorPresets.confirmSave') }}</EaButton
+          >
+        </EaDialogActions>
+      </template>
+    </EaDialog>
   </InputRegionBoundary>
 </template>
 <style scoped>
+.operator-presets__dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ea-space-2);
+  height: 24px;
+  padding-right: 32px;
+  min-width: 0;
+}
+.operator-presets__dialog-heading > .el-dialog__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.operator-presets__file-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--ea-space-1);
+}
 .operator-presets {
   display: flex;
   flex-direction: column;
@@ -436,15 +523,26 @@ async function apply(preset: OperatorBuildPreset) {
   background: var(--ea-border-soft);
 }
 .operator-presets__heading {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: var(--ea-space-2);
+}
+.operator-presets__disclosure.ea-button {
+  justify-content: flex-start;
+  align-items: center;
+  min-width: 0;
+  height: auto;
+  min-height: 32px;
+  padding: var(--ea-space-1);
+  text-align: left;
+  white-space: normal;
+}
+.operator-presets__disclosure > .ea-chevron-icon {
+  flex-shrink: 0;
 }
 .operator-presets__identity {
   display: flex;
-  flex: 1 1 220px;
   flex-wrap: wrap;
   align-items: baseline;
   min-width: 0;
@@ -459,10 +557,6 @@ async function apply(preset: OperatorBuildPreset) {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--ea-space-2);
-}
-.operator-presets__toolbar > .ea-input {
-  flex: 1;
-  min-width: 160px;
 }
 .operator-presets__current,
 .operator-presets__card {
@@ -480,6 +574,26 @@ async function apply(preset: OperatorBuildPreset) {
   padding-bottom: var(--ea-space-3);
   border-bottom: 1px solid color-mix(in srgb, var(--ea-gold) 15%, transparent);
 }
+.operator-presets__filter-toolbar {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.65fr) minmax(0, 1.35fr);
+  align-items: center;
+  gap: var(--ea-space-2);
+}
+.operator-presets__filter-toolbar > .ea-input {
+  min-width: 0;
+}
+.operator-presets__filter-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ea-space-1) var(--ea-space-2);
+}
+.operator-presets__result-count {
+  color: var(--ea-fg-secondary);
+  font-size: 12px;
+}
 .operator-presets__current-details,
 .operator-presets__save {
   padding-top: var(--ea-space-3);
@@ -492,8 +606,7 @@ async function apply(preset: OperatorBuildPreset) {
   gap: var(--ea-space-2);
   font-size: 12px;
 }
-.operator-presets__save > .ea-dialog-actions,
-.operator-presets__editing > .ea-dialog-actions {
+.operator-presets__save > .ea-dialog-actions {
   padding-top: 0;
 }
 .operator-presets__list,
@@ -522,18 +635,31 @@ async function apply(preset: OperatorBuildPreset) {
   color: var(--ea-gold);
   font-size: 12px;
 }
-.operator-presets__editing {
-  display: grid;
+.operator-presets__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
   gap: var(--ea-space-2);
+  margin-top: var(--ea-space-3);
   padding-top: var(--ea-space-3);
   border-top: 1px solid var(--ea-border-soft);
+}
+.operator-presets__action-tooltip {
+  display: inline-flex;
 }
 .operator-presets__error {
   color: var(--ea-danger);
 }
 @media (max-width: 600px) {
-  .operator-presets__heading > .operator-presets__identity {
-    flex-basis: 100%;
+  .operator-presets__filter-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .operator-presets__heading {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .operator-presets__heading > .operator-presets__toolbar {
+    justify-self: end;
   }
   .operator-presets__save {
     grid-template-columns: minmax(0, 1fr);
