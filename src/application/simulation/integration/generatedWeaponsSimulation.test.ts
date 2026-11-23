@@ -470,8 +470,17 @@ describe('生成武器的正式模拟门禁', () => {
 
   it('战技开始创建的武器 Buff 随本次技能结束，不残留到下一次战技', async () => {
     const weapon = candidates.find(item => item.slug === 'wpn_lance_0006')!;
-    const operator = repository.getOperators().find(item => item.weaponType === weapon.weaponType)!;
-    const result = await simulateWeapon(weapon, operator, ['battleSkill', 'battleSkill']);
+    const operator = repository.getOperator('avywenna')!;
+    const result = await simulateWeapon(
+      weapon,
+      operator,
+      ['battleSkill', 'battleSkill'],
+      undefined,
+      [],
+      {
+        ownerStartFrames: [1, 601],
+      },
+    );
     const applied = result.receiptEntries.filter(
       entry =>
         entry.event === 'BuffApplied' && entry.data?.buffId === 'buff_wpn_lance_0006_skill_pulse01',
