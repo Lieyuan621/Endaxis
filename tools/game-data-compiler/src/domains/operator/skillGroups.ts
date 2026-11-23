@@ -1,3 +1,8 @@
+import type { OperatorSkillGroupValidationOptions } from '../../source/operatorSkillGroupOptions.ts';
+export {
+  parseOperatorSkillGroupValidationOptions,
+  type OperatorSkillGroupValidationOptions,
+} from '../../source/operatorSkillGroupOptions.ts';
 import { OPERATION_TYPES } from '../../../../../packages/game-data-contract/src/primitives.ts';
 import type {
   SkillGroupDefinition,
@@ -6,6 +11,7 @@ import type {
   SkillGroupVariantDefinition,
 } from '../../compiler/intermediateDefinitions.ts';
 import {
+  distinctStrings,
   requireArray,
   requireExactFields,
   requireNonEmptyString,
@@ -66,32 +72,6 @@ export type OperatorSkillGroupSource = Readonly<
   readonly replacementPlacements: Readonly<Record<string, (typeof REPLACEMENT_PLACEMENTS)[number]>>;
   readonly variants: readonly OperatorSkillGroupVariantSource[];
 };
-
-export interface OperatorSkillGroupValidationOptions {
-  readonly routingOnlyNativeSkillIds?: readonly string[];
-  readonly simulationEquivalentNativeSkillIds?: readonly string[];
-  readonly basePassiveSkillIds?: readonly string[];
-  readonly routedSkillKeys?: readonly string[];
-  /** 需注册到技能系统、但不作为稳定时间轴入口的原生替换/内部技能。 */
-  readonly runtimeReplacementSkillKeys?: readonly string[];
-}
-
-/** 生成与各类审计共用同一读取边界，避免内部技能等例外只在某个入口生效。 */
-export function parseOperatorSkillGroupValidationOptions(
-  value: unknown,
-  sourcePath: string,
-): OperatorSkillGroupValidationOptions {
-  const row = requireRecord(value, sourcePath);
-  const read = (key: keyof OperatorSkillGroupValidationOptions) =>
-    row[key] === undefined ? undefined : distinctStrings(row[key], `${sourcePath}.${key}`);
-  return {
-    routingOnlyNativeSkillIds: read('routingOnlyNativeSkillIds'),
-    simulationEquivalentNativeSkillIds: read('simulationEquivalentNativeSkillIds'),
-    basePassiveSkillIds: read('basePassiveSkillIds'),
-    routedSkillKeys: read('routedSkillKeys'),
-    runtimeReplacementSkillKeys: read('runtimeReplacementSkillKeys'),
-  };
-}
 
 /** 严格读取原生技能等级组的字段。 */
 export function parseNativeOperatorSkillGroupSources(
@@ -367,16 +347,6 @@ function requireGroupIdentity<T extends string>(
   const result = allowed.find(item => item === name);
   if (result === undefined)
     throw new Error(`${path}: unsupported identity ${JSON.stringify(name)}`);
-  return result;
-}
-
-function distinctStrings(value: unknown, path: string): string[] {
-  const result = requireArray(value, path).map((item, index) =>
-    requireNonEmptyString(item, `${path}[${index}]`),
-  );
-  if (new Set(result).size !== result.length) {
-    throw new Error(`${path}: expected distinct values`);
-  }
   return result;
 }
 

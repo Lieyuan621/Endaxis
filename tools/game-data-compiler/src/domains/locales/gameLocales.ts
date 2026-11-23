@@ -1,4 +1,4 @@
-import { parseOperatorSkillGroupValidationOptions } from '../operator/skillGroups.ts';
+import { parseOperatorSkillGroupValidationOptions } from '../../source/operatorSkillGroupOptions.ts';
 import { normalizeNativeTableNumbers } from '../../source/nativeTableNumbers.ts';
 import { ATTRIBUTE_TYPES } from '../../source/attributeModifiers.ts';
 import {
