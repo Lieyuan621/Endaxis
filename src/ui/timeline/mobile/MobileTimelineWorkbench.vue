@@ -8,6 +8,8 @@ import {
   EaCopyIcon,
   EaDeleteIcon,
   EaDrawer,
+  EaExportIcon,
+  EaImportIcon,
   EaNumberInput,
   EaPlusIcon,
   EaPopover,
@@ -872,21 +874,7 @@ function setScenario(value: EaSelectValue | EaSelectValue[]): void {
                       moreOpen = false;
                       emit('openProject');
                     "
-                    ><svg
-                      viewBox="0 0 24 24"
-                      width="14"
-                      height="14"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" /></svg
-                    ><span>{{ t('common.load') }}</span></EaButton
+                    ><EaImportIcon :size="14" /><span>{{ t('common.load') }}</span></EaButton
                   ><EaButton
                     size="sm"
                     class="mobile-project-action"
@@ -915,21 +903,7 @@ function setScenario(value: EaSelectValue | EaSelectValue[]): void {
                       moreOpen = false;
                       emit('exportProject');
                     "
-                    ><svg
-                      viewBox="0 0 24 24"
-                      width="14"
-                      height="14"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M14 3h7v7" />
-                      <path d="M10 14L21 3" />
-                      <path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7" /></svg
-                    ><span>{{ t('common.export') }}</span></EaButton
+                    ><EaExportIcon :size="14" /><span>{{ t('common.export') }}</span></EaButton
                   >
                 </div>
               </section>

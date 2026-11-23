@@ -5,7 +5,7 @@ import { mountSetup } from '../../../test/componentSetup';
 import { createDefaultOperatorInstance } from '../../../application/editor/loadoutBuildFactory';
 import { captureOperatorBuild } from '../../../application/editor/operatorBuildPreset';
 import { gameDataRepository } from '../../../data/gameDataRepository';
-import { perlica, ember } from '../../../data/operators';
+import { perlica, ember, endministrator } from '../../../data/operators';
 import {
   loadOperatorBuildPresets,
   saveOperatorBuildPresets,
@@ -131,4 +131,29 @@ describe('预设管理', () => {
     expect(state.renameName.value).toBe('未保存');
     expect(state.renaming.value.id).toBe('a');
   });
+});
+
+it('all-operator groups follow directory IDs while each operator keeps its saved preset order', async () => {
+  const record = (id: string, operator: typeof perlica) => ({
+    id,
+    name: id,
+    build: captureOperatorBuild({ ...track(), operator: createDefaultOperatorInstance(operator) }),
+  });
+  saveOperatorBuildPresets([
+    record('ember-first', ember),
+    record('perlica', perlica),
+    record('ember-second', ember),
+    record('admin', endministrator),
+  ]);
+  const { state } = await mount();
+  state.selectedOperator.value = 'all';
+  expect(state.groups.value.map((group: { slug: string }) => group.slug)).toEqual([
+    endministrator.slug,
+    perlica.slug,
+    ember.slug,
+  ]);
+  expect(state.groups.value[2].items.map((preset: { id: string }) => preset.id)).toEqual([
+    'ember-first',
+    'ember-second',
+  ]);
 });

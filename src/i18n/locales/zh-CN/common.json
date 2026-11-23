@@ -3226,7 +3226,8 @@
     "allOperators": "全部干员",
     "importShort": "导入",
     "exportShort": "导出",
-    "noFilteredOperatorPresets": "该干员暂无预设。"
+    "noFilteredOperatorPresets": "该干员暂无预设。",
+    "unknownRarity": "星级未知"
   },
   "projectTransfer": {
     "selectedCount": "已选择 {count} 个方案",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref, useAttrs } from 'vue';
+import { computed, inject, onMounted, onUpdated, ref, useAttrs } from 'vue';
 import { ElInputNumber } from 'element-plus';
 import { eaFormFieldKey } from '../fieldContext';
 import type { EaControlSize } from '../types';
@@ -52,6 +52,15 @@ const effectiveSize = computed(() => (props.compact ? 'sm' : props.size));
 const elementSize = computed(() =>
   effectiveSize.value === 'md' ? 'default' : effectiveSize.value === 'sm' ? 'small' : 'large',
 );
+
+// Element Plus initializes this attribute on mount but does not update it with disabled.
+function syncDisabledState() {
+  const root = inputRef.value?.$el as HTMLElement | undefined;
+  const input = root?.querySelector<HTMLInputElement>('input');
+  input?.setAttribute('aria-disabled', String(input.disabled));
+}
+onMounted(syncDisabledState);
+onUpdated(syncDisabledState);
 
 defineExpose({
   focus: () => inputRef.value?.focus(),

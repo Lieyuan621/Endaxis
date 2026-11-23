@@ -6,6 +6,8 @@ import {
   EaCopyIcon,
   EaDeleteIcon,
   EaDiceIcon,
+  EaExportIcon,
+  EaImportIcon,
   EaInput,
   EaNumberInput,
   EaPlusIcon,
@@ -616,11 +618,7 @@ onBeforeUnmount(() => {
                 :title="t('timeline.header.loadTooltip')"
                 @click="runProjectAction('open')"
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
+                <EaImportIcon :size="14" />
                 <span>{{ labels.open }}</span>
               </EaButton>
               <EaButton
@@ -642,11 +640,7 @@ onBeforeUnmount(() => {
                 class="header-more-action header-project-action header-project-action--wide"
                 @click="runProjectAction('export')"
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M14 3h7v7" />
-                  <path d="M10 14L21 3" />
-                  <path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7" />
-                </svg>
+                <EaExportIcon :size="14" />
                 <span>{{ labels.export }}</span>
               </EaButton>
             </div>

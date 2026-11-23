@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SelectionIconFrame from './SelectionIconFrame.vue';
+import { groupOperatorsByRarity } from '../../appearance/operatorGroups';
 /**
  * Next 时间轴的干员定义选择器。
  *
@@ -116,16 +117,7 @@ const groups = computed(() => {
     return matchesLocalizedNameSearch(operator.name, searchQuery.value);
   });
 
-  const byRarity = new Map<number, typeof operators>();
-  for (const operator of operators) {
-    const list = byRarity.get(operator.rarity) ?? [];
-    list.push(operator);
-    byRarity.set(operator.rarity, list);
-  }
-
-  return [...byRarity.entries()]
-    .sort(([left], [right]) => right - left)
-    .map(([level, list]) => ({ level, list }));
+  return groupOperatorsByRarity(operators).map(({ rarity, list }) => ({ level: rarity, list }));
 });
 
 function select(slug: string): void {

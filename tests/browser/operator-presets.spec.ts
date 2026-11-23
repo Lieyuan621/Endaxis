@@ -1,6 +1,14 @@
 import { test, expect, openPerlica } from './helpers';
 import { createDefaultOperatorInstance } from '../../src/application/editor/loadoutBuildFactory';
-import { perlica, ember } from '../../src/data/operators';
+import {
+  perlica,
+  ember,
+  endministrator,
+  gilberta,
+  antal,
+  operatorDefinitions,
+} from '../../src/data/operators';
+import operatorNames from '../../src/i18n/game-locales/zh/operators.json' with { type: 'json' };
 
 test('预设默认当前干员，文件往返返回原筛选且应用到空轨道可撤销', async ({ page }) => {
   await openPerlica(page);
@@ -208,4 +216,80 @@ test('零预设保留当前干员，保存定位到当前干员，删除后仍�
   await picker.getByRole('button', { name: '全部干员 1', exact: true }).click();
   await expect(manager.locator('article')).toHaveCount(1);
   await expect(manager.locator('article')).toContainText('Other build');
+});
+
+test('干员选择与预设筛选按星级及原生编号排列，不受保存顺序影响', async ({ page }) => {
+  const definitions = [gilberta, antal, ember, endministrator, perlica];
+  await page.addInitScript(
+    items => localStorage.setItem('endaxis.operator-build-presets', JSON.stringify(items)),
+    definitions.map(operator => ({
+      id: operator.slug,
+      name: operator.slug,
+      build: {
+        operator: createDefaultOperatorInstance(operator),
+        weapon: null,
+        gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+      },
+    })),
+  );
+  await page.goto('/timeline');
+  await page.getByText('未设置干员', { exact: true }).nth(1).click();
+  const native = page.locator('.char-selector-dialog');
+  await expect(native.locator('.rarity-label')).toHaveText(['6 ★', '5 ★', '4 ★']);
+  await expect(native.locator('.roster-grid').first().locator('.card-name')).toHaveText(
+    operatorDefinitions
+      .filter(operator => operator.rarity === 6)
+      .map(operator => (operatorNames as Record<string, { name: string }>)[operator.slug]!.name),
+  );
+  await native.getByText('佩丽卡', { exact: true }).click();
+  await page.getByRole('button', { name: '干员预设', exact: true }).click();
+  const manager = page.getByRole('dialog', { name: '干员预设', exact: true });
+  const filter = manager.getByRole('button', { name: '筛选干员', exact: true });
+  const picker = page.getByRole('group', { name: '筛选干员', exact: true });
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await filter.click();
+    await expect(picker.locator('.preset-operator-filter__group-title')).toHaveText([
+      '6 ★',
+      '5 ★',
+      '4 ★',
+    ]);
+    const groups = picker.locator('.preset-operator-filter__operator-group');
+    expect(
+      await groups
+        .nth(0)
+        .getByRole('button')
+        .evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))),
+    ).toEqual(['管理员', '余烬', '洁尔佩塔']);
+    expect(
+      await groups
+        .nth(1)
+        .getByRole('button')
+        .evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))),
+    ).toEqual(['佩丽卡']);
+    expect(
+      await groups
+        .nth(2)
+        .getByRole('button')
+        .evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))),
+    ).toEqual(['安塔尔']);
+    await picker.getByRole('button', { name: '全部干员 5', exact: true }).click();
+    await expect(manager.locator('.operator-presets__group > h3')).toHaveText([
+      '管理员 (1)',
+      '佩丽卡 (1)',
+      '余烬 (1)',
+      '洁尔佩塔 (1)',
+      '安塔尔 (1)',
+    ]);
+    await page.mouse.move(0, 0);
+    await filter.click();
+    await expect(picker.locator('.preset-operator-filter__group-title').first()).toBeVisible();
+    await picker.screenshot({
+      path: '.local/preset-directory-order-' + width + '.png',
+      animations: 'disabled',
+    });
+    await page.keyboard.press('Escape');
+    await expect(picker).toBeHidden();
+    await expect(filter).toBeFocused();
+  }
 });

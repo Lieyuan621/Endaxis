@@ -6,12 +6,13 @@ import OperatorAvatar from '@/ui/components/OperatorAvatar.vue';
 import { DEFAULT_GAME_ICON_PATH, getOperatorAvatarPath } from '@/ui/gameAssetPaths';
 import { getOperatorGameName } from '@/ui/gameText';
 import type { OperatorBuildPreset } from '@/application/editor/operatorBuildPreset';
-import type { GameDataRepository } from '@/core/game-data/gameDataRepository';
+import type { GameDataRepository, GameDataBrowser } from '@/core/game-data/gameDataRepository';
+import { groupOperatorsByRarity, orderByOperatorDirectory } from '../../appearance/operatorGroups';
 import { useInteractionSession } from '../../interaction/interactionSessionContext';
 import { usePopoverInteractionBoundary } from '../../interaction/usePopoverInteractionBoundary';
 const props = defineProps<{
   presets: readonly OperatorBuildPreset[];
-  gameData: GameDataRepository;
+  gameData: GameDataRepository & Partial<Pick<GameDataBrowser, 'getOperators'>>;
   currentOperatorSlug?: string;
   disabled?: boolean;
 }>();
@@ -31,7 +32,7 @@ usePopoverInteractionBoundary(
 const operators = computed(() => {
   const options = new Map<
     string,
-    { value: string; label: string; avatar: string; count: number }
+    { value: string; label: string; avatar: string; count: number; rarity?: number }
   >();
   function include(slug: string, count: number) {
     const existing = options.get(slug);
@@ -48,14 +49,20 @@ const operators = computed(() => {
         ? getOperatorAvatarPath(assetSlug)
         : DEFAULT_GAME_ICON_PATH,
       count,
+      rarity: definition?.rarity,
     });
   }
   for (const preset of props.presets) include(preset.build.operator.operatorSlug, 1);
   // Zero-count selections remain explicit until the user changes the filter.
   if (props.currentOperatorSlug) include(props.currentOperatorSlug, 0);
   if (model.value !== 'all') include(model.value, 0);
-  return [...options.values()].sort((a, b) => a.label.localeCompare(b.label, locale.value));
+  return orderByOperatorDirectory(
+    [...options.values()],
+    option => option.value,
+    props.gameData.getOperators?.() ?? [],
+  );
 });
+const operatorGroups = computed(() => groupOperatorsByRarity(operators.value));
 const selectedOperator = computed(() =>
   operators.value.find(option => option.value === model.value),
 );
@@ -138,21 +145,32 @@ watch(
       >
         {{ t('operatorPresets.allOperators') }} <span>{{ props.presets.length }}</span>
       </EaButton>
-      <div class="preset-operator-filter__operator-grid">
-        <EaButton
-          v-for="option in operators"
-          :key="option.value"
-          variant="ghost"
-          class="preset-operator-filter__operator-option"
-          :aria-label="option.label"
-          :pressed="model === option.value"
-          @click="selectOperator(option.value)"
+      <div class="preset-operator-filter__operator-groups">
+        <section
+          v-for="group in operatorGroups"
+          :key="group.rarity"
+          class="preset-operator-filter__operator-group"
         >
-          <OperatorAvatar :src="option.avatar" @error.capture="avatarFallback" />
-          <span class="preset-operator-filter__operator-label"
-            >{{ option.label }} <span>{{ option.count }}</span></span
-          >
-        </EaButton>
+          <h3 class="preset-operator-filter__group-title">
+            {{ group.rarity ? group.rarity + ' ★' : t('operatorPresets.unknownRarity') }}
+          </h3>
+          <div class="preset-operator-filter__operator-grid">
+            <EaButton
+              v-for="option in group.list"
+              :key="option.value"
+              variant="ghost"
+              class="preset-operator-filter__operator-option"
+              :aria-label="option.label"
+              :pressed="model === option.value"
+              @click="selectOperator(option.value)"
+            >
+              <OperatorAvatar :src="option.avatar" @error.capture="avatarFallback" />
+              <span class="preset-operator-filter__operator-label"
+                >{{ option.label }} <span>{{ option.count }}</span></span
+              >
+            </EaButton>
+          </div>
+        </section>
       </div>
     </div>
   </EaPopover>
@@ -213,13 +231,25 @@ watch(
   justify-content: space-between;
   width: 100%;
 }
+.preset-operator-filter__operator-groups {
+  display: grid;
+  gap: var(--ea-space-3);
+  max-height: min(360px, 55dvh);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.preset-operator-filter__group-title {
+  margin: 0 0 var(--ea-space-2);
+  padding-bottom: var(--ea-space-1);
+  border-bottom: 1px solid var(--ea-border-soft);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ea-fg-muted);
+}
 .preset-operator-filter__operator-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--ea-space-2);
-  max-height: min(360px, 55dvh);
-  overflow-y: auto;
-  scrollbar-gutter: stable;
 }
 .preset-operator-filter__operator-option.ea-button {
   display: flex;

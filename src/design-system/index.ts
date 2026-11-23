@@ -12,9 +12,11 @@ export { default as EaDialogActions } from './components/EaDialogActions/EaDialo
 export { default as EaDrawer } from './components/EaDrawer/EaDrawer.vue';
 export { default as EaDeleteIcon } from './components/EaDeleteIcon/EaDeleteIcon.vue';
 export { default as EaDiceIcon } from './components/EaDiceIcon/EaDiceIcon.vue';
+export { default as EaExportIcon } from './components/EaExportIcon/EaExportIcon.vue';
 export { default as EaFilterChip } from './components/EaFilterChip/EaFilterChip.vue';
 export { default as EaFormField } from './components/EaFormField/EaFormField.vue';
 export { default as EaInput } from './components/EaInput/EaInput.vue';
+export { default as EaImportIcon } from './components/EaImportIcon/EaImportIcon.vue';
 export { default as EaMinusIcon } from './components/EaMinusIcon/EaMinusIcon.vue';
 export { default as EaPlusIcon } from './components/EaPlusIcon/EaPlusIcon.vue';
 export { default as EaNumberInput } from './components/EaNumberInput/EaNumberInput.vue';

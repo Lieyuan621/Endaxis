@@ -9,11 +9,13 @@ import {
   EaDialog,
   EaDialogActions,
   EaDeleteIcon,
+  EaExportIcon,
   EaFormField,
+  EaImportIcon,
   EaInput,
   EaTooltip,
 } from '@/design-system';
-import { Download, EditPen, Refresh, Search, Upload } from '@element-plus/icons-vue';
+import { EditPen, Refresh, Search } from '@element-plus/icons-vue';
 import { getOperatorGameName, getWeaponGameName, getGearPieceGameName } from '../../gameText';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import OperatorPresetBuildSummary from './OperatorPresetBuildSummary.vue';
@@ -27,12 +29,16 @@ import {
   loadOperatorBuildPresets,
   saveOperatorBuildPresets,
 } from '../../../data/browserOperatorBuildPresets';
-import type { GameDataRepository } from '../../../core/game-data/gameDataRepository';
+import { orderByOperatorDirectory } from '../../appearance/operatorGroups';
+import type {
+  GameDataRepository,
+  GameDataBrowser,
+} from '../../../core/game-data/gameDataRepository';
 import type { TrackDocument } from '../../../core/project/schema';
 
 const props = defineProps<{
   track: TrackDocument | null;
-  gameData: GameDataRepository;
+  gameData: GameDataRepository & Partial<Pick<GameDataBrowser, 'getOperators'>>;
   readOnly: boolean;
   suspended?: boolean;
   apply: (preset: OperatorBuildPreset) => void;
@@ -89,7 +95,11 @@ const groups = computed(() => {
     group.push(preset);
     result.set(slug, group);
   }
-  return [...result].map(([slug, items]) => ({ slug, items }));
+  return orderByOperatorDirectory(
+    [...result].map(([slug, items]) => ({ slug, items })),
+    group => group.slug,
+    props.gameData.getOperators?.() ?? [],
+  );
 });
 function beginSave() {
   const base = t('operatorPresets.defaultName', {
@@ -237,9 +247,7 @@ async function apply(preset: OperatorBuildPreset) {
               :title="t('operatorPresets.import')"
               @click="emit('importFile')"
             >
-              <Upload width="14" height="14" aria-hidden="true" />{{
-                t('operatorPresets.importShort')
-              }}
+              <EaImportIcon :size="14" />{{ t('operatorPresets.importShort') }}
             </EaButton>
             <EaButton
               size="sm"
@@ -250,9 +258,7 @@ async function apply(preset: OperatorBuildPreset) {
                 emit('exportPresets', selectedOperator === 'all' ? undefined : selectedOperator)
               "
             >
-              <Download width="14" height="14" aria-hidden="true" />{{
-                t('operatorPresets.exportShort')
-              }}
+              <EaExportIcon :size="14" />{{ t('operatorPresets.exportShort') }}
             </EaButton>
           </div>
         </div>

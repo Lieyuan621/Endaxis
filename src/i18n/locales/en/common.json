@@ -3226,7 +3226,8 @@
     "allOperators": "All operators",
     "importShort": "Import",
     "exportShort": "Export",
-    "noFilteredOperatorPresets": "No presets for this operator."
+    "noFilteredOperatorPresets": "No presets for this operator.",
+    "unknownRarity": "Unknown rarity"
   },
   "projectTransfer": {
     "selectedCount": "Selected {count} scenarios",
