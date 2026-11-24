@@ -1,8 +1,10 @@
+import { isHitIdentity } from '../derivedObjectIdentity';
 /**
  * 顶层项目校验器使用的场景内部一致性规则。
  * 这里只检查持久化结构和引用关系，不应调用游戏数据或执行战斗规则。
  */
 import { type JsonObject } from './schema';
+import { HIT_OVERRIDE_FIELDS } from './hitOverrides';
 import { validateScenarioBuff } from '../game-data/validateGlobalEffectDefinition';
 import { ENEMY_RANKS } from '../game-data/enemyRank';
 import { validateEnemyLifecycle } from './enemyLifecycleValidation';
@@ -202,19 +204,25 @@ export function validateBattle(value: unknown, path: string, issues: ValidationI
     requireBoolean(value.enemyAutomaticDeath, `${path}.enemyAutomaticDeath`, issues);
   requireNonNegativeInteger(value.prepFrames, `${path}.prepFrames`, issues);
   requirePositiveInteger(value.durationFrames, `${path}.durationFrames`, issues);
-  if (
-    value.reactionCriticalOverrides !== undefined &&
-    (!isObject(value.reactionCriticalOverrides) ||
-      Object.entries(value.reactionCriticalOverrides).some(
-        ([key, flag]) => key.length === 0 || typeof flag !== 'boolean',
-      ))
-  ) {
-    issues.push({
-      path: `${path}.reactionCriticalOverrides`,
-      message: 'expected non-empty hit keys mapped to booleans',
-    });
+  for (const field of HIT_OVERRIDE_FIELDS) {
+    const overrides = value[field];
+    if (overrides === undefined) continue;
+    if (!isObject(overrides)) {
+      issues.push({ path: `${path}.${field}`, message: 'expected an object' });
+      continue;
+    }
+    for (const [key, mark] of Object.entries(overrides)) {
+      const markPath = `${path}.${field}[${JSON.stringify(key)}]`;
+      if (!isHitIdentity(key)) issues.push({ path: markPath, message: 'invalid hit identity' });
+      if (field === 'hitWeaknessBreaks' && isObject(mark)) {
+        if (typeof mark.stagger !== 'number' || !Number.isFinite(mark.stagger) || mark.stagger < 0)
+          issues.push({
+            path: `${markPath}.stagger`,
+            message: 'expected a finite non-negative number',
+          });
+      } else requireBoolean(mark, markPath, issues);
+    }
   }
-
   if (value.random !== undefined) {
     const randomPath = `${path}.random`;
     if (!isObject(value.random)) {

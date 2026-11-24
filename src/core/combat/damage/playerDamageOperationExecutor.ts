@@ -37,7 +37,7 @@ import { attributeModifierValues } from '../attributes/combatAttributes';
 import type { CriticalSampleSource } from '../random/criticalSampleSource';
 import type { SimulationRandomMode } from '../random/simulationRandom';
 import { operationProducer } from '../receipt/combatObjectIdentity';
-import type { CombatReceiptSink } from '../receipt/combatReceipt';
+import type { CombatReceiptSink, CombatObjectRef } from '../receipt/combatReceipt';
 import type { CombatVitals } from '../resources/combatVitals';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
@@ -72,7 +72,7 @@ import {
 } from './playerDamageContext';
 import { executePoiseDamage, type PoiseDamageEvent, type PoiseDamageModifier } from './poiseDamage';
 import { PoiseCalculationContext } from './poiseModifiers';
-import { reactionDamageKind, type ReactionDamageIdentity } from './reactionDamageCritical';
+import { reactionDamageKind } from './reactionDamageCritical';
 
 type RuntimeOperation = ResolvedCombatOperationStep;
 type DamageStep = ResolvedCombatStepForKind<'dealDamage'>;
@@ -180,12 +180,22 @@ export interface PlayerDamageOperationDependencies {
   /** 期望模式把伤害写成数学期望，并确定触发允许暴击的后续效果，不推进随机流。 */
   readonly randomMode?: SimulationRandomMode;
   readonly attackDetail?: AttackReceiptSnapshot;
-  /** 场景显式指定的命中覆盖；返回 undefined 才取样，且不污染公式中的原始暴击率。 */
-  readonly resolveCriticalOverride?: (step: DamageStep) => boolean | undefined;
-  readonly resolveReactionCriticalOverride?: (identity: ReactionDamageIdentity) => {
-    readonly key: string;
-    readonly value: boolean | undefined;
-  };
+  /** 分配本次命中身份并读取覆盖；不改变原始暴击率及原本的随机取样次数。 */
+  readonly resolveHitMarks?: (
+    producer: CombatObjectRef | undefined,
+    ownerId: string,
+    targetId: string,
+    supportsWeakness: boolean,
+  ) =>
+    | {
+        hitIdentity: string;
+        hitCriticalOverride?: boolean;
+        canBreakWeakness?: boolean;
+        breaksWeakness?: boolean;
+        weaknessBreakStagger?: number;
+      }
+    | undefined;
+  readonly emitWeaknessBreak?: Parameters<typeof executeHealthDamage>[0]['onWeaknessBreak'];
   readonly resolveNonRandomRuntimeSnapshot: (
     step: DamageStep,
   ) => PlayerDamageNonRandomRuntimeSnapshot;
@@ -325,7 +335,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       skillType: this.dependencies.skillType,
       skillCastInfo: this.dependencies.skillCastInfo,
       sourceActionId: this.dependencies.sourceActionId,
-      resolveCriticalOverride: this.dependencies.resolveCriticalOverride,
+      resolveHitMarks: this.dependencies.resolveHitMarks,
       delegate: this.dependencies.delegate,
     });
   }
@@ -563,28 +573,18 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       const finalAttackValue = context.resolveFinalAttackValue();
       const runtimeSnapshot = this.dependencies.resolveNonRandomRuntimeSnapshot(step);
       const reactionKind = reactionDamageKind(step.parameters.tags);
-      const reactionOverride =
-        reactionKind === undefined
-          ? undefined
-          : this.dependencies.resolveReactionCriticalOverride?.({
-              sourceId: this.dependencies.sourceOperatorId,
-              targetId: this.dependencies.targetId,
-              castId,
-              actionId:
-                operationContext?.executingBuff?.buffId ??
-                this.dependencies.executingSkillId ??
-                this.dependencies.sourceActionId ??
-                operationContext?.executionActionId,
-              stepKey: step.key,
-              kind: reactionKind,
-            });
       const fixedDamage = step.parameters.damageType === 'fixed';
+      const marks = this.dependencies.resolveHitMarks?.(
+        operationProducer(operationContext, {
+          ownerId: this.dependencies.sourceOperatorId,
+          actionId: this.dependencies.sourceActionId,
+        }),
+        this.dependencies.sourceOperatorId,
+        this.dependencies.targetId,
+        step.parameters.tags?.includes('canBreakWeakness') === true,
+      );
       const canCritical = !fixedDamage && this.dependencies.canCritical !== false;
-      const criticalOverride = !canCritical
-        ? undefined
-        : reactionKind === undefined
-          ? this.dependencies.resolveCriticalOverride?.(step)
-          : reactionOverride?.value;
+      const criticalOverride = canCritical ? marks?.hitCriticalOverride : undefined;
       const resolvedFormulaInput = resolvePlayerActiveDamageInput(
         {
           step,
@@ -601,7 +601,6 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
               isPhysicalInflictionDamage(step.parameters.tags),
             criticalSample:
               this.dependencies.randomMode !== 'expected' &&
-              criticalOverride === undefined &&
               canCritical &&
               context.attackerAttributes.criticalRate > 0.00001
                 ? this.dependencies.criticalSamples.nextCriticalSample({
@@ -783,12 +782,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
             : {}),
           ...(finisherMultiplier === 1 ? {} : { finisherMultiplier }),
           ...(reactionKind === undefined ? {} : { reactionDamageKind: reactionKind }),
-          ...(reactionOverride === undefined
-            ? {}
-            : {
-                reactionCriticalKey: reactionOverride.key,
-                forcedCritical: reactionOverride.value === true,
-              }),
+          ...marks,
+          ...(marks ? { hitCriticalOverride: criticalOverride ?? null } : {}),
           ...(calculationAttackAttributes.level === undefined
             ? {}
             : { sourceLevel: calculationAttackAttributes.level }),
@@ -816,6 +811,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
               ]),
             ),
           ),
+          canCritical,
           criticalRate: canCritical ? context.attackerAttributes.criticalRate : 0,
           criticalDamageIncrease: context.attackerAttributes.criticalDamageIncrease,
           criticalExpectationMultiplier,
@@ -846,6 +842,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         ...(castId === undefined ? {} : { castId }),
         ...(step.key === undefined ? {} : { stepKey: step.key }),
         ...(hitId === undefined ? {} : { hitId }),
+        weaknessBreakStagger: marks?.weaknessBreakStagger,
+        onWeaknessBreak: this.dependencies.emitWeaknessBreak,
         emitSourceEvent: this.dependencies.emitHealthSourceEvent,
         emitTargetEvent: this.dependencies.emitHealthTargetEvent,
         ...(this.dependencies.absorbHealthDamage === undefined
@@ -981,6 +979,15 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       );
       if (operationContext.skillExecution !== undefined)
         operationContext.skillExecution.hasOutputDamageBattle = true;
+      const marks = this.dependencies.resolveHitMarks?.(
+        operationProducer(operationContext, {
+          ownerId: sourceId,
+          actionId: this.dependencies.sourceActionId,
+        }),
+        sourceId,
+        targetId,
+        step.parameters.tags?.includes('canBreakWeakness') === true,
+      );
       executeHealthDamage({
         targetCanDie: this.dependencies.canTargetDie?.(targetId),
         producedBy: operationProducer(operationContext, {
@@ -1014,7 +1021,11 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           criticalDamage: result.value,
           expectedDamage: result.value,
           canCritical: false,
+          ...marks,
+          ...(marks ? { hitCriticalOverride: null } : {}),
         },
+        weaknessBreakStagger: marks?.weaknessBreakStagger,
+        onWeaknessBreak: this.dependencies.emitWeaknessBreak,
         emitSourceEvent: ports.emitSourceEvent,
         emitTargetEvent: ports.emitTargetEvent,
         absorbDamage: (_type, value) => ports.absorbDamage(targetId, value),

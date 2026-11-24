@@ -516,6 +516,15 @@
       "useGlobalSeed": "Use global seed",
       "castSeedHelp": "When set, this skill block and its derived behavior use an independent random stream."
     },
+    "hitMarks": {
+      "breakWeakness": "Interrupt enemy skill charge",
+      "interruptStagger": "Stagger",
+      "pasteMismatch": "The current scenario does not match the copied items.",
+      "pasteSkipped": "Skipped {count} hit settings because their objects could not be matched.",
+      "default": "Default critical result",
+      "critical": "Force critical hit",
+      "nonCritical": "Force non-critical hit"
+    },
     "skillWarnings": {
       "thisSkill": "this skill",
       "resourceUnavailable": "There is not enough SP or Ultimate Energy to use {skill}.",
@@ -2998,6 +3007,7 @@
     "expectedDamage": "Expected Damage",
     "actualDamage": "Damage This Run",
     "forcedDamage": "Forced Crit Damage",
+    "forcedNonCriticalDamage": "Forced Non-crit Damage",
     "forceCrit": "Force Crit",
     "critDamage": "Crit Damage",
     "nonCritDamage": "Non-crit Damage",

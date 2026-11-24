@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import TimelineStatusIcon from './TimelineStatusIcon.vue';
-defineProps<{ x: number; y: number; title: string; icon?: string }>();
+defineProps<{ x: number; y: number; title: string; icon?: string; hasOverride?: boolean }>();
 const emit = defineEmits<{ activate: [] }>();
 </script>
 <template>
@@ -17,7 +17,7 @@ const emit = defineEmits<{ activate: [] }>();
     @keydown.space.stop.prevent="emit('activate')"
   >
     <TimelineStatusIcon v-if="icon" :src="icon" class="standalone-damage-icon" />
-    <span class="enemy-damage-diamond" />
+    <span class="enemy-damage-diamond" :class="{ 'timeline-hit--marked': hasOverride }" />
   </button>
 </template>
 <style scoped>

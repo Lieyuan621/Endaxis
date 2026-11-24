@@ -516,6 +516,15 @@
       "useGlobalSeed": "使用全局种子",
       "castSeedHelp": "设置后，这个技能块及其派生行为使用独立随机流。"
     },
+    "hitMarks": {
+      "breakWeakness": "打断敌人蓄力",
+      "interruptStagger": "失衡值",
+      "pasteMismatch": "当前方案与复制的信息不匹配，无法粘贴。",
+      "pasteSkipped": "部分命中设置无法匹配来源或目标，已跳过 {count} 条。",
+      "default": "默认暴击结果",
+      "critical": "强制暴击",
+      "nonCritical": "强制不暴击"
+    },
     "skillWarnings": {
       "thisSkill": "该技能",
       "resourceUnavailable": "释放{skill}所需的技力或终结技能量不足。",
@@ -2998,10 +3007,11 @@
     "expectedDamage": "期望伤害",
     "actualDamage": "本次伤害",
     "forcedDamage": "强制暴击伤害",
+    "forcedNonCriticalDamage": "强制非暴击伤害",
     "forceCrit": "强制暴击",
     "critDamage": "暴击伤害",
     "nonCritDamage": "非暴击伤害",
-    "criticalResult": "本次暴击结果",
+    "criticalResult": "暴击结果",
     "criticalHit": "暴击",
     "nonCriticalHit": "未暴击",
     "cannotCritical": "不可暴击",

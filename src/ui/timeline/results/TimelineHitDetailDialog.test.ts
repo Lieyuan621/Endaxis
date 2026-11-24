@@ -1,5 +1,13 @@
-import { expect, it } from 'vitest';
-import { createSSRApp, h, type ComponentOptions } from 'vue';
+import { expect, it, vi } from 'vitest';
+import {
+  createSSRApp,
+  effectScope,
+  h,
+  nextTick,
+  reactive,
+  ssrContextKey,
+  type ComponentOptions,
+} from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import Dialog from './TimelineHitDetailDialog.vue';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
@@ -90,8 +98,6 @@ it('按旧版顺序展示独立乘区，失衡只从独立增伤中拆出一次'
           {
             visible: true,
             randomMode: 'expected',
-            forceCritical: false,
-            resultForceCritical: false,
             entries: [entry, { ...entry, sequence: 2 }],
             initialSequence: 2,
             targetLabel: '伤害对象',
@@ -232,8 +238,6 @@ it('keeps flat, additive percentage and independent attack sources separate with
           {
             visible: true,
             randomMode: 'expected',
-            forceCritical: false,
-            resultForceCritical: false,
             entries: [entry],
             contributionSourceLabel: () => '武器词条',
             damageTypeLabel: (s: string) => s,
@@ -258,7 +262,7 @@ it('keeps flat, additive percentage and independent attack sources separate with
   );
   const detail = state.damageDetails.value[0];
   expect(detail.contextRows.some((row: any) => row.value === 'battleSkill')).toBe(false);
-  expect(detail.canForceCritical).toBe(true);
+  expect(state.criticalKey.value).toBeUndefined();
   const defenseIndex = detail.multiplierRows.findIndex((row: any) => row.label === '防御修正');
   expect(
     detail.multiplierRows.slice(defenseIndex, defenseIndex + 3).map((row: any) => row.label),
@@ -339,8 +343,6 @@ it('projects the full attack breakdown from the frozen hit receipt instead of a 
           {
             visible: true,
             randomMode: 'expected',
-            forceCritical: false,
-            resultForceCritical: false,
             entries: [entry],
             contributionSourceLabel: () => '',
             damageTypeLabel: (s: string) => s,
@@ -449,8 +451,6 @@ it('projects expandable crit rows from the frozen hit facts', async () => {
           {
             visible: true,
             randomMode: 'expected',
-            forceCritical: false,
-            resultForceCritical: false,
             entries: [entry],
             contributionSourceLabel: () => '',
             damageTypeLabel: (s: string) => s,
@@ -779,16 +779,186 @@ it('projects expandable crit rows from the frozen hit facts', async () => {
   expect(state.openSkillMultiplierDetails.value.has(3)).toBe(true);
   expect(detail.criticalRateRaw).toBe(1.25);
   expect(detail.criticalRateEffective).toBe(1);
-  expect(detail.multiplierRows.find((row: { kind?: string }) => row.kind === 'crit')?.detail).toBe(
-    '100% × 60%',
-  );
+  expect(
+    detail.multiplierRows.find(
+      (row: { expandsCriticalDetails?: boolean }) => row.expandsCriticalDetails,
+    )?.detail,
+  ).toBe('100% × 60%');
   expect(detail.criticalDamageIncrease).toBe(0.6);
   expect(detail.criticalRateSources).toEqual([{ label: 'rate-buff', value: '+25%' }]);
   expect(detail.criticalDamageSources).toEqual([{ label: 'damage-buff', value: '+10%' }]);
-  expect(detail.multiplierRows.find((row: { kind?: string }) => row.kind === 'crit')).toBeDefined();
   state.toggleCriticalDetail(3);
   expect(state.openCriticalDetails.value.has(3)).toBe(true);
   state.onClose();
   expect(state.openCriticalDetails.value.size).toBe(0);
   expect(state.openSkillMultiplierDetails.value.size).toBe(0);
+});
+
+it('按当前页的身份设置标记，重算后跟随同一命中并显示已结算的非暴击结果', async () => {
+  const hit = (sequence: number, key: string, canEdit: boolean): CombatReceiptEntry => ({
+    event: 'DamageApplied',
+    frame: 1,
+    time: 1 / 30,
+    sequence,
+    data: {
+      hitIdentity: key,
+      canBreakWeakness: canEdit,
+      canCritical: canEdit,
+      value: 85,
+      criticalDamage: 100,
+      nonCriticalDamage: 100,
+      expectedDamage: 105,
+      hitCriticalOverride: canEdit ? false : null,
+      criticalMultiplier: 1,
+      criticalExpectationMultiplier: 1.05,
+    },
+  });
+  const first = hit(5, 'first', false),
+    second = hit(7, 'second', true);
+  const props = reactive({
+    entries: [first, second],
+    visible: true,
+    initialSequence: 5,
+    randomMode: 'expected',
+    criticalOverrides: { second: false },
+    weaknessBreaks: {},
+    labels: {
+      criticalResult: '结果',
+      criticalHit: '暴击',
+      nonCriticalHit: '未暴击',
+      forceNonCritical: '强制不暴击',
+      criticalExpectation: '期望',
+      expectedDamage: '期望伤害',
+      actualDamage: '本次伤害',
+      forcedDamage: '强制暴击伤害',
+      forcedNonCriticalDamage: '强制非暴击伤害',
+      defenseDetail: () => '',
+    },
+  });
+  const scope = effectScope();
+  try {
+    const emit = vi.fn();
+    const app = createSSRApp({});
+    app.provide(ssrContextKey, { modules: new Set() });
+    const state = app.runWithContext(() =>
+      scope.run(() => (Dialog as any).setup(props, { emit, expose: () => {} })),
+    );
+    expect(state.criticalKey.value).toBeUndefined();
+    expect(state.weaknessKey.value).toBeUndefined();
+    state.setCriticalSelection(true);
+    state.setWeaknessSelection(true);
+    expect(emit).not.toHaveBeenCalled();
+    state.damageIndex.value = 1;
+    expect(state.criticalSelection.value).toBe(false);
+    expect(state.criticalLabel.value).toBe('强制不暴击');
+    state.setCriticalSelection(null);
+    state.setWeaknessSelection(true);
+    expect(emit.mock.calls).toEqual([
+      ['setCriticalOverride', 'second', undefined],
+      ['setWeaknessBreak', 'second', true],
+    ]);
+    props.entries = [hit(8, 'second', true), hit(11, 'first', false)];
+    props.initialSequence = 11;
+    await nextTick();
+    expect(state.damageIndex.value).toBe(0);
+    expect(state.criticalKey.value).toBe('second');
+    const detail = state.damageDetails.value[0];
+    expect(detail).toMatchObject({ headline: 85, headlineLabel: '强制非暴击伤害', isForced: true });
+    const resultRow = (index: number) =>
+      state.damageDetails.value[index].multiplierRows.find(
+        (row: { label: string }) => row.label === '结果',
+      );
+    expect(resultRow(0)).toMatchObject({
+      detail: '未暴击',
+      expandsCriticalDetails: false,
+      tooltip: undefined,
+      factor: 1,
+    });
+    expect(state.damageDetails.value[1].headlineLabel).toBe('期望伤害');
+    props.randomMode = 'sampled';
+    const critical = hit(8, 'second', true);
+    props.entries[0] = {
+      ...critical,
+      data: {
+        ...critical.data,
+        hitCriticalOverride: true,
+        isCritical: true,
+        criticalMultiplier: 1.5,
+      },
+    };
+    expect(state.damageDetails.value.map((item: any) => item.headlineLabel)).toEqual([
+      '强制暴击伤害',
+      '本次伤害',
+    ]);
+    expect(resultRow(0)).toMatchObject({
+      detail: '暴击',
+      expandsCriticalDetails: false,
+      tooltip: undefined,
+      factor: 1.5,
+    });
+    expect(resultRow(1).expandsCriticalDetails).toBe(true);
+  } finally {
+    scope.stop();
+  }
+});
+
+it('打断失衡值与命中绑定，参考招式取自当前目标，选用后可手填', () => {
+  const hit = (sequence: number, targetId: string): CombatReceiptEntry => ({
+    event: 'DamageApplied',
+    sequence,
+    frame: 1,
+    time: 1 / 30,
+    targetId,
+    data: { canBreakWeakness: true, hitIdentity: `hit-${sequence}` },
+  });
+  const skillId = 'eny_0018_lbtough_skill02';
+  const props = reactive({
+    visible: true,
+    entries: [hit(1, 'enemy:a'), hit(2, 'enemy:b')],
+    weaknessBreaks: { 'hit-1': true, 'hit-2': { stagger: 8 } },
+    weaknessBreakOptions: (targetId: string) =>
+      targetId === 'enemy:a'
+        ? [
+            { skillId, stagger: 10 },
+            { skillId, stagger: 25 },
+          ]
+        : [],
+  });
+  const scope = effectScope();
+  try {
+    const emit = vi.fn();
+    const app = createSSRApp({});
+    app.provide(ssrContextKey, { modules: new Set() });
+    const state = app.runWithContext(() =>
+      scope.run(() => (Dialog as any).setup(props, { emit, expose: () => {} })),
+    );
+    expect(state.weaknessStagger.value).toBe(0);
+    expect(state.enemySkillOptions.value.map((option: { label: string }) => option.label)).toEqual([
+      'skill02 · 10',
+      'skill02 · 25',
+    ]);
+    state.setWeaknessStagger(state.enemySkillOptions.value[1].stagger);
+    state.setWeaknessStagger(3.5);
+    expect(emit.mock.calls).toEqual([
+      ['setWeaknessBreakStagger', 'hit-1', 25],
+      ['setWeaknessBreakStagger', 'hit-1', 3.5],
+    ]);
+    state.damageIndex.value = 1;
+    expect(state.weaknessStagger.value).toBe(8);
+    expect(state.enemySkillOptions.value).toEqual([]);
+    emit.mockClear();
+    for (const invalid of [-1, NaN, Infinity]) state.setWeaknessStagger(invalid);
+    state.setWeaknessStagger(8);
+    expect(emit).not.toHaveBeenCalled();
+    state.setWeaknessStagger(undefined);
+    expect(emit.mock.calls).toEqual([['setWeaknessBreakStagger', 'hit-2', 0]]);
+    state.damageIndex.value = 0;
+    props.weaknessBreaks['hit-1'] = false;
+    expect(state.enemySkillOptions.value).toEqual([]);
+    emit.mockClear();
+    state.setWeaknessStagger(5);
+    expect(emit).not.toHaveBeenCalled();
+  } finally {
+    scope.stop();
+  }
 });

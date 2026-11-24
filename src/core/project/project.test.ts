@@ -724,7 +724,6 @@ describe('current project document', () => {
       placement: { startFrame: 0 },
       simulationInputs: {
         randomSeed: 7,
-        criticalOverrides: { 'damage:1': true },
       },
     });
     project.scenarios[0]!.tracks[0] = track;

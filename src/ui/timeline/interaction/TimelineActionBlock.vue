@@ -306,7 +306,7 @@ function formatDurationFrames(frames: number): string {
       :class="{
         'is-link-buffed': hit.linkBuffed,
         'is-triggered': hit.triggered,
-        'is-forced-crit': hit.forcedCritical,
+        'timeline-hit--marked': hit.hasOverride,
       }"
       :style="markerStyle(hit)"
       :title="hit.title ?? ''"
@@ -955,12 +955,6 @@ function formatDurationFrames(frames: number): string {
   .hit-marker.is-triggered:hover {
     transform: translate(-50%, var(--hit-offset, 0px)) rotate(45deg) scale(1.35);
   }
-}
-
-.hit-marker.is-forced-crit {
-  background-color: #ff6b6b;
-  border-color: #ffd166;
-  box-shadow: 0 0 8px rgba(255, 209, 102, 0.9);
 }
 
 :global(html[data-theme='light'] .timeline-action-block) {

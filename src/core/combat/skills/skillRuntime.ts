@@ -57,6 +57,7 @@ import {
 
 /** 发射动作只提交一次请求；回调技能及其宿主都归该投射物持有。 */
 export type LaunchProjectile = (request: {
+  readonly projectileId: string;
   readonly faction?: ResolvedCombatStepForKind<'launchProjectile'>['parameters']['faction'];
   readonly schedule: ProjectileLaunchSchedule;
 

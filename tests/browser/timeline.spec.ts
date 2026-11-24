@@ -1,6 +1,28 @@
 import { readFile } from 'node:fs/promises';
 import { test, expect, box, openPerlica, startPlacement, placeBasicGroup } from './helpers';
 
+test('暴击方框保留标签并同步三态的原生勾选状态', async ({ page }) => {
+  await openPerlica(page);
+  await startPlacement(page, page.locator('.skill-card').filter({ hasText: '战技' }).first());
+  const lane = await box(page.locator('.track-lane').first());
+  await page.mouse.move(lane.x + 245, lane.y + 25, { steps: 20 });
+  await page.mouse.up();
+  await page.locator('.timeline-action-block .hit-marker:not([title=""])').first().click();
+  const dialog = page.locator('.hit-damage-detail-dialog');
+  const critical = dialog.getByRole('checkbox', { name: '暴击', exact: true });
+  const label = dialog.locator('.el-dialog__footer').getByText('暴击', { exact: true });
+  await expect(critical).toHaveJSProperty('indeterminate', true);
+  await label.click();
+  await expect(critical).toHaveJSProperty('checked', true);
+  await critical.press('Space');
+  await expect(critical).toHaveJSProperty('checked', false);
+  await expect(critical).toHaveJSProperty('indeterminate', false);
+  await label.click();
+  await expect(critical).toHaveJSProperty('indeterminate', true);
+  await expect(critical).toHaveJSProperty('checked', false);
+  await expect(dialog.getByRole('checkbox', { name: '打断敌人蓄力' })).not.toBeChecked();
+});
+
 test('通用弹窗标题与关闭按钮对齐，装备 Tab 支持键盘切换', async ({ page }) => {
   await openPerlica(page);
   await page.locator('.track-header .operator-presets-button').first().click();

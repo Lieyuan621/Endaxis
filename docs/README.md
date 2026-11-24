@@ -15,6 +15,7 @@
 | 核对暴击、概率事件、种子与随机模式   | [概率事件与随机模式](architecture/randomness.md)                                |
 | 修改保存、恢复和分支试算             | [战斗切面](architecture/checkpoints.md)                                         |
 | 修改状态条、来源图或伤害分析         | [结果与来源](architecture/results.md)                                           |
+| 保存、恢复或复制针对单次命中的标记   | [派生对象的身份锚定](architecture/derived-object-identity.md)                   |
 | 理解动作图、变量与宏                 | [动作图](architecture/action-graphs.md)                                         |
 | 修改定义类型、编译或资源加载         | [游戏数据](architecture/game-data.md)                                           |
 | 修改公共控件或面板样式               | [界面开发](development/ui.md)                                                   |

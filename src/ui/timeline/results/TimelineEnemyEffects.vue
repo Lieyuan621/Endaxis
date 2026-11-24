@@ -15,6 +15,7 @@ type EntityHit = {
   hitId: string;
   frame: number;
   entityInstanceId: number;
+  hasOverride: boolean;
   title: string;
 };
 /**
@@ -38,6 +39,7 @@ import { frameToCondensedTimelinePx } from '../timelineGeometry';
 import TimelineMonitorGrid from './TimelineMonitorGrid.vue';
 import { summarizeLastHitBuffs } from './lastHitBuffSummary';
 import { layoutEnemyStatusRows } from './enemyStatusRows';
+import { hasHitOverride } from '../../../core/projection/hitEffectProjection';
 import { layoutEnemyDamageHits } from './enemyDamageHitLayout';
 import { findBuffDamageSegment } from './enemyBuffDamageHits';
 import { isPhysicalStatusRowBuff } from './physicalStatusDisplay';
@@ -204,6 +206,7 @@ const damageHits = computed(() =>
     const buff = findBuffDamageSegment(entry, props.viz.damageBuffs ?? []);
     return {
       sequence: entry.sequence,
+      hasOverride: group.some(hasHitOverride),
       standaloneIcon: standalone
         ? ((buff && props.icon?.(buff)) ?? resolveImage(buff?.icon) ?? DEFAULT_GAME_ICON_PATH)
         : undefined,
@@ -441,6 +444,7 @@ function scrollEffects(event: WheelEvent) {
           :x="hit.x"
           :y="hit.top"
           :title="hit.title"
+          :has-override="hit.hasOverride"
           :icon="hit.standaloneIcon"
           @activate="emit('open-damage-detail', hit.sequence)"
         />
@@ -487,6 +491,7 @@ function scrollEffects(event: WheelEvent) {
           :x="pointX(hit.frame)"
           :y="hit.top"
           :title="hit.title"
+          :has-override="hit.hasOverride"
           @activate="emit('open-entity-hit', hit)"
         />
         <div

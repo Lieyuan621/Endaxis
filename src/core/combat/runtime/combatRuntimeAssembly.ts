@@ -3399,6 +3399,7 @@ export class CombatRuntimeAssembly {
           producedBy,
           runtimeSource: this.#resolveRuntimeTarget(sourceId),
           data: {
+            projectileId: request.projectileId,
             ...(skillCastInfo?.originCastId === undefined
               ? {}
               : { castId: skillCastInfo.originCastId }),

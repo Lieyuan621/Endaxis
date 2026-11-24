@@ -1,17 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-it('反应伤害覆盖独立保存，取消时不修改技能块或其他命中', () => {
-  const original = createEmptyScenario('reaction', '反应');
-  const forced = setReactionDamageForcedCritical(original, ['first', 'second'], true);
-  expect(forced.tracks).toBe(original.tracks);
-  expect(original.battle.reactionCriticalOverrides).toBeUndefined();
-  const saved = JSON.parse(JSON.stringify(forced)) as ScenarioDocument;
-  const cleared = setReactionDamageForcedCritical(saved, ['first'], false);
-  expect(cleared.battle.reactionCriticalOverrides).toEqual({ second: true });
-  expect(
-    setReactionDamageForcedCritical(cleared, ['second'], false).battle.reactionCriticalOverrides,
-  ).toBeUndefined();
-});
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { ScenarioDocument, SkillCastDocument } from '../../../core/project/schema';
 import {
@@ -24,9 +12,9 @@ import {
   insertSkillCastIntoGroup,
   dissolveSkillCastGroups,
   removeSkillCasts,
-  setSkillCastForcedCritical,
+  setHitOverride,
+  setHitWeaknessBreakStagger,
   setSkillCastInitialBlackboard,
-  setReactionDamageForcedCritical,
   setUnifiedInitialUltimateEnergy,
   updateDodgeMarker,
   setScenarioBuffAttributes,
@@ -46,6 +34,22 @@ import {
 import { createScenarioEditorSession } from '../../../test/scenarioEditorSession';
 
 describe('battle axis commands', () => {
+  it('只编辑已勾选命中的打断失衡值，重复操作保留既有数值', () => {
+    const original = scenario();
+    const key = JSON.stringify([['battle'], ['hit', 'operator', 'enemy', 0]]);
+    expect(setHitWeaknessBreakStagger(original, key, 25)).toBe(original);
+    const marked = setHitOverride(original, 'hitWeaknessBreaks', key, true);
+    const updated = setHitWeaknessBreakStagger(marked, key, 25);
+    expect(updated.battle.hitWeaknessBreaks).toEqual({ [key]: { stagger: 25 } });
+    expect(setHitOverride(updated, 'hitWeaknessBreaks', key, true)).toBe(updated);
+    expect(setHitWeaknessBreakStagger(updated, key, 25)).toBe(updated);
+    expect(setHitWeaknessBreakStagger(updated, key, 0).battle.hitWeaknessBreaks).toEqual({
+      [key]: true,
+    });
+    expect(
+      setHitOverride(updated, 'hitWeaknessBreaks', key, false).battle.hitWeaknessBreaks,
+    ).toBeUndefined();
+  });
   it('保存顶层初始化覆盖且清除时保留其他模拟输入', () => {
     const original = scenario();
     const cast = original.tracks[0]!.skillCasts[0]!;
@@ -517,19 +521,6 @@ describe('skill document editing', () => {
         artificingLevels: [0],
       }),
     ).toThrow('track 0 is empty');
-  });
-
-  it('stores forced critical hits by stable step key and removes empty simulation inputs', () => {
-    const original = scenario();
-    const forced = setSkillCastForcedCritical(original, 0, 'cast:1', 'damage:1', true);
-
-    expect(forced.tracks[0]!.skillCasts[0]!.simulationInputs?.criticalOverrides).toEqual({
-      'damage:1': true,
-    });
-    expect(setSkillCastForcedCritical(forced, 0, 'cast:1', 'damage:1', true)).toBe(forced);
-
-    const cleared = setSkillCastForcedCritical(forced, 0, 'cast:1', 'damage:1', false);
-    expect(cleared.tracks[0]!.skillCasts[0]!.simulationInputs).toBeUndefined();
   });
 
   it('removes the cast and every connection that points to it', () => {

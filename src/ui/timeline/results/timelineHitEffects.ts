@@ -6,6 +6,7 @@
  */
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import {
+  hasHitOverride,
   projectHitDamageReceipts,
   projectHitDamageIdentity,
   projectHitInflictionReceipts,
@@ -98,6 +99,7 @@ export function projectTimelineHitOccurrences(
       triggered: boolean;
       stackIndex: number;
       linkBuffed: boolean;
+      hasOverride: boolean;
       label: TimelineHitEffectLabel;
       entityInstanceId?: number;
     }[]
@@ -129,7 +131,9 @@ export function projectTimelineHitOccurrences(
       hitId: hit.hitId,
       stepKey: hit.stepKey,
       frame: hit.frame,
-      // main 只在该次命中实际吃到“连击”伤害 Buff 时染蓝；释放连携技本身不等于吃到 Buff。
+      hasOverride: occurrenceDamages.some(hit =>
+        hasHitOverride(entriesBySequence.get(hit.sequence)!),
+      ),
       linkBuffed: occurrenceDamages.some(damage => receivedComboBuff(damage, entriesBySequence)),
       label: {
         damage: occurrenceDamages.map(({ targetId, value, damageType, isCritical }) => ({

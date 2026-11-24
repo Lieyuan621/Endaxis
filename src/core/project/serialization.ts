@@ -3,7 +3,7 @@
  * 解析时只识别当前项目格式与旧版异构格式；序列化只接受合法的当前项目。
  */
 import { canUpgradeProjectVersion, upgradeProjectDocument } from './projectUpgrades';
-import type { EndaxisProjectDocument, JsonObject } from './schema';
+import type { EndaxisProjectDocument, JsonObject, ScenarioDocument } from './schema';
 import { PROJECT_SCHEMA_VERSION } from './schema';
 import { validateProjectDocument, type ValidationIssue, type ValidationResult } from './validation';
 import type { GameDataRepository } from '../game-data/gameDataRepository';
@@ -136,17 +136,33 @@ export function parseProjectDocument(
   }
   const validation = validateLoadedProject(decodeProjectNumbers(value), options);
   if (!validation.ok) return { ok: false, kind: 'invalid-document', issues: validation.issues };
-  return { ok: true, value: withoutLegacyDistance(validation.value) };
+  return { ok: true, value: withoutObsoleteSimulationInputs(validation.value) };
 }
 
-/** 旧方案的统一距离已由干员固定站位取代，加载后不再携带这个设置。 */
-function withoutLegacyDistance(project: EndaxisProjectDocument): EndaxisProjectDocument {
+/** 丢弃已移除的模拟输入，不将旧覆盖猜测迁移到新的命中身份。 */
+function withoutObsoleteSimulationInputs(project: EndaxisProjectDocument): EndaxisProjectDocument {
   return {
     ...project,
     scenarios: project.scenarios.map(scenario => {
-      if (!('operatorEnemyDistanceMeters' in scenario.battle)) return scenario;
-      const { operatorEnemyDistanceMeters: _distance, ...battle } = scenario.battle;
-      return { ...scenario, battle };
+      const battle = { ...scenario.battle };
+      for (const key of ['operatorEnemyDistanceMeters', 'reactionCriticalOverrides'])
+        Reflect.deleteProperty(battle, key);
+      const tracks = scenario.tracks.map(track =>
+        track === null
+          ? null
+          : {
+              ...track,
+              skillCasts: track.skillCasts.map(cast => {
+                if (!cast.simulationInputs || !('criticalOverrides' in cast.simulationInputs))
+                  return cast;
+                const simulationInputs = { ...cast.simulationInputs };
+                Reflect.deleteProperty(simulationInputs, 'criticalOverrides');
+                const { simulationInputs: _old, ...rest } = cast;
+                return Object.keys(simulationInputs).length ? { ...rest, simulationInputs } : rest;
+              }),
+            },
+      ) as ScenarioDocument['tracks'];
+      return { ...scenario, battle, tracks };
     }),
   };
 }
@@ -158,7 +174,7 @@ export function serializeProjectDocument(project: EndaxisProjectDocument, pretty
     throw new Error(`cannot serialize invalid project document:\n${summary}`);
   }
   return JSON.stringify(
-    withoutLegacyDistance(project),
+    withoutObsoleteSimulationInputs(project),
     encodeProjectNumber,
     pretty ? 2 : undefined,
   );

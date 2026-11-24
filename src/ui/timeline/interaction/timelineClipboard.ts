@@ -10,6 +10,13 @@ import type {
   TrackIndex,
 } from '../../../core/project/schema';
 import type { TimelineDocumentIdAllocator } from './placeSkillGroup';
+import {
+  clipboardSource,
+  clipboardTrackDestinations,
+  copyHitOverrides,
+  pasteHitOverrides,
+  type ClipboardSource,
+} from './hitOverrideClipboard';
 import { type TimelineItem, type TimelineItemRef, type TimelinePointCopy } from './timelineItems';
 
 interface ClipboardCast {
@@ -18,6 +25,8 @@ interface ClipboardCast {
 }
 
 export interface TimelineActionClipboard {
+  readonly source: ClipboardSource;
+  readonly hitOverrides?: ReturnType<typeof copyHitOverrides>;
   readonly originFrame: number;
   readonly casts: readonly ClipboardCast[];
   readonly connections: readonly ConnectionDocument[];
@@ -25,6 +34,8 @@ export interface TimelineActionClipboard {
 }
 
 export interface PasteTimelineActionsResult {
+  readonly skippedHitOverrides?: number;
+  readonly unmatchedTracks?: true;
   readonly scenario: ScenarioDocument;
   readonly skillCastIds: readonly string[];
   readonly itemRefs: readonly TimelineItemRef[];
@@ -45,6 +56,8 @@ export function copyTimelineItems(
   const points = items.flatMap(item => (item.copy ? [item.copy()] : []));
   return {
     casts: skills?.casts ?? [],
+    source: skills?.source ?? clipboardSource(scenario),
+    hitOverrides: skills?.hitOverrides,
     connections: skills?.connections ?? [],
     points,
     originFrame: Math.min(skills?.originFrame ?? Infinity, ...points.map(point => point.frame)),
@@ -76,6 +89,7 @@ export function copyTimelineActions(
   if (casts.length === 0) return null;
 
   const copiedIds = new Set(casts.map(entry => entry.cast.id));
+
   for (const { cast } of casts) {
     const previous = cast.placement.afterCastId;
     if (previous === undefined || copiedIds.has(previous)) continue;
@@ -94,6 +108,8 @@ export function copyTimelineActions(
       ),
     ),
     casts,
+    source: clipboardSource(scenario),
+    hitOverrides: copyHitOverrides(scenario, copiedIds),
     connections: scenario.connections
       .filter(
         connection =>
@@ -123,6 +139,15 @@ export function pasteTimelineActions(
   }
   if (clipboard.casts.length === 0 && !clipboard.points?.length)
     return { scenario, skillCastIds: [], itemRefs: [] };
+  const destinations = clipboardTrackDestinations(scenario, clipboard.source);
+  if (
+    clipboard.casts.some(entry => !destinations.has(entry.trackIndex)) ||
+    clipboard.points?.some(
+      point => point.trackIndex !== undefined && !destinations.has(point.trackIndex),
+    )
+  ) {
+    return { scenario, skillCastIds: [], itemRefs: [], unmatchedTracks: true };
+  }
   const minimum = Math.max(
     scenario.inheritance?.frame ?? -scenario.battle.prepFrames,
     ...(clipboard.points ?? []).map(
@@ -150,7 +175,8 @@ export function pasteTimelineActions(
   const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
   const createdIds: string[] = [];
   for (const entry of clipboard.casts) {
-    const track = tracks[entry.trackIndex];
+    const destination = destinations.get(entry.trackIndex)!;
+    const track = tracks[destination];
     if (track === null) throw new Error(`track ${entry.trackIndex} is empty`);
     const skillCastId = castIds.get(entry.cast.id)!;
     let placement: SkillCastDocument['placement'];
@@ -169,7 +195,7 @@ export function pasteTimelineActions(
       id: skillCastId,
       placement,
     };
-    tracks[entry.trackIndex] = { ...track, skillCasts: [...track.skillCasts, cast] };
+    tracks[destination] = { ...track, skillCasts: [...track.skillCasts, cast] };
     createdIds.push(skillCastId);
   }
 
@@ -184,8 +210,21 @@ export function pasteTimelineActions(
   const itemRefs: TimelineItemRef[] = createdIds.map(id => ({ kind: 'skill', id }));
   for (const point of clipboard.points ?? []) {
     const id = ids.allocate(point.kind);
-    next = point.paste(next, id, startFrame + point.frame - clipboard.originFrame);
+    next = point.paste(
+      next,
+      id,
+      startFrame + point.frame - clipboard.originFrame,
+      point.trackIndex === undefined ? undefined : destinations.get(point.trackIndex),
+    );
     itemRefs.push({ kind: point.kind, id });
   }
-  return { scenario: next, skillCastIds: createdIds, itemRefs };
+  const mapped =
+    clipboard.hitOverrides &&
+    pasteHitOverrides(next, clipboard.source, clipboard.hitOverrides, castIds, destinations);
+  return {
+    scenario: mapped?.scenario ?? next,
+    skillCastIds: createdIds,
+    itemRefs,
+    ...(mapped?.skipped ? { skippedHitOverrides: mapped.skipped } : {}),
+  };
 }

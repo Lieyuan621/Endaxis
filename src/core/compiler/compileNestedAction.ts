@@ -51,7 +51,7 @@ export function compileNestedAction(
           : { afterSet: compileEntry(step.afterSet, `${path}.afterSet`) }),
       };
     case 'launchProjectile': {
-      const { projectileId: _sourceProjectileId, ...parameters } = step.parameters;
+      const parameters = step.parameters;
       const schedule = parameters.schedule ?? {
         endFrame: 0,
         callbacks: step.callbacks.map(route => ({ event: route.event, triggerFrames: [0] })),

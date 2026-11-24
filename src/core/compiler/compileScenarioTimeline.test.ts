@@ -166,18 +166,13 @@ describe('compileResolvedScenarioTimeline', () => {
     const scenario = place(createScenario(), 'battleSkill', 0);
     scenario.tracks[0]!.skillCasts[0]!.simulationInputs = {
       randomSeed: 7,
-      criticalOverrides: { 'damage:1': true },
     };
 
     const compiled = compileTimeline(scenario, index());
 
     expect(compiled.inputs[0]?.simulationInputs).toEqual({
       randomSeed: 7,
-      criticalOverrides: { 'damage:1': true },
     });
-    expect(compiled.inputs[0]?.simulationInputs?.criticalOverrides).not.toBe(
-      scenario.tracks[0]!.skillCasts[0]!.simulationInputs?.criticalOverrides,
-    );
   });
 
   it('combines read-only common Buffs with operator-owned Buffs without a skill level', () => {

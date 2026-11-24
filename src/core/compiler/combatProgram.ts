@@ -335,10 +335,7 @@ export interface ResolvedCombatStepParameters {
   switch: CompiledStepParameters['switch'];
   once: CompiledStepParameters['once'];
   repeatEachTick: CompiledStepParameters['repeatEachTick'];
-  launchProjectile: Omit<
-    CompiledStepParameters['launchProjectile'],
-    'projectileId' | 'schedule'
-  > & {
+  launchProjectile: Omit<CompiledStepParameters['launchProjectile'], 'schedule'> & {
     schedule: NonNullable<CompiledStepParameters['launchProjectile']['schedule']>;
   };
   openComboWindow: CompiledStepParameters['openComboWindow'];

@@ -9,7 +9,11 @@ import { isDeepStrictEqual } from 'node:util';
 import type { OperatorBuffDefinitions } from '../../../packages/game-data-contract/src/index.ts';
 import { compileEnemyBirthBuffPrograms } from '../src/domains/enemy/birthBuffPrograms.ts';
 import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/definitionSourceRenderer.ts';
-import type { EnemyBirthBuffOption } from '../../../packages/game-data-contract/src/enemies.ts';
+import type {
+  EnemyBirthBuffOption,
+  EnemyWeaknessBreakOption,
+} from '../../../packages/game-data-contract/src/enemies.ts';
+import { compileEnemyWeaknessBreakOptions } from '../src/domains/enemy/weaknessBreakOptions.ts';
 import { imageRefFromPath } from '../src/compiler/publication/imageResources.ts';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -35,6 +39,7 @@ interface Arguments {
   readonly outputDirectory: string;
   readonly localeDirectory: string;
   readonly buffDirectory: string;
+  readonly skillDirectory: string;
   readonly spawnerDirectory: string;
   readonly check: boolean;
 }
@@ -55,6 +60,7 @@ interface EnemyDefinitionSource {
   readonly birthBuffs?: readonly EnemyBirthBuffOption[];
   readonly id: string;
   readonly gameId: string;
+  readonly templateId: string;
   readonly icon?: string;
   readonly tier: (typeof TIER_BY_DISPLAY_TYPE)[keyof typeof TIER_BY_DISPLAY_TYPE];
   readonly rank: 'mob' | 'boss' | 'elite';
@@ -253,6 +259,7 @@ export async function planEnemyDefinitions(
       ...(attributeModifiers.length ? { attributeModifiers } : {}),
       ...(birthBuffs.length ? { birthBuffs } : {}),
       gameId,
+      templateId: baseId,
       ...(iconAssetPath === undefined ? {} : { icon: imageRefFromPath(`/enemies/${baseId}.webp`) }),
       tier,
       rank,
@@ -341,6 +348,11 @@ export async function generateEnemyDefinitions(args: Arguments) {
     args.buffDirectory,
   );
   const prettierConfig = (await resolveConfig(resolve('.prettierrc.json'))) ?? {};
+  const weaknessOptions = compileEnemyWeaknessBreakOptions(
+    [...new Set(plan.definitions.map(enemy => enemy.templateId))],
+    args.skillDirectory,
+    args.buffDirectory,
+  );
   const requiredLevels = new Map<string, Set<number>>();
   for (const stage of stageCatalog.stages) {
     for (const enemy of stage.enemies) {
@@ -357,6 +369,7 @@ export async function generateEnemyDefinitions(args: Arguments) {
       plan.compatibilityDefaults.evidence,
       requiredLevels,
       plan.birthPrograms,
+      weaknessOptions,
     ),
     {
       ...prettierConfig,
@@ -386,20 +399,34 @@ function renderDefinitions(
   evidence: string,
   requiredLevels: ReadonlyMap<string, ReadonlySet<number>>,
   birthPrograms: ReturnType<typeof compileEnemyBirthBuffPrograms>,
+  weaknessOptions: ReadonlyMap<string, readonly EnemyWeaknessBreakOption[]>,
 ): string {
   // Keep raw identities in the audit plan only; runtime references use the stable id.
-  const runtimeDefinitions = definitions.map(({ gameId: _gameId, levelHp, ...definition }) => ({
-    ...definition,
-    levelHp: Object.fromEntries(
-      [...new Set([...ENEMY_LEVELS, ...(requiredLevels.get(definition.id) ?? [])])]
-        .sort((a, b) => a - b)
-        .map(level => {
-          const node = levelHp.find(node => node.level === level);
-          if (node === undefined) throw new Error(`${definition.id}: missing HP at level ${level}`);
-          return [level, node.hp];
-        }),
-    ),
-  }));
+  const runtimeDefinitions = definitions.map(
+    ({ gameId: _gameId, templateId, levelHp, ...definition }) => {
+      const data = {
+        ...definition,
+        levelHp: Object.fromEntries(
+          [...new Set([...ENEMY_LEVELS, ...(requiredLevels.get(definition.id) ?? [])])]
+            .sort((a, b) => a - b)
+            .map(level => {
+              const node = levelHp.find(node => node.level === level);
+              if (node === undefined)
+                throw new Error(`${definition.id}: missing HP at level ${level}`);
+              return [level, node.hp];
+            }),
+        ),
+      };
+      const source = JSON.stringify(data, null, 2);
+      if (!weaknessOptions.has(templateId)) return source;
+      return (
+        source.slice(0, -2) +
+        ',\n  weaknessBreakOptions: weaknessBreakOptions[' +
+        JSON.stringify(templateId) +
+        ']\n}'
+      );
+    },
+  );
   const runtimeDefinitionsById: Record<string, OperatorBuffDefinitions[string]> = {};
   for (const runtime of Object.values(birthPrograms)) {
     for (const [id, definition] of Object.entries(runtime.buffDefinitions)) {
@@ -413,10 +440,12 @@ function renderDefinitions(
   const runtimeSource = Object.keys(runtimeDefinitionsById).length
     ? renderCommonBuffDefinitionsSource(runtimeDefinitionsById, 'enemyBirthBuffDefinitions')
     : `export const enemyBirthBuffDefinitions = {};`;
-  const definitionSource = JSON.stringify(runtimeDefinitions, null, 2);
+  const definitionSource = '[' + runtimeDefinitions.join(',\n') + ']';
   return `import type { EnemyDefinition } from '../../../../packages/game-data-contract/src/enemies';
 
 ${runtimeSource}
+
+const weaknessBreakOptions = ${JSON.stringify(Object.fromEntries(weaknessOptions))} as const;
 
 // knotBreakDurationSeconds is a project compatibility default: ${evidence}.
 // Every other field below is compiled from the same source snapshot and strict rank evidence.
@@ -572,10 +601,11 @@ function parseArguments(values: readonly string[]): Arguments {
     !parsed.has('--tables') ||
     !parsed.has('--rank-evidence') ||
     !parsed.has('--buff-directory') ||
-    !parsed.has('--spawner-directory')
+    !parsed.has('--spawner-directory') ||
+    !parsed.has('--skill-directory')
   )
     throw new Error(
-      '--tables, --rank-evidence, --buff-directory and --spawner-directory are required',
+      '--tables, --rank-evidence, --buff-directory, --skill-directory and --spawner-directory are required',
     );
   return {
     tablesDirectory,
@@ -585,6 +615,7 @@ function parseArguments(values: readonly string[]): Arguments {
     outputDirectory,
     localeDirectory,
     buffDirectory: resolve(parsed.get('--buff-directory')!),
+    skillDirectory: resolve(parsed.get('--skill-directory')!),
     spawnerDirectory: resolve(parsed.get('--spawner-directory')!),
     check,
   };

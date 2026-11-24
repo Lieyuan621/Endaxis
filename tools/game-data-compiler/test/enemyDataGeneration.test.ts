@@ -260,6 +260,8 @@ describe('enemy data generation', () => {
     const root = await mkdtemp(join(tmpdir(), 'endaxis-enemy-generation-test-'));
     temporaryRoots.push(root);
     const tables = join(root, 'tables');
+    const skills = join(root, 'SkillData');
+    await mkdir(skills);
     await mkdir(tables);
     await writeJson(join(tables, 'EnemyTemplateDisplayInfoTable.json'), {
       eny_9999_fixture: { templateId: 'eny_9999_fixture', displayType: 2 },
@@ -445,6 +447,7 @@ describe('enemy data generation', () => {
         selectionCategories,
         outputDirectory: join(root, 'generated'),
         buffDirectory: buffs,
+        skillDirectory: skills,
         spawnerDirectory: join(root, 'spawners'),
         localeDirectory: join(root, 'locales'),
         check: false,

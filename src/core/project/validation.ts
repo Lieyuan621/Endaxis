@@ -356,20 +356,6 @@ function validateSkillCast(
           });
         }
       }
-      if (value.simulationInputs.criticalOverrides !== undefined) {
-        const overrides = value.simulationInputs.criticalOverrides;
-        if (
-          !isObject(overrides) ||
-          Object.entries(overrides).some(
-            ([key, result]) => key.length === 0 || typeof result !== 'boolean',
-          )
-        ) {
-          issues.push({
-            path: `${inputPath}.criticalOverrides`,
-            message: 'expected non-empty step keys with boolean results',
-          });
-        }
-      }
       if (value.simulationInputs.initialBlackboard !== undefined) {
         const values = value.simulationInputs.initialBlackboard;
         if (

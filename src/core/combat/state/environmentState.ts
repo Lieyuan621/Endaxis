@@ -345,8 +345,6 @@ export interface StandardCombatEnvironmentState {
       >;
     }
   >;
-  /** 反应伤害的来源内序号；随切面恢复，不能从新回执的局部序号重建。 */
-  readonly reactionDamageCounts: Map<string, number>;
   readonly random: SimulationRandomState | null;
   readonly enemyVitals: CombatVitalsState;
   readonly operatorVitals: Map<string, CombatVitalsState>;

@@ -44,6 +44,7 @@ const markers = computed(() =>
       key: `${index}:${marker.kind}:${marker.frame}:${marker.burstType ?? ''}`,
       icon,
       damageSequence: marker.damageSequence,
+      hasOverride: marker.hasOverride,
       // 瞬时标记的角标表示一次触发，不表示新增持续附着层数。
       badge: 1,
       x: props.framePx(marker.frame) + (props.positions[index]?.slot ?? 0) * (props.iconSize + 2),
@@ -63,7 +64,10 @@ const markers = computed(() =>
     :icon="marker.icon"
     :title="marker.title"
     :badge="marker.badge"
-    :class="{ 'is-clickable': marker.damageSequence !== undefined }"
+    :class="{
+      'is-clickable': marker.damageSequence !== undefined,
+      'timeline-hit--marked': marker.hasOverride,
+    }"
     :role="marker.damageSequence === undefined ? undefined : 'button'"
     :tabindex="marker.damageSequence === undefined ? undefined : 0"
     @click.stop="

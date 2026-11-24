@@ -3457,6 +3457,228 @@ export const enemyBirthBuffDefinitions: OperatorBuffDefinitions = Object.freeze(
   buff_race_enemy_add_atb_on_death: commonBuff_buff_race_enemy_add_atb_on_death,
 });
 
+const weaknessBreakOptions = {
+  eny_0007_mimicw: [
+    { skillId: 'eny_0007_mimicw_skill02', stagger: 20 },
+    { skillId: 'eny_0007_mimicw_skill02_dungeon', stagger: 3 },
+  ],
+  eny_0018_lbtough: [
+    { skillId: 'eny_0018_lbtough_skill02', stagger: 15 },
+    { skillId: 'eny_0018_lbtough_skill02_endinggame', stagger: 15 },
+    { skillId: 'eny_0018_lbtough_skill02_ex', stagger: 20 },
+    { skillId: 'eny_0018_lbtough_skill02_tower013', stagger: 15 },
+    { skillId: 'eny_0018_lbtough_skill07', stagger: 20 },
+    { skillId: 'eny_0018_lbtough_skill07_endinggame', stagger: 20 },
+  ],
+  eny_0023_aghornb: [
+    { skillId: 'eny_0023_aghornb_normal_attack04', stagger: 10 },
+    { skillId: 'eny_0023_aghornb_normal_attack04_whitering_train', stagger: 10 },
+  ],
+  eny_0027_agscorp: [{ skillId: 'eny_0027_agscorp_skill03', stagger: 20 }],
+  eny_0045_agtrinit: [
+    { skillId: 'eny_0045_agtrinit_skill01', stagger: 15 },
+    { skillId: 'eny_0045_agtrinit_skill011', stagger: 15 },
+    { skillId: 'eny_0045_agtrinit_skill011', stagger: 20 },
+    { skillId: 'eny_0045_agtrinit_skill02', stagger: 15 },
+    { skillId: 'eny_0045_agtrinit_skill021', stagger: 15 },
+    { skillId: 'eny_0045_agtrinit_skill02_invisible_race', stagger: 20 },
+    { skillId: 'eny_0045_agtrinit_skill11', stagger: 2 },
+    { skillId: 'eny_0045_agtrinit_skill33', stagger: 15 },
+    { skillId: 'eny_0045_agtrinit_skill331', stagger: 15 },
+    { skillId: 'eny_0045_agtrinit_skill331_race', stagger: 20 },
+  ],
+  eny_0046_lbshamman: [
+    { skillId: 'eny_0046_lbshamman_skill02', stagger: 20 },
+    { skillId: 'eny_0046_lbshamman_skill02_hdg016', stagger: 20 },
+    { skillId: 'eny_0046_lbshamman_skill03', stagger: 20 },
+    { skillId: 'eny_0046_lbshamman_skill03_hdg016', stagger: 20 },
+    { skillId: 'eny_0046_lbshamman_skill_hdg016', stagger: 20 },
+    { skillId: 'eny_0046_lbshamman_skill_hdg016_debuff', stagger: 20 },
+  ],
+  eny_0048_hvybow: [
+    { skillId: 'eny_0048_hvybow_skill03', stagger: 20 },
+    { skillId: 'eny_0048_hvybow_skill05', stagger: 20 },
+    { skillId: 'eny_0048_hvybow_skill_bomb', stagger: 20 },
+  ],
+  eny_0051_rodin: [
+    { skillId: 'eny_0051_rodin_skill02_3', stagger: 20 },
+    { skillId: 'eny_0051_rodin_skill13', stagger: 20 },
+    { skillId: 'eny_0051_rodin_skill13_dungeon', stagger: 20 },
+  ],
+  eny_0052_palesent: [
+    { skillId: 'eny_0052_palesent_attack01', stagger: 20 },
+    { skillId: 'eny_0052_palesent_skill01', stagger: 20 },
+    { skillId: 'eny_0052_palesent_skill01_01', stagger: 20 },
+    { skillId: 'eny_0052_palesent_skill02_02', stagger: 20 },
+    { skillId: 'eny_0052_palesent_skill03', stagger: 20 },
+    { skillId: 'eny_0052_palesent_skill03_02', stagger: 20 },
+  ],
+  eny_0054_hsmino: [
+    { skillId: 'eny_0054_hsmino_skill01', stagger: 20 },
+    { skillId: 'eny_0054_hsmino_skill01_cc002', stagger: 20 },
+    { skillId: 'eny_0054_hsmino_skill01_hard', stagger: 20 },
+    { skillId: 'eny_0054_hsmino_skill01_hard_cc002', stagger: 20 },
+    { skillId: 'eny_0054_hsmino_skill01_tower013', stagger: 20 },
+    { skillId: 'eny_0054_hsmino_skill02', stagger: 20 },
+    { skillId: 'eny_0054_hsmino_skill03', stagger: 20 },
+    { skillId: 'eny_0054_hsmino_skill04_tower013', stagger: 20 },
+    { skillId: 'eny_0054_hsmino_skill08_chrdung', stagger: 100 },
+    { skillId: 'eny_0054_hsmino_skill09_hard_cc02', stagger: 20 },
+  ],
+  eny_0055_hscrane: [
+    { skillId: 'eny_0055_hscrane_settlement_sp', stagger: 15 },
+    { skillId: 'eny_0055_hscrane_skill2', stagger: 15 },
+  ],
+  eny_0058_agdisk: [
+    { skillId: 'eny_0058_agdisk_skill06withdashb', stagger: 0 },
+    { skillId: 'eny_0058_agdisk_skill08', stagger: 0 },
+  ],
+  eny_0062_paletent: [{ skillId: 'eny_0062_paletent_attack01', stagger: 0 }],
+  eny_0071_sandb: [{ skillId: 'eny_0071_sandb_skill04', stagger: 20 }],
+  eny_0075_lbroshan: [
+    { skillId: 'eny_0075_lbroshan_skill1_fast', stagger: 0 },
+    { skillId: 'eny_0075_lbroshan_skill2', stagger: 0 },
+    { skillId: 'eny_0075_lbroshan_skill2_coin', stagger: 30 },
+    { skillId: 'eny_0075_lbroshan_skill3', stagger: 0 },
+    { skillId: 'eny_0075_lbroshan_skill3_coin', stagger: 30 },
+    { skillId: 'eny_0075_lbroshan_skill4', stagger: 0 },
+    { skillId: 'eny_0075_lbroshan_skill4_coin', stagger: 0 },
+    { skillId: 'eny_0075_lbroshan_skill4_coin', stagger: 30 },
+  ],
+  eny_0077_agshield: [
+    { skillId: 'eny_0077_agshield_skill04', stagger: 10 },
+    { skillId: 'eny_0077_agshield_skill06', stagger: 10 },
+  ],
+  eny_0078_nefarp1: [
+    { skillId: 'eny_0078_nefarp1_skill01', stagger: 20 },
+    { skillId: 'eny_0078_nefarp1_skill011', stagger: 20 },
+    { skillId: 'eny_0078_nefarp1_skill01_start', stagger: 20 },
+    { skillId: 'eny_0078_nefarp1_skill02', stagger: 20 },
+    { skillId: 'eny_0078_nefarp1_skill02', stagger: 50 },
+    { skillId: 'eny_0078_nefarp1_skill021', stagger: 20 },
+    { skillId: 'eny_0078_nefarp1_skill021', stagger: 50 },
+    { skillId: 'eny_0078_nefarp1_skill03', stagger: 20 },
+    { skillId: 'eny_0078_nefarp1_skill04', stagger: 50 },
+  ],
+  eny_0079_nefarp2: [
+    { skillId: 'eny_0079_nefarp2_skill01', stagger: 50 },
+    { skillId: 'eny_0079_nefarp2_skill03', stagger: 75 },
+    { skillId: 'eny_0079_nefarp2_skill03_start', stagger: 100 },
+    { skillId: 'eny_0079_nefarp2_skill08', stagger: 50 },
+  ],
+  eny_0082_hsbear: [
+    { skillId: 'eny_0082_hsbear_skill02_angry', stagger: 30 },
+    { skillId: 'eny_0082_hsbear_skill02_angry_02', stagger: 50 },
+    { skillId: 'eny_0082_hsbear_skill02_angry_02', stagger: 100 },
+    { skillId: 'eny_0082_hsbear_skill05', stagger: 30 },
+    { skillId: 'eny_0082_hsbear_skill05_angry_01', stagger: 30 },
+    { skillId: 'eny_0082_hsbear_skill05_angry_02', stagger: 30 },
+    { skillId: 'eny_0082_hsbear_skill05_hdg018', stagger: 30 },
+    { skillId: 'eny_0082_hsbear_skill08', stagger: 20 },
+    { skillId: 'eny_0082_hsbear_skill08_hdg018', stagger: 20 },
+    { skillId: 'eny_0082_hsbear_skill08_simple', stagger: 20 },
+  ],
+  eny_0083_hstiger: [
+    { skillId: 'eny_0083_hstiger_skill05', stagger: 40 },
+    { skillId: 'eny_0083_hstiger_skill05_hdg021', stagger: 40 },
+    { skillId: 'eny_0083_hstiger_skill07', stagger: 20 },
+    { skillId: 'eny_0083_hstiger_skill07_hdg021', stagger: 20 },
+    { skillId: 'eny_0083_hstiger_skill09', stagger: 20 },
+  ],
+  eny_0088_wgthorns: [{ skillId: 'eny_0088_wgthorns_skill03', stagger: 20 }],
+  eny_0090_wgabyss: [
+    { skillId: 'eny_0090_wgabyss_skill02', stagger: 100 },
+    { skillId: 'eny_0090_wgabyss_skill02_hdg010', stagger: 100 },
+    { skillId: 'eny_0090_wgabyss_skill03', stagger: 100 },
+    { skillId: 'eny_0090_wgabyss_skill03_hdg010', stagger: 100 },
+    { skillId: 'eny_0090_wgabyss_skill04', stagger: 100 },
+    { skillId: 'eny_0090_wgabyss_skill04_hdg010', stagger: 100 },
+    { skillId: 'eny_0090_wgabyss_skill06', stagger: 100 },
+    { skillId: 'eny_0090_wgabyss_skill06_hdg010', stagger: 100 },
+    { skillId: 'eny_0090_wgabyss_skill_zfydef_01', stagger: 100 },
+    { skillId: 'eny_0090_wgabyss_skill_zfydef_02', stagger: 100 },
+  ],
+  eny_0091_wgshoal: [
+    { skillId: 'eny_0091_wgshoal_skill02_nearspcial', stagger: 120 },
+    { skillId: 'eny_0091_wgshoal_skill04_nearspecial', stagger: 120 },
+    { skillId: 'eny_0091_wgshoal_skill05', stagger: 30 },
+    { skillId: 'eny_0091_wgshoal_skill05_nearspecial', stagger: 120 },
+    { skillId: 'eny_0091_wgshoal_skill05_v2', stagger: 30 },
+  ],
+  eny_0093_hshog: [
+    { skillId: 'eny_0093_hshog_skill04', stagger: 10 },
+    { skillId: 'eny_0093_hshog_skill05', stagger: 10 },
+    { skillId: 'eny_0093_hshog_skill07', stagger: 10 },
+    { skillId: 'eny_0093_hshog_skill08', stagger: 10 },
+  ],
+  eny_0113_jzogre: [
+    { skillId: 'eny_0113_jzogre_skill06_cc', stagger: 20 },
+    { skillId: 'eny_0113_jzogre_skill06_hdg023', stagger: 20 },
+  ],
+  eny_0114_jzmking: [
+    { skillId: 'eny_0114_jzmking_skill03', stagger: 10 },
+    { skillId: 'eny_0114_jzmking_skill03', stagger: 25 },
+  ],
+  eny_0118_klhog: [
+    { skillId: 'eny_0118_klhog_skill03', stagger: 40 },
+    { skillId: 'eny_0118_klhog_skill03_cc002', stagger: 40 },
+    { skillId: 'eny_0118_klhog_skill03_gm02m20', stagger: 40 },
+    { skillId: 'eny_0118_klhog_skill03_hdg026', stagger: 40 },
+    { skillId: 'eny_0118_klhog_skill07', stagger: 20 },
+    { skillId: 'eny_0118_klhog_skill07_cc002', stagger: 20 },
+  ],
+  eny_0119_kltiger: [{ skillId: 'eny_0119_kltiger_skill05', stagger: 40 }],
+  eny_0120_klbear: [
+    { skillId: 'eny_0120_klbear_skill01_angry', stagger: 30 },
+    { skillId: 'eny_0120_klbear_skill03', stagger: 20 },
+    { skillId: 'eny_0120_klbear_skill05_angry', stagger: 30 },
+    { skillId: 'eny_0120_klbear_skill05_angry_02', stagger: 30 },
+    { skillId: 'eny_0120_klbear_skill05_angry_02', stagger: 40 },
+    { skillId: 'eny_0120_klbear_skill05_angry_02', stagger: 80 },
+    { skillId: 'eny_0120_klbear_skill08', stagger: 30 },
+    { skillId: 'eny_0120_klbear_skill08_angry_01', stagger: 30 },
+    { skillId: 'eny_0120_klbear_skill08_angry_02', stagger: 30 },
+    { skillId: 'eny_0120_klbear_skill11', stagger: 20 },
+    { skillId: 'eny_0120_klbear_skill11_simple', stagger: 20 },
+  ],
+  eny_0124_kltdcap: [
+    { skillId: 'eny_0124_kltdcap_skill05', stagger: 20 },
+    { skillId: 'eny_0124_kltdcap_skill05_cc', stagger: 20 },
+    { skillId: 'eny_0124_kltdcap_skill06', stagger: 20 },
+    { skillId: 'eny_0124_kltdcap_skill06_cc002', stagger: 20 },
+    { skillId: 'eny_0124_kltdcap_skill06_hdg028', stagger: 200 },
+    { skillId: 'eny_0124_kltdcap_skill08start', stagger: 20 },
+    { skillId: 'eny_0124_kltdcap_skill08start_cc002', stagger: 20 },
+  ],
+  eny_0125_fdcentur: [
+    { skillId: 'eny_0125_fdcentur_lance_skill_02', stagger: 20 },
+    { skillId: 'eny_0125_fdcentur_lance_skill_03', stagger: 20 },
+    { skillId: 'eny_0125_fdcentur_sword_skill_01', stagger: 20 },
+    { skillId: 'eny_0125_fdcentur_sword_skill_02', stagger: 20 },
+  ],
+  eny_0128_babyents: [
+    { skillId: 'eny_0128_babyents_skill01', stagger: 10 },
+    { skillId: 'eny_0128_babyents_skill01_cc', stagger: 10 },
+    { skillId: 'eny_0128_babyents_skill01_cc002', stagger: 10 },
+  ],
+  eny_0133_inklion: [
+    { skillId: 'eny_0133_inklion_skill04', stagger: 20 },
+    { skillId: 'eny_0133_inklion_skill06', stagger: 20 },
+    { skillId: 'eny_0133_inklion_skill08', stagger: 20 },
+  ],
+  eny_0134_jsspsi: [
+    { skillId: 'eny_0134_jsspsi_skill02', stagger: 20 },
+    { skillId: 'eny_0134_jsspsi_skill03', stagger: 15 },
+    { skillId: 'eny_0134_jsspsi_skill04', stagger: 15 },
+    { skillId: 'eny_0134_jsspsi_skill08', stagger: 15 },
+    { skillId: 'eny_0134_jsspsi_skill09', stagger: 20 },
+    { skillId: 'eny_0134_jsspsi_taunt1', stagger: 15 },
+    { skillId: 'eny_0134_jsspsi_taunt1_loop', stagger: 15 },
+    { skillId: 'eny_0134_jsspsi_taunt2', stagger: 15 },
+    { skillId: 'eny_0134_jsspsi_taunt3', stagger: 15 },
+  ],
+} as const;
+
 // knotBreakDurationSeconds is a project compatibility default: legacy Endaxis compatibility; native poise-knot Buff timing is not yet reduced to one proven scalar.
 // Every other field below is compiled from the same source snapshot and strict rank evidence.
 export const generatedEnemyDefinitions = [
@@ -3493,6 +3715,7 @@ export const generatedEnemyDefinitions = [
       '80': 297678,
       '90': 458582,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0007_mimicw'],
   },
   {
     id: 'eny-0018-lbtough',
@@ -3524,6 +3747,7 @@ export const generatedEnemyDefinitions = [
       '80': 476285,
       '90': 733731,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0018_lbtough'],
   },
   {
     id: 'eny-0021-agmelee',
@@ -3592,6 +3816,7 @@ export const generatedEnemyDefinitions = [
       '80': 357214,
       '90': 550298,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0023_aghornb'],
   },
   {
     id: 'eny-0025-agrange',
@@ -3659,6 +3884,7 @@ export const generatedEnemyDefinitions = [
       '80': 315539,
       '90': 486097,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0027_agscorp'],
   },
   {
     id: 'eny-0029-lbmob',
@@ -3790,6 +4016,7 @@ export const generatedEnemyDefinitions = [
       '80': 595357,
       '90': 917164,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0045_agtrinit'],
   },
   {
     id: 'eny-0046-lbshamman',
@@ -3831,6 +4058,7 @@ export const generatedEnemyDefinitions = [
       '80': 327446,
       '90': 504440,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0046_lbshamman'],
   },
   {
     id: 'eny-0047-firebat',
@@ -3895,6 +4123,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0048_hvybow'],
   },
   {
     id: 'eny-0049-rogue',
@@ -3993,6 +4222,7 @@ export const generatedEnemyDefinitions = [
       '80': 1488392,
       '90': 2292909,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0051_rodin'],
   },
   {
     id: 'eny-0052-palesent',
@@ -4024,6 +4254,7 @@ export const generatedEnemyDefinitions = [
       '80': 1905141,
       '90': 2934923,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0052_palesent'],
   },
   {
     id: 'eny-0053-hsmob',
@@ -4086,6 +4317,7 @@ export const generatedEnemyDefinitions = [
       '80': 476285,
       '90': 733731,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0054_hsmino'],
   },
   {
     id: 'eny-0055-hscrane',
@@ -4118,6 +4350,7 @@ export const generatedEnemyDefinitions = [
       '80': 327446,
       '90': 504440,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0055_hscrane'],
   },
   {
     id: 'eny-0057-dog',
@@ -4179,6 +4412,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0058_agdisk'],
   },
   {
     id: 'eny-0059-erhound',
@@ -4331,6 +4565,7 @@ export const generatedEnemyDefinitions = [
       '80': 101211,
       '90': 155918,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0062_paletent'],
   },
   {
     id: 'eny-0063-agmelee2',
@@ -4672,6 +4907,7 @@ export const generatedEnemyDefinitions = [
       '80': 595357,
       '90': 917164,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0071_sandb'],
   },
   {
     id: 'eny-0072-slimeml',
@@ -4811,6 +5047,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0075_lbroshan'],
   },
   {
     id: 'eny-0076-agfly',
@@ -4877,6 +5114,7 @@ export const generatedEnemyDefinitions = [
       '80': 595357,
       '90': 917164,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0077_agshield'],
   },
   {
     id: 'eny-0078-nefarp1',
@@ -4909,6 +5147,7 @@ export const generatedEnemyDefinitions = [
       '80': 1012106,
       '90': 1559178,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0078_nefarp1'],
   },
   {
     id: 'eny-0079-nefarp2',
@@ -4940,6 +5179,7 @@ export const generatedEnemyDefinitions = [
       '80': 1131178,
       '90': 1742611,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0079_nefarp2'],
   },
   {
     id: 'eny-0080-reaper',
@@ -5034,6 +5274,7 @@ export const generatedEnemyDefinitions = [
       '80': 714428,
       '90': 1100596,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0082_hsbear'],
   },
   {
     id: 'eny-0083-hstiger',
@@ -5066,6 +5307,7 @@ export const generatedEnemyDefinitions = [
       '80': 476285,
       '90': 733731,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0083_hstiger'],
   },
   {
     id: 'eny-0084-hshunt',
@@ -5192,6 +5434,7 @@ export const generatedEnemyDefinitions = [
       '80': 65489,
       '90': 100888,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0088_wgthorns'],
   },
   {
     id: 'eny-0089-wgreflec',
@@ -5256,6 +5499,7 @@ export const generatedEnemyDefinitions = [
       '80': 595357,
       '90': 917164,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0090_wgabyss'],
   },
   {
     id: 'eny-0091-wgshoal',
@@ -5287,6 +5531,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0091_wgshoal'],
   },
   {
     id: 'eny-0092-slbomb',
@@ -5351,6 +5596,7 @@ export const generatedEnemyDefinitions = [
       '80': 357214,
       '90': 550298,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0093_hshog'],
   },
   {
     id: 'eny-0094-hsfly',
@@ -6000,6 +6246,7 @@ export const generatedEnemyDefinitions = [
       '80': 506053,
       '90': 779589,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0113_jzogre'],
   },
   {
     id: 'eny-0114-jzmking',
@@ -6032,6 +6279,7 @@ export const generatedEnemyDefinitions = [
       '80': 863267,
       '90': 1329887,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0114_jzmking'],
   },
   {
     id: 'eny-0117-klhound',
@@ -6113,6 +6361,7 @@ export const generatedEnemyDefinitions = [
       '80': 416750,
       '90': 642014,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0118_klhog'],
   },
   {
     id: 'eny-0119-kltiger',
@@ -6153,6 +6402,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0119_kltiger'],
   },
   {
     id: 'eny-0120-klbear',
@@ -6194,6 +6444,7 @@ export const generatedEnemyDefinitions = [
       '80': 654892,
       '90': 1008880,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0120_klbear'],
   },
   {
     id: 'eny-0121-klbud',
@@ -6356,6 +6607,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0124_kltdcap'],
   },
   {
     id: 'eny-0125-fdcentur',
@@ -6397,6 +6649,7 @@ export const generatedEnemyDefinitions = [
       '80': 1607463,
       '90': 2476341,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0125_fdcentur'],
   },
   {
     id: 'eny-0127-bigents',
@@ -6490,6 +6743,7 @@ export const generatedEnemyDefinitions = [
       '80': 357214,
       '90': 550298,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0128_babyents'],
   },
   {
     id: 'eny-0129-slwood',
@@ -6661,6 +6915,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0133_inklion'],
   },
   {
     id: 'eny-0134-jsspsi',
@@ -6693,6 +6948,7 @@ export const generatedEnemyDefinitions = [
       '80': 1905141,
       '90': 2934923,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0134_jsspsi'],
   },
   {
     id: 'eny-0029-lbmob-dungeon',
@@ -6789,6 +7045,7 @@ export const generatedEnemyDefinitions = [
       '80': 476285,
       '90': 733731,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0018_lbtough'],
   },
   {
     id: 'eny-0058-agdisk-dungeon',
@@ -6821,6 +7078,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0058_agdisk'],
   },
   {
     id: 'eny-0025-agrange-dungeon',
@@ -7011,6 +7269,7 @@ export const generatedEnemyDefinitions = [
       '80': 416750,
       '90': 642014,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0118_klhog'],
   },
   {
     id: 'eny-0128-babyents-cc',
@@ -7064,6 +7323,7 @@ export const generatedEnemyDefinitions = [
       '80': 357214,
       '90': 550298,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0128_babyents'],
   },
   {
     id: 'eny-0124-kltdcap-cc',
@@ -7111,6 +7371,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0124_kltdcap'],
   },
   {
     id: 'eny-0113-jzogre-cc',
@@ -7158,6 +7419,7 @@ export const generatedEnemyDefinitions = [
       '80': 506053,
       '90': 779589,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0113_jzogre'],
   },
   {
     id: 'eny-0097-hsmino2-cc',
@@ -7243,6 +7505,7 @@ export const generatedEnemyDefinitions = [
       '80': 357214,
       '90': 550298,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0023_aghornb'],
   },
   {
     id: 'eny-0023-aghornb-hdg001-assult',
@@ -7281,6 +7544,7 @@ export const generatedEnemyDefinitions = [
       '80': 357214,
       '90': 550298,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0023_aghornb'],
   },
   {
     id: 'eny-0027-agscorp-hdg002',
@@ -7324,6 +7588,7 @@ export const generatedEnemyDefinitions = [
       '80': 315539,
       '90': 486097,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0027_agscorp'],
   },
   {
     id: 'eny-0064-agrange2-hdg002-assult',
@@ -7414,6 +7679,7 @@ export const generatedEnemyDefinitions = [
       '80': 315539,
       '90': 486097,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0027_agscorp'],
   },
   {
     id: 'eny-0077-agshield-hdg003',
@@ -7460,6 +7726,7 @@ export const generatedEnemyDefinitions = [
       '80': 595357,
       '90': 917164,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0077_agshield'],
   },
   {
     id: 'eny-0018-lbtough-hdg004',
@@ -7507,6 +7774,7 @@ export const generatedEnemyDefinitions = [
       '80': 476285,
       '90': 733731,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0018_lbtough'],
   },
   {
     id: 'eny-0048-hvybow-hdg004',
@@ -7554,6 +7822,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0048_hvybow'],
   },
   {
     id: 'eny-0018-lbtough-hdg004-assult',
@@ -7601,6 +7870,7 @@ export const generatedEnemyDefinitions = [
       '80': 476285,
       '90': 733731,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0018_lbtough'],
   },
   {
     id: 'eny-0048-hvybow-hdg004-assult',
@@ -7648,6 +7918,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0048_hvybow'],
   },
   {
     id: 'eny-0033-lbhunt-hdg005',
@@ -7791,6 +8062,7 @@ export const generatedEnemyDefinitions = [
       '80': 297678,
       '90': 458582,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0007_mimicw'],
   },
   {
     id: 'eny-0054-hsmino-hdg007',
@@ -7829,6 +8101,7 @@ export const generatedEnemyDefinitions = [
       '80': 476285,
       '90': 733731,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0054_hsmino'],
   },
   {
     id: 'eny-0085-hsrogue-hard',
@@ -7900,6 +8173,7 @@ export const generatedEnemyDefinitions = [
       '80': 327446,
       '90': 504440,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0055_hscrane'],
   },
   {
     id: 'eny-0047-firebat-hdg009',
@@ -8060,6 +8334,7 @@ export const generatedEnemyDefinitions = [
       '80': 595357,
       '90': 917164,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0090_wgabyss'],
   },
   {
     id: 'eny-0093-hshog-hdg',
@@ -8100,6 +8375,7 @@ export const generatedEnemyDefinitions = [
       '80': 357214,
       '90': 550298,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0093_hshog'],
   },
   {
     id: 'eny-0109-hshog2-hdg',
@@ -8233,6 +8509,7 @@ export const generatedEnemyDefinitions = [
       '80': 327446,
       '90': 504440,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0046_lbshamman'],
   },
   {
     id: 'eny-0082-hsbear-hdg018',
@@ -8264,6 +8541,7 @@ export const generatedEnemyDefinitions = [
       '80': 714428,
       '90': 1100596,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0082_hsbear'],
   },
   {
     id: 'eny-0102-hstiger2-hdg021',
@@ -8326,6 +8604,7 @@ export const generatedEnemyDefinitions = [
       '80': 327446,
       '90': 504440,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0046_lbshamman'],
   },
   {
     id: 'eny-0113-jzogre-hdg023',
@@ -8366,6 +8645,7 @@ export const generatedEnemyDefinitions = [
       '80': 506053,
       '90': 779589,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0113_jzogre'],
   },
   {
     id: 'eny-0114-jzmking-hdg024',
@@ -8397,6 +8677,7 @@ export const generatedEnemyDefinitions = [
       '80': 863267,
       '90': 1329887,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0114_jzmking'],
   },
   {
     id: 'eny-0118-klhog-hdg026',
@@ -8437,6 +8718,7 @@ export const generatedEnemyDefinitions = [
       '80': 416750,
       '90': 642014,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0118_klhog'],
   },
   {
     id: 'eny-0119-kltiger-hdg026',
@@ -8468,6 +8750,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0119_kltiger'],
   },
   {
     id: 'eny-0124-kltdcap-hdg027',
@@ -8508,6 +8791,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0124_kltdcap'],
   },
   {
     id: 'eny-0123-klcap-hdg028',
@@ -8653,6 +8937,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0091_wgshoal'],
   },
   {
     id: 'eny-0092-slbomb-race003',
@@ -8863,6 +9148,7 @@ export const generatedEnemyDefinitions = [
       '80': 357214,
       '90': 550298,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0093_hshog'],
   },
   {
     id: 'eny-0055-hscrane-race005',
@@ -8895,6 +9181,7 @@ export const generatedEnemyDefinitions = [
       '80': 327446,
       '90': 504440,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0055_hscrane'],
   },
   {
     id: 'eny-0074-lbshield-race006',
@@ -8959,6 +9246,7 @@ export const generatedEnemyDefinitions = [
       '80': 357214,
       '90': 550298,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0023_aghornb'],
   },
   {
     id: 'eny-0047-firebat-race006',
@@ -9023,6 +9311,7 @@ export const generatedEnemyDefinitions = [
       '80': 476285,
       '90': 733731,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0018_lbtough'],
   },
   {
     id: 'eny-0082-hsbear-race007',
@@ -9055,6 +9344,7 @@ export const generatedEnemyDefinitions = [
       '80': 714428,
       '90': 1100596,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0082_hsbear'],
   },
   {
     id: 'eny-0122-kltdbud-tower009',
@@ -9137,6 +9427,7 @@ export const generatedEnemyDefinitions = [
       '80': 416750,
       '90': 642014,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0118_klhog'],
   },
   {
     id: 'eny-0089-wgreflec-tower010',
@@ -9201,6 +9492,7 @@ export const generatedEnemyDefinitions = [
       '80': 357214,
       '90': 550298,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0023_aghornb'],
   },
   {
     id: 'eny-0047-firebat-tower011',
@@ -9265,6 +9557,7 @@ export const generatedEnemyDefinitions = [
       '80': 357214,
       '90': 550298,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0093_hshog'],
   },
   {
     id: 'eny-0018-lbtough-tower013',
@@ -9297,6 +9590,7 @@ export const generatedEnemyDefinitions = [
       '80': 476285,
       '90': 733731,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0018_lbtough'],
   },
   {
     id: 'eny-0054-hsmino-tower013',
@@ -9329,6 +9623,7 @@ export const generatedEnemyDefinitions = [
       '80': 476285,
       '90': 733731,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0054_hsmino'],
   },
   {
     id: 'eny-0112-jzmonk-tower014',
@@ -9393,6 +9688,7 @@ export const generatedEnemyDefinitions = [
       '80': 506053,
       '90': 779589,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0113_jzogre'],
   },
   {
     id: 'eny-0120-klbear-tower015',
@@ -9434,6 +9730,7 @@ export const generatedEnemyDefinitions = [
       '80': 654892,
       '90': 1008880,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0120_klbear'],
   },
   {
     id: 'eny-0124-kltdcap-tower016',
@@ -9466,6 +9763,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0124_kltdcap'],
   },
   {
     id: 'eny-0075-lbroshan-settlement',
@@ -9507,6 +9805,7 @@ export const generatedEnemyDefinitions = [
       '80': 535821,
       '90': 825447,
     },
+    weaknessBreakOptions: weaknessBreakOptions['eny_0075_lbroshan'],
   },
   {
     id: 'eny-0127-bigents-tower019',

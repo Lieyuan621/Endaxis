@@ -714,10 +714,13 @@ describe('PlayerDamageOperationExecutor', () => {
       },
       randomMode,
       canCritical,
-      ...(override === undefined ? {} : { resolveCriticalOverride: () => override }),
-      ...(reaction === undefined
-        ? {}
-        : { resolveReactionCriticalOverride: () => ({ key: 'reaction:1', value: override }) }),
+      resolveHitMarks: () => ({
+        hitIdentity: JSON.stringify([
+          ['action', 'operator', 'cast:1'],
+          ['hit', 'operator', 'enemy', 0],
+        ]),
+        hitCriticalOverride: override,
+      }),
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
         appliesIgniteDamageMultiplier: false,
@@ -749,7 +752,10 @@ describe('PlayerDamageOperationExecutor', () => {
     const damage = receipt.entries.find(entry => entry.event === 'DamageApplied')!;
     if (reaction !== undefined)
       expect(damage.data).toMatchObject({
-        reactionCriticalKey: 'reaction:1',
+        hitIdentity: JSON.stringify([
+          ['action', 'operator', 'cast:1'],
+          ['hit', 'operator', 'enemy', 0],
+        ]),
         reactionDamageKind: reaction,
       });
     return {
@@ -786,7 +792,7 @@ describe('PlayerDamageOperationExecutor', () => {
       expect(runCriticalPolicy(mode, true, true, reaction)).toMatchObject({
         damage: 600,
         isCritical: true,
-        samples: 0,
+        samples: mode === 'sampled' ? 1 : 0,
       });
     }
     expect(runCriticalPolicy('expected', undefined, true, reaction)).toMatchObject({
@@ -805,13 +811,13 @@ describe('PlayerDamageOperationExecutor', () => {
       damage: 400,
       isCritical: false,
       triggersCriticalEffects: false,
-      samples: 0,
+      samples: 1,
     });
     expect(runCriticalPolicy('sampled', true)).toEqual({
       damage: 600,
       isCritical: true,
       triggersCriticalEffects: true,
-      samples: 0,
+      samples: 1,
     });
     expect(runCriticalPolicy('expected', true)).toEqual({
       damage: 600,
@@ -872,6 +878,7 @@ describe('PlayerDamageOperationExecutor', () => {
   });
 
   it('applies standard health damage before the hit poise unit', () => {
+    let forcedHit = false;
     let sourceControlled = false;
     let runtimeAttack = 100;
     let attackModifiers: AppliedDamageModifier[] = [];
@@ -914,7 +921,13 @@ describe('PlayerDamageOperationExecutor', () => {
         attributes: { strength: 10, agility: 20, intellect: 30, will: 40 },
         coefficients: { strength: 0, agility: 0, intellect: 0.001, will: 0.0005 },
       },
-      resolveCriticalOverride: step => (step.key === 'forced' ? true : undefined),
+      resolveHitMarks: () => ({
+        hitIdentity: JSON.stringify([
+          ['action', 'operator', 'cast'],
+          ['hit', 'operator', 'enemy', 0],
+        ]),
+        hitCriticalOverride: forcedHit ? true : undefined,
+      }),
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
         appliesIgniteDamageMultiplier: false,
@@ -1046,6 +1059,7 @@ describe('PlayerDamageOperationExecutor', () => {
     runtimeAttack = 100;
     expect(nextCriticalSample).not.toHaveBeenCalled();
 
+    forcedHit = true;
     executor.execute({
       ...DAMAGE_STEP,
       key: 'forced',
@@ -1061,6 +1075,7 @@ describe('PlayerDamageOperationExecutor', () => {
     });
     expect(nextCriticalSample).not.toHaveBeenCalled();
 
+    forcedHit = false;
     const snapshotStep = {
       ...DAMAGE_STEP,
       parameters: {

@@ -317,6 +317,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
               outputDirectory: path.join(candidateRoot, relativeOutput),
               localeDirectory: path.join(candidateRoot, 'src/i18n/game-locales'),
               buffDirectory: path.join(sourceRoot, 'BuffData'),
+              skillDirectory: path.join(sourceRoot, 'SkillData'),
               spawnerDirectory: path.join(sourceRoot, 'SpawnerConfig'),
               check: false,
             };

@@ -57,8 +57,11 @@ export interface HealthDamageEventPayload {
 export interface HealthDamageReceiptDetail {
   readonly damageTransferMultiplier?: number;
   readonly reactionDamageKind?: 'spellBurst' | 'physicalInfliction';
-  readonly reactionCriticalKey?: string;
-  readonly forcedCritical?: boolean;
+  readonly hitIdentity?: string;
+  readonly hitCriticalOverride?: boolean | null;
+  readonly canBreakWeakness?: boolean;
+  readonly breaksWeakness?: boolean;
+  readonly weaknessBreakStagger?: number;
   readonly 'damageScale:normal:attacker'?: number;
   readonly 'damageScale:normal:defender'?: number;
   readonly attackDetailRawBase?: number;
@@ -165,6 +168,9 @@ export interface ExecuteHealthDamageInput {
   readonly castId?: string;
   /** 存档中的命中身份；命中回执凭它与具体命中点对应。 */
   readonly hitId?: string;
+  /** 手工标记的敌方招式失衡；0 仍会发布击破事件。 */
+  readonly weaknessBreakStagger?: number;
+  readonly onWeaknessBreak?: (sourceId: string, targetId: string, stagger: number) => void;
   readonly emitSourceEvent: (
     event: HealthDamageSourceEvent,
     payload: HealthDamageEventPayload,
@@ -254,6 +260,8 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
   );
 
   input.emitTargetEvent('takeDamage', { ...payload, actualDamage: stateChange.actualDamage });
+  if (input.weaknessBreakStagger !== undefined)
+    input.onWeaknessBreak?.(input.sourceId, input.targetId, input.weaknessBreakStagger);
   input.emitSourceEvent('outputDamage', {
     ...sourceBeforePayload,
     result,

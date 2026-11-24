@@ -245,6 +245,23 @@ function inflictionEntry(sequence: number, frame: number): CombatReceiptEntry {
 }
 
 describe('skill hit occurrences and details', () => {
+  it.each([
+    { hitCriticalOverride: true, breaksWeakness: false },
+    { hitCriticalOverride: false, breaksWeakness: false },
+    { hitCriticalOverride: null, breaksWeakness: true },
+  ])('marks grouped hits only when a visible damage receipt has an override: %j', mark => {
+    const first = damageEntry(1, 60);
+    const entries = [
+      { ...first, data: { ...first.data, isCritical: true, hitCriticalOverride: null } },
+      { ...first, sequence: 2, targetId: 'other', data: { ...first.data, ...mark } },
+    ];
+    const marker = (targetId?: string) =>
+      projectTimelineHitOccurrences(entries, undefined, targetId).get('cast:1')?.[0];
+    expect(marker()?.hasOverride).toBe(true);
+    expect(marker('other')?.hasOverride).toBe(true);
+    expect(marker('enemy')?.hasOverride).toBe(false);
+  });
+
   it('marks only the hit that actually received the common combo damage Buff', () => {
     const ownDamage: CombatReceiptEntry = {
       ...damageEntry(1, 60),

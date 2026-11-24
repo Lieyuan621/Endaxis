@@ -2713,6 +2713,16 @@ export const definitionSchemas = {
   enemy: {
     kind: 'object',
     fields: {
+      weaknessBreakOptions: {
+        kind: 'array',
+        element: {
+          kind: 'object',
+          fields: { skillId: { kind: 'string' }, stagger: { kind: 'number' } },
+        },
+        semantics: { arrayElement: {} },
+        optional: true,
+        description: '本模板招式中可确定的打断失衡值，供手动标记命中时参考。',
+      },
       attributeModifiers: {
         kind: 'array',
         element: { kind: 'object', fields: schema_a514ad26903f },

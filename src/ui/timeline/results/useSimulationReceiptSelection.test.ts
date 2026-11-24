@@ -12,15 +12,15 @@ it('强制暴击重算后按稳定命中身份重新定位，不复用旧序号'
   try {
     scope.run(() => {
       const first = {
-        receiptEntries: [{ sequence: 1, data: { reactionCriticalKey: 'burst' } }],
+        receiptEntries: [{ sequence: 1, data: { hitIdentity: 'burst' } }],
       } as unknown as ScenarioSimulationRun;
       const published = shallowRef<ScenarioSimulationRun | null>(first);
       const selected = useSimulationReceiptSelection(published);
       selected.value = 1;
       published.value = {
         receiptEntries: [
-          { sequence: 1, data: { reactionCriticalKey: 'other' } },
-          { sequence: 8, data: { reactionCriticalKey: 'burst' } },
+          { sequence: 1, data: { hitIdentity: 'other' } },
+          { sequence: 8, data: { hitIdentity: 'burst' } },
         ],
       } as unknown as ScenarioSimulationRun;
       expect(selected.value).toBe(8);

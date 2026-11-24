@@ -390,7 +390,6 @@ export interface SkillCastStartPreparation {
 export interface SkillSimulationInputs {
   readonly initialBlackboard?: Readonly<Record<string, number>>;
   readonly randomSeed?: number;
-  readonly criticalOverrides?: Readonly<Record<string, boolean>>;
 }
 
 /** 原生单槽延迟施放目前已进入模拟器的稳定字段。 */

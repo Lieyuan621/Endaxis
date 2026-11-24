@@ -32,6 +32,7 @@ const props = defineProps<{
     title: string;
     triggered: boolean;
     linkBuffed: boolean;
+    hasOverride: boolean;
     stackIndex: number;
   }[];
 }>();
@@ -194,7 +195,7 @@ const hitItems = computed(() => {
       :title="hit.title"
       @pointerdown.stop
       @mousedown.stop.prevent="emit('hit-click', hit)"
-      ><span class="entity-hit-diamond"
+      ><span class="entity-hit-diamond" :class="{ 'timeline-hit--marked': hit.hasOverride }"
     /></span>
     <TimelineStatusSegment
       v-for="item in items"

@@ -6,6 +6,7 @@ import type { GlobalConfigDocument } from '../../../core/project/schema';
  *
  * 组件不得直接改写持久化对象；后续撤销历史应记录这些命令的输入与输出，而不是 DOM 状态。
  */
+import type { HitOverrideField, HitOverrideValue } from '../../../core/project/hitOverrides';
 import type {
   BattleDocument,
   OperatorInstanceDocument,
@@ -686,61 +687,6 @@ export function setSkillCastRandomSeed(
   return { ...scenario, tracks };
 }
 
-/** 修改当前选中的反应伤害；取消时删除覆盖，恢复场景的期望或随机策略。 */
-export function setReactionDamageForcedCritical(
-  scenario: ScenarioDocument,
-  keys: readonly string[],
-  forced: boolean,
-): ScenarioDocument {
-  const current = scenario.battle.reactionCriticalOverrides ?? {};
-  if (keys.length === 0 || keys.every(key => (current[key] === true) === forced)) return scenario;
-  const overrides = { ...current };
-  for (const key of keys) {
-    if (key.length === 0) throw new TypeError('forced-critical hit key must not be empty');
-    if (forced) overrides[key] = true;
-    else delete overrides[key];
-  }
-  const { reactionCriticalOverrides: _old, ...battle } = scenario.battle;
-  return {
-    ...scenario,
-    battle: {
-      ...battle,
-      ...(Object.keys(overrides).length ? { reactionCriticalOverrides: overrides } : {}),
-    },
-  };
-}
-
-/** 切换一次释放中某个稳定伤害步骤的强制暴击输入。 */
-export function setSkillCastForcedCritical(
-  scenario: ScenarioDocument,
-  trackIndex: TrackIndex,
-  skillCastId: string,
-  stepKey: string,
-  forced: boolean,
-): ScenarioDocument {
-  if (stepKey.length === 0) throw new TypeError('forced-critical step key must not be empty');
-  const { track, castIndex, cast } = locateSkillCast(scenario, trackIndex, skillCastId);
-  const current = cast.simulationInputs?.criticalOverrides ?? {};
-  if ((current[stepKey] === true) === forced) return scenario;
-  const criticalOverrides = { ...current };
-  if (forced) criticalOverrides[stepKey] = true;
-  else delete criticalOverrides[stepKey];
-  const remainingInputs = {
-    ...cast.simulationInputs,
-    ...(Object.keys(criticalOverrides).length === 0 ? {} : { criticalOverrides }),
-  };
-  if (Object.keys(criticalOverrides).length === 0) delete remainingInputs.criticalOverrides;
-  const skillCasts = [...track.skillCasts];
-  const { simulationInputs: _oldInputs, ...castWithoutInputs } = cast;
-  skillCasts[castIndex] =
-    Object.keys(remainingInputs).length === 0
-      ? castWithoutInputs
-      : { ...castWithoutInputs, simulationInputs: remainingInputs };
-  const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
-  tracks[trackIndex] = { ...track, skillCasts };
-  return { ...scenario, tracks };
-}
-
 /**
  * 一次删除任意轨道上的多个动作，并统一清理连线。
  * 不存在的 ID 会被忽略，便于临时选择集合在撤销、重做或切换干员后安全收敛。
@@ -984,4 +930,42 @@ export function setSkillCastInitialBlackboard(
   const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
   tracks[trackIndex] = { ...track, skillCasts };
   return { ...scenario, tracks };
+}
+
+/** undefined 清除标记；暴击覆盖保留明确的不暴击。 */
+export function setHitOverride(
+  scenario: ScenarioDocument,
+  field: HitOverrideField,
+  key: string,
+  value: boolean | undefined,
+): ScenarioDocument {
+  if (field === 'hitWeaknessBreaks' && !value) value = undefined;
+  if (field === 'hitWeaknessBreaks' && value && scenario.battle.hitWeaknessBreaks?.[key])
+    return scenario;
+  if (scenario.battle[field]?.[key] === value) return scenario;
+  const overrides: Record<string, HitOverrideValue> = { ...scenario.battle[field] };
+  if (value === undefined) delete overrides[key];
+  else overrides[key] = value;
+  const battle = { ...scenario.battle, [field]: overrides };
+  if (!Object.keys(overrides).length) delete battle[field];
+  return { ...scenario, battle };
+}
+
+export function setHitWeaknessBreakStagger(
+  scenario: ScenarioDocument,
+  key: string,
+  stagger: number,
+): ScenarioDocument {
+  if (!Number.isFinite(stagger) || stagger < 0)
+    throw new RangeError('weakness break stagger must be a finite non-negative number');
+  const marks = scenario.battle.hitWeaknessBreaks;
+  const mark = marks?.[key];
+  if (!mark || stagger === (mark === true ? 0 : mark.stagger)) return scenario;
+  return {
+    ...scenario,
+    battle: {
+      ...scenario.battle,
+      hitWeaknessBreaks: { ...marks, [key]: stagger ? { stagger } : true },
+    },
+  };
 }

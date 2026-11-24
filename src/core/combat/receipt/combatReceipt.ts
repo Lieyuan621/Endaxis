@@ -9,6 +9,7 @@ import type {
   CombatObjectRef,
 } from '../state/foundationState';
 import { CombatReceiptHistory, type CombatReceiptView } from './combatReceiptHistory';
+import { HitIdentityIndex } from './hitIdentity';
 export type { CombatObjectRef } from '../state/foundationState';
 export type CombatReceiptValue = boolean | number | string | null;
 
@@ -63,19 +64,36 @@ export interface CombatReceiptEntry {
 /** 运行时追加事实的最小端口，投影层只读取其最终结果。 */
 export interface CombatReceiptSink {
   record(entry: Omit<CombatReceiptEntry, 'sequence'>): void;
+  nextHitIdentity?(
+    producer: CombatObjectRef | undefined,
+    ownerId: string,
+    targetId: string,
+  ): string | undefined;
 }
 
 /** 稳定且仅追加的事实记录；本地化与展示均属于投影。 */
 export class CombatReceiptCollector implements CombatReceiptSink {
+  readonly #hitIdentities = new HitIdentityIndex();
+  nextHitIdentity(
+    producer: CombatObjectRef | undefined,
+    ownerId: string,
+    targetId: string,
+  ): string | undefined {
+    return this.#hitIdentities.nextHit(producer, ownerId, targetId);
+  }
   readonly history: CombatReceiptHistory;
   /** 已发布数值的派生索引；恢复时只读固定前缀重建，分支之间不共享。 */
   readonly #passiveUiValues = new Map<string, { sourceId: string; value: number }>();
   constructor(saved?: CombatReceiptView) {
     this.history = saved?.fork() ?? new CombatReceiptHistory();
     if (saved !== undefined)
-      for (const entry of saved.entries())
+      for (const entry of saved.entries()) {
+        this.#hitIdentities.observeCreation(entry);
+        if (entry.event === 'DamageApplied' && typeof entry.data?.hitIdentity === 'string')
+          this.#hitIdentities.restoreHit(entry.data.hitIdentity);
         if (entry.event === 'CharacterPassiveUiValueChanged' && entry.targetId !== undefined)
           this.#recordPassiveUiValue(entry, false);
+      }
   }
 
   get entries(): readonly CombatReceiptEntry[] {
@@ -83,6 +101,7 @@ export class CombatReceiptCollector implements CombatReceiptSink {
   }
 
   record(entry: Omit<CombatReceiptEntry, 'sequence'>): void {
+    this.#hitIdentities.observeCreation(entry);
     if (entry.event === 'CharacterPassiveUiValueChanged' && entry.targetId !== undefined)
       this.#recordPassiveUiValue(entry, true);
     else this.history.append(entry);

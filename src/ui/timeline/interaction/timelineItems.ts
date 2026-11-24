@@ -52,10 +52,16 @@ export interface TimelineItem {
 
 /** 剪贴板保留独立的数据副本；恢复函数只捕获该副本，不捕获源方案。 */
 export interface TimelinePointCopy {
+  readonly trackIndex?: TrackIndex;
   readonly kind: TimelinePointKind;
   readonly frame: number;
   readonly minimumFrame: number;
-  readonly paste: (scenario: ScenarioDocument, id: string, frame: number) => ScenarioDocument;
+  readonly paste: (
+    scenario: ScenarioDocument,
+    id: string,
+    frame: number,
+    destination?: TrackIndex,
+  ) => ScenarioDocument;
 }
 
 interface Timed {
@@ -111,16 +117,17 @@ function pointItems<T extends Timed>(
         const snapshot = structuredClone(value);
         return {
           kind: adapter.kind,
+          trackIndex,
           frame: value.frame,
           minimumFrame: adapter.preparation ? -Infinity : 0,
-          paste: (current, id, frame) => {
-            if (trackIndex !== undefined && current.tracks[trackIndex] === null)
+          paste: (current, id, frame, destination = trackIndex) => {
+            if (destination !== undefined && current.tracks[destination] === null)
               throw new Error('Cannot paste input onto an empty track');
             return adapter.write(
               current,
               id,
               { ...structuredClone(snapshot), id, frame },
-              trackIndex,
+              destination,
             );
           },
         };
@@ -138,11 +145,15 @@ const pointSources = [
         preparation: true,
         input: true,
         list: s => s.battle.controlSwitches.map(value => ({ value, trackIndex: value.trackIndex })),
-        write: (s, id, value) => ({
+        write: (s, id, value, trackIndex) => ({
           ...s,
           battle: {
             ...s.battle,
-            controlSwitches: replaceEntry(s.battle.controlSwitches, id, value),
+            controlSwitches: replaceEntry(
+              s.battle.controlSwitches,
+              id,
+              value ? { ...value, trackIndex: trackIndex! } : null,
+            ),
           },
         }),
       },
@@ -156,11 +167,15 @@ const pointSources = [
         input: true,
         list: s =>
           (s.battle.dodgeMarkers ?? []).map(value => ({ value, trackIndex: value.trackIndex })),
-        write: (s, id, value) => ({
+        write: (s, id, value, trackIndex) => ({
           ...s,
           battle: {
             ...s.battle,
-            dodgeMarkers: replaceEntry(s.battle.dodgeMarkers ?? [], id, value),
+            dodgeMarkers: replaceEntry(
+              s.battle.dodgeMarkers ?? [],
+              id,
+              value ? { ...value, trackIndex: trackIndex! } : null,
+            ),
           },
         }),
       },
@@ -176,11 +191,17 @@ const pointSources = [
             value,
             trackIndex: value.target.scope === 'operator' ? value.target.trackIndex : undefined,
           })),
-        write: (s, id, value) => ({
+        write: (s, id, value, trackIndex) => ({
           ...s,
           battle: {
             ...s.battle,
-            externalEventMarkers: replaceEntry(s.battle.externalEventMarkers ?? [], id, value),
+            externalEventMarkers: replaceEntry(
+              s.battle.externalEventMarkers ?? [],
+              id,
+              value?.target.scope === 'operator'
+                ? { ...value, target: { ...value.target, trackIndex: trackIndex! } }
+                : value,
+            ),
           },
         }),
       },

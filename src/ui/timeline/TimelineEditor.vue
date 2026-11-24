@@ -160,7 +160,10 @@ import TimelineBuffBands from './results/TimelineBuffBands.vue';
 import TimelineComboWindowBands from './results/TimelineComboWindowBands.vue';
 import TimelineEnemyEffects from './results/TimelineEnemyEffects.vue';
 import type { EnemyDocument, EnemyLifecycleDocument } from '../../core/project/schema';
-import { getEnemySourceDefinitionId } from '../../core/game-data/enemyDefinition';
+import {
+  getEnemyRuntimeDefinitionId,
+  getEnemySourceDefinitionId,
+} from '../../core/game-data/enemyDefinition';
 import { isMultiEnemyModeEnabled, requiresMultiEnemyMode } from '../../core/project/multiEnemyMode';
 import TimelineEnemyOverview from './results/TimelineEnemyOverview.vue';
 import TimelineEnemyStatusSections from './results/TimelineEnemyStatusSections.vue';
@@ -240,6 +243,7 @@ import {
 import { CombatObjectOrigins } from '../../core/projection/combatObjectOrigins';
 import { projectComboWindowTimelineViz } from '../../core/projection/comboWindowTimelineViz';
 import {
+  hasHitOverride,
   projectHitDamageReceipts,
   type HitDamageReceipt,
 } from '../../core/projection/hitEffectProjection';
@@ -339,12 +343,12 @@ import {
   setBattlePrepFrames,
   setControlSwitchTrack,
   setGlobalConfig,
-  setReactionDamageForcedCritical,
   setScenarioBuffAttributes,
   setSimulationRangeBoundary,
   setSkillCastColor,
   setSkillCastDisabled,
-  setSkillCastForcedCritical,
+  setHitOverride,
+  setHitWeaknessBreakStagger,
   setSkillCastLocked,
   setSkillCastRandomSeed,
   setSkillCastInitialBlackboard,
@@ -4158,7 +4162,7 @@ function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMark
         triggered: hit.triggered,
         stackIndex: hit.stackIndex,
         linkBuffed: hit.linkBuffed,
-        forcedCritical: cast.simulationInputs?.criticalOverrides?.[hit.stepKey] === true,
+        hasOverride: hit.hasOverride,
         title: hitMarkerTitle(hit.label),
       }));
   }
@@ -4173,7 +4177,6 @@ function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMark
         timelineFramePx(
           hitActualFrames.value.get(marker.hitId) ?? publishedStartFrame + marker.frameOffset,
         ) - timelineFramePx(publishedStartFrame),
-      forcedCritical: cast.simulationInputs?.criticalOverrides?.[marker.stepKey] === true,
     }));
 }
 
@@ -4264,59 +4267,41 @@ function damageSourceDescription(entry: CombatReceiptEntry) {
   const slug = track?.operator?.operatorSlug;
   return [slug ? publishedOperatorName(slug) : entry.sourceId, name].filter(Boolean).join(' · ');
 }
-const hitDetail = computed(() => {
-  const entry = selectedHitDetailEntry.value;
-  if (entry?.data?.canCritical === false) return null;
-  const castId = entry?.data?.castId;
-  const stepKey = entry?.data?.stepKey;
-  if (typeof castId !== 'string' || typeof stepKey !== 'string') return null;
-  for (const [index, track] of scenario.value.tracks.entries()) {
-    const cast = track?.skillCasts.find(candidate => candidate.id === castId);
-    if (cast) return { cast, stepKey, trackIndex: index as TrackIndex };
-  }
-  return null;
-});
 const hitDetailEntries = computed(() =>
   hitDetailTarget.value !== null
     ? (publishedHitDetail.value?.entries ?? [])
     : enemyDamageDetailEntries.value,
 );
-const selectedHitDetailSequence = ref<number>();
-const selectedHitDetailEntry = computed(
-  () =>
-    hitDetailEntries.value.find(entry => entry.sequence === selectedHitDetailSequence.value) ??
-    hitDetailEntries.value[0],
-);
-const reactionCriticalKeys = computed(() =>
-  (selectedHitDetailEntry.value ? [selectedHitDetailEntry.value] : []).flatMap(entry =>
-    typeof entry.data?.reactionCriticalKey === 'string' && entry.data.canCritical !== false
-      ? [entry.data.reactionCriticalKey]
-      : [],
-  ),
-);
-const hitDetailResultForceCritical = computed(() =>
-  reactionCriticalKeys.value.length > 0
-    ? reactionCriticalKeys.value.every(
-        key => publishedSimulation.value?.scenario.battle.reactionCriticalOverrides?.[key] === true,
-      )
-    : (publishedSimulation.value?.scenario.tracks.some(track =>
-        track?.skillCasts.some(
-          cast =>
-            cast.id === selectedHitDetailEntry.value?.data?.castId &&
-            cast.simulationInputs?.criticalOverrides?.[
-              String(selectedHitDetailEntry.value?.data?.stepKey)
-            ] === true,
-        ),
-      ) ?? false),
-);
-const hitDetailForceCritical = computed(() => {
-  if (reactionCriticalKeys.value.length > 0)
-    return reactionCriticalKeys.value.every(
-      key => scenario.value.battle.reactionCriticalOverrides?.[key] === true,
-    );
-  const detail = hitDetail.value;
-  return detail?.cast.simulationInputs?.criticalOverrides?.[detail.stepKey] === true;
-});
+function hitWeaknessBreakOptions(targetId: string) {
+  const level = publishedSimulation.value?.scenario.level;
+  const enemy = level && levelEnemies(level).find(instance => instance.id === targetId)?.enemy;
+  const definitionId = enemy && getEnemyRuntimeDefinitionId(enemy);
+  return definitionId
+    ? (editorGameDataRepository.getEnemy(definitionId)?.weaknessBreakOptions ?? [])
+    : [];
+}
+async function updateHitMark(
+  field: 'hitCriticalOverrides' | 'hitWeaknessBreaks',
+  key: string,
+  value: boolean | number | undefined,
+) {
+  const entry = hitDetailEntries.value.find(hit => hit.data?.hitIdentity === key);
+  const permission = field === 'hitCriticalOverrides' ? 'canCritical' : 'canBreakWeakness';
+  if (
+    publishedSimulation.value?.scenario.id !== scenario.value.id ||
+    entry?.data?.[permission] !== true
+  )
+    return;
+  if (
+    commitScenario(field, current =>
+      typeof value === 'number'
+        ? setHitWeaknessBreakStagger(current, key, value)
+        : setHitOverride(current, field, key, value),
+    )
+  ) {
+    await nextTick(simulateNow);
+  }
+}
 function hitDetailContributionSourceLabel(
   entry: Pick<OperatorPanelContributionReceipt, 'source'>,
   sequence?: number,
@@ -4342,21 +4327,6 @@ function hitDetailContributionSourceLabel(
   });
 }
 
-function toggleHitDetailForceCritical(forced: boolean): void {
-  if (reactionCriticalKeys.value.length > 0) {
-    const changed = commitScenario('setReactionDamageForcedCritical', current =>
-      setReactionDamageForcedCritical(current, reactionCriticalKeys.value, forced),
-    );
-    if (changed) void simulateNow();
-    return;
-  }
-  const detail = hitDetail.value;
-  if (detail === null) return;
-  const changed = commitScenario('setSkillCastForcedCritical', current =>
-    setSkillCastForcedCritical(current, detail.trackIndex, detail.cast.id, detail.stepKey, forced),
-  );
-  if (changed) void simulateNow();
-}
 function formatGuideFrame(frame: number): string {
   const seconds = Math.floor(frame / PROJECT_FPS);
   return `${seconds}s${frame % PROJECT_FPS}f`;
@@ -6486,6 +6456,10 @@ function pasteClipboardAtTimelinePosition(frame?: number): boolean {
         )
       : pointerMarkerFrame(timelinePointerClientX.value, 0, minimumFrame);
   const result = pasteTimelineActions(scenario.value, clipboard, frame ?? pasteFrame, ids);
+  if (result.unmatchedTracks) {
+    ElMessage.warning(t('timeline.hitMarks.pasteMismatch'));
+    return true;
+  }
   if (!result.itemRefs.length) return false;
   const pastedItems = collectTimelineItems(result.scenario);
   const pastePlan = planTimelineItemMove(
@@ -6499,6 +6473,8 @@ function pasteClipboardAtTimelinePosition(frame?: number): boolean {
       ? result.scenario
       : moveTimelineItems(result.scenario, pastePlan, pasteDelta).scenario;
   if (!commitScenario('pasteTimelineItems', () => pastedScenario)) return false;
+  if (result.skippedHitOverrides)
+    ElMessage.warning(t('timeline.hitMarks.pasteSkipped', { count: result.skippedHitOverrides }));
   const keys = result.itemRefs.map(timelineItemKey);
   applyItemSelection({ selectedIds: new Set(keys), primaryId: keys.at(-1) ?? null });
   return true;
@@ -8660,6 +8636,7 @@ function setMobileGuideFrame(frame: number | null): void {
                       v-for="hit in enemyOverviewDamageHits.get(id) ?? []"
                       :key="hit.group[0]!.sequence"
                       :x="timelineFramePx(hit.group[0]!.frame)"
+                      :has-override="hit.group.some(hasHitOverride)"
                       :y="
                         hit.row < 0
                           ? iconSize - 2
@@ -9415,9 +9392,14 @@ function setMobileGuideFrame(frame: number | null): void {
     :source-description="damageSourceDescription"
     :target-label="t('timeline.hitDetail.target')"
     :visible="hitDetailTarget !== null || enemyDamageDetailSequence !== null"
-    :allow-force-critical="hitDetail !== null || reactionCriticalKeys.length > 0"
-    :force-critical="hitDetailForceCritical"
-    :result-force-critical="hitDetailResultForceCritical"
+    :critical-overrides="scenario.battle.hitCriticalOverrides"
+    :weakness-breaks="scenario.battle.hitWeaknessBreaks"
+    :weakness-break-options="hitWeaknessBreakOptions"
+    @set-critical-override="(key, value) => updateHitMark('hitCriticalOverrides', key, value)"
+    @set-weakness-break="
+      (key, value) => updateHitMark('hitWeaknessBreaks', key, value || undefined)
+    "
+    @set-weakness-break-stagger="(key, value) => updateHitMark('hitWeaknessBreaks', key, value)"
     :entries="hitDetailEntries"
     :initial-sequence="enemyDamageDetailSequence ?? undefined"
     :contribution-source-label="hitDetailContributionSourceLabel"
@@ -9425,6 +9407,11 @@ function setMobileGuideFrame(frame: number | null): void {
     :skill-type-label="skillTypeLabel"
     :labels="{
       dialogTitle: t('hitDetail.title'),
+      breakWeakness: t('timeline.hitMarks.breakWeakness'),
+      interruptStagger: t('timeline.hitMarks.interruptStagger'),
+      defaultCritical: t('timeline.hitMarks.default'),
+      forceCritical: t('timeline.hitMarks.critical'),
+      forceNonCritical: t('timeline.hitMarks.nonCritical'),
       previousHit: t('timeline.hitDetail.previousHit'),
       nextHit: t('timeline.hitDetail.nextHit'),
       context: t('hitDetail.context'),
@@ -9436,7 +9423,7 @@ function setMobileGuideFrame(frame: number | null): void {
       expectedDamage: t('hitDetail.expectedDamage'),
       actualDamage: t('hitDetail.actualDamage'),
       forcedDamage: t('hitDetail.forcedDamage'),
-      forceCrit: t('hitDetail.forceCrit'),
+      forcedNonCriticalDamage: t('hitDetail.forcedNonCriticalDamage'),
       criticalDamage: t('hitDetail.critDamage'),
       nonCriticalDamage: t('hitDetail.nonCritDamage'),
       attack: t('hitDetail.attack'),
@@ -9508,8 +9495,6 @@ function setMobileGuideFrame(frame: number | null): void {
       hitDetailTarget = null;
       enemyDamageDetailSequence = null;
     "
-    @toggle-force-critical="toggleHitDetailForceCritical"
-    @select-entry="selectedHitDetailSequence = $event"
   />
   <TimelineBuffDetailDialog
     :receipt-entries="publishedReceiptEntries"
@@ -9669,6 +9654,13 @@ function setMobileGuideFrame(frame: number | null): void {
     @update:visible="showShortcutHelp = $event"
   />
 </template>
+
+<style>
+.timeline-hit--marked {
+  outline: 1px solid var(--ea-gold);
+  outline-offset: -1px;
+}
+</style>
 
 <style scoped>
 .legacy-conversion-actions .ea-button {

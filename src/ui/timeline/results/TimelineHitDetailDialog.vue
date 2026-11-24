@@ -5,6 +5,7 @@ import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigin
 import {
   EaButton,
   EaCheckbox,
+  EaThreeStateCheckbox,
   EaChevronIcon,
   EaDialog,
   EaDialogActions,
@@ -14,6 +15,7 @@ import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import type { CombatObjectIconResolver } from './combatObjectIcons';
 import type { CombatObjectOwnName } from './combatObjectNames';
 import CombatObjectOriginGraph from './CombatObjectOriginGraph.vue';
+import InterruptStaggerInput from './InterruptStaggerInput.vue';
 /** 结构与视觉以旧版 HitDamageDetailDialog 为规格；UI 只投影回执冻结值。 */
 import { ArrowRight, Warning } from '@element-plus/icons-vue';
 import { computed, ref, watch } from 'vue';
@@ -33,15 +35,16 @@ import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatRece
 import type { ActionValueCalculation } from '../../../core/combat/state/foundationState';
 import type { OperatorPanelContributionReceipt } from '../../../core/compiler/resolveOperatorPanel';
 import type { OperatorAttribute } from '../../../core/game-data/operatorDefinition';
+import type { HitWeaknessBreak } from '../../../core/project/schema';
+import type { EnemyWeaknessBreakOption } from '../../../../packages/game-data-contract/src/enemies';
 
 const damageIndex = ref(0);
 const props = defineProps<{
   visible: boolean;
   randomMode: 'expected' | 'sampled';
-  forceCritical: boolean;
-  /** 结果区使用发布快照；forceCritical 仅表示当前编辑中的复选框。 */
-  resultForceCritical: boolean;
-  allowForceCritical?: boolean;
+  criticalOverrides?: Readonly<Record<string, boolean>>;
+  weaknessBreaks?: Readonly<Record<string, HitWeaknessBreak>>;
+  weaknessBreakOptions?: (targetId: string) => readonly EnemyWeaknessBreakOption[];
   sourceDescription?: (entry: CombatReceiptEntry) => string | undefined;
   sourceLabel?: string;
   targetLabel?: string;
@@ -64,6 +67,11 @@ const props = defineProps<{
   damageTypeLabel: (value: string) => string;
   skillTypeLabel: (value: string) => string;
   labels: {
+    breakWeakness: string;
+    interruptStagger: string;
+    defaultCritical: string;
+    forceCritical: string;
+    forceNonCritical: string;
     previousHit: string;
     nextHit: string;
     dialogTitle: string;
@@ -76,7 +84,7 @@ const props = defineProps<{
     expectedDamage: string;
     actualDamage: string;
     forcedDamage: string;
-    forceCrit: string;
+    forcedNonCriticalDamage: string;
     criticalDamage: string;
     nonCriticalDamage: string;
     attack: string;
@@ -129,19 +137,72 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: [];
-  toggleForceCritical: [forced: boolean];
-  selectEntry: [sequence: number | undefined];
+  setCriticalOverride: [key: string, value: boolean | undefined];
+  setWeaknessBreak: [key: string, value: boolean];
+  setWeaknessBreakStagger: [key: string, stagger: number];
 }>();
-watch(
-  () => props.entries.filter(entry => entry.event === 'DamageApplied')[damageIndex.value]?.sequence,
-  sequence => emit('selectEntry', sequence),
-  { immediate: true },
+const damageEntries = computed(() =>
+  props.entries.filter(entry => entry.event === 'DamageApplied'),
 );
+const selectedEntry = computed(() => damageEntries.value[damageIndex.value]);
+function editableHitKey(permission: 'canCritical' | 'canBreakWeakness'): string | undefined {
+  const data = selectedEntry.value?.data;
+  return data?.[permission] === true && typeof data.hitIdentity === 'string'
+    ? data.hitIdentity
+    : undefined;
+}
+const criticalKey = computed(() => editableHitKey('canCritical'));
+const weaknessKey = computed(() => editableHitKey('canBreakWeakness'));
+const weaknessMark = computed(() =>
+  weaknessKey.value === undefined ? undefined : props.weaknessBreaks?.[weaknessKey.value],
+);
+const weaknessStagger = computed(() =>
+  typeof weaknessMark.value === 'object' ? weaknessMark.value.stagger : 0,
+);
+const enemySkillOptions = computed(() => {
+  const target = selectedEntry.value?.targetId;
+  if (!weaknessMark.value || !target) return [];
+  const options = props.weaknessBreakOptions?.(target) ?? [];
+  const prefix = options[0]?.skillId.match(/^eny_\d+_[^_]+_/)?.[0];
+  const sharedPrefixLength =
+    prefix && options.every(option => option.skillId.startsWith(prefix)) ? prefix.length : 0;
+  return options.map(option => ({
+    ...option,
+    label: `${option.skillId.slice(sharedPrefixLength)} · ${option.stagger}`,
+  }));
+});
+const criticalSelection = computed(() => {
+  return criticalKey.value === undefined
+    ? null
+    : (props.criticalOverrides?.[criticalKey.value] ?? null);
+});
+const criticalLabel = computed(() => {
+  if (criticalSelection.value === null) return props.labels.defaultCritical;
+  return criticalSelection.value ? props.labels.forceCritical : props.labels.forceNonCritical;
+});
+function setCriticalSelection(value: boolean | null) {
+  if (criticalKey.value !== undefined)
+    emit('setCriticalOverride', criticalKey.value, value ?? undefined);
+}
+function setWeaknessSelection(value: boolean) {
+  if (weaknessKey.value !== undefined) emit('setWeaknessBreak', weaknessKey.value, value);
+}
+function setWeaknessStagger(value: number | null | undefined) {
+  const stagger = value ?? 0;
+  if (
+    weaknessKey.value !== undefined &&
+    weaknessMark.value &&
+    Number.isFinite(stagger) &&
+    stagger >= 0 &&
+    stagger !== weaknessStagger.value
+  )
+    emit('setWeaknessBreakStagger', weaknessKey.value, stagger);
+}
 const origins = computed(() => new CombatObjectOrigins(props.receiptEntries ?? props.entries));
 
 interface DetailRow {
   readonly order?: number;
-  readonly kind?: 'crit';
+  readonly expandsCriticalDetails?: boolean;
   readonly factor?: number;
   readonly tooltip?: string;
   readonly label: string;
@@ -159,7 +220,8 @@ interface DamageDetail {
   readonly criticalDamage: number;
   readonly nonCriticalDamage: number;
   readonly canCritical: boolean;
-  readonly canForceCritical: boolean;
+  readonly headlineLabel: string;
+  readonly isForced: boolean;
   readonly attackValue: string;
   readonly criticalRateRaw: number;
   readonly criticalRateEffective: number;
@@ -204,12 +266,23 @@ const openCriticalDetails = ref<ReadonlySet<number>>(new Set());
 const openSkillMultiplierDetails = ref<ReadonlySet<number>>(new Set());
 // 回执序号只在当前结果内有效；换一组结果后不能继承上一组的展开状态。
 watch(
-  () => [props.entries, props.initialSequence] as const,
-  () => {
-    const index = props.entries
-      .filter(entry => entry.event === 'DamageApplied')
-      .findIndex(entry => entry.sequence === props.initialSequence);
-    damageIndex.value = Math.max(0, index);
+  [damageEntries, () => props.initialSequence, () => props.visible],
+  ([entries, initial, visible], [previous, oldInitial, wasVisible]) => {
+    const initialHit = entries.find(entry => entry.sequence === initial);
+    const oldAnchor = previous?.find(entry => entry.sequence === oldInitial)?.data?.hitIdentity;
+    const sameAnchor =
+      initial === oldInitial ||
+      (typeof oldAnchor === 'string' && initialHit?.data?.hitIdentity === oldAnchor);
+    const previousKey =
+      visible && wasVisible && sameAnchor
+        ? previous?.[damageIndex.value]?.data?.hitIdentity
+        : undefined;
+    const index =
+      typeof previousKey === 'string'
+        ? entries.findIndex(entry => entry.data?.hitIdentity === previousKey)
+        : -1;
+    damageIndex.value =
+      index >= 0 ? index : Math.max(0, initialHit ? entries.indexOf(initialHit) : 0);
     openAttackDetails.value = new Set();
     openCriticalDetails.value = new Set();
     openSkillMultiplierDetails.value = new Set();
@@ -651,8 +724,7 @@ function skillMultiplierCalculationRows(
 }
 
 const damageDetails = computed<readonly DamageDetail[]>(() =>
-  props.entries.flatMap(entry => {
-    if (entry.event !== 'DamageApplied') return [];
+  damageEntries.value.map(entry => {
     const data = entry.data ?? {};
     const actualValue = finiteNumber(data.value);
     const expectedDamage = finiteNumber(data.expectedDamage, actualValue);
@@ -830,9 +902,11 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
         tooltip: modifierTooltip(modifiers.filter(item => item.kind === 'damageScale')),
       });
     }
-    if (props.randomMode === 'expected') {
+    const forced = typeof data.hitCriticalOverride === 'boolean' && data.canCritical === true;
+    const useExpectation = props.randomMode === 'expected' && !forced;
+    if (useExpectation) {
       multiplierRows.push({
-        kind: 'crit',
+        expandsCriticalDetails: true,
         label: props.labels.criticalExpectation,
         order: 3,
         tooltip: criticalTooltip,
@@ -840,8 +914,7 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
         value: mult(criticalExpectation),
         factor: criticalExpectation,
       });
-    }
-    if (props.randomMode === 'sampled') {
+    } else {
       const criticalResult =
         data.canCritical === false
           ? props.labels.cannotCritical
@@ -849,11 +922,13 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
             ? props.labels.criticalHit
             : props.labels.nonCriticalHit;
       multiplierRows.push({
-        kind: 'crit',
+        expandsCriticalDetails: !forced,
         label: props.labels.criticalResult,
         order: 3,
-        tooltip: criticalTooltip,
-        detail: `${props.labels.criticalRate} ${pct(criticalRateEffective)} · ${criticalResult}`,
+        tooltip: forced ? undefined : criticalTooltip,
+        detail: forced
+          ? criticalResult
+          : `${props.labels.criticalRate} ${pct(criticalRateEffective)} · ${criticalResult}`,
         value: mult(criticalMultiplier),
         factor: criticalMultiplier,
       });
@@ -962,30 +1037,20 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
       if (differsFromOne(row.factor)) multiplierRows.push({ ...row, value: mult(row.factor) });
     }
     multiplierRows.sort((left, right) => (left.order ?? 0) - (right.order ?? 0));
-    const forced =
-      props.resultForceCritical &&
-      data.canCritical !== false &&
-      Math.abs(criticalDamage - nonCriticalDamage) > 0.000_001;
     const formulaNumber = (value: number) =>
       value.toLocaleString(undefined, { maximumFractionDigits: 3 });
-    const formulaFactors = multiplierRows.map(row => {
-      const critical =
-        row.label === props.labels.criticalExpectation || row.label === props.labels.criticalResult;
-      return `${forced && critical ? props.labels.criticalHit : row.label}（${formulaNumber(forced && critical ? 1 + criticalDamageIncrease : (row.factor ?? 1))}）`;
-    });
+    const formulaFactors = multiplierRows.map(
+      row => `${row.label}（${formulaNumber(row.factor ?? 1)}）`,
+    );
     const formulaBase = standardCalculation
       ? `${props.labels.attack}（${formulaNumber(finiteNumber(data.attack))}）\n× ${props.labels.skillMultiplier}（${formulaNumber(finiteNumber(data.skillMultiplierPercent) / 100)}）`
       : `${props.labels.baseDamage}（${formulaNumber(finiteNumber(data.baseDamage))}）`;
-    const formulaResult = forced
-      ? criticalDamage
-      : props.randomMode === 'expected'
-        ? expectedDamage
-        : actualValue;
-    const formulaLabel = forced
-      ? props.labels.forcedDamage
-      : props.randomMode === 'expected'
-        ? props.labels.expectedDamage
-        : props.labels.actualDamage;
+    const formulaResult = useExpectation ? expectedDamage : actualValue;
+    let formulaLabel = useExpectation ? props.labels.expectedDamage : props.labels.actualDamage;
+    if (forced)
+      formulaLabel = data.hitCriticalOverride
+        ? props.labels.forcedDamage
+        : props.labels.forcedNonCriticalDamage;
     const formulaTooltip =
       typeof data.baseDamage === 'number'
         ? [
@@ -1010,73 +1075,67 @@ const damageDetails = computed<readonly DamageDetail[]>(() =>
         ),
       ]),
     ) as Record<AttributeModifierSlot, DetailRow[]>;
-    return [
-      {
-        formulaTooltip,
-        attackFormulaTooltip: attackDetail?.formula,
-        attributeSources: Object.fromEntries(
-          (attackDetail?.attributeContributions ?? []).map(row => [
-            row.key,
-            [
-              ...modifierRows(
-                attributes('attacker', [
-                  row.key,
-                  ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE[row.key as OperatorAttribute],
-                ]),
-              ),
-            ],
-          ]),
-        ),
-        key: entry.sequence,
-        headline: props.randomMode === 'expected' ? expectedDamage : actualValue,
-        expectedDamage,
-        criticalDamage,
-        nonCriticalDamage,
-        canCritical: data.canCritical !== false,
-        canForceCritical:
-          data.canCritical !== false && Math.abs(criticalDamage - nonCriticalDamage) > 0.000_001,
-        attackValue: num(data.attack),
-        criticalRateRaw: criticalRate,
-        criticalRateEffective,
-        criticalDamageIncrease,
-        criticalRateSources,
-        criticalDamageSources,
-        attackSources: modifierRows(attackModifiers),
-        attackSlotValues,
-        attackSlotSources,
-        otherAttackSlots: (
+    return {
+      formulaTooltip,
+      attackFormulaTooltip: attackDetail?.formula,
+      attributeSources: Object.fromEntries(
+        (attackDetail?.attributeContributions ?? []).map(row => [
+          row.key,
           [
-            'baseAddition',
-            'baseMultiplier',
-            'baseFinalAddition',
-            'baseFinalMultiplier',
-            'addition',
-            'multiplier',
-            'finalAddition',
-            'finalMultiplier',
-          ] as const
-        ).filter(
-          slot =>
-            (attackSlotSources[slot].length > 0 ||
-              (attackSlotValues[slot] !== null &&
-                Math.abs(
-                  attackSlotValues[slot] -
-                    (slot === 'baseFinalMultiplier' || slot === 'finalMultiplier' ? 1 : 0),
-                ) > 0.000_001)) &&
-            (attackDetail === null || (slot !== 'baseMultiplier' && slot !== 'baseFinalAddition')),
-        ),
-        attackDetail,
-        contextRows,
-        baseRows,
-        skillMultiplierSources,
-        multiplierRows,
-      },
-    ];
+            ...modifierRows(
+              attributes('attacker', [
+                row.key,
+                ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE[row.key as OperatorAttribute],
+              ]),
+            ),
+          ],
+        ]),
+      ),
+      key: entry.sequence,
+      headlineLabel: formulaLabel,
+      headline: formulaResult,
+      isForced: forced,
+      expectedDamage,
+      criticalDamage,
+      nonCriticalDamage,
+      canCritical: data.canCritical !== false,
+      attackValue: num(data.attack),
+      criticalRateRaw: criticalRate,
+      criticalRateEffective,
+      criticalDamageIncrease,
+      criticalRateSources,
+      criticalDamageSources,
+      attackSources: modifierRows(attackModifiers),
+      attackSlotValues,
+      attackSlotSources,
+      otherAttackSlots: (
+        [
+          'baseAddition',
+          'baseMultiplier',
+          'baseFinalAddition',
+          'baseFinalMultiplier',
+          'addition',
+          'multiplier',
+          'finalAddition',
+          'finalMultiplier',
+        ] as const
+      ).filter(
+        slot =>
+          (attackSlotSources[slot].length > 0 ||
+            (attackSlotValues[slot] !== null &&
+              Math.abs(
+                attackSlotValues[slot] -
+                  (slot === 'baseFinalMultiplier' || slot === 'finalMultiplier' ? 1 : 0),
+              ) > 0.000_001)) &&
+          (attackDetail === null || (slot !== 'baseMultiplier' && slot !== 'baseFinalAddition')),
+      ),
+      attackDetail,
+      contextRows,
+      baseRows,
+      skillMultiplierSources,
+      multiplierRows,
+    };
   }),
-);
-
-const canForceCritical = computed(() =>
-  damageDetails.value.some(detail => detail.canForceCritical),
 );
 
 function onClose(): void {
@@ -1141,13 +1200,7 @@ function onClose(): void {
           <div class="damage-result">
             <div class="expected-damage">
               <span class="damage-label"
-                >{{
-                  resultForceCritical && detail.canForceCritical
-                    ? labels.forcedDamage
-                    : randomMode === 'expected'
-                      ? labels.expectedDamage
-                      : labels.actualDamage
-                }}
+                >{{ detail.headlineLabel }}
                 <EaTooltip
                   v-if="detail.formulaTooltip"
                   :content="detail.formulaTooltip"
@@ -1161,17 +1214,9 @@ function onClose(): void {
                 </EaTooltip>
               </span>
               <span class="damage-result-value">
-                <span
-                  class="damage-value"
-                  :class="{ forced: resultForceCritical && detail.canForceCritical }"
-                  >{{
-                    hitNumber(
-                      resultForceCritical && detail.canForceCritical
-                        ? detail.criticalDamage
-                        : detail.headline,
-                    )
-                  }}</span
-                >
+                <span class="damage-value" :class="{ forced: detail.isForced }">{{
+                  hitNumber(detail.headline)
+                }}</span>
               </span>
             </div>
             <table class="stat-table">
@@ -1384,12 +1429,12 @@ function onClose(): void {
             <tbody>
               <template v-for="row in detail.multiplierRows" :key="row.label">
                 <tr
-                  :class="{ 'expandable-row': row.kind === 'crit' }"
-                  @click="row.kind === 'crit' ? toggleCriticalDetail(detail.key) : undefined"
+                  :class="{ 'expandable-row': row.expandsCriticalDetails }"
+                  @click="row.expandsCriticalDetails && toggleCriticalDetail(detail.key)"
                 >
                   <td class="label-cell">
                     <el-icon
-                      v-if="row.kind === 'crit'"
+                      v-if="row.expandsCriticalDetails"
                       class="expand-icon"
                       :class="{ 'is-open': openCriticalDetails.has(detail.key) }"
                     >
@@ -1409,7 +1454,7 @@ function onClose(): void {
                   </td>
                   <td class="value-cell mult-value">{{ row.value }}</td>
                 </tr>
-                <template v-if="row.kind === 'crit' && openCriticalDetails.has(detail.key)">
+                <template v-if="row.expandsCriticalDetails && openCriticalDetails.has(detail.key)">
                   <tr class="sub-row">
                     <td class="label-cell indent-1">{{ labels.criticalRateStat }}</td>
                     <td class="value-cell">{{ pct(detail.criticalRateEffective) }}</td>
@@ -1466,15 +1511,31 @@ function onClose(): void {
       </div>
       <div v-else class="hit-detail-empty">—</div>
 
-      <template #footer>
-        <EaDialogActions align="start">
-          <EaCheckbox
-            v-if="canForceCritical && allowForceCritical !== false"
-            class="force-crit-check"
-            :model-value="forceCritical"
-            @change="emit('toggleForceCritical', $event)"
-            >{{ labels.forceCrit }}</EaCheckbox
+      <template v-if="criticalKey !== undefined || weaknessKey !== undefined" #footer>
+        <EaDialogActions class="hit-detail-marks" align="start">
+          <EaThreeStateCheckbox
+            v-if="criticalKey !== undefined"
+            :model-value="criticalSelection"
+            :aria-description="criticalLabel"
+            @update:model-value="setCriticalSelection"
           >
+            {{ labels.criticalHit }}
+          </EaThreeStateCheckbox>
+          <EaCheckbox
+            v-if="weaknessKey !== undefined"
+            :model-value="!!weaknessMark"
+            @change="setWeaknessSelection"
+          >
+            {{ labels.breakWeakness }}
+          </EaCheckbox>
+          <InterruptStaggerInput
+            v-if="weaknessMark"
+            :key="weaknessKey"
+            :model-value="weaknessStagger"
+            :label="labels.interruptStagger"
+            :options="enemySkillOptions"
+            @change="setWeaknessStagger"
+          />
         </EaDialogActions>
       </template>
     </EaDialog>
@@ -1482,6 +1543,13 @@ function onClose(): void {
 </template>
 
 <style scoped>
+.hit-detail-marks {
+  gap: var(--ea-space-2);
+}
+.hit-detail-marks > * {
+  min-width: 0;
+  min-height: var(--ea-control-height-sm);
+}
 .hint-icon {
   margin-left: 4px;
   color: inherit;

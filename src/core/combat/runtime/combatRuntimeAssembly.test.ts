@@ -2853,6 +2853,7 @@ describe('CombatRuntimeAssembly', () => {
     assembly.advanceFrames(3);
     expect(assembly.projectileLifetimes.activeCount).toBe(0);
     const launched = assembly.receipt.entries.find(entry => entry.event === 'ProjectileLaunched');
+    expect(launched?.data?.projectileId).toBe('point');
     expect(launched?.subject).toEqual({ kind: 'abilityEntity', instanceId: 2 });
     expect(launched?.producedBy).toEqual({ kind: 'abilityEntity', instanceId: 1 });
   });

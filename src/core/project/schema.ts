@@ -169,8 +169,6 @@ export interface SkillCastDocument {
   simulationInputs?: {
     /** 随机模式下只接管这个技能块及其派生行为；省略时使用场景全局种子。 */
     randomSeed?: number;
-    /** 按伤害 step key 覆盖本次结果；true 为暴击，false 为明确不暴击。 */
-    criticalOverrides?: Record<string, boolean>;
     initialBlackboard?: Readonly<Record<string, number>>;
   };
   /** 完整覆盖所属技能；正式项目必须携带自身局部图，不能借用模板节点或内嵌 Buff。 */
@@ -330,13 +328,17 @@ export interface DodgeMarkerDocument {
   mode: { kind: 'dodge' } | { kind: 'perfectDodge'; successDelayFrames: number };
 }
 
+/** true 只触发击破事件；stagger 是被打断的招式额外产生的失衡值。 */
+export type HitWeaknessBreak = boolean | { readonly stagger: number };
+
 /** 一次模拟的时间范围、共享资源规则与控制事件。敌人失衡规则归敌人实例所有。 */
 export interface BattleDocument {
   enemyTargetSwitches?: { id: string; frame: number; targetId: string }[];
   /** 省略/关闭时维持木桩规则，死亡只能由敌人的手动死亡时间触发。 */
   enemyAutomaticDeath?: boolean;
-  /** 法术爆发、物理异常的逐次命中覆盖，与技能块本身的覆盖分开。 */
-  reactionCriticalOverrides?: Record<string, boolean>;
+  /** 按用户可见的创建链及局部次数定位实际命中，不引用内部图节点。 */
+  hitCriticalOverrides?: Record<string, boolean>;
+  hitWeaknessBreaks?: Record<string, HitWeaknessBreak>;
   prepFrames: number;
   durationFrames: number;
   /** 模拟起始线和模拟终止线 */

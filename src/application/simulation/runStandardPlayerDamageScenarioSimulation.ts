@@ -150,11 +150,16 @@ export function prepareStandardPlayerDamageScenarioRuntime(
       ),
     ].map(([id, program]) => [id, { program, vitals: createEnemyCombatVitals(program) }]),
   );
+  const weaknessBreakStagger = new Map<string, number>();
+  for (const [hit, mark] of Object.entries(input.scenario.battle.hitWeaknessBreaks ?? {})) {
+    if (mark) weaknessBreakStagger.set(hit, mark === true ? 0 : mark.stagger);
+  }
   const restoredEnvironmentBase = {
     primaryEnemyId: firstScenarioEnemy(input.scenario).id,
     enemyAutomaticDeath: input.scenario.battle.enemyAutomaticDeath ?? false,
     additionalEnemies,
-    reactionCriticalOverrides: input.scenario.battle.reactionCriticalOverrides,
+    weaknessBreakStagger,
+    hitCriticalOverrides: input.scenario.battle.hitCriticalOverrides,
     resolveNonRandomRuntimeSnapshot: input.resolveNonRandomRuntimeSnapshot,
     tagRegistry: gameplayTagRegistry,
     tagPredefine: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),

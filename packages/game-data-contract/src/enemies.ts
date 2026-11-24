@@ -22,6 +22,12 @@ export const ENEMY_TIERS = ['normal', 'advanced', 'elite', 'boss', 'leader'] as 
 /** 定义筛选和展示使用的敌人强度分类。 */
 export type EnemyTier = (typeof ENEMY_TIERS)[number];
 
+/** 同一招式的不同红圈可以有不同的基础打断失衡值。 */
+export interface EnemyWeaknessBreakOption {
+  readonly skillId: string;
+  readonly stagger: number;
+}
+
 /** 敌人失衡规则的定义默认值；时长沿用数据源的秒单位，进入场景时再换算为项目帧。 */
 export interface EnemyStaggerDefinition {
   readonly maximum: number;
@@ -40,6 +46,8 @@ export interface EnemyStaggerDefinition {
  * 这里不保存本地化名称，也不持有项目实例或运行时可变状态。
  */
 export interface EnemyDefinition {
+  /** 本模板招式中可确定的打断失衡值，供手动标记命中时参考。 */
+  readonly weaknessBreakOptions?: readonly EnemyWeaknessBreakOption[];
   readonly attributeModifiers?: readonly AttributeModifier[];
   readonly birthBuffs?: readonly EnemyBirthBuffOption[];
   readonly id: string;

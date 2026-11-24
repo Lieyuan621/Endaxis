@@ -87,7 +87,13 @@ function handleChange(event: Event) {
       :aria-invalid="isInvalid"
       @change="handleChange"
     />
-    <span class="ea-checkbox__box" aria-hidden="true" />
+    <span
+      class="ea-checkbox__box"
+      :class="{ 'ea-checkbox__box--custom': $slots.mark }"
+      aria-hidden="true"
+    >
+      <slot name="mark" />
+    </span>
     <span class="ea-checkbox__label"><slot /></span>
   </label>
 </template>

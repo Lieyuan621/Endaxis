@@ -1,3 +1,4 @@
+import { pruneHitOverrides } from '../../core/project/hitOverrides';
 import type { EndaxisProjectDocument, ScenarioDocument } from '../../core/project/schema';
 import {
   assertScenarioEditAllowed,
@@ -173,7 +174,7 @@ export class ActiveScenarioEditorSession implements ScenarioEditingSession {
   commit(commandName: string, command: ScenarioCommand): boolean {
     return this.projectSession.commit(commandName, project => {
       const current = activeScenario(project);
-      const next = command(current);
+      const next = pruneHitOverrides(current, command(current));
       if (next === current) return project;
       return {
         ...project,

@@ -472,6 +472,7 @@ class ProjectileLaunchStep extends StatelessCombatStep {
       };
     });
     const launched = launch({
+      projectileId: this.step.parameters.projectileId,
       faction: this.step.parameters.faction,
       schedule: resolveProjectileSchedule(this.step.parameters.schedule, input =>
         typeof input === 'number' ? input : resolveActionValueOperand(input, parent.blackboard),

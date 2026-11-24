@@ -11,10 +11,6 @@ import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { BuffAppliedEvent } from '../buffs/buffOperationExecutor';
 import type { CombatBuffDefinitionCompilerPorts } from '../buffs/combatBuffDefinitions';
 import type { CombatBuffDefinition } from '../buffs/combatBuffs';
-import {
-  nextReactionDamageKey,
-  type ReactionDamageIdentity,
-} from '../damage/reactionDamageCritical';
 import type { AbilityEventRuntimeActionContext } from '../events/abilityEventActionContext';
 import type { AbilityEventPayloadMap, CombatAbilityEvent } from '../events/combatAbilityEvent';
 import { submitSimulationCastSeed } from '../random/simulationRandom';
@@ -316,7 +312,8 @@ export interface StandardPlayerDamagePayloadMap
 
 export interface StandardPlayerDamageEnvironmentOptions {
   readonly primaryEnemyId: string;
-  readonly reactionCriticalOverrides?: Readonly<Record<string, boolean>>;
+  readonly weaknessBreakStagger?: ReadonlyMap<string, number>;
+  readonly hitCriticalOverrides?: Readonly<Record<string, boolean>>;
   /** 暴击样本和命中特殊倍率必须由具有证据的上层策略提供。 */
   readonly criticalSamples: CriticalSampleSource;
   /** RandomUtil.Dice 的独立样本源，不与暴击随机流混用。 */
@@ -636,7 +633,6 @@ export class StandardPlayerDamageEnvironment {
     this.runtimeState = restored ?? {
       enemyInstances: new Map(),
       buffFrameEndEvents: new Map(),
-      reactionDamageCounts: new Map(),
       random: options.randomState ?? null,
       enemyVitals: this.#primaryEnemy.vitals.runtimeState,
       operatorVitals: new Map(),
@@ -1094,13 +1090,8 @@ export class StandardPlayerDamageEnvironment {
         ),
       criticalSamples: this.options.criticalSamples,
       randomMode: this.options.randomMode,
-      resolveCriticalOverride: step =>
-        step.key === undefined
-          ? undefined
-          : 'program' in context
-            ? context.readSimulationInputs?.()?.criticalOverrides?.[step.key]
-            : undefined,
-      resolveReactionCriticalOverride: identity => this.#resolveReactionCriticalOverride(identity),
+      resolveHitMarks: this.#resolveHitMarks,
+      emitWeaknessBreak: this.#emitWeaknessBreak,
       resolveNonRandomRuntimeSnapshot: step =>
         this.options.resolveNonRandomRuntimeSnapshot(context, step),
       ...this.#damagePreparationPorts(operatorId, operatorBuffs),
@@ -1810,11 +1801,6 @@ export class StandardPlayerDamageEnvironment {
   }
 
   /** 独立伤害共用来源属性、准备事件、伤害处理器和护盾，不伪造技能运行上下文。 */
-  #resolveReactionCriticalOverride(identity: ReactionDamageIdentity) {
-    const key = nextReactionDamageKey(this.runtimeState.reactionDamageCounts, identity);
-    return { key, value: this.options.reactionCriticalOverrides?.[key] };
-  }
-
   #auxiliaryDamageDependencies(
     sourceId: string,
     skillCastInfo?: CombatSkillCastInfo,
@@ -1832,7 +1818,8 @@ export class StandardPlayerDamageEnvironment {
       sourceOperatorId: sourceId,
       resolveSharedDamageTransfer: this.#resolveSharedDamageTransfer,
       targetExists: this.#targetExists,
-      resolveReactionCriticalOverride: identity => this.#resolveReactionCriticalOverride(identity),
+      resolveHitMarks: this.#resolveHitMarks,
+      emitWeaknessBreak: this.#emitWeaknessBreak,
       ...(skillCastInfo === undefined
         ? {}
         : {
@@ -2042,8 +2029,13 @@ export class StandardPlayerDamageEnvironment {
       resolveDefaultDamageTarget: () => runtimeTargetFromEntityId(payload.buffOwnerId),
       sourceActionId: payload.sourceActionId,
       canCritical: payload.canCritical,
-      resolveReactionCriticalOverride: identity =>
-        this.#resolveReactionCriticalOverride({ ...identity, actionId: payload.buffId }),
+      resolveHitMarks: (_producer, ownerId, targetId, supportsWeakness) =>
+        this.#resolveHitMarks(
+          { kind: 'buff', ownerId: payload.buffOwnerId, instanceId: payload.buffInstanceId },
+          ownerId,
+          targetId,
+          supportsWeakness,
+        ),
       receipt: {
         record: entry => {
           if (entry.event === 'DamageApplied') {
@@ -2123,6 +2115,46 @@ export class StandardPlayerDamageEnvironment {
     }
     return clock;
   }
+
+  readonly #resolveHitMarks: NonNullable<PlayerDamageOperationDependencies['resolveHitMarks']> = (
+    producer,
+    sourceId,
+    targetId,
+    supportsWeakness,
+  ) => {
+    const hitIdentity = this.#requireReceipt().nextHitIdentity?.(producer, sourceId, targetId);
+    if (hitIdentity === undefined) return undefined;
+    const critical = this.options.hitCriticalOverrides?.[hitIdentity];
+    const stagger = this.options.weaknessBreakStagger?.get(hitIdentity);
+    return {
+      hitIdentity,
+      ...(critical === undefined ? {} : { hitCriticalOverride: critical }),
+      ...(supportsWeakness && this.#enemies.has(targetId)
+        ? {
+            canBreakWeakness: true,
+            breaksWeakness: stagger !== undefined,
+            ...(stagger === undefined ? {} : { weaknessBreakStagger: stagger }),
+          }
+        : {}),
+    };
+  };
+
+  readonly #emitWeaknessBreak = (sourceId: string, targetId: string, stagger: number) => {
+    // 手动标注的招式失衡归于击破者，独立于命中技能的标签和倍率。
+    if (stagger > 0) {
+      const step: ResolvedCombatStepForKind<'dealStagger'> = {
+        kind: 'dealStagger',
+        parameters: { value: stagger },
+      };
+      const ports = this.#bindDamageTarget(
+        targetId,
+        this.#auxiliaryDamageDependencies(sourceId),
+        step,
+      );
+      new PlayerDamageOperationExecutor(ports).execute(step);
+    }
+    this.#emit(sourceId, 'afterOutputWeaknessTriggered', { sourceId, targetId });
+  };
 
   #requireReceipt(): CombatReceiptSink {
     const receipt = this.#receipt;

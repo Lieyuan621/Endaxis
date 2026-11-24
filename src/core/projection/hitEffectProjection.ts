@@ -7,6 +7,12 @@ import type { DamageType } from '../game-data/operatorDefinition';
 import { deriveHitId } from '../combat/timeline/deriveHitId';
 import { CombatObjectOrigins } from './combatObjectOrigins';
 
+export function hasHitOverride(entry: CombatReceiptEntry): boolean {
+  return (
+    typeof entry.data?.hitCriticalOverride === 'boolean' || entry.data?.breaksWeakness === true
+  );
+}
+
 /** 一次落到目标身上的生命伤害事实。 */
 export interface HitDamageReceipt {
   readonly frame: number;
