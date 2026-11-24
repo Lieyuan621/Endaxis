@@ -307,6 +307,31 @@ it('祀正式定义可放置全部技能并完成模拟', async () => {
       entry.data?.castId === 'chr_0036_jsspsi_normal_skill_2' &&
       entry.data?.damageType === 'fixed',
   );
+  const baseSkill = 'chr_0036_jsspsi_normal_skill';
+  const slotChanges = (entries: typeof result.receiptEntries) =>
+    entries
+      .filter(
+        entry => entry.event === 'SkillSlotChanged' && entry.data?.skillSlotKey === 'battleSkill',
+      )
+      .map(entry => entry.data?.targetSkillKey);
+  expect(slotChanges(returningResult.receiptEntries).at(-1)).toBe(baseSkill);
+  expect(slotChanges(result.receiptEntries)).toEqual(
+    expect.arrayContaining([baseSkill + '_1', baseSkill + '_2']),
+  );
+  expect(result.receiptEntries).toContainEqual(
+    expect.objectContaining({
+      event: 'SkillSwitchedToBuff',
+      data: expect.objectContaining({ skillId: baseSkill + '_2' }),
+    }),
+  );
+  expect(result.receiptEntries).toContainEqual(
+    expect.objectContaining({
+      event: 'PoiseApplied',
+      frame: burst!.frame,
+      targetId: burst!.targetId,
+      data: expect.objectContaining({ actualDelta: -5 }),
+    }),
+  );
   expect(burst?.targetId).toBe('enemy');
   expect(burst?.data?.value).toBeGreaterThan(0);
   expect(burst?.producedBy).toEqual(soul!.subject);

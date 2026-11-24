@@ -479,3 +479,35 @@ test('删除初始敌人后重新加载，可以直接编辑剩余敌人并切�
   await expect(page.locator('.enemy-overview')).not.toBeVisible();
   await expect(page.locator('.stats-summary .summary-value').first()).toHaveText('123,456');
 });
+
+test('关卡难度列表内部滚动，选中变种的等级与生命值在重读后保留', async ({ page }) => {
+  await page.goto('/timeline');
+  await page.getByText('自定义敌人', { exact: true }).first().click();
+  await page.getByRole('button', { name: '关卡变种', exact: true }).click();
+  const list = page.locator('.stage-list'),
+    groups = list.locator('button');
+  expect(
+    await list.evaluate(e => {
+      e.scrollTop = 80;
+      return e.scrollTop;
+    }),
+  ).toBeGreaterThan(0);
+  const sections = page.locator('.stage-difficulty');
+  for (let i = 0; i < (await groups.count()); i++) {
+    await groups.nth(i).click();
+    if ((await sections.count()) > 1) break;
+  }
+  expect(await sections.count()).toBeGreaterThan(1);
+  const card = sections.last().locator('.enemy-card:enabled').first();
+  const level = (await card.innerText()).match(/Lv(\d+)/)?.[1];
+  if (!level) throw new Error('所选敌人卡片缺少等级');
+  await card.click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.enemy-level-badge')).toContainText(level);
+  const hp = page.locator('.stats-summary .summary-value').first(),
+    value = await hp.innerText();
+  expect(Number(value.replaceAll(',', ''))).toBeGreaterThan(0);
+  await page.reload();
+  await expect(page.locator('.enemy-level-badge')).toContainText(level);
+  await expect(hp).toHaveText(value);
+});
