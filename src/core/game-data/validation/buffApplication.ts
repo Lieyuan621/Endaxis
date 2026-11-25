@@ -143,6 +143,9 @@ export function validateBuffApplication(
   if (parameters.passTargetGroupsToBuff !== undefined) {
     requireBoolean(parameters, 'passTargetGroupsToBuff', `${path}.parameters`, out);
   }
+  if (parameters.delayedTriggerInputKey !== undefined) {
+    requireString(parameters, 'delayedTriggerInputKey', `${path}.parameters`, out);
+  }
   if (parameters.isExtra !== undefined) {
     requireBoolean(parameters, 'isExtra', `${path}.parameters`, out);
   }

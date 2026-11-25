@@ -5,6 +5,7 @@ import type { BuffLookupQuery } from '../../../../packages/game-data-contract/sr
 import {
   copyEnemyPartTransferInfo,
   resolveOperationPartTransferInfo,
+  RuntimeTargetContext,
 } from '../abilities/runtimeTargetContext';
 import type {
   BuffSingleTarget,
@@ -109,6 +110,7 @@ export interface BuffLifecycleOperationSource {
 
 /** 技能动作对目标 Buff 容器使用的最小稳定端口。 */
 export interface BuffOperationTarget {
+  definitionTags?(id: string): readonly GameplayTag[] | undefined;
   findMatching?(query: BuffLookupQuery): Iterable<BuffQueryResult>;
   setRemainingDuration?(
     query: BuffLookupQuery,
@@ -279,7 +281,7 @@ export interface BuffAppliedEvent {
 }
 
 export interface BuffConsumedEvent {
-  readonly buff: EventBuffInstance;
+  readonly buff: EventBuffInstance | null;
   readonly skillCastInfo?: CombatSkillCastInfo | null;
   readonly sourceOperatorId: string;
   readonly targetId: string;
@@ -324,6 +326,7 @@ export interface BuffOperationDependencies {
     query: CompiledTargetQuery,
     context: CombatOperationContext,
   ) => readonly RuntimeTargetRef[];
+  readonly publishBuffConsumeEvent?: (event: BuffConsumedEvent) => void;
   readonly triggerCharacterInflictionEvent?: (
     ownerId: string,
     sourceId: string,
@@ -579,6 +582,34 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
           : 'Status/DisableNormalSkill/WithUI',
       ]);
       state.registrationIds.push(1);
+      return true;
+    }
+    if (step.kind === 'triggerBuffConsumeEvent') {
+      const { queryTargets, publishBuffConsumeEvent } = this.dependencies;
+      if (!context || !queryTargets || !publishBuffConsumeEvent)
+        throw new Error('Buff consumption event requires target queries and an event publisher');
+      const layers = Math.trunc(
+        resolveActionValueOperand(step.parameters.layers, context.blackboard),
+      );
+      if (layers <= 0) return false;
+      const source = firstRuntimeEntityTarget(queryTargets(step.parameters.source, context));
+      const owner = firstRuntimeEntityTarget(queryTargets(step.parameters.owner, context));
+      if (!source || !owner) return false;
+      const buffId = step.parameters.buffId;
+      const target = this.#resolveContextTarget(owner);
+      const definition = this.dependencies.resolveBuffDefinition?.(buffId);
+      const tags = definition ? (definition.applyTags ?? []) : target.definitionTags?.(buffId);
+      if (!tags) throw new Error('missing consumed Buff definition: ' + buffId);
+      publishBuffConsumeEvent({
+        buff: null,
+        sourceOperatorId: runtimeTargetEntityId(source)!,
+        targetId: target.ownerId,
+        buffId,
+        layers,
+        buffTags: tags,
+        blackboardValues: {},
+        skillCastInfo: context.skillCastInfo,
+      });
       return true;
     }
     if (step.kind === 'triggerCharacterInflictionEvent') {
@@ -978,6 +1009,7 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       ) {
         return false;
       }
+      if (event.payload.buff === null) return false;
       const value = event.payload.buff.blackboard.getNumber(step.parameters.desiredKey);
       context.blackboard.assignDynamic(
         step.parameters.outputKey,
@@ -1540,7 +1572,11 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
   #createBuffRequest(
     parameters: Pick<
       ResolvedCombatStepForKind<'applyBuff'>['parameters'],
-      'iconDurationSource' | 'inheritSourceSkillCastInfo' | 'isExtra' | 'passTargetGroupsToBuff'
+      | 'iconDurationSource'
+      | 'inheritSourceSkillCastInfo'
+      | 'delayedTriggerInputKey'
+      | 'isExtra'
+      | 'passTargetGroupsToBuff'
     >,
     entry: ResolvedCombatStepForKind<'applyBuff'>['parameters']['buffs'][number],
     context: CombatOperationContext | undefined,
@@ -1552,7 +1588,26 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     const dynamicId = typeof identity !== 'string';
     const assignments = entry.blackboardAssignments ?? {};
     const stringAssignments = entry.stringBlackboardAssignments ?? {};
-    const copiedAssignments = entry.copiedBlackboardAssignments ?? {};
+    const copiedAssignments = { ...entry.copiedBlackboardAssignments };
+    let inheritedTargetGroups = parameters.passTargetGroupsToBuff
+      ? context?.targetContext?.runtimeState
+      : undefined;
+    if (parameters.delayedTriggerInputKey !== undefined) {
+      if (!context) throw new Error('inherited Buff blackboard requires an action context');
+      const captured = new RuntimeTargetContext(
+        inheritedTargetGroups && { groups: new Map(inheritedTargetGroups.groups) },
+      );
+      captured.set(parameters.delayedTriggerInputKey, context.actionInputTargets ?? []);
+      inheritedTargetGroups = captured.runtimeState;
+      for (const key of Object.keys(context.blackboard.snapshot())) {
+        if (
+          !Object.hasOwn(assignments, key) &&
+          !Object.hasOwn(stringAssignments, key) &&
+          !Object.hasOwn(copiedAssignments, key)
+        )
+          copiedAssignments[key] = key;
+      }
+    }
     if (
       (Object.keys(assignments).length > 0 ||
         Object.keys(stringAssignments).length > 0 ||
@@ -1634,9 +1689,7 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     }
     return {
       buffId,
-      ...(parameters.passTargetGroupsToBuff
-        ? { inheritedTargetGroups: context?.targetContext?.runtimeState }
-        : {}),
+      ...(inheritedTargetGroups === undefined ? {} : { inheritedTargetGroups }),
       partTransferInfo: resolveOperationPartTransferInfo(context),
       producedBy: operationProducer(context, {
         ownerId: this.dependencies.sourceId,

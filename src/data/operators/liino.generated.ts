@@ -6092,7 +6092,10 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
 
 export const liinoChr_0035_liino_ultimate_skill: SkillDefinition = {
   actionGraph: liinoChr_0035_liino_ultimate_skillActionGraph,
-  skillTags: ['Skill/Character/chr_0035_liino/UltSkillMusic'],
+  skillTags: [
+    'Skill/Character/chr_0035_liino/UltSkillMusic',
+    'Skill/Character/Common/StartCdOnBuffEnd',
+  ],
   key: 'chr_0035_liino_ultimate_skill',
   element: 'electric',
   blackboard: {
@@ -7858,6 +7861,7 @@ const liinoBuff13ActionGraph = {
             target: { kind: 'context', key: 'target' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
           },
         },
         next: null,
@@ -7910,7 +7914,11 @@ const liinoBuff13: SkillBuffDefinition = {
   maxStackCount: 1,
   durationSeconds: { blackboardKey: 'duration' },
   presentation: { visible: true, showInHeadBarCommon: false, showInHeadBarAttached: false },
-  applyTags: ['Skill/Character/chr_0035_liino/NormalSkillMusic'],
+  applyTags: [
+    'Skill/Character/chr_0035_liino/NormalSkillMusic',
+    '3C/SpecialSkillMove/LiinoNormalSkill',
+    '3C/SpecialSkillMove',
+  ],
   extendTags: [],
   blackboard: {
     atk_up: 0,
@@ -9312,7 +9320,11 @@ const liinoBuff36: SkillBuffDefinition = {
   maxStackCount: 1,
   durationSeconds: { blackboardKey: 'duration' },
   presentation: { visible: true, showInHeadBarCommon: false, showInHeadBarAttached: false },
-  applyTags: ['Skill/Character/chr_0035_liino/UltSkillMusic'],
+  applyTags: [
+    'Skill/Character/chr_0035_liino/UltSkillMusic',
+    '3C/SpecialSkillMove/LiinoNormalSkill',
+    '3C/SpecialSkillMove',
+  ],
   extendTags: [],
   blackboard: {
     atk_up: 0,
@@ -9343,6 +9355,19 @@ const liinoBuff37ActionGraph = {
         },
         next: null,
       },
+      adjustSkillCooldown_2: {
+        action: {
+          kind: 'adjustSkillCooldown',
+          parameters: {
+            target: { kind: 'owner' },
+            skill: { kind: 'type', skillType: 'ultimate' },
+            operation: 'reduce',
+            basis: 'absoluteSeconds',
+            value: { kind: 'constant', value: 0 },
+          },
+        },
+        next: null,
+      },
     },
   },
   macros: {},
@@ -9356,7 +9381,10 @@ const liinoBuff37: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 1 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: [{ $sequence: 'restrictUltimateEnergyRecovery_1' }] },
+  lifecycleSequences: {
+    enable: [{ $sequence: 'restrictUltimateEnergyRecovery_1' }],
+    finish: [{ $sequence: 'adjustSkillCooldown_2' }],
+  },
   actionGraph: liinoBuff37ActionGraph,
 };
 

@@ -289,6 +289,7 @@ function inspectSequenceBody(
           );
         }
         return;
+      case 'triggerBuffConsumeEvent':
       case 'triggerCustomAbilityEvent':
       case 'castSkillDuringAction':
         return;

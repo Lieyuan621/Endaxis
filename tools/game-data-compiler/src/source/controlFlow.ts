@@ -13,6 +13,7 @@ import {
 import { parseScalarSource, type BlackboardLevelValues, type ScalarSource } from './scalar.ts';
 import { parseTargetReferenceSource, type TargetReferenceSource } from './target.ts';
 import { parsePhysicsCastActionSource, type PhysicsCastActionSource } from './physicsCastAction.ts';
+import { DELAY_TRIGGER_INPUT_KEY } from './buffActions.ts';
 
 const ACTION_META_FIELDS = [
   '$type',
@@ -58,7 +59,11 @@ export interface NativeActionBodySourceMap<TLeaf> {
     readonly trigger: 'targetPointInvalid';
     readonly callback: NativeSequenceSource<TLeaf>;
   };
-  readonly once: { readonly kind: 'once'; readonly action: NativeSequenceSource<TLeaf> };
+  readonly once: {
+    readonly kind: 'once';
+    readonly action: NativeSequenceSource<TLeaf>;
+    readonly delayedTriggerInputKey?: string;
+  };
   readonly ifElse: {
     readonly kind: 'ifElse';
     readonly condition: NativeSequenceSource<TLeaf>;
@@ -292,16 +297,19 @@ function parseNativeActionNodeSource<TLeaf>(
         parseLeaf,
       ),
     };
-  } else if (nativeName === 'DoOnceAction') {
-    requireExactFields(action, new Set([...ACTION_META_FIELDS, 'sequenceActionData']), path);
+  } else if (nativeName === 'DoOnceAction' || nativeName === 'ExecuteDelayTriggerBuffActions') {
+    const delayed = nativeName === 'ExecuteDelayTriggerBuffActions';
+    const field = delayed ? 'actions' : 'sequenceActionData';
+    requireExactFields(action, new Set([...ACTION_META_FIELDS, field]), path);
     body = {
       kind: 'once',
       action: parseNativeSequenceSource(
-        action.sequenceActionData,
-        `${path}.sequenceActionData`,
+        action[field],
+        `${path}.${field}`,
         inheritedBlackboard,
         parseLeaf,
       ),
+      ...(delayed ? { delayedTriggerInputKey: DELAY_TRIGGER_INPUT_KEY } : {}),
     };
   } else if (nativeName === 'IfElseAction') {
     body = parseIfElseBody(action, path, inheritedBlackboard, parseLeaf);

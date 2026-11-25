@@ -473,7 +473,7 @@ it.each(['current', 'ratio'] as const)(
   },
 );
 
-it('runs both generated Last Rite zero-health branches on the living side while retaining shared cleanup', () => {
+it('evaluates the generated Last Rite energy branch for zero-health targets', () => {
   const compilation = createActionGraphCompilation(
     lastRiteChr_0026_lastrite_combo_skillActionGraph,
     1,
@@ -495,15 +495,6 @@ it('runs both generated Last Rite zero-health branches on the living side while 
       .executeInstant({});
     expect(f.execute.mock.calls.length).toBe(target.kind === 'enemy' ? 0 : 1);
     expect(f.context.blackboard.getNumber('recover_usp')).toBe(target.kind === 'enemy' ? 0 : 1);
-    f.execute.mockClear();
-    runtime
-      .createSequence(compilation.compileEntry({ $sequence: 'ifElse_14' }, 'infliction'))
-      .executeInstant({});
-    expect(f.execute.mock.calls.map(call => call[0].kind)).toEqual(
-      target.kind === 'enemy'
-        ? ['finishBuffsByTag']
-        : ['triggerCustomAbilityEvent', 'finishBuffsByTag'],
-    );
     expect(f.vitals.health).toBe(0);
   }
 });

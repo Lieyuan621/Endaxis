@@ -3622,31 +3622,7 @@ const tangtangBuff14: SkillBuffDefinition = {
 };
 
 const tangtangBuff15ActionGraph = {
-  main: {
-    nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: { kind: 'owner' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'less',
-          value: { kind: 'constant', value: 1 },
-          tagQueryType: 'hasAny',
-          buffTags: ['Immune/Static'],
-        },
-      },
-    },
-  },
+  main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -3663,7 +3639,6 @@ const tangtangBuff15: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { ultskill_debuff_duration: 4 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: [{ $sequence: 'checkCondition_1' }] },
   actionGraph: tangtangBuff15ActionGraph,
 };
 

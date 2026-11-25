@@ -44,15 +44,19 @@ describe('本地来源精确资源下载器', () => {
     await writeJson(catalog, {
       tableCfg: ['CharacterTable'],
       jsonCollections: { SkillData: 'SkillData' },
-      jsonFiles: ['GameplayConfig/GameplayTagPredefineTable.json'],
+      jsonFiles: ['GameplayConfig/GameplayTagPredefineTable.json', 'LevelData/scene/battle.json'],
     });
 
     await expect(loadSourceCatalog(catalog)).resolves.toEqual({
       tableCfg: ['CharacterTable'],
       jsonCollections: { SkillData: 'SkillData' },
-      jsonFiles: ['GameplayConfig/GameplayTagPredefineTable.json'],
+      jsonFiles: ['GameplayConfig/GameplayTagPredefineTable.json', 'LevelData/scene/battle.json'],
     });
-    for (const jsonFiles of [['../escape.json'], ['X/a.json', 'X/a.json']]) {
+    for (const jsonFiles of [
+      ['../escape.json'],
+      ['LevelData/../a.json'],
+      ['X/a.json', 'X/a.json'],
+    ]) {
       await writeJson(catalog, { tableCfg: [], jsonCollections: {}, jsonFiles });
       await expect(loadSourceCatalog(catalog)).rejects.toThrow();
     }

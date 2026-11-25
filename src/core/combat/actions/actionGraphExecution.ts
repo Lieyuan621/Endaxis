@@ -1036,11 +1036,23 @@ export class ActionGraphExecution
       if (action.kind === 'once') {
         if (saved && saved.kind !== 'graphOnce') throw new Error(`expected once state: ${id}`);
         const data = saved ?? { kind: 'graphOnce' as const, executed: false, body: null };
-        const body = this.#child(id, 0, action.body.$sequence, data.body ?? undefined);
+        const inputKey = action.parameters.delayedTriggerInputKey;
+        const childHost =
+          inputKey === undefined
+            ? this.host
+            : this.host.withSavedInput(
+                this.host.targets({ targets: { kind: 'context', key: inputKey } })[0] ?? null,
+              );
+        const body = this.#child(id, 0, action.body.$sequence, data.body ?? undefined, childHost);
         data.body = body.runtimeState;
         binding = {
           data,
           execute: context => {
+            if (inputKey !== undefined) {
+              if (data.executed) return false;
+              data.executed = true;
+              return body.executeInstant(context);
+            }
             if (!data.executed) {
               body.executeInstant(context);
               data.executed = true;

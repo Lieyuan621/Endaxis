@@ -311,6 +311,7 @@ export function compileActionNode(
       'buffIgnite',
       'forcedElementalStatus',
       'spellBurstEvent',
+      'buffConsumeEvent',
       'customAbilityEvent',
       'skillCast',
       // Pending 自身仍在下方严格校验固定候选角色、敌人目标、trigger 与空赋值。
@@ -503,6 +504,24 @@ export function compileActionNode(
       {
         kind: 'triggerSpellBurst',
         parameters: { burstType: node.body.value.action.element },
+      },
+    ];
+  }
+  if (node.body.value.family === 'buffConsumeEvent') {
+    const action = node.body.value;
+    return [
+      {
+        kind: 'triggerBuffConsumeEvent',
+        parameters: {
+          source: projectActionTargetQuery(
+            action.source,
+            context,
+            node.sourcePath + '.eventSource',
+          ),
+          owner: projectActionTargetQuery(action.owner, context, node.sourcePath + '.buffOwner'),
+          buffId: action.buffId,
+          layers: actionValueOperand(action.layers),
+        },
       },
     ];
   }
@@ -742,6 +761,13 @@ export function compileActionNode(
     if (action.limitSource) {
       throw new Error(`${node.sourcePath}: limited-source Buff finish is not supported`);
     }
+    if (
+      action.kind === 'buffFinishByQuery' &&
+      action.settings.checkType === 'Tag' &&
+      action.settings.tagQuery.queryType === 'hasAny' &&
+      action.settings.tagQuery.tagIds.length === 0
+    )
+      return [];
     const targets = projectActionTargetQuery(action.owner, context, `${node.sourcePath}.buffOwner`);
     const finishSource = projectActionTargetQuery(
       action.finishSource,
@@ -2194,6 +2220,9 @@ function compileBuffApplication(
           ? {}
           : { count: actionValueOperand(action.count) }),
         ...(action.inheritSourceSkillCastInfo ? { inheritSourceSkillCastInfo: true } : {}),
+        ...(action.delayedTriggerInputKey === undefined
+          ? {}
+          : { delayedTriggerInputKey: action.delayedTriggerInputKey }),
         ...(action.isExtra ? { isExtra: true } : {}),
         ...(action.overrideBuffIconDuration
           ? { iconDurationSource: { kind: 'actionOwnerAbilityEntity' as const } }

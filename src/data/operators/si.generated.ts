@@ -2634,41 +2634,6 @@ const siComboCondition2: ComboSkillConditionDefinition = {
   actionGraph: siComboCondition2ActionGraph,
 };
 
-const siComboCondition3ActionGraph = {
-  main: {
-    nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'eventCustomAbilityNameMatch',
-          eventName: 'SiComboSkillTrigger',
-          outputKey: 'EntityBB_combo_count',
-        },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const siComboCondition3: ComboSkillConditionDefinition = {
-  key: 'native-combo:2',
-  skillKey: 'chr_0036_jsspsi_combo_skill',
-  event: 'customAbilityEvent',
-  immediately: false,
-  initialValues: null,
-  sequence: { $sequence: 'checkCondition_1' },
-  actionGraph: siComboCondition3ActionGraph,
-};
-
 const siBuff1ActionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -3430,27 +3395,6 @@ const siBuff9ActionGraph = {
         },
         next: null,
       },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: 'startTimeDilation_1',
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: { kind: 'owner' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'less',
-          value: { kind: 'constant', value: 1 },
-          tagQueryType: 'hasAny',
-          buffTags: ['Immune/Static'],
-        },
-      },
     },
   },
   macros: {},
@@ -3473,7 +3417,7 @@ const siBuff9: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: [{ $sequence: 'checkCondition_2' }] },
+  lifecycleSequences: { enable: [{ $sequence: 'startTimeDilation_1' }] },
   actionGraph: siBuff9ActionGraph,
 };
 
@@ -4068,6 +4012,13 @@ const siBuff23ActionGraph = {
         },
         next: 'launchProjectile_27',
       },
+      checkCondition_29: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'findOwnerSpawnedAbilityEntities_28',
+      },
       applyBuff_2: {
         action: {
           kind: 'applyBuff',
@@ -4127,7 +4078,7 @@ const siBuff23ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'readBuffBlackboard_5' },
           whenFalse: { $sequence: null },
         },
@@ -4161,7 +4112,7 @@ const siBuff23ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'readBuffBlackboard_10' },
           whenFalse: { $sequence: 'ifElse_11' },
         },
@@ -4251,7 +4202,7 @@ const siBuff23ActionGraph = {
       checkCondition_20: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: 'setAbilityEntityRemainingDuration_19',
       },
@@ -4315,13 +4266,13 @@ const siBuff23ActionGraph = {
         },
         next: 'findTargets_23',
       },
-      ifElse_29: {
+      ifElse_30: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'findOwnerSpawnedAbilityEntities_28' },
+          whenFalse: { $sequence: 'checkCondition_29' },
         },
         next: null,
       },
@@ -4333,6 +4284,19 @@ const siBuff23ActionGraph = {
         expression: { kind: 'blackboard', key: 'EntityBB_ink_boom_poise' },
       },
       data_3: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_soulback', fallback: 0 },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_3' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4343,7 +4307,7 @@ const siBuff23ActionGraph = {
           buffIds: ['buff_chr_0036_jsspsi_talent1_2'],
         },
       },
-      data_4: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4354,7 +4318,7 @@ const siBuff23ActionGraph = {
           buffIds: ['buff_chr_0036_jsspsi_talent1_1'],
         },
       },
-      data_5: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4365,7 +4329,7 @@ const siBuff23ActionGraph = {
           buffIds: ['buff_chr_0036_jsspsi_xianjing_inkhurteffect'],
         },
       },
-      data_6: {
+      data_8: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: 'findTargets_24' } },
       },
@@ -4383,7 +4347,7 @@ const siBuff23: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 2, duration_speedup: 0, ratio_speed: 0 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: [{ $sequence: 'ifElse_29' }] },
+  lifecycleSequences: { enable: [{ $sequence: 'ifElse_30' }] },
   actionGraph: siBuff23ActionGraph,
 };
 
@@ -4429,12 +4393,6 @@ const siBuff24: SkillBuffDefinition = {
   priority: 0,
   maxStackCount: 1,
   durationSeconds: { blackboardKey: 'duration' },
-  presentation: {
-    icon: 'endaxis:icons/icon_battle_buff_atk_up',
-    showInHeadBarCommon: false,
-    showInHeadBarAttached: false,
-    showInSquadIcon: true,
-  },
   applyTags: [],
   extendTags: [],
   blackboard: { duration: 3 },
@@ -5383,6 +5341,17 @@ const siBuff25ActionGraph = {
         },
         next: null,
       },
+      modifyActionValue_83: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'kill_damage',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          },
+        },
+        next: 'refreshCurrentBuffAttributeModifiers_17',
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'ink_damage_display' } },
@@ -5601,6 +5570,7 @@ const siBuff25: SkillBuffDefinition = {
     { event: 'takeDamage', priority: 0, sequence: { $sequence: 'checkCondition_50' } },
     { event: 'ownerHpZero', priority: 0, sequence: { $sequence: 'modifyActionValue_77' } },
     { event: 'beforeTakeDamage', priority: 0, sequence: { $sequence: 'ifElse_81' } },
+    { event: 'beforeSetHpDirectly', priority: 0, sequence: { $sequence: 'modifyActionValue_83' } },
   ],
   actionGraph: siBuff25ActionGraph,
 };
@@ -7079,7 +7049,7 @@ export const si: OperatorDefinition = {
     comboSkill: { kind: 'skillSlot', skillSlotKey: 'comboSkill' },
     ultimate: { kind: 'skillSlot', skillSlotKey: 'ultimate' },
   },
-  comboSkillConditions: [siComboCondition1, siComboCondition2, siComboCondition3],
+  comboSkillConditions: [siComboCondition1, siComboCondition2],
   comboSkillPriority: 'default',
   talents: [
     {
@@ -7438,7 +7408,14 @@ export const si: OperatorDefinition = {
                 },
                 next: 'checkCondition_7',
               },
-              copyContextTargets_9: {
+              checkCondition_9: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                },
+                next: 'checkCondition_8',
+              },
+              copyContextTargets_10: {
                 action: {
                   kind: 'copyContextTargets',
                   parameters: {
@@ -7447,9 +7424,9 @@ export const si: OperatorDefinition = {
                     replacePartsWithMainBodies: true,
                   },
                 },
-                next: 'checkCondition_8',
+                next: 'checkCondition_9',
               },
-              applyBuff_17: {
+              applyBuff_18: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -7461,7 +7438,7 @@ export const si: OperatorDefinition = {
                 },
                 next: null,
               },
-              startTimeDilation_18: {
+              startTimeDilation_19: {
                 action: {
                   kind: 'startTimeDilation',
                   parameters: {
@@ -7474,9 +7451,9 @@ export const si: OperatorDefinition = {
                     curve: { kind: 'named', key: 'char_normal_attack' },
                   },
                 },
-                next: 'applyBuff_17',
+                next: 'applyBuff_18',
               },
-              applyBuff_19: {
+              applyBuff_20: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -7491,31 +7468,31 @@ export const si: OperatorDefinition = {
                     inheritSourceSkillCastInfo: true,
                   },
                 },
-                next: 'startTimeDilation_18',
+                next: 'startTimeDilation_19',
               },
-              dealDamage_20: {
+              dealDamage_21: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
                     attacker: 'actionSource',
                     target: { kind: 'inputTarget' },
                     damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                    attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                     tags: ['normalSkill', 'canBreakWeakness'],
-                    stagger: { kind: 'valueNode', nodeId: 'data_5' },
+                    stagger: { kind: 'valueNode', nodeId: 'data_6' },
                   },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill_1:chr_0036_jsspsi_normal_skill_abilityrange_1:/childSkill/actionGraph/main/nodes/dealDamage_20/action',
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill_1:chr_0036_jsspsi_normal_skill_abilityrange_1:/childSkill/actionGraph/main/nodes/dealDamage_21/action',
                 },
-                next: 'applyBuff_19',
+                next: 'applyBuff_20',
               },
-              checkCondition_21: {
+              checkCondition_22: {
                 action: {
                   kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
                 },
-                next: 'dealDamage_20',
+                next: 'dealDamage_21',
               },
-              applyElementalInfliction_22: {
+              applyElementalInfliction_23: {
                 action: {
                   kind: 'applyElementalInfliction',
                   parameters: {
@@ -7525,31 +7502,31 @@ export const si: OperatorDefinition = {
                     target: { kind: 'inputTarget' },
                   },
                 },
-                next: 'checkCondition_21',
+                next: 'checkCondition_22',
               },
-              dealDamage_14: {
+              dealDamage_15: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
                     attacker: 'actionSource',
                     target: { kind: 'inputTarget' },
                     damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                    attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                     tags: ['normalSkill', 'canBreakWeakness'],
-                    stagger: { kind: 'valueNode', nodeId: 'data_5' },
+                    stagger: { kind: 'valueNode', nodeId: 'data_6' },
                   },
-                  key: 'abilityentity_chr_0036_jsspsi_normal_skill_1:chr_0036_jsspsi_normal_skill_abilityrange_1:/childSkill/actionGraph/main/nodes/dealDamage_14/action',
+                  key: 'abilityentity_chr_0036_jsspsi_normal_skill_1:chr_0036_jsspsi_normal_skill_abilityrange_1:/childSkill/actionGraph/main/nodes/dealDamage_15/action',
                 },
-                next: 'applyBuff_19',
+                next: 'applyBuff_20',
               },
-              checkCondition_15: {
+              checkCondition_16: {
                 action: {
                   kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 },
-                next: 'dealDamage_14',
+                next: 'dealDamage_15',
               },
-              applyElementalInfliction_16: {
+              applyElementalInfliction_17: {
                 action: {
                   kind: 'applyElementalInfliction',
                   parameters: {
@@ -7559,19 +7536,19 @@ export const si: OperatorDefinition = {
                     target: { kind: 'inputTarget' },
                   },
                 },
-                next: 'checkCondition_15',
+                next: 'checkCondition_16',
               },
-              ifElse_23: {
+              ifElse_24: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                  whenTrue: { $sequence: 'applyElementalInfliction_16' },
-                  whenFalse: { $sequence: 'applyElementalInfliction_22' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_10' },
+                  whenTrue: { $sequence: 'applyElementalInfliction_17' },
+                  whenFalse: { $sequence: 'applyElementalInfliction_23' },
                 },
                 next: null,
               },
-              mergeContextTargets_24: {
+              mergeContextTargets_25: {
                 action: {
                   kind: 'mergeContextTargets',
                   parameters: {
@@ -7579,9 +7556,9 @@ export const si: OperatorDefinition = {
                     sources: [{ kind: 'abilitySystemSource', owner: { kind: 'source' } }],
                   },
                 },
-                next: 'ifElse_23',
+                next: 'ifElse_24',
               },
-              storeCharacterTypeBySquadSlot_25: {
+              storeCharacterTypeBySquadSlot_26: {
                 action: {
                   kind: 'storeCharacterTypeBySquadSlot',
                   parameters: {
@@ -7590,7 +7567,7 @@ export const si: OperatorDefinition = {
                     outputKey: 'spellinficttype',
                   },
                 },
-                next: 'mergeContextTargets_24',
+                next: 'mergeContextTargets_25',
               },
             },
             dataNodes: {
@@ -7601,14 +7578,25 @@ export const si: OperatorDefinition = {
               data_2: {
                 type: 'boolean',
                 expression: {
-                  kind: 'targetObjectTypeMatch',
-                  target: { kind: 'context', key: 'soul_target' },
-                  objectTypes: ['enemy'],
+                  kind: 'entityCountCompare',
+                  target: { kind: 'source' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: true,
+                  operator: 'greaterOrEqual',
+                  value: 1,
                 },
               },
               data_3: {
                 type: 'boolean',
                 expression: {
+                  kind: 'targetObjectTypeMatch',
+                  target: { kind: 'context', key: 'soul_target' },
+                  objectTypes: ['enemy'],
+                },
+              },
+              data_4: {
+                type: 'boolean',
+                expression: {
                   kind: 'entityCountCompare',
                   target: { kind: 'context', key: 'soul_target' },
                   containsHittableTarget: false,
@@ -7617,22 +7605,11 @@ export const si: OperatorDefinition = {
                   value: 1,
                 },
               },
-              data_4: {
+              data_5: {
                 type: 'number',
                 expression: { kind: 'blackboard', key: 'EntityBB_atk_scale' },
               },
-              data_5: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_poise' } },
-              data_6: {
-                type: 'boolean',
-                expression: {
-                  kind: 'entityCountCompare',
-                  target: { kind: 'inputTarget' },
-                  containsHittableTarget: false,
-                  excludeDeadEntity: true,
-                  operator: 'greaterOrEqual',
-                  value: 1,
-                },
-              },
+              data_6: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_poise' } },
               data_7: {
                 type: 'boolean',
                 expression: {
@@ -7645,14 +7622,25 @@ export const si: OperatorDefinition = {
                 },
               },
               data_8: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'inputTarget' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: true,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_9: {
                 type: 'number',
                 expression: { kind: 'blackboard', key: 'spellinficttype', fallback: 0 },
               },
-              data_9: {
+              data_10: {
                 type: 'boolean',
                 expression: {
                   kind: 'actionValueCompare',
-                  left: { kind: 'valueNode', nodeId: 'data_8' },
+                  left: { kind: 'valueNode', nodeId: 'data_9' },
                   operator: 'equal',
                   right: { kind: 'constant', value: 0 },
                 },
@@ -7674,11 +7662,11 @@ export const si: OperatorDefinition = {
         blackboard: { soulbufftime: 0, spellinficttype: 0 },
         scheduledSequences: [
           { startFrame: 0, endFrame: 25, sequence: { $sequence: 'setIgnoreGlobalTimeScale_1' } },
-          { startFrame: 6, endFrame: 7, sequence: { $sequence: 'copyContextTargets_9' } },
+          { startFrame: 6, endFrame: 7, sequence: { $sequence: 'copyContextTargets_10' } },
           {
             startFrame: 6,
             endFrame: 7,
-            sequence: { $sequence: 'storeCharacterTypeBySquadSlot_25' },
+            sequence: { $sequence: 'storeCharacterTypeBySquadSlot_26' },
           },
         ],
       },
@@ -7733,9 +7721,9 @@ export const si: OperatorDefinition = {
                   kind: 'calculateActionValue',
                   parameters: {
                     key: 'soulbufftime',
-                    operation: 'multiply',
+                    operation: 'add',
                     left: { kind: 'valueNode', nodeId: 'data_1' },
-                    right: { kind: 'constant', value: 0.98 },
+                    right: { kind: 'constant', value: -0.1 },
                   },
                 },
                 next: 'applyBuff_3',
@@ -7829,14 +7817,24 @@ export const si: OperatorDefinition = {
                   kind: 'calculateActionValue',
                   parameters: {
                     key: 'soulbufftime',
-                    operation: 'multiply',
+                    operation: 'add',
                     left: { kind: 'valueNode', nodeId: 'data_1' },
-                    right: { kind: 'constant', value: 1.2 },
+                    right: { kind: 'constant', value: 2 },
                   },
                 },
                 next: 'storeSourceAttributeValue_9',
               },
-              readBuffRemainingDuration_11: {
+              ifElse_12: {
+                action: {
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { kind: 'conditionNode', nodeId: 'data_4' },
+                  whenTrue: { $sequence: 'calculateActionValue_10' },
+                  whenFalse: { $sequence: null },
+                },
+                next: null,
+              },
+              readBuffRemainingDuration_13: {
                 action: {
                   kind: 'readBuffRemainingDuration',
                   parameters: {
@@ -7845,9 +7843,9 @@ export const si: OperatorDefinition = {
                     outputKey: 'soulbufftime',
                   },
                 },
-                next: 'calculateActionValue_10',
+                next: 'ifElse_12',
               },
-              createSpatialPointTargets_12: {
+              createSpatialPointTargets_14: {
                 action: {
                   kind: 'createSpatialPointTargets',
                   parameters: {
@@ -7856,26 +7854,26 @@ export const si: OperatorDefinition = {
                     origin: { kind: 'mainCharacter' },
                   },
                 },
-                next: 'readBuffRemainingDuration_11',
+                next: 'readBuffRemainingDuration_13',
               },
-              ifElse_14: {
+              ifElse_16: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_3' },
-                  whenTrue: { $sequence: 'createSpatialPointTargets_12' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_5' },
+                  whenTrue: { $sequence: 'createSpatialPointTargets_14' },
                   whenFalse: { $sequence: null },
                 },
                 next: null,
               },
-              checkCondition_15: {
+              checkCondition_17: {
                 action: {
                   kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                 },
-                next: 'ifElse_14',
+                next: 'ifElse_16',
               },
-              copyContextTargets_16: {
+              copyContextTargets_18: {
                 action: {
                   kind: 'copyContextTargets',
                   parameters: {
@@ -7883,9 +7881,9 @@ export const si: OperatorDefinition = {
                     saveToContextKey: 'soul_target',
                   },
                 },
-                next: 'checkCondition_15',
+                next: 'checkCondition_17',
               },
-              findTargets_17: {
+              findTargets_19: {
                 action: {
                   kind: 'findTargets',
                   parameters: {
@@ -7901,16 +7899,16 @@ export const si: OperatorDefinition = {
                     saveToContextKey: 'soul_target',
                   },
                 },
-                next: 'copyContextTargets_16',
+                next: 'copyContextTargets_18',
               },
-              checkCondition_18: {
+              checkCondition_20: {
                 action: {
                   kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 },
-                next: 'findTargets_17',
+                next: 'findTargets_19',
               },
-              readBuffBlackboard_19: {
+              readBuffBlackboard_21: {
                 action: {
                   kind: 'readBuffBlackboard',
                   parameters: {
@@ -7920,23 +7918,23 @@ export const si: OperatorDefinition = {
                     outputKey: 'havesoul',
                   },
                 },
-                next: 'checkCondition_18',
+                next: 'checkCondition_20',
               },
-              mergeContextTargets_20: {
+              mergeContextTargets_22: {
                 action: {
                   kind: 'mergeContextTargets',
                   parameters: { saveToContextKey: 'moying1', sources: [] },
                 },
-                next: 'readBuffBlackboard_19',
+                next: 'readBuffBlackboard_21',
               },
-              mergeContextTargets_21: {
+              mergeContextTargets_23: {
                 action: {
                   kind: 'mergeContextTargets',
                   parameters: { saveToContextKey: 'moying', sources: [] },
                 },
-                next: 'mergeContextTargets_20',
+                next: 'mergeContextTargets_22',
               },
-              applyBuff_22: {
+              applyBuff_24: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -7948,7 +7946,7 @@ export const si: OperatorDefinition = {
                 },
                 next: null,
               },
-              castSkillDuringAction_23: {
+              castSkillDuringAction_25: {
                 action: {
                   kind: 'castSkillDuringAction',
                   parameters: {
@@ -7959,23 +7957,42 @@ export const si: OperatorDefinition = {
                     inheritSourceSkillCastInfo: false,
                   },
                 },
-                next: 'applyBuff_22',
+                next: 'applyBuff_24',
               },
-              checkCondition_24: {
+              checkCondition_26: {
                 action: {
                   kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
                 },
-                next: 'castSkillDuringAction_23',
+                next: 'castSkillDuringAction_25',
               },
-              checkCondition_25: {
+              readBuffBlackboard_27: {
+                action: {
+                  kind: 'readBuffBlackboard',
+                  parameters: {
+                    target: { kind: 'source' },
+                    query: { kind: 'id', buffIds: ['buff_chr_0036_jsspsi_normal_skill_check'] },
+                    desiredKey: 'EntityBB_soulback',
+                    outputKey: 'soulback',
+                  },
+                },
+                next: 'checkCondition_26',
+              },
+              checkCondition_28: {
                 action: {
                   kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
                 },
-                next: 'checkCondition_24',
+                next: 'readBuffBlackboard_27',
               },
-              applyBuff_26: {
+              checkCondition_29: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+                },
+                next: 'checkCondition_28',
+              },
+              applyBuff_30: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -7992,7 +8009,7 @@ export const si: OperatorDefinition = {
                 },
                 next: null,
               },
-              calculateActionValue_27: {
+              calculateActionValue_31: {
                 action: {
                   kind: 'calculateActionValue',
                   parameters: {
@@ -8002,9 +8019,9 @@ export const si: OperatorDefinition = {
                     right: { kind: 'constant', value: 0.98 },
                   },
                 },
-                next: 'applyBuff_26',
+                next: 'applyBuff_30',
               },
-              readBuffRemainingDuration_28: {
+              readBuffRemainingDuration_32: {
                 action: {
                   kind: 'readBuffRemainingDuration',
                   parameters: {
@@ -8013,34 +8030,47 @@ export const si: OperatorDefinition = {
                     outputKey: 'soulbufftime',
                   },
                 },
-                next: 'calculateActionValue_27',
+                next: 'calculateActionValue_31',
               },
-              checkCondition_29: {
+              checkCondition_33: {
                 action: {
                   kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
                 },
-                next: 'readBuffRemainingDuration_28',
+                next: 'readBuffRemainingDuration_32',
               },
-              checkCondition_30: {
+              checkCondition_34: {
                 action: {
                   kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
                 },
-                next: 'checkCondition_29',
+                next: 'checkCondition_33',
               },
-              checkCondition_31: {
+              checkCondition_35: {
                 action: {
                   kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
                 },
-                next: 'checkCondition_30',
+                next: 'checkCondition_34',
               },
             },
             dataNodes: {
               data_1: { type: 'number', expression: { kind: 'blackboard', key: 'soulbufftime' } },
               data_2: { type: 'number', expression: { kind: 'blackboard', key: 'soul_hpmax' } },
               data_3: {
+                type: 'number',
+                expression: { kind: 'blackboard', key: 'soulbufftime', fallback: 0 },
+              },
+              data_4: {
+                type: 'boolean',
+                expression: {
+                  kind: 'actionValueCompare',
+                  left: { kind: 'valueNode', nodeId: 'data_3' },
+                  operator: 'greaterOrEqual',
+                  right: { kind: 'constant', value: 0.34 },
+                },
+              },
+              data_5: {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
@@ -8051,7 +8081,7 @@ export const si: OperatorDefinition = {
                   value: 1,
                 },
               },
-              data_4: {
+              data_6: {
                 type: 'boolean',
                 expression: {
                   kind: 'targetObjectTypeMatch',
@@ -8059,20 +8089,33 @@ export const si: OperatorDefinition = {
                   objectTypes: ['enemy'],
                 },
               },
-              data_5: {
+              data_7: {
                 type: 'number',
                 expression: { kind: 'blackboard', key: 'havesoul', fallback: 0 },
               },
-              data_6: {
+              data_8: {
                 type: 'boolean',
                 expression: {
                   kind: 'actionValueCompare',
-                  left: { kind: 'valueNode', nodeId: 'data_5' },
+                  left: { kind: 'valueNode', nodeId: 'data_7' },
                   operator: 'equal',
                   right: { kind: 'constant', value: 0 },
                 },
               },
-              data_7: {
+              data_9: {
+                type: 'number',
+                expression: { kind: 'blackboard', key: 'soulback', fallback: 0 },
+              },
+              data_10: {
+                type: 'boolean',
+                expression: {
+                  kind: 'actionValueCompare',
+                  left: { kind: 'valueNode', nodeId: 'data_9' },
+                  operator: 'equal',
+                  right: { kind: 'constant', value: 0 },
+                },
+              },
+              data_11: {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
@@ -8083,7 +8126,7 @@ export const si: OperatorDefinition = {
                   value: 1,
                 },
               },
-              data_8: {
+              data_12: {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
@@ -8094,7 +8137,7 @@ export const si: OperatorDefinition = {
                   value: 1,
                 },
               },
-              data_9: {
+              data_13: {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
@@ -8105,7 +8148,7 @@ export const si: OperatorDefinition = {
                   value: 1,
                 },
               },
-              data_10: {
+              data_14: {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
@@ -8116,7 +8159,7 @@ export const si: OperatorDefinition = {
                   value: 1,
                 },
               },
-              data_11: {
+              data_15: {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
@@ -8140,12 +8183,12 @@ export const si: OperatorDefinition = {
           maxChargeTime: 1,
           cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
         },
-        blackboard: { havesoul: 0, soul_hpmax: 0, soulbufftime: 0 },
+        blackboard: { havesoul: 0, soul_hpmax: 0, soulback: 0, soulbufftime: 0 },
         scheduledSequences: [
           { startFrame: 0, endFrame: 25, sequence: { $sequence: 'setIgnoreGlobalTimeScale_1' } },
-          { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_21' } },
-          { startFrame: 20, endFrame: 23, sequence: { $sequence: 'checkCondition_25' } },
-          { startFrame: 20, endFrame: 23, sequence: { $sequence: 'checkCondition_31' } },
+          { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_23' } },
+          { startFrame: 20, endFrame: 23, sequence: { $sequence: 'checkCondition_29' } },
+          { startFrame: 20, endFrame: 23, sequence: { $sequence: 'checkCondition_35' } },
         ],
       },
     },
@@ -11002,6 +11045,7 @@ export const si: OperatorDefinition = {
         'Visual/ShowHPBar/ShowWhenFullHp',
         'Immune/Airborne',
         'Immune/Pull',
+        'Immune/BoneAttach',
       ],
       blackboard: { EntityBB_duration: 0, EntityBB_soul_hp: 10000000000 },
       lifetime: {

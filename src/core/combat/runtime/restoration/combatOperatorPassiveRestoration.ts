@@ -20,12 +20,13 @@ import { CombatActionSequenceRuntime } from '../../actions/combatActionSequenceR
 import { buffReferenceKey } from '../../buffs/buffReference';
 import type { BuffApplicationHandle } from '../../buffs/combatBuffs';
 import type { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRuntime';
-import type { CombatOperationExecutor } from '../../skills/skillRuntime';
+import type { CombatOperationExecutor, ProjectileRuntimeDependencies } from '../../skills/skillRuntime';
 import type { PassiveAbilityEventState } from '../../state/abilityState';
 import { type BuffReference } from '../../state/foundationState';
 
 export interface RestoreCombatOperatorPassivesOptions {
   readonly operatorId: string;
+  readonly projectileRuntime?: ProjectileRuntimeDependencies;
   readonly programs: readonly CompiledOperatorPassiveProgram[];
   readonly states: ReadonlyMap<string, PassiveAbilityEventState>;
   readonly operatorBlackboard: ActionBlackboard;
@@ -73,6 +74,7 @@ export function bindRestoredCombatOperatorPassives(
       const blackboard = ActionBlackboard.bindRuntimeState(state.blackboard);
       const operations = options.createOperations(program, state);
       const ownerContext = {
+        ...options.projectileRuntime,
         blackboard,
         actionOwnerId: options.operatorId,
         actionSourceId: options.operatorId,
@@ -83,6 +85,7 @@ export function bindRestoredCombatOperatorPassives(
         program.abilityEventResponses ?? [],
         options.register,
         state,
+        options.operatorId,
       );
       const enableContext = {
         ...ownerContext,

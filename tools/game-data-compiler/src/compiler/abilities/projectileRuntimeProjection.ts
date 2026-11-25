@@ -1,3 +1,4 @@
+import { collectRandomPointTargetGroupKeys } from '../optimization/targetGroupCardinalityAnalysis.ts';
 import type { ProjectileHitParameters } from '../../../../../packages/game-data-contract/src/actions.ts';
 import type { ProjectileLaunchSchedule } from '../../../../../packages/game-data-contract/src/projectileSchedule.ts';
 
@@ -435,24 +436,23 @@ export function compileProjectileCallbackSkillSource(input: {
   const program = createActionGraphBuilder<CompiledBuffStepSource>();
   if (graph.actionGroup.passiveEvents.length > 0)
     throw new Error(`${graph.skillId}: projectile callback passive events are unsupported`);
-  const discoveredEnemyGroups = graph.actionGroup.timelineActions.flatMap(timeline =>
-    collectNativeActionNodes(timeline.sequence)
-      .filter(
-        node =>
-          node.body.kind === 'leaf' &&
-          node.body.value.family === 'targetGroup' &&
-          isStaticSingleEnemyTargetGroup(node.body.value.action),
-      )
-      .map(node =>
-        node.body.kind === 'leaf' && node.body.value.family === 'targetGroup'
-          ? node.body.value.action.targetGroupKey
-          : '',
-      ),
+  const writes = graph.actionGroup.timelineActions.flatMap(timeline =>
+    collectNativeActionNodes(timeline.sequence).flatMap(node =>
+      node.body.kind === 'leaf' && node.body.value.family === 'targetGroup'
+        ? [node.body.value.action]
+        : [],
+    ),
   );
+  const discoveredEnemyGroups = writes
+    .filter(isStaticSingleEnemyTargetGroup)
+    .map(write => write.targetGroupKey);
   const presentationOnlyTargetGroupKeys = collectPresentationOnlyTargetGroups(graph);
   const callbackContext: CombatActionProjectionContextSource = {
     ...context,
     graph: program,
+    randomPointTargetGroupKeys: collectRandomPointTargetGroupKeys(
+      Map.groupBy(writes, write => write.targetGroupKey),
+    ),
     presentationOnlyTargetGroupKeys,
     materializedTargetGroupKeys: collectMaterializedTargetGroups(
       graph,
@@ -498,7 +498,7 @@ function assertSupportedLaunchTargetControls(
   context?: CombatActionProjectionContextSource,
   retainDynamicFilter = false,
 ): ActionTargetQuery | undefined {
-  if (launch.alsoLaunchToHittableTarget !== false) {
+  if (launch.alsoLaunchToHittableTarget && context?.fixedHittableTargetCount !== 0) {
     throw new Error(
       `${path}.alsoLaunchToHittableTarget: additional projectile launches are not modeled`,
     );

@@ -94,9 +94,19 @@ function assembleUpgrade(
     }),
   );
   const attachedBuffs = mergeAttachedBuffs(attachedByLevel);
-  const first = modifiersByLevel[0]!;
-  if (modifiersByLevel.some(modifiers => modifiers.length !== first.length))
-    throw new Error(`${key}: level-dependent effect structure is not representable`);
+  const sharedLength = Math.min(...modifiersByLevel.map(items => items.length));
+  const first = modifiersByLevel[0]!.slice(0, sharedLength);
+  const levelSpecific = modifiersByLevel.flatMap((items, levelIndex) =>
+    items.slice(sharedLength).map(modifier => {
+      if (modifier.kind !== 'patchSkillBlackboard')
+        throw new Error(`${key}: unsupported level-specific ${modifier.kind}`);
+      return {
+        ...modifier,
+        minimumUpgradeLevel: levelIndex + 1,
+        maximumUpgradeLevel: levelIndex + 1,
+      };
+    }),
+  );
   const modifiers: UpgradeModifierDefinition[] = first.flatMap<UpgradeModifierDefinition>(
     (modifier, index) => {
       const variants = modifiersByLevel.map(items => items[index]!);
@@ -148,6 +158,7 @@ function assembleUpgrade(
       return [modifier];
     },
   );
+  modifiers.push(...levelSpecific);
   return {
     levels: levels.length,
     ...(modifiers.length ? { modifiers } : {}),

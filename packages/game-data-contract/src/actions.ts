@@ -458,6 +458,16 @@ export interface CombatStepParameters {
     /** 要触发的原生法术爆发类型。 */
     burstType: 'Fire' | 'Pulse' | 'Cryst' | 'Natural';
   };
+  /** 发布指定 Buff 的消费事件；宿主上无需存在或移除该 Buff。 */
+  triggerBuffConsumeEvent: {
+    /** 接收消费事件的动作来源。 */
+    source: ActionTargetQuery;
+    /** 被消费的 Buff 所属的目标。 */
+    owner: ActionTargetQuery;
+    buffId: string;
+    /** 由技能在伤害前记录的层数。 */
+    layers: ActionValueOperand;
+  };
   /** 在目标 AbilitySystem 上同步发布一个已命名的原生自定义事件。 */
   triggerCustomAbilityEvent: {
     /** 发布的自定义事件名称。 */
@@ -689,6 +699,8 @@ export interface CombatStepParameters {
     inheritSourceSkillCastInfo?: boolean;
     /** 原生 passTargetGroupsToBuff：创建时复制动作环境的全部命名目标组。 */
     passTargetGroupsToBuff?: boolean;
+    /** 延时触发时使用创建动作的黑板快照，原输入目标保存在此命名组中。 */
+    delayedTriggerInputKey?: string;
     /** 原生 AddBuffContext.isExtra；仅作为 Buff 添加事件事实传播，不自行产生数值效果。 */
     isExtra?: boolean;
     /** 原生区域/动作生命周期结束时，只结束本步骤实际创建的 Buff 实例。 */
@@ -1330,7 +1342,10 @@ export interface CombatStepParameters {
     alwaysNext: boolean;
   };
   /** DoOnceAction：每个动作实例只即时执行一次子序列，普通复位后可再次执行。 */
-  once: Record<string, never>;
+  once: {
+    /** 延时 Buff 首次调用用此组恢复创建时的输入并返回正文结果，再次执行返回 false。 */
+    delayedTriggerInputKey?: string;
+  };
   /** 在承载调度区间内逐 Tick 驱动 body；保留原生周期动作的扫描与目标门槛。 */
   repeatEachTick: {
     /** 原生 Channeling 动作的逐帧和按目标重复设置。 */
@@ -1552,6 +1567,7 @@ export const COMBAT_STEP_KINDS = [
   'applyElementalInfliction',
   'forceSpellStatus',
   'triggerSpellBurst',
+  'triggerBuffConsumeEvent',
   'triggerCustomAbilityEvent',
   'castSkillDuringAction',
   'applyPhysicalInfliction',

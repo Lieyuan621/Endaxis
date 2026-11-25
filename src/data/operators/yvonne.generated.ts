@@ -2281,6 +2281,7 @@ export const yvonneChr_0017_yvonne_ultimate_skillActionGraph = {
 
 export const yvonneChr_0017_yvonne_ultimate_skill: SkillDefinition = {
   actionGraph: yvonneChr_0017_yvonne_ultimate_skillActionGraph,
+  skillTags: ['Skill/Character/Common/StartCdOnBuffEnd'],
   key: 'chr_0017_yvonne_ultimate_skill',
   element: 'cryo',
   blackboard: {

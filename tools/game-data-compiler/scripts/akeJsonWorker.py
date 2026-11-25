@@ -3,6 +3,7 @@
 AKE owns decoding, routing and result validation. The process must exit while
 its native thread and callback references still exist, before thread teardown.
 """
+import json
 import os
 from pathlib import Path
 import sys
@@ -25,6 +26,21 @@ def terminate(code: int) -> None:
 def main() -> None:
     sys.path.insert(0, str(Path(sys.argv[1]).resolve()))
     from ake_tool.json_host import export_json
+
+    # AKE routes many datasets used by other tools. Only decode the collections
+    # and individual files requested by the compiler's source catalog.
+    catalog = json.loads((Path(__file__).resolve().parents[1] / 'game-data-sources.json').read_text('utf-8'))
+    collections = tuple(f'data/json/{name.casefold()}/' for name in catalog['jsonCollections'])
+    files = {f'data/json/{name.casefold()}' for name in catalog['jsonFiles']}
+    select_entries = export_json.select_entries
+
+    def select_compiler_entries(vfs, datasets, limit):
+        return [
+            (entry, schema) for entry, schema in select_entries(vfs, datasets, limit)
+            if entry.name.casefold() in files or entry.name.casefold().startswith(collections)
+        ]
+
+    export_json.select_entries = select_compiler_entries
 
     def run_worker(args):
         def execute():

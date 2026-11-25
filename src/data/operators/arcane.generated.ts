@@ -2959,6 +2959,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
 
 export const arcaneChr_0032_lizhiyan_ultimate_skill: SkillDefinition = {
   actionGraph: arcaneChr_0032_lizhiyan_ultimate_skillActionGraph,
+  skillTags: ['Skill/Character/Common/StartCdOnBuffEnd'],
   key: 'chr_0032_lizhiyan_ultimate_skill',
   useSkillGroupIcon: true,
   element: 'nature',
@@ -4015,7 +4016,7 @@ const arcaneComboCondition2ActionGraph = {
           target: { kind: 'context', key: 'trigger' },
           compareZeroWhenTargetMissing: false,
           operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
+          value: { kind: 'constant', value: 2 },
           tagQueryType: 'hasAny',
           buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
         },
@@ -4040,7 +4041,7 @@ const arcaneComboCondition2ActionGraph = {
 const arcaneComboCondition2: ComboSkillConditionDefinition = {
   key: 'native-combo:1',
   skillKey: 'chr_0032_lizhiyan_combo_skill',
-  event: 'beforeTakeInfliction',
+  event: 'afterTakeInfliction',
   immediately: false,
   initialValues: { consumed_layer: 0, consumed_type: 0 },
   sequence: { $sequence: 'checkCondition_3' },
@@ -4080,7 +4081,7 @@ const arcaneComboCondition3ActionGraph = {
           target: { kind: 'context', key: 'trigger' },
           compareZeroWhenTargetMissing: false,
           operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
+          value: { kind: 'constant', value: 2 },
           tagQueryType: 'hasAny',
           buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
         },
@@ -4105,7 +4106,7 @@ const arcaneComboCondition3ActionGraph = {
 const arcaneComboCondition3: ComboSkillConditionDefinition = {
   key: 'native-combo:2',
   skillKey: 'chr_0032_lizhiyan_combo_skill',
-  event: 'beforeTakeInfliction',
+  event: 'afterTakeInfliction',
   immediately: false,
   initialValues: { consumed_layer: 0, consumed_type: 0 },
   sequence: { $sequence: 'checkCondition_3' },
@@ -4145,7 +4146,7 @@ const arcaneComboCondition4ActionGraph = {
           target: { kind: 'context', key: 'trigger' },
           compareZeroWhenTargetMissing: false,
           operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
+          value: { kind: 'constant', value: 2 },
           tagQueryType: 'hasAny',
           buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
         },
@@ -4170,7 +4171,7 @@ const arcaneComboCondition4ActionGraph = {
 const arcaneComboCondition4: ComboSkillConditionDefinition = {
   key: 'native-combo:3',
   skillKey: 'chr_0032_lizhiyan_combo_skill',
-  event: 'beforeTakeInfliction',
+  event: 'afterTakeInfliction',
   immediately: false,
   initialValues: { consumed_layer: 0, consumed_type: 0 },
   sequence: { $sequence: 'checkCondition_3' },
@@ -4190,13 +4191,28 @@ const arcaneComboCondition5ActionGraph = {
       checkCondition_2: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: 'checkCondition_1',
+      },
+      checkCondition_3: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'checkCondition_2',
       },
     },
     dataNodes: {
       data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'context', key: 'trigger' },
+          objectTypes: ['enemy'],
+        },
+      },
+      data_2: {
         type: 'boolean',
         expression: {
           kind: 'eventInflictionElementIn',
@@ -4204,15 +4220,15 @@ const arcaneComboCondition5ActionGraph = {
           outputKey: 'EntityBB_consumed_type',
         },
       },
-      data_2: {
+      data_3: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
       },
-      data_3: {
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_2' },
+          left: { kind: 'valueNode', nodeId: 'data_3' },
           operator: 'less',
           right: { kind: 'constant', value: 1 },
         },
@@ -4228,7 +4244,7 @@ const arcaneComboCondition5: ComboSkillConditionDefinition = {
   event: 'beforeTakeInfliction',
   immediately: false,
   initialValues: { consumed_layer: 0, consumed_type: 0 },
-  sequence: { $sequence: 'checkCondition_2' },
+  sequence: { $sequence: 'checkCondition_3' },
   actionGraph: arcaneComboCondition5ActionGraph,
 };
 
@@ -4644,7 +4660,7 @@ const arcaneBuff4ActionGraph = {
             source: { kind: 'source' },
             targets: { kind: 'source' },
             spGainKind: 'refund',
-            spGainSource: 'default',
+            spGainSource: 'skill',
           },
         },
         next: 'findTargets_4',
@@ -5946,7 +5962,7 @@ const arcaneBuff12ActionGraph = {
             source: { kind: 'source' },
             targets: { kind: 'source' },
             spGainKind: 'refund',
-            spGainSource: 'default',
+            spGainSource: 'skill',
           },
         },
         next: 'findTargets_5',
@@ -7538,6 +7554,7 @@ const arcaneBuff27ActionGraph = {
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
+            ignoreUltimateEnergyGainMultiplier: true,
           },
         },
         next: null,
@@ -7572,6 +7589,7 @@ const arcaneBuff27ActionGraph = {
             targets: { kind: 'source' },
             isPercentValue: true,
             ultimateRecoveryTag: 'Skill/Character/chr_0032_lizhiyan/special_usp',
+            ignoreUltimateEnergyGainMultiplier: true,
           },
         },
         next: null,

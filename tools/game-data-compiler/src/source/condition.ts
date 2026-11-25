@@ -1082,6 +1082,12 @@ export function parseConditionLeafSource(
         target: parseTargetReferenceSource(condition.targetSettings, `${path}.targetSettings`),
       };
     case 'CheckObjectTypeMatch': {
+      // 部位按所属本体类型判定时需要保留部位归属，当前来源中的干员连携未启用该选项。
+      if ('treatPartAsOriginalType' in condition && condition.treatPartAsOriginalType !== false) {
+        throw new Error(
+          `${path}.treatPartAsOriginalType: body-part type resolution is not supported`,
+        );
+      }
       const mask = condition.objectTypeMask;
       if ((typeof mask !== 'string' && typeof mask !== 'number') || typeof mask === 'boolean') {
         throw new Error(`${path}.objectTypeMask: expected flags`);

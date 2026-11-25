@@ -91,6 +91,11 @@ export class BuffDefinitionOperationTarget<Key extends string>
     this.#beforeImmunityEvents = events;
   }
 
+  definitionTags(id: string): readonly GameplayTag[] | undefined {
+    const definition = this.definitions.get(id);
+    return definition === undefined ? undefined : (definition.applyTags ?? []);
+  }
+
   get ownerId(): string {
     return this.container.ownerId;
   }

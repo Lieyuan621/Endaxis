@@ -296,9 +296,13 @@ export function parseSkillCooldownMutationActionSource(
       'functionType',
       'isPercentage',
       'value',
+      ...('triggerEvent' in action ? ['triggerEvent'] : []),
     ]),
     path,
   );
+  // OnSetSkillCdAtOnce is read by the stage double-cast Buffs. The cooldown
+  // write itself is unconditional, including when event publication is disabled.
+  if ('triggerEvent' in action) requireBoolean(action.triggerEvent, `${path}.triggerEvent`);
   const useSkillType = requireBoolean(action.useSkillType, `${path}.useSkillType`);
   const skillType = {
     NormalAttack: 'basicAttack',

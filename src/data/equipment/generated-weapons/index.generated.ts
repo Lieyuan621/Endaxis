@@ -47,41 +47,43 @@ import generatedWeapon45 from './lance/wpn_lance_0013.generated';
 import generatedWeapon46 from './lance/wpn_lance_0014.generated';
 import generatedWeapon47 from './lance/wpn_lance_0015.generated';
 import generatedWeapon48 from './lance/wpn_lance_0016.generated';
-import generatedWeapon49 from './pistol/wpn_pistol_0001.generated';
-import generatedWeapon50 from './pistol/wpn_pistol_0002.generated';
-import generatedWeapon51 from './pistol/wpn_pistol_0003.generated';
-import generatedWeapon52 from './pistol/wpn_pistol_0004.generated';
-import generatedWeapon53 from './pistol/wpn_pistol_0005.generated';
-import generatedWeapon54 from './pistol/wpn_pistol_0006.generated';
-import generatedWeapon55 from './pistol/wpn_pistol_0007.generated';
-import generatedWeapon56 from './pistol/wpn_pistol_0008.generated';
-import generatedWeapon57 from './pistol/wpn_pistol_0009.generated';
-import generatedWeapon58 from './pistol/wpn_pistol_0010.generated';
-import generatedWeapon59 from './pistol/wpn_pistol_0011.generated';
-import generatedWeapon60 from './pistol/wpn_pistol_0012.generated';
-import generatedWeapon61 from './sword/wpn_sword_0003.generated';
-import generatedWeapon62 from './sword/wpn_sword_0005.generated';
-import generatedWeapon63 from './sword/wpn_sword_0006.generated';
-import generatedWeapon64 from './sword/wpn_sword_0007.generated';
-import generatedWeapon65 from './sword/wpn_sword_0008.generated';
-import generatedWeapon66 from './sword/wpn_sword_0009.generated';
-import generatedWeapon67 from './sword/wpn_sword_0010.generated';
-import generatedWeapon68 from './sword/wpn_sword_0011.generated';
-import generatedWeapon69 from './sword/wpn_sword_0012.generated';
-import generatedWeapon70 from './sword/wpn_sword_0013.generated';
-import generatedWeapon71 from './sword/wpn_sword_0014.generated';
-import generatedWeapon72 from './sword/wpn_sword_0015.generated';
-import generatedWeapon73 from './sword/wpn_sword_0016.generated';
-import generatedWeapon74 from './sword/wpn_sword_0017.generated';
-import generatedWeapon75 from './sword/wpn_sword_0018.generated';
-import generatedWeapon76 from './sword/wpn_sword_0019.generated';
-import generatedWeapon77 from './sword/wpn_sword_0020.generated';
-import generatedWeapon78 from './sword/wpn_sword_0021.generated';
-import generatedWeapon79 from './sword/wpn_sword_0022.generated';
-import generatedWeapon80 from './sword/wpn_sword_0023.generated';
-import generatedWeapon81 from './sword/wpn_sword_0024.generated';
-import generatedWeapon82 from './sword/wpn_sword_0025.generated';
-import generatedWeapon83 from './sword/wpn_sword_0026.generated';
+import generatedWeapon49 from './lance/wpn_lance_0017.generated';
+import generatedWeapon50 from './lance/wpn_lance_0018.generated';
+import generatedWeapon51 from './pistol/wpn_pistol_0001.generated';
+import generatedWeapon52 from './pistol/wpn_pistol_0002.generated';
+import generatedWeapon53 from './pistol/wpn_pistol_0003.generated';
+import generatedWeapon54 from './pistol/wpn_pistol_0004.generated';
+import generatedWeapon55 from './pistol/wpn_pistol_0005.generated';
+import generatedWeapon56 from './pistol/wpn_pistol_0006.generated';
+import generatedWeapon57 from './pistol/wpn_pistol_0007.generated';
+import generatedWeapon58 from './pistol/wpn_pistol_0008.generated';
+import generatedWeapon59 from './pistol/wpn_pistol_0009.generated';
+import generatedWeapon60 from './pistol/wpn_pistol_0010.generated';
+import generatedWeapon61 from './pistol/wpn_pistol_0011.generated';
+import generatedWeapon62 from './pistol/wpn_pistol_0012.generated';
+import generatedWeapon63 from './sword/wpn_sword_0003.generated';
+import generatedWeapon64 from './sword/wpn_sword_0005.generated';
+import generatedWeapon65 from './sword/wpn_sword_0006.generated';
+import generatedWeapon66 from './sword/wpn_sword_0007.generated';
+import generatedWeapon67 from './sword/wpn_sword_0008.generated';
+import generatedWeapon68 from './sword/wpn_sword_0009.generated';
+import generatedWeapon69 from './sword/wpn_sword_0010.generated';
+import generatedWeapon70 from './sword/wpn_sword_0011.generated';
+import generatedWeapon71 from './sword/wpn_sword_0012.generated';
+import generatedWeapon72 from './sword/wpn_sword_0013.generated';
+import generatedWeapon73 from './sword/wpn_sword_0014.generated';
+import generatedWeapon74 from './sword/wpn_sword_0015.generated';
+import generatedWeapon75 from './sword/wpn_sword_0016.generated';
+import generatedWeapon76 from './sword/wpn_sword_0017.generated';
+import generatedWeapon77 from './sword/wpn_sword_0018.generated';
+import generatedWeapon78 from './sword/wpn_sword_0019.generated';
+import generatedWeapon79 from './sword/wpn_sword_0020.generated';
+import generatedWeapon80 from './sword/wpn_sword_0021.generated';
+import generatedWeapon81 from './sword/wpn_sword_0022.generated';
+import generatedWeapon82 from './sword/wpn_sword_0023.generated';
+import generatedWeapon83 from './sword/wpn_sword_0024.generated';
+import generatedWeapon84 from './sword/wpn_sword_0025.generated';
+import generatedWeapon85 from './sword/wpn_sword_0026.generated';
 
 import type { WeaponDefinition } from '../../../core/game-data/equipmentDefinition';
 
@@ -170,4 +172,6 @@ export const generatedWeaponDefinitions = [
   generatedWeapon81,
   generatedWeapon82,
   generatedWeapon83,
+  generatedWeapon84,
+  generatedWeapon85,
 ] as const satisfies readonly WeaponDefinition[];

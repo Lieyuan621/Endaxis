@@ -828,7 +828,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
             source: { kind: 'source' },
             targets: { kind: 'source' },
             spGainKind: 'refund',
-            spGainSource: 'default',
+            spGainSource: 'skill',
           },
         },
         next: null,
@@ -925,7 +925,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
           parameters: {
             targets: { kind: 'characterTeam', excludeOwner: false },
             source: { kind: 'source' },
-            inheritSourceSkillCastInfo: false,
+            inheritSourceSkillCastInfo: true,
             buffs: [{ buffId: 'buff_chr_0014_aurora_potential_1_listener' }],
           },
           onEnter: { $sequence: null },
@@ -949,7 +949,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
           parameters: {
             targets: { kind: 'characterTeam', excludeOwner: false },
             source: { kind: 'source' },
-            inheritSourceSkillCastInfo: false,
+            inheritSourceSkillCastInfo: true,
             buffs: [
               {
                 buffId: 'buff_chr_0014_aurora_reduce_damage',
@@ -1222,7 +1222,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
           parameters: {
             targets: { kind: 'characterTeam', excludeOwner: false },
             source: { kind: 'source' },
-            inheritSourceSkillCastInfo: false,
+            inheritSourceSkillCastInfo: true,
             buffs: [
               {
                 buffId: 'buff_chr_0014_aurora_reduce_damage',

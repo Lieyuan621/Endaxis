@@ -142,7 +142,7 @@ it.each(['finishedBuff', 'buffEndsEarly', 'buffConsumed', 'buffAbsorbed'] as con
     });
     dispatcher.registerAction(event, 10, published => {
       expect(published.payload.buff).toBe(buff);
-      published.payload.buff.blackboard.assignDynamic('count', 7);
+      published.payload.buff!.blackboard.assignDynamic('count', 7);
     });
     dispatcher.registerAction(event, 0, published => {
       withAbilityEventResponseContext(

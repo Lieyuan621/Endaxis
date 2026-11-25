@@ -2482,7 +2482,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
             source: { kind: 'source' },
             targets: { kind: 'source' },
             spGainKind: 'refund',
-            spGainSource: 'default',
+            spGainSource: 'skill',
           },
         },
         next: 'ifElse_34',
@@ -3295,7 +3295,7 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
             source: { kind: 'source' },
             targets: { kind: 'source' },
             spGainKind: 'refund',
-            spGainSource: 'default',
+            spGainSource: 'skill',
           },
         },
         next: 'ifElse_39',
@@ -4641,6 +4641,7 @@ export const zhuangFangyiChr_0030_zhuangfy_ultimate_skillActionGraph = {
 
 export const zhuangFangyiChr_0030_zhuangfy_ultimate_skill: SkillDefinition = {
   actionGraph: zhuangFangyiChr_0030_zhuangfy_ultimate_skillActionGraph,
+  skillTags: ['Skill/Character/Common/StartCdOnBuffEnd'],
   key: 'chr_0030_zhuangfy_ultimate_skill',
   element: 'electric',
   blackboard: { combo_cd_rate: 4, duration: 25 },
@@ -6415,7 +6416,7 @@ const zhuangFangyiBuff14ActionGraph = {
 const zhuangFangyiBuff14: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 1,
-  maxStackCount: { blackboardKey: 'max_stack' },
+  maxStackCount: 3,
   durationSeconds: 0.1,
   applyTags: [],
   extendTags: [],

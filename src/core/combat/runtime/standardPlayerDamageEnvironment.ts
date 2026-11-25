@@ -2596,7 +2596,7 @@ export class StandardPlayerDamageEnvironment {
         const { layers, buff, ...payload } = published.payload;
         const key = JSON.stringify([
           event,
-          buff.instanceId,
+          buff?.instanceId ?? [payload.targetId, payload.buffId],
           payload.skillCastInfo?.skillCastId ?? 0,
           this.#requireClock().frame,
         ]);
@@ -2604,7 +2604,11 @@ export class StandardPlayerDamageEnvironment {
         state.pending.set(
           key,
           previous === undefined
-            ? { event, buff: buff.runtimeState, payload: { ...payload, layerCount: layers } }
+            ? {
+                event,
+                buff: buff?.runtimeState ?? null,
+                payload: { ...payload, layerCount: layers },
+              }
             : {
                 ...previous,
                 payload: { ...previous.payload, layerCount: previous.payload.layerCount + layers },
@@ -2678,14 +2682,17 @@ export class StandardPlayerDamageEnvironment {
             event: event.event,
             payload: {
               ...event.payload,
-              buff: {
-                runtimeState: state,
-                instanceId: state.identity.instanceId,
-                blackboard: ActionBlackboard.bindRuntimeState(state.blackboard),
-                get isFinished() {
-                  return state.lifecycle.finished;
-                },
-              },
+              buff:
+                state === null
+                  ? null
+                  : {
+                      runtimeState: state,
+                      instanceId: state.identity.instanceId,
+                      blackboard: ActionBlackboard.bindRuntimeState(state.blackboard),
+                      get isFinished() {
+                        return state.lifecycle.finished;
+                      },
+                    },
             },
           });
         }

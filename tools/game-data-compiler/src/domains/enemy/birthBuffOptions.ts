@@ -24,6 +24,7 @@ function isCombatIrrelevantBirthBuff(source: Record<string, unknown>): boolean {
   if (
     [
       'damageModifier',
+      'atbGainModifier',
       'healModifier',
       'poiseModifier',
       'globalModifier',

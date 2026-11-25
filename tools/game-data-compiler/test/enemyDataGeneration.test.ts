@@ -120,6 +120,9 @@ describe('enemy data generation', () => {
     });
     for (const name of [
       'DungeonSeriesTable',
+      'HighDifficultySeriesTable',
+      'HighDifficultyBossGroupTable',
+      'HighDifficultyBossGameTable',
       'SeasonTowerGameGroupTable',
       'EnemyDisplayInfoTable',
       'I18nTextTable_CN',
@@ -242,6 +245,96 @@ describe('enemy data generation', () => {
     await writeFile(englishPath, english);
     await writeFile(result.output, '// stale');
     await expect(generateEnemyStageCatalog({ ...args, check: true })).rejects.toThrow('stale');
+  });
+  it('groups monument bosses by period and uses the spawned variant at the selected difficulty', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'endaxis-monument-boss-'));
+    temporaryRoots.push(root);
+    const tables = {
+      DungeonTable: Object.fromEntries(
+        ['a', 'b'].map(key => [
+          key,
+          {
+            dungeonCategory: 'dungeon_highdifficulty',
+            dungeonSeriesId: key,
+            sceneId: key,
+            dungeonName: { text: key },
+            enemyIds: ['base'],
+            enemyLevels: [80],
+            sortId: 0,
+          },
+        ]),
+      ),
+      DungeonSeriesTable: {
+        a: { name: { text: 'Monument' }, sortId: 1 },
+        b: { name: { text: 'Monument' }, sortId: 2 },
+      },
+      HighDifficultySeriesTable: { a: { hdId: 'season' }, b: { hdId: 'season' } },
+      HighDifficultyBossGroupTable: {
+        bossA: { hdId: 'season', bossName: { text: 'Boss A' } },
+        bossB: { hdId: 'season', bossName: { text: 'Boss B' } },
+      },
+      HighDifficultyBossGameTable: {
+        bossA: { gameList: [{ gameId: 'a', difficultyName: { text: 'I' }, sortId: 1 }] },
+        bossB: { gameList: [{ gameId: 'b', difficultyName: { text: 'II' }, sortId: 2 }] },
+      },
+      EnemyTable: { base: { templateId: 'base' }, harder: { templateId: 'base' } },
+      SeasonTowerGameGroupTable: {},
+      EnemyDisplayInfoTable: {},
+      I18nTextTable_CN: {},
+      I18nTextTable_EN: {},
+    };
+    for (const [name, data] of Object.entries(tables))
+      await writeJson(join(root, name + '.json'), data);
+    const spawnerDirectory = join(root, 'SpawnerConfig');
+    const levelDirectory = join(root, 'LevelData');
+    await mkdir(join(spawnerDirectory, 'a'), { recursive: true });
+    await writeJson(join(spawnerDirectory, 'a', 'wave.json'), {
+      enemyLibrary: [{ key: 'used', enemyId: 'harder', enemyLevel: 80, bornBuffList: [] }],
+      waveMap: {
+        first: {
+          groupMap: { first: { actionMap: { spawn: { libraryKey: 'used', spawnCount: 2 } } } },
+        },
+      },
+    });
+    await mkdir(join(levelDirectory, 'b'), { recursive: true });
+    await writeJson(join(levelDirectory, 'b', 'battle.json'), {
+      enemies: [
+        { entityDataIdKey: 'harder', level: 80, buffs: [] },
+        { entityDataIdKey: 'base', level: 90, buffs: [] },
+      ],
+    });
+    const result = await generateEnemyStageCatalog({
+      tablesDirectory: root,
+      spawnerDirectory,
+      levelDirectory,
+      outputDirectory: join(root, 'out'),
+      localeDirectory: join(root, 'locale'),
+      check: false,
+    });
+    expect(result.stages).toMatchObject([
+      {
+        id: 'a',
+        groupId: 'bossA',
+        seriesId: 'a',
+        difficultyOrder: 1,
+        enemies: [{ level: 80, count: 2, definitionId: 'harder' }],
+      },
+      {
+        id: 'b',
+        groupId: 'bossB',
+        seriesId: 'a',
+        difficultyOrder: 2,
+        enemies: [{ level: 80, count: 1, definitionId: 'harder' }],
+      },
+    ]);
+    expect(result.files).toHaveLength(1);
+    const labels = JSON.parse(await readFile(join(root, 'locale', 'en', 'stages.json'), 'utf8'));
+    expect(labels).toMatchObject({
+      group_bossA: 'Boss A',
+      group_bossB: 'Boss B',
+      difficulty_b: 'II',
+      series_a: 'Monument',
+    });
   });
 
   it('strictly decodes the proven EnemyTemplateData prefix', () => {
@@ -426,6 +519,9 @@ describe('enemy data generation', () => {
     for (const name of [
       'DungeonTable',
       'DungeonSeriesTable',
+      'HighDifficultySeriesTable',
+      'HighDifficultyBossGroupTable',
+      'HighDifficultyBossGameTable',
       'SeasonTowerGameGroupTable',
       'EnemyDisplayInfoTable',
       'I18nTextTable_CN',

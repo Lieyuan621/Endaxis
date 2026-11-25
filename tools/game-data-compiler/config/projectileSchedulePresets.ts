@@ -5,6 +5,19 @@ export interface ProjectileSchedulePreset {
   readonly callbacks: Partial<Record<ProjectileCallbackSchedule['event'], readonly number[]>>;
 }
 
+// 小刻｜连携命中后弹开的三把兵器：从命中目标上方 0.3 或 1.5 米投向 leavepoint 地面随机点。
+// 三者的抛物线时长均为 0.8 秒，顶点在较高端点上方 2.5 米，阻挡球半径 0.1 米。
+// 平地上下降至球心高度 0.1 米分别需要 0.7926、0.7944 秒，均在第 24 帧触发落地回调。
+const sweetpieComboLanding: ProjectileSchedulePreset = { endFrame: 24, callbacks: { block: [24] } };
+
+// 小刻｜终结技抛落的三把兵器，以及天赋追加抛落的第二把：目标均为地面 leavepoint。
+// 从 1.5 米高度发射，抛物线时长 1 秒、顶点偏移 2.5 米，阻挡球半径 0.5 米；
+// 平地上下降至球心高度 0.5 米用时 0.9639 秒。水平随机偏移不改变触地时间。
+const sweetpieUltimateLanding: ProjectileSchedulePreset = {
+  endFrame: 29,
+  callbacks: { block: [29] },
+};
+
 /** 木桩场景的固定近似值，生成时复制到各发射节点，运行时不模拟弹道。
  * 普通直射采用3米有效路程，不代表敌人中心坐标；其他场景独立定义端点。上下文目标、实体、固定点及局部偏移必须按发射动作分别解析。
  * 固定落点、落地和返回路径不得套用直射有效路程。
@@ -1191,6 +1204,29 @@ export const projectileSchedulePresets: Readonly<Record<string, ProjectileSchedu
     endFrame: 43,
     callbacks: { hit: [2], block: [] },
   },
+  // 小刻｜普攻第 3 段：向目标抛出长枪，连续造成四次伤害，落地后另外生成枪的拾取范围。
+  // 起点高 0.5 米，终点取地面，抛物线时长 0.45 秒，顶点偏移 2.3 米。按站立木桩在枪下方、
+  // 敌身于检测开启时已进入半径 2 米的命中球估算。延后 0.3 秒开启检测，同一目标间隔 0.03 秒、
+  // 上限四次，向上取整为第 9~12 帧。独立阻挡球半径 0.5 米，0.4279 秒触地结束。
+  projectile_chr_0040_sweetpie_normal_attack_2: {
+    endFrame: 13,
+    callbacks: { hit: [9, 10, 11, 12], block: [13] },
+  },
+  // 小刻｜连携第一把兵器：从 Owner 向 smart_target 作二次贝塞尔运动。木桩端点相距 3 米，
+  // 忽略挂点；两个有目标入口控制点分别为目标+[8,3.5,6]、自身+[8,3.5,12]。距离曲线在
+  // 3 米处为 0.36807；以 20 米/秒乘此倍率并积分 10 秒归一化速度曲线，到 0.01 米命中球约 0.409 秒。
+  projectile_chr_0040_sweetpie_combo_weapon: { endFrame: 13, callbacks: { hit: [13] } },
+  // 小刻｜连携第二把兵器：三段直线依次经过自身+[0,0,1.5]、自身+[1,4,3]、smart_target。
+  // 对 3 米木桩全程约 10 米，速度恒为 40 米/秒，0.01 米阈值切段并命中，取 8 帧。
+  projectile_chr_0040_sweetpie_combo_weapon_2: { endFrame: 8, callbacks: { hit: [8] } },
+  // 小刻｜连携第三把兵器：从 Owner 直射 smart_target，木桩有效路程 3 米，速度 30 米/秒，取 3 帧。
+  projectile_chr_0040_sweetpie_combo_weapon_3: { endFrame: 3, callbacks: { hit: [3] } },
+  projectile_chr_0040_sweetpie_combo_weapon_leave: sweetpieComboLanding,
+  projectile_chr_0040_sweetpie_combo_weapon_2_leave: sweetpieComboLanding,
+  projectile_chr_0040_sweetpie_combo_weapon_3_leave: sweetpieComboLanding,
+  projectile_chr_0040_sweetpie_ult_weapon_leave: sweetpieUltimateLanding,
+  projectile_chr_0040_sweetpie_ult_weapon_2_leave: sweetpieUltimateLanding,
+  projectile_chr_0040_sweetpie_ult_weapon_3_leave: sweetpieUltimateLanding,
 };
 
 /** Explicit dummy-model omission: also removes the instance from SkillAffix lifetime tracking.

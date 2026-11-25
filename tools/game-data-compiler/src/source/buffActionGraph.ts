@@ -120,15 +120,18 @@ function parseBuffActionGraphSource<TLeaf>(
 ): BuffActionGraphSource<TLeaf> {
   const root = requireRecord(value, sourcePath);
   const inflictionCache = '<isSpellInflictionRelated>k__BackingField';
+  const fields = new Set(BUFF_DATA_FIELDS);
   if (inflictionCache in root) {
     requireBoolean(root[inflictionCache], `${sourcePath}.${inflictionCache}`);
+    fields.add(inflictionCache);
+  }
+  if ('atbGainModifier' in root) {
+    fields.add('atbGainModifier');
+    if (requireArray(root.atbGainModifier, `${sourcePath}.atbGainModifier`).length)
+      throw new Error(`${sourcePath}.atbGainModifier: ATB gain modifiers require conversion`);
   }
   // AKEDB 可附带属性的运行时缓存；可执行行为仍由标签和动作定义决定。
-  requireExactFields(
-    root,
-    inflictionCache in root ? new Set([...BUFF_DATA_FIELDS, inflictionCache]) : BUFF_DATA_FIELDS,
-    sourcePath,
-  );
+  requireExactFields(root, fields, sourcePath);
   const parseSequence = (sequence: unknown, path: string) =>
     parseNativeSequenceSource(sequence, path, inheritedBlackboard, (leaf, leafPath) =>
       parseLeaf(leaf, leafPath, inheritedBlackboard),

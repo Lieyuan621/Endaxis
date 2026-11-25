@@ -26,7 +26,7 @@ interface Spawner {
   >;
 }
 /** 与 AKEDatabase 一样按场景、敌人和等级匹配；仅使用实际被刷怪动作引用的库条目。 */
-export async function loadSceneSpawners(directory: string, scene: string): Promise<Spawner[]> {
+async function readSceneFiles<T>(directory: string, scene: string): Promise<T[]> {
   let files: string[];
   try {
     files = await readdir(join(directory, scene));
@@ -38,10 +38,22 @@ export async function loadSceneSpawners(directory: string, scene: string): Promi
     files
       .filter(file => file.endsWith('.json'))
       .sort()
-      .map(
-        async file => JSON.parse(await readFile(join(directory, scene, file), 'utf8')) as Spawner,
-      ),
+      .map(async file => JSON.parse(await readFile(join(directory, scene, file), 'utf8')) as T),
   );
+}
+
+export const loadSceneSpawners = readSceneFiles<Spawner>;
+
+interface PlacedEnemy {
+  entityDataIdKey: string;
+  level: number;
+  buffs: SpawnerBuff[];
+}
+
+/** 直接放置在场景中的敌人，其出生 Buff 归属于该 LevelData 实例。 */
+export async function loadSceneEnemies(directory: string, scene: string): Promise<PlacedEnemy[]> {
+  const files = await readSceneFiles<{ enemies?: PlacedEnemy[] }>(directory, scene);
+  return files.flatMap(file => file.enemies ?? []);
 }
 
 export function findSpawnerBuffs(

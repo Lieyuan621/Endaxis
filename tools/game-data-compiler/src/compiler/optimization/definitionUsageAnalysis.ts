@@ -872,6 +872,9 @@ export function analyzeStepUsage(
     case 'aura':
     case 'applyBuff':
       return mergeDefinitionValueUsage([
+        ...(step.kind === 'applyBuff' && step.parameters.delayedTriggerInputKey !== undefined
+          ? [{ ...EMPTY, unknownAccess: true }]
+          : []),
         effect([step.kind === 'applyBuff' ? step.parameters.count : undefined]),
         ...(!isReadOnlyTargetQuery(step.parameters.targets) ||
         (step.parameters.source !== undefined && !isReadOnlyTargetQuery(step.parameters.source))
@@ -973,6 +976,12 @@ export function analyzeStepUsage(
     case 'changeNativeSkillType':
     case 'inheritSkillCastInfoForBasicAttack':
       return effect();
+    case 'triggerBuffConsumeEvent':
+      return effect([
+        step.parameters.layers,
+        ...targetQueryValueInputs(step.parameters.source),
+        ...targetQueryValueInputs(step.parameters.owner),
+      ]);
     case 'triggerCustomAbilityEvent':
       return effect([
         step.parameters.eventParam,

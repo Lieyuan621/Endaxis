@@ -37,6 +37,7 @@ export const OPERATOR_PASSIVE_ABILITY_EVENTS = [
   'abilityEntitySpawned',
   'abilityEntityFinished',
   'addedBuff',
+  'skillEnd',
   'skillSpGained',
   'receiveHeal',
 ] as const;
@@ -88,6 +89,7 @@ export const UPGRADE_STATIC_DAMAGE_INCREASE_TARGETS = [
   'physical',
   'electric',
   'cryo',
+  'nature',
 ] as const;
 
 /**

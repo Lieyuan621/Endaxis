@@ -371,8 +371,21 @@ export function parseSelectorSummarySource(
     if (!KNOWN_FINDERS.has(finderType)) {
       throw new Error(`${path}.finderData: unsupported finder ${JSON.stringify(finderType)}`);
     }
-    if (
-      finderType === 'AllEnemyFinder' ||
+    if (finderType === 'AllEnemyFinder') {
+      requireExactFields(
+        finder,
+        new Set([
+          '$type',
+          ...('includeIndividualParts' in finder ? ['includeIndividualParts'] : []),
+        ]),
+        `${path}.finderData`,
+      );
+      if (
+        'includeIndividualParts' in finder &&
+        requireBoolean(finder.includeIndividualParts, `${path}.finderData.includeIndividualParts`)
+      )
+        throw new Error(`${path}.finderData: enumerating individual enemy parts is unsupported`);
+    } else if (
       finderType === 'OwnerSoulFinder' ||
       finderType === 'GodEntityFinder' ||
       finderType === 'AbilityEntityTargetFinder' ||

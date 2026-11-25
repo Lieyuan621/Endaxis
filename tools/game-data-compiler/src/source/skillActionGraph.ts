@@ -68,7 +68,6 @@ const SKILL_DATA_FIELDS = new Set([
   'switchToCenterBeforeCast',
   'tagDuringAttach',
   'toggleBuffs',
-  'uiRangeHints',
   'useAIExclusiveFrame',
 ]);
 
@@ -124,7 +123,7 @@ export function parseSkillActionGraphSource<TLeaf>(
   const root = requireRecord(value, sourcePath);
   const expectedFields = new Set(SKILL_DATA_FIELDS);
   // 新版字段逐项校验，不能忽略影响战技分型的非默认值。
-  for (const field of ['buffInputBase', 'canCastInWater', 'normalSkillSubType']) {
+  for (const field of ['buffInputBase', 'canCastInWater', 'normalSkillSubType', 'uiRangeHints']) {
     if (Object.hasOwn(root, field)) expectedFields.add(field);
   }
   requireExactFields(root, expectedFields, sourcePath);

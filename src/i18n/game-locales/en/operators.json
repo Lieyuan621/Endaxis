@@ -5340,7 +5340,7 @@
       },
       "battleSkill": {
         "name": "Darkness Cowed",
-        "description": "Argent Flow sweeps his lance and deals <@ba.pd>Physical DMG</> to nearby enemies and applies <#ba.airborne>Lift</> to target(s) in front of him.\nAfter Argent Flow casts his combo skill, his battle skill is temporarily changed to <@ba.key>Bolt Rush</>.\n<@ba.key>Bolt Rush</>: Argent Flow mounts his galloper Nuli to leap into mid-air, powers up quickly, and then charges at the target to forcibly apply <#ba.conduct>Electrification</> and deal <@ba.pulse>Electric DMG</> to enemies within a large area in front of him. When this <#ba.conduct>Electrification</> is applied on a target with <#ba.pulseinflict>Electric Infliction</>, it <#ba.consume>consumes</> all <#ba.pulseinflict>Electric Infliction</> stacks from the target and grants <#ba.conduct>Electrification</> <#ba.statuslevel>Status Level +1</> per 1 stack consumed. After <#ba.consume>consuming</> the target's <#ba.pulseinflict>Electric Infliction</>, Argent Flow also applies 1 stack of <#ba.noguard>Vulnerability</>.",
+        "description": "Argent Flow sweeps his lance and deals <@ba.pd>Physical DMG</> to nearby enemies and applies <#ba.airborne>Lift</> to target(s) in front of him.\nAfter Argent Flow casts his combo skill, his battle skill is temporarily changed to <@ba.key>Bolt Rush</>.\n<@ba.key>Bolt Rush</>: Argent Flow mounts his galloper Nuli to leap into mid-air, powers up quickly, and then charges at the target to forcibly apply <#ba.conduct>Electrification</> and deal <@ba.pulse>Electric DMG</> to enemies within a large area in front of him. When this <#ba.conduct>Electrification</> is applied on a target with <#ba.pulseinflict>Electric Infliction</>, it <#ba.consume>consumes</> all <#ba.pulseinflict>Electric Infliction</> stacks from the target and grants <#ba.conduct>Electrification</> <#ba.statuslevel>Status Level</> +1 per 1 stack consumed. After <#ba.consume>consuming</> the target's <#ba.pulseinflict>Electric Infliction</>, Argent Flow also applies 1 stack of <#ba.noguard>Vulnerability</>.",
         "details": {
           "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
           "rows": [
@@ -5602,6 +5602,183 @@
             {
               "label": "Susceptibility",
               "values": ["1.5%", "1.5%", "1.5%", "1.5%", "1.5%", "1.5%", "1.5%", "1.5%", "2%", "2%", "2%", "2.5%"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "kay": {
+    "name": "Kay",
+    "talents": [
+      {
+        "name": "Bottomless Arsenal",
+        "description": "Kay starts with 3 <@ba.key>Weapons</>. When the battle ends, Kay salvages all thrown <@ba.key>Weapons</>.\nSalvaging a <@ba.key>Weapon</> grants Kay 1 stack of <@ba.key>Hot Edgy Naives</>."
+      },
+      {
+        "name": "Bottomless Arsenal",
+        "description": "Kay starts with 3 <@ba.key>Weapons</>. When the battle ends, Kay salvages all thrown <@ba.key>Weapons</>.\nSalvaging a <@ba.key>Weapon</> grants Kay 1 stack of <@ba.key>Hot Edgy Naives</> and grants the entire team <#ba.spelldmg>Arts DMG Dealt</> <@ba.vup>+1%</>, with <@ba.natur>Nature DMG Dealt</> getting another <@ba.vup>+1%</>. Duration: <@ba.vup>15</>s. Max stacks for this effect: 3."
+      },
+      {
+        "name": "Bottomless Arsenal",
+        "description": "Kay starts with 3 <@ba.key>Weapons</>. When the battle ends, Kay salvages all thrown <@ba.key>Weapons</>.\nSalvaging a <@ba.key>Weapon</> grants Kay 1 stack of <@ba.key>Hot Edgy Naives</> and grants the entire team <#ba.spelldmg>Arts DMG Dealt</> <@ba.vup>+1.5%</>, with <@ba.natur>Nature DMG Dealt</> getting another <@ba.vup>+1.5%</>. Duration: <@ba.vup>15</>s. Max stacks for this effect: 3."
+      },
+      {
+        "name": "Have a Waffle!",
+        "description": "When an enemy is <@ba.poise>Staggered</> or triggers a <#ba.poiseknot>Stagger Node</>, it drops 1 <@ba.key>Picnic Waffle</>. Effect only triggers once every 30s.\n<@ba.info>Picnic Waffle has the same effects as Picnic Snack.</>"
+      },
+      {
+        "name": "Have a Waffle!",
+        "description": "When an enemy is <@ba.poise>Staggered</> or triggers a <#ba.poiseknot>Stagger Node</>, it drops 1 <@ba.key>Picnic Waffle</>. Effect only triggers once every 20s.\n<@ba.info>Picnic Waffle has the same effects as Picnic Snack.</>"
+      }
+    ],
+    "potentials": [
+      {
+        "name": "Wildness Ignited",
+        "description": "When entering battle, Kay gains 1 stack of <@ba.key>Hot Edgy Naives</>.\nTalent <@ba.key>Bottomless Arsenal</> improved: Each <@ba.key>Weapon</> salvage gives the entire team an additional <#ba.spelldmg>Arts DMG Dealt</> <@ba.vup>+2.0%</>, with additional <@ba.natur>Nature DMG Dealt</> getting another <@ba.vup>+2.0%</>, for an additional duration of <@ba.vup>+10</>s."
+      },
+      {
+        "name": "Expert Roamer",
+        "description": "Strength <@ba.vup>+20</>, <@ba.natur>Nature DMG Dealt</> <@ba.vup>+10%</>."
+      },
+      {
+        "name": "Picnic Prep",
+        "description": "Battle skill <@ba.key>\"Really Heavy Bash\"</> enhanced: Bonus DMG Multiplier per <@ba.key>Hot Edgy Naives</> stack is increased to <@ba.vup>1.2</> times the original. Ultimate <@ba.key>\"Really Sweet Combi-Bonker!\"</> improved: DMG Multiplier is increased to <@ba.vup>1.2</> times the original."
+      },
+      {
+        "name": "\"Bonkie I Made\"",
+        "description": "Ultimate <@ba.key>\"Really Sweet Combi-Bonker!\"</> improved: Ultimate Energy cost <@ba.vup>-15%</>."
+      },
+      {
+        "name": "\"Kwikker Smash\"",
+        "description": "Combo skill <@ba.key>\"Really Kwik Smash\"</> improved: Length of cooldown <@ba.vup>-1</>s. DMG Multiplier is increased to <@ba.vup>1.2</> times the original. SP Recovery is increased to <@ba.vup>1.3</> times the original."
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "Wild Wacky-Whack",
+        "description": "BASIC ATTACK: \nAn attack with up to 5 sequences that deals <@ba.pd>Physical DMG</>. As the controlled operator, <#ba.lastcombo>Final Strike</> also deals <@ba.poise>17</> Stagger. \n\nDIVE ATTACK: \nBasic attack performed in mid-air becomes a dive attack that deals <@ba.pd>Physical DMG</> to nearby enemies. \n\nFINISHER: \nBasic attack performed near a Staggered enemy becomes a finisher attack that deals massive <@ba.pd>Physical DMG</> and recovers some SP.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "BATK SEQ 1 Multiplier",
+              "values": ["21%", "23%", "26%", "28%", "30%", "32%", "34%", "36%", "38%", "41%", "44%", "48%"]
+            },
+            {
+              "label": "BATK SEQ 2 Multiplier",
+              "values": ["24%", "26%", "28%", "30%", "32%", "34%", "36%", "40%", "42%", "44%", "48%", "52%"]
+            },
+            {
+              "label": "BATK SEQ 3 Multiplier",
+              "values": ["28%", "28%", "32%", "36%", "36%", "40%", "44%", "44%", "48%", "52%", "56%", "60%"]
+            },
+            {
+              "label": "BATK SEQ 4 Multiplier",
+              "values": ["42%", "42%", "48%", "54%", "54%", "60%", "66%", "66%", "72%", "78%", "84%", "90%"]
+            },
+            {
+              "label": "BATK SEQ 5 Multiplier",
+              "values": ["59%", "65%", "70%", "76%", "82%", "88%", "94%", "100%", "106%", "113%", "122%", "132%"]
+            },
+            {
+              "label": "Finisher ATK Multiplier",
+              "values": ["400%", "440%", "480%", "520%", "560%", "600%", "640%", "680%", "720%", "770%", "830%", "900%"]
+            },
+            {
+              "label": "Dive ATK Multiplier",
+              "values": ["80%", "88%", "96%", "104%", "112%", "120%", "128%", "136%", "144%", "154%", "166%", "180%"]
+            }
+          ]
+        }
+      },
+      "battleSkill": {
+        "name": "\"Really Heavy Bash\"",
+        "description": "Kay leaps into mid-air for a short power-up, salvages all her <@ba.key>Weapons</>, then unleashes a powerful ground bash with her heavy hammer. The bash deals <@ba.natur>Nature DMG</> (based on her <@ba.key>Hot Edgy Naives</> stacks), applies <#ba.naturalinflict>Nature Infliction</> on enemies within the area of effect, and consumes all <@ba.key>Hot Edgy Naives</> stacks. If Kay consumes 3 <@ba.key>Hot Edgy Naives</> stacks, she also forcibly applies <#ba.burning>Combustion</> on enemies.\n<@ba.info>If ＞ 3 Hot Edgy Naives stacks are consumed, the effects will be the same as those for 3 stacks.</>",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "DMG Multiplier",
+              "values": ["133%", "147%", "160%", "173%", "187%", "200%", "213%", "227%", "240%", "257%", "277%", "300%"]
+            },
+            {
+              "label": "Stagger",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
+            },
+            {
+              "label": "Bonus DMG Multiplier per Hot Edgy Naives",
+              "values": ["44%", "49%", "53%", "58%", "62%", "67%", "71%", "76%", "80%", "86%", "92%", "100%"]
+            },
+            {
+              "label": "Combustion Duration (s)",
+              "values": ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5"]
+            }
+          ]
+        }
+      },
+      "comboSkill": {
+        "name": "\"Really Kwik Smash\"",
+        "description": "COMBO TRIGGER: While Kay has ≥ 1 <@ba.key>Weapon</> and either <#ba.naturalinflict>Nature Infliction</> is applied OR <#ba.spellburst>Arts Burst</> DMG is dealt to the enemy.\nKay throws a <@ba.key>Weapon</> at the target to deal <@ba.natur>Nature DMG</>. Hitting the enemy recovers some SP and also forcibly applies a <#ba.naturalburst>Nature Burst</>. The <@ba.key>Weapon</> will then drop at a random location in the battlefield. Kay <@ba.key>salvages</> the said <@ba.key>Weapon</> when the controlled operator touches it.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "DMG Multiplier",
+              "values": ["31%", "34%", "37%", "40%", "44%", "47%", "50%", "53%", "56%", "60%", "65%", "70%"]
+            },
+            {
+              "label": "Stagger",
+              "values": ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5"]
+            },
+            {
+              "label": "Ultimate Energy Gain",
+              "values": ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5"]
+            },
+            {
+              "label": "SP Recovery",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "11", "11", "11", "12"]
+            }
+          ]
+        }
+      },
+      "ultimate": {
+        "name": "\"Really Sweet Combi-Bonker!\"",
+        "description": "Kay kitbashes a combi-bonker that she swings multiple times before throwing it to cause an explosion that deals <@ba.natur>Nature DMG</> and applies <#ba.naturalinflict>Nature Infliction</> on enemies within the area of effect, recovers some SP, and leaves behind multiple <@ba.key>Picnic Snacks</>. When the controlled operator touches a <@ba.key>Picnic Snack</> and picks it up, Kay grants HP treatment to the said operator and recovers some SP. The attribute of Agility increases the amount of HP treatment.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "SEQ 1 DMG Multiplier",
+              "values": ["71%", "78%", "85%", "92%", "100%", "107%", "114%", "121%", "128%", "137%", "148%", "160%"]
+            },
+            {
+              "label": "SEQ 2 DMG Multiplier",
+              "values": ["89%", "98%", "107%", "116%", "124%", "133%", "142%", "151%", "160%", "171%", "184%", "200%"]
+            },
+            {
+              "label": "SEQ 3 DMG Multiplier",
+              "values": ["107%", "117%", "128%", "139%", "149%", "160%", "171%", "181%", "192%", "205%", "221%", "240%"]
+            },
+            {
+              "label": "Stagger",
+              "values": ["20", "20", "20", "20", "20", "20", "20", "20", "20", "20", "20", "20"]
+            },
+            {
+              "label": "SP Recovery",
+              "values": ["24", "24", "24", "24", "24", "24", "24", "24", "27", "27", "27", "30"]
+            },
+            {
+              "label": "Base Treatment",
+              "values": ["180", "216", "252", "288", "306", "324", "342", "360", "378", "387", "396", "405"]
+            },
+            {
+              "label": "Treatment Increase per Agility",
+              "values": ["0.42", "0.5", "0.59", "0.67", "0.71", "0.76", "0.8", "0.84", "0.88", "0.9", "0.92", "0.95"]
+            },
+            {
+              "label": "SP Recovery per Picnic Snack",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
             }
           ]
         }

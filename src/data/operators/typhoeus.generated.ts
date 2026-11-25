@@ -13612,7 +13612,7 @@ const typhoeusBuff7ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 const typhoeusBuff7: SkillBuffDefinition = {
-  stackingType: 'unique',
+  stackingType: 'highPriority',
   priority: 0,
   maxStackCount: 1,
   applyTags: [],

@@ -3175,6 +3175,35 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       },
     ],
   },
+  triggerBuffConsumeEvent: {
+    fields: [
+      schema_087add57f9c6,
+      {
+        valueSchema: schema_740094310b29,
+        path: ['parameters', 'source'],
+        description: '接收消费事件的动作来源。',
+        control: 'json',
+      },
+      {
+        valueSchema: schema_740094310b29,
+        path: ['parameters', 'owner'],
+        description: '被消费的 Buff 所属的目标。',
+        control: 'json',
+      },
+      {
+        valueSchema: schema_50e38d533a50,
+        path: ['parameters', 'buffId'],
+        description: '',
+        control: 'string',
+      },
+      {
+        valueSchema: schema_9b7ff1a12796,
+        path: ['parameters', 'layers'],
+        description: '由技能在伤害前记录的层数。',
+        control: 'operand',
+      },
+    ],
+  },
   triggerCustomAbilityEvent: {
     fields: [
       schema_087add57f9c6,
@@ -4021,6 +4050,12 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         path: ['parameters', 'passTargetGroupsToBuff'],
         description: '原生 passTargetGroupsToBuff：创建时复制动作环境的全部命名目标组。',
         control: 'boolean',
+      },
+      {
+        valueSchema: schema_b168dffc75ec,
+        path: ['parameters', 'delayedTriggerInputKey'],
+        description: '延时触发时使用创建动作的黑板快照，原输入目标保存在此命名组中。',
+        control: 'string',
       },
       {
         valueSchema: schema_f3dcc58b8fca,
@@ -5935,6 +5970,12 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   once: {
     fields: [
       schema_087add57f9c6,
+      {
+        valueSchema: schema_b168dffc75ec,
+        path: ['parameters', 'delayedTriggerInputKey'],
+        description: '延时 Buff 首次调用用此组恢复创建时的输入并返回正文结果，再次执行返回 false。',
+        control: 'string',
+      },
       {
         valueSchema: schema_510f6b76edbb,
         path: ['body'],

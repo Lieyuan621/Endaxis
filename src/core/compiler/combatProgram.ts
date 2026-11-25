@@ -1,4 +1,5 @@
 import type { OperatorPassiveSkillDefinition } from '../../../packages/game-data-contract/src/operators';
+import type { AbilityEntityPassiveSkillDefinition } from '../../../packages/game-data-contract/src/skills';
 import type {
   ComboSkillConditionDefinition,
   DamageElement,
@@ -169,6 +170,7 @@ export interface ResolvedCombatStepParameters {
   applyCharacterInfliction: CompiledStepParameters['applyCharacterInfliction'];
   applyElementalInfliction: CompiledStepParameters['applyElementalInfliction'];
   triggerSpellBurst: CompiledStepParameters['triggerSpellBurst'];
+  triggerBuffConsumeEvent: CompiledStepParameters['triggerBuffConsumeEvent'];
   triggerCustomAbilityEvent: CompiledStepParameters['triggerCustomAbilityEvent'];
   applyPhysicalInfliction: CompiledStepParameters['applyPhysicalInfliction'];
   forceSpellStatus: CompiledStepParameters['forceSpellStatus'];
@@ -456,6 +458,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   applyCharacterInfliction: 'operation',
   applyElementalInfliction: 'operation',
   triggerSpellBurst: 'operation',
+  triggerBuffConsumeEvent: 'operation',
   triggerCustomAbilityEvent: 'operation',
   castSkillDuringAction: 'operation',
   applyPhysicalInfliction: 'operation',
@@ -589,7 +592,7 @@ export interface CompiledOperatorPassiveProgram {
   readonly initialBlackboard: Readonly<Record<string, number>>;
   readonly enableSequence: ResolvedActionSequence;
   readonly abilityEventResponses?: readonly (Omit<
-    NonNullable<OperatorPassiveSkillDefinition['abilityEventResponses']>[number],
+    NonNullable<(OperatorPassiveSkillDefinition | AbilityEntityPassiveSkillDefinition)['abilityEventResponses']>[number],
     'sequence'
   > & { readonly sequence: ResolvedActionSequence })[];
 }

@@ -41,6 +41,7 @@ interface Arguments {
   readonly buffDirectory: string;
   readonly skillDirectory: string;
   readonly spawnerDirectory: string;
+  readonly levelDirectory?: string;
   readonly check: boolean;
 }
 
@@ -617,6 +618,9 @@ function parseArguments(values: readonly string[]): Arguments {
     buffDirectory: resolve(parsed.get('--buff-directory')!),
     skillDirectory: resolve(parsed.get('--skill-directory')!),
     spawnerDirectory: resolve(parsed.get('--spawner-directory')!),
+    levelDirectory: resolve(
+      parsed.get('--level-directory') ?? join(parsed.get('--spawner-directory')!, '../LevelData'),
+    ),
     check,
   };
 }

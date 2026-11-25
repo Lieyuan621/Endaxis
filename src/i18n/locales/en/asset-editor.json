@@ -1890,6 +1890,8 @@
       "consumedElement": {
         "name": "Consumed attachment element"
       },
+      "layers": { "name": "Layer count" },
+      "delayedTriggerInputKey": { "name": "Saved input target group" },
       "consumedLayers": {
         "name": "Layers consumed"
       },
@@ -2719,6 +2721,10 @@
       "stringOperand": {
         "name": "String value",
         "help": "A literal or string read from the current action blackboard. Each consumer reads its own current context."
+      },
+      "triggerBuffConsumeEvent": {
+        "name": "Publish Buff consumption",
+        "help": "Notifies listeners of the consumed Buff and layer count."
       },
       "triggerCharacterInflictionEvent": {
         "name": "Notify operator infliction",

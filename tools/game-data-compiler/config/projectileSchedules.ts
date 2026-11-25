@@ -107,6 +107,12 @@ const purrchenaUltimateSchedules: readonly {
 ];
 
 export const projectileSchedules: ReadonlyMap<string, ProjectileScheduleConfiguration> = new Map([
+  // 小刻｜连携第一把兵器的无目标分支：目标为自身+[0,1.5,8]，控制点为自身+[8,3.5,14]；
+  // 平地上该曲线不经过前方 3 米木桩的命中点。终点距离 8.139 米，距离倍率 1，约 0.409 秒到达结束。
+  [
+    'buff_delay_trigger_chr_0040_sweetpie_combo_skill_01:8',
+    { schedule: { endFrame: 13, callbacks: [{ event: 'hit', triggerFrames: [] }] } },
+  ],
   ...purrchenaUltimateSchedules.flatMap(({ indices, schedule }) =>
     indices.map((index): [string, ProjectileScheduleConfiguration] => [
       `chr_0038_purrche_ultimate_skill:${index}`,

@@ -264,6 +264,14 @@ export function collectCombatInvisibleRandomKeys(
     const safe = nodes.every(node => {
       const usage = usages.get(node)!;
       if (!usage.reads.has(key)) return true;
+      if (
+        node.body.kind === 'leaf' &&
+        node.body.value.family === 'spatial' &&
+        node.body.value.action.kind === 'teleportPositionSelection' &&
+        node.body.value.action.distance.blackboardKey === key &&
+        !JSON.stringify(node.body.value.action.target).includes(JSON.stringify(key))
+      )
+        return true;
       // 位置偏移不改变点数；只有输出组已证明完全无战斗消费者时才丢弃随机输入。
       if (
         node.body.kind === 'leaf' &&

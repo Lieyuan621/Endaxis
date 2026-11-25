@@ -71,6 +71,7 @@ const STATIC_DAMAGE_INCREASE_ATTRIBUTE: Readonly<
   normalAttack: 'normalAttackDamageIncrease',
   battleSkill: 'normalSkillDamageIncrease',
   physical: 'physicalDamageIncrease',
+  nature: 'natureDamageIncrease',
   electric: 'electricDamageIncrease',
   cryo: 'cryoDamageIncrease',
 };

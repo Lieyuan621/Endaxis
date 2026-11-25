@@ -1086,6 +1086,26 @@ export const imageCatalog: readonly {
     category: 'enemies',
   },
   {
+    ref: 'endaxis:enemies/eny_0158_mushbug',
+    path: '/enemies/eny_0158_mushbug.webp',
+    category: 'enemies',
+  },
+  {
+    ref: 'endaxis:enemies/eny_0159_mushman',
+    path: '/enemies/eny_0159_mushman.webp',
+    category: 'enemies',
+  },
+  {
+    ref: 'endaxis:enemies/eny_0160_mushro',
+    path: '/enemies/eny_0160_mushro.webp',
+    category: 'enemies',
+  },
+  {
+    ref: 'endaxis:enemies/eny_0161_mushshd',
+    path: '/enemies/eny_0161_mushshd.webp',
+    category: 'enemies',
+  },
+  {
     ref: 'endaxis:equipment/agi01/item_equip_t2_suit_agi01_body_01',
     path: '/equipment/agi01/item_equip_t2_suit_agi01_body_01.webp',
     category: 'equipment',
@@ -1156,6 +1176,16 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_body_06',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_body_06.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_body_07',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_body_07.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_edc_01',
     path: '/equipment/atb01/item_equip_t4_suit_atb01_edc_01.webp',
     category: 'equipment',
@@ -1186,6 +1216,16 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_edc_07',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_edc_07.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_edc_08',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_edc_08.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_hand_01',
     path: '/equipment/atb01/item_equip_t4_suit_atb01_hand_01.webp',
     category: 'equipment',
@@ -1198,6 +1238,16 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_hand_03',
     path: '/equipment/atb01/item_equip_t4_suit_atb01_hand_03.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_hand_04',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_hand_04.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_hand_05',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_hand_05.webp',
     category: 'equipment',
   },
   {
@@ -2151,6 +2201,11 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/usp02/item_equip_t4_suit_usp02_hand_06',
+    path: '/equipment/usp02/item_equip_t4_suit_usp02_hand_06.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/will01/item_equip_t2_suit_will01_body_01',
     path: '/equipment/will01/item_equip_t2_suit_will01_body_01.webp',
     category: 'equipment',
@@ -2291,6 +2346,11 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_body_07',
+    path: '/equipment/wuling00/item_equip_t4_parts_wuling00_body_07.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_edc_01',
     path: '/equipment/wuling00/item_equip_t4_parts_wuling00_edc_01.webp',
     category: 'equipment',
@@ -2321,6 +2381,11 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_edc_07',
+    path: '/equipment/wuling00/item_equip_t4_parts_wuling00_edc_07.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_hand_01',
     path: '/equipment/wuling00/item_equip_t4_parts_wuling00_hand_01.webp',
     category: 'equipment',
@@ -2348,6 +2413,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_hand_06',
     path: '/equipment/wuling00/item_equip_t4_parts_wuling00_hand_06.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_hand_07',
+    path: '/equipment/wuling00/item_equip_t4_parts_wuling00_hand_07.webp',
     category: 'equipment',
   },
   {
@@ -2411,6 +2481,16 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_body_05',
+    path: '/equipment/wuling02/item_equip_t4_parts_wuling02_body_05.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_body_06',
+    path: '/equipment/wuling02/item_equip_t4_parts_wuling02_body_06.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_edc_01',
     path: '/equipment/wuling02/item_equip_t4_parts_wuling02_edc_01.webp',
     category: 'equipment',
@@ -2418,6 +2498,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_edc_02',
     path: '/equipment/wuling02/item_equip_t4_parts_wuling02_edc_02.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_edc_03',
+    path: '/equipment/wuling02/item_equip_t4_parts_wuling02_edc_03.webp',
     category: 'equipment',
   },
   {
@@ -2438,6 +2523,16 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_hand_04',
     path: '/equipment/wuling02/item_equip_t4_parts_wuling02_hand_04.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_hand_05',
+    path: '/equipment/wuling02/item_equip_t4_parts_wuling02_hand_05.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_hand_06',
+    path: '/equipment/wuling02/item_equip_t4_parts_wuling02_hand_06.webp',
     category: 'equipment',
   },
   {
@@ -3103,6 +3198,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:icons/icon_energy_fusion_pulse',
     path: '/icons/icon_energy_fusion_pulse.webp',
+    category: 'icons',
+  },
+  {
+    ref: 'endaxis:icons/icon_equipmake',
+    path: '/icons/icon_equipmake.webp',
     category: 'icons',
   },
   {
@@ -3833,6 +3933,36 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/gilberta/ultimate_01',
     path: '/operators/gilberta/ultimate 01.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/avatar',
+    path: '/operators/kay/avatar.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/battle_01',
+    path: '/operators/kay/battle 01.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/combo_01',
+    path: '/operators/kay/combo 01.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/talent_1',
+    path: '/operators/kay/talent 1.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/talent_2',
+    path: '/operators/kay/talent 2.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/ultimate_01',
+    path: '/operators/kay/ultimate 01.webp',
     category: 'operators',
   },
   {
@@ -4693,6 +4823,16 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:weapons/lance/wpn_lance_0016',
     path: '/weapons/lance/wpn_lance_0016.webp',
+    category: 'weapons',
+  },
+  {
+    ref: 'endaxis:weapons/lance/wpn_lance_0017',
+    path: '/weapons/lance/wpn_lance_0017.webp',
+    category: 'weapons',
+  },
+  {
+    ref: 'endaxis:weapons/lance/wpn_lance_0018',
+    path: '/weapons/lance/wpn_lance_0018.webp',
     category: 'weapons',
   },
   {

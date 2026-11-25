@@ -1416,29 +1416,19 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: 'dealDamage_7',
       },
-      triggerCustomAbilityEvent_10: {
+      triggerBuffConsumeEvent_11: {
         action: {
-          kind: 'triggerCustomAbilityEvent',
+          kind: 'triggerBuffConsumeEvent',
           parameters: {
-            eventName: 'SiComboSkillTrigger',
-            eventParam: { kind: 'valueNode', nodeId: 'data_2' },
-            target: { kind: 'characterTeam', excludeOwner: false },
-            source: { kind: 'owner' },
+            source: { kind: 'source' },
+            owner: { kind: 'inputTarget' },
+            buffId: 'buff_common_energy_shard_attached_cryst',
+            layers: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
         next: null,
       },
-      ifElse_12: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'triggerCustomAbilityEvent_10' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      finishBuffsByTag_13: {
+      finishBuffsByTag_10: {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
@@ -1451,17 +1441,31 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_14: {
+      ifElse_12: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: 'ifElse_12' },
-          whenFalse: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'finishBuffsByTag_10' },
+          whenFalse: { $sequence: 'triggerBuffConsumeEvent_11' },
         },
-        next: 'finishBuffsByTag_13',
+        next: null,
       },
-      dealDamage_15: {
+      dealDamage_13: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+            tags: ['canBreakWeakness', 'comboSkill'],
+            stagger: { kind: 'valueNode', nodeId: 'data_8' },
+          },
+        },
+        next: 'ifElse_12',
+      },
+      dealDamage_14: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1470,25 +1474,11 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_9' },
             tags: ['canBreakWeakness', 'comboSkill'],
-            stagger: { kind: 'valueNode', nodeId: 'data_10' },
           },
         },
-        next: 'ifElse_14',
+        next: 'dealDamage_13',
       },
-      dealDamage_16: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            attacker: 'actionSource',
-            target: { kind: 'inputTarget' },
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_11' },
-            tags: ['canBreakWeakness', 'comboSkill'],
-          },
-        },
-        next: 'dealDamage_15',
-      },
-      modifyActionValue_17: {
+      modifyActionValue_15: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1497,21 +1487,21 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
-        next: 'dealDamage_16',
+        next: 'dealDamage_14',
       },
-      calculateActionValue_18: {
+      calculateActionValue_16: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'final_combo_atkscale',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_12' },
+            left: { kind: 'valueNode', nodeId: 'data_10' },
             right: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
-        next: 'modifyActionValue_17',
+        next: 'modifyActionValue_15',
       },
-      readBuffStackCount_19: {
+      readBuffStackCount_17: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
@@ -1524,17 +1514,17 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
             },
           },
         },
-        next: 'calculateActionValue_18',
+        next: 'calculateActionValue_16',
       },
-      forEachContextTarget_20: {
+      forEachContextTarget_18: {
         action: {
           kind: 'forEachContextTarget',
           parameters: { targets: { kind: 'context', key: 'tar' } },
-          body: { $sequence: 'readBuffStackCount_19' },
+          body: { $sequence: 'readBuffStackCount_17' },
         },
         next: null,
       },
-      findTargets_21: {
+      findTargets_19: {
         action: {
           kind: 'findTargets',
           parameters: {
@@ -1550,9 +1540,9 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
             saveToContextKey: 'tar',
           },
         },
-        next: 'forEachContextTarget_20',
+        next: 'forEachContextTarget_18',
       },
-      applyBuff_23: {
+      applyBuff_21: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1564,23 +1554,23 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_24: {
+      ifElse_22: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'applyBuff_23' },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'applyBuff_21' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      changeResource_27: {
+      changeResource_25: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
             amount: { kind: 'valueNode', nodeId: 'data_1' },
-            coefficient: { kind: 'valueNode', nodeId: 'data_14' },
+            coefficient: { kind: 'valueNode', nodeId: 'data_12' },
             source: { kind: 'source' },
             targets: { kind: 'source' },
             ultimateRecoveryTag: 'Skill/Character/chr_0026_lastrite',
@@ -1588,7 +1578,7 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      changeResource_26: {
+      changeResource_24: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1602,27 +1592,27 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_29: {
+      ifElse_27: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          whenTrue: { $sequence: 'changeResource_24' },
+          whenFalse: { $sequence: 'changeResource_25' },
+        },
+        next: null,
+      },
+      ifElse_28: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'changeResource_26' },
-          whenFalse: { $sequence: 'changeResource_27' },
-        },
-        next: null,
-      },
-      ifElse_30: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_18' },
-          whenTrue: { $sequence: 'ifElse_29' },
+          whenTrue: { $sequence: 'ifElse_27' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_32: {
+      startTimeDilation_30: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1637,17 +1627,17 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_33: {
+      ifElse_31: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_19' },
-          whenTrue: { $sequence: 'startTimeDilation_32' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
+          whenTrue: { $sequence: 'startTimeDilation_30' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_34: {
+      startTimeDilation_32: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1670,7 +1660,7 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_35: {
+      reachSkillOperableBoundary_33: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0026_lastrite_normal_skill'] },
@@ -1694,33 +1684,21 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'usp_base' } },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_6: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'infliction_num', fallback: 0 },
-      },
-      data_7: {
         type: 'boolean',
         expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_6' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_8: {
-        type: 'boolean',
-        expression: {
-          kind: 'healthCompare',
+          kind: 'entityCountCompare',
           target: { kind: 'inputTarget' },
-          valueType: 'ratio',
-          operator: 'lessOrEqual',
-          value: { kind: 'constant', value: 0 },
+          containsHittableTarget: false,
+          excludeDeadEntity: true,
+          operator: 'greaterOrEqual',
+          value: 1,
         },
       },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'final_combo_atkscale' } },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale3' } },
-      data_13: {
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'final_combo_atkscale' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale3' } },
+      data_11: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1731,34 +1709,34 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
           value: 1,
         },
       },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'infliction_num_total' } },
-      data_15: {
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'infliction_num_total' } },
+      data_13: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'infliction_num_total', fallback: 0 },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_13' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 4 },
+        },
+      },
+      data_15: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'recover_usp', fallback: 0 },
       },
       data_16: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
           left: { kind: 'valueNode', nodeId: 'data_15' },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 4 },
-        },
-      },
-      data_17: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'recover_usp', fallback: 0 },
-      },
-      data_18: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_17' },
           operator: 'equal',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_19: {
+      data_17: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1799,12 +1777,12 @@ export const lastRiteChr_0026_lastrite_combo_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 2, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 13, endFrame: 13, sequence: { $sequence: 'readBuffStackCount_8' } },
-    { startFrame: 63, endFrame: 63, sequence: { $sequence: 'findTargets_21' } },
-    { startFrame: 2, endFrame: 3, sequence: { $sequence: 'ifElse_24' } },
-    { startFrame: 63, endFrame: 63, sequence: { $sequence: 'ifElse_30' } },
-    { startFrame: 64, endFrame: 64, sequence: { $sequence: 'ifElse_33' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_34' } },
-    { startFrame: 65, endFrame: 91, sequence: { $sequence: 'reachSkillOperableBoundary_35' } },
+    { startFrame: 63, endFrame: 63, sequence: { $sequence: 'findTargets_19' } },
+    { startFrame: 2, endFrame: 3, sequence: { $sequence: 'ifElse_22' } },
+    { startFrame: 63, endFrame: 63, sequence: { $sequence: 'ifElse_28' } },
+    { startFrame: 64, endFrame: 64, sequence: { $sequence: 'ifElse_31' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_32' } },
+    { startFrame: 65, endFrame: 91, sequence: { $sequence: 'reachSkillOperableBoundary_33' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'trigger',

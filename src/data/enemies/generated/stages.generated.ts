@@ -12,8 +12,9 @@ import { stages as group8 } from './stages.monument-indie_group_h05.generated';
 import { stages as group9 } from './stages.monument-indie_group_h06.generated';
 import { stages as group10 } from './stages.monument-indie_group_h07.generated';
 import { stages as group11 } from './stages.monument-indie_group_h08.generated';
-import { stages as group12 } from './stages.protocol-spaces.generated';
-import { stages as group13 } from './stages.war-echoes.generated';
+import { stages as group12 } from './stages.monument-indie_group_h09.generated';
+import { stages as group13 } from './stages.protocol-spaces.generated';
+import { stages as group14 } from './stages.war-echoes.generated';
 const stages: EnemyStageDefinition[] = [
   ...group0,
   ...group1,
@@ -29,6 +30,7 @@ const stages: EnemyStageDefinition[] = [
   ...group11,
   ...group12,
   ...group13,
+  ...group14,
 ];
 export const generatedEnemyStages: readonly EnemyStageDefinition[] = stages.sort(
   (a, b) => a.seriesId.localeCompare(b.seriesId) || a.sort - b.sort || a.id.localeCompare(b.id),

@@ -36,6 +36,7 @@ import { liino } from './liino.generated';
 import { si } from './si.generated';
 import { minghe } from './minghe.generated';
 import { purrchena } from './purrchena.generated';
+import { kay } from './kay.generated';
 
 export {
   endministrator,
@@ -72,6 +73,7 @@ export {
   si,
   minghe,
   purrchena,
+  kay,
 };
 
 /**
@@ -116,4 +118,5 @@ export const operatorDefinitions = [
   si, // chr_0036
   minghe, // chr_0037
   purrchena, // chr_0038
+  kay, // chr_0040
 ] as const;

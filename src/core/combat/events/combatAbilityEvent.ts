@@ -89,6 +89,7 @@ export type LifecycleAbilityEvent = CombatAbilityEvent<
   | 'ownerSwitchToCenter'
   | 'ownerSwitchToGuard'
   | 'ownerHpZero'
+  | 'beforeSetHpDirectly'
   | 'ownerDead'
   | 'hpChanged'
   | 'abilityEntitySpawned'
@@ -107,6 +108,7 @@ export function lifecycleAbilityEvent(
     case 'ownerSwitchToCenter':
     case 'ownerSwitchToGuard':
     case 'ownerHpZero':
+    case 'beforeSetHpDirectly':
     case 'ownerDead':
     case 'hpChanged':
     case 'abilityEntitySpawned':
@@ -266,7 +268,7 @@ export interface AbilityFinishedBuffPayload extends AbilityOriginPayload {
 }
 
 interface AbilityBuffLayerPayload extends AbilityOriginPayload {
-  readonly buff: EventBuffInstance;
+  readonly buff: EventBuffInstance | null;
   readonly buffId: string;
   readonly buffTags: readonly GameplayTag[];
   readonly blackboardValues?: Readonly<Record<string, string | number | null>>;
@@ -278,7 +280,7 @@ export interface AbilityConsumedBuffPayload extends AbilityBuffLayerPayload {
 
 /** 帧末事件保留首条上下文，只有本帧同 Buff、同施法的变化量累加。 */
 export interface AbilityBuffFrameEndPayload extends BuffFrameEndPayloadState {
-  readonly buff: EventBuffInstance;
+  readonly buff: EventBuffInstance | null;
 }
 
 /** OnBuffEnhanceChanged 在 Buff owner 上广播，不具有动作目标。 */
@@ -345,6 +347,7 @@ export interface AbilityEventPayloadMap {
   ownerSwitchToCenter: AbilityOriginPayload;
   ownerSwitchToGuard: AbilityOriginPayload;
   ownerHpZero: AbilityOriginPayload;
+  beforeSetHpDirectly: AbilityOriginPayload;
   ownerDead: AbilityOriginPayload;
   hpChanged: AbilityOriginPayload;
   abilityEntitySpawned: AbilityEntitySpawnedPayload;

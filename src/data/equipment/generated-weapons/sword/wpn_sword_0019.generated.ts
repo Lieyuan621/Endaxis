@@ -80,7 +80,7 @@ const definition = {
           dataNodes: {
             data_1: {
               type: 'boolean',
-              expression: { kind: 'eventSpGainMatch', sources: ['skill'] },
+              expression: { kind: 'eventSpGainMatch', sources: ['skill'], gainKinds: ['gain'] },
             },
           },
         },

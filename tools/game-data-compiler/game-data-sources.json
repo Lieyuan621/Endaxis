@@ -28,6 +28,9 @@
     "WikiEntryDataTable",
     "DungeonTable",
     "DungeonSeriesTable",
+    "HighDifficultySeriesTable",
+    "HighDifficultyBossGroupTable",
+    "HighDifficultyBossGameTable",
     "SeasonTowerGameGroupTable",
     "EnemyAbilityDescTable",
     "EnemyAttributeTemplateTable",
@@ -47,5 +50,8 @@
     "AbilityEntityData": "AbilityEntityData",
     "CharacterData": "CharacterData"
   },
-  "jsonFiles": ["GameplayConfig/GameplayTagPredefineTable.json"]
+  "jsonFiles": [
+    "GameplayConfig/GameplayTagPredefineTable.json",
+    "LevelData/indie_hdg035/indie_hdg035_lv_data_sub_battle.json"
+  ]
 }

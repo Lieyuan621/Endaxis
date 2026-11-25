@@ -9,6 +9,7 @@ import type { AbilityEvent } from '../../../../../packages/game-data-contract/sr
  */
 const NATIVE_ABILITY_EVENT_NAMES = {
   OnOwnerHpZero: 'ownerHpZero',
+  OnBeforeSetHpDirectly: 'beforeSetHpDirectly',
   OnOwnerDead: 'ownerDead',
   OnHpChange: 'hpChanged',
   OnCustomAbilityEvent: 'customAbilityEvent',

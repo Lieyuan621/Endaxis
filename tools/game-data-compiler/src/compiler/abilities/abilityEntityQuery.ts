@@ -310,7 +310,6 @@ function compileOwnerDistancePriorityFilter(
   | CompiledAbilityEntityDistanceFromOwnerSource
   | CompiledAbilityEntityDistanceFromMainCharacterSource {
   const commonFilterIsEmpty =
-    !source.onlyReserveMaxPriorityTargets &&
     source.buffFilter.checkType === 'Id' &&
     source.buffFilter.buffIds.length === 0 &&
     source.buffFilter.tagQuery.queryType === 'hasAny' &&
@@ -334,9 +333,8 @@ function compileOwnerDistancePriorityFilter(
       `${sourcePath}: unsupported PriorityFilter ${JSON.stringify(source.filterType)}`,
     );
   }
-  if (source.onlyReserveMaxPriorityTargets) {
-    throw new Error(`${sourcePath}: onlyReserveMaxPriorityTargets is unsupported`);
-  }
+  // 距离筛选的 priorWeight 恒为 0，且模拟中的能力实体等距；
+  // 只保留最高优先级不会剔除并列候选，数量上限仍需执行。
   if (!commonFilterIsEmpty) {
     throw new Error(`${sourcePath}: non-empty PriorityFilter buff filtering is unsupported`);
   }

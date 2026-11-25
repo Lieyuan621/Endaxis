@@ -4,7 +4,7 @@ import { EnemyLifecycle, type EnemyLifecycleTransition } from './enemyLifecycle'
 export interface EnemyLifeRuntimeHooks {
   readonly spawn: () => void;
   readonly healthCleared?: (previousHealth: number) => void;
-  readonly emit: (event: 'ownerHpZero' | 'ownerDead') => void;
+  readonly emit: (event: 'beforeSetHpDirectly' | 'ownerHpZero' | 'ownerDead') => void;
   /** 原生死亡完成后通知来源关联对象；回收及 Buff 清理不等同于死亡事件。 */
   readonly died: () => void;
   readonly transition: (event: EnemyLifecycleTransition) => void;
@@ -43,6 +43,7 @@ export class EnemyLifeRuntime {
     if (this.#dying || !this.lifecycle.alive) return;
     this.#dying = true;
     try {
+      if (this.vitals.health !== 0) this.hooks.emit('beforeSetHpDirectly');
       const previousHealth = this.vitals.health;
       this.vitals.setHealthToZero();
       if (previousHealth !== 0) this.hooks.healthCleared?.(previousHealth);

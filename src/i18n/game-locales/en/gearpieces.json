@@ -581,6 +581,12 @@
     "setName": "AIC Fieldwork",
     "defense": 48
   },
+  "item_equip_t4_parts_wuling00_body_07": {
+    "name": "AIC Fieldwork Mecha-Armor",
+    "slotType": "Armor",
+    "setName": "AIC Fieldwork",
+    "defense": 48
+  },
   "item_equip_t4_parts_wuling00_edc_01": {
     "name": "AIC Fieldwork Machete",
     "slotType": "Accessory",
@@ -617,6 +623,12 @@
     "setName": "AIC Fieldwork",
     "defense": 18
   },
+  "item_equip_t4_parts_wuling00_edc_07": {
+    "name": "AIC Fieldwork Mecha-Slab",
+    "slotType": "Accessory",
+    "setName": "AIC Fieldwork",
+    "defense": 18
+  },
   "item_equip_t4_parts_wuling00_hand_01": {
     "name": "AIC Fieldwork Gloves",
     "slotType": "Gloves",
@@ -649,6 +661,12 @@
   },
   "item_equip_t4_parts_wuling00_hand_06": {
     "name": "AIC Fieldwork CQB Gloves",
+    "slotType": "Gloves",
+    "setName": "AIC Fieldwork",
+    "defense": 36
+  },
+  "item_equip_t4_parts_wuling00_hand_07": {
+    "name": "AIC Fieldwork Mecha-Gloves",
     "slotType": "Gloves",
     "setName": "AIC Fieldwork",
     "defense": 36
@@ -725,6 +743,18 @@
     "setName": "",
     "defense": 56
   },
+  "item_equip_t4_parts_wuling02_body_05": {
+    "name": "Rift Trekker HVY Plate",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 56
+  },
+  "item_equip_t4_parts_wuling02_body_06": {
+    "name": "Rift Trekker LITE Armor",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 56
+  },
   "item_equip_t4_parts_wuling02_edc_01": {
     "name": "Rift Trekker Armor Slab",
     "slotType": "Accessory",
@@ -733,6 +763,12 @@
   },
   "item_equip_t4_parts_wuling02_edc_02": {
     "name": "Rift Trekker Silver Blade",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 21
+  },
+  "item_equip_t4_parts_wuling02_edc_03": {
+    "name": "Rift Trekker Rock Pick",
     "slotType": "Accessory",
     "setName": "",
     "defense": 21
@@ -757,6 +793,18 @@
   },
   "item_equip_t4_parts_wuling02_hand_04": {
     "name": "Rift Trekker Gauntlets",
+    "slotType": "Gloves",
+    "setName": "",
+    "defense": 42
+  },
+  "item_equip_t4_parts_wuling02_hand_05": {
+    "name": "Rift Trekker LITE Wraps",
+    "slotType": "Gloves",
+    "setName": "",
+    "defense": 42
+  },
+  "item_equip_t4_parts_wuling02_hand_06": {
+    "name": "Rift Trekker HVY Gauntlets",
     "slotType": "Gloves",
     "setName": "",
     "defense": 42
@@ -787,6 +835,18 @@
   },
   "item_equip_t4_suit_atb01_body_05": {
     "name": "Frontiers Protection Suit",
+    "slotType": "Armor",
+    "setName": "Frontiers",
+    "defense": 56
+  },
+  "item_equip_t4_suit_atb01_body_06": {
+    "name": "Frontiers HVY Steel Plate",
+    "slotType": "Armor",
+    "setName": "Frontiers",
+    "defense": 56
+  },
+  "item_equip_t4_suit_atb01_body_07": {
+    "name": "Frontiers LITE Armor",
     "slotType": "Armor",
     "setName": "Frontiers",
     "defense": 56
@@ -827,6 +887,18 @@
     "setName": "Frontiers",
     "defense": 21
   },
+  "item_equip_t4_suit_atb01_edc_07": {
+    "name": "Frontiers Composite RHA",
+    "slotType": "Accessory",
+    "setName": "Frontiers",
+    "defense": 21
+  },
+  "item_equip_t4_suit_atb01_edc_08": {
+    "name": "Frontiers Compressed Slab",
+    "slotType": "Accessory",
+    "setName": "Frontiers",
+    "defense": 21
+  },
   "item_equip_t4_suit_atb01_hand_01": {
     "name": "Frontiers Blight RES Gloves",
     "slotType": "Gloves",
@@ -841,6 +913,18 @@
   },
   "item_equip_t4_suit_atb01_hand_03": {
     "name": "Frontiers Fiber Gloves T1",
+    "slotType": "Gloves",
+    "setName": "Frontiers",
+    "defense": 42
+  },
+  "item_equip_t4_suit_atb01_hand_04": {
+    "name": "Frontiers HVY Gauntlets",
+    "slotType": "Gloves",
+    "setName": "Frontiers",
+    "defense": 42
+  },
+  "item_equip_t4_suit_atb01_hand_05": {
+    "name": "Frontiers LITE Gloves",
     "slotType": "Gloves",
     "setName": "Frontiers",
     "defense": 42
@@ -1651,6 +1735,12 @@
   },
   "item_equip_t4_suit_usp02_hand_05": {
     "name": "Eternal Xiranite Channeling Gloves",
+    "slotType": "Gloves",
+    "setName": "Eternal Xiranite",
+    "defense": 42
+  },
+  "item_equip_t4_suit_usp02_hand_06": {
+    "name": "Eternal Xiranite HVY Gauntlets",
     "slotType": "Gloves",
     "setName": "Eternal Xiranite",
     "defense": 42

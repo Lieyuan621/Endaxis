@@ -921,7 +921,7 @@ export const catcherChr_0020_meurs_normal_skillActionGraph = {
             source: { kind: 'source' },
             targets: { kind: 'source' },
             spGainKind: 'refund',
-            spGainSource: 'default',
+            spGainSource: 'skill',
           },
         },
         next: null,
@@ -979,7 +979,7 @@ export const catcherChr_0020_meurs_normal_skillActionGraph = {
           parameters: {
             targets: { kind: 'characterTeam', excludeOwner: false },
             source: { kind: 'source' },
-            inheritSourceSkillCastInfo: false,
+            inheritSourceSkillCastInfo: true,
             buffs: [
               {
                 buffId: 'buff_chr_0020_meurs_reduce_damage',

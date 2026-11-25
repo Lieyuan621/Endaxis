@@ -854,6 +854,14 @@ export function compileBuffLeafNode(
         extensions,
       );
       const step = projected.steps[0];
+      // 单次查询已证明结果无人读取且查询没有副作用时，重复查询也无需调度。
+      if (
+        projected.steps.length === 0 &&
+        (context.unconsumedTargetGroupKeys?.has(write.targetGroupKey) ||
+          context.presentationOnlyTargetGroupKeys?.has(write.targetGroupKey)) &&
+        !context.materializedTargetGroupKeys?.has(write.targetGroupKey)
+      )
+        return projected;
       if (
         projected.steps.length !== 1 ||
         step?.kind !== 'findTargets' ||
@@ -1979,7 +1987,11 @@ export function compileBuffLeafNode(
       write.priorityFilters.length === 0 &&
       write.shuffleTargets.length === 0 &&
       write.distanceValidators.length === 0 &&
-      ((write.center === 'InputTarget' && context.actionTargetTarget === 'enemy') ||
+      ((write.center === 'CurrentTarget' && context.actionTargetTarget === 'enemy') ||
+        (write.center === 'InputTarget' &&
+          (context.actionTargetTarget === 'enemy' ||
+            context.actionTargetTarget === 'eventSource' ||
+            context.actionTargetTarget === 'eventTarget')) ||
         (write.center === 'ActionSource' && context.actionSourceTarget === 'caster') ||
         (write.center === 'ActionOwner' &&
           (context.actionOwnerTarget === 'caster' ||
@@ -1987,10 +1999,11 @@ export function compileBuffLeafNode(
             context.actionOwnerTarget === 'currentAbilityEntity')) ||
         (write.center === 'ContextTarget' &&
           write.centerContextKey !== '' &&
-          context.staticZeroSpaceTargetGroupKeys?.has(write.centerContextKey) === true)) &&
-      (write.center === 'ContextTarget' || write.centerContextKey === '') &&
-      write.selectorOwner === 'ActionOwner' &&
-      write.selectorOwnerContextKey === ''
+          (context.staticZeroSpaceTargetGroupKeys?.has(write.centerContextKey) === true ||
+            partyTargetGroups.get(write.centerContextKey) === 'spatialPoint'))) &&
+      (write.selectorOwner === 'ActionOwner' ||
+        write.selectorOwner === 'MainCharacter' ||
+        (write.selectorOwner === 'ActionSource' && context.actionSourceTarget === 'caster'))
     ) {
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'spatialPoint');
@@ -1999,7 +2012,7 @@ export function compileBuffLeafNode(
       const origin =
         write.center === 'ContextTarget'
           ? { kind: 'context' as const, key: write.centerContextKey }
-          : write.center === 'InputTarget'
+          : write.center === 'InputTarget' || write.center === 'CurrentTarget'
             ? { kind: 'inputTarget' as const }
             : write.center === 'ActionSource'
               ? { kind: 'source' as const }

@@ -190,7 +190,13 @@ function normalizeLeaf(
   if (!Object.hasOwn(LEAF_FIELDS, type))
     throw new Error(`${path}: unsupported Unity action ${type}`);
   const data = requireRecord(reference.data, `${path}.data`);
-  requireExactFields(data, new Set([...META, ...LEAF_FIELDS[type]!]), `${path}.data`);
+  const fields = new Set([...META, ...LEAF_FIELDS[type]!]);
+  if (
+    type === 'Beyond.Gameplay.Core.Conditions.CheckObjectTypeMatch/Data' &&
+    'treatPartAsOriginalType' in data
+  )
+    fields.add('treatPartAsOriginalType');
+  requireExactFields(data, fields, `${path}.data`);
   if (data.priorityLevel !== 0)
     throw new Error(`${path}: only audited Default priority is supported`);
   const result: Record<string, unknown> = {

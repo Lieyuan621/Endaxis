@@ -50,6 +50,7 @@ const actionGroups: Readonly<Record<string, readonly string[]>> = {
     'refreshCurrentBuffAttributeModifiers',
     'readBuffStackCount',
     'dispelBuffs',
+    'triggerBuffConsumeEvent',
     'finishBuffsByTag',
     'finishBuffsById',
     'finishCurrentBuff',

@@ -96,6 +96,7 @@ const LEAF_ACTION_KINDS = [
   'forceSpellStatus',
   'applyPhysicalInfliction',
   'triggerSpellBurst',
+  'triggerBuffConsumeEvent',
   'triggerCustomAbilityEvent',
   'castSkillDuringAction',
   'gainFinisherSp',
@@ -560,6 +561,7 @@ export function compileLeafAction(
     case 'applyElementalInfliction':
     case 'applyPhysicalInfliction':
     case 'triggerSpellBurst':
+    case 'triggerBuffConsumeEvent':
     case 'triggerCustomAbilityEvent':
     case 'castSkillDuringAction':
     case 'gainFinisherSp':

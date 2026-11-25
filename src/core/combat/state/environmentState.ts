@@ -340,7 +340,7 @@ export interface StandardCombatEnvironmentState {
         {
           readonly event: 'buffAbsorbedFrameEnd' | 'buffConsumedFrameEnd';
           readonly payload: BuffFrameEndPayloadState;
-          readonly buff: BuffInstanceState<string>;
+          readonly buff: BuffInstanceState<string> | null;
         }
       >;
     }

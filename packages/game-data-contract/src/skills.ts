@@ -94,7 +94,7 @@ export interface AbilityEntityPassiveSkillDefinition {
   /** 能力实体启用时执行一次的动作序列。 */
   readonly enableSequence: ActionGraphReference;
   /** 实体存活期间监听的 Buff 加入事件响应。 */
-  readonly abilityEventResponses?: readonly AbilityEventResponse<'addedBuff'>[];
+  readonly abilityEventResponses?: readonly AbilityEventResponse<'addedBuff' | 'abilityEntitySelfFinished'>[];
 }
 
 /** 能力实体模板数值；原生可在生成时用实体黑板覆盖模板默认值。 */

@@ -9,6 +9,7 @@ import {
   collectSpawnerEnemies,
   findSpawnerBuffs,
   findSpawnerCount,
+  loadSceneEnemies,
   loadSceneSpawners,
 } from '../src/domains/enemy/spawnerAttributes.ts';
 
@@ -38,6 +39,7 @@ export async function generateEnemyStageCatalog(args: {
   outputDirectory: string;
   localeDirectory: string;
   spawnerDirectory?: string;
+  levelDirectory?: string;
   buffDirectory?: string;
   check: boolean;
 }) {
@@ -50,7 +52,7 @@ export async function generateEnemyStageCatalog(args: {
   }
   const [dungeons, series, enemies, displays, cn, en] = await Promise.all([
     table<StageSource>('DungeonTable'),
-    table<{ name: TextReference }>('DungeonSeriesTable'),
+    table<{ name: TextReference; sortId: number }>('DungeonSeriesTable'),
     table<EnemySource>('EnemyTable'),
     table<{ name: TextReference }>('EnemyDisplayInfoTable'),
     table<string>('I18nTextTable_CN'),
@@ -69,7 +71,33 @@ export async function generateEnemyStageCatalog(args: {
       Object.entries(group.stars).map(([rank, star]) => [star.gameId, Number(rank)] as const),
     ),
   );
+  const [monuments, bossGroups, bossGames] = await Promise.all([
+    table<{ hdId: string }>('HighDifficultySeriesTable'),
+    table<{ hdId: string; bossName: TextReference }>('HighDifficultyBossGroupTable'),
+    table<{ gameList: { gameId: string; difficultyName: TextReference; sortId: number }[] }>(
+      'HighDifficultyBossGameTable',
+    ),
+  ]);
+  // 同期可包含多个 DungeonSeries；以期内首个原生系列作为选择器入口。
+  const seriesByPeriod = new Map<string, string>();
+  for (const [id, row] of Object.entries(monuments).sort(
+    ([a], [b]) => (series[a]?.sortId ?? 0) - (series[b]?.sortId ?? 0) || a.localeCompare(b),
+  )) {
+    if (!seriesByPeriod.has(row.hdId)) seriesByPeriod.set(row.hdId, id);
+  }
+  const bossByStage = new Map(
+    Object.entries(bossGames).flatMap(([id, boss]) =>
+      boss.gameList.map(game => {
+        const group = bossGroups[id];
+        if (!group || monuments[dungeons[game.gameId]?.dungeonSeriesId ?? '']?.hdId !== group.hdId)
+          throw new Error(`${game.gameId}: invalid monument boss group ${id}`);
+        return [game.gameId, { groupId: id, name: group.bossName, game }] as const;
+      }),
+    ),
+  );
   function groupId(id: string, stage: StageSource): string {
+    const boss = bossByStage.get(id);
+    if (boss) return boss.groupId;
     if (stage.dungeonCategory === 'dungeon_seasontower') return towerGroupByStage.get(id) ?? id;
     if (stage.dungeonCategory === 'dungeon_highdifficulty' && stage.sceneId)
       return `${stage.dungeonSeriesId}:${stage.sceneId}`;
@@ -92,6 +120,8 @@ export async function generateEnemyStageCatalog(args: {
   }
   function groupName(id: string, stage: StageSource, seriesName: TextReference | undefined) {
     const key = groupId(id, stage);
+    const boss = bossByStage.get(id);
+    if (boss) return name(`group_${key}`, boss.name, id);
     const nameKey = name(
       `group_${key}`,
       stage.dungeonCategory === 'dungeon_resource' || stage.dungeonCategory === 'dungeon_bossrush'
@@ -142,13 +172,50 @@ export async function generateEnemyStageCatalog(args: {
       ),
     ),
   );
+  const placedByScene = new Map(
+    await Promise.all(
+      [...new Set([...bossByStage.keys()].map(id => dungeons[id]!.sceneId!))].map(
+        async scene =>
+          [
+            scene,
+            args.levelDirectory ? await loadSceneEnemies(args.levelDirectory, scene) : [],
+          ] as const,
+      ),
+    ),
+  );
   // 合约展示表省略了部分实际刷怪种类；补齐后沿用统一的属性与数量解析。
-  for (const stage of Object.values(dungeons)) {
-    if (stage.dungeonCategory !== 'dungeon_contract') continue;
+  for (const [id, stage] of Object.entries(dungeons)) {
+    if (stage.dungeonCategory !== 'dungeon_contract' && !bossByStage.has(id)) continue;
     const roster = collectSpawnerEnemies(sceneSpawners.get(stage.sceneId ?? '') ?? []);
-    if (roster.length) {
+    if (stage.dungeonCategory === 'dungeon_contract' && roster.length) {
       stage.enemyIds = roster.map(entry => entry.enemyId);
       stage.enemyLevels = roster.map(entry => entry.level);
+    }
+    if (bossByStage.has(id)) {
+      // Boss 展示表列的是模板；同场景、同等级的刷怪库或放置实例确定关卡变种。
+      const spawned = [
+        ...roster,
+        ...(placedByScene.get(stage.sceneId!) ?? []).map(e => ({
+          enemyId: e.entityDataIdKey,
+          level: e.level,
+        })),
+      ];
+      stage.enemyIds = stage.enemyIds.map((displayId, i) => {
+        const ids = new Set(
+          spawned
+            .filter(
+              e =>
+                e.level === stage.enemyLevels[i] &&
+                enemies[e.enemyId]?.templateId === enemies[displayId]?.templateId,
+            )
+            .map(e => e.enemyId),
+        );
+        if (ids.size !== 1)
+          throw new Error(
+            `${id}: expected one spawned identity for ${displayId} at level ${stage.enemyLevels[i]}, found ${ids.size}`,
+          );
+        return [...ids][0]!;
+      });
     }
   }
   const buffSources = new Map<string, Record<string, unknown>>();
@@ -162,6 +229,8 @@ export async function generateEnemyStageCatalog(args: {
         ),
       ),
     );
+    for (const scene of placedByScene.values())
+      for (const enemy of scene) for (const buff of enemy.buffs) ids.add(buff.buffId);
     for (const id of ids)
       buffSources.set(
         id,
@@ -182,18 +251,25 @@ export async function generateEnemyStageCatalog(args: {
         ].includes(stage.dungeonCategory)
       )
         return [];
-      const group = series[stage.dungeonSeriesId];
+      const seriesId =
+        seriesByPeriod.get(monuments[stage.dungeonSeriesId]?.hdId ?? '') ?? stage.dungeonSeriesId;
+      const group = series[seriesId];
+      const boss = bossByStage.get(id);
       return [
         {
           id,
           groupId: groupId(id, stage),
-          difficultyOrder: towerDifficulty.get(id) ?? stage.sortId,
+          difficultyOrder: boss?.game.sortId ?? towerDifficulty.get(id) ?? stage.sortId,
           groupNameKey: groupName(id, stage, group?.name),
-          seriesId: stage.dungeonSeriesId,
+          seriesId,
           nameKey: name(`stage_${id}`, stageName(id, stage), id),
-          difficultyNameKey: name(`difficulty_${id}`, stage.dungeonLevelDesc, ''),
+          difficultyNameKey: name(
+            `difficulty_${id}`,
+            boss?.game.difficultyName ?? stage.dungeonLevelDesc,
+            '',
+          ),
           seriesNameKey: name(
-            `series_${stage.dungeonSeriesId}`,
+            `series_${seriesId}`,
             group?.name?.id || group?.name?.text ? group.name : stage.dungeonName,
             stage.dungeonSeriesId,
           ),
@@ -203,12 +279,17 @@ export async function generateEnemyStageCatalog(args: {
             if (!enemy) throw new Error(`${id}: missing enemy ${enemyId}`);
             const base = enemies[enemy.templateId];
             if (!base) throw new Error(`${id}: missing base enemy ${enemy.templateId}`);
-            const variants = findSpawnerBuffs(
-              sceneSpawners.get(stage.sceneId ?? '') ?? [],
-              stage.enemyIds,
-              enemyId,
-              stage.enemyLevels[index] ?? 0,
+            const placed = (placedByScene.get(stage.sceneId ?? '') ?? []).filter(
+              e => e.entityDataIdKey === enemyId && e.level === stage.enemyLevels[index],
             );
+            const variants = placed.length
+              ? [...new Map(placed.map(e => [JSON.stringify(e.buffs), e.buffs])).values()]
+              : findSpawnerBuffs(
+                  sceneSpawners.get(stage.sceneId ?? '') ?? [],
+                  stage.enemyIds,
+                  enemyId,
+                  stage.enemyLevels[index] ?? 0,
+                );
             return variants.map(buffs => {
               const signature = createHash('sha256')
                 .update(JSON.stringify(buffs))
@@ -242,14 +323,16 @@ export async function generateEnemyStageCatalog(args: {
                   templateId: enemy.templateId.replaceAll('_', '-'),
                 },
                 level: stage.enemyLevels[index] ?? null,
-                count: findSpawnerCount(
-                  sceneSpawners.get(stage.sceneId ?? '') ?? [],
-                  stage.enemyIds,
-                  stage.enemyLevels,
-                  enemyId,
-                  stage.enemyLevels[index] ?? 0,
-                  buffs,
-                ),
+                count: placed.length
+                  ? placed.filter(e => JSON.stringify(e.buffs) === JSON.stringify(buffs)).length
+                  : findSpawnerCount(
+                      sceneSpawners.get(stage.sceneId ?? '') ?? [],
+                      stage.enemyIds,
+                      stage.enemyLevels,
+                      enemyId,
+                      stage.enemyLevels[index] ?? 0,
+                      buffs,
+                    ),
                 nameKey: name(`enemy_${enemyId}`, displays[enemyId]?.name, ''),
                 definitionId: enemyId.replaceAll('_', '-'),
               };
@@ -274,7 +357,7 @@ export async function generateEnemyStageCatalog(args: {
   }
   const groups = new Map<string, typeof stages>();
   for (const stage of stages) {
-    const file = stageFileKey(stage.id, dungeons[stage.id]!);
+    const file = stageFileKey(stage.id, stage.seriesId, dungeons[stage.id]!.dungeonCategory);
     const entries = groups.get(file) ?? [];
     entries.push(stage);
     groups.set(file, entries);
@@ -330,23 +413,21 @@ export async function generateEnemyStageCatalog(args: {
 }
 
 /** 分类来自原生关卡类别；丰碑按系列、合约按关卡身份分别发布。 */
-function stageFileKey(id: string, stage: StageSource): string {
-  switch (stage.dungeonCategory) {
+function stageFileKey(id: string, seriesId: string, category: string): string {
+  switch (category) {
     case 'dungeon_resource':
     case 'dungeon_ss':
       return 'protocol-spaces';
     case 'dungeon_bossrush':
-      return stage.dungeonSeriesId.includes('_minibossrush')
-        ? 'danger-fragments'
-        : 'danger-recurrence';
+      return seriesId.includes('_minibossrush') ? 'danger-fragments' : 'danger-recurrence';
     case 'dungeon_highdifficulty':
-      return `monument-${stage.dungeonSeriesId}`;
+      return `monument-${seriesId}`;
     case 'dungeon_contract':
       return `contract-${id}`;
     case 'dungeon_seasontower':
       return 'war-echoes';
     default:
-      throw new Error(`unsupported stage category '${stage.dungeonCategory}'`);
+      throw new Error(`unsupported stage category '${category}'`);
   }
 }
 
@@ -356,6 +437,9 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
   console.log(
     await generateEnemyStageCatalog({
       tablesDirectory: resolve(process.argv[2]),
+      spawnerDirectory: resolve(process.argv[2], '../SpawnerConfig'),
+      levelDirectory: resolve(process.argv[2], '../LevelData'),
+      buffDirectory: resolve(process.argv[2], '../BuffData'),
       outputDirectory: resolve('src/data/enemies/generated'),
       localeDirectory: resolve('src/i18n/game-locales'),
       check: process.argv.includes('--check'),

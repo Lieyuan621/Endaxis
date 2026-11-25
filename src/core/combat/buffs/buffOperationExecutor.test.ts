@@ -3231,6 +3231,43 @@ describe('BuffOperationExecutor', () => {
     expect(applied).toEqual([expect.objectContaining({ sourceId: 'ability-entity:7' })]);
   });
 
+  it('延时 Buff 保存发起动作的黑板，显式赋值覆盖同名快照', () => {
+    const captured: BuffApplicationRequest[] = [];
+    const target = Object.assign(new CombatBuffContainer('operator', new CombatAttributeSet()), {
+      apply: (request: BuffApplicationRequest) => {
+        captured.push(request);
+        return true;
+      },
+    });
+    const executor = createExecutor({
+      sourceId: 'operator',
+      resolveTarget: () => target,
+      delegate,
+    });
+    const blackboard = new ActionBlackboard({ atk_scale: 2, label: 'skill' });
+    blackboard.setArtsIntensityFactor('atk_scale', 1.5);
+    executor.execute(
+      {
+        kind: 'applyBuff',
+        parameters: {
+          targets: { kind: 'fixed', target: 'enemy' },
+          source: { kind: 'fixed', target: 'enemy' },
+          buffs: [{ buffId: 'delayed', stringBlackboardAssignments: { label: 'override' } }],
+          delayedTriggerInputKey: 'delayed_input',
+        },
+      },
+      { blackboard, actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'original' }) },
+    );
+    blackboard.assignDynamic('atk_scale', 0);
+    expect(captured[0]).toMatchObject({
+      blackboardValues: { atk_scale: 2, label: 'override' },
+      blackboardArtsIntensityFactors: { atk_scale: { multiplier: 1.5 } },
+    });
+    expect(captured[0]?.inheritedTargetGroups?.groups.get('delayed_input')).toEqual([
+      { kind: 'enemy', enemyId: 'original' },
+    ]);
+  });
+
   it('按目标、次数、Buff 条目顺序施加，每项动态读取而次数只读取一次', () => {
     const blackboard = new ActionBlackboard({ count: 1.5, value: 0 });
     const targetContext = new RuntimeTargetContext();

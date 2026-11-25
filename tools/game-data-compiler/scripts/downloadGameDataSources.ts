@@ -381,7 +381,10 @@ function requireSafeName(value: string, sourcePath: string): void {
 
 function requireSafeCollectionFile(value: string, sourcePath: string): string {
   const parsed = requireNonEmptyString(value, sourcePath).replace(/\\/g, '/');
-  if (!/^[A-Za-z0-9_]+\/[A-Za-z0-9_.-]+\.json$/.test(parsed)) {
+  if (
+    !/^[A-Za-z0-9_]+\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.json$/.test(parsed) ||
+    parsed.includes('..')
+  ) {
     throw new Error(`${sourcePath}: expected collection/file.json`);
   }
   return parsed;

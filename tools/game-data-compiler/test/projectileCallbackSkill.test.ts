@@ -169,6 +169,24 @@ it('未支持的投射物来源不能默认为 Source', () => {
   expect(() => projectFixture(input)).toThrow('projectile source must resolve to Source or Owner');
 });
 
+it('场景无额外可命中物时仍向常规目标发射', () => {
+  const input = reachInput();
+  input.launch = { ...input.launch, alsoLaunchToHittableTarget: true };
+  expect(
+    projectFixture({
+      ...input,
+      projectionContext: { ...input.projectionContext, fixedHittableTargetCount: 0 },
+    }).steps[0]?.kind,
+  ).toBe('launchProjectile');
+  for (const count of [undefined, 1])
+    expect(() =>
+      projectFixture({
+        ...input,
+        projectionContext: { ...input.projectionContext, fixedHittableTargetCount: count },
+      }),
+    ).toThrow('additional projectile launches');
+});
+
 it('Source 来源不读取未启用的目标组名', () => {
   const input = reachInput();
   const expected = projectFixture(input);

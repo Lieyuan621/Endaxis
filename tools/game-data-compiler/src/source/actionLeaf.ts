@@ -47,6 +47,7 @@ import {
   type BuffHoldActionSource,
   type BuffIgniteActionSource,
   type BuffInheritanceActionSource,
+  DELAY_TRIGGER_INPUT_KEY,
 } from './buffActions.ts';
 import {
   parseBuffBlackboardReadActionSource,
@@ -464,6 +465,7 @@ const REFERENCE_CLOSURE_ACTION_NAMES = new Set([
   'ObtainUspInNormalSkill',
   'SetHpFloor',
   'CreateBuffAction',
+  'DelayTriggerAction',
   'CreateBuffAttachingSkill',
   'InheritBuffAction',
   'CreateGlobalBuffAction',
@@ -678,6 +680,13 @@ export type KnownNativeActionLeafSource =
         AirborneActionSource | KnockDownActionSource | PhysicalInflictionActionSource;
     }
   | { readonly family: 'spellBurstEvent'; readonly action: TriggerSpellBurstEventSource }
+  | {
+      readonly family: 'buffConsumeEvent';
+      readonly source: TargetReferenceSource;
+      readonly owner: TargetReferenceSource;
+      readonly buffId: string;
+      readonly layers: ScalarSource;
+    }
   | { readonly family: 'customAbilityEvent'; readonly action: TriggerCustomAbilityEventSource }
   | { readonly family: 'aiMarker'; readonly action: AiMarkerActionSource }
   | {
@@ -859,6 +868,32 @@ export function tryParseKnownNativeActionLeafSource(
           target: parseTargetReferenceSource(action.target, `${path}.target`),
           query: parseTagQuerySource(action.immuneQuery, `${path}.immuneQuery`),
         },
+      };
+    case 'TriggerFakeBuffConsumeEvent':
+      requireExactFields(
+        action,
+        new Set([
+          '$type',
+          'isEnable',
+          'priorityLevel',
+          'priorityOffset',
+          'serverActionIndex',
+          'eventSource',
+          'buffOwner',
+          'buffId',
+          'layerCount',
+          'eventType',
+        ]),
+        path,
+      );
+      if (action.eventType !== 'Consume')
+        throw new Error(`${path}.eventType: unsupported Buff event '${action.eventType}'`);
+      return {
+        family: 'buffConsumeEvent',
+        source: parseTargetReferenceSource(action.eventSource, `${path}.eventSource`),
+        owner: parseTargetReferenceSource(action.buffOwner, `${path}.buffOwner`),
+        buffId: requireNonEmptyString(action.buffId, `${path}.buffId`),
+        layers: parseScalarSource(action.layerCount, `${path}.layerCount`, inheritedBlackboard),
       };
     case 'TriggerCustomAbilityEvent':
       return {
@@ -1434,7 +1469,7 @@ export function tryParseKnownNativeActionLeafSource(
           'useRatio',
           'floorValue',
           'floorRatio',
-          'actionAfterSet',
+          ...('actionAfterSet' in action ? ['actionAfterSet'] : []),
         ]),
         path,
       );
@@ -1453,7 +1488,13 @@ export function tryParseKnownNativeActionLeafSource(
             inheritedBlackboard,
           ),
           actionAfterSet: parseNativeSequenceSource(
-            action.actionAfterSet,
+            'actionAfterSet' in action
+              ? action.actionAfterSet
+              : {
+                  actionData: [],
+                  onlyExecuteWhenSourceIsMainChar: false,
+                  onlyExecuteWhenSourceIsGuard: false,
+                },
             `${path}.actionAfterSet`,
             inheritedBlackboard,
             (leaf, leafPath) =>
@@ -1753,9 +1794,15 @@ export function tryParseKnownNativeActionLeafSource(
         action: parseSkillSlotReplacementActionSource(value, path, inheritedBlackboard),
       };
     case 'CreateBuffAction':
+    case 'DelayTriggerAction':
       return {
         family: 'buffApplication',
-        action: parseBuffApplicationActionSource(value, path, inheritedBlackboard),
+        action: {
+          ...parseBuffApplicationActionSource(value, path, inheritedBlackboard),
+          ...(name === 'DelayTriggerAction'
+            ? { delayedTriggerInputKey: DELAY_TRIGGER_INPUT_KEY }
+            : {}),
+        },
       };
     case 'CreateBuffAttachingSkill':
       return {

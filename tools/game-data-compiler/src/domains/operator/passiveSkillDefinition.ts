@@ -13,6 +13,8 @@ import {
 import { isPresentationOnlyActionSequence } from '../../compiler/skills/skillPresentationTargets.ts';
 import { compileCombatActionSequenceSource } from '../../compiler/buffs/buffRuntimeProjection.ts';
 import { collectNativeActionNodes } from '../../source/controlFlow.ts';
+import { collectMaterializedSequenceTargetGroups } from '../../compiler/optimization/nativeTargetUsage.ts';
+import { collectRandomPointTargetGroupKeys } from '../../compiler/optimization/targetGroupCardinalityAnalysis.ts';
 import { projectAbilityEvent } from '../../compiler/abilities/abilityEventProjection.ts';
 import { isOperatorPassiveAbilityEvent } from '../../../../../src/core/game-data/definitionGuards.ts';
 import type {
@@ -25,7 +27,10 @@ import {
 } from '../../compiler/actions/actionGraphBuilder.ts';
 import { collectCompiledBuffIds } from '../../compiler/references/compiledReferences.ts';
 import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
-import type { CombatActionProjectionContextSource } from '../../compiler/combatProjectionCommon.ts';
+import type {
+  CombatActionProjectionContextSource,
+  CombatActionProjectionExtensionsSource,
+} from '../../compiler/combatProjectionCommon.ts';
 
 interface PlannedPassiveSkill {
   readonly graph: ActionGraphBuilder<CompiledBuffStepSource>;
@@ -61,13 +66,20 @@ export function compileOperatorUpgradePassiveSkills(
   definitions: readonly CompiledPassiveSkillDefinitionSource[],
   gameplayTagRegistry?: GameplayTagRegistry,
   predefinedTagQueries?: CombatActionProjectionContextSource['predefinedTagQueries'],
+  extensions?: CombatActionProjectionExtensionsSource,
 ): CompiledOperatorUpgradePassiveSkillsSource {
   const definitionById = new Map(definitions.map(item => [item.skillId, item]));
   const levelPlans = effectIds.map(effectId =>
     requests
       .filter(request => request.originId === effectId)
       .map(request =>
-        planPassiveSkill(request, definitionById, gameplayTagRegistry, predefinedTagQueries),
+        planPassiveSkill(
+          request,
+          definitionById,
+          gameplayTagRegistry,
+          predefinedTagQueries,
+          extensions,
+        ),
       ),
   );
   const identities = levelPlans.map(plan =>
@@ -225,6 +237,7 @@ function planPassiveSkill(
   definitions: ReadonlyMap<string, CompiledPassiveSkillDefinitionSource>,
   gameplayTagRegistry?: GameplayTagRegistry,
   predefinedTagQueries?: CombatActionProjectionContextSource['predefinedTagQueries'],
+  extensions?: CombatActionProjectionExtensionsSource,
 ): PlannedPassiveSkill {
   const graph = createActionGraphBuilder<CompiledBuffStepSource>();
   if (request.activeConditionIds?.length) {
@@ -245,8 +258,20 @@ function planPassiveSkill(
     throw new Error(`${request.sourcePath}: unsupported operator passive SkillData program`);
   }
   const blackboard = resolvePassiveSkillDefinitionBlackboard(request, compiled);
+  const sequences = skill.actionGraph.actionGroup.passiveEvents.flatMap(event => event.actions);
+  const targetWrites = sequences
+    .flatMap(collectNativeActionNodes)
+    .flatMap(node =>
+      node.metadata.enabled && node.body.kind === 'leaf' && node.body.value.family === 'targetGroup'
+        ? [node.body.value.action]
+        : [],
+    );
   const passiveEventContext = {
     graph,
+    materializedTargetGroupKeys: collectMaterializedSequenceTargetGroups(sequences),
+    randomPointTargetGroupKeys: collectRandomPointTargetGroupKeys(
+      Map.groupBy(targetWrites, write => write.targetGroupKey),
+    ),
     gameplayTagRegistry,
     predefinedTagQueries,
     actionOwnerTarget: 'caster' as const,
@@ -258,7 +283,7 @@ function planPassiveSkill(
     .filter(event => event.abilityEvent === 'OnCharDeckAttrChanged')
     .flatMap(event =>
       event.actions.map(sequence =>
-        compileCombatActionSequenceSource(sequence, passiveEventContext),
+        compileCombatActionSequenceSource(sequence, passiveEventContext, undefined, extensions),
       ),
     );
   const abilityEventResponses: NonNullable<
@@ -269,6 +294,7 @@ function planPassiveSkill(
       event.abilityEvent === 'OnAbilityEntityFinished' ||
       event.abilityEvent === 'OnAbilityEntitySpawned' ||
       event.abilityEvent === 'OnAddedBuff' ||
+      event.abilityEvent === 'OnSkillEnd' ||
       event.abilityEvent === 'OnObtainAtb' ||
       event.abilityEvent === 'OnReceiveHeal'
     ) {
@@ -286,10 +312,15 @@ function planPassiveSkill(
         abilityEventResponses.push({
           event: projected,
           priority: 0,
-          sequence: compileCombatActionSequenceSource(sequence, {
-            ...passiveEventContext,
-            actionTargetTarget: projected === 'addedBuff' ? 'eventSource' : 'eventTarget',
-          }),
+          sequence: compileCombatActionSequenceSource(
+            sequence,
+            {
+              ...passiveEventContext,
+              actionTargetTarget: projected === 'addedBuff' ? 'eventSource' : 'eventTarget',
+            },
+            undefined,
+            extensions,
+          ),
         });
       }
       return [];

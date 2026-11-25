@@ -266,7 +266,7 @@ function compileAbilityEntityPassiveSkill(
   >[number][] = [];
   for (const event of skill.actionGraph.actionGroup.passiveEvents) {
     const projected = projectAbilityEvent(event.abilityEvent, sourcePath);
-    if (projected !== 'addedBuff') {
+    if (projected !== 'addedBuff' && projected !== 'abilityEntitySelfFinished') {
       throw new Error(
         `${sourcePath}: unsupported AbilityEntity passive event ${JSON.stringify(event.abilityEvent)}`,
       );
@@ -281,7 +281,7 @@ function compileAbilityEntityPassiveSkill(
         }
       }
       abilityEventResponses.push({
-        event: 'addedBuff',
+        event: projected,
         priority: 0,
         sequence: compileCombatActionSequenceSource(sequence, context, visualOnlyIds, extensions),
       });

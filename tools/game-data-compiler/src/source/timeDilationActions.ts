@@ -136,10 +136,15 @@ export function parseTimeDilationActionSource(
       'effectTargets',
       'useTimeScaleForSkillCdTick',
       'influenceSkillCdTime',
+      ...('countAsControlled' in action ? ['countAsControlled'] : []),
     ]),
     path,
   );
   const layer = requireString(action.layer, `${path}.layer`);
+  if ('countAsControlled' in action) {
+    // 原生标记此时间膨胀属于受控状态；时间倍率仍由 layer、slot 和曲线决定。
+    requireBoolean(action.countAsControlled, `${path}.countAsControlled`);
+  }
   if (layer !== 'Global' && layer !== 'Entity')
     throw new Error(`${path}.layer: unsupported value ${JSON.stringify(layer)}`);
   return {

@@ -145,15 +145,15 @@
   },
   "102801": {
     "name": "Team: Weaken",
-    "description": "Operator Attributes <color=#cc9900>-{1-attr:0%}</color>/-{@102802@1-attr:0%}/-{@102803@1-attr:0%}."
+    "description": "Main Attributes <color=#cc9900>-{1-attr:0%}</color>/-{@102802@1-attr:0%}/-{@102803@1-attr:0%}."
   },
   "102802": {
     "name": "Team: Weaken",
-    "description": "Operator Attributes -{@102801@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>/-{@102803@1-attr:0%}."
+    "description": "Main Attributes -{@102801@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>/-{@102803@1-attr:0%}."
   },
   "102803": {
     "name": "Team: Weaken",
-    "description": "Operator Attributes -{@102801@1-attr:0%}/-{@102802@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>."
+    "description": "Main Attributes -{@102801@1-attr:0%}/-{@102802@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>."
   },
   "103102": {
     "name": "Edit: Encasement",

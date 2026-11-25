@@ -359,8 +359,8 @@ function validateAbilityEntityPassiveSkill(
     const responsePath = `${path}.abilityEventResponses[${index}]`;
     const response = asRecord(value, responsePath, out);
     if (response === null) return;
-    if (response.event !== 'addedBuff') {
-      push(out, `${responsePath}.event`, "expected 'addedBuff'");
+    if (response.event !== 'addedBuff' && response.event !== 'abilityEntitySelfFinished') {
+      push(out, `${responsePath}.event`, "expected 'addedBuff' or 'abilityEntitySelfFinished'");
     }
     requireInteger(response, 'priority', responsePath, out);
     validateActionGraphReference(response.sequence, `${responsePath}.sequence`, out);
@@ -2055,6 +2055,8 @@ function validateCombatStep(
       }
       break;
     case 'once':
+      if (parameters.delayedTriggerInputKey !== undefined)
+        requireString(parameters, 'delayedTriggerInputKey', `${path}.parameters`, out);
       break;
     case 'repeatEachTick': {
       if (
@@ -2194,6 +2196,12 @@ function validateCombatStep(
         `${path}.parameters.activeDurationSeconds`,
         out,
       );
+      break;
+    case 'triggerBuffConsumeEvent':
+      requireString(parameters, 'buffId', `${path}.parameters`, out);
+      validateTargetQuery(parameters.source, `${path}.parameters.source`, out);
+      validateTargetQuery(parameters.owner, `${path}.parameters.owner`, out);
+      validateActionValueOperand(parameters.layers, `${path}.parameters.layers`, out);
       break;
     case 'triggerCustomAbilityEvent':
       requireString(parameters, 'eventName', `${path}.parameters`, out);

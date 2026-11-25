@@ -2906,6 +2906,7 @@ export const laevatainChr_0016_laevat_ultimate_skillActionGraph = {
 
 export const laevatainChr_0016_laevat_ultimate_skill: SkillDefinition = {
   actionGraph: laevatainChr_0016_laevat_ultimate_skillActionGraph,
+  skillTags: ['Skill/Character/Common/StartCdOnBuffEnd'],
   key: 'chr_0016_laevat_ultimate_skill',
   element: 'heat',
   blackboard: {},

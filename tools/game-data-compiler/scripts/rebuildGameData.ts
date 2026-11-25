@@ -319,6 +319,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
               buffDirectory: path.join(sourceRoot, 'BuffData'),
               skillDirectory: path.join(sourceRoot, 'SkillData'),
               spawnerDirectory: path.join(sourceRoot, 'SpawnerConfig'),
+              levelDirectory: path.join(sourceRoot, 'LevelData'),
               check: false,
             };
             const generated = await generateEnemyDefinitions(generationInput);

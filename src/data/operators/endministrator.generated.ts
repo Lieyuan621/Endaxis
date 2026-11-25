@@ -157,30 +157,17 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
         },
         next: 'dealDamage_18',
       },
-      dealDamage_20: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            attacker: 'actionSource',
-            target: { kind: 'context', key: 'smart_target' },
-            damageType: 'physical',
-            attackScale: { kind: 'constant', value: 0 },
-            tags: ['canBreakWeakness', 'comboSkill'],
-          },
-        },
-        next: 'applyBuff_19',
-      },
-      ifElse_21: {
+      ifElse_20: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_11' },
-          whenTrue: { $sequence: 'dealDamage_20' },
+          whenTrue: { $sequence: 'applyBuff_19' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_22: {
+      startTimeDilation_21: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -203,7 +190,7 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_24: {
+      startTimeDilation_23: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -249,17 +236,17 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_25: {
+      ifElse_24: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_12' },
           whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'startTimeDilation_24' },
+          whenFalse: { $sequence: 'startTimeDilation_23' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_26: {
+      reachSkillOperableBoundary_25: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0003_endminf_normal_skill'] },
@@ -370,10 +357,10 @@ export const endministratorChr_0003_endminf_combo_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 88, sequence: { $sequence: 'ifElse_12' } },
-    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'ifElse_21' } },
-    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'startTimeDilation_22' } },
-    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'ifElse_25' } },
-    { startFrame: 23, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_26' } },
+    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'ifElse_20' } },
+    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'startTimeDilation_21' } },
+    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'ifElse_24' } },
+    { startFrame: 23, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_25' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'input',

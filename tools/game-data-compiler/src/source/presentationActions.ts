@@ -1118,10 +1118,20 @@ export function parseAnimatedCameraActionSource(
       'checkCollisionOnEnd',
       'checkCollisionTime',
       'endByInput',
+      ...('useControllerLifetimeImpulse' in action
+        ? ['useControllerLifetimeImpulse', 'controllerLifetimeImpulseDefinition']
+        : []),
     ]),
     path,
   );
   requireString(action.cameraAnimKey, `${path}.cameraAnimKey`);
+  if ('useControllerLifetimeImpulse' in action) {
+    requireBoolean(action.useControllerLifetimeImpulse, `${path}.useControllerLifetimeImpulse`);
+    requireRecord(
+      action.controllerLifetimeImpulseDefinition,
+      `${path}.controllerLifetimeImpulseDefinition`,
+    );
+  }
   for (const key of [
     'duration',
     'outRelativeHorizontalAngle',
@@ -1721,6 +1731,9 @@ export function parseCameraPresentationActionSource(
       ? [
           ...ACTION_META_FIELDS,
           'realCameraShake2D',
+          ...(Object.hasOwn(action, 'onlyWhenActionSourceIsMainChar')
+            ? ['onlyWhenActionSourceIsMainChar']
+            : []),
           'targetSettings',
           'releaseWhenActionEnds',
           '_mountPoint',
@@ -1838,10 +1851,13 @@ export function parseEffectActionSource(
       'isCreateWithSourceModelActive',
       ...('alignSpawnPhaseToTimeline' in action ? ['alignSpawnPhaseToTimeline'] : []),
       ...('spawnPhaseAlignFrame' in action ? ['spawnPhaseAlignFrame'] : []),
+      ...('stopPostProcessWhenHidden' in action ? ['stopPostProcessWhenHidden'] : []),
     ]),
     path,
   );
   const config = requireRecord(action.effectActionCfg, `${path}.effectActionCfg`);
+  if ('stopPostProcessWhenHidden' in action)
+    requireBoolean(action.stopPostProcessWhenHidden, `${path}.stopPostProcessWhenHidden`);
   // 1.6.3 新增特效相位对齐；本批资源均未启用，不把开启形态默认为无影响。
   if ('alignSpawnPhaseToTimeline' in action || 'spawnPhaseAlignFrame' in action) {
     const align = requireBoolean(

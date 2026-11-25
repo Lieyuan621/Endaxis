@@ -1345,6 +1345,7 @@ export class CombatRuntimeAssembly {
           this.#restorePendingCastFactories(operator, core, options);
         },
         createSourceBindings: operator => ({
+          projectileRuntime: this.#projectileRuntimeDependencies(operator.operatorId),
           createEquipmentExecutor: context =>
             this.#createEquipmentEventOperationChain(operator, context, options),
           registerEquipmentAbilityEventAction: options.registerEquipmentAbilityEventAction,
@@ -2032,6 +2033,7 @@ export class CombatRuntimeAssembly {
             options,
           );
           const ownerContext = {
+            ...this.#projectileRuntimeDependencies(operator.operatorId),
             blackboard,
             actionOwnerId: operator.operatorId,
             actionSourceId: operator.operatorId,
@@ -2046,6 +2048,8 @@ export class CombatRuntimeAssembly {
                 throw new Error(`passive '${passive.key}' requires ability event registration`);
               return register(operator.operatorId, event, priority, handle, subscriptions);
             },
+            undefined,
+            operator.operatorId,
           );
           this.#passiveAbilityEvents.push(eventHost);
           let passiveStates = this.#operatorPassiveStates.get(operator.operatorId);
@@ -4871,6 +4875,7 @@ export class CombatRuntimeAssembly {
       resolveInflictionTarget: target => this.#resolveInflictionTarget(target),
       queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
       isEntityAvailable: target => this.#queryEntityLifeState(target) !== undefined,
+      publishBuffConsumeEvent: event => this.#publishBuffConsumption('BuffConsumed', event),
       triggerCharacterInflictionEvent: (ownerId, sourceId, event, element) =>
         this.#publishCharacterInfliction(ownerId, sourceId, event, element),
       isCharacterTarget: id => this.#operators.has(id),
@@ -5246,6 +5251,7 @@ export class CombatRuntimeAssembly {
       resolveInflictionTarget: target => this.#resolveInflictionTarget(target),
       queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
       isEntityAvailable: target => this.#queryEntityLifeState(target) !== undefined,
+      publishBuffConsumeEvent: event => this.#publishBuffConsumption('BuffConsumed', event),
       triggerCharacterInflictionEvent: (ownerId, sourceId, event, element) =>
         this.#publishCharacterInfliction(ownerId, sourceId, event, element),
       isCharacterTarget: id => this.#operators.has(id),
@@ -6484,7 +6490,7 @@ export class CombatRuntimeAssembly {
   }
 
   /** 普通实体与能力实体共用 Buff 生命周期接线，发布与兼容订阅只能维护一份。 */
-  #recordBuffConsumption(
+  #publishBuffConsumption(
     eventName: 'BuffConsumed' | 'BuffAbsorbed',
     event: BuffConsumedEvent,
   ): void {
@@ -6496,13 +6502,17 @@ export class CombatRuntimeAssembly {
       targetId: event.targetId,
       data: {
         buffId: event.buffId,
-        instanceId: event.buff.instanceId,
+        ...(event.buff === null ? {} : { instanceId: event.buff.instanceId }),
         layers: event.layers,
         ...(event.skillCastInfo?.originCastId === undefined
           ? {}
           : { castId: event.skillCastInfo.originCastId }),
       },
     });
+    this.#options.emitBuffLifecycleAbilityEvent?.(
+      eventName === 'BuffConsumed' ? 'buffConsumed' : 'buffAbsorbed',
+      { ...event, sourceId: event.sourceOperatorId },
+    );
   }
 
   #configureBuffLifecycle(
@@ -6566,20 +6576,12 @@ export class CombatRuntimeAssembly {
           ability.applyControlTagChange(false, true);
       });
     }
-    target.configureBuffConsumedObserver?.(event => {
-      this.#recordBuffConsumption('BuffConsumed', event);
-      options.emitBuffLifecycleAbilityEvent?.('buffConsumed', {
-        ...event,
-        sourceId: event.sourceOperatorId,
-      });
-    });
-    target.configureBuffAbsorbedObserver?.(event => {
-      this.#recordBuffConsumption('BuffAbsorbed', event);
-      options.emitBuffLifecycleAbilityEvent?.('buffAbsorbed', {
-        ...event,
-        sourceId: event.sourceOperatorId,
-      });
-    });
+    target.configureBuffConsumedObserver?.(event =>
+      this.#publishBuffConsumption('BuffConsumed', event),
+    );
+    target.configureBuffAbsorbedObserver?.(event =>
+      this.#publishBuffConsumption('BuffAbsorbed', event),
+    );
   }
 
   #projectileBuffLifecycle(): ProjectileBuffLifecycle {

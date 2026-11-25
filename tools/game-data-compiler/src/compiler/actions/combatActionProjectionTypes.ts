@@ -211,6 +211,7 @@ export type CompiledBuffStepSource =
   | Step<'saveTransferredSource'>
   | Step<'igniteBuffs'>
   | Step<'triggerSpellBurst'>
+  | Step<'triggerBuffConsumeEvent'>
   | Step<'triggerCustomAbilityEvent'>
   | Step<'openComboWindow'>
   | (Step<'playAnimation'> & { readonly onEnd: CompiledBuffSequenceSource })

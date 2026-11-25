@@ -114,11 +114,14 @@ export interface PlannedOperatorActiveSkillRuntime {
   readonly abilityEntityObservedBuffIds: readonly string[];
 }
 
-function collectProjectileLaunches(
+export function collectProjectileLaunches(
   graph: ReturnType<typeof parseKnownSkillActionGraphSource>,
 ): ProjectileLaunchActionSource[] {
-  return graph.actionGroup.timelineActions.flatMap(timeline =>
-    collectNativeActionNodes(timeline.sequence).flatMap(node =>
+  return [
+    ...graph.actionGroup.timelineActions.map(timeline => timeline.sequence),
+    ...graph.actionGroup.passiveEvents.flatMap(event => event.actions),
+  ].flatMap(sequence =>
+    collectNativeActionNodes(sequence).flatMap(node =>
       node.metadata.enabled && node.body.kind === 'leaf' && node.body.value.family === 'projectile'
         ? [node.body.value.action]
         : [],

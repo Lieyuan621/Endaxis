@@ -1115,7 +1115,7 @@ function leafActionReadsContextKey(leaf: KnownNativeActionLeafSource, key: strin
   if (leaf.family === 'spatial' && leaf.action.kind === 'teleportPositionSelection') {
     return JSON.stringify({ ...leaf.action, outputContextKey: '' }).includes(JSON.stringify(key));
   }
-  return JSON.stringify(leaf.action).includes(JSON.stringify(key));
+  return JSON.stringify('action' in leaf ? leaf.action : leaf).includes(JSON.stringify(key));
 }
 
 function createBuffSequenceProjection(
@@ -1805,11 +1805,28 @@ function createBuffSequenceProjection(
       };
     },
     compileOnce: (node, partyTargetGroups) => {
+      const inputKey = node.body.delayedTriggerInputKey;
       const body = compileActionSequenceProgram(node.body.action, {
-        ...createBuffSequenceProjection(visualOnlyIds, context, extensions),
+        ...createBuffSequenceProjection(
+          visualOnlyIds,
+          inputKey === undefined
+            ? context
+            : { ...context, actionTargetTarget: 'actionInputTarget' },
+          extensions,
+        ),
         initialState: () => partyTargetGroups,
+        resultIsConsumed: inputKey !== undefined,
       });
-      return { steps: [{ kind: 'once', parameters: {}, body }], state: partyTargetGroups };
+      return {
+        steps: [
+          {
+            kind: 'once',
+            parameters: inputKey === undefined ? {} : { delayedTriggerInputKey: inputKey },
+            body,
+          },
+        ],
+        state: partyTargetGroups,
+      };
     },
     compileTickIntervalV2: (node, partyTargetGroups) => {
       const action = node.body;

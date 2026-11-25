@@ -2004,7 +2004,19 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_29: {
+      triggerBuffConsumeEvent_29: {
+        action: {
+          kind: 'triggerBuffConsumeEvent',
+          parameters: {
+            source: { kind: 'source' },
+            owner: { kind: 'inputTarget' },
+            buffId: 'buff_common_energy_shard_attached_cryst',
+            layers: { kind: 'valueNode', nodeId: 'data_13' },
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_31: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -2019,31 +2031,56 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_30: {
+      ifElse_32: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'startTimeDilation_29' },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          whenTrue: { $sequence: 'startTimeDilation_31' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_31: {
+      ifElse_33: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'triggerBuffConsumeEvent_29' },
+        },
+        next: 'ifElse_32',
+      },
+      dealDamage_34: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_14' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_16' },
             tags: ['normalSkill', 'canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_15' },
+            stagger: { kind: 'valueNode', nodeId: 'data_17' },
           },
         },
-        next: 'ifElse_30',
+        next: 'ifElse_33',
       },
-      repeatEachTick_32: {
+      readBuffStackCount_35: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'inputTarget' },
+            outputKey: 'infliction_num',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+            },
+          },
+        },
+        next: 'dealDamage_34',
+      },
+      repeatEachTick_36: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
@@ -2056,11 +2093,11 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'dealDamage_31' },
+          body: { $sequence: 'readBuffStackCount_35' },
         },
         next: null,
       },
-      applyBuff_34: {
+      applyBuff_38: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2072,17 +2109,17 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_35: {
+      ifElse_39: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'applyBuff_34' },
+          condition: { kind: 'conditionNode', nodeId: 'data_18' },
+          whenTrue: { $sequence: 'applyBuff_38' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      forceSpellStatus_37: {
+      forceSpellStatus_41: {
         action: {
           kind: 'forceSpellStatus',
           parameters: {
@@ -2090,14 +2127,14 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
             target: { kind: 'inputTarget' },
             element: 'cryo',
             consumedElement: 'cryo',
-            consumedLayers: { kind: 'valueNode', nodeId: 'data_17' },
-            count: { kind: 'valueNode', nodeId: 'data_17' },
+            consumedLayers: { kind: 'valueNode', nodeId: 'data_19' },
+            count: { kind: 'valueNode', nodeId: 'data_19' },
             isExtra: false,
           },
         },
         next: null,
       },
-      readBuffStackCount_38: {
+      readBuffStackCount_42: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
@@ -2110,19 +2147,19 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
             },
           },
         },
-        next: 'forceSpellStatus_37',
+        next: 'forceSpellStatus_41',
       },
-      ifElse_39: {
+      ifElse_43: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_18' },
-          whenTrue: { $sequence: 'readBuffStackCount_38' },
+          condition: { kind: 'conditionNode', nodeId: 'data_20' },
+          whenTrue: { $sequence: 'readBuffStackCount_42' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      repeatEachTick_40: {
+      repeatEachTick_44: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
@@ -2135,7 +2172,7 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'ifElse_39' },
+          body: { $sequence: 'ifElse_43' },
         },
         next: null,
       },
@@ -2172,7 +2209,8 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_13: {
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'infliction_num' } },
+      data_14: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -2183,9 +2221,20 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
           value: 1,
         },
       },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_16: {
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'inputTarget' },
+          containsHittableTarget: false,
+          excludeDeadEntity: true,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -2196,8 +2245,8 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
           value: 1,
         },
       },
-      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
-      data_18: {
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+      data_20: {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
@@ -2225,6 +2274,7 @@ export const aleshChr_0024_deepfin_normal_skill: SkillDefinition = {
     atb_4: [40, 40, 40, 40, 40, 40, 40, 40, 40, 45, 45, 45],
     atk_scale: [2, 2.2, 2.4, 2.6, 2.8, 3, 3.2, 3.4, 3.6, 3.85, 4.15, 4.5],
     count: 0,
+    infliction_num: 0,
     num: 0,
     num_1: 0,
     poise: 10,
@@ -2241,9 +2291,9 @@ export const aleshChr_0024_deepfin_normal_skill: SkillDefinition = {
     { startFrame: 27, endFrame: 28, sequence: { $sequence: 'findTargets_6' } },
     { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_11' } },
     { startFrame: 27, endFrame: 28, sequence: { $sequence: 'ifElse_27' } },
-    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_32' } },
-    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'ifElse_35' } },
-    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_40' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_36' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'ifElse_39' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_44' } },
   ],
   defaultTarget: 'enemy',
   smartTarget: 'enemy',

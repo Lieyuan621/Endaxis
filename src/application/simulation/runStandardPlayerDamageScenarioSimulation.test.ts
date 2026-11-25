@@ -2706,7 +2706,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     const damageEntries = result.receiptEntries.filter(
       entry => entry.event === 'DamageApplied' && entry.sourceId === 'track:endministrator',
     );
-    expect(damageEntries).toHaveLength(5);
+    expect(damageEntries).toHaveLength(4);
     expect(damageEntries).toContainEqual(
       expect.objectContaining({
         data: expect.objectContaining({

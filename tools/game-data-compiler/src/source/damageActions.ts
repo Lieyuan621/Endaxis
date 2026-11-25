@@ -284,6 +284,11 @@ export function parseDamageUnitSource(
   if ('poiseCalculation' in unit) expectedFields.add('poiseCalculation');
   if ('damageTags' in unit) expectedFields.add('damageTags');
   if ('damageTextFollowDuration' in unit) expectedFields.add('damageTextFollowDuration');
+  if ('snapshotBlackboardKey' in unit) {
+    expectedFields.add('snapshotBlackboardKey');
+    if (unit.snapshotBlackboardKey !== '')
+      throw new Error(`${path}.snapshotBlackboardKey: named attack snapshots are not supported`);
+  }
   requireExactFields(unit, expectedFields, path);
   const gameplayTagIds =
     'damageTags' in unit ? parseTagIdsSource(unit.damageTags, `${path}.damageTags`) : [];

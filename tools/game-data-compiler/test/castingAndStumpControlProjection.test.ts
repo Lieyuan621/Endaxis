@@ -966,7 +966,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         deadOption: 'AllValid',
         returnTrueWhen: 'Always',
       },
-    } as ReturnType<typeof parseKnownNativeActionLeafSource>;
+    } as Extract<ReturnType<typeof parseKnownNativeActionLeafSource>, { family: 'stumpControl' }>;
 
     expect(compileBuffLeafNode(node(source), new Set(), new Map(), leafContext())).toEqual({
       steps: [],

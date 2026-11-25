@@ -1907,6 +1907,8 @@
       "consumedElement": {
         "name": "消耗的附着元素"
       },
+      "layers": { "name": "层数" },
+      "delayedTriggerInputKey": { "name": "延时触发输入目标组" },
       "consumedLayers": {
         "name": "消耗层数"
       },
@@ -2736,6 +2738,10 @@
       "stringOperand": {
         "name": "字符串值",
         "help": "字符串常量或当前动作黑板读取；每个消费点独立读取当前上下文。"
+      },
+      "triggerBuffConsumeEvent": {
+        "name": "发布 Buff 消耗事件",
+        "help": "向监听器报告消耗的 Buff 和层数。"
       },
       "triggerCharacterInflictionEvent": {
         "name": "通知干员附着事件",

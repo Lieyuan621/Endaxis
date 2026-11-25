@@ -134,7 +134,7 @@ it('帧末队列恢复使用复制后的 Buff 黑板，清理宿主中止当前�
   const bound = bindBattleWithoutProjectiles(restored, createContext());
   const values: number[] = [];
   restored.eventsFor('enemy').registerCallback('buffConsumedFrameEnd', event => {
-    values.push(event.payload.buff.blackboard.getNumber('value')!);
+    values.push(event.payload.buff!.blackboard.getNumber('value')!);
     restored.runtimeOptions.clearPendingAbilityEvents!('enemy');
   });
   expect(values).toEqual([]);

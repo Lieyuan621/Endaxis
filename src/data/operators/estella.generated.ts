@@ -1134,7 +1134,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
             source: { kind: 'source' },
             targets: { kind: 'source' },
             spGainKind: 'refund',
-            spGainSource: 'default',
+            spGainSource: 'skill',
           },
         },
         next: 'finishBuffsById_38',

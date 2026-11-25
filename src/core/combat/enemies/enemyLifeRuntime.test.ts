@@ -77,5 +77,5 @@ it('生命下限挡住自动死亡，但人为死亡直接归零且不伪造伤�
   expect(vitals.health).toBe(1);
   runtime.advanceFrame(2);
   expect(vitals.health).toBe(0);
-  expect(events).toEqual(['ownerHpZero', 'ownerDead']);
+  expect(events).toEqual(['beforeSetHpDirectly', 'ownerHpZero', 'ownerDead']);
 });
