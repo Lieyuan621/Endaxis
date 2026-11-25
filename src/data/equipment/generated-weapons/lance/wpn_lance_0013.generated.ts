@@ -123,12 +123,12 @@ const definition = {
           sequence: { $sequence: 'checkCondition_3' },
         },
       ],
-      enableSequence: { $sequence: 'applyBuff_4' },
       blackboard: {
         atk_up: [0.12, 0.144, 0.168, 0.192, 0.216, 0.24, 0.264, 0.288, 0.336],
         duration: [15, 15, 15, 15, 15, 15, 15, 15, 15],
         install_0_dmg_up: [0.08, 0.096, 0.112, 0.128, 0.144, 0.16, 0.176, 0.192, 0.224],
       },
+      enableSequence: { $sequence: 'applyBuff_4' },
     },
   ],
   assetSlug: 'wpn_lance_0013',

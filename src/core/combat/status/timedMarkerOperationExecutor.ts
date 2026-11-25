@@ -1,3 +1,4 @@
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import { stringInputExpression } from '../../compiler/compiledGraphData';
 import type { CompiledStringInput, CompiledCondition } from '../../compiler/compiledGraphData.ts';
 
@@ -7,9 +8,12 @@ import type { CombatOperationContext } from '../skills/skillRuntime';
  * 目标到实体容器的映射由装配层提供；动态时长只读取当前技能实例黑板。
  */
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import { runtimeTargetEntityId, type RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
-import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
-import type { GlobalCooldownTarget } from '../../game-data/operatorDefinition';
+import {
+  firstRuntimeEntityTarget,
+  runtimeTargetEntityId,
+  type RuntimeTargetRef,
+} from '../../game-data/logicalAbilityEntity';
+
 import type { GlobalCooldowns } from '../skills/globalCooldowns';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
@@ -22,15 +26,11 @@ type RuntimeOperation = ResolvedCombatOperationStep;
 export interface TimedMarkerOperationDependencies {
   readonly resolveEventTarget: (targetId: string) => TimedMarkerContainer;
   readonly queryTargets: (
-    query: ActionTargetQuery,
+    query: CompiledTargetQuery,
     context: CombatOperationContext,
   ) => readonly RuntimeTargetRef[];
   readonly globalScaledClock: TimedMarkerClock;
   readonly globalCooldowns?: GlobalCooldowns;
-  readonly resolveCooldownCharacter?: (
-    target: GlobalCooldownTarget,
-    context: CombatOperationContext | undefined,
-  ) => string;
   readonly delegate: CombatOperationExecutor;
 }
 
@@ -55,7 +55,13 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
     if (step.kind === 'setGlobalCooldown') {
       if (context === undefined)
         throw new Error('setGlobalCooldown requires a combat operation context');
-      const { cooldowns, characterId } = this.#resolveCooldown(step.parameters.target, context);
+      const first = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(step.parameters.target, context),
+      );
+      const characterId = first === undefined ? undefined : runtimeTargetEntityId(first);
+      if (characterId === undefined) return true;
+      const cooldowns = this.dependencies.globalCooldowns;
+      if (cooldowns === undefined) throw new Error('global cooldown runtime is not configured');
       cooldowns.set(
         characterId,
         step.parameters.markerId,
@@ -126,16 +132,21 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'globalCooldownPresent') {
       if (!context) throw new Error('globalCooldownPresent requires an action context');
-      const target = this.dependencies.queryTargets(condition.target, context)[0];
-      if (target?.kind !== 'operator') return false;
+      const target = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(condition.target, context),
+      );
+      const id = target === undefined ? undefined : runtimeTargetEntityId(target);
+      if (id === undefined) return false;
       const cooldowns = this.dependencies.globalCooldowns;
       if (!cooldowns) throw new Error('global cooldown runtime is not configured');
-      const exists = cooldowns.has(target.operatorId, condition.markerId);
+      const exists = cooldowns.has(id, condition.markerId);
       return condition.returnTrueIfNotExists ? !exists : exists;
     }
     if (condition.kind === 'timedMarkerPresent') {
       if (!context) throw new Error('timedMarkerPresent requires an action context');
-      const target = this.dependencies.queryTargets(condition.target, context)[0];
+      const target = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(condition.target, context),
+      );
       const id = target === undefined ? undefined : runtimeTargetEntityId(target);
       if (id === undefined) return false;
       const exists = this.#resolveOwner(id).has(resolveMarkerId(condition.markerId, context));
@@ -144,14 +155,6 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
     return context === undefined
       ? this.dependencies.delegate.evaluate(condition)
       : this.dependencies.delegate.evaluate(condition, context);
-  }
-
-  #resolveCooldown(target: GlobalCooldownTarget, context: CombatOperationContext | undefined) {
-    const cooldowns = this.dependencies.globalCooldowns;
-    const resolve = this.dependencies.resolveCooldownCharacter;
-    if (cooldowns === undefined || resolve === undefined)
-      throw new Error('global cooldown runtime is not configured');
-    return { cooldowns, characterId: resolve(target, context) };
   }
 
   #resolveOwner(ownerId: string): TimedMarkerContainer {

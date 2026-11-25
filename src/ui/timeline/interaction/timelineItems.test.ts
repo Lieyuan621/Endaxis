@@ -20,6 +20,7 @@ function fixture() {
   const s = createEmptyScenario('mixed', 'mixed');
   s.battle.prepFrames = 30;
   s.battle.durationFrames = 300;
+  s.editor.prepExpanded = true;
   s.tracks[0] = {
     id: 'track',
     operator: null,
@@ -56,6 +57,30 @@ const key = (kind: Parameters<typeof timelineItemKey>[0]['kind'], id: string) =>
   timelineItemKey({ kind, id });
 
 describe('mixed timeline objects', () => {
+  it('keeps dragged inputs out of a collapsed preparation area and allows them when expanded', () => {
+    const scenario = fixture();
+    const inputs = [
+      key('skill', 'head'),
+      key('controlSwitch', 'same-id'),
+      key('dodge', 'same-id'),
+      key('consumableUse', 'item'),
+    ];
+    scenario.editor.prepExpanded = false;
+    const collapsedItems = collectTimelineItems(scenario);
+    for (const input of inputs) {
+      const item = collapsedItems.get(input)!;
+      expect(item.minimumFrame).toBe(0);
+      const plan = planTimelineItemMove(collapsedItems, new Set([input]))!;
+      const result = moveTimelineItems(scenario, plan, -100);
+      expect(result.delta).toBe(-item.frame!);
+    }
+    scenario.editor.prepExpanded = true;
+    const expandedItems = collectTimelineItems(scenario);
+    for (const input of inputs) expect(expandedItems.get(input)!.minimumFrame).toBe(-30);
+    scenario.inheritance = { sourceScenarioId: 'original', frame: -10 };
+    scenario.editor.prepExpanded = false;
+    expect(collectTimelineItems(scenario).get(key('skill', 'head'))!.minimumFrame).toBe(0);
+  });
   it('expands selection from a chain to a track and all tracks without global markers', () => {
     const scenario = fixture();
     scenario.tracks[1] = {

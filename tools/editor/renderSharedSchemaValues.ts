@@ -1,10 +1,10 @@
 /** 相同的字段、元数据、来源数组及长文本只声明一次，保留完整取值和属性顺序。 */
 import { createHash } from 'node:crypto';
 
-type Value =
-  null | boolean | number | string | readonly Value[] | { readonly [key: string]: Value };
 interface Part {
-  readonly value: Value;
+  readonly kind: 'leaf' | 'array' | 'object';
+  readonly propertyNames: readonly string[];
+  readonly depth: number;
   readonly key: string;
   readonly name: string;
   readonly children: readonly Part[];
@@ -18,17 +18,48 @@ export function renderSharedSchemaValues(values: readonly unknown[]): {
 } {
   const parts = new Map<string, Part>();
   const names = new Map<string, string>();
-  function collect(value: Value): Part {
-    const key = JSON.stringify(value);
+  const objects = new WeakMap<object, Part>();
+  const visiting = new WeakSet<object>();
+  const omitted = (value: unknown) =>
+    value === undefined || typeof value === 'function' || typeof value === 'symbol';
+  function collect(value: unknown): Part {
+    const isObject = value !== null && typeof value === 'object';
+    if (isObject) {
+      const cached = objects.get(value);
+      if (cached) return cached;
+      if (visiting.has(value)) throw new Error('schema contains a cyclic value');
+      visiting.add(value);
+    }
+    const kind = !isObject ? 'leaf' : Array.isArray(value) ? 'array' : 'object';
+    const entries =
+      isObject && !Array.isArray(value)
+        ? Object.entries(value).filter(([, child]) => !omitted(child))
+        : [];
+    const propertyNames = entries.map(([name]) => name);
+    const children = Array.isArray(value)
+      ? Array.from(value, child => collect(omitted(child) ? null : child))
+      : entries.map(([, child]) => collect(child));
+    // 用子值身份构成结构键，不将递归查询的共享子树先展开成巨型 JSON。
+    const key =
+      kind === 'leaf'
+        ? JSON.stringify(value)
+        : JSON.stringify([kind, propertyNames, children.map(child => child.name)]);
     if (key === undefined) throw new Error('schema contains a non-JSON value');
     const existing = parts.get(key);
-    if (existing) return existing;
-    const children = value && typeof value === 'object' ? Object.values(value).map(collect) : [];
+    if (existing) {
+      if (isObject) {
+        objects.set(value, existing);
+        visiting.delete(value);
+      }
+      return existing;
+    }
     const name = `schema_${createHash('sha256').update(key).digest('hex').slice(0, 12)}`;
     if (names.has(name) && names.get(name) !== key) throw new Error('schema value hash collision');
     names.set(name, key);
     const part: Part = {
-      value,
+      kind,
+      propertyNames,
+      depth: children.length === 0 ? 0 : 1 + Math.max(...children.map(child => child.depth)),
       key,
       children,
       name,
@@ -36,12 +67,16 @@ export function renderSharedSchemaValues(values: readonly unknown[]): {
       shared: false,
     };
     parts.set(key, part);
+    if (isObject) {
+      objects.set(value, part);
+      visiting.delete(value);
+    }
     return part;
   }
   // 沿用生成器的 JSON 边界，省略对象中尚未赋值的可选属性。
-  const roots = values.map(value => collect(JSON.parse(JSON.stringify(value)) as Value));
+  const roots = values.map(collect);
   const ordered = [...parts.values()].sort(
-    (left, right) => right.key.length - left.key.length || (left.key < right.key ? -1 : 1),
+    (left, right) => right.depth - left.depth || (left.key < right.key ? -1 : 1),
   );
   function countUses(): void {
     for (const part of ordered) part.count = 0;
@@ -53,12 +88,10 @@ export function renderSharedSchemaValues(values: readonly unknown[]): {
   }
   function render(part: Part, declaration = false): string {
     if (part.shared && !declaration) return part.name;
-    const { value } = part;
-    if (value === null || typeof value !== 'object') return part.key;
-    const renderChild = (child: Value) => render(parts.get(JSON.stringify(child))!);
-    if (Array.isArray(value)) return `[${value.map(renderChild).join(',')}]`;
-    return `{${Object.entries(value)
-      .map(([name, child]) => `${JSON.stringify(name)}:${renderChild(child)}`)
+    if (part.kind === 'leaf') return part.key;
+    if (part.kind === 'array') return `[${part.children.map(child => render(child)).join(',')}]`;
+    return `{${part.propertyNames
+      .map((name, index) => `${JSON.stringify(name)}:${render(part.children[index]!)}`)
       .join(',')}}`;
   }
   function worthwhile(part: Part): boolean {
@@ -78,6 +111,8 @@ export function renderSharedSchemaValues(values: readonly unknown[]): {
       if (part.shared && !worthwhile(part)) {
         part.shared = false;
         changed = true;
+        // 展开父值会增加子值的使用次数；必须重新计数后再决定是否展开子值。
+        break;
       }
     }
   } while (changed);
@@ -86,7 +121,7 @@ export function renderSharedSchemaValues(values: readonly unknown[]): {
     .filter(part => part.shared)
     .map(
       part =>
-        `const ${part.name} = ${render(part, true)}${typeof part.value === 'object' ? ' as const' : ''};`,
+        `const ${part.name} = ${render(part, true)}${part.kind !== 'leaf' ? ' as const' : ''};`,
     )
     .join('\n');
   return { declarations, expressions: roots.map(part => render(part)) };

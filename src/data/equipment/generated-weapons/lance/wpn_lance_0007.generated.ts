@@ -215,8 +215,8 @@ const definition = {
       actionGraph: { main: { nodes: {} }, macros: {} },
     },
     buff_wpn_lance_0007_dmgup2: {
-      stackingType: 'refresh',
-      priority: { blackboardKey: 'pd_up' },
+      stackingType: 'highPriority',
+      priority: { blackboardKey: 'dmg_up2' },
       maxStackCount: { blackboardKey: 'max_stack' },
       durationSeconds: { blackboardKey: 'duration2' },
       triggerIntervalSeconds: 0,

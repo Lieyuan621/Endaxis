@@ -44,6 +44,7 @@ export interface RestoreCombatOperatorSourcesOptions {
   readonly registerEquipmentAbilityEventAction?: RestoreCombatOperatorEquipmentOptions['registerAbilityEventAction'];
   readonly createInitializationOperations: RestoreCombatOperatorInitializationsOptions['createOperations'];
   readonly createPassiveOperations: RestoreCombatOperatorPassivesOptions['createOperations'];
+  readonly projectileRuntime?: RestoreCombatOperatorPassivesOptions['projectileRuntime'];
   readonly registerPassive: RestoreCombatOperatorPassivesOptions['register'];
   readonly createUpgradeExecutor: CreateOperatorUpgradeEventExecutor;
 }
@@ -102,6 +103,7 @@ export function bindRestoredCombatOperatorSources(
       semanticEvents: options.semanticEvents,
       createOperations: options.createPassiveOperations,
       register: options.registerPassive,
+      projectileRuntime: options.projectileRuntime,
     });
     const restoredPassives = passives;
     const restoredUpgradeEvents = upgradeEvents;

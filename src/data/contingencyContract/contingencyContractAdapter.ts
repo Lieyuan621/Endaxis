@@ -6,15 +6,21 @@ import type {
 import type { MechanicContribution } from '../../core/scenarioMechanics/mechanicContribution';
 import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
 import {
-  contingencyContractDefinitionRevision,
-  contingencyContractBlockedTagReasons,
-  contingencyContractOmittedTagReasons,
-} from './generated/contingencyContractDefinitions.generated';
+  contingencyContractBlockedTagReasons as seasonOneBlocked,
+  contingencyContractOmittedTagReasons as seasonOneOmitted,
+} from './generated/contingencyContract.indie_contract001.generated';
+import {
+  contingencyContractBlockedTagReasons as seasonTwoBlocked,
+  contingencyContractOmittedTagReasons as seasonTwoOmitted,
+} from './generated/contingencyContract.indie_contract002.generated';
 import { contingencyContractInitializationPlans } from './definitions';
 import { contractInitialVariables, resolveContractInitialVariables } from './definitions';
 import { withContractInitialVariables } from './initialVariables';
 
 export const CONTINGENCY_CONTRACT_MECHANIC_PREFIX = 'contingency-contract:tag:';
+
+const contingencyContractBlockedTagReasons = { ...seasonOneBlocked, ...seasonTwoBlocked };
+const contingencyContractOmittedTagReasons = { ...seasonOneOmitted, ...seasonTwoOmitted };
 
 const programs = new ActionGraphDefinitionRepository();
 
@@ -39,7 +45,7 @@ export const contingencyContractMechanicDefinitions: readonly MechanicDefinition
       Object.freeze({
         id: `${CONTINGENCY_CONTRACT_MECHANIC_PREFIX}${tagId}`,
         family: 'contingencyContract' as const,
-        revision: contingencyContractDefinitionRevision,
+        revision: 'builtin',
         parameters: Object.freeze(
           contractInitialVariables(tagId).map(field => ({
             ...field,
@@ -53,7 +59,7 @@ export const contingencyContractMechanicDefinitions: readonly MechanicDefinition
 
 export const contingencyContractMechanicAdapter: MechanicAdapter = Object.freeze({
   family: 'contingencyContract',
-  revision: contingencyContractDefinitionRevision,
+  revision: 'builtin',
   compile(input: MechanicAdapterInput): readonly MechanicContribution[] {
     const plan = planByMechanicId.get(input.definition.id);
     if (plan === undefined) {

@@ -8,7 +8,7 @@ export const GLOBAL_EFFECT_PRESETS = [
     descriptionKey: 'globalConfig.comboAccelerationDescription',
     buff: {
       stackingType: 'unlimited',
-      presentation: { visible: false },
+      presentation: { visible: false, icon: 'endaxis:icons/icon_combo_skill_cooldown' },
       attributeModifiers: [
         { attribute: 'ComboSkillCooldownScalar', slot: 'finalMultiplier', value: 0.5 },
       ],

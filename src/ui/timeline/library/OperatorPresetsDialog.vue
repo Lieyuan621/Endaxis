@@ -1,98 +1,126 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { EaButton, EaDialog, EaDialogActions, EaInput, EaDeleteIcon } from '@/design-system';
-import { getOperatorGameName, getWeaponGameName, getGearPieceGameName } from '../../gameText';
-import OperatorPresetTransferDialog from './OperatorPresetTransferDialog.vue';
 import {
-  readOperatorPresetFile,
-  serializeOperatorPresets,
-  operatorPresetFilename,
-} from '../../../application/editor/operatorBuildPresetFile';
-import { downloadProjectJson } from '../projectFileSession';
+  EaButton,
+  EaChevronIcon,
+  EaCollapse,
+  EaDialog,
+  EaDialogActions,
+  EaDeleteIcon,
+  EaExportIcon,
+  EaFormField,
+  EaImportIcon,
+  EaInput,
+  EaTooltip,
+} from '@/design-system';
+import { EditPen, Refresh, Search } from '@element-plus/icons-vue';
+import { getOperatorGameName, getWeaponGameName, getGearPieceGameName } from '../../gameText';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import OperatorPresetBuildSummary from './OperatorPresetBuildSummary.vue';
+import OperatorPresetOperatorFilter from './OperatorPresetOperatorFilter.vue';
 import {
   captureOperatorBuild,
+  sameOperatorBuild,
   type OperatorBuildPreset,
 } from '../../../application/editor/operatorBuildPreset';
 import {
   loadOperatorBuildPresets,
   saveOperatorBuildPresets,
 } from '../../../data/browserOperatorBuildPresets';
-import type { GameDataRepository } from '../../../core/game-data/gameDataRepository';
+import { orderByOperatorDirectory } from '../../appearance/operatorGroups';
+import type {
+  GameDataRepository,
+  GameDataBrowser,
+} from '../../../core/game-data/gameDataRepository';
 import type { TrackDocument } from '../../../core/project/schema';
 
 const props = defineProps<{
   track: TrackDocument | null;
-  gameData: GameDataRepository;
+  gameData: GameDataRepository & Partial<Pick<GameDataBrowser, 'getOperators'>>;
   readOnly: boolean;
+  suspended?: boolean;
   apply: (preset: OperatorBuildPreset) => void;
 }>();
-const emit = defineEmits<{ close: [] }>();
+const emit = defineEmits<{
+  close: [];
+  importFile: [];
+  exportPresets: [operatorSlug: string | undefined];
+}>();
 const { t, locale } = useI18n();
-const fileInput = ref<HTMLInputElement>();
-const transfer = ref<{ mode: 'import' | 'export'; presets: OperatorBuildPreset[] } | null>(null);
-async function readFile(event: Event) {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  input.value = '';
-  if (!file) return;
-  try {
-    transfer.value = { mode: 'import', presets: readOperatorPresetFile(await file.text()) };
-  } catch {
-    ElMessage.error(t('operatorPresets.importError'));
-  }
-}
-function exportPresets() {
-  try {
-    transfer.value = { mode: 'export', presets: loadOperatorBuildPresets() };
-  } catch {
-    ElMessage.error(t('operatorPresets.loadError'));
-  }
-}
-function finishTransfer(selected: OperatorBuildPreset[]) {
-  if (transfer.value?.mode === 'import') {
-    // 导入为独立副本，不覆盖浏览器里同名或同 ID 的预设。
-    if (
-      !write(items => [
-        ...items,
-        ...selected.map(preset => ({ ...preset, id: crypto.randomUUID() })),
-      ])
-    )
-      return;
-    ElMessage.success(t('operatorPresets.imported', { count: selected.length }));
-  } else {
-    try {
-      downloadProjectJson(serializeOperatorPresets(selected), operatorPresetFilename());
-    } catch {
-      ElMessage.error(t('operatorPresets.exportError'));
-      return;
-    }
-  }
-  transfer.value = null;
-}
+const panel = ref<HTMLElement>();
+let scrollPosition = 0;
+const currentExpanded = ref(false);
 const search = ref('');
 const presets = ref<OperatorBuildPreset[]>([]);
 const name = ref('');
+const renaming = ref<OperatorBuildPreset | null>(null);
+const renameName = ref('');
 const error = ref('');
 const current = computed(() => (props.track?.operator ? captureOperatorBuild(props.track) : null));
+const selectedOperator = ref(props.track?.operator?.operatorSlug ?? 'all');
+const expanded = ref<string | null>(null);
+const saving = ref(false);
+const scopedPresets = computed(() =>
+  selectedOperator.value === 'all'
+    ? presets.value
+    : presets.value.filter(p => p.build.operator.operatorSlug === selectedOperator.value),
+);
+const searchPlaceholder = computed(() =>
+  t(selectedOperator.value !== 'all' ? 'operatorPresets.searchOperator' : 'operatorPresets.search'),
+);
 const filteredPresets = computed(() => {
   const query = search.value.trim().toLocaleLowerCase();
-  if (!query) return presets.value;
-  return presets.value.filter(preset => {
+  return scopedPresets.value.filter(preset => {
     const { operator, weapon, gears } = preset.build;
-    return [
-      preset.name,
-      getOperatorGameName(operator.operatorSlug, locale.value),
-      weapon ? getWeaponGameName(weapon.weaponSlug, locale.value) : '',
-      ...Object.values(gears).map(gear =>
-        gear ? getGearPieceGameName(gear.gearSlug, locale.value) : '',
-      ),
-    ].some(value => value.toLocaleLowerCase().includes(query));
+    return (
+      !query ||
+      [
+        preset.name,
+        getOperatorGameName(operator.operatorSlug, locale.value),
+        weapon ? getWeaponGameName(weapon.weaponSlug, locale.value) : '',
+        ...Object.values(gears).map(gear =>
+          gear ? getGearPieceGameName(gear.gearSlug, locale.value) : '',
+        ),
+      ].some(value => value.toLocaleLowerCase().includes(query))
+    );
   });
 });
+const groups = computed(() => {
+  const result = new Map<string, OperatorBuildPreset[]>();
+  for (const preset of filteredPresets.value) {
+    const slug = preset.build.operator.operatorSlug;
+    const group = result.get(slug) ?? [];
+    group.push(preset);
+    result.set(slug, group);
+  }
+  return orderByOperatorDirectory(
+    [...result].map(([slug, items]) => ({ slug, items })),
+    group => group.slug,
+    props.gameData.getOperators?.() ?? [],
+  );
+});
+function beginSave() {
+  const base = t('operatorPresets.defaultName', {
+    operator: getOperatorGameName(props.track!.operator!.operatorSlug, locale.value),
+  });
+  let index = 1;
+  while (presets.value.some(p => p.name === `${base} ${index}`)) index++;
+  name.value = `${base} ${index}`;
+  saving.value = true;
+}
+function matches(preset: OperatorBuildPreset): boolean {
+  return current.value !== null && sameOperatorBuild(current.value, preset.build);
+}
+async function updatePreset(preset: OperatorBuildPreset) {
+  if (!current.value || current.value.operator.operatorSlug !== preset.build.operator.operatorSlug)
+    return;
+  const build = captureOperatorBuild(props.track!);
+  if (!(await confirmChange(t('operatorPresets.updateConfirm', { name: preset.name })))) return;
+  if (write(items => items.map(item => (item.id === preset.id ? { ...item, build } : item))))
+    ElMessage.success(t('operatorPresets.updated'));
+}
 function refresh() {
   try {
     presets.value = loadOperatorBuildPresets();
@@ -101,6 +129,20 @@ function refresh() {
     error.value = t('operatorPresets.loadError');
   }
 }
+watch(
+  () => props.suspended,
+  suspended => {
+    if (suspended) {
+      scrollPosition = panel.value?.closest('.el-dialog__body')?.scrollTop ?? 0;
+    } else {
+      refresh();
+      void nextTick(() => {
+        const body = panel.value?.closest('.el-dialog__body');
+        if (body) body.scrollTop = scrollPosition;
+      });
+    }
+  },
+);
 onMounted(() => {
   refresh();
   window.addEventListener('storage', refresh);
@@ -122,7 +164,15 @@ function save() {
   if (!label || !current.value) return;
   const build = current.value;
   if (write(items => [...items, { id: crypto.randomUUID(), name: label, build }])) {
+    if (
+      selectedOperator.value !== 'all' &&
+      selectedOperator.value !== build.operator.operatorSlug
+    ) {
+      selectedOperator.value = build.operator.operatorSlug;
+    }
+    search.value = '';
     name.value = '';
+    saving.value = false;
     ElMessage.success(t('operatorPresets.saved'));
   }
 }
@@ -142,10 +192,18 @@ async function remove(preset: OperatorBuildPreset) {
   if (await confirmChange(t('operatorPresets.deleteConfirm', { name: preset.name })))
     write(items => items.filter(p => p.id !== preset.id));
 }
-function rename(id: string, name: string) {
-  const label = name.trim();
-  if (!label || !write(items => items.map(p => (p.id === id ? { ...p, name: label } : p))))
-    refresh();
+function beginRename(preset: OperatorBuildPreset) {
+  renaming.value = preset;
+  renameName.value = preset.name;
+}
+function commitRename() {
+  const id = renaming.value?.id;
+  const label = renameName.value.trim();
+  if (!id || !label || label.length > 60) return;
+  if (write(items => items.map(p => (p.id === id ? { ...p, name: label } : p)))) {
+    renaming.value = null;
+    renameName.value = '';
+  }
 }
 async function apply(preset: OperatorBuildPreset) {
   if (props.readOnly) return;
@@ -168,302 +226,449 @@ async function apply(preset: OperatorBuildPreset) {
 }
 </script>
 <template>
-  <InputRegionBoundary label="operator-presets" active modal>
+  <InputRegionBoundary label="operator-presets" :active="!suspended" modal>
     <EaDialog
+      v-if="!suspended"
       :model-value="true"
       :title="t('operatorPresets.title')"
       class="operator-presets-dialog"
-      size="lg"
+      width="760px"
       scroll-mode="body"
-      @update:model-value="emit('close')"
+      @update:model-value="!suspended && emit('close')"
     >
-      <div class="operator-presets">
+      <template #header>
+        <div class="operator-presets__dialog-heading">
+          <span class="el-dialog__title">{{ t('operatorPresets.title') }}</span>
+          <div class="operator-presets__file-actions">
+            <EaButton
+              size="sm"
+              :disabled="!!error"
+              :aria-label="t('operatorPresets.import')"
+              :title="t('operatorPresets.import')"
+              @click="emit('importFile')"
+            >
+              <EaImportIcon :size="14" />{{ t('operatorPresets.importShort') }}
+            </EaButton>
+            <EaButton
+              size="sm"
+              :disabled="!!error || !scopedPresets.length"
+              :aria-label="t('operatorPresets.export')"
+              :title="t('operatorPresets.export')"
+              @click="
+                emit('exportPresets', selectedOperator === 'all' ? undefined : selectedOperator)
+              "
+            >
+              <EaExportIcon :size="14" />{{ t('operatorPresets.exportShort') }}
+            </EaButton>
+          </div>
+        </div>
+      </template>
+      <div ref="panel" class="operator-presets">
         <p v-if="error" role="alert" class="operator-presets__error">{{ error }}</p>
         <section v-if="current" class="operator-presets__current">
-          <h3 class="operator-presets__heading">{{ t('operatorPresets.current') }}</h3>
-          <OperatorPresetBuildSummary :build="current" :game-data="gameData" />
-          <div class="operator-presets__save">
-            <EaInput
-              v-model="name"
-              :placeholder="t('operatorPresets.name')"
-              :aria-label="t('operatorPresets.name')"
-              :maxlength="60"
-              @keydown.enter="save"
+          <div class="operator-presets__heading">
+            <EaButton
+              variant="ghost"
+              class="operator-presets__disclosure"
+              :aria-expanded="currentExpanded"
+              aria-controls="preset-current-details"
+              :aria-label="`${t(currentExpanded ? 'operatorPresets.collapse' : 'operatorPresets.details')} · ${t('operatorPresets.current')}`"
+              @click="currentExpanded = !currentExpanded"
+            >
+              <EaChevronIcon :direction="currentExpanded ? 'down' : 'right'" :size="16" />
+              <span class="operator-presets__identity">
+                <strong
+                  >{{ t('operatorPresets.current') }} ·
+                  {{ getOperatorGameName(current.operator.operatorSlug, locale) }}</strong
+                >
+                <span class="operator-presets__hint"
+                  >{{ t('operatorPresets.levelValue', { level: current.operator.level }) }} ·
+                  {{ t('armory.common.potential') }} {{ current.operator.potential }}</span
+                >
+              </span>
+            </EaButton>
+            <div class="operator-presets__toolbar">
+              <EaButton :disabled="!!error" @click="beginSave">{{
+                t('operatorPresets.saveNew')
+              }}</EaButton>
+            </div>
+          </div>
+          <EaCollapse :expanded="currentExpanded" id="preset-current-details">
+            <OperatorPresetBuildSummary
+              class="operator-presets__current-details"
+              :build="current"
+              :game-data="gameData"
+              expanded
             />
-            <EaButton :disabled="!!error || !name.trim()" @click="save">{{
-              t('operatorPresets.saveNew')
-            }}</EaButton>
+          </EaCollapse>
+          <div v-if="saving" class="operator-presets__save">
+            <EaFormField control-id="preset-save-name" :label="t('operatorPresets.name')">
+              <EaInput v-model="name" :maxlength="60" @keydown.enter="save" />
+            </EaFormField>
+            <EaDialogActions>
+              <EaButton @click="saving = false">{{ t('operatorPresets.cancel') }}</EaButton>
+              <EaButton variant="primary" :disabled="!!error || !name.trim()" @click="save">{{
+                t('operatorPresets.confirmSave')
+              }}</EaButton>
+            </EaDialogActions>
           </div>
         </section>
-        <div class="operator-presets__list-heading">
-          <h3>{{ t('operatorPresets.list', { count: presets.length }) }}</h3>
-          <EaInput
-            v-model="search"
-            clearable
-            :placeholder="t('operatorPresets.search')"
-            :aria-label="t('operatorPresets.search')"
-          />
-          <EaButton size="sm" :disabled="!!error" @click="fileInput?.click()">{{
-            t('operatorPresets.import')
-          }}</EaButton>
-          <EaButton size="sm" :disabled="!!error || !presets.length" @click="exportPresets">{{
-            t('operatorPresets.export')
-          }}</EaButton>
-          <input
-            ref="fileInput"
-            type="file"
-            accept=".json,application/json"
-            hidden
-            @change="readFile"
-          />
+        <div class="operator-presets__filters">
+          <div class="operator-presets__filter-toolbar">
+            <OperatorPresetOperatorFilter
+              v-model="selectedOperator"
+              :presets="presets"
+              :game-data="gameData"
+              :current-operator-slug="current?.operator.operatorSlug"
+              :disabled="!!error"
+            />
+            <EaInput
+              v-model="search"
+              :prefix-icon="Search"
+              clearable
+              :placeholder="searchPlaceholder"
+              :aria-label="t('operatorPresets.search')"
+            />
+          </div>
+          <div class="operator-presets__filter-meta">
+            <p class="operator-presets__hint">{{ t('operatorPresets.applyInfo') }}</p>
+            <span v-if="search.trim()" class="operator-presets__result-count" role="status">{{
+              t('operatorPresets.resultCount', { count: filteredPresets.length })
+            }}</span>
+          </div>
         </div>
         <div class="operator-presets__list">
-          <p v-if="presets.length && !filteredPresets.length" class="operator-presets__hint">
-            {{ t('operatorPresets.noMatches') }}
-          </p>
-          <p v-if="!presets.length" class="operator-presets__hint">
-            {{ t('operatorPresets.noPresets') }}
-          </p>
-          <article
-            v-for="preset in filteredPresets"
-            :key="preset.id"
-            class="operator-presets__card"
-          >
-            <div class="operator-presets__heading">
-              <span class="operator-presets__bracket" aria-hidden="true">[</span>
-              <span class="operator-presets__name-wrap">
-                <span class="operator-presets__name-measure" aria-hidden="true">{{
-                  preset.name || ' '
-                }}</span>
-                <EaInput
-                  v-model="preset.name"
-                  class="operator-presets__name"
-                  variant="inline"
-                  :aria-label="t('operatorPresets.name')"
-                  :maxlength="60"
-                  @change="rename(preset.id, $event)"
-                  @keydown.enter="($event.target as HTMLInputElement).blur()"
-                />
-              </span>
-              <span class="operator-presets__bracket" aria-hidden="true">]</span>
-            </div>
-            <OperatorPresetBuildSummary :build="preset.build" :game-data="gameData" />
-            <div class="operator-presets__actions">
-              <EaButton
-                size="sm"
-                variant="ghost"
-                icon-only
-                :title="t('operatorPresets.delete')"
-                :aria-label="t('operatorPresets.delete')"
-                @click="remove(preset)"
+          <div v-if="!filteredPresets.length" class="operator-presets__empty">
+            <p>
+              {{
+                search.trim()
+                  ? t('operatorPresets.noMatches')
+                  : selectedOperator !== 'all'
+                    ? t(
+                        selectedOperator === current?.operator.operatorSlug
+                          ? 'operatorPresets.noOperatorPresets'
+                          : 'operatorPresets.noFilteredOperatorPresets',
+                      )
+                    : t('operatorPresets.noPresets')
+              }}
+            </p>
+            <EaButton
+              v-if="selectedOperator !== 'all'"
+              @click="
+                selectedOperator = 'all';
+                search = '';
+              "
+              >{{ t('operatorPresets.viewAll') }}</EaButton
+            >
+          </div>
+          <section v-for="group in groups" :key="group.slug" class="operator-presets__group">
+            <h3 v-if="selectedOperator === 'all'">
+              {{ getOperatorGameName(group.slug, locale) }} ({{ group.items.length }})
+            </h3>
+            <article v-for="preset in group.items" :key="preset.id" class="operator-presets__card">
+              <header class="operator-presets__heading">
+                <EaButton
+                  variant="ghost"
+                  class="operator-presets__disclosure"
+                  :aria-expanded="expanded === preset.id"
+                  :aria-controls="`preset-details-${preset.id}`"
+                  :aria-label="`${t(expanded === preset.id ? 'operatorPresets.collapse' : 'operatorPresets.details')} · ${preset.name}`"
+                  @click="expanded = expanded === preset.id ? null : preset.id"
+                >
+                  <EaChevronIcon
+                    :direction="expanded === preset.id ? 'down' : 'right'"
+                    :size="16"
+                  />
+                  <span class="operator-presets__identity">
+                    <strong class="operator-presets__name">{{ preset.name }}</strong>
+                    <span v-if="matches(preset)" class="operator-presets__match">{{
+                      t('operatorPresets.matches')
+                    }}</span>
+                  </span>
+                </EaButton>
+                <div class="operator-presets__toolbar">
+                  <EaButton
+                    variant="primary"
+                    :disabled="readOnly || !!error"
+                    @click="apply(preset)"
+                    >{{
+                      current && current.operator.operatorSlug !== group.slug
+                        ? t('operatorPresets.replaceAndApply', {
+                            operator: getOperatorGameName(group.slug, locale),
+                          })
+                        : t('operatorPresets.apply')
+                    }}</EaButton
+                  >
+                </div>
+              </header>
+              <OperatorPresetBuildSummary
+                :build="preset.build"
+                :game-data="gameData"
+                :expanded="expanded === preset.id"
+                :details-id="`preset-details-${preset.id}`"
               >
-                <EaDeleteIcon />
-              </EaButton>
-              <EaButton
-                size="sm"
-                variant="ghost"
-                icon-only
-                :title="t('operatorPresets.apply')"
-                :aria-label="t('operatorPresets.apply')"
-                :disabled="readOnly"
-                @click="apply(preset)"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
-              </EaButton>
-            </div>
-          </article>
+                <template #details-footer>
+                  <div
+                    class="operator-presets__actions"
+                    role="group"
+                    :aria-label="t('operatorPresets.manage', { name: preset.name })"
+                  >
+                    <EaButton size="sm" :disabled="!!error" @click="beginRename(preset)">
+                      <EditPen width="14" height="14" aria-hidden="true" />
+                      {{ t('operatorPresets.rename') }}
+                    </EaButton>
+                    <EaTooltip
+                      :content="t('operatorPresets.update')"
+                      :show-after="300"
+                      placement="top"
+                    >
+                      <span class="operator-presets__action-tooltip">
+                        <EaButton
+                          size="sm"
+                          :disabled="
+                            !!error ||
+                            !current ||
+                            current.operator.operatorSlug !== group.slug ||
+                            matches(preset)
+                          "
+                          :aria-label="t('operatorPresets.update')"
+                          @click="updatePreset(preset)"
+                        >
+                          <Refresh width="14" height="14" aria-hidden="true" />
+                          {{ t('operatorPresets.updateShort') }}
+                        </EaButton>
+                      </span>
+                    </EaTooltip>
+                    <EaButton
+                      variant="danger"
+                      size="sm"
+                      :disabled="!!error"
+                      @click="remove(preset)"
+                    >
+                      <EaDeleteIcon :size="14" />{{ t('operatorPresets.delete') }}
+                    </EaButton>
+                  </div>
+                </template>
+              </OperatorPresetBuildSummary>
+            </article>
+          </section>
         </div>
       </div>
-      <template #footer
-        ><EaDialogActions
-          ><EaButton @click="emit('close')">{{
-            t('operatorPresets.close')
-          }}</EaButton></EaDialogActions
-        ></template
-      >
     </EaDialog>
-    <OperatorPresetTransferDialog
-      v-if="transfer"
-      :mode="transfer.mode"
-      :presets="transfer.presets"
-      :game-data="gameData"
-      @close="transfer = null"
-      @confirm="finishTransfer"
-    />
+    <EaDialog
+      v-if="renaming && !suspended"
+      :model-value="true"
+      :title="t('operatorPresets.rename')"
+      width="420px"
+      @update:model-value="!$event && (renaming = null)"
+    >
+      <EaFormField control-id="preset-rename-name" :label="t('operatorPresets.name')">
+        <EaInput
+          id="preset-rename-name"
+          v-model="renameName"
+          :maxlength="60"
+          @keydown.enter="commitRename"
+        />
+      </EaFormField>
+      <template #footer>
+        <EaDialogActions>
+          <EaButton @click="renaming = null">{{ t('operatorPresets.cancel') }}</EaButton>
+          <EaButton
+            variant="primary"
+            :disabled="!renameName.trim() || !!error"
+            @click="commitRename"
+            >{{ t('operatorPresets.confirmSave') }}</EaButton
+          >
+        </EaDialogActions>
+      </template>
+    </EaDialog>
   </InputRegionBoundary>
 </template>
 <style scoped>
+.operator-presets__dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ea-space-2);
+  height: 24px;
+  padding-right: 32px;
+  min-width: 0;
+}
+.operator-presets__dialog-heading > .el-dialog__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.operator-presets__file-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--ea-space-1);
+}
 .operator-presets {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  height: min(720px, calc(100dvh - 150px));
   gap: var(--ea-space-3);
+  min-height: 0;
 }
-.operator-presets h3,
-.operator-presets p {
+.operator-presets p,
+.operator-presets h3 {
   margin: 0;
 }
 .operator-presets h3 {
-  font-size: 14px;
-}
-.operator-presets__hint {
-  color: var(--ea-fg-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-.operator-presets__current,
-.operator-presets__card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 156px;
-  gap: var(--ea-space-1) var(--ea-space-3);
-  padding: var(--ea-space-2) var(--ea-space-3);
-  border: 1px solid var(--ea-border);
-  background: var(--ea-fill-soft);
-}
-.operator-presets__current {
-  border-left: 3px solid var(--ea-gold);
-}
-.operator-presets__heading {
-  grid-column: 1;
-  display: flex;
-  align-items: center;
-  gap: var(--ea-space-2);
-  min-width: 0;
-}
-.operator-presets__name-wrap {
-  position: relative;
-  display: inline-block;
-  min-width: 1em;
-  max-width: calc(100% - 32px);
-}
-.operator-presets__name-measure,
-.operator-presets__name {
-  line-height: 24px;
-  font-size: 14px;
-  font-weight: 700;
-}
-.operator-presets__name-measure {
-  visibility: hidden;
-  white-space: pre;
-  padding: 0 2px;
-}
-.operator-presets__name {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  min-width: 0;
-}
-.operator-presets__bracket {
-  color: var(--ea-fg-faint);
-  font-weight: 300;
-  line-height: 24px;
-}
-.operator-presets__heading:has(.operator-presets__name-wrap) {
-  gap: 2px;
-}
-.operator-presets__name :deep(.el-input__wrapper) {
-  padding: 0 2px;
-}
-.operator-presets__name :deep(.el-input__inner) {
-  font: inherit;
-  height: 24px;
-  line-height: 24px;
-}
-.operator-presets__list-heading {
   display: flex;
   align-items: center;
   gap: var(--ea-space-3);
+  font-size: 14px;
 }
-.operator-presets__list-heading h3 {
-  flex-shrink: 0;
+.operator-presets h3::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--ea-border-soft);
 }
-.operator-presets__list-heading .ea-input {
-  width: 240px;
-  max-width: 100%;
-}
-.operator-presets__list {
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
+.operator-presets__heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: var(--ea-space-2);
 }
-.operator-presets__card,
-.operator-presets__current {
+.operator-presets__disclosure.ea-button {
+  justify-content: flex-start;
+  align-items: center;
+  min-width: 0;
+  height: auto;
+  min-height: 32px;
+  padding: var(--ea-space-1);
+  text-align: left;
+  white-space: normal;
+}
+.operator-presets__disclosure > .ea-chevron-icon {
   flex-shrink: 0;
 }
-.operator-presets-dialog :deep(.el-dialog__body) {
-  overflow: hidden;
+.operator-presets__identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  min-width: 0;
+  gap: var(--ea-space-2);
 }
 .operator-presets__name {
-  --ea-number-input-bg: transparent;
-  --ea-number-input-border: transparent;
-  --ea-control-border: transparent;
-  font-weight: 700;
-}
-.operator-presets__heading strong {
   overflow-wrap: anywhere;
+  font-size: 14px;
 }
-.operator-presets__current > .preset-build,
-.operator-presets__card > .preset-build {
-  grid-column: 1;
+.operator-presets__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ea-space-2);
 }
-.operator-presets__save,
-.operator-presets__actions {
-  grid-column: 2;
-  grid-row: 1 / span 2;
+.operator-presets__current,
+.operator-presets__card {
+  padding: var(--ea-space-3);
+  border: 1px solid var(--ea-border-soft);
+  background: var(--ea-fill-soft);
+}
+.operator-presets__current,
+.operator-presets__filters {
+  display: grid;
+  gap: var(--ea-space-3);
+}
+.operator-presets__filters {
+  gap: var(--ea-space-2);
+  padding-bottom: var(--ea-space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--ea-gold) 15%, transparent);
+}
+.operator-presets__filter-toolbar {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.65fr) minmax(0, 1.35fr);
+  align-items: center;
+  gap: var(--ea-space-2);
+}
+.operator-presets__filter-toolbar > .ea-input {
+  min-width: 0;
+}
+.operator-presets__filter-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ea-space-1) var(--ea-space-2);
+}
+.operator-presets__result-count {
+  color: var(--ea-fg-secondary);
+  font-size: 12px;
+}
+.operator-presets__current-details,
+.operator-presets__save {
+  padding-top: var(--ea-space-3);
+  border-top: 1px solid var(--ea-border-soft);
+}
+.operator-presets__save {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--ea-space-2);
+  font-size: 12px;
+}
+.operator-presets__save > .ea-dialog-actions {
+  padding-top: 0;
+}
+.operator-presets__list,
+.operator-presets__group {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: stretch;
   gap: var(--ea-space-2);
-  padding-left: var(--ea-space-4);
-  border-left: 1px solid var(--ea-border);
+}
+.operator-presets__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ea-space-3);
+}
+.operator-presets__hint,
+.operator-presets__empty {
+  color: var(--ea-fg-secondary);
+  font-size: 12px;
+}
+.operator-presets__empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--ea-space-2);
+  padding: var(--ea-space-3);
+}
+.operator-presets__match {
+  color: var(--ea-gold);
+  font-size: 12px;
 }
 .operator-presets__actions {
-  flex-direction: row;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: var(--ea-space-2);
+  margin-top: var(--ea-space-3);
+  padding-top: var(--ea-space-3);
+  border-top: 1px solid var(--ea-border-soft);
 }
-.operator-presets__actions .ea-button {
-  width: 34px;
-  height: 34px;
-  padding: 6px;
-  border-radius: 50%;
-}
-.operator-presets__actions svg {
-  width: 20px;
-  height: 20px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.operator-presets__action-tooltip {
+  display: inline-flex;
 }
 .operator-presets__error {
   color: var(--ea-danger);
 }
-@media (max-width: 650px) {
-  .operator-presets__current,
-  .operator-presets__card {
+@media (max-width: 600px) {
+  .operator-presets__filter-toolbar {
     grid-template-columns: minmax(0, 1fr);
   }
-  .operator-presets__save,
-  .operator-presets__actions {
-    grid-column: 1;
-    grid-row: auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    padding-left: 0;
-    padding-top: var(--ea-space-3);
-    border-left: 0;
-    border-top: 1px solid var(--ea-border);
+  .operator-presets__heading {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .operator-presets__save > :first-child {
-    flex: 1;
-    min-width: 100px;
+  .operator-presets__heading > .operator-presets__toolbar {
+    justify-self: end;
+  }
+  .operator-presets__save {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>

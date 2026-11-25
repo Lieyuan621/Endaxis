@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { describe, expect, it } from 'vitest';
 
 import type { WeaponDefinition } from '../../../core/game-data/equipmentDefinition';
@@ -75,7 +76,7 @@ describe('生成武器的正式模拟门禁', () => {
     ).toBe(false);
     expect(baseline.executionDiagnostics).toEqual([]);
   });
-  it('艾维文娜连续排轴：三把连携枪由战技回收并执行正式回调伤害', async () => {
+  it('艾维文娜连续排轴：三次连携的九把枪由战技回收并执行正式回调伤害', async () => {
     const weapon = candidates.find(item => item.slug === 'wpn_lance_0006')!;
     const result = await simulateWeapon(
       weapon,
@@ -89,10 +90,9 @@ describe('生成武器的正式模拟门禁', () => {
       entry =>
         entry.event === 'DamageApplied' &&
         entry.sourceId === 'track:weapon-owner' &&
-        // 发射后的下一次投射物 Tick 执行回收回调，不在发射动作内同步展开。
-        entry.frame === 459,
+        String(entry.data?.stepKey).includes('chr_0012_avywen_combo_skill_lance_back'),
     );
-    expect(returnHits).toHaveLength(3);
+    expect(returnHits).toHaveLength(9);
     expect(returnHits.every(entry => entry.data?.damageType === 'electric')).toBe(true);
   });
   it.each([
@@ -470,8 +470,17 @@ describe('生成武器的正式模拟门禁', () => {
 
   it('战技开始创建的武器 Buff 随本次技能结束，不残留到下一次战技', async () => {
     const weapon = candidates.find(item => item.slug === 'wpn_lance_0006')!;
-    const operator = repository.getOperators().find(item => item.weaponType === weapon.weaponType)!;
-    const result = await simulateWeapon(weapon, operator, ['battleSkill', 'battleSkill']);
+    const operator = repository.getOperator('avywenna')!;
+    const result = await simulateWeapon(
+      weapon,
+      operator,
+      ['battleSkill', 'battleSkill'],
+      undefined,
+      [],
+      {
+        ownerStartFrames: [1, 601],
+      },
+    );
     const applied = result.receiptEntries.filter(
       entry =>
         entry.event === 'BuffApplied' && entry.data?.buffId === 'buff_wpn_lance_0006_skill_pulse01',
@@ -554,7 +563,7 @@ async function simulateWeapon(
   if (teammates.length > teammateTrackIndices.length) throw new Error('at most three teammates');
   let scenario = createEmptyScenario(`audit:generated:${weapon.slug}`, '生成武器生产验证');
   scenario.battle.durationFrames = 1800;
-  scenario.enemy.editable.hp = 1_000_000_000;
+  firstScenarioEnemy(scenario).enemy.editable.hp = 1_000_000_000;
   scenario.battle.resourceRules = {
     maxSp: 1000,
     initialSp: 1000,

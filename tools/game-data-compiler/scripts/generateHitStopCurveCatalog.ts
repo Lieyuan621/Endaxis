@@ -6,7 +6,7 @@ import {
   renderHitStopCurveCatalogModule,
 } from '../src/source/hitStopCurveCatalog.ts';
 import { writeAtomicBytes } from './downloadGameDataSources.ts';
-import { formatGeneratedSource } from './formatGeneratedSource.ts';
+import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 
 export async function generateHitStopCurveCatalog(args: {
   readonly sourceUrl: string;

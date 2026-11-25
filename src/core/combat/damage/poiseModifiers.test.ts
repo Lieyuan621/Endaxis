@@ -5,11 +5,45 @@ import { EventContextConditionExecutor } from '../events/eventContextConditionEx
 import { OperatorControlConditionExecutor } from '../skills/operatorControlConditionExecutor';
 import type { PoiseModifierConditionInput } from './poiseModifiers';
 import { describe, expect, it } from 'vitest';
-import { CombatAttributeSet } from '../attributes/combatAttributes';
+import {
+  CombatAttributeSet,
+  attributeModifierValues,
+  createCombatAttributeModifier,
+} from '../attributes/combatAttributes';
+import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
 import { CombatBuffContainer } from '../buffs/combatBuffs';
 import { PoiseCalculationContext } from './poiseModifiers';
 
 describe('poise modifiers', () => {
+  it('即时修正使用属性快照和原生公式槽，零最终乘区不被后续加算穿透', () => {
+    const output = new CombatAttributeSet<string>();
+    const taken = new CombatAttributeSet<string>();
+    output.define('PoiseDamageOutputScalar', 1, {});
+    taken.define('PoiseDamageTakenScalar', 1, {});
+    const permanent = createCombatAttributeModifier(
+      'PoiseDamageTakenScalar',
+      attributeModifierValues('finalMultiplier', 2),
+      ATTRIBUTE_MODIFIER_SOURCES.all,
+      'runtime',
+    );
+    taken.addModifier(permanent);
+    const context = new PoiseCalculationContext('operator', 'enemy', [], 1, 1, {
+      output,
+      taken,
+    });
+    taken.removeModifier(permanent);
+    taken.setRawValue('PoiseDamageTakenScalar', 4);
+    context.modifyScalar('defender', 'baseAddition', 0.5);
+    expect(context.takenMultiplier).toBe(3);
+    context.modifyScalar('defender', 'finalMultiplier', 0);
+    context.modifyScalar('defender', 'baseAddition', 1);
+    expect(context.takenMultiplier).toBe(0);
+    expect(context.outputMultiplier).toBe(1);
+    expect(taken.get('PoiseDamageTakenScalar')).toBe(4);
+    const next = new PoiseCalculationContext('operator', 'enemy', [], 1, 1, { output, taken });
+    expect(next.takenMultiplier).toBe(4);
+  });
+
   it('失衡条件同时检查主控、技能标签和伤害特征，结束后不再生效', () => {
     let controlled = true;
     const buffs = new CombatBuffContainer('operator', new CombatAttributeSet());
@@ -50,9 +84,9 @@ describe('poise modifiers', () => {
                     feature: {
                       type: 'boolean',
                       expression: {
-                        kind: 'eventDamageFeaturesMatch',
+                        kind: 'eventDamageTagsMatch',
                         match: 'hasAny',
-                        features: ['talentDamage'],
+                        tags: ['talentDamage'],
                       },
                     },
                     tag: {
@@ -68,7 +102,10 @@ describe('poise modifiers', () => {
                 new CombatActionSequenceRuntime(
                   new OperatorControlConditionExecutor({
                     isOperatorControlled: () => controlled,
-                    queryTargets: () => [{ kind: 'operator', operatorId: 'caster' }],
+                    queryTargets: () => [
+                      { kind: 'spatialPoint', pointId: 1 },
+                      { kind: 'operator', operatorId: 'caster' },
+                    ],
                     delegate: new EventContextConditionExecutor({
                       execute: () => true,
                       evaluate: () => {
@@ -78,7 +115,10 @@ describe('poise modifiers', () => {
                   }),
                   { blackboard: buff.blackboard },
                 ),
-                input => ({ context: { kind: 'poise', input }, target: { kind: 'enemy' } }),
+                input => ({
+                  context: { kind: 'poise', input },
+                  target: { kind: 'enemy', enemyId: 'enemy' },
+                }),
                 state,
               ),
             processors: [
@@ -86,7 +126,7 @@ describe('poise modifiers', () => {
                 kind: 'modifyPoiseScalar',
                 timing: 'beforeCalculation',
                 side: 'attacker',
-                addition: { blackboardKey: 'poise_up' },
+                values: { slot: 'baseAddition', value: { blackboardKey: 'poise_up' } },
               },
             ],
           },
@@ -98,16 +138,14 @@ describe('poise modifiers', () => {
     const matching = new PoiseCalculationContext(
       'operator',
       'enemy',
-      ['normalAttack', 'normalAttackLastCombo'],
-      ['talentDamage'],
+      ['normalAttack', 'normalAttackLastCombo', 'talentDamage'],
       1,
       1,
     );
     const uncontrolled = new PoiseCalculationContext(
       'operator',
       'enemy',
-      ['normalAttackLastCombo'],
-      ['talentDamage'],
+      ['normalAttackLastCombo', 'talentDamage'],
       1,
       1,
     );
@@ -124,7 +162,6 @@ describe('poise modifiers', () => {
       'operator',
       'enemy',
       ['normalAttackLastCombo'],
-      [],
       1,
       1,
     );
@@ -135,7 +172,6 @@ describe('poise modifiers', () => {
       'operator',
       'enemy',
       ['normalAttackLastCombo'],
-      ['talentDamage'],
       1,
       1,
     );

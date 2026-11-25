@@ -1,3 +1,5 @@
+import { parseOperatorSkillGroupValidationOptions } from '../../source/operatorSkillGroupOptions.ts';
+import { normalizeNativeTableNumbers } from '../../source/nativeTableNumbers.ts';
 import { ATTRIBUTE_TYPES } from '../../source/attributeModifiers.ts';
 import {
   requireArray,
@@ -19,6 +21,7 @@ import {
 
 export interface LocaleIdentities {
   readonly operators: Readonly<Record<string, string>>;
+  readonly equivalentSkillIds: ReadonlySet<string>;
   readonly excludedOperators: ReadonlySet<string>;
   readonly weapons: Readonly<Record<string, string>>;
   readonly gearSets: Readonly<Record<string, string>>;
@@ -107,9 +110,10 @@ const joinDescriptions = (parts: string[]) => parts.filter(Boolean).join('\n').t
 
 export function operatorLocaleIdentities(
   source: unknown,
-): Pick<LocaleIdentities, 'operators' | 'excludedOperators'> {
+): Pick<LocaleIdentities, 'operators' | 'excludedOperators' | 'equivalentSkillIds'> {
   const manifest = requireRecord(source, 'operator manifest');
   const operators: Record<string, string> = {};
+  const equivalentSkillIds = new Set<string>();
   const excludedOperators = new Set<string>();
   for (const value of requireArray(manifest.operators, 'operator manifest.operators')) {
     const row = requireRecord(value, 'operator manifest entry');
@@ -120,12 +124,15 @@ export function operatorLocaleIdentities(
       excludedOperators.add(requireNonEmptyString(id, 'excludedLocaleCharIds string list'));
     const id = requireNonEmptyString(row.charId, 'operator charId');
     if (Object.hasOwn(operators, id)) throw new Error(`duplicate charId: ${id}`);
+    const options = parseOperatorSkillGroupValidationOptions(row, id);
+    for (const skillId of options.simulationEquivalentNativeSkillIds ?? [])
+      equivalentSkillIds.add(skillId);
     operators[id] = requireNonEmptyString(row.slug, 'operator slug');
   }
   for (const id of excludedOperators)
     if (Object.hasOwn(operators, id))
       throw new Error(`cannot exclude a canonical operator charId: ${id}`);
-  return { operators, excludedOperators };
+  return { operators, excludedOperators, equivalentSkillIds };
 }
 
 function effectValues(table: SourceRecord, id: string, context: string): Record<string, number> {
@@ -179,11 +186,17 @@ export function compileGameLocales(
       throw new Error(`${context}: unresolved or missing text`);
     return result;
   };
-  const patches = table('SkillPatchTable');
+  const patches = requireRecord(
+    normalizeNativeTableNumbers(table('SkillPatchTable')),
+    'SkillPatchTable',
+  );
   const bundles = (id: string) =>
     array(record(patches[id], id).SkillPatchDataBundle, id).map(value => requireRecord(value, id));
   const operators: Document = {};
-  const effects = table('PotentialTalentEffectTable');
+  const effects = requireRecord(
+    normalizeNativeTableNumbers(table('PotentialTalentEffectTable')),
+    'PotentialTalentEffectTable',
+  );
   const effectDescription = (id: string, name: string, context: string) => {
     const effect = record(effects[id], context);
     const desc = text(effect.desc) || text(bundles(id)[0]?.description);
@@ -257,8 +270,11 @@ export function compileGameLocales(
       if (!key || !text(group.name)) continue;
       const context = `${slug} ${key}`;
       const values: Record<string, number> = {};
-      for (const skillId of array(group.skillIdList, context))
-        for (const bundle of bundles(requireNonEmptyString(skillId, context)))
+      const skillIds = array(group.skillIdList, context)
+        .map(id => requireNonEmptyString(id, context))
+        .filter(id => !identities.equivalentSkillIds.has(id));
+      for (const skillId of skillIds)
+        for (const bundle of bundles(skillId))
           addBlackboardEntries(values, bundle.blackboard, context);
       if (group.skillGroupId)
         for (const bundle of bundles(requireNonEmptyString(group.skillGroupId, context))) {
@@ -308,7 +324,7 @@ export function compileGameLocales(
         name: plain(text(group.name), context),
         description: baseDescription,
         details: compileOperatorSkillDetails(
-          array(group.skillIdList, context).map(id => bundles(requireNonEmptyString(id, context))),
+          skillIds.map(bundles),
           texts,
           conditionForms,
           text(group.name),
@@ -396,7 +412,7 @@ export function compileGameLocales(
   const slots = requireRecord(enumTerms.slotType, 'enumTerms.slotType');
   for (const id of Object.keys(identities.gears).sort()) {
     const item = requireRecord(table('ItemTable')[id], id),
-      equip = requireRecord(table('EquipTable')[id], id);
+      equip = requireRecord(normalizeNativeTableNumbers(table('EquipTable')[id]), id);
     const name = requiredText(item.name, id, true);
     const slot = ({ 0: 'armor', 1: 'gloves', 2: 'accessory' } as Record<string, string>)[
       String(equip.partType)
@@ -421,6 +437,12 @@ export function compileGameLocales(
     }
   if (!Object.keys(enemies).length)
     throw new Error('EnemyTemplateDisplayInfoTable: no selectable eny_* templates');
+  const monsterWiki = requireRecord(table('WikiGroupTable').wiki_type_monster, 'wiki_type_monster');
+  for (const value of requireArray(monsterWiki.list, 'wiki_type_monster.list')) {
+    const group = requireRecord(value, 'monster wiki group');
+    const id = requireNonEmptyString(group.groupId, 'monster wiki groupId');
+    enemies[id] = { name: requiredText(group.groupName, id, true) };
+  }
 
   const consumables: Document = {};
   for (const [id, use] of entries(table('UseItemTable'))) {

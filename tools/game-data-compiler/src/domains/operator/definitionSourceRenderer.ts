@@ -202,11 +202,12 @@ export function renderCommonBuffDefinitionsSource(
   const helpers = new Set<string>();
   const declarations: string[] = [];
   const entries: string[] = [];
-  for (const [index, [id, value]] of Object.entries(definitions)
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .entries()) {
-    const name = `commonBuff${index + 1}`;
-    const graphName = `${name}ActionGraph`;
+  for (const [id, value] of Object.entries(definitions).sort(([a], [b]) =>
+    a < b ? -1 : a > b ? 1 : 0,
+  )) {
+    // Escape punctuation rather than dropping it, so distinct IDs retain distinct names.
+    const name = `commonBuff_${id.replace(/[^A-Za-z0-9_]/gu, char => `$${char.codePointAt(0)!.toString(16)}$`)}`;
+    const graphName = `${name}$actionGraph`;
     const definition = prepareActionGraphIdentities(
       requireRecord(value, `commonBuffDefinitions.${id}`),
     );

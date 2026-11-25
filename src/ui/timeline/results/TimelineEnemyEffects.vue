@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import TimelineDamageHit from './TimelineDamageHit.vue';
+import TimelineStatusIcon from './TimelineStatusIcon.vue';
+import TimelineEnemyEffectMarkers from './TimelineEnemyEffectMarkers.vue';
+import TimelineStatusDuration from './TimelineStatusDuration.vue';
 import { roundHitDamage } from './hitDamageDisplay';
 import { resolveImage } from '../../imageResources';
 import type { BuffDisplayName } from './buffDisplayName';
@@ -11,15 +15,15 @@ type EntityHit = {
   hitId: string;
   frame: number;
   entityInstanceId: number;
+  hasOverride: boolean;
   title: string;
 };
 /**
- * 敌人效果面板（对齐旧版 ResourceMonitor 的敌人状态区样式）：
+ * 敌人效果面板：
  * 可见 Buff = 原生图标框 + 层数角标 + 45 度条纹时长条；爆发/反应消费 = 图标标记。
  * 坐标与资源曲线同一体系（准备区偏移 + 每帧像素 + 轨道头宽度，跟随时间轴滚动）。
  */
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
-import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
 import { useDurationBarColor } from './durationBarColorContext';
 import { resolveDurationBarColor } from './durationBarColor';
 import { useI18n } from 'vue-i18n';
@@ -31,17 +35,19 @@ import BuffStatusIconStrip from './BuffStatusIconStrip.vue';
 import { resolveBuffDisplayName } from './buffDisplayName';
 import { resolveBuffEffectSummary, showBuffLayerBadge } from './buffDisplayName';
 import type { BuffDetailTarget } from './buffDetail';
-import { DEFAULT_GAME_ICON_PATH, getSpellBurstIconPath } from '../../gameAssetPaths';
+import { DEFAULT_GAME_ICON_PATH } from '../../gameAssetPaths';
 import { frameToCondensedTimelinePx } from '../timelineGeometry';
 import TimelineMonitorGrid from './TimelineMonitorGrid.vue';
 import { summarizeLastHitBuffs } from './lastHitBuffSummary';
 import { layoutEnemyStatusRows } from './enemyStatusRows';
+import { hasHitOverride } from '../../../core/projection/hitEffectProjection';
 import { layoutEnemyDamageHits } from './enemyDamageHitLayout';
 import { findBuffDamageSegment } from './enemyBuffDamageHits';
 import { isPhysicalStatusRowBuff } from './physicalStatusDisplay';
-import { enemyStatusRowSize } from './monitorSectionMinimums';
-import { projectAttachmentConversionLinks } from '../../../core/projection/attachmentContinuations';
+import { ENEMY_STATUS_CONTENT_TOP, enemyStatusRowSize } from './monitorSectionMinimums';
+import { projectBuffTimelineColors } from './buffTimelineColors';
 import TimelineAttachmentContinuation from './TimelineAttachmentContinuation.vue';
+import { ArrowLeft } from '@element-plus/icons-vue';
 
 const { t, te } = useI18n();
 
@@ -56,7 +62,11 @@ const props = defineProps<{
   prepFrames: number;
   pxPerFrame: number;
   trackHeaderWidth: number;
-  scrollLeft: number;
+  scrollLeft?: number;
+  scrollState?: { readonly left: { readonly value: number } };
+  /** 分桶后的可见世界坐标；导出时留空以绘制全部效果。 */
+  visibleLeftPx?: number;
+  visibleRightPx?: number;
   prepEndFrame?: number;
 
   prepExpanded: boolean;
@@ -66,8 +76,10 @@ const props = defineProps<{
   snapshotFrame: number | null;
   hudSnapshot: EnemyCombatHudSnapshotModel;
   enemyName: string;
+  targetName: (targetId: string) => string;
   enemyLevel: number;
   compact?: boolean;
+  showOverviewReturn?: boolean;
   poiseKnotThresholds: readonly number[];
   hudLabels: {
     status: string;
@@ -91,7 +103,9 @@ const props = defineProps<{
     readonly sourceActionId?: string;
   }) => string | undefined;
 }>();
+const currentScrollLeft = computed(() => props.scrollState?.left.value ?? props.scrollLeft ?? 0);
 const emit = defineEmits<{
+  'return-overview': [];
   'open-damage-detail': [sequence: number];
   'open-entity-detail': [segment: PositionedOperatorPassiveUiTimelineSegment, title: string];
   'open-entity-hit': [hit: EntityHit];
@@ -113,30 +127,25 @@ onBeforeUnmount(() => resizeObserver?.disconnect());
 const iconSize = computed(() =>
   enemyStatusRowSize(
     height.value - ICON_TOP,
-    Math.max(statusRows.value.rowCount, ...entitySegments.value.map(segment => segment.lane + 1)),
+    Math.max(
+      statusRows.value.rowCount,
+      ...entitySegments.value.map(segment => segment.lane + 1),
+      ...damageHitPositions.value.map(position => position.row + 1),
+    ),
   ),
 );
 const rowPitch = computed(() => iconSize.value + 4);
 const durationBarColor = useDurationBarColor();
-const ICON_TOP = 2;
+const ICON_TOP = ENEMY_STATUS_CONTENT_TOP;
 
-function spellBurstTitle(burstType: string | undefined): string {
-  if (burstType === undefined) return props.labels.burst;
-  const key = `timeline.skillEditing.spellBurstTypes.${burstType}`;
-  return te(key) ? t(key) : `${props.labels.burst} ${burstType}`;
-}
-
+// 状态内容保持时间轴世界坐标；滚动只平移容器，避免逐项重算 Buff 详情与图标。
 function pointX(frame: number): number {
-  return (
-    props.trackHeaderWidth +
-    frameToCondensedTimelinePx(
-      frame,
-      props.prepFrames,
-      props.pxPerFrame,
-      props.prepExpanded,
-      props.prepEndFrame,
-    ) -
-    props.scrollLeft
+  return frameToCondensedTimelinePx(
+    frame,
+    props.prepFrames,
+    props.pxPerFrame,
+    props.prepExpanded,
+    props.prepEndFrame,
   );
 }
 
@@ -181,39 +190,7 @@ const entityDamageHits = computed(() => {
 function entityTop(lane: number) {
   return ICON_TOP + lane * rowPitch.value;
 }
-const markers = computed(() =>
-  props.viz.markers.map((marker, index) => {
-    const attachment =
-      marker.kind === 'attachmentTrigger'
-        ? elementalAttachments.buffs.find(
-            buff =>
-              buff.role?.kind === 'elementalAttachment' && buff.role.element === marker.element,
-          )
-        : undefined;
-    const icon =
-      marker.kind === 'attachmentTrigger'
-        ? (resolveImage(attachment?.presentation?.icon) ?? DEFAULT_GAME_ICON_PATH)
-        : (getSpellBurstIconPath(marker.burstType) ?? DEFAULT_GAME_ICON_PATH);
-    const title =
-      marker.kind === 'attachmentTrigger'
-        ? resolveBuffDisplayName(attachment?.id ?? marker.element ?? '', { t, te })
-        : spellBurstTitle(marker.burstType);
-    return {
-      key: `${index}:${marker.kind}:${marker.frame}:${marker.burstType ?? ''}`,
-      icon,
-      // Legacy markers also carry a badge. For an instantaneous input/burst this
-      // denotes one occurrence, not a newly created persistent attachment layer.
-      badge: 1,
-      x:
-        pointX(marker.frame) +
-        (statusRows.value.markerPositions[index]?.slot ?? 0) * (iconSize.value + 2),
-      top: ICON_TOP + (statusRows.value.markerPositions[index]?.row ?? 0) * rowPitch.value,
-      title,
-    };
-  }),
-);
-
-const damageHits = computed(() =>
+const damageHitPositions = computed(() =>
   layoutEnemyDamageHits(
     props.viz.damageHits ?? [],
     props.buffs,
@@ -222,11 +199,15 @@ const damageHits = computed(() =>
     props.viz.damageBuffs,
     props.viz.damageDisplayOwners,
     props.entitySegments,
-  ).map(({ group, row, standalone }) => {
+  ),
+);
+const damageHits = computed(() =>
+  damageHitPositions.value.map(({ group, row, standalone }) => {
     const entry = group[0]!;
     const buff = findBuffDamageSegment(entry, props.viz.damageBuffs ?? []);
     return {
       sequence: entry.sequence,
+      hasOverride: group.some(hasHitOverride),
       standaloneIcon: standalone
         ? ((buff && props.icon?.(buff)) ?? resolveImage(buff?.icon) ?? DEFAULT_GAME_ICON_PATH)
         : undefined,
@@ -242,16 +223,22 @@ const damageHits = computed(() =>
           ? `${resolveBuffDisplayName(entry.data.buffId, { t, te })}: `
           : '') +
         group
-          .map(hit =>
-            String(roundHitDamage(Number(hit.data?.expectedDamage ?? hit.data?.value ?? 0))),
+          .map(
+            hit =>
+              `${hit.targetId === undefined ? '' : props.targetName(hit.targetId) + ': '}${roundHitDamage(Number(hit.data?.expectedDamage ?? hit.data?.value ?? 0))}`,
           )
-          .join(' / '),
+          .join('\n'),
     };
   }),
 );
 
-const attachmentConversions = computed(() =>
-  projectAttachmentConversionLinks(props.buffs, props.viz.attachmentConversions ?? []),
+const buffColors = computed(() =>
+  projectBuffTimelineColors(
+    props.buffs,
+    props.viz.attachmentConversions ?? [],
+    durationBarColor.value,
+    'enemy',
+  ),
 );
 const buffs = computed(() =>
   props.buffs.map(buff => {
@@ -274,18 +261,13 @@ const buffs = computed(() =>
           ...new Set(buff.windows.map(member => resolveBuffDisplayName(member.buffId, { t, te }))),
         ].join(' / ')
       : baseTitle;
-    const icon =
-      (isPhysicalStatusRowBuff(buff) ? resolveImage(buff.icon) : props.icon?.(buff)) ??
-      resolveImage(buff.icon) ??
-      resolveImage(buff.icon);
+    const icon = isPhysicalStatusRowBuff(buff)
+      ? resolveImage(buff.icon)
+      : (props.icon?.(buff) ?? resolveImage(buff.icon));
     return {
       ...buff,
       isAttachment: props.attachmentBuffIds?.has(buff.buffId) ?? false,
-      endColor: resolveDurationBarColor(
-        durationBarColor.value,
-        'enemy',
-        attachmentConversions.value.get(buff) ?? buff,
-      ),
+      ...buffColors.value.get(buff)!,
       key: `${buff.buffId}:${buff.instanceId}:${buff.startFrame}:${buff.startSequence ?? ''}`,
       icon,
       hideIcon,
@@ -293,7 +275,6 @@ const buffs = computed(() =>
       iconOffset: (statusRows.value.iconSlots.get(buff) ?? 0) * (iconSize.value + 2),
       top: ICON_TOP + (statusRows.value.lanes.get(buff) ?? 0) * rowPitch.value,
       barWidthPx: Math.max(0, right - start - iconSize.value - 2),
-      color: resolveDurationBarColor(durationBarColor.value, 'enemy', buff),
       title,
       tooltip: modifierSummary ? `${title}\n${modifierSummary}` : title,
       detail: {
@@ -342,12 +323,9 @@ const buffs = computed(() =>
             ...(member.endReason === undefined ? {} : { endReason: member.endReason }),
             ...(member.stackingType === undefined ? {} : { stackingType: member.stackingType }),
             ...(member.parentBuffId === undefined ? {} : { parentBuffId: member.parentBuffId }),
-            icon:
-              (isPhysicalStatusRowBuff(member)
-                ? resolveImage(member.icon)
-                : props.icon?.(member)) ??
-              resolveImage(member.icon) ??
-              resolveImage(member.icon),
+            icon: isPhysicalStatusRowBuff(member)
+              ? resolveImage(member.icon)
+              : (props.icon?.(member) ?? resolveImage(member.icon)),
             ...(memberModifierSummary === undefined
               ? {}
               : { modifierSummary: memberModifierSummary }),
@@ -357,10 +335,42 @@ const buffs = computed(() =>
     };
   }),
 );
+const visibleBuffs = computed(() => {
+  const left = props.visibleLeftPx;
+  const right = props.visibleRightPx;
+  if (left === undefined || right === undefined) return buffs.value;
+  return buffs.value.filter(buff => {
+    const start = pointX(buff.startFrame);
+    const end = Math.max(
+      pointX(buff.durationEndFrame ?? buff.endFrame) + iconSize.value,
+      start + buff.iconOffset + iconSize.value,
+    );
+    return end >= left && start <= right;
+  });
+});
 
 const lastHitSummary = computed(() => summarizeLastHitBuffs(buffs.value, props.snapshotFrame));
 const visibleLastHitBuffs = computed(() => lastHitSummary.value.buffs);
 const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
+const contentHeight = computed(() =>
+  Math.max(
+    ICON_TOP + statusRows.value.rowCount * rowPitch.value,
+    ...entitySegments.value.map(segment => ICON_TOP + (segment.lane + 1) * rowPitch.value),
+    ...damageHits.value.map(hit => hit.top + 12),
+    ...entityDamageHits.value.map(hit => hit.top + 12),
+  ),
+);
+function scrollEffects(event: WheelEvent) {
+  const viewport = event.currentTarget;
+  if (!(viewport instanceof HTMLElement)) return;
+  if (
+    !event.ctrlKey &&
+    !event.metaKey &&
+    Math.abs(event.deltaY) > Math.abs(event.deltaX) &&
+    viewport.scrollHeight > viewport.clientHeight
+  )
+    event.stopPropagation();
+}
 </script>
 
 <template>
@@ -373,7 +383,7 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
       :prep-expanded="prepExpanded"
       :px-per-frame="pxPerFrame"
       :track-header-width="trackHeaderWidth"
-      :scroll-left="scrollLeft"
+      :scroll-left="currentScrollLeft"
     />
     <EnemyCombatHudSnapshot
       class="enemy-hud"
@@ -385,6 +395,18 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
       :poise-knot-thresholds="poiseKnotThresholds"
       :labels="hudLabels"
     >
+      <template v-if="showOverviewReturn" #header-action>
+        <button
+          type="button"
+          class="enemy-overview-return"
+          :title="t('timeline.enemies.backToOverview')"
+          :aria-label="t('timeline.enemies.backToOverview')"
+          @click="emit('return-overview')"
+        >
+          <ArrowLeft aria-hidden="true" />
+          <span v-if="!compact">{{ t('timeline.enemies.title') }}</span>
+        </button>
+      </template>
       <BuffStatusIconStrip
         :buffs="visibleLastHitBuffs"
         :overflow="lastHitBuffOverflow"
@@ -394,177 +416,128 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
         "
       />
     </EnemyCombatHudSnapshot>
-    <div class="enemy-timed-effects">
-      <button
-        type="button"
-        v-for="hit in damageHits"
-        :key="`damage:${hit.sequence}`"
-        class="enemy-damage-hit"
-        :style="{ left: `${hit.x}px`, top: `${hit.top}px` }"
-        :title="hit.title"
-        :aria-label="`${hit.title}`"
-        @mousedown.stop="emit('open-damage-detail', hit.sequence)"
-        @keydown.enter.stop.prevent="emit('open-damage-detail', hit.sequence)"
-        @keydown.space.stop.prevent="emit('open-damage-detail', hit.sequence)"
-      >
-        <img
-          v-if="hit.standaloneIcon"
-          :src="hit.standaloneIcon"
-          class="standalone-damage-icon"
-          alt=""
-        />
-        <span class="enemy-damage-diamond"></span>
-      </button>
-      <span
-        v-for="marker in markers"
-        :key="marker.key"
-        class="anomaly-icon-box effect-marker"
-        :style="{ left: `${marker.x}px`, top: `${marker.top}px` }"
-        :title="marker.title"
-      >
-        <img :src="marker.icon" class="anomaly-icon" alt="" />
-        <span v-if="marker.badge !== undefined" class="anomaly-stacks">{{ marker.badge }}</span>
-      </span>
+    <div
+      class="enemy-effects-viewport"
+      :style="{ left: trackHeaderWidth + 'px' }"
+      @wheel="scrollEffects"
+    >
       <div
-        v-for="segment in entitySegments"
-        :key="`${segment.operatorId}:${segment.abilityEntityId}:${segment.startFrame}:${segment.entities.map(entity => entity.instanceId).join(',')}`"
-        class="attachment-item"
-        :style="{ left: `${pointX(segment.startFrame)}px`, top: `${entityTop(segment.lane)}px` }"
-        :title="t(segment.nameKey)"
+        class="enemy-timed-effects"
+        :style="{
+          height: contentHeight + 'px',
+          transform: `translateX(${-currentScrollLeft}px)`,
+        }"
       >
-        <span
-          class="anomaly-icon-box is-clickable"
-          role="button"
-          tabindex="0"
-          @click.stop="emit('open-entity-detail', segment, t(segment.nameKey))"
-          @keydown.enter.stop.prevent="emit('open-entity-detail', segment, t(segment.nameKey))"
-          @keydown.space.stop.prevent="emit('open-entity-detail', segment, t(segment.nameKey))"
-        >
-          <img :src="resolveImage(segment.icon)" class="anomaly-icon" alt="" />
-          <span v-if="segment.entities.length > 1" class="anomaly-stacks">{{
-            segment.entities.length
-          }}</span>
-        </span>
-        <span
-          class="anomaly-duration-bar generic-buff-bar"
-          :style="{
-            backgroundColor: resolveDurationBarColor(durationBarColor, 'enemy', {
-              buffId: segment.abilityEntityId,
-            }),
-            width: `${Math.max(0, pointX(segment.endFrame) - pointX(segment.startFrame) - iconSize - 2)}px`,
-          }"
-          ><span class="striped-bg"
-        /></span>
-      </div>
-      <button
-        v-for="hit in entityDamageHits"
-        :key="`${hit.castId}:${hit.hitId}:${hit.frame}`"
-        class="enemy-damage-hit"
-        :style="{ left: `${pointX(hit.frame)}px`, top: `${hit.top}px` }"
-        :title="hit.title"
-        @click.stop="emit('open-entity-hit', hit)"
-      >
-        <span class="enemy-damage-diamond" />
-      </button>
-      <div
-        v-for="buff in buffs"
-        :key="buff.key"
-        class="attachment-item"
-        :style="{ left: `${buff.left}px`, top: `${buff.top}px` }"
-        :title="buff.tooltip"
-      >
-        <span
-          v-if="!buff.hideIcon"
-          class="anomaly-icon-box is-clickable"
-          :style="{ transform: `translateX(${buff.iconOffset}px)` }"
-          role="button"
-          tabindex="0"
-          @click.stop="emit('open-buff-detail', buff.detail)"
-          @keydown.enter.stop.prevent="emit('open-buff-detail', buff.detail)"
-          @keydown.space.stop.prevent="emit('open-buff-detail', buff.detail)"
-        >
-          <img v-if="buff.icon" :src="buff.icon" class="anomaly-icon" alt="" />
-          <span v-else class="buff-fallback">+</span>
-          <span v-if="showBuffLayerBadge(buff)" class="anomaly-stacks">{{ buff.layers }}</span>
-        </span>
-        <TimelineAttachmentContinuation
-          v-if="buff.isAttachment && buff.barWidthPx > 0"
-          :width="buff.barWidthPx + 2"
-          :height="iconSize"
-          :color="buff.color"
-          :end-color="buff.endColor"
+        <TimelineDamageHit
+          v-for="hit in damageHits"
+          :key="`damage:${hit.sequence}`"
+          :x="hit.x"
+          :y="hit.top"
+          :title="hit.title"
+          :has-override="hit.hasOverride"
+          :icon="hit.standaloneIcon"
+          @activate="emit('open-damage-detail', hit.sequence)"
         />
-        <span
-          v-else-if="buff.barWidthPx > 0"
-          class="anomaly-duration-bar generic-buff-bar"
-          :style="{
-            width: `${buff.barWidthPx}px`,
-            ...(buff.color === undefined ? {} : { backgroundColor: buff.color }),
-          }"
+        <TimelineEnemyEffectMarkers
+          :markers="viz.markers"
+          :positions="statusRows.markerPositions"
+          :icon-size="iconSize"
+          :top="ICON_TOP"
+          :frame-px="pointX"
+          :burst-label="labels.burst"
+          @open-damage-detail="emit('open-damage-detail', $event)"
+        />
+        <div
+          v-for="segment in entitySegments"
+          :key="`${segment.operatorId}:${segment.abilityEntityId}:${segment.startFrame}:${segment.entities.map(entity => entity.instanceId).join(',')}`"
+          class="attachment-item"
+          :style="{ left: `${pointX(segment.startFrame)}px`, top: `${entityTop(segment.lane)}px` }"
+          :title="t(segment.nameKey)"
         >
-          <span class="striped-bg"></span>
-        </span>
+          <TimelineStatusIcon
+            :size="iconSize"
+            class="anomaly-icon-box is-clickable"
+            :count="segment.entities.length > 1 ? segment.entities.length : undefined"
+            :src="resolveImage(segment.icon)"
+            role="button"
+            tabindex="0"
+            @click.stop="emit('open-entity-detail', segment, t(segment.nameKey))"
+            @keydown.enter.stop.prevent="emit('open-entity-detail', segment, t(segment.nameKey))"
+            @keydown.space.stop.prevent="emit('open-entity-detail', segment, t(segment.nameKey))"
+          ></TimelineStatusIcon>
+          <TimelineStatusDuration
+            class="anomaly-duration-bar generic-buff-bar"
+            :style="{
+              backgroundColor: resolveDurationBarColor(durationBarColor, 'enemy', {
+                buffId: segment.abilityEntityId,
+              }),
+              width: `${Math.max(0, pointX(segment.endFrame) - pointX(segment.startFrame) - iconSize - 2)}px`,
+            }"
+          ></TimelineStatusDuration>
+        </div>
+        <TimelineDamageHit
+          v-for="hit in entityDamageHits"
+          :key="`${hit.castId}:${hit.hitId}:${hit.frame}`"
+          :x="pointX(hit.frame)"
+          :y="hit.top"
+          :title="hit.title"
+          :has-override="hit.hasOverride"
+          @activate="emit('open-entity-hit', hit)"
+        />
+        <div
+          v-for="buff in visibleBuffs"
+          :key="buff.key"
+          class="attachment-item"
+          :style="{ left: `${buff.left}px`, top: `${buff.top}px` }"
+          :title="buff.tooltip"
+        >
+          <TimelineStatusIcon
+            :size="iconSize"
+            v-if="!buff.hideIcon"
+            :src="buff.icon"
+            fallback="+"
+            :count="showBuffLayerBadge(buff) ? buff.layers : undefined"
+            class="anomaly-icon-box is-clickable"
+            :style="{ transform: `translateX(${buff.iconOffset}px)` }"
+            role="button"
+            tabindex="0"
+            @click.stop="emit('open-buff-detail', buff.detail)"
+            @keydown.enter.stop.prevent="emit('open-buff-detail', buff.detail)"
+            @keydown.space.stop.prevent="emit('open-buff-detail', buff.detail)"
+          ></TimelineStatusIcon>
+          <TimelineAttachmentContinuation
+            v-if="buff.isAttachment && buff.barWidthPx > 0"
+            :width="buff.barWidthPx + 2"
+            :height="iconSize"
+            :color="buff.color"
+            :end-color="buff.endColor"
+          />
+          <TimelineStatusDuration
+            v-else-if="buff.barWidthPx > 0"
+            class="anomaly-duration-bar generic-buff-bar"
+            :style="{
+              width: `${buff.barWidthPx}px`,
+              ...(buff.color === undefined ? {} : { backgroundColor: buff.color }),
+            }"
+          >
+          </TimelineStatusDuration>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.enemy-effects-viewport {
+  position: absolute;
+  inset: 0 0 0 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+}
 .enemy-timed-effects {
-  position: absolute;
-  inset: 0;
-}
-
-.enemy-damage-hit {
-  appearance: none;
-  position: absolute;
-  z-index: 15;
-  width: 12px;
-  height: 12px;
-  padding: 3px;
-  margin: -3px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-.enemy-damage-diamond {
-  display: block;
-  width: 6px;
-  height: 6px;
-  background: #fff;
-  border: 1px solid #666;
-  box-sizing: border-box;
-  transform: rotate(45deg);
-  pointer-events: none;
-  transition:
-    background-color 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-    border-color 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-    box-shadow 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-    transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.standalone-damage-icon {
-  position: absolute;
-  width: var(--aff-icon-size, 20px);
-  height: var(--aff-icon-size, 20px);
-  left: 3px;
-  bottom: 6px;
-  object-fit: contain;
-  background: var(--ea-workbench-panel);
-  border: 1px solid var(--ea-border, #666);
-}
-.enemy-damage-hit:focus-visible {
-  outline: none;
-}
-.enemy-damage-hit:focus-visible .enemy-damage-diamond {
-  box-shadow: var(--ea-focus-ring);
-}
-@media (hover: hover) and (pointer: fine) {
-  .enemy-damage-hit:hover .enemy-damage-diamond {
-    background: var(--ea-gold);
-    border-color: #fff;
-    box-shadow: 0 0 4px color-mix(in srgb, var(--ea-gold) 80%, transparent);
-    transform: rotate(45deg) scale(1.3);
-  }
+  position: relative;
+  min-height: 100%;
 }
 </style>
 
@@ -578,6 +551,35 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
   color: var(--ea-fg);
   background: var(--ea-workbench-main, #18181c);
 }
+.enemy-overview-return {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  height: 16px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ea-fg-secondary);
+  font: inherit;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.enemy-overview-return svg {
+  width: 12px;
+  height: 12px;
+}
+.enemy-overview-return:hover,
+.enemy-overview-return:focus-visible {
+  background: rgb(255 255 255 / 8%);
+  color: var(--ea-fg);
+}
+.enemy-overview-return:focus-visible {
+  outline: 1px solid var(--ea-gold);
+}
 
 .enemy-hud {
   position: absolute;
@@ -589,115 +591,5 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
   position: absolute;
   display: flex;
   align-items: center;
-}
-
-.anomaly-icon-box {
-  position: relative;
-  z-index: 10;
-  width: var(--aff-icon-size, 20px);
-  height: var(--aff-icon-size, 20px);
-  flex-shrink: 0;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--ea-keycap-skill-bg, #333);
-  border: 1px solid var(--ea-keycap-skill-border, #999);
-  cursor: default;
-  transition:
-    filter 0.12s ease,
-    border-color 0.12s ease,
-    box-shadow 0.12s ease;
-}
-
-.anomaly-icon-box.is-clickable {
-  cursor: pointer;
-}
-.anomaly-icon-box:focus-visible {
-  outline: none;
-  box-shadow: var(--ea-focus-ring);
-}
-
-.anomaly-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: filter 0.12s ease;
-}
-
-.buff-fallback {
-  color: #eef6ff;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.anomaly-stacks {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  background: rgb(0 0 0 / 80%);
-  color: var(--ea-gold);
-  font-size: 8px;
-  line-height: 1;
-  padding: 0 2px;
-  border-radius: 2px;
-}
-
-.anomaly-duration-bar {
-  position: relative;
-  z-index: 1;
-  height: 16px;
-  margin-left: 2px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  overflow: visible;
-  border: none;
-  border-radius: 2px;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 50%);
-  pointer-events: auto;
-  transition:
-    filter 0.12s ease,
-    box-shadow 0.12s ease;
-}
-
-.generic-buff-bar {
-  background: color-mix(in srgb, var(--ea-fg) 30%, var(--ea-workbench-main));
-}
-@media (hover: hover) and (pointer: fine) {
-  .anomaly-icon-box:hover {
-    filter: brightness(1.18);
-    border-color: rgb(255 255 255 / 95%);
-    box-shadow:
-      0 0 0 1px rgb(255 255 255 / 22%),
-      0 4px 12px rgb(0 0 0 / 46%);
-  }
-  .anomaly-icon-box:hover .anomaly-icon {
-    filter: brightness(1.12) saturate(1.08);
-  }
-  .anomaly-duration-bar:hover {
-    filter: brightness(1.16) saturate(1.08);
-    box-shadow:
-      0 0 0 1px rgb(255 255 255 / 18%),
-      0 2px 8px rgb(0 0 0 / 50%);
-  }
-}
-
-.striped-bg {
-  position: absolute;
-  inset: 0;
-  border-radius: 2px;
-  background: repeating-linear-gradient(
-    45deg,
-    rgb(255 255 255 / 20%),
-    rgb(255 255 255 / 20%) 2px,
-    transparent 2px,
-    transparent 6px
-  );
-}
-
-.effect-marker {
-  position: absolute;
-  z-index: 10;
 }
 </style>

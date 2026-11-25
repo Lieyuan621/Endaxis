@@ -1,3 +1,4 @@
+import { normalizeNativeTableNumbers } from './nativeTableNumbers.ts';
 import {
   parseAttributeTypeValue,
   parseModifierTypeValue,
@@ -108,7 +109,7 @@ export function parseOperatorProgressionEffectBundles(
   }
   return effectIds.map(effectId => {
     const sourcePath = `${sourceName}.${effectId}`;
-    const row = requireRecord(table[effectId], sourcePath);
+    const row = requireRecord(normalizeNativeTableNumbers(table[effectId]), sourcePath);
     requireExactFields(row, BUNDLE_FIELDS, sourcePath);
     const embeddedId = requireNonEmptyString(row.id, `${sourcePath}.id`);
     if (embeddedId !== effectId) {

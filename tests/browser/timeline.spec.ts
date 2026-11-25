@@ -1,11 +1,290 @@
+import { readFile } from 'node:fs/promises';
 import { test, expect, box, openPerlica, startPlacement, placeBasicGroup } from './helpers';
+
+test('暴击方框保留标签并同步三态的原生勾选状态', async ({ page }) => {
+  await openPerlica(page);
+  await startPlacement(page, page.locator('.skill-card').filter({ hasText: '战技' }).first());
+  const lane = await box(page.locator('.track-lane').first());
+  await page.mouse.move(lane.x + 245, lane.y + 25, { steps: 20 });
+  await page.mouse.up();
+  await page.locator('.timeline-action-block .hit-marker:not([title=""])').first().click();
+  const dialog = page.locator('.hit-damage-detail-dialog');
+  const critical = dialog.getByRole('checkbox', { name: '暴击', exact: true });
+  const label = dialog.locator('.el-dialog__footer').getByText('暴击', { exact: true });
+  await expect(critical).toHaveJSProperty('indeterminate', true);
+  await label.click();
+  await expect(critical).toHaveJSProperty('checked', true);
+  await critical.press('Space');
+  await expect(critical).toHaveJSProperty('checked', false);
+  await expect(critical).toHaveJSProperty('indeterminate', false);
+  await label.click();
+  await expect(critical).toHaveJSProperty('indeterminate', true);
+  await expect(critical).toHaveJSProperty('checked', false);
+  await expect(dialog.getByRole('checkbox', { name: '打断敌人蓄力' })).not.toBeChecked();
+});
+
+test('通用弹窗标题与关闭按钮对齐，装备 Tab 支持键盘切换', async ({ page }) => {
+  await openPerlica(page);
+  await page.locator('.track-header .operator-presets-button').first().click();
+  const presetsDialog = page.locator('.operator-presets-dialog');
+  await expect(presetsDialog).toBeVisible();
+  const measureHeader = async (selector: string) =>
+    page.locator(selector).evaluate(dialog => {
+      const dialogBox = dialog.getBoundingClientRect();
+      const headerBox = dialog.querySelector('.el-dialog__header')!.getBoundingClientRect();
+      const titleBox = dialog.querySelector('.el-dialog__title')!.getBoundingClientRect();
+      const closeBox = dialog.querySelector('.el-dialog__headerbtn')!.getBoundingClientRect();
+      return {
+        topInset: headerBox.top - dialogBox.top,
+        centerGap: Math.abs(
+          titleBox.top + titleBox.height / 2 - closeBox.top - closeBox.height / 2,
+        ),
+      };
+    });
+  const presetsHeader = await measureHeader('.operator-presets-dialog');
+  expect(presetsHeader.topInset).toBeLessThan(2);
+  expect(presetsHeader.centerGap).toBeLessThan(2);
+  await presetsDialog.locator('.el-dialog__headerbtn').click();
+
+  await page.locator('.track-header .gear-slot').first().click();
+  const gearDialog = page.locator('.gear-selector-dialog');
+  await expect(gearDialog).toBeVisible();
+  const gearHeader = await measureHeader('.gear-selector-dialog');
+  expect(gearHeader.topInset).toBeLessThan(2);
+  expect(gearHeader.centerGap).toBeLessThan(2);
+  await gearDialog.getByRole('tab', { name: '护甲' }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(gearDialog.getByRole('tab', { name: '护手' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+});
+
+test('装备选择弹窗在退出过渡结束后卸载', async ({ page }) => {
+  await openPerlica(page);
+  await page.locator('.track-header .gear-slot').first().click();
+  const dialog = page.locator('.gear-selector-dialog');
+  await expect(dialog).toBeVisible();
+  await dialog.locator('.el-dialog__headerbtn').evaluate(button => (button as HTMLElement).click());
+  await expect(page.locator('.dialog-fade-leave-active .gear-selector-dialog')).toHaveCount(1);
+  await expect(dialog).toHaveCount(0);
+});
+
+test('干员资料与天赋并排、技能独占一行且窄屏不溢出', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 878 });
+  await page.goto('/timeline');
+  await page.getByText('未设置干员', { exact: true }).nth(1).click();
+  await page.getByText('汤汤', { exact: true }).click();
+  await page.locator('.track-header .loadout-adjust-button').first().click();
+  const buildDialog = page.locator('.loadout-build-dialog');
+  await expect(buildDialog).toBeVisible();
+  const header = await buildDialog.locator('.operator-build-dialog .header').boundingBox();
+  const skills = await buildDialog.locator('.operator-skills-section').boundingBox();
+  const talents = await buildDialog.locator('.operator-talents-section').boundingBox();
+  expect(header).not.toBeNull();
+  expect(skills).not.toBeNull();
+  expect(talents).not.toBeNull();
+  expect(talents!.x).toBeGreaterThan(header!.x + header!.width);
+  expect(skills!.y).toBeGreaterThan(header!.y + header!.height);
+  await expect(buildDialog.locator('.operator-talents-section .talent-row')).toHaveCount(3);
+  const body = buildDialog.locator('.el-dialog__body');
+  expect(await body.evaluate(el => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(0);
+  await page.setViewportSize({ width: 800, height: 878 });
+  expect(await body.evaluate(el => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
+  await expect(buildDialog.getByRole('tab', { name: '武器' })).toBeDisabled();
+  await expect(buildDialog.getByRole('tab', { name: '装备' })).toBeDisabled();
+});
+
+test('状态调整窗口在常见桌面高度下容纳四件装备与套装说明', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 878 });
+  await openPerlica(page);
+  await page.locator('.track-header .weapon-slot').first().click();
+  const weaponPicker = page.locator('.char-selector-dialog');
+  await expect(weaponPicker).toBeVisible();
+  await weaponPicker.locator('.roster-card').first().click();
+  await page.locator('.track-header .gear-slot').first().click();
+  const gearPicker = page.locator('.gear-selector-dialog');
+  await expect(gearPicker).toBeVisible();
+  for (const slot of ['护甲', '护手', '配件 1', '配件 2']) {
+    await gearPicker.getByRole('tab', { name: slot }).click();
+    await expect(gearPicker.getByRole('tab', { name: slot })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await gearPicker.locator('.roster-card').first().click();
+    await expect(gearPicker).toBeVisible();
+  }
+  await gearPicker.getByRole('tab', { name: '护甲' }).click();
+  await gearPicker.getByRole('button', { name: '卸下' }).click();
+  await expect(gearPicker).toBeVisible();
+  await gearPicker.locator('.roster-card').first().click();
+  await gearPicker.locator('.el-dialog__headerbtn').click();
+  await expect(gearPicker).not.toBeVisible();
+  await page.locator('.track-header .loadout-adjust-button').first().click();
+  const buildDialog = page.locator('.loadout-build-dialog');
+  await buildDialog.getByRole('tab', { name: '装备' }).click();
+  await expect(buildDialog.locator('.gear-slot-card')).toHaveCount(4);
+  await expect(buildDialog.locator('.gear-set-bonus-panel')).toBeVisible();
+  const firstGearCard = buildDialog.locator('.gear-slot-card').first();
+  const refine = (await firstGearCard.locator('.refine-row').boundingBox())!;
+  const edit = (await firstGearCard.locator('.slot-actions').boundingBox())!;
+  expect(Math.abs(refine.y + refine.height / 2 - edit.y - edit.height / 2)).toBeLessThan(6);
+  const body = buildDialog.locator('.el-dialog__body');
+  expect(await body.evaluate(el => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(0);
+  const dialogHeight = (await buildDialog.boundingBox())!.height;
+  await buildDialog.getByRole('tab', { name: '干员' }).click();
+  expect(Math.abs((await buildDialog.boundingBox())!.height - dialogHeight)).toBeLessThan(40);
+  await buildDialog.getByRole('tab', { name: '武器' }).click();
+  expect(Math.abs((await buildDialog.boundingBox())!.height - dialogHeight)).toBeLessThan(40);
+  await buildDialog.getByRole('tab', { name: '装备' }).click();
+  await page.setViewportSize({ width: 1440, height: 650 });
+  expect(await body.evaluate(el => el.scrollHeight - el.clientHeight)).toBeGreaterThan(0);
+  await body.evaluate(el => {
+    el.scrollTop = el.scrollHeight;
+  });
+  await buildDialog.getByRole('tab', { name: '干员' }).click();
+  await expect(buildDialog.locator('.loadout-build-content--operator')).toBeVisible();
+  expect(await body.evaluate(el => el.scrollTop)).toBe(0);
+});
+
+test('状态窗口只调整已有配置，武器和装备从时间轴干员栏选择', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 878 });
+  await openPerlica(page);
+  const entry = page.locator('.track-header .loadout-adjust-button').first();
+  await expect(entry).toHaveCount(1);
+  await expect(entry).toHaveAttribute('aria-label', '干员状态调整');
+  await expect(page.locator('.skill-sidebar .loadout-build-entry')).toHaveCount(0);
+  await entry.click();
+  const buildDialog = page.locator('.loadout-build-dialog');
+  await expect(buildDialog).toBeVisible();
+  await expect(buildDialog.getByRole('tab', { name: '干员' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  expect(
+    await buildDialog.locator('.el-dialog__body').evaluate(el => el.scrollHeight - el.clientHeight),
+  ).toBeLessThanOrEqual(0);
+
+  await expect(buildDialog.getByRole('tab', { name: '武器' })).toBeDisabled();
+  await expect(buildDialog.getByRole('tab', { name: '装备' })).toBeDisabled();
+  await expect(buildDialog.getByRole('tab', { name: '干员' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await buildDialog.locator('.el-dialog__headerbtn').click();
+  await expect(buildDialog).not.toBeVisible();
+  await page.locator('.track-header .weapon-slot').first().click();
+  const weaponPicker = page.locator('.char-selector-dialog');
+  await expect(weaponPicker).toBeVisible();
+  await weaponPicker.locator('.roster-card').first().click();
+  await entry.click();
+  await expect(buildDialog).toBeVisible();
+  await buildDialog.getByRole('tab', { name: '武器' }).click();
+  await expect(buildDialog.getByRole('tab', { name: '武器' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect(buildDialog.locator('.portrait-frame')).toBeVisible();
+  const weaponProgression = buildDialog.locator('.weapon-build-dialog .build-progression-bar');
+  await expect(weaponProgression.locator('.build-progression-bar__action')).toBeDisabled();
+  await weaponProgression.getByRole('button', { name: 'Lv20' }).click();
+  await expect(weaponProgression.locator('.build-progression-bar__action')).toBeEnabled();
+  await weaponProgression.locator('.build-progression-bar__action').click();
+  await expect(weaponProgression.locator('.level-num')).toHaveText('20');
+
+  await expect(buildDialog.getByRole('tab', { name: '装备' })).toBeDisabled();
+  await buildDialog.locator('.el-dialog__headerbtn').click();
+  await expect(buildDialog).not.toBeVisible();
+  await page.locator('.track-header .gear-slot').first().click();
+  const gearPicker = page.locator('.gear-selector-dialog');
+  await expect(gearPicker).toBeVisible();
+  await gearPicker.locator('.roster-card').first().click();
+  await expect(gearPicker).toBeVisible();
+  await gearPicker.locator('.el-dialog__headerbtn').click();
+  await entry.click();
+  await expect(buildDialog).toBeVisible();
+  await buildDialog.getByRole('tab', { name: '装备' }).click();
+  await expect(buildDialog.locator('.gear-slot-card').first()).toBeVisible();
+  expect(
+    await buildDialog.locator('.el-dialog__body').evaluate(el => el.scrollHeight - el.clientHeight),
+  ).toBeLessThanOrEqual(0);
+  await buildDialog.getByRole('button', { name: '编辑装备' }).first().click();
+  await expect(page.locator('.armory-dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.armory-dialog')).not.toBeVisible();
+  await buildDialog.getByRole('tab', { name: '干员' }).click();
+  await expect(buildDialog.locator('.portrait-frame')).toBeVisible();
+  const operatorProgression = buildDialog.locator('.operator-build-dialog .build-progression-bar');
+  await expect(operatorProgression.locator('.build-progression-bar__action')).toBeDisabled();
+  await operatorProgression.getByRole('button', { name: 'Lv20' }).click();
+  await expect(operatorProgression.locator('.build-progression-bar__action')).toBeEnabled();
+  await operatorProgression.locator('.build-progression-bar__action').click();
+  await expect(operatorProgression.locator('.level-num')).toHaveText('20');
+  await expect(page.locator('.loadout-build-dialog')).toHaveCount(1);
+});
+
+test('轨道上的状态按钮打开对应干员', async ({ page }) => {
+  await openPerlica(page);
+  const header = page.locator('.track-header').first();
+  await expect(header.locator('.initial-gauge-button')).toHaveText(/0\/\d+/);
+  await expect(header.locator('.initial-gauge-button')).toHaveAttribute('title', /0\/\d+/);
+  await header.locator('.initial-gauge-button').click();
+  await expect(
+    page.locator('.ea-compact-number-popover--energy .ea-compact-number-popover__unit'),
+  ).toHaveText(/\/\d+/);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.ea-compact-number-popover--energy')).not.toBeVisible();
+  // The widest common display must leave a gap before the action buttons.
+  await header.locator('.initial-gauge-value').evaluate(element => {
+    element.textContent = '100';
+  });
+  await header.locator('.initial-gauge-max').evaluate(element => {
+    element.textContent = '/100';
+  });
+  const gauge = await box(header.locator('.initial-gauge-button'));
+  const actions = await box(header.locator('.track-header-actions'));
+  const avatar = await box(header.locator('.avatar-trigger'));
+  const adjust = await box(header.locator('.loadout-adjust-button'));
+  const gearRow = await box(header.locator('.loadout-row'));
+  expect(actions.x - (gauge.x + gauge.width)).toBeGreaterThanOrEqual(8);
+  expect(Math.abs(actions.y - gauge.y)).toBeLessThan(2);
+  expect(actions.y + actions.height).toBeLessThan(avatar.y);
+  expect(adjust.x).toBeGreaterThan(avatar.x + avatar.width);
+  expect(adjust.y).toBeGreaterThan(avatar.y);
+  expect(adjust.y + adjust.height).toBeLessThan(gearRow.y);
+  await page.getByText('未设置干员', { exact: true }).first().click();
+  await page.getByText('汤汤', { exact: true }).click();
+  await page.locator('.track-header .loadout-adjust-button').nth(1).click();
+  await expect(page.locator('.loadout-build-dialog .el-dialog__title')).toContainText('汤汤');
+});
+
+test.describe('移动端原有养成入口', () => {
+  test.use({
+    userAgent:
+      'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+    hasTouch: true,
+    viewport: { width: 1440, height: 900 },
+  });
+
+  test('干员状态按钮仍能打开独立编辑窗口', async ({ page }) => {
+    await openPerlica(page);
+    await page.setViewportSize({ width: 740, height: 900 });
+    await expect(page.locator('.mobile-viewer-root')).toBeVisible();
+    await page.locator('.mobile-avatar-btn').first().click();
+    await page.locator('.loadout-quick-actions').getByRole('button', { name: '干员' }).click();
+    await expect(page.locator('.armory-dialog')).toBeVisible();
+    await expect(page.locator('.loadout-build-dialog')).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.armory-dialog')).not.toBeVisible();
+  });
+});
 
 test('桌面项目菜单集中加载、接收、导出与重置，并与显示菜单互斥', async ({ page }) => {
   await page.goto('/timeline');
   await expect(page.locator('#boot-loader')).toHaveCount(0);
   await expect(page.locator('.command-button--overlay')).toHaveCount(0);
   await expect(page.getByRole('button', { name: '游戏内提示', exact: true })).toHaveCount(0);
-  const projectButton = page.getByRole('button', { name: '项目', exact: true });
+  const projectButton = page.getByRole('button', { name: '文件', exact: true });
   const displayButton = page.getByRole('button', { name: '显示', exact: true });
   const projectPanel = page.locator('.header-project-panel');
 
@@ -19,6 +298,73 @@ test('桌面项目菜单集中加载、接收、导出与重置，并与显示�
   await projectPanel.getByRole('button', { name: '导出', exact: true }).click();
   await expect(projectPanel).not.toBeVisible();
   await expect(page.locator('.export-dialog-shell')).toBeVisible();
+});
+
+test('方案设置位于重命名按钮左侧，长方案名不会推移设置按钮和页签', async ({ page }) => {
+  await page.goto('/timeline');
+  const settings = page.getByRole('button', { name: '方案设置', exact: true });
+  const tab = page.locator('.ts-tab-item').first();
+  const beforeSettings = await box(settings);
+  const beforeTab = await box(tab);
+  expect(beforeSettings.x + beforeSettings.width).toBeLessThan(
+    (await box(page.getByRole('button', { name: '重命名当前方案', exact: true }))).x,
+  );
+  expect(beforeSettings.x + beforeSettings.width).toBeLessThan(
+    (await box(page.locator('.ts-title-wrapper'))).x,
+  );
+  await settings.click();
+  const panel = page.locator('.header-scenario-settings-panel');
+  await expect(panel.getByRole('button', { name: '多敌人模式', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '更多', exact: true }).click();
+  await expect(panel).not.toBeVisible();
+  await expect(page.locator('.header-tools-panel')).not.toContainText('方案设置');
+
+  await page.getByRole('button', { name: '重命名当前方案', exact: true }).click();
+  const name = '这是一个很长很长的方案名称用于检查布局';
+  await page.locator('.ts-title-wrapper input').fill(name);
+  await page.locator('.ts-title-wrapper input').press('Enter');
+  await expect(page.locator('.ts-title-wrapper')).toHaveAttribute('title', name);
+  expect((await box(settings)).x).toBeCloseTo(beforeSettings.x, 0);
+  expect((await box(tab)).x).toBeCloseTo(beforeTab.x, 0);
+});
+
+test('拖入 JSON 项目文件会打开导入确认，并能覆盖当前项目', async ({ page }) => {
+  await page.goto('/timeline');
+  await page.getByRole('button', { name: '文件', exact: true }).click();
+  await page.locator('.header-project-panel').getByRole('button', { name: '导出' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('.export-dialog-shell .export-action-card').first().click();
+  const download = await downloadPromise;
+  const exported = JSON.parse(await readFile((await download.path())!, 'utf8'));
+  exported.scenarios[0].battle.prepFrames = 5;
+  exported.scenarios[0].editor.prepExpanded = false;
+  const json = JSON.stringify(exported);
+  await page.keyboard.press('Escape');
+
+  await page.getByRole('button', { name: '重命名当前方案', exact: true }).click();
+  await page.locator('.ts-title-wrapper input').fill('拖入前修改的方案');
+  await page.locator('.ts-title-wrapper input').press('Enter');
+  await expect(page.locator('.ts-title-wrapper')).toHaveAttribute('title', '拖入前修改的方案');
+
+  await page
+    .locator('.track-lane')
+    .first()
+    .evaluate((lane, content) => {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(new File([content], 'project.json', { type: 'application/json' }));
+      lane.dispatchEvent(
+        new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer }),
+      );
+      lane.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+    }, json);
+  const importDialog = page.getByRole('dialog', { name: '导入项目内容' });
+  await expect(importDialog).toBeVisible();
+  await importDialog.getByRole('radio', { name: '完整覆盖' }).click();
+  await importDialog.getByRole('button', { name: '确认完整覆盖' }).click();
+  await expect(page.locator('.ts-title-wrapper')).toHaveAttribute('title', '方案 1');
+  await expect(page.locator('.prep-tool-button')).toContainText('5f');
+  await expect(page.locator('.timeline-surface')).not.toHaveClass(/is-history-collapsed/);
+  await expect(page.locator('.prep-collapsed-entry, .prep-expanded-collapse')).toHaveCount(0);
 });
 
 test('方案各自保留会话内滚动和缩放，新方案使用默认视图', async ({ page }) => {
@@ -43,6 +389,100 @@ test('方案各自保留会话内滚动和缩放，新方案使用默认视图',
   await page.locator('.ts-tab-item').first().click();
   await expect(page.locator('.zoom-value')).toHaveText('100%');
   await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBe(0);
+});
+
+test('展开战前准备区后仍能显示并放置技能', async ({ page }) => {
+  await openPerlica(page);
+  await page.locator('.prep-collapsed-entry button').click();
+  await expect(page.locator('.timeline-surface')).not.toHaveClass(/is-history-collapsed/);
+  await expect(page.locator('.prep-expanded-collapse button')).toBeVisible();
+  const prepWidth = await page
+    .locator('.track-lane .prep-zone')
+    .first()
+    .evaluate(element => element.getBoundingClientRect().width);
+  expect(prepWidth).toBeGreaterThan(50);
+
+  await startPlacement(page);
+  const lane = await box(page.locator('.track-lane').first());
+  await page.mouse.move(lane.x + Math.min(70, prepWidth / 2), lane.y + 25, { steps: 20 });
+  await expect
+    .poll(async () => (await box(page.locator('#custom-drag-ghost'))).x)
+    .toBeLessThan(lane.x + prepWidth);
+  await page.mouse.up();
+  await expect(page.locator('.timeline-action-block')).toHaveCount(4);
+  const firstBlock = await box(page.locator('.timeline-action-block').first());
+  expect(firstBlock.x).toBeLessThan(lane.x + prepWidth);
+});
+
+test('准备时长为零或极短时，时轴原点没有遮挡控件', async ({ page }) => {
+  await page.goto('/timeline');
+  const prepButton = page.locator('.prep-tool-button');
+  const setPrepFrames = async (frames: number) => {
+    await prepButton.click();
+    await page.locator('.prep-popover input').fill(String(frames));
+    await page.locator('.prep-popover input').press('Enter');
+  };
+  await setPrepFrames(0);
+  await expect(page.locator('.prep-collapsed-entry, .prep-expanded-collapse')).toHaveCount(0);
+  await expect(page.locator('.axis-boundary--prep')).toHaveCount(0);
+  await expect(prepButton).toContainText('0f');
+  await expect(prepButton).toBeInViewport({ ratio: 1 });
+  expect(
+    await page
+      .locator('.track-lane')
+      .first()
+      .evaluate(element => getComputedStyle(element).clipPath),
+  ).toBe('none');
+  expect(
+    await page.locator('.operation-layer').evaluate(element => getComputedStyle(element).clipPath),
+  ).toBe('none');
+
+  await setPrepFrames(5);
+  await expect(prepButton).toContainText('5f');
+  await expect(page.locator('.prep-collapsed-entry, .prep-expanded-collapse')).toHaveCount(0);
+  await expect(page.locator('.timeline-surface')).not.toHaveClass(/is-history-collapsed/);
+  await expect(page.locator('.timeline-surface')).toHaveClass(/is-compact-prep/);
+  await expect(page.locator('.axis-boundary--prep')).toHaveCount(0);
+  const shortPrep = page.locator('.track-lane .prep-zone').first();
+  await expect(shortPrep).toBeVisible();
+  expect(
+    await shortPrep.evaluate(element => element.getBoundingClientRect().width),
+  ).toBeGreaterThan(0);
+  await expect(page.locator('.track-lane .battle-start-line').first()).toBeVisible();
+  await expect(prepButton).toBeInViewport({ ratio: 1 });
+
+  await setPrepFrames(10);
+  await expect(page.locator('.prep-collapsed-entry, .prep-expanded-collapse')).toHaveCount(0);
+  await expect(shortPrep).toBeVisible();
+  await setPrepFrames(11);
+  await page.locator('.prep-expanded-collapse button').click();
+  await expect(page.locator('.timeline-surface')).toHaveClass(/is-history-collapsed/);
+  await page.locator('.prep-collapsed-entry button').click();
+  await expect(page.locator('.timeline-surface')).not.toHaveClass(/is-history-collapsed/);
+
+  await prepButton.click();
+  const popover = page.locator('.prep-popover');
+  await expect(popover).toBeVisible();
+  expect((await box(popover)).width).toBeLessThan(130);
+  await popover.locator('input').fill('150');
+  await popover.locator('input').press('Escape');
+  await expect(popover).toHaveCount(0);
+  await expect(prepButton).toContainText('11f');
+
+  await setPrepFrames(150);
+  await expect(page.locator('.prep-expanded-collapse button')).toBeVisible();
+  await prepButton.click();
+  await popover.locator('input').fill('151');
+  await page
+    .locator('.track-lane')
+    .first()
+    .click({ position: { x: 200, y: 25 } });
+  await expect(prepButton).toContainText('151f');
+  const width = await page
+    .locator('.track-lane .prep-zone')
+    .first()
+    .evaluate(element => element.getBoundingClientRect().width);
+  expect(width).toBeGreaterThan(50);
 });
 
 test('技能、闪避和切人共用选区，整体移动、右键删除和撤销', async ({ page }) => {
@@ -207,13 +647,14 @@ test('技能库整组和单段放置、取消及横向滚动', async ({ page, br
   await expect(page.locator('#custom-drag-ghost')).toHaveCount(0);
 
   const scrollbar = await box(page.locator('.timeline-horizontal-scrollbar'));
-  await page.mouse.move(scrollbar.x + 20, scrollbar.y + 7);
+  // 避开 Windows 原生滚动条左侧箭头和滑块边缘，避免命中区域随系统缩放抖动。
+  await page.mouse.move(scrollbar.x + 50, scrollbar.y + 7);
   if (browserName === 'webkit') {
     // 无头 WebKit 不显示可拖的原生滑块，仍验证滚动槽的真实横向输入与同步。
     await page.mouse.wheel(200, 0);
   } else {
     await page.mouse.down();
-    await page.mouse.move(scrollbar.x + 180, scrollbar.y + 7, { steps: 15 });
+    await page.mouse.move(scrollbar.x + 210, scrollbar.y + 7, { steps: 15 });
     await page.mouse.up();
   }
   await expect
@@ -229,9 +670,7 @@ for (const menuName of ['更多', '显示']) {
     const before = await box(block);
     const menu = page.getByRole('button', { name: menuName, exact: true });
     const panel = page.locator(
-      menuName === '更多'
-        ? '.header-more-panel:not(.header-project-panel)'
-        : '.timeline-display-menu',
+      menuName === '更多' ? '.header-tools-panel' : '.timeline-display-menu',
     );
     await menu.click();
     await expect(panel).toBeVisible();

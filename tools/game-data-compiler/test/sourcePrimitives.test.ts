@@ -21,6 +21,13 @@ describe('shared native source primitives', () => {
 });
 
 describe('shared scalar source parser', () => {
+  it('preserves an empty declared key but rejects null keys', () => {
+    const entry = { key: '', valueDouble: 0, valueStr: '', isDynamic: false };
+    expect(parseBlackboardDataPairs([entry], 'bb')).toEqual([
+      { key: '', value: 0, isDynamic: false },
+    ]);
+    expect(() => parseBlackboardDataPairs([{ ...entry, key: null }], 'bb')).toThrow();
+  });
   it('accepts numeric null encodings without accepting an active null reference', () => {
     expect(
       parseScalarSource({ value: 3, useBlackboardKey: false, blackboardKey: null }, 'value', {}),

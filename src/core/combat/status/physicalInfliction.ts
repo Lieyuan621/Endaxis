@@ -8,3 +8,11 @@ export const PHYSICAL_INFLICTION_BUFFS = {
   fracture: 'buff_physical_fracture',
   crush: 'buff_physical_crushed',
 } as const;
+
+/** 原生异常动作在发布 Before 事件之前使用的标签免疫准入。 */
+export const PHYSICAL_INFLICTION_TAGS = {
+  airborne: 'Skill/Character/Common/PhysicalStatus/AirborneStatus',
+  knockDown: 'Skill/Character/Common/PhysicalStatus/KnockdownStatus',
+  fracture: 'Skill/Character/Common/PhysicalStatus/FractureStatus',
+  crush: 'Skill/Character/Common/PhysicalStatus/CrushStatus',
+} as const;

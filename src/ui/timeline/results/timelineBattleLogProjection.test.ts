@@ -24,6 +24,18 @@ const entry = (
 });
 
 describe('projectTimelineBattleLogGroups', () => {
+  it('汇总多个敌人受到的伤害，排除干员和能力实体受击', () => {
+    const groups = projectTimelineBattleLogGroups(
+      ['enemy', 'enemy:second', 'track:1', 'ability-entity:1'].map((targetId, index) => ({
+        ...entry(index + 1, 'DamageApplied', { castId: 'cast:1', value: (index + 1) * 100 }),
+        targetId,
+      })),
+      [{ castId: 'cast:1', label: '战技', operatorLabel: '佩里卡', sourceId: 'track:1' }],
+    );
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.damage).toBe(300);
+    expect(groups[0]!.entries).toHaveLength(4);
+  });
   it('groups explicit cast receipts and totals resolved damage', () => {
     const groups = projectTimelineBattleLogGroups(
       [

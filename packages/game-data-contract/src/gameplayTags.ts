@@ -41,12 +41,8 @@ export interface GameplayTagPredefineDefinition {
   }[];
 }
 
-/** 带生成版本和源文件校验信息的预定义标签文档。 */
+/** 预定义标签文档。 */
 export interface GameplayTagPredefineDocument extends GameplayTagPredefineDefinition {
   /** 文档格式版本；读取方据此判断是否支持这份数据。 */
   readonly schemaVersion: 1;
-  /** 生成人填写或生成器取得的游戏数据修订号。 */
-  readonly revision: string;
-  /** 源数据内容的 SHA-256，用于确认文档对应哪一份输入。 */
-  readonly sourceSha256: string;
 }

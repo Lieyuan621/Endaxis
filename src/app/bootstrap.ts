@@ -4,6 +4,7 @@ import type { Router } from 'vue-router';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
 import '../design-system/styles/index.css';
+import '../ui/timeline/interaction/timelineContextMenu.css';
 
 import App from '../App.vue';
 import { i18n, setLocale } from '../i18n';

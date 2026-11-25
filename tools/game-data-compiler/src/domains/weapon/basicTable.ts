@@ -1,5 +1,6 @@
 import {
   requireArray,
+  requireBoolean,
   requireExactFields,
   requireNonEmptyString,
   requireNonNegativeInteger,
@@ -55,7 +56,12 @@ export function parseWeaponBasicSources(
   return weaponIds.map(weaponId => {
     const sourcePath = `${sourceName}.${weaponId}`;
     const row = requireRecord(table[weaponId], sourcePath);
-    requireExactFields(row, WEAPON_FIELDS, sourcePath);
+    if ('isStoryWeapon' in row) requireBoolean(row.isStoryWeapon, `${sourcePath}.isStoryWeapon`);
+    requireExactFields(
+      row,
+      'isStoryWeapon' in row ? new Set([...WEAPON_FIELDS, 'isStoryWeapon']) : WEAPON_FIELDS,
+      sourcePath,
+    );
     const embeddedId = requireNonEmptyString(row.weaponId, `${sourcePath}.weaponId`);
     if (embeddedId !== weaponId) {
       throw new Error(`${sourcePath}.weaponId: expected ${JSON.stringify(weaponId)}`);

@@ -1,10 +1,24 @@
 {
   "supportedTagIds": [
     100003, 100301, 100302, 100401, 100402, 100501, 100502, 100803, 100901, 100902, 101001, 101101,
-    101102, 101701, 101801, 101901, 102302, 102401, 102801, 102802, 102803, 103102, 103203, 103302,
-    103401, 900101, 900102, 900103
+    101102, 101303, 101701, 101801, 101901, 102302, 102401, 102801, 102802, 102803, 103102, 103203,
+    103302, 103401, 900101, 900102, 900103
   ],
   "blockedTagReasons": {},
+  "omittedBuffRootReasons": {
+    "buff_cc_enemy_bananatrap_periodic": "banana traps are explicitly excluded from this simulation",
+    "buff_cc_enemy_death_ground_area_dmg": "avoidable death-pool damage child; not an independent contract initialization entry",
+    "buff_cc_eny_0054_hsmino_ground_area_dmg": "avoidable ground-area damage child; not an unconditional global effect",
+    "buff_cc_level_klcommon_mech_sign_common": "marker produced by an enemy active skill; no such skill input exists in the passive-enemy scenario",
+    "buff_cc_chr_cryst_inflict_to_slowdown": "only modifies ground/air movement speed and its private bookkeeping; no spatial movement is simulated",
+    "buff_cc_chr_dash_point": "dash stamina recovery and count restrictions are outside authored timeline admission",
+    "buff_cc_chr_dash_point_effect": "child of the dash stamina restriction; not an independent combat effect in the authored timeline",
+    "buff_cc_chr_dash_recover_interval": "automatic dash stamina recovery is outside the authored timeline",
+    "buff_cc_chr_dash_recover_speed_down": "only modifies automatic dash stamina recovery",
+    "buff_cc_enemy_damage_ignore_shield": "only modifies damage output of the passive enemy",
+    "buff_cc_level_klcommon_mech_listener": "requires an enemy active skill to launch lightning projectiles; no such input exists in the passive-enemy scenario",
+    "buff_cc_level_klcommon_mech_sign_klbear": "enemy lightning-projectile skill marker; cannot be installed as an unconditional player-driven contract entry"
+  },
   "omittedTagReasons": {
     "100201": "only changes damage dealt by the passive enemy",
     "100202": "only changes damage dealt by the passive enemy",
@@ -12,7 +26,6 @@
     "100602": "only changes damage received by operators",
     "101201": "operator switching is forced by the authored timeline",
     "101301": "stamina and evasion are outside the authored skill timeline",
-    "101303": "stamina and evasion are outside the authored skill timeline",
     "101402": "depends on operators receiving enemy damage",
     "101501": "runs after the unique fixed target has been defeated",
     "101502": "runs after the unique fixed target has been defeated",
@@ -24,5 +37,24 @@
     "102103": "challenge countdown is not a combat result",
     "102201": "changes stage wave enemy composition rather than the selected fixed target",
     "102202": "changes stage wave enemy composition rather than the selected fixed target"
+  },
+  "previewBuffRoots": {
+    "buff_cc_eny_numshield_instance": "enemy",
+    "buff_cc_chr_no_lastcombo_stop_atb_recover": "caster",
+    "buff_cc_chr_dmg_down_after_consume": "caster",
+    "buff_cc_chr_dmg_down_after_consume_inflict": "caster",
+    "buff_cc_chr_combo_lock": "caster",
+    "buff_cc_chr_combo_skill_dmg_up": "caster",
+    "buff_cc_chr_disable_same_normal_skill": "caster",
+    "buff_cc_chr_set_skill_atb_recover_ratio": "caster",
+    "buff_cc_chr_ult_skill_usp_clear": "caster",
+    "buff_cc_eny_heal_no_inflict": "enemy",
+    "buff_cc_chr_combo_cd_up": "caster",
+    "buff_cc_chr_normal_skill_cd": "caster",
+    "buff_cc_chr_combo_cost_atb": "caster",
+    "buff_cc_chr_ult_sp_cost_increase": "caster",
+    "buff_cc_enemy_poise_up": "enemy",
+    "buff_cc02_eny_numshield": "enemy",
+    "buff_cc_chr_no_lastcombo_weak": "caster"
   }
 }

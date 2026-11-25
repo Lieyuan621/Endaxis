@@ -26,15 +26,14 @@ function pointX(frame: number): number {
       props.pxPerFrame,
       props.prepExpanded,
       props.prepEndFrame,
-    ) -
-    props.scrollLeft
+    )
   );
 }
 
 const gridLines = computed(() => {
-  const lines: number[] = [];
+  const lines: { frame: number; x: number }[] = [];
   for (let frame = 0; frame <= Math.max(0, props.durationFrames); frame += GRID_LINE_FRAME_STEP) {
-    lines.push(pointX(frame));
+    lines.push({ frame, x: pointX(frame) });
   }
   return lines;
 });
@@ -52,31 +51,33 @@ const zeroX = computed(() => pointX(0));
     preserveAspectRatio="none"
     aria-hidden="true"
   >
-    <rect
-      v-if="prepFrames > 0"
-      :x="prepStartX"
-      y="0"
-      :width="Math.max(0, zeroX - prepStartX)"
-      height="100"
-      class="monitor-grid__prep"
-    />
-    <line
-      v-for="line in gridLines"
-      :key="line"
-      :x1="line"
-      y1="0"
-      :x2="line"
-      y2="100"
-      class="monitor-grid__line"
-    />
-    <line
-      v-if="prepFrames > 0"
-      :x1="zeroX"
-      y1="0"
-      :x2="zeroX"
-      y2="100"
-      class="monitor-grid__zero"
-    />
+    <g :transform="`translate(${-scrollLeft} 0)`">
+      <rect
+        v-if="prepFrames > 0"
+        :x="prepStartX"
+        y="0"
+        :width="Math.max(0, zeroX - prepStartX)"
+        height="100"
+        class="monitor-grid__prep"
+      />
+      <line
+        v-for="line in gridLines"
+        :key="line.frame"
+        :x1="line.x"
+        y1="0"
+        :x2="line.x"
+        y2="100"
+        class="monitor-grid__line"
+      />
+      <line
+        v-if="prepFrames > 0"
+        :x1="zeroX"
+        y1="0"
+        :x2="zeroX"
+        y2="100"
+        class="monitor-grid__zero"
+      />
+    </g>
   </svg>
 </template>
 

@@ -4,6 +4,11 @@
  */
 import type { DamageType } from '../../game-data/operatorDefinition';
 
+/** 1.6.3 BattleFormula.UsesRawDamageValue：LifeDrain(5)与Fixed(8)。 */
+export function usesRawDamageValue(type: DamageType): boolean {
+  return type === 'lifeDrain' || type === 'fixed';
+}
+
 /** 抗性公式准入；新增伤害类型必须明确归属，不自动套用现有抗性公式。 */
 const DAMAGE_TYPE_USES_RESISTANCE = {
   physical: true,
@@ -63,8 +68,8 @@ export interface PlayerActiveDamageResult {
 export function calculatePlayerActiveDamage(
   input: PlayerActiveDamageInput,
 ): PlayerActiveDamageResult {
-  // 1.6.3 BattleFormula.CalculateDamage 的 Fixed 提前返回路径。
-  if (input.damageType === 'fixed')
+  // 1.6.3 BattleFormula.CalculateDamage 的原始值提前返回路径。
+  if (usesRawDamageValue(input.damageType))
     return {
       value: input.finalAttackValue,
       isCritical: false,
@@ -76,9 +81,6 @@ export function calculatePlayerActiveDamage(
       igniteMultiplier: 1,
       physicalInflictionMultiplier: 1,
     };
-  if (input.damageType === 'lifeDrain') {
-    throw new Error('life-drain damage uses a separate native calculation branch');
-  }
 
   const isCritical = isCriticalHit(input.criticalRate, input.criticalSample);
   const criticalMultiplier = isCritical ? 1 + input.criticalDamageIncrease : 1;

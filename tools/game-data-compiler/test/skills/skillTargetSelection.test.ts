@@ -20,10 +20,11 @@ describe('木桩技能智能目标投影', () => {
   ] as const)('原生策略 %s 投影为 %s，保留原始几何来源', (strategy, expected) => {
     const input = source(4, strategy);
     const result = compileSkillTargetSelection(input);
-    expect(result.definition).toEqual({ smartTarget: expected });
+    expect(result.definition).toEqual({ defaultTarget: 'enemy', smartTarget: expected });
   });
   it('评分策略经唯一主目标回退投影为敌人', () => {
     expect(compileSkillTargetSelection(source(4, 4)).definition).toEqual({
+      defaultTarget: 'enemy',
       smartTarget: 'enemy',
     });
   });

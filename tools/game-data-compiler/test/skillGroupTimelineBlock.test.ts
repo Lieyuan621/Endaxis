@@ -78,11 +78,6 @@ describe('基础攻击技能块窗口', () => {
 
     expect(definitions.get('native_attack1')?.timelineBlockFrames).toBe(16);
     expect(definitions.get('native_attack2')?.timelineBlockFrames).toBe(24);
-    expect(definitions.get('native_attack1')?.timelineContinuationSkillId).toBe('native_attack2');
-    expect(definitions.get('native_attack2')?.timelineContinuationSkillId).toBe('native_attack1');
-    expect(definitions.get('native_attack2')?.inputWindows?.allowedNextSkills).toEqual([
-      { startFrame: 24, endFrame: 36, skillIds: ['native_attack1'] },
-    ]);
   });
 
   it('同一顶层目标存在立即退出和稍后续段时采用最早的正数连段窗口', () => {
@@ -111,7 +106,6 @@ describe('基础攻击技能块窗口', () => {
     ]);
 
     expect(definitions.get('native_attack1')?.timelineBlockFrames).toBe(16);
-    expect(definitions.get('native_attack1')?.timelineContinuationSkillId).toBe('native_attack2');
   });
 
   it('同一下一段存在多轮输入窗口时采用第一次可输入的窗口', () => {
@@ -138,14 +132,6 @@ describe('基础攻击技能块窗口', () => {
     ]);
 
     expect(definitions.get('native_attack1')?.timelineBlockFrames).toBe(18);
-    expect(definitions.get('native_attack1')?.timelineContinuationSkillId).toBe('native_attack2');
-    expect(definitions.get('native_attack1')?.inputWindows?.allowedNextSkills).toEqual([
-      { startFrame: 18, endFrame: 25, skillIds: ['native_attack2'] },
-      { startFrame: 63, endFrame: 70, skillIds: ['native_attack2'] },
-      { startFrame: 93, endFrame: 100, skillIds: ['native_attack2'] },
-      { startFrame: 123, endFrame: 130, skillIds: ['native_attack2'] },
-      { startFrame: 153, endFrame: 160, skillIds: ['native_attack2'] },
-    ]);
   });
 });
 

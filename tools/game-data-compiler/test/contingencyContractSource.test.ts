@@ -3,6 +3,7 @@ import {
   collectContingencyContractGlobalBuffIds,
   compileContingencyContractTagDefinitions,
   parseContingencyContractCatalogSource,
+  parseContingencyContractLayoutSource,
 } from '../src/domains/contingencyContract/contingencyContractSource.ts';
 
 function tag(tagId: number, termType: number, buffId: string) {
@@ -36,8 +37,19 @@ describe('Contingency Contract native source', () => {
       Object.entries(tag(100003, 2, 'global_buff_party')).filter(([key]) => key !== 'tagTerms'),
     );
     expect(() => parseContingencyContractCatalogSource({ 100003: presentation }, {})).toThrow(
-      'Server-synchronized contingency contract Buff configuration is required',
+      'Explicit Buff bindings are required',
     );
+    const layout = parseContingencyContractLayoutSource(
+      { 100003: presentation },
+      {
+        indie_contract001: {
+          activityId: 'activity',
+          contractGroupMap: { 1: { contractMap: { 1: entry(100003) } } },
+        },
+      },
+    );
+    expect(layout.tags[0]?.tagId).toBe(100003);
+    expect(layout.tags[0]).not.toHaveProperty('terms');
   });
 
   it('keeps native column order and recovers the three explicit term identities', () => {
@@ -107,4 +119,27 @@ describe('Contingency Contract native source', () => {
       ),
     ).toThrow('tags are not present');
   });
+});
+
+it('reads column/row layout instead of treating logical groups as columns', () => {
+  const tags = { 100201: tag(100201, 1, 'buff_enemy') };
+  const row = { ...entry(100201), column: 2, row: 3 };
+  const contract = {
+    activityId: 'activity',
+    contractColMap: { 2: { contractRowMap: { 3: row } } },
+    contractGroupMap: { 10: { contractMap: { 100201: row } } },
+    contractMap: { 100201: row },
+  };
+  const parsed = parseContingencyContractCatalogSource(tags, { contract });
+  const legacy = parseContingencyContractCatalogSource(tags, {
+    contract: {
+      activityId: 'activity',
+      contractGroupMap: { 2: { contractMap: { 3: entry(100201) } } },
+    },
+  });
+  expect(parsed).toEqual(legacy);
+  row.column = 10;
+  expect(() => parseContingencyContractCatalogSource(tags, { contract })).toThrow(
+    'column/row does not match',
+  );
 });

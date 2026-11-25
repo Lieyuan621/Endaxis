@@ -1,7 +1,9 @@
+import { levelEnemies } from '../project/level';
 /**
  * 校验项目敌人实例引用的定义身份。
  * 本模块不把定义默认值写回项目，避免加载校验悄悄修改用户文档。
  */
+import { getEnemySourceDefinitionId } from './enemyDefinition';
 import type { EndaxisProjectDocument } from '../project/schema';
 import type { ValidationIssue } from '../project/validation';
 import type { EnemyDefinition } from './enemyDefinition';
@@ -18,15 +20,21 @@ export function validateProjectEnemyDefinitionReferences(
   const issues: ValidationIssue[] = [];
 
   project.scenarios.forEach((scenario, scenarioIndex) => {
-    if (scenario.enemy.source.kind !== 'prefab') return;
-    const path = `$.scenarios[${scenarioIndex}].enemy.source.enemyId`;
-    const enemyId = scenario.enemy.source.enemyId;
-    const definition = repository.getEnemy(enemyId);
-    if (definition === null) {
-      issues.push({ path, message: 'unknown enemy' });
-    } else if (definition.id !== enemyId) {
-      issues.push({ path, message: 'enemy definition identity mismatch' });
-    }
+    levelEnemies(scenario.level).forEach((instance, index) => {
+      const source = instance.enemy.source;
+      const enemyId = getEnemySourceDefinitionId(source);
+      if (enemyId === null) return;
+      const field = source.kind === 'stage' ? 'templateId' : 'enemyId';
+      const levelPath =
+        scenario.level.kind === 'singleEnemy' ? 'level.enemy' : `level.enemies[${index}]`;
+      const path = `$.scenarios[${scenarioIndex}].${levelPath}.enemy.source.${field}`;
+      const definition = repository.getEnemy(enemyId);
+      if (definition === null) {
+        issues.push({ path, message: 'unknown enemy' });
+      } else if (definition.id !== enemyId) {
+        issues.push({ path, message: 'enemy definition identity mismatch' });
+      }
+    });
   });
 
   return issues;

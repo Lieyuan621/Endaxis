@@ -2,7 +2,46 @@
   max-width: calc(100vw - 24px);
 }
 
+.build-progression-bar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--ea-border-soft);
+  background: var(--ea-fill-soft);
+}
+
+.build-progression-bar .level-display {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+.build-progression-bar .level-selector {
+  min-width: 0;
+}
+
+.build-progression-bar__action {
+  white-space: nowrap;
+}
+
 @media (max-width: 760px) {
+  .build-progression-bar {
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+  }
+
+  .build-progression-bar .level-selector {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .build-progression-bar__action {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
   .next-armory-dialog .el-dialog__body {
     overflow-x: hidden;
   }

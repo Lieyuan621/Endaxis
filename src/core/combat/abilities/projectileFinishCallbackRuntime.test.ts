@@ -37,6 +37,8 @@ const compileGraphEntry = (
     },
     1,
     revision,
+    {},
+    { abilityEntities: {} },
   ).compileAll(),
   entry,
   callSite: revision,
@@ -108,10 +110,16 @@ const delayedProbeNodes = (): ActionGraphDefinition['nodes'] => ({
     action: {
       kind: 'launchProjectile',
       parameters: {
-        inheritActionBlackboard: true,
-        finish: 3,
-        recycleDelaySeconds: 0,
+        projectileId: 'delayedProbe',
         entityInitialValues: { EntityBB_seed: 4 },
+        schedule: {
+          endFrame: 90,
+          callbacks: [{ event: 'finish', triggerFrames: [90] }],
+        },
+
+        inheritActionBlackboard: true,
+
+        recycleDelaySeconds: 0,
         entityAssignments: {
           EntityBB_snapshot: { kind: 'valueNode', nodeId: 'launchValue' },
           EntityBB_sourceSnapshot: { kind: 'valueNode', nodeId: 'source' },
@@ -159,6 +167,75 @@ function delayedProbe(): ResolvedActionSequence {
 }
 
 describe('projectile callback action lifecycle', () => {
+  it('时间表通过图编译及发射动作执行回调，保留来源和黑板且不建立轨迹', () => {
+    const projectiles = new ProjectileLifecycleRuntime();
+    const calls: number[] = [];
+    const runtime = new CombatActionSequenceRuntime(
+      {
+        execute: () => {
+          calls.push(1);
+          return true;
+        },
+        evaluate: () => true,
+      },
+      {
+        blackboard: new ActionBlackboard({ launchValue: 7 }),
+        skillCastInfo: {
+          skillCastId: 42,
+          originSkillId: 'source',
+          originCastId: 'block:1',
+          nonReturnedSpCost: 0,
+        },
+        createCallbackSkillHost: createTestHost,
+        launchProjectile: request => {
+          return projectiles.launch({
+            schedule: request.schedule,
+            entityBlackboard: request.entityBlackboard,
+            callbacks: request.callbacks.map(c => c.runtime.runtimeState),
+            callbackPrograms: request.callbacks.map(c => c.program),
+            recycleDelaySeconds: 0,
+            ...bindProjectileCallbackLifecycle(
+              request.callbacks.map(c => c.runtime),
+              () => 1 / 30,
+            ),
+          });
+        },
+      },
+      undefined,
+      undefined,
+      'source',
+    );
+    const nodes = delayedProbeNodes();
+    const action = nodes.launch!.action;
+    if (action.kind !== 'launchProjectile') throw new Error('expected launch');
+    const entry = compileGraphEntry('scheduled-probe', 'launch', {
+      ...nodes,
+      launch: {
+        ...nodes.launch!,
+        action: {
+          ...action,
+          parameters: {
+            ...action.parameters,
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'finish', triggerFrames: [3] }],
+            },
+          },
+        },
+      },
+    });
+    runtime.createSequence(entry).executeInstant({});
+    const instance = [...projectiles.runtimeState.instances.values()][0]!;
+    expect(instance.callbacks[0]!.skillCastInfo?.originCastId).toBe('block:1');
+    expect(
+      ActionBlackboard.bindRuntimeState(instance.callbacks[0]!.blackboard).snapshot().launchValue,
+    ).toBe(7);
+    projectiles.advanceFrame();
+    projectiles.advanceFrame();
+    expect(calls).toEqual([]);
+    projectiles.advanceFrame();
+    expect(calls).toEqual([1]);
+  });
   it.each(['finish', 'launch'] as const)('%s 回调按对应时点启动，并保存宿主与输入目标', event => {
     const projectiles = new ProjectileLifecycleRuntime();
     let calls = 0;
@@ -181,11 +258,10 @@ describe('projectile callback action lifecycle', () => {
         createCallbackSkillHost: createTestHost,
         launchProjectile: request =>
           projectiles.launch({
-            finishDelaySeconds: request.finish,
+            schedule: request.schedule,
             recycleDelaySeconds: request.recycleDelaySeconds,
             callbacks: request.callbacks.map(c => c.runtime.runtimeState),
             callbackPrograms: request.callbacks.map(c => c.program),
-            firstTickHit: request.hit,
             ...bindProjectileCallbackLifecycle(
               request.callbacks.map(c => c.runtime),
               () => 1,
@@ -205,6 +281,13 @@ describe('projectile callback action lifecycle', () => {
         ...nodes.launch!,
         action: {
           ...action,
+          parameters: {
+            ...action.parameters,
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event, triggerFrames: [event === 'launch' ? 0 : 3] }],
+            },
+          },
           callbacks: action.callbacks.map(callback => ({ ...callback, event })),
         },
       },
@@ -380,11 +463,10 @@ describe('projectile callback action lifecycle', () => {
         createCallbackSkillHost: createTestHost,
         launchProjectile: request => {
           const projectile = scheduler.launch({
-            finishDelaySeconds: request.finish,
+            schedule: request.schedule,
             recycleDelaySeconds: request.recycleDelaySeconds,
             callbacks: request.callbacks.map(c => c.runtime.runtimeState),
             callbackPrograms: request.callbacks.map(c => c.program),
-            firstTickHit: request.hit,
             ...bindProjectileCallbackLifecycle(
               request.callbacks.map(c => c.runtime),
               () => componentDelta,
@@ -403,7 +485,17 @@ describe('projectile callback action lifecycle', () => {
         launch: {
           action: {
             kind: 'launchProjectile',
-            parameters: { inheritActionBlackboard: true, finish: 1, recycleDelaySeconds: 100 },
+            parameters: {
+              projectileId: 'stationary',
+              schedule: {
+                endFrame: 1,
+                callbacks: [{ event: 'finish', triggerFrames: [1] }],
+              },
+
+              inheritActionBlackboard: true,
+
+              recycleDelaySeconds: 100,
+            },
             callbacks: [
               {
                 event: 'finish',
@@ -516,11 +608,10 @@ describe('projectile callback action lifecycle', () => {
         createCallbackSkillHost: createTestHost,
         launchProjectile: request => {
           const instance = scheduler.launch({
-            finishDelaySeconds: request.finish,
+            schedule: request.schedule,
             recycleDelaySeconds: request.recycleDelaySeconds,
             callbacks: request.callbacks.map(c => c.runtime.runtimeState),
             callbackPrograms: request.callbacks.map(c => c.program),
-            firstTickHit: request.hit,
             ...bindProjectileCallbackLifecycle(
               request.callbacks.map(c => c.runtime),
               () => 1,
@@ -539,7 +630,17 @@ describe('projectile callback action lifecycle', () => {
         launch: {
           action: {
             kind: 'launchProjectile',
-            parameters: { inheritActionBlackboard: true, finish: 1, recycleDelaySeconds: 1 },
+            parameters: {
+              projectileId: 'stationary',
+              schedule: {
+                endFrame: 1,
+                callbacks: [{ event: 'finish', triggerFrames: [1] }],
+              },
+
+              inheritActionBlackboard: true,
+
+              recycleDelaySeconds: 1,
+            },
             callbacks: [
               {
                 event: 'finish',
@@ -602,11 +703,10 @@ describe('projectile callback action lifecycle', () => {
         createCallbackSkillHost: createTestHost,
         launchProjectile: request => {
           return scheduler.launch({
-            finishDelaySeconds: request.finish,
+            schedule: request.schedule,
             recycleDelaySeconds: request.recycleDelaySeconds,
             callbacks: request.callbacks.map(c => c.runtime.runtimeState),
             callbackPrograms: request.callbacks.map(c => c.program),
-            firstTickHit: request.hit,
             ...bindProjectileCallbackLifecycle(
               request.callbacks.map(c => c.runtime),
               () => COMBAT_FRAME_INTERVAL,
@@ -669,7 +769,10 @@ describe('projectile callback action lifecycle', () => {
       targets.set(
         'selected',
         kind === 'entity'
-          ? [{ kind: 'enemy' }, { kind: 'operator', operatorId: 'ally' }]
+          ? [
+              { kind: 'enemy', enemyId: 'enemy' },
+              { kind: 'operator', operatorId: 'ally' },
+            ]
           : [
               { kind: 'spatialPoint', pointId: 1 },
               { kind: 'spatialPoint', pointId: 2 },
@@ -695,7 +798,7 @@ describe('projectile callback action lifecycle', () => {
             blackboard.assignDynamic('launchValue', 100);
             targets.set('selected', []);
             return scheduler.launch({
-              finishDelaySeconds: request.finish,
+              schedule: { ...request.schedule, callbacks: [] },
               recycleDelaySeconds: 0,
               callbacks: [],
               callbackPrograms: [],
@@ -766,11 +869,10 @@ describe('projectile callback action lifecycle', () => {
         createCallbackSkillHost: createTestHost,
         launchProjectile: request => {
           return scheduler.launch({
-            finishDelaySeconds: request.finish,
+            schedule: request.schedule,
             recycleDelaySeconds: request.recycleDelaySeconds,
             callbacks: request.callbacks.map(c => c.runtime.runtimeState),
             callbackPrograms: request.callbacks.map(c => c.program),
-            firstTickHit: request.hit,
             ...bindProjectileCallbackLifecycle(
               request.callbacks.map(c => c.runtime),
               () => COMBAT_FRAME_INTERVAL,

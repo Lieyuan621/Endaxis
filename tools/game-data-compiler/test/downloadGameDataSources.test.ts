@@ -4,7 +4,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { downloadGameDataSources, loadSourceCatalog } from '../scripts/downloadGameDataSources.ts';
+import {
+  downloadGameDataSources,
+  loadSourceCatalog,
+  parseCollectionManifest,
+} from '../scripts/downloadGameDataSources.ts';
 
 const temporaryDirectories: string[] = [];
 
@@ -16,22 +20,43 @@ afterEach(async () => {
   );
 });
 
-describe('VFS 精确资源下载器', () => {
+describe('本地来源精确资源下载器', () => {
+  it('保留刷怪配置的场景子目录，区分不同场景中的同名文件', () => {
+    expect(
+      parseCollectionManifest(
+        [
+          { contentFile: '/api/data/SpawnerConfig/scene_a/config.json' },
+          { contentFile: '/api/data/SpawnerConfig/scene_b/config.json' },
+        ],
+        'SpawnerConfig',
+      ),
+    ).toEqual(['scene_a/config.json', 'scene_b/config.json']);
+    expect(() =>
+      parseCollectionManifest(
+        [{ contentFile: '/api/data/SkillData/config.json' }],
+        'SpawnerConfig',
+      ),
+    ).toThrow('unsafe JSON filename');
+  });
   it('只接受 Endaxis 自维护清单声明的安全路径', async () => {
     const root = await temporaryRoot('endaxis-vfs-catalog-');
     const catalog = path.join(root, 'sources.json');
     await writeJson(catalog, {
       tableCfg: ['CharacterTable'],
       jsonCollections: { SkillData: 'SkillData' },
-      jsonFiles: ['GameplayConfig/GameplayTagPredefineTable.json'],
+      jsonFiles: ['GameplayConfig/GameplayTagPredefineTable.json', 'LevelData/scene/battle.json'],
     });
 
     await expect(loadSourceCatalog(catalog)).resolves.toEqual({
       tableCfg: ['CharacterTable'],
       jsonCollections: { SkillData: 'SkillData' },
-      jsonFiles: ['GameplayConfig/GameplayTagPredefineTable.json'],
+      jsonFiles: ['GameplayConfig/GameplayTagPredefineTable.json', 'LevelData/scene/battle.json'],
     });
-    for (const jsonFiles of [['../escape.json'], ['X/a.json', 'X/a.json']]) {
+    for (const jsonFiles of [
+      ['../escape.json'],
+      ['LevelData/../a.json'],
+      ['X/a.json', 'X/a.json'],
+    ]) {
       await writeJson(catalog, { tableCfg: [], jsonCollections: {}, jsonFiles });
       await expect(loadSourceCatalog(catalog)).rejects.toThrow();
     }
@@ -49,16 +74,14 @@ describe('VFS 精确资源下载器', () => {
     });
 
     const payloads: Record<string, unknown> = {
-      '/api/endaxis-data/TableCfg-current/CharacterTable.json': { table: true },
-      '/api/endaxis-data/GameplayConfig/GameplayTagPredefineTable.json': { tags: true },
-      '/api/endaxis-data/SkillData/manifest.json': [
-        { contentFile: '/api/endaxis-data/SkillData/a.json' },
+      '/api/data/TableCfg-current/CharacterTable.json': { table: true },
+      '/api/data/GameplayConfig/GameplayTagPredefineTable.json': { tags: true },
+      '/api/data/SkillData/manifest.json': [{ contentFile: '/api/data/SkillData/a.json' }],
+      '/api/data/SkillData/a.json': { skill: true },
+      '/api/data/CharacterData/manifest.json': [
+        { contentFile: '/api/data/CharacterData/chr_0004_pelica.runtime-template.json' },
       ],
-      '/api/endaxis-data/SkillData/a.json': { skill: true },
-      '/api/endaxis-data/CharacterData/manifest.json': [
-        { contentFile: '/api/endaxis-data/CharacterData/chr_0004_pelica.runtime-template.json' },
-      ],
-      '/api/endaxis-data/CharacterData/chr_0004_pelica.runtime-template.json': {
+      '/api/data/CharacterData/chr_0004_pelica.runtime-template.json': {
         format: 'character-template-prefix-v1',
         decodeStatus: 'partial',
         data: { id: 'chr_0004_pelica' },
@@ -67,16 +90,16 @@ describe('VFS 精确资源下载器', () => {
     const { base, close } = await fixtureServer(payloads, true);
     try {
       await downloadGameDataSources({
-        sourceMode: 'vfs-only',
-        vfsBase: `${base}/api/endaxis-data`,
+        sourceMode: 'local-only',
+        localBase: `${base}/api/data`,
         sourceCatalog: catalog,
         output,
         workers: 2,
         tablesOnly: false,
       });
       await downloadGameDataSources({
-        sourceMode: 'vfs-only',
-        vfsBase: `${base}/api/endaxis-data`,
+        sourceMode: 'local-only',
+        localBase: `${base}/api/data`,
         sourceCatalog: catalog,
         output: repeatedOutput,
         workers: 1,
@@ -112,20 +135,20 @@ describe('VFS 精确资源下载器', () => {
     const catalog = path.join(root, 'sources.json');
     await writeJson(catalog, { tableCfg: ['CharacterTable'], jsonCollections: {}, jsonFiles: [] });
     const { base, close } = await fixtureServer(
-      { '/api/endaxis-data/TableCfg-current/CharacterTable.json': { table: true } },
+      { '/api/data/TableCfg-current/CharacterTable.json': { table: true } },
       false,
     );
     try {
       await expect(
         downloadGameDataSources({
-          sourceMode: 'vfs-only',
-          vfsBase: `${base}/api/endaxis-data`,
+          sourceMode: 'local-only',
+          localBase: `${base}/api/data`,
           sourceCatalog: catalog,
           output: path.join(root, 'output'),
           workers: 1,
           tablesOnly: true,
         }),
-      ).rejects.toThrow('response lacks the required vfs-index-browser source header');
+      ).rejects.toThrow('response lacks the required endaxis-data-tool source header');
     } finally {
       await close();
     }
@@ -143,7 +166,7 @@ async function fixtureServer(payloads: Record<string, unknown>, identify: boolea
     const payload = payloads[request.url ?? ''];
     if (payload === undefined) return void response.writeHead(404).end();
     response.setHeader('Content-Type', 'application/json');
-    if (identify) response.setHeader('X-Endaxis-Source', 'vfs-index-browser');
+    if (identify) response.setHeader('X-Endaxis-Source', 'endaxis-data-tool');
     response.end(JSON.stringify(payload));
   });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));

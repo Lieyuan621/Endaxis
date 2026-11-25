@@ -126,7 +126,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0036_jsspsi.runtime-template.json",
-        "sourceSha256": "b8c9079fa014891f6eed028651bc77685bb92c4cf98ed2c300a6df47263f95d9",
+        "sourceSha256": "61543cba57baa7e06a6913617b7a6664a2df9af6d1f5b956ffcdaac7578b93f4",
         "sourceCharacterId": "chr_0036_jsspsi",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -272,7 +272,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0038_purrche.runtime-template.json",
-        "sourceSha256": "e98b0ce6e0f4304bf59d807c6a140fa92352fe644564e4ad78356468ba0d0710",
+        "sourceSha256": "db4b05613c1957ac42efaf93aed2a772a1e0882ef0baf9141a9ef76c72b27557",
         "sourceCharacterId": "chr_0038_purrche",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -282,7 +282,14 @@
       "exportName": "perlicaGeneratedSource",
       "gameId": "PERLICA",
       "charId": "chr_0004_pelica",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -370,7 +377,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0004_pelica.runtime-template.json",
-        "sourceSha256": "b5c4967feff18218d70a49890f14a2ca10b9c80fb7ead81e9b155dc73adfe02c",
+        "sourceSha256": "4333cbdca8217afad0844de58d6154132abeaa3326185dde4b006fbb6b94f772",
         "sourceCharacterId": "chr_0004_pelica",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -381,7 +388,14 @@
       "gameId": "EMBER",
       "charId": "chr_0009_azrila",
       "outputStage": "complete",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -469,7 +483,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0009_azrila.runtime-template.json",
-        "sourceSha256": "4fecc731315317daac5711a8d4f298184059e7d63cb7278671ee9e2b317099c6",
+        "sourceSha256": "8f874250f651c5b77118e355f355a8b5eba377794fd4c4ab579bd14ac2ad316e",
         "sourceCharacterId": "chr_0009_azrila",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -480,7 +494,14 @@
       "gameId": "WULFGARD",
       "charId": "chr_0006_wolfgd",
       "outputStage": "complete",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -568,7 +589,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0006_wolfgd.runtime-template.json",
-        "sourceSha256": "203b5ef68f271e85d6ef1842b7916d877a6181505a09ece21ee270a3a4fa8c3f",
+        "sourceSha256": "eaeb6fa01b6d36970e56333a9808209f17ea3b1ea01058ac95259a95d49bdbff",
         "sourceCharacterId": "chr_0006_wolfgd",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -579,7 +600,14 @@
       "gameId": "ANTAL",
       "charId": "chr_0023_antal",
       "outputStage": "complete",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -667,7 +695,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0023_antal.runtime-template.json",
-        "sourceSha256": "9498fd2ae4fcff153289f9159b39aa8c6e7f47ce94c8a2bcc79565fbc43f51b1",
+        "sourceSha256": "349618a7b51259e3d46e8668c75190dca6fef6842989c44dbbac44283801a260",
         "sourceCharacterId": "chr_0023_antal",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -678,7 +706,14 @@
       "gameId": "ALESH",
       "charId": "chr_0024_deepfin",
       "outputStage": "complete",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -772,7 +807,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0024_deepfin.runtime-template.json",
-        "sourceSha256": "bf33c24fd56d872f7de95fddf8f80d231b489958f23d6360245fcd4ebc34c3e0",
+        "sourceSha256": "d6a76332dd76c4f1484fc180f58398af49b1ce9105094b2aea16046a1a3dbbe8",
         "sourceCharacterId": "chr_0024_deepfin",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -789,7 +824,14 @@
       "gameId": "XAIHI",
       "charId": "chr_0011_seraph",
       "outputStage": "complete",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -883,7 +925,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0011_seraph.runtime-template.json",
-        "sourceSha256": "21b316c62dd834f1208c08f47805c484b4504ae98f0703e2d52bbe469d778db5",
+        "sourceSha256": "9060b26e23e206c9a8c217c4d43d595ce2c8a6e0519a427ab3897ae52d2efedd",
         "sourceCharacterId": "chr_0011_seraph",
         "comboSkillGroupKey": null
       }
@@ -894,7 +936,14 @@
       "gameId": "AVYWENNA",
       "charId": "chr_0012_avywen",
       "outputStage": "complete",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -988,7 +1037,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0012_avywen.runtime-template.json",
-        "sourceSha256": "38dec2655075ff8427a447b26b911781ba7bf8c55edb2b0244de4085da08f3c4",
+        "sourceSha256": "25106f9dffabe1320e77bb6d54b28ffd51ad47ecbeb6b24d65a37da035392b4c",
         "sourceCharacterId": "chr_0012_avywen",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -999,7 +1048,14 @@
       "gameId": "CATCHER",
       "charId": "chr_0020_meurs",
       "outputStage": "complete",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -1087,7 +1143,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0020_meurs.runtime-template.json",
-        "sourceSha256": "6c3b8dbbefade2bf15e80b67aeae10e1539effd418afe9e7fbefdec2304544d6",
+        "sourceSha256": "0892fa9bdbd0d7f0325b4d57183647968e5477196d1d93e67d2fcadca5810672",
         "sourceCharacterId": "chr_0020_meurs",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -1098,7 +1154,14 @@
       "gameId": "ARDELIA",
       "charId": "chr_0025_ardelia",
       "outputStage": "complete",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -1186,7 +1249,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0025_ardelia.runtime-template.json",
-        "sourceSha256": "1112a4ea027178bc1c5ad23918c5b47478a0b7c0d5de939a56640796b0abae9a",
+        "sourceSha256": "e1b9fe74a8dd1ca0b3d1cf3abfe2586f7ee741488601aeec94088ef28eb9b1d8",
         "sourceCharacterId": "chr_0025_ardelia",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -1196,7 +1259,14 @@
       "exportName": "chenQianyuGeneratedSource",
       "gameId": "CHENQIANYU",
       "charId": "chr_0005_chen",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -1290,7 +1360,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0005_chen.runtime-template.json",
-        "sourceSha256": "f33fcd923a3ce685c644176f9b546b38189ffe632dff353926840a08452df636",
+        "sourceSha256": "9dda81b523b3669d5a99a2201a12ae1ef7af0fb3c26b9ce26d9e45ebab0b22bd",
         "sourceCharacterId": "chr_0005_chen",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -1301,7 +1371,14 @@
       "exportName": "rossiGeneratedSource",
       "gameId": "ROSSI",
       "charId": "chr_0028_wulfa",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -1403,7 +1480,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0028_wulfa.runtime-template.json",
-        "sourceSha256": "5a61b69d532b53c65a2438832083048d71981c8817112af301d76def61279f58",
+        "sourceSha256": "45767e70d4097cfba1767ae3793e148063e70caf76f26503e6b54bf4631aa483",
         "sourceCharacterId": "chr_0028_wulfa",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -1415,14 +1492,20 @@
       "charId": "chr_0033_camille",
       "basePassiveSkillIds": ["chr_0033_camille_passive_listen_normal_skill"],
       "outputStage": "complete",
-
       "runtimeReplacementSkillKeys": [
         "chr_0033_camille_normal_skill_2",
         "chr_0033_camille_combo_skill_2"
       ],
       "routedSkillKeys": ["chr_0033_camille_normal_skill_2"],
       "routingOnlyNativeSkillIds": ["chr_0033_camille_normal_skill_2"],
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -1526,7 +1609,10 @@
           "skillType": "battleSkill",
           "levelSource": "battleSkill",
           "source": "chr_0033_camille_normal_skill_2.json",
-          "compile": { "kind": "routedSkill", "targetSkillKey": "chr_0033_camille_combo_skill_2" }
+          "compile": {
+            "kind": "routedSkill",
+            "targetSkillKey": "chr_0033_camille_combo_skill_2"
+          }
         },
         {
           "skillType": "ultimate",
@@ -1536,7 +1622,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0033_camille.runtime-template.json",
-        "sourceSha256": "efee6413422333d283c4a398295f112422c93042da9346fcd8e9a6a2321af1ed",
+        "sourceSha256": "e6c2fa09b32b03d752378e03243460d4156e8efc8698ee0620e89dad27a0f7ab",
         "sourceCharacterId": "chr_0033_camille",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -1547,7 +1633,14 @@
       "gameId": "POGRANICHNK",
       "charId": "chr_0029_pograni",
       "outputStage": "complete",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -1641,7 +1734,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0029_pograni.runtime-template.json",
-        "sourceSha256": "aa8a5947d5b73477009006ea15d6d3326286d648fae0089bb9d6034e78c26bca",
+        "sourceSha256": "6c887736c74ffcf555967ad16ba184c286c4017639cbac2f2ba9e6dd33293b4c",
         "sourceCharacterId": "chr_0029_pograni",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -1658,7 +1751,14 @@
         "chr_0030_zhuangfy_ultimate_skill_end"
       ],
       "basePassiveSkillIds": ["chr_0030_zhuangfy_check_sword_passive"],
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -1808,7 +1908,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0030_zhuangfy.runtime-template.json",
-        "sourceSha256": "c1f62ce09862a4e87ae7c58a5b91f37f75fe5ea4a412a40dfeb531ef93ade356",
+        "sourceSha256": "311c8eb57e4221e357e342cea20dd8b172252778c1c098e626ad2e7001e4dc40",
         "sourceCharacterId": "chr_0030_zhuangfy",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -1820,7 +1920,14 @@
       "charId": "chr_0032_lizhiyan",
       "outputStage": "complete",
       "runtimeReplacementSkillKeys": ["chr_0032_lizhiyan_ultimate_skill2"],
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -1857,7 +1964,9 @@
         {
           "key": "ultimate",
           "operationType": "ultimate",
-          "replacementPlacements": { "chr_0032_lizhiyan_ultimate_skill2": "sequence" },
+          "replacementPlacements": {
+            "chr_0032_lizhiyan_ultimate_skill2": "sequence"
+          },
           "skillKeys": ["chr_0032_lizhiyan_ultimate_skill", "chr_0032_lizhiyan_ultimate_skill2"]
         }
       ],
@@ -1865,7 +1974,7 @@
       "compileTimeOnlyBasePassiveSkillIds": ["chr_0032_lizhiyan_passive"],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0032_lizhiyan.runtime-template.json",
-        "sourceSha256": "25e79b6eb719c5032cdc7fcc087eccc4a5c67311d80e2aa93613fe866941f940",
+        "sourceSha256": "9adfcd92078e6db252a12555e56a2995e86e1b12f82404f43af8529a49273e67",
         "sourceCharacterId": "chr_0032_lizhiyan",
         "comboSkillGroupKey": "comboSkill"
       },
@@ -1884,8 +1993,14 @@
         }
       },
       "presentationVariants": [
-        { "key": "int", "conditionId": "lizhiyan_wisd" },
-        { "key": "will", "conditionId": "lizhiyan_will" }
+        {
+          "key": "int",
+          "conditionId": "lizhiyan_wisd"
+        },
+        {
+          "key": "will",
+          "conditionId": "lizhiyan_will"
+        }
       ],
       "skills": [
         {
@@ -1951,7 +2066,14 @@
       "exportName": "arclightGeneratedSource",
       "gameId": "ARCLIGHT",
       "charId": "chr_0007_ikut",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -2045,7 +2167,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0007_ikut.runtime-template.json",
-        "sourceSha256": "00b616545bc30493d5da3f3e80ef2fe9aab310b0973ba4d9e49ba0c3b33aa775",
+        "sourceSha256": "d2df4c1d29787de1587d05bea8b2f8fac56eda1d37880965c3bfbeec5bc64814",
         "sourceCharacterId": "chr_0007_ikut",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -2055,7 +2177,14 @@
       "exportName": "gilbertaGeneratedSource",
       "gameId": "GILBERTA",
       "charId": "chr_0013_aglina",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -2143,7 +2272,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0013_aglina.runtime-template.json",
-        "sourceSha256": "9ab170e9e79161a2ecdcee022d1d98c50989fa85d4a4e87cf5802b6fc52a943d",
+        "sourceSha256": "6f79a6fceeb2d391e33f988b8cb4dd9145f6267501ef37ac35972aebe1ea311a",
         "sourceCharacterId": "chr_0013_aglina",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -2155,7 +2284,14 @@
       "charId": "chr_0015_lifeng",
       "outputStage": "complete",
       "basePassiveSkillIds": ["chr_0015_lifeng_passive"],
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -2243,7 +2379,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0015_lifeng.runtime-template.json",
-        "sourceSha256": "67ceb99dd24ed6707b4e88b455c5a13b900565fe330f6f731227f85a94187487",
+        "sourceSha256": "bf26307f03b174616dca3a114ae3cb704044ab83420f72d1ff891449409f48a3",
         "sourceCharacterId": "chr_0015_lifeng",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -2253,7 +2389,14 @@
       "exportName": "estellaGeneratedSource",
       "gameId": "ESTELLA",
       "charId": "chr_0021_whiten",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -2341,7 +2484,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0021_whiten.runtime-template.json",
-        "sourceSha256": "caa322ec1c80096e47e998a3c7e5daafd7051465d116e36d3e32fadd1f731356",
+        "sourceSha256": "fb61babe0c25238eb937d8bcbd616734de75b893f3e4b3ecd903e4796e30be6f",
         "sourceCharacterId": "chr_0021_whiten",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -2351,7 +2494,14 @@
       "exportName": "daPanGeneratedSource",
       "gameId": "DAPAN",
       "charId": "chr_0018_dapan",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -2439,7 +2589,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0018_dapan.runtime-template.json",
-        "sourceSha256": "886e0d04f6a1194691598ed4ea96e5bccdeec1a13419c2066337f9e1427d6de4",
+        "sourceSha256": "a1f293808bf43821b6daa2dd047b0239c179f7b1b9be28d4a958a690f9aa8779",
         "sourceCharacterId": "chr_0018_dapan",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -2449,7 +2599,14 @@
       "exportName": "akekuriGeneratedSource",
       "gameId": "AKEKURI",
       "charId": "chr_0019_karin",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -2537,7 +2694,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0019_karin.runtime-template.json",
-        "sourceSha256": "4458a014ad5ca164fbea047465dce3ba2c1996fb7200ccb998b8f2ed51cfa6af",
+        "sourceSha256": "b97694e17e2261d81a329ec56dc42021384436578217aa7d87c6f054b26d7e8d",
         "sourceCharacterId": "chr_0019_karin",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -2556,9 +2713,18 @@
       "gameId": "TANGTANG",
       "charId": "chr_0027_tangtang",
       "basePassiveSkillIds": ["chr_0027_tangtang_passive_0"],
-      "nativeMissingBlackboardZeroKeys": { "chr_0027_tangtang_ultimate_skill_1": ["potential3"] },
+      "nativeMissingBlackboardZeroKeys": {
+        "chr_0027_tangtang_ultimate_skill_1": ["potential3"]
+      },
       "presentationOnlyPassiveBuffIds": ["buff_chr_0027_tangtang_water_passiveui"],
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -2652,7 +2818,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0027_tangtang.runtime-template.json",
-        "sourceSha256": "c79cc4ac39748d6730109f1a276098068939cf590a1d589c01e9205fe732ddfe",
+        "sourceSha256": "cdecdf503256117fc771378cd923789869cb3195523ade535792026c847b3827",
         "sourceCharacterId": "chr_0027_tangtang",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -2662,7 +2828,14 @@
       "exportName": "fluoriteGeneratedSource",
       "gameId": "FLUORITE",
       "charId": "chr_0022_bounda",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -2756,14 +2929,16 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0022_bounda.runtime-template.json",
-        "sourceSha256": "16ce707aa907c6b8f73d3c8928d25715c505a439f864390e422b1230e830e4ac",
+        "sourceSha256": "4e98a49d35c074099f259b5dbc5b2f0956439f108e89e2e8c4c349f787c239b0",
         "sourceCharacterId": "chr_0022_bounda",
         "comboSkillGroupKey": "comboSkill"
       }
     },
     {
       "slug": "endministrator",
-      "assets": { "portraitCharacterId": "chr_0003_endminf" },
+      "assets": {
+        "avatarCharacterId": "chr_0003_endminf"
+      },
       "excludedLocaleCharIds": ["chr_0002_endminm", "chr_0003_endminf"],
       "exportName": "endministratorGeneratedSource",
       "gameId": "ENDMINISTRATOR",
@@ -2851,8 +3026,23 @@
           "to": ["comboSkill", "chr_0003_endminf_combo_skill"]
         }
       ],
-      "talents": [{ "index": 0 }, { "index": 1 }],
-      "potentials": [{}, {}, {}, { "simulationNoEffectAttributeTypes": [60] }, {}],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
+      "potentials": [
+        {},
+        {},
+        {},
+        {
+          "simulationNoEffectAttributeTypes": [60]
+        },
+        {}
+      ],
       "skillGroups": [
         {
           "key": "basicAttack",
@@ -2945,7 +3135,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0003_endminf.runtime-template.json",
-        "sourceSha256": "dc00017c2861e361ce7c4ace79d63fd04154cba4bebe0cd7e36bb7268bfc723f",
+        "sourceSha256": "06c84c560715521eaa648a9cab48f2032ffbe07704114eee41681763b8226cdc",
         "sourceCharacterId": "chr_0003_endminf",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -2956,7 +3146,14 @@
       "gameId": "LASTRITE",
       "charId": "chr_0026_lastrite",
       "basePassiveSkillIds": ["chr_0026_lastrite_passive"],
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -3044,7 +3241,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0026_lastrite.runtime-template.json",
-        "sourceSha256": "06b423617eae7e2c6b4aec6fb6d98c8b3151480ab9fe6806eb0f72919c668149",
+        "sourceSha256": "bf60254e998d9370096ce9fd99654ae643ad72977e88f7c30bca117b3a84b88c",
         "sourceCharacterId": "chr_0026_lastrite",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -3053,10 +3250,22 @@
       "slug": "laevatain",
       "assets": {
         "icons": {
-          "magma_1": { "sourceName": "icon_laevat_energy_1", "preferredPathSegment": "/bufficon/" },
-          "magma_2": { "sourceName": "icon_laevat_energy_2", "preferredPathSegment": "/bufficon/" },
-          "magma_3": { "sourceName": "icon_laevat_energy_3", "preferredPathSegment": "/bufficon/" },
-          "magma_4": { "sourceName": "icon_laevat_energy_4", "preferredPathSegment": "/bufficon/" },
+          "magma_1": {
+            "sourceName": "icon_laevat_energy_1",
+            "preferredPathSegment": "/bufficon/"
+          },
+          "magma_2": {
+            "sourceName": "icon_laevat_energy_2",
+            "preferredPathSegment": "/bufficon/"
+          },
+          "magma_3": {
+            "sourceName": "icon_laevat_energy_3",
+            "preferredPathSegment": "/bufficon/"
+          },
+          "magma_4": {
+            "sourceName": "icon_laevat_energy_4",
+            "preferredPathSegment": "/bufficon/"
+          },
           "ultimate_skill": {
             "sourceName": "icon_ultimate_skill_laevat_01",
             "preferredPathSegment": "/skillicon/"
@@ -3067,7 +3276,14 @@
       "gameId": "LAEVATAIN",
       "charId": "chr_0016_laevat",
       "runtimeReplacementSkillKeys": ["chr_0016_laevat_normal_skill_during_ult"],
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -3204,7 +3420,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0016_laevat.runtime-template.json",
-        "sourceSha256": "6ea7bcddc7be46ebfaf4fd855682aa483156f95f001e6549e7a50836ee7dd95d",
+        "sourceSha256": "37d77512827abe8493df493b280dbddd3d6ed25675c35712168d279d58c24061",
         "sourceCharacterId": "chr_0016_laevat",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -3215,7 +3431,14 @@
       "gameId": "YVONNE",
       "charId": "chr_0017_yvonne",
       "outputStage": "complete",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -3244,9 +3467,22 @@
           "placementPolicy": {
             "kind": "recursiveInput",
             "firstSkillKey": "chr_0017_yvonne_ult_attack1_1",
+            "fallback": [
+              "chr_0017_yvonne_ult_attack1_1",
+              "chr_0017_yvonne_ult_attack2_1",
+              "chr_0017_yvonne_ult_attack2_2",
+              "chr_0017_yvonne_ult_attack3_1",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack_end"
+            ],
             "terminalSkillKey": "chr_0017_yvonne_ult_attack_end",
-            "maxSegments": 24,
-            "fallback": "sequence"
+            "maxSegments": 24
           }
         },
         {
@@ -3360,7 +3596,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0017_yvonne.runtime-template.json",
-        "sourceSha256": "7d5b7272a5b30591d3e93725e993e24eaca38a9a492962410d0d75821caa0dba",
+        "sourceSha256": "21832a7c71cdc9043937539222b1794e79f2aacd5ae28c9021274a9689131089",
         "sourceCharacterId": "chr_0017_yvonne",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -3372,7 +3608,14 @@
       "charId": "chr_0031_mifu",
       "outputStage": "complete",
       "runtimeReplacementSkillKeys": ["chr_0031_mifu_normalskill_2", "chr_0031_mifu_normalskill_3"],
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -3478,7 +3721,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0031_mifu.runtime-template.json",
-        "sourceSha256": "fbfe5f069d08b9d99b76afef57d29ec5f7810f5f862df5b52fef992da07fd48f",
+        "sourceSha256": "9a9e2aaaee43e758f33fb92bdaa7403329890348cca0b12cd09fb7444b40ff99",
         "sourceCharacterId": "chr_0031_mifu",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -3489,7 +3732,14 @@
       "gameId": "SNOWSHINE",
       "charId": "chr_0014_aurora",
       "outputStage": "complete",
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -3571,7 +3821,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0014_aurora.runtime-template.json",
-        "sourceSha256": "30669723a842cac1a20345b6b6b0243a4dda1f8c0abd4d664337163ac056be3f",
+        "sourceSha256": "edac98b6e88a06c7ceb3ca8ec3fe69cb2676a3f6c294054095536777186e6214",
         "sourceCharacterId": "chr_0014_aurora",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -3581,12 +3831,18 @@
       "exportName": "liinoGeneratedSource",
       "gameId": "LIINO",
       "charId": "chr_0035_liino",
-
       "runtimeReplacementSkillKeys": [
         "chr_0035_liino_normal_skill_end",
         "chr_0035_liino_normal_skill_combo"
       ],
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -3702,7 +3958,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0035_liino.runtime-template.json",
-        "sourceSha256": "965a69435365463dfe07a435495707868ca109c707a7a58f55b1af9621d27dbc",
+        "sourceSha256": "81a8050ca8491d847f62c4edf97c03cfa8117a06ac782877dc415451f4cc66a3",
         "sourceCharacterId": "chr_0035_liino",
         "comboSkillGroupKey": "comboSkill"
       }
@@ -3721,7 +3977,14 @@
         "chr_0034_typhoea_normal_skill_floating_end",
         "chr_0034_typhoea_combo_skillfloating"
       ],
-      "talents": [{ "index": 0 }, { "index": 1 }],
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
       "potentials": [{}, {}, {}, {}, {}],
       "skillGroups": [
         {
@@ -3881,8 +4144,240 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0034_typhoea.runtime-template.json",
-        "sourceSha256": "401cac48ed0916dc1e8bd916c58d571a2a0a15f63cc22cb5ef3ce97890bb590d",
+        "sourceSha256": "a6ab8705a4eb3206174265f087c0c721677e4cbc85a4c9d89a5e844594ca6a5c",
         "sourceCharacterId": "chr_0034_typhoea",
+        "comboSkillGroupKey": "comboSkill"
+      }
+    },
+    {
+      "slug": "minghe",
+      "exportName": "mingheGeneratedSource",
+      "gameId": "MINGHE",
+      "charId": "chr_0037_minghe",
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
+      "potentials": [{}, {}, {}, {}, {}],
+      "skillGroups": [
+        {
+          "key": "basicAttack",
+          "operationType": "basicAttack",
+          "skillKeys": [
+            "chr_0037_minghe_attack1",
+            "chr_0037_minghe_attack2",
+            "chr_0037_minghe_attack3",
+            "chr_0037_minghe_attack4",
+            "chr_0037_minghe_attack5"
+          ]
+        },
+        {
+          "key": "finisher",
+          "operationType": "finisher",
+          "skillKeys": ["chr_0037_minghe_powerattack"]
+        },
+        {
+          "key": "plungingAttack",
+          "operationType": "plungingAttack",
+          "skillKeys": ["chr_0037_minghe_plunging_attack_end"]
+        },
+        {
+          "key": "battleSkill",
+          "operationType": "battleSkill",
+          "skillKeys": ["chr_0037_minghe_normalskill_1", "chr_0037_minghe_normalskill_2"],
+          "replacementPlacements": {
+            "chr_0037_minghe_normalskill_2": "sequence"
+          }
+        },
+        {
+          "key": "comboSkill",
+          "operationType": "comboSkill",
+          "skillKeys": ["chr_0037_minghe_combo_skill"]
+        },
+        {
+          "key": "ultimate",
+          "operationType": "ultimate",
+          "skillKeys": ["chr_0037_minghe_ultimate_skill"]
+        }
+      ],
+      "skills": [
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0037_minghe_attack1.json"
+        },
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0037_minghe_attack2.json"
+        },
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0037_minghe_attack3.json"
+        },
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0037_minghe_attack4.json"
+        },
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0037_minghe_attack5.json"
+        },
+        {
+          "skillType": "finisher",
+          "levelSource": "basicAttack",
+          "source": "chr_0037_minghe_powerattack.json"
+        },
+        {
+          "skillType": "plungingAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0037_minghe_plunging_attack_end.json"
+        },
+        {
+          "skillType": "battleSkill",
+          "levelSource": "battleSkill",
+          "source": "chr_0037_minghe_normalskill_1.json"
+        },
+        {
+          "skillType": "battleSkill",
+          "levelSource": "battleSkill",
+          "source": "chr_0037_minghe_normalskill_2.json"
+        },
+        {
+          "skillType": "comboSkill",
+          "levelSource": "comboSkill",
+          "source": "chr_0037_minghe_combo_skill.json"
+        },
+        {
+          "skillType": "ultimate",
+          "levelSource": "ultimate",
+          "source": "chr_0037_minghe_ultimate_skill.json"
+        }
+      ],
+      "runtimeTemplate": {
+        "sourceFile": "CharacterData/chr_0037_minghe.runtime-template.json",
+        "sourceSha256": "8370167aa0d308cd9322eee1a48143d0b44380090a07440d03c4d11f24b4cbe0",
+        "sourceCharacterId": "chr_0037_minghe",
+        "comboSkillGroupKey": "comboSkill"
+      },
+      "runtimeReplacementSkillKeys": ["chr_0037_minghe_normalskill_2"]
+    },
+    {
+      "slug": "kay",
+      "exportName": "kayGeneratedSource",
+      "gameId": "KAY",
+      "charId": "chr_0040_sweetpie",
+      "talents": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
+      "potentials": [{}, {}, {}, {}, {}],
+      "basePassiveSkillIds": ["chr_0040_sweetpie_passive_talent2"],
+      "skillGroups": [
+        {
+          "key": "basicAttack",
+          "operationType": "basicAttack",
+          "skillKeys": [
+            "chr_0040_sweetpie_attack1",
+            "chr_0040_sweetpie_attack2",
+            "chr_0040_sweetpie_attack3",
+            "chr_0040_sweetpie_attack4",
+            "chr_0040_sweetpie_attack5"
+          ]
+        },
+        {
+          "key": "finisher",
+          "operationType": "finisher",
+          "skillKeys": ["chr_0040_sweetpie_power_attack"]
+        },
+        {
+          "key": "plungingAttack",
+          "operationType": "plungingAttack",
+          "skillKeys": ["chr_0040_sweetpie_plunging_attack_end"]
+        },
+        {
+          "key": "battleSkill",
+          "operationType": "battleSkill",
+          "skillKeys": ["chr_0040_sweetpie_normal_skill"]
+        },
+        {
+          "key": "comboSkill",
+          "operationType": "comboSkill",
+          "skillKeys": ["chr_0040_sweetpie_combo_skill"]
+        },
+        {
+          "key": "ultimate",
+          "operationType": "ultimate",
+          "skillKeys": ["chr_0040_sweetpie_ultimate_skill"]
+        }
+      ],
+      "skills": [
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0040_sweetpie_attack1.json"
+        },
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0040_sweetpie_attack2.json"
+        },
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0040_sweetpie_attack3.json"
+        },
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0040_sweetpie_attack4.json"
+        },
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0040_sweetpie_attack5.json"
+        },
+        {
+          "skillType": "finisher",
+          "levelSource": "basicAttack",
+          "source": "chr_0040_sweetpie_power_attack.json"
+        },
+        {
+          "skillType": "plungingAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0040_sweetpie_plunging_attack_end.json"
+        },
+        {
+          "skillType": "battleSkill",
+          "levelSource": "battleSkill",
+          "source": "chr_0040_sweetpie_normal_skill.json"
+        },
+        {
+          "skillType": "comboSkill",
+          "levelSource": "comboSkill",
+          "source": "chr_0040_sweetpie_combo_skill.json"
+        },
+        {
+          "skillType": "ultimate",
+          "levelSource": "ultimate",
+          "source": "chr_0040_sweetpie_ultimate_skill.json"
+        }
+      ],
+      "runtimeTemplate": {
+        "sourceFile": "CharacterData/chr_0040_sweetpie.runtime-template.json",
+        "sourceSha256": "5c380b835f4265cd918fa4ce9af5dc0f1694a000861c9ccc3ecb8a990f496a68",
+        "sourceCharacterId": "chr_0040_sweetpie",
         "comboSkillGroupKey": "comboSkill"
       }
     }

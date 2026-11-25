@@ -44,21 +44,6 @@ const definition = {
           value: [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.14],
         },
       ],
-      skillId: 'sk_wpn_claym_0015',
-      eventHandlers: [
-        {
-          key: 'skill3:event:0:sequence:0',
-          abilityEvent: 'beforeOutputBuff',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_4' },
-        },
-        {
-          key: 'skill3:event:1:sequence:0',
-          abilityEvent: 'beforeOutputPhysicalInfliction',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_8' },
-        },
-      ],
       actionGraph: {
         main: {
           nodes: {
@@ -142,6 +127,21 @@ const definition = {
         },
         macros: {},
       },
+      skillId: 'sk_wpn_claym_0015',
+      eventHandlers: [
+        {
+          key: 'skill3:event:0:sequence:0',
+          abilityEvent: 'beforeOutputBuff',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_4' },
+        },
+        {
+          key: 'skill3:event:1:sequence:0',
+          abilityEvent: 'beforeOutputPhysicalInfliction',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_8' },
+        },
+      ],
       blackboard: {
         cd: 0.1,
         def_up: [0.18, 0.216, 0.252, 0.288, 0.324, 0.36, 0.396, 0.432, 0.504],

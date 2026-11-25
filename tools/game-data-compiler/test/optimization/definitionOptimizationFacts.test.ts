@@ -11,7 +11,7 @@ import {
 
 describe('优化对照的事实摘要', () => {
   it('区分无限制、禁止全部、允许指定标签；同一集合的插入顺序不影响摘要', async () => {
-    const scenario = optimizationSimulationScenario(gameDataRepository.getOperators()[0]!, 1, 0);
+    const scenario = optimizationSimulationScenario(gameDataRepository.getOperator('si')!, 1, 0);
     const run = await optimizationSimulationService().simulate(scenario, 0);
     expect(run.finalResources.squad).toHaveLength(1);
     const facts = (allowedUltimateEnergyRecoveryTags: ReadonlySet<string> | null) =>

@@ -14,6 +14,7 @@ const declarationFiles: Readonly<Record<FieldDeclarationId, string>> = {
   'CombatStepParameters.applyBuff.buffs': 'actions',
   'CombatStepParameters.aura.buffs': 'actions',
   'CombatStepParameters.readSkillSettingData.items': 'actions',
+  'CombatStepParameters.overrideRawAttributes.attributes': 'actions',
   'CombatStepParameters.createGlobalBuff.definition': 'actions',
   'CombatStepParameters.listenForCombatEvents.responses': 'actions',
   'CombatStepNode.options': 'actions',
@@ -35,7 +36,8 @@ const REFERENCE_DECLARATIONS: Readonly<
   Record<
     string,
     {
-      readonly kind: 'gearSet' | 'buff' | 'skillGroup' | 'skillSlot' | 'skill' | 'abilityEntity';
+      readonly kind:
+        'gearSet' | 'buff' | 'skillGroup' | 'skillSlot' | 'skill' | 'abilityEntity' | 'projectile';
       readonly files: readonly string[];
     }
   >
@@ -58,7 +60,6 @@ const REFERENCE_DECLARATIONS: Readonly<
   skillId: { kind: 'skill', files: ['actions', 'skills'] },
   targetSkillKey: { kind: 'skill', files: ['buffs', 'actions'] },
   targetSkillId: { kind: 'skill', files: ['skills'] },
-  timelineContinuationSkillId: { kind: 'skill', files: ['skills'] },
   timelineBlockFollowUpSkillId: { kind: 'skill', files: ['skills'] },
   skillIds: { kind: 'skill', files: ['actions', 'skills', 'conditions'] },
   enhancementStateBuffId: { kind: 'buff', files: ['skills'] },
@@ -72,11 +73,11 @@ const REFERENCE_DECLARATIONS: Readonly<
   stableSkillKeys: { kind: 'skill', files: ['skills'] },
   normalAttackSkillKeys: { kind: 'skill', files: ['skills'] },
   abilityEntityId: { kind: 'abilityEntity', files: ['actions', 'operators'] },
+  projectileId: { kind: 'projectile', files: ['actions'] },
   skillKeys: { kind: 'skill', files: ['skills'] },
   triggerBuffIds: { kind: 'buff', files: ['actions', 'buffs'] },
   buffIds: { kind: 'buff', files: ['actions', 'operators', 'conditions', 'modifiers'] },
   inheritToNextSkillIds: { kind: 'skill', files: ['actions'] },
-  abilityEntityIds: { kind: 'abilityEntity', files: ['actions', 'skills', 'conditions'] },
 };
 
 /** Ignore anonymous containers, union branches, and array/Readonly wrappers. An exact
@@ -118,6 +119,9 @@ const blackboardActionPaths = new Set([
   'readSkillSettingData.items.storeKey',
   'readBuffBlackboard.desiredKey',
   'readBuffBlackboard.outputKey',
+  'storeCollectedBuffValue.key',
+  'storeCollectedBuffValue.outputKey',
+  'modifyCollectedBuffValue.key',
   'readEventBuffBlackboard.desiredKey',
   'readEventBuffBlackboard.outputKey',
   'readBuffRemainingDuration.outputKey',
@@ -162,7 +166,7 @@ export function createFieldDeclarationExtractor(root: string) {
       const path = declarationPath(node);
       if (!path) return {};
       const file = sources.filePath(node.getSourceFile().fileName);
-      if (file === 'src/core/game-data/enemyDefinition.ts' && path === 'EnemyDefinition.levelHp')
+      if (file === 'packages/game-data-contract/src/enemies.ts' && path === 'EnemyDefinition.levelHp')
         return { readonlyDeclaration: true };
       const match = /^packages\/game-data-contract\/src\/([^/]+)\.ts$/.exec(file);
       if (!match) return {};

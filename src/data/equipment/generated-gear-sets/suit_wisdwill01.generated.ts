@@ -6,6 +6,109 @@ const definition = {
   icon: 'endaxis:equipment/wisdwill01/item_equip_t1_suit_wisdwill01_edc_01',
   modifiers: [{ kind: 'panelStat', stat: 'healthFlat', value: 500 }],
   skillId: 'passive_equipsuit_wisdwill_01',
+  buffDefinitions: {
+    buff_equipsuit_wisdwill_01: {
+      stackingType: 'unlimited',
+      priority: 0,
+      maxStackCount: 0,
+      triggerIntervalSeconds: 0,
+      waitFirstTriggerInterval: true,
+      maxTriggerCount: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { atk_up: 100, duration: 5 },
+      attributeModifiers: [],
+      abilityEventResponses: [
+        { event: 'afterKillEntity', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
+      ],
+      actionGraph: {
+        main: {
+          nodes: {
+            applyBuff_1: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_wisdwill_02',
+                      copiedBlackboardAssignments: { atk_up: 'atk_up', duration: 'duration' },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'owner' },
+                  inheritSourceSkillCastInfo: true,
+                },
+              },
+              next: null,
+            },
+            checkCondition_2: {
+              action: {
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+              },
+              next: 'applyBuff_1',
+            },
+          },
+          dataNodes: {
+            data_1: {
+              type: 'boolean',
+              expression: {
+                kind: 'targetObjectTypeMatch',
+                target: { kind: 'inputTarget' },
+                objectTypes: ['enemy'],
+              },
+            },
+          },
+        },
+        macros: {},
+      },
+    },
+    buff_equipsuit_wisdwill_02: {
+      stackingType: 'stack',
+      priority: 0,
+      maxStackCount: 1,
+      durationSeconds: { blackboardKey: 'duration' },
+      presentation: {
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
+        showInHeadBarCommon: false,
+        showInHeadBarAttached: false,
+        showInSquadIcon: true,
+      },
+      applyTags: [],
+      extendTags: [],
+      blackboard: { atk_up: 10, duration: 5 },
+      attributeModifiers: [
+        { attribute: 'Atk', slot: 'baseFinalAddition', value: { blackboardKey: 'atk_up' } },
+      ],
+      actionGraph: { main: { nodes: {} }, macros: {} },
+    },
+  },
+  initializationSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_wisdwill_01',
+                  blackboardAssignments: {
+                    atk_up: { kind: 'constant', value: 20 },
+                    duration: { kind: 'constant', value: 5 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

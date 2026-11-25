@@ -139,16 +139,6 @@ it('preserves stale reference occurrences once, rechecks added references, and e
     field => field.path.at(-1) === 'abilityEntityTargets',
   )!.valueSchema!;
   expect(() =>
-    validateStructuredValue(entity, [], [{ kind: 'ownerSpawned', abilityEntityIds: ['known'] }], {
-      choices: { abilityEntity: referenceCatalog('abilityEntity') },
-    }),
-  ).not.toThrow();
-  expect(() =>
-    validateStructuredValue(entity, [], [{ kind: 'ownerSpawned', abilityEntityIds: ['known'] }], {
-      choices: { abilityEntity: referenceCatalog('abilityEntity', []) },
-    }),
-  ).toThrow(/fieldReference/);
-  expect(() =>
     validateStructuredValue(entity, [], [{ kind: 'context', contextKey: 'targets' }]),
   ).not.toThrow();
   expect(() =>

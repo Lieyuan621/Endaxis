@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../core/project/level';
 import { expect, it, vi } from 'vitest';
 import { CombatRuntimeSession } from '../../core/combat/runtime/combatRuntimeSession';
 import { convertLegacyTimeline, resolveLegacyRuntimeReplacementSource } from './convert';
@@ -831,13 +832,13 @@ it('preserves enemy identity and falls back to a custom enemy when the identity 
   Object.assign(data, { activeEnemyId: 'eny_0071_sandb', activeEnemyLevel: 90 });
   const blocked = convertLegacyTimeline(input, gameDataRepository);
   expect(blocked.status).toBe('converted-with-issues');
-  expect(blocked.project?.scenarios[0]?.enemy.source.kind).toBe('custom');
+  expect(firstScenarioEnemy(blocked.project!.scenarios[0]!).enemy.source.kind).toBe('custom');
   expect(blocked.report.issues.some(issue => issue.message.includes('enemy'))).toBe(true);
   const mapped = convertLegacyTimeline(input, gameDataRepository, {
     enemies: { eny_0071_sandb: 'eny-0071-sandb' },
   });
   expect(mapped.report.issues).toEqual([]);
-  expect(mapped.project?.scenarios[0]?.enemy).toMatchObject({
+  expect(firstScenarioEnemy(mapped.project!.scenarios[0]!).enemy).toMatchObject({
     source: { kind: 'prefab', enemyId: 'eny-0071-sandb', level: 90 },
     rank: 'elite',
     editable: { hp: 100000, defense: 100, superArmor: 0, finisherMultiplier: 1 },

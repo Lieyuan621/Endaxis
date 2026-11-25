@@ -8,11 +8,10 @@ export function useSimulationReceiptSelection(run: WatchSource<ScenarioSimulatio
     run,
     (next, previous) => {
       const key = previous?.receiptEntries.find(entry => entry.sequence === sequence.value)?.data
-        ?.reactionCriticalKey;
+        ?.hitIdentity;
       sequence.value =
         typeof key === 'string'
-          ? (next?.receiptEntries.find(entry => entry.data?.reactionCriticalKey === key)
-              ?.sequence ?? null)
+          ? (next?.receiptEntries.find(entry => entry.data?.hitIdentity === key)?.sequence ?? null)
           : null;
     },
     { flush: 'sync' },

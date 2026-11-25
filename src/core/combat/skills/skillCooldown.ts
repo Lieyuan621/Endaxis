@@ -10,6 +10,7 @@ import type {
 } from '../state/abilityState';
 import {
   compileSkillCooldown,
+  prepareReadySkillCooldownSet,
   createSkillCooldownState,
   readSkillCooldown,
   reserveSkillCooldown,
@@ -26,17 +27,16 @@ import {
 export class SkillCooldown {
   readonly #program: SkillCooldownProgram;
   readonly #state: SkillCooldownState;
-  readonly #resolvePeriodMultiplier?: () => number;
+  readonly #resolvePeriodFrames?: (baseFrames: number) => number;
   constructor(
     periodFrames?: number,
     commitFrame?: number,
-    resolvePeriodMultiplier?: () => number,
+    resolvePeriodFrames?: (baseFrames: number) => number,
     state?: SkillCooldownState,
   ) {
     this.#program = compileSkillCooldown(periodFrames, commitFrame);
     this.#state = state ?? createSkillCooldownState(this.#program);
-    this.#resolvePeriodMultiplier =
-      periodFrames === undefined ? undefined : resolvePeriodMultiplier;
+    this.#resolvePeriodFrames = periodFrames === undefined ? undefined : resolvePeriodFrames;
   }
   get snapshot(): SkillCooldownSnapshot {
     return readSkillCooldown(this.#state);
@@ -66,7 +66,7 @@ export class SkillCooldown {
     return reserveSkillCooldown(
       this.#state,
       this.#program,
-      () => this.#resolvePeriodMultiplier?.() ?? 1,
+      baseFrames => this.#resolvePeriodFrames?.(baseFrames) ?? baseFrames,
     );
   }
   advanceFrame(): boolean {
@@ -75,23 +75,33 @@ export class SkillCooldown {
   advance(deltaFrames = 1): boolean {
     return advanceSkillCooldown(this.#state, deltaFrames);
   }
-  reduceByBaseDurationRatio(ratio: number): boolean {
-    return reduceSkillCooldownByRatio(this.#state, this.#program, ratio);
+  reduceByPeriodRatio(ratio: number): boolean {
+    return reduceSkillCooldownByRatio(this.#state, ratio);
   }
   reduceByFrames(frames: number): boolean {
     return reduceSkillCooldownByFrames(this.#state, frames);
   }
-  setByBaseDurationRatio(ratio: number): boolean {
-    return setSkillCooldownByRatio(this.#state, this.#program, ratio);
+  setByPeriodRatio(ratio: number): boolean {
+    this.#prepareSet();
+    return setSkillCooldownByRatio(this.#state, ratio);
   }
   setProgress(progress: number): boolean {
-    return setSkillCooldownProgress(this.#state, this.#program, progress);
+    this.#prepareSet();
+    return setSkillCooldownProgress(this.#state, progress);
   }
   overrideByTimeline(ready: boolean): boolean {
     return overrideSkillCooldown(this.#state, this.#program, ready);
   }
   setRemainingFrames(frames: number): boolean {
+    this.#prepareSet();
     return setSkillCooldownFrames(this.#state, frames);
+  }
+  #prepareSet(): void {
+    if (this.#state.timer !== undefined && this.ready)
+      prepareReadySkillCooldownSet(
+        this.#state,
+        this.#resolvePeriodFrames?.(this.#program.periodFrames) ?? this.#program.periodFrames,
+      );
   }
   finishCast(): boolean {
     return finishSkillCooldownCast(this.#state, this.#program);

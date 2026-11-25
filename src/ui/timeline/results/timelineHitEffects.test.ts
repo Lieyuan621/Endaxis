@@ -23,6 +23,56 @@ function baseDamage(): Record<string, number | boolean | string | null> {
   };
 }
 
+it('shows delayed child damage through its entity origin without inherited cast metadata', () => {
+  const entries: CombatReceiptEntry[] = [
+    {
+      sequence: 1,
+      frame: 39,
+      time: 1.3,
+      event: 'SkillStarted',
+      sourceId: 'operator',
+      data: { castId: 'cast:2', skillId: 'battle:2' },
+    },
+    {
+      sequence: 2,
+      frame: 39,
+      time: 1.3,
+      event: 'AbilityEntitySpawned',
+      subject: { kind: 'abilityEntity', instanceId: 2 },
+      producedBy: { kind: 'action', ownerId: 'operator', actionId: 'cast:2' },
+      sourceId: 'operator',
+      data: { castId: 'cast:2' },
+    },
+    {
+      sequence: 3,
+      frame: 47,
+      time: 47 / 30,
+      event: 'AbilityEntitySpawned',
+      subject: { kind: 'abilityEntity', instanceId: 4 },
+      producedBy: { kind: 'abilityEntity', instanceId: 2 },
+      sourceId: 'operator',
+    },
+    {
+      sequence: 4,
+      frame: 617,
+      time: 617 / 30,
+      event: 'DamageApplied',
+      producedBy: { kind: 'abilityEntity', instanceId: 4 },
+      sourceId: 'operator',
+      targetId: 'enemy',
+      data: { ...baseDamage(), damageType: 'fixed', stepKey: 'finish-damage' },
+    },
+  ];
+  const hitId = deriveHitId('cast:2', 'finish-damage');
+  expect(projectTimelineHitOccurrences(entries).get('cast:2')).toEqual([
+    expect.objectContaining({ hitId, frame: 617, entityInstanceId: 4 }),
+  ]);
+  expect(projectTimelineHitDetailEntries(entries, 'cast:2', hitId, 617)).toEqual([entries[3]]);
+  expect(entries[3]!.data).not.toHaveProperty('castId');
+  // 缺少产生链时，不能用同干员最近一次技能猜测归属。
+  expect(projectTimelineHitOccurrences([entries[0]!, entries[3]!]).size).toBe(0);
+});
+
 it('keeps target-owned Buff receipts out of skill markers while retaining delegated Buff hits', () => {
   const direct: CombatReceiptEntry = {
     sequence: 1,
@@ -141,7 +191,7 @@ it('keeps spell-burst damage exclusively under its enemy effect marker', () => {
     expect.objectContaining({
       hitId: 'hit',
       label: expect.objectContaining({
-        damage: [{ value: 100, damageType: 'physical', isCritical: false }],
+        damage: [{ targetId: 'enemy', value: 100, damageType: 'physical', isCritical: false }],
       }),
     }),
   ]);
@@ -195,6 +245,23 @@ function inflictionEntry(sequence: number, frame: number): CombatReceiptEntry {
 }
 
 describe('skill hit occurrences and details', () => {
+  it.each([
+    { hitCriticalOverride: true, breaksWeakness: false },
+    { hitCriticalOverride: false, breaksWeakness: false },
+    { hitCriticalOverride: null, breaksWeakness: true },
+  ])('marks grouped hits only when a visible damage receipt has an override: %j', mark => {
+    const first = damageEntry(1, 60);
+    const entries = [
+      { ...first, data: { ...first.data, isCritical: true, hitCriticalOverride: null } },
+      { ...first, sequence: 2, targetId: 'other', data: { ...first.data, ...mark } },
+    ];
+    const marker = (targetId?: string) =>
+      projectTimelineHitOccurrences(entries, undefined, targetId).get('cast:1')?.[0];
+    expect(marker()?.hasOverride).toBe(true);
+    expect(marker('other')?.hasOverride).toBe(true);
+    expect(marker('enemy')?.hasOverride).toBe(false);
+  });
+
   it('marks only the hit that actually received the common combo damage Buff', () => {
     const ownDamage: CombatReceiptEntry = {
       ...damageEntry(1, 60),
@@ -258,4 +325,27 @@ describe('skill hit occurrences and details', () => {
       ).map(entry => entry.sequence),
     ).toEqual([1, 2]);
   });
+});
+
+it('选中敌人时仅聚合其命中，详情也不混入同帧其他敌人的伤害', () => {
+  const entries: CombatReceiptEntry[] = ['enemy:a', 'enemy:b', 'enemy:b'].map(
+    (targetId, index) => ({
+      sequence: index + 1,
+      frame: index === 2 ? 60 : 30,
+      time: index === 2 ? 2 : 1,
+      event: 'DamageApplied',
+      sourceId: 'operator',
+      targetId,
+      data: { ...baseDamage(), castId: 'cast', hitId: 'hit', stepKey: 'hit' },
+    }),
+  );
+  const selected = projectTimelineHitOccurrences(entries, undefined, 'enemy:a').get('cast')!;
+  expect(selected).toHaveLength(1);
+  expect(selected[0]!.frame).toBe(30);
+  expect(selected[0]!.label.damage.map(hit => hit.targetId)).toEqual(['enemy:a']);
+  expect(projectTimelineHitDetailEntries(entries, 'cast', 'hit', 30, 'enemy:a')).toEqual([
+    entries[0],
+  ]);
+  expect(projectTimelineHitOccurrences(entries, undefined, 'enemy:absent').size).toBe(0);
+  expect(projectTimelineHitOccurrences(entries).get('cast')).toHaveLength(2);
 });

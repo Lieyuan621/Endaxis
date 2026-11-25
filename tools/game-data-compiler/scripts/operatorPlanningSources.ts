@@ -1,3 +1,7 @@
+import {
+  parseProjectileRuntimeSource,
+  type ProjectileRuntimeSource,
+} from '../src/source/projectileRuntime.ts';
 import { readdirSync, readFileSync } from 'node:fs';
 import { collectExternalBuffBlackboardReads } from '../src/compiler/references/externalBlackboardUsage.ts';
 /**
@@ -28,6 +32,21 @@ import {
 } from '../src/source/gameplayTagPredefineTable.ts';
 
 export class OperatorPlanningSources {
+  private readonly projectileSources = new Map<string, ProjectileRuntimeSource>();
+
+  projectileRuntime(sourceRoot: string, id: string): ProjectileRuntimeSource {
+    const file = path.resolve(sourceRoot, 'ProjectileData', `${id}.json`);
+    let source = this.projectileSources.get(file);
+    if (!source) {
+      const native = parseProjectileRuntimeSource(this.readJson(file), `ProjectileData.${id}`);
+      if (native.projectileId !== id)
+        throw new Error(`ProjectileData.${id}: resource identity mismatch`);
+      source = native;
+      this.projectileSources.set(file, source);
+    }
+    return source;
+  }
+
   private readonly buffReads = new Map<string, ReadonlySet<string>>();
   private readonly shared: SourceFileCache;
   private readonly currentOperator: SourceFileCache;
@@ -93,11 +112,13 @@ export class OperatorPlanningSources {
 
   /** 完成一名干员的规划后释放原始资源；已收集的定义不依赖此缓存继续存活。 */
   releaseOperator(): void {
+    this.projectileSources.clear();
     this.currentOperator.clear();
   }
 
   /** 全部来源编译完成后释放原文与解析目录，避免它们与后续优化、渲染同时驻留。 */
   clear(): void {
+    this.projectileSources.clear();
     this.shared.clear();
     this.currentOperator.clear();
     this.entities.clear();

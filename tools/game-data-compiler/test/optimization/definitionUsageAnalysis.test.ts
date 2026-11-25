@@ -19,6 +19,7 @@ import { TargetContextOperationExecutor } from '../../../../src/core/combat/abil
 import {
   analyzeConditionUsage,
   analyzeStepUsage,
+  isReadOnlyTargetQuery,
 } from '../../src/compiler/optimization/definitionUsageAnalysis.ts';
 import {
   analyzeGraphSequenceUsage,
@@ -28,6 +29,332 @@ import { pruneUnusedGraphSkillValues } from '../../src/compiler/optimization/gra
 import { extractGraphDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 
 describe('黑板用途的读取对象', () => {
+  it('目标组转交、终止、附着与事件动作保留各查询分支的阈值', () => {
+    const query = (key: string) => ({
+      kind: 'distanceFilter' as const,
+      targets: { kind: 'inputTarget' as const },
+      center: { kind: 'owner' as const },
+      threshold: { kind: 'blackboard' as const, key },
+      operator: 'lessOrEqual' as const,
+      clampToXZ: true,
+    });
+    const cases: [ActionGraphStep, string[]][] = [
+      [
+        {
+          kind: 'addEntityTags',
+          parameters: { targets: query('tagRange'), tags: ['Status/DisableCastComboSkill'] },
+        },
+        ['tagRange'],
+      ],
+      [
+        {
+          kind: 'copyContextTargets',
+          parameters: {
+            source: query('source'),
+            excludeTargets: query('excluded'),
+            saveToContextKey: 'selected',
+          },
+        },
+        ['source', 'excluded'],
+      ],
+      [
+        {
+          kind: 'saveTransferredSource',
+          parameters: { source: query('source'), saveToContextKey: 'selected' },
+        },
+        ['source'],
+      ],
+      [
+        {
+          kind: 'mergeContextTargets',
+          parameters: { sources: [query('first'), query('second')], saveToContextKey: 'selected' },
+        },
+        ['first', 'second'],
+      ],
+      [{ kind: 'finishOwner', parameters: { targets: query('range') } }, ['range']],
+      [{ kind: 'interruptCurrentSkill', parameters: { targets: query('range') } }, ['range']],
+      [
+        {
+          kind: 'applyElementalInfliction',
+          parameters: {
+            element: 'heat',
+            isExtra: false,
+            target: query('target'),
+            source: query('source'),
+          },
+        },
+        ['target', 'source'],
+      ],
+      [
+        {
+          kind: 'triggerCustomAbilityEvent',
+          parameters: {
+            eventName: 'fixture',
+            eventParam: 0,
+            target: query('target'),
+            source: query('source'),
+          },
+        },
+        ['target', 'source'],
+      ],
+    ];
+    for (const [action, keys] of cases) {
+      const skill: SkillDefinition = {
+        ...skillFixture({
+          key: 'query-usage',
+          timelineBlockFrames: 1,
+          scheduledSequences: [],
+          actionGraph: { main: { nodes: {} }, macros: {} },
+        }),
+        blackboard: { ...Object.fromEntries(keys.map(key => [key, 3])), unused: 99 },
+        scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'run' } }],
+        actionGraph: { main: { nodes: { run: { action, next: null } } }, macros: {} },
+      };
+      expect(pruneUnusedGraphSkillValues(skill).report.removedInitialKeys, action.kind).toEqual([
+        'unused',
+      ]);
+    }
+  });
+  it.each(['source', 'targets'] as const)('资源获取保留 %s 查询的黑板阈值', field => {
+    const action: CombatStepForKind<'changeResource'> = {
+      kind: 'changeResource',
+      parameters: {
+        resource: 'sp',
+        amount: 10,
+        source: { kind: 'owner' },
+        targets: { kind: 'inputTarget' },
+        [field]: {
+          kind: 'distanceFilter',
+          targets: { kind: 'inputTarget' },
+          center: { kind: 'owner' },
+          threshold: { kind: 'blackboard', key: 'range' },
+          operator: 'lessOrEqual',
+          clampToXZ: true,
+        },
+      },
+    };
+    const skill: SkillDefinition = {
+      ...skillFixture({
+        key: 'resource-query',
+        timelineBlockFrames: 1,
+        scheduledSequences: [],
+        actionGraph: { main: { nodes: {} }, macros: {} },
+      }),
+      blackboard: { range: 3, unused: 99 },
+      scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'gain' } }],
+      actionGraph: { main: { nodes: { gain: { action, next: null } } }, macros: {} },
+    };
+    expect(pruneUnusedGraphSkillValues(skill).report.removedInitialKeys).toEqual(['unused']);
+  });
+  it('读取 Buff 时长保留嵌套目标查询依赖，仍裁剪无关初值', () => {
+    const action: CombatStepForKind<'readBuffRemainingDuration'> = {
+      kind: 'readBuffRemainingDuration',
+      parameters: {
+        target: {
+          kind: 'limit',
+          count: 1,
+          targets: {
+            kind: 'distanceFilter',
+            targets: { kind: 'inputTarget' },
+            center: { kind: 'owner' },
+            operator: 'lessOrEqual',
+            clampToXZ: true,
+            threshold: { kind: 'blackboard', key: 'range' },
+          },
+        },
+        query: { kind: 'id', buffIds: ['buff_fixture'] },
+        outputKey: 'remaining',
+      },
+    };
+    const skill: SkillDefinition = {
+      ...skillFixture({
+        key: 'buff-query',
+        timelineBlockFrames: 1,
+        scheduledSequences: [],
+        actionGraph: { main: { nodes: {} }, macros: {} },
+      }),
+      blackboard: { range: 3, remaining: 0, unused: 99 },
+      scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'read' } }],
+      actionGraph: { main: { nodes: { read: { action, next: null } } }, macros: {} },
+    };
+    expect(pruneUnusedGraphSkillValues(skill).report.removedInitialKeys).toEqual(['unused']);
+  });
+  it('敌方光环枚举不会保留无关方向黑板，但保留 Buff 赋值读取', () => {
+    const usage = analyzeStepUsage({
+      kind: 'aura',
+      parameters: {
+        targets: {
+          kind: 'exclude',
+          targets: {
+            kind: 'enemyByTags',
+            scope: 'global',
+            tagQueryType: 'hasAll',
+            tags: [],
+          },
+          excludeTargets: { kind: 'owner' },
+        },
+        buffs: [
+          {
+            buffId: 'buff',
+            blackboardAssignments: { amount: { kind: 'blackboard', key: 'amount' } },
+          },
+        ],
+      },
+      onEnter: { $sequence: null },
+      onExit: { $sequence: null },
+    });
+    expect(usage.unknownAccess).toBe(false);
+    expect(usage.reads).toEqual(new Set(['amount']));
+  });
+  it('延迟施法和实体时缓保留查询中的黑板依赖', () => {
+    const query = (key: string) => ({
+      kind: 'distanceFilter' as const,
+      targets: { kind: 'inputTarget' as const },
+      center: { kind: 'owner' as const },
+      operator: 'less' as const,
+      clampToXZ: true,
+      threshold: { kind: 'blackboard' as const, key },
+    });
+    const usage = analyzeStepUsage({
+      kind: 'castSkillDuringAction',
+      parameters: {
+        caster: query('casterRange'),
+        target: query('targetRange'),
+        skillId: { blackboardKey: 'childSkill' },
+        skipApplyCost: false,
+        inheritSourceSkillCastInfo: false,
+      },
+    });
+    expect(usage.reads).toEqual(new Set(['casterRange', 'targetRange', 'childSkill']));
+    const timeUsage = analyzeStepUsage({
+      kind: 'startTimeDilation',
+      parameters: {
+        scope: 'entity',
+        durationSeconds: { kind: 'constant', value: 1 },
+        slot: 'unassigned',
+        priority: 1,
+        curve: { kind: 'named', key: 'fixture' },
+        finishByAction: true,
+        targets: [query('targetRange')],
+      },
+    });
+    expect(timeUsage.reads).toEqual(new Set(['targetRange']));
+    for (const usage of [
+      analyzeStepUsage({
+        kind: 'startTimeDilation',
+        parameters: {
+          scope: 'global',
+          durationSeconds: { kind: 'constant', value: 1 },
+          slot: 'unassigned',
+          priority: 1,
+          curve: { kind: 'named', key: 'fixture' },
+          finishByAction: true,
+          ignoredTargets: [query('targetRange')],
+        },
+      }),
+      analyzeStepUsage({
+        kind: 'startUltimateTimeDilation',
+        parameters: {
+          priority: 1,
+          targetScale: { kind: 'constant', value: 0.5 },
+          ignoredTargets: [query('targetRange')],
+        },
+      }),
+    ])
+      expect(usage.reads).toEqual(new Set(['targetRange']));
+  });
+  it('查询已有子实体及部位来源不阻止无关黑板值裁剪', () => {
+    const targets = {
+      kind: 'partBuffSource' as const,
+      targets: {
+        kind: 'ownerSpawned' as const,
+        owner: { kind: 'owner' as const },
+        objectType: 'abilityEntity' as const,
+        sameSourceSkillCast: false,
+      },
+    };
+    expect(isReadOnlyTargetQuery(targets)).toBe(true);
+    const usage = analyzeStepUsage({
+      kind: 'setIgnoreGlobalTimeScale',
+      parameters: { targets, ignore: true, revertOnEnd: true },
+    });
+    expect(usage.unknownAccess).toBe(false);
+    expect(usage.reads.size).toBe(0);
+  });
+  it('发射时间表保留数值输入读取', () => {
+    const read = (key: string) => ({ kind: 'blackboard' as const, key });
+    const action: CombatStepForKind<'launchProjectile'> = {
+      kind: 'launchProjectile',
+      callbacks: [],
+      parameters: {
+        projectileId: 'fixture_projectile',
+        inheritActionBlackboard: true,
+        schedule: {
+          endFrame: read('duration'),
+          callbacks: [{ event: 'hit', triggerFrames: [read('delay')] }],
+        },
+      },
+    };
+    const expected = new Set(['duration', 'delay']);
+    expect(analyzeStepUsage(action).reads).toEqual(expected);
+    const graph = { nodes: { launch: { action, next: null } } };
+    expect(analyzeGraphSequenceUsage(graph, { $sequence: 'launch' }).reads).toEqual(expected);
+  });
+
+  it('实体时长条件保留嵌套查询、比较阈值及结果写入依赖，裁剪无关初值', () => {
+    const condition = {
+      kind: 'abilityEntityRemainingDurationCompare',
+      target: {
+        kind: 'partBuffSource',
+        targets: {
+          kind: 'distanceFilter',
+          targets: { kind: 'context', key: 'victims' },
+          center: { kind: 'owner' },
+          threshold: { kind: 'blackboard', key: 'range' },
+          operator: 'lessOrEqual',
+          clampToXZ: true,
+        },
+      },
+      value: { kind: 'blackboard', key: 'required' },
+      operator: 'greaterOrEqual',
+      outputKey: 'saved',
+    } satisfies CombatCondition;
+    expect(analyzeConditionUsage(condition).reads).toEqual(new Set(['range', 'required', 'saved']));
+    const skill: SkillDefinition = {
+      ...skillFixture({
+        key: 'query-dependencies',
+        timelineBlockFrames: 1,
+        scheduledSequences: [],
+        actionGraph: { main: { nodes: {} }, macros: {} },
+      }),
+      blackboard: { range: 3, required: 2, saved: 0, unused: 99 },
+      scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'check' } }],
+      actionGraph: {
+        main: {
+          nodes: {
+            check: { action: { kind: 'checkCondition', parameters: { condition } }, next: null },
+          },
+        },
+        macros: {},
+      },
+    };
+    expect(pruneUnusedGraphSkillValues(skill).report.removedInitialKeys).toEqual(['unused']);
+  });
+
+  it('逻辑点保留数量输入的变量读取', () => {
+    const read = (key: string) => ({ kind: 'blackboard' as const, key });
+    const usage = analyzeStepUsage({
+      kind: 'createSpatialPointTargets',
+      parameters: {
+        saveToContextKey: 'points',
+        count: read('count'),
+        origin: { kind: 'source' },
+      },
+    });
+    expect(usage.reads).toEqual(new Set(['count']));
+    expect(usage.unknownAccess).toBe(false);
+  });
+
   it('距离与方向检查的目标查询可分配位置身份，不能当成纯比较删除', () => {
     const executor = new TargetContextOperationExecutor('ally', {
       execute: () => false,
@@ -67,6 +394,22 @@ describe('黑板用途的读取对象', () => {
       ).toBe(true);
       const allocated = executor.runtimeState.nextSpatialPointId - before;
       expect(allocated).toBe(query.kind === 'fixedPoint' ? 1 : 0);
+      expect(
+        analyzeStepUsage({
+          kind: 'storeShieldValue',
+          parameters: { target: query, value: 'current', outputKey: 'shield' },
+        }).unknownAccess,
+      ).toBe(allocated > 0);
+      expect(
+        analyzeStepUsage({
+          kind: 'setGlobalCooldown',
+          parameters: {
+            target: query,
+            markerId: 'cooldown',
+            durationSeconds: { kind: 'constant', value: 1 },
+          },
+        }).unknownAccess,
+      ).toBe(allocated > 0);
       for (const condition of [distance, angle]) {
         expect(analyzeConditionUsage(condition).observable).toBe(allocated > 0);
         const optimized = optimizeActionGraphDefinition(
@@ -320,15 +663,14 @@ describe('黑板用途的读取对象', () => {
   });
 
   it('环排序读取查询到的实体板，技能上同名初值可以删除', () => {
-    const query: CombatStepForKind<'findOwnerSpawnedAbilityEntities'> = {
+    const query = {
       kind: 'findOwnerSpawnedAbilityEntities',
       parameters: {
         owner: { kind: 'source' },
         saveToContextKey: 'places',
-        abilityEntityIds: ['place'],
         circularOrder: { indexBlackboardKey: 'slot', desiredCount: 3, reverseFlag: 1 },
       },
-    };
+    } satisfies CombatStepForKind<'findOwnerSpawnedAbilityEntities'>;
     const input: SkillDefinition = skillFixture({
       key: 'fixture',
       timelineBlockFrames: 1,
@@ -346,7 +688,6 @@ describe('黑板用途的读取对象', () => {
     expect(usage.externalReads).toEqual([
       {
         kind: 'abilityEntity',
-        abilityEntityIds: ['place'],
         owner: { kind: 'source' },
         key: 'slot',
       },
@@ -391,7 +732,6 @@ describe('黑板用途的读取对象', () => {
     ).toEqual([
       {
         kind: 'abilityEntity',
-        abilityEntityIds: ['place'],
         owner: { kind: 'context', key: 'owners' },
         sameSourceSkillCast: true,
         key: 'slot',

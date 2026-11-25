@@ -15,7 +15,7 @@ const props = withDefaults(
 
 const attrs = useAttrs();
 const mergedPopperClass = computed(() =>
-  ['ea-floating-surface', 'ea-tooltip-popper', props.popperClass].filter(Boolean).join(' '),
+  ['ea-floating-surface', 'ea-tooltip-surface', props.popperClass].filter(Boolean).join(' '),
 );
 </script>
 

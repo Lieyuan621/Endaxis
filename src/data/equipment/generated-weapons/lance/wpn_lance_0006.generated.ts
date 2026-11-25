@@ -110,7 +110,7 @@ const definition = {
               action: {
                 kind: 'readBuffStackCount',
                 parameters: {
-                  target: 'caster',
+                  target: { kind: 'owner' },
                   outputKey: 'count',
                   query: { kind: 'id', buffIds: ['buff_wpn_lance_0006_exist'] },
                 },

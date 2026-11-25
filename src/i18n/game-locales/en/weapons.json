@@ -1266,6 +1266,62 @@
       ]
     }
   },
+  "wpn_lance_0017": {
+    "name": "Sweet Deal",
+    "skill1": {
+      "name": "Strength [L]",
+      "description": "Strength <@ba.vup>+{0}</>",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156]
+    },
+    "skill2": {
+      "name": "Nature DMG [L]",
+      "description": "Nature DMG Dealt <@ba.vup>+{0}%</>",
+      "values": [5.6, 10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 43.3]
+    },
+    "skill3": {
+      "name": "Flow: Sweetening Function",
+      "description": "Ultimate Gain Efficiency <@ba.vup>+{0}%</>.\nAfter the wielder's skill recovers SP, the entire team gains ATK <@ba.vup>+{1}%</> for 30s.\n<@ba.info>Max stacks for this effect: 3. Duration of each stack is counted separately. Effect only triggers once every 0.1s.</>\nAfter the wielder's skill applies an <#ba.spellburst>Arts Burst</>, the entire team gains Arts DMG Dealt <@ba.vup>+{2}%</> for 15s.\n<@ba.info>This effect cannot stack.</>",
+      "values": [
+        [18, 2, 6],
+        [21.6, 2.4, 7.2],
+        [25.2, 2.8, 8.4],
+        [28.8, 3.2, 9.6],
+        [32.4, 3.6, 10.8],
+        [36, 4, 12],
+        [39.6, 4.4, 13.2],
+        [43.2, 4.8, 14.4],
+        [50.4, 5.6, 16.8]
+      ]
+    }
+  },
+  "wpn_lance_0018": {
+    "name": "Raid Comet",
+    "skill1": {
+      "name": "Strength [L]",
+      "description": "Strength <@ba.vup>+{0}</>",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156]
+    },
+    "skill2": {
+      "name": "ULT Efficiency [L]",
+      "description": "Ultimate Gain Efficiency <@ba.vup>+{0}%</>",
+      "values": [6, 10.7, 15.5, 20.2, 25, 29.8, 34.5, 39.3, 46.4]
+    },
+    "skill3": {
+      "name": "Detonate: Skybreaker",
+      "description": "Nature DMG Dealt <@ba.vup>+{0}%</>.\nAfter the wielder applies a <#ba.naturalburst>Nature Burst</>, the wielder gains Nature DMG Dealt <@ba.vup>+{1}%</> for 20s.\nAfter the wielder's skill recovers SP, the entire team gains Arts DMG Dealt <@ba.vup>+{2}%</> for 20s.\n<@ba.info>The two effects apply separately and do not stack with themselves.</>",
+      "values": [
+        [7, 12, 2],
+        [8.4, 14.4, 2.4],
+        [9.8, 16.8, 2.8],
+        [11.2, 19.2, 3.2],
+        [12.6, 21.6, 3.6],
+        [14, 24, 4],
+        [15.4, 26.4, 4.4],
+        [16.8, 28.8, 4.8],
+        [19.6, 33.6, 5.6]
+      ]
+    }
+  },
   "wpn_pistol_0001": {
     "name": "Peco 5",
     "skill1": {
@@ -2117,6 +2173,34 @@
         [15.4, 33, 17.6],
         [16.8, 36, 19.2],
         [19.6, 42, 22.4]
+      ]
+    }
+  },
+  "wpn_sword_0025": {
+    "name": "Lunar Calling",
+    "skill1": {
+      "name": "Will [L]",
+      "description": "Will <@ba.vup>+{0}</>",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156]
+    },
+    "skill2": {
+      "name": "ATK [L]",
+      "description": "ATK <@ba.vup>+{0}%</>",
+      "values": [5, 9, 13, 17, 21, 25, 29, 33, 39]
+    },
+    "skill3": {
+      "name": "Infliction: Coursing Stars",
+      "description": "Arts Intensity <@ba.vup>+{0}</>.\nWhen wielder's skill applies <#ba.conduct>Electrification</>, the entire team gains ATK <@ba.vup>+{1}%</> for 20s.\nWhen the wielder <#ba.consume>consumes</> <#ba.spellinflict>Arts Infliction</>, the wielder gains Electric DMG Dealt <@ba.vup>+{2}%</> for 20s.\n<@ba.info>The two effects apply separately and do not stack with themselves.</>",
+      "values": [
+        [30, 7.5, 12],
+        [36, 9, 14.4],
+        [42, 10.5, 16.8],
+        [48, 12, 19.2],
+        [54, 13.5, 21.6],
+        [60, 15, 24],
+        [66, 16.5, 26.4],
+        [72, 18, 28.8],
+        [84, 21, 33.6]
       ]
     }
   },

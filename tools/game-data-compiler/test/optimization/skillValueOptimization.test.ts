@@ -129,6 +129,73 @@ function executeSkillPrograms(input: SkillDefinition): readonly number[] {
 }
 
 describe('技能黑板和算术写入裁剪', () => {
+  it.each([
+    { consumed: false, area: false },
+    { consumed: true, area: false },
+    { consumed: false, area: true },
+    { consumed: true, area: true },
+  ])('距离与曲线链只在结果被消费时保留：%j', ({ consumed, area }) => {
+    const input = skill(
+      nodes => [
+        {
+          startFrame: 0,
+          sequence: chain(nodes, 'main', [
+            {
+              kind: 'saveTargetDistance',
+              parameters: {
+                source: { kind: 'owner' },
+                target: area
+                  ? {
+                      kind: 'factionHitBox',
+                      owner: { kind: 'owner' },
+                      factionTarget: 'anti',
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    }
+                  : { kind: 'battleMainTarget' },
+                outputKey: 'distance',
+              },
+            },
+            {
+              kind: 'evaluateCurve',
+              parameters: {
+                key: 'speed',
+                input: board('distance'),
+                curve: [
+                  {
+                    time: 0,
+                    value: 1,
+                    inTangent: 1,
+                    outTangent: 1,
+                    weightedMode: 0,
+                    inWeight: 1 / 3,
+                    outWeight: 1 / 3,
+                  },
+                  {
+                    time: 10,
+                    value: 11,
+                    inTangent: 1,
+                    outTangent: 1,
+                    weightedMode: 0,
+                    inWeight: 1 / 3,
+                    outWeight: 1 / 3,
+                  },
+                ],
+              },
+            },
+            ...(consumed ? [spend('speed')] : [signal]),
+          ]),
+        },
+      ],
+      { distance: 0, speed: 0 },
+    );
+    const result = pruneUnusedGraphSkillValues(input).skill;
+    const kinds = Object.values(result.actionGraph.main.nodes).map(node => node.action.kind);
+    expect(kinds.includes('saveTargetDistance')).toBe(consumed);
+    expect(kinds.includes('evaluateCurve')).toBe(consumed);
+  });
+
   it.each([false, true])('无人读取的逻辑点及距离写入可删，动态数量的读取仍保留：%s', dynamic => {
     const input = skill(
       nodes => {
@@ -519,9 +586,11 @@ describe('技能黑板和算术写入裁剪', () => {
       {
         kind: 'launchProjectile',
         parameters: {
+          projectileId: 'fixture_projectile',
+          schedule: { endFrame: 30, callbacks: [] },
           inheritActionBlackboard: false,
           entityAssignments: { EntityBB_payload: board('payload') },
-          finish: 1,
+
           recycleDelaySeconds: 0,
         },
         callbacks: [],
@@ -793,4 +862,158 @@ it('无用途夹角计算可正式化，存在跨调度消费者时拒绝发布'
   expect(() => extractResourceDataNodes(used.actionGraph)).toThrow(
     'direction angle still affects combat',
   );
+});
+
+describe('无效初值裁剪', () => {
+  const prune = (input: SkillDefinition) =>
+    pruneUnusedGraphSkillValues(input, undefined, undefined, undefined, true).skill;
+
+  it('裁剪覆盖前的初值，保留写入和复制消费者；容差内旧值仍保留', () => {
+    for (const initial of [0, 3, 3.000005]) {
+      const input = {
+        ...single([assign('value', 3), spend('value')]),
+        blackboard: { value: initial },
+      };
+      const result = prune(input);
+      expect(Object.hasOwn(result.blackboard!, 'value')).toBe(initial === 3.000005);
+      expect(executeSkillPrograms(result)).toEqual(executeSkillPrograms(input));
+      expect(Object.keys(result.actionGraph.main.nodes)).toHaveLength(2);
+    }
+    const augmented = {
+      ...single([
+        {
+          kind: 'modifyActionValue' as const,
+          parameters: { key: 'value', operation: 'add' as const, value: literal(3) },
+        },
+        spend('value'),
+      ]),
+      blackboard: { value: 2 },
+    };
+    expect(prune(augmented).blackboard).toEqual({ value: 2 });
+  });
+
+  it.each([false, true])('只有所有分支覆盖后才删除初值：两边覆盖=%s', both => {
+    const input = skill(
+      nodes => [
+        {
+          startFrame: 0,
+          sequence: chain(nodes, 'main', [
+            {
+              kind: 'ifElse',
+              parameters: { alwaysNext: true },
+              condition: {
+                kind: 'actionValueCompare',
+                left: board('flag'),
+                operator: 'equal',
+                right: literal(1),
+              },
+              whenTrue: chain(nodes, 'yes', [assign('value', 3)]),
+              whenFalse: both ? chain(nodes, 'no', [assign('value', 4)]) : { $sequence: null },
+            },
+            spend('value'),
+          ]),
+        },
+      ],
+      { flag: 1, value: 2 },
+    );
+    const result = prune(input);
+    expect(Object.hasOwn(result.blackboard!, 'value')).toBe(!both);
+    expect(executeSkillPrograms(result)).toEqual(executeSkillPrograms(input));
+  });
+
+  it('其他调度、外部事件或养成补丁仍可能消费初值时保留', () => {
+    const input = skill(
+      nodes => [
+        { startFrame: 0, sequence: chain(nodes, 'write', [assign('value', 3)]) },
+        { startFrame: 10, sequence: chain(nodes, 'read', [spend('value')]) },
+      ],
+      { value: 2 },
+    );
+    expect(prune(input).blackboard).toEqual({ value: 2 });
+    const eventFirst = {
+      ...single([signal, assign('value', 3), spend('value')]),
+      blackboard: { value: 2 },
+    };
+    expect(prune(eventFirst).blackboard).toEqual({ value: 2 });
+    const patched = { ...single([assign('value', 3), spend('value')]), blackboard: { value: 2 } };
+    expect(
+      pruneUnusedGraphSkillValues(patched, undefined, undefined, new Set(['value']), true).skill
+        .blackboard,
+    ).toEqual({ value: 2 });
+  });
+});
+
+it.each(['storeRandomFloat', 'storeRandomInteger'] as const)(
+  '%s 不为随机序列位置保留无人读取的结果',
+  kind => {
+    const input = single([
+      {
+        kind,
+        parameters: {
+          key: 'unusedRandom',
+          minimum: { kind: 'constant', value: 0 },
+          maximum: { kind: 'constant', value: 10 },
+        },
+      },
+    ]);
+    const pruned = pruneUnusedGraphSkillValues(input);
+    expect(Object.keys(pruned.skill.actionGraph.main.nodes)).toHaveLength(0);
+    const retained = pruneUnusedGraphSkillValues(input, new Set(['unusedRandom']));
+    expect(Object.keys(retained.skill.actionGraph.main.nodes)).toHaveLength(1);
+  },
+);
+
+it.each([false, true])('局部条件中的目标组只在外部消费时保留：%s', consumed => {
+  const input = skill(
+    nodes => {
+      const condition = chain(nodes, 'condition', [
+        {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'point', count: literal(1) },
+        },
+        {
+          kind: 'saveTargetDistance',
+          parameters: {
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'point' },
+            outputKey: 'distance',
+          },
+        },
+      ]);
+      return [
+        {
+          startFrame: 0,
+          sequence: chain(nodes, 'entry', [
+            {
+              kind: 'ifElse',
+              parameters: { alwaysNext: true },
+              condition: { kind: 'checkActionResult', action: condition },
+              whenTrue: { $sequence: null },
+              whenFalse: { $sequence: null },
+            },
+            ...(consumed
+              ? [
+                  {
+                    kind: 'saveTargetDistance' as const,
+                    parameters: {
+                      source: { kind: 'owner' as const },
+                      target: { kind: 'context' as const, key: 'point' },
+                      outputKey: 'observed',
+                    },
+                  },
+                  spend('observed'),
+                ]
+              : [signal]),
+          ]),
+        },
+      ];
+    },
+    { distance: 0, observed: 0 },
+  );
+  const result = pruneUnusedGraphSkillValues(input).skill;
+  expect(
+    Object.values(result.actionGraph.main.nodes).some(
+      node => node.action.kind === 'createSpatialPointTargets',
+    ),
+  ).toBe(consumed);
 });

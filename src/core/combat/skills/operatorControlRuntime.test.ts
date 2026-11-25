@@ -95,3 +95,55 @@ it.each([
   expect(state.get('b')).toBe(shouldSwitch);
   expect(receipt.entries).toHaveLength(shouldSwitch ? 1 : 0);
 });
+
+it('实际切换时先清理双方连段再通知，重复选择和恢复不重复清理', () => {
+  const trace: string[] = [];
+  const options = {
+    clock: new CombatClock(),
+    receipt: new CombatReceiptCollector(),
+    state: new Map([
+      ['a', true],
+      ['b', false],
+    ]),
+    controlChanged: (id: string) => {
+      trace.push(`reset:${id}`);
+    },
+    emit: (id: string) => {
+      trace.push(`event:${id}`);
+    },
+  };
+  const runtime = new OperatorControlRuntime(options);
+  runtime.applyInput('b');
+  expect(trace).toEqual(['reset:a', 'reset:b', 'event:a', 'event:b']);
+  runtime.applyInput('b');
+  new OperatorControlRuntime({ ...options, state: structuredClone(runtime.runtimeState) });
+  expect(trace).toHaveLength(4);
+});
+
+it.each([false, true])('原生技能切主控使用独立回执，自动切人=%s', automaticSwitches => {
+  const changes: string[] = [];
+  const receipt = new CombatReceiptCollector();
+  const state = new Map([
+    ['a', true],
+    ['b', false],
+  ]);
+  const runtime = new OperatorControlRuntime({
+    clock: new CombatClock(),
+    receipt,
+    state,
+    configuration: { initialOperatorId: 'a', automaticSwitches, scheduledSwitches: [] },
+    controlChanged: id => {
+      changes.push(id);
+    },
+  });
+  runtime.beforeSkillInput('b', 'ultimate', 'ultimate', 'ult', true);
+  expect(state.get('b')).toBe(true);
+  expect(changes).toEqual(['a', 'b']);
+  expect(receipt.entries).toEqual([
+    expect.objectContaining({
+      event: 'SkillControlSwitched',
+      sourceId: 'b',
+      data: { castId: 'ult' },
+    }),
+  ]);
+});

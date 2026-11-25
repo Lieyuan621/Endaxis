@@ -8,8 +8,7 @@ export function applySkillCastStartPreparation(
   context: CombatOperationContext,
 ): void {
   if (context.targetContext === undefined) throw new Error('combo cast requires target context');
-  if (preparation.trigger !== undefined)
-    context.targetContext.setSingle('trigger', preparation.trigger);
+  if (preparation.trigger !== undefined) context.targetContext.set('trigger', preparation.trigger);
   if (preparation.smartTarget !== undefined)
     context.targetContext.setSingle('smart_target', preparation.smartTarget);
   if (preparation.trigger !== undefined && preparation.assignPairs !== null) {

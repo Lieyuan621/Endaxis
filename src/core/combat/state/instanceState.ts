@@ -1,3 +1,5 @@
+import type { ProjectileHitParameters } from '../../../../packages/game-data-contract/src/actions';
+import type { CombatFaction } from '../../../../packages/game-data-contract/src/primitives';
 /**
  * 战斗中动态创建的实例数据。
  *
@@ -9,12 +11,14 @@ import type {
   BuffStackingType,
 } from '../../../../packages/game-data-contract/src/buffs';
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
+
+import type { ProjectileScheduleState } from './projectileScheduleState';
 import type {
   AbilityEntityTargetRef,
   LogicalAbilityEntityDefinition,
   RuntimeTargetRef,
 } from '../../game-data/logicalAbilityEntity';
-import type { CombatStepParameters, DamageType } from '../../game-data/operatorDefinition';
+import type { DamageType } from '../../game-data/operatorDefinition';
 import type {
   AbilityEntityChildSkillState,
   CallbackSkillHostState,
@@ -126,6 +130,10 @@ export function createGlobalBuffState(): GlobalBuffState {
 
 /** Soul 的主体绑定与独立生命账本；主体不是施法来源，也不随控制器重设目标改变。 */
 export interface AbilityEntitySoulState {
+  readonly canBeHitIndividually: boolean;
+  readonly onlyHitByNormalAttack: boolean;
+  readonly halfBlockAngle: number;
+  readonly canBeDirectlyBuffed: boolean;
   readonly damageTransferType: 'sharedDamage';
   readonly useMainBodyPoise: boolean;
   readonly mainBody: RuntimeTargetRef;
@@ -136,6 +144,8 @@ export interface AbilityEntitySoulState {
 
 /** 能力实体的身份、寿命、标记、子技能与黑板数据。 */
 export interface LogicalAbilityEntityState {
+  /** 出生时的位置快照，不随来源移动或回收而改变。 */
+
   /** 创建时实际使用的固定定义槽位；与是否继承伤害施法来源无关。 */
   readonly definitionProgramId?: number;
   buffContainerCreated: boolean;
@@ -155,7 +165,11 @@ export interface LogicalAbilityEntityState {
   readonly source: RuntimeTargetRef;
   readonly sourceSkillCastId?: number;
   target?: RuntimeTargetRef;
+  targets?: readonly RuntimeTargetRef[];
+  allowMultiInputTarget?: boolean;
   readonly dieWhenSourceDies: boolean;
+  /** 出生时登记死亡监听的首个目标，独立于之后可变的 target/targets。 */
+  readonly deathBoundTarget?: RuntimeTargetRef;
   readonly blackboard: ActionBlackboardState;
   /** 出生时实际采用的计时器周期，包含时长覆盖；null 表示无限寿命。赋值不改变周期。 */
   readonly durationPeriodSeconds: number | null;
@@ -178,14 +192,8 @@ export interface LogicalAbilityEntityDirectoryState {
 export interface ProjectileCallbackState {
   /** 回调输入目标；launch 为投射物自身，hit 不得在执行时重新选择主控。 */
   inputTarget?: RuntimeTargetRef;
-  /** 同一投射物依次命中的友方目标；回调复用同一技能宿主及其冷却。 */
-  inputTargets?: readonly RuntimeTargetRef[];
   /** 启动本程序的原生事件；恢复沿用该字段，不根据是否已有宿主猜测。 */
   readonly event: 'launch' | 'hit' | 'block' | 'reach' | 'finish';
-  /** 本次发射的碰撞标签条件；只保存纯数据，恢复时重新绑定当前分支的判断逻辑。 */
-  readonly hitTagFilter?: NonNullable<
-    CombatStepParameters['launchProjectile']['hit']
-  >['hitTagFilter'];
   programId: number | null;
   readonly definitionOperatorId: string;
   readonly skillId: string;
@@ -194,25 +202,29 @@ export interface ProjectileCallbackState {
   host: CallbackSkillHostState | null;
 }
 
+export interface ProjectileHitTargets {
+  /** 碰撞近似在命中时选择目标；显式到达目标保留发射身份。 */
+  readonly resolveOnHit?: boolean;
+  readonly onlyHitTargets?: readonly RuntimeTargetRef[];
+  readonly targets: readonly RuntimeTargetRef[];
+  readonly hitTagFilter?: ProjectileHitParameters['hitTagFilter'];
+}
+
 export interface ProjectileLifetimeState {
+  readonly faction?: CombatFaction;
+  readonly schedule: ProjectileScheduleState;
+  /** 回调和时延覆盖沿用发射动作的施法身份。 */
+  readonly originCastId?: string;
+
   readonly entityBlackboard: ActionBlackboardState;
   buffs: BuffContainerState | null;
   readonly callbacks: readonly ProjectileCallbackState[];
+  readonly hitTargets?: ProjectileHitTargets;
   readonly instanceId: number;
   source?: RuntimeTargetRef;
   phase: 'active' | 'finished' | 'marked' | 'reset';
   remainingSeconds: number;
-  remainingReachTicks: number | null;
-  /** 已发射但尚未执行的零空间落地，恢复时不得丢失或重复执行。 */
-  pendingBlock?: boolean;
-  readonly finishOnReach: boolean;
-  /** 从首 Tick 开始的单目标碰撞；pending 表示仍待成功命中，拒绝后是否重试由数据明确指定。 */
-  firstTickHit: {
-    readonly onReach?: boolean;
-    pending: boolean;
-    readonly finishOnHit: boolean;
-    readonly retryRejectedHit?: boolean;
-  } | null;
+
   readonly recycleDelaySeconds: number;
   readonly resetListeners: Map<number, number>;
 }
@@ -314,6 +326,8 @@ export interface BuffInstanceIdentity {
 }
 
 export interface BuffInstanceState<Key extends string> {
+  readonly recordedDamageSkillCastIds: Set<number>;
+  readonly modifiedBlackboardKeys: Set<string>;
   actionHost: BuffActionHostState | null;
   /** onRecycled 回调的稳定登记顺序；函数由恢复后的宿主按编号重绑。 */
   readonly recycleCallbackIds: number[];
@@ -325,6 +339,7 @@ export interface BuffInstanceState<Key extends string> {
   sourceActionId: string;
   definitionOwnerId: string;
   partTransferInfo: EnemyPartTransferInfo | null;
+  inheritedTargetGroups: RuntimeTargetContextState | null;
   /** null 表示创建时没有显式的来源属性读取目标；否则恢复时必须按实体身份接回读取端口。 */
   sourceAttributeOwnerId: string | null;
   skillCastInfo: CombatSkillCastInfo | null;
@@ -345,6 +360,8 @@ export function createBuffInstanceState<Key extends string>(
   blackboard: ActionBlackboardState = createActionBlackboardState(),
 ): BuffInstanceState<Key> {
   return {
+    recordedDamageSkillCastIds: new Set(),
+    modifiedBlackboardKeys: new Set(),
     actionHost: null,
     recycleCallbackIds: [],
     nextRecycleCallbackId: 0,
@@ -354,6 +371,7 @@ export function createBuffInstanceState<Key extends string>(
     sourceActionId: identity.definitionId,
     definitionOwnerId: identity.sourceId,
     partTransferInfo: null,
+    inheritedTargetGroups: null,
     sourceAttributeOwnerId: null,
     skillCastInfo: null,
     priority: 0,

@@ -3,8 +3,8 @@ import { createSSRApp, h } from 'vue';
 import { createI18n } from 'vue-i18n';
 import { renderToString } from 'vue/server-renderer';
 import type * as DesignSystem from '../../../design-system/index';
-import enMessages from '../../../i18n/locales/en.json';
-import zhMessages from '../../../i18n/locales/zh-CN.json';
+import enMessages from '../../../i18n/locales/en/common.json';
+import zhMessages from '../../../i18n/locales/zh-CN/common.json';
 import Dialog from './TimelineBuffDetailDialog.vue';
 import { initialBuffDetailInstanceIndex, type BuffDetailTarget } from './buffDetail';
 
@@ -45,6 +45,7 @@ async function render(target: BuffDetailTarget, locale: 'en' | 'zh-CN') {
         visible: true,
         target,
         fps: 30,
+        operatorLabel: id => (id === 'enemy:second' ? '第二目标' : id),
         labels: {
           ...detail,
           frames: value => `${value}f`,
@@ -153,4 +154,11 @@ it('separates effective totals from the selected candidate’s raw count and dis
   const ordinary = await render({ ...target, instances: undefined, displayCount: undefined }, 'en');
   expect(ordinary).not.toContain(enMessages.timeline.buffDetail.displayCount);
   expect(ordinary).not.toContain(enMessages.timeline.buffDetail.effectiveDisplayCount);
+});
+
+it.each(['zh-CN', 'en'] as const)('状态详情显示实际宿主名称（%s）', async locale => {
+  const html = await render({ ...target, targetId: 'enemy:second' }, locale);
+  expect(html).toContain(locale === 'zh-CN' ? '状态宿主' : 'Status host');
+  expect(html).toContain('第二目标');
+  expect(html).not.toContain('enemy:second');
 });

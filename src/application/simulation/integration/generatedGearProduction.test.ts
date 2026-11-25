@@ -1,3 +1,6 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
+import { projectPhysicalStatusDisplay } from '../../../ui/timeline/results/physicalStatusDisplay';
+import { layoutEnemyDamageHits } from '../../../ui/timeline/results/enemyDamageHitLayout';
 import { describe, expect, it } from 'vitest';
 
 import { ExplicitCriticalSampleSource } from '../../../core/combat/random/criticalSampleSource';
@@ -30,7 +33,7 @@ describe('generated gear production integration', () => {
       scenario.battle.durationFrames = endFrame;
       scenario.battle.resourceRules.maxSp = 400;
       scenario.battle.resourceRules.initialSp = 200;
-      scenario.enemy.editable.hp = 10_000_000;
+      firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
       scenario.tracks[0] = {
         id: 'track:pogranichnik-ultimate-set',
         operator: {
@@ -106,6 +109,7 @@ describe('generated gear production integration', () => {
         },
         endFrame,
         criticalSamples: new ExplicitCriticalSampleSource(Array.from({ length: 200 }, () => 1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -156,7 +160,7 @@ describe('generated gear production integration', () => {
     scenario.battle.durationFrames = 260;
     scenario.battle.resourceRules.maxSp = 400;
     scenario.battle.resourceRules.initialSp = 400;
-    scenario.enemy.editable.hp = 10_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
     scenario.tracks[0] = {
       id: 'track:pogranichnik',
       operator: {
@@ -213,6 +217,7 @@ describe('generated gear production integration', () => {
       },
       endFrame: 260,
       criticalSamples: new ExplicitCriticalSampleSource(Array.from({ length: 40 }, () => 1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -246,7 +251,7 @@ describe('generated gear production integration', () => {
     scenario.battle.durationFrames = 260;
     scenario.battle.resourceRules.maxSp = 400;
     scenario.battle.resourceRules.initialSp = 400;
-    scenario.enemy.editable.hp = 10_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 10_000_000;
     scenario.tracks[0] = {
       id: 'track:pogranichnik',
       operator: {
@@ -303,6 +308,7 @@ describe('generated gear production integration', () => {
       },
       endFrame: 260,
       criticalSamples: new ExplicitCriticalSampleSource(Array.from({ length: 40 }, () => 1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -310,6 +316,21 @@ describe('generated gear production integration', () => {
         appliesPhysicalInflictionDamageMultiplier: false,
       }),
     });
+
+    const physical = projectPhysicalStatusDisplay(result.receiptEntries, 260, {
+      enemySuperArmor: firstScenarioEnemy(placed).enemy.editable.superArmor,
+    });
+    expect(physical.some(segment => segment.buffId === 'buff_physical_do_fracture')).toBe(true);
+    const physicalHits = layoutEnemyDamageHits(
+      result.receiptEntries,
+      physical,
+      [],
+      new Set(),
+    ).filter(position =>
+      position.group.some(hit => hit.data?.buffId === 'buff_physical_do_fracture'),
+    );
+    expect(physicalHits.length).toBeGreaterThan(0);
+    expect(physicalHits.every(position => position.row === 0 && !position.standalone)).toBe(true);
 
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({
@@ -350,6 +371,7 @@ function runWithGear(gearSlug: string, damageTraitLevel: number) {
     },
     endFrame: 100,
     criticalSamples: new ExplicitCriticalSampleSource(Array.from({ length: 20 }, () => 1)),
+    rangeSamples: { nextRangeSample: () => 0.5 },
     resolveNonRandomRuntimeSnapshot: () => ({
       runtimeExtensionMultiplier: 1,
       appliesIgniteDamageMultiplier: false,

@@ -4,11 +4,15 @@
  * 不读正式生成库，不写候选文件；缺来源或未支持行为继续报错。
  */
 import path from 'node:path';
+import fs from 'node:fs';
 import { compileConsumableDefinitionsFromFiles } from './generateConsumableDefinitions.ts';
 import { compileWeaponDefinitionsFromFiles } from './generateWeaponDefinitions.ts';
 import { compileGearSetDefinitionsFromFiles } from './generateGearSetDefinitions.ts';
 import { compileGearDefinitionsFromFiles } from './generateGearDefinitions.ts';
-import { compileContingencyContractDefinitionsFromFiles } from './generateContingencyContractDefinitions.ts';
+import {
+  compileContingencyContractDefinitionsFromFiles,
+  compileBoundContingencyContractPublicationFromFiles,
+} from './generateContingencyContractDefinitions.ts';
 import type { CompiledContingencyContractDefinitions } from './generateContingencyContractDefinitions.ts';
 import type { CompiledWeaponRuntimeDefinitionBatchSource } from '../src/domains/weapon/runtimeDefinition.ts';
 import type { CompiledEquipmentDefinitionBatchSource } from '../src/domains/equipment/formalDefinition.ts';
@@ -27,7 +31,13 @@ export interface EntityValueConsumerSourceArguments {
   readonly gameplayTagCatalog: string;
   readonly globalBuffCatalog: string;
   readonly skillSettingCatalog: string;
+  readonly timeDilationCatalog?: string;
   readonly mechanicScope?: string;
+  readonly contractPeriods?: readonly {
+    gameId: string;
+    tableRoot: string;
+    supplement: string;
+  }[];
   /** 保留现有合约产物，不重新读取合约来源；不为未参与编译的资源伪造变量访问。 */
   readonly skipContingencyContract?: boolean;
   readonly nativeJsonEncoding?: NativeJsonEncodingSchema;
@@ -58,7 +68,9 @@ export async function compileEntityValueConsumers(
   const consumables = compileConsumableDefinitionsFromFiles(args);
   usage.addBuffDefinitions(consumables.buffDefinitions);
   await rendering?.consumables(consumables);
-  return usage.finish();
+  const result = usage.finish();
+  // 未重编的合约仍可能读取实体变量，不能把它们当作没有外部消费者。
+  return args.skipContingencyContract ? { ...result, unknownAccess: true } : result;
 }
 
 async function weapons(
@@ -108,20 +120,41 @@ async function mechanics(
   usage: GraphSharedEntityValueUsageCollector,
   rendering: EntityValueConsumerRendering | undefined,
 ) {
-  const mechanics = compileContingencyContractDefinitionsFromFiles({
-    nativeJsonEncoding: args.nativeJsonEncoding,
-    tableRoot: args.tableRoot,
-    buffDataRoot: args.buffDataRoot,
-    globalBuffCatalog: args.globalBuffCatalog,
-    skillSettingCatalog: args.skillSettingCatalog,
-    gameplayTagPaths: readGameplayTagPaths(args.gameplayTagCatalog),
-    scope:
-      args.mechanicScope ??
-      path.resolve(import.meta.dirname, '../config/contingencyContractSimulationScope.json'),
-  });
-  usage.addBuffDefinitions(mechanics.buffDefinitions);
-  mechanics.initializationPlans.forEach(plan =>
-    usage.addSequence({ graph: plan.actionGraph.main, entry: plan.sequence }),
-  );
-  await rendering?.mechanics(mechanics);
+  for (const period of args.contractPeriods ?? [undefined]) {
+    const source = {
+      nativeJsonEncoding: args.nativeJsonEncoding,
+      tableRoot: period?.tableRoot ?? args.tableRoot,
+      buffDataRoot: args.buffDataRoot,
+      globalBuffCatalog: args.globalBuffCatalog,
+      skillSettingCatalog: args.skillSettingCatalog,
+      gameplayTagPaths: readGameplayTagPaths(args.gameplayTagCatalog),
+      scope:
+        args.mechanicScope ??
+        path.resolve(import.meta.dirname, '../config/contingencyContractSimulationScope.json'),
+    };
+    const bindings = path.resolve(
+      import.meta.dirname,
+      '../config/contingencyContractBindings.json',
+    );
+    const configured = JSON.parse(fs.readFileSync(bindings, 'utf8'));
+    const mechanics =
+      period && Object.hasOwn(configured, period.gameId)
+        ? compileBoundContingencyContractPublicationFromFiles(
+            {
+              ...source,
+              supplement: period.supplement,
+              bindings,
+              timeDilationCatalog: args.timeDilationCatalog!,
+            },
+            period.gameId === 'indie_contract002'
+              ? 'contingency_contract/2'
+              : 'contingency_contract/1',
+          )
+        : compileContingencyContractDefinitionsFromFiles(source);
+    usage.addBuffDefinitions(mechanics.buffDefinitions);
+    mechanics.initializationPlans.forEach(plan =>
+      usage.addSequence({ graph: plan.actionGraph.main, entry: plan.sequence }),
+    );
+    await rendering?.mechanics(mechanics);
+  }
 }

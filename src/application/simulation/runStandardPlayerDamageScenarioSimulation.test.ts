@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../core/project/level';
 import { describe, expect, it } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -263,7 +264,8 @@ describe('标准入口普通倒地装配', () => {
               kind: 'applyPhysicalInfliction' as const,
               parameters: {
                 type: 'knockDown' as const,
-                target: 'enemy' as const,
+                target: { kind: 'fixed' as const, target: 'enemy' as const },
+                source: { kind: 'fixed' as const, target: 'caster' as const },
                 duration: { kind: 'constant' as const, value: 0.1 },
                 force: false,
                 isExtra: false,
@@ -380,8 +382,8 @@ describe('标准入口普通倒地装配', () => {
 
 function placeGeneratedPerlicaFlow(operator: OperatorDefinition = perlicaGeneratedOperator) {
   const scenario = createPerlicaScenario();
-  scenario.enemy.editable.stagger = {
-    ...scenario.enemy.editable.stagger,
+  firstScenarioEnemy(scenario).enemy.editable.stagger = {
+    ...firstScenarioEnemy(scenario).enemy.editable.stagger,
     maximum: 30,
     finisherSpRecovery: 80,
   };
@@ -1410,8 +1412,8 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         '洛茜战技流血天赋',
       );
       scenario.battle.durationFrames = 1200;
-      scenario.enemy.editable.stagger = {
-        ...scenario.enemy.editable.stagger,
+      firstScenarioEnemy(scenario).enemy.editable.stagger = {
+        ...firstScenarioEnemy(scenario).enemy.editable.stagger,
         maximum: 1,
       };
       scenario.battle.resourceRules = {
@@ -1483,6 +1485,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       }).scenario;
       return runStandardPlayerDamageScenarioSimulation({
         scenario: withFollowUp,
+        rangeSamples: { nextRangeSample: () => 0.5 },
         endFrame: 1100,
         criticalSamples: new ExplicitCriticalSampleSource(Array(200).fill(1)),
         resolveNonRandomRuntimeSnapshot: () => ({
@@ -1850,6 +1853,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       scenario: placed,
       endFrame: 260,
       criticalSamples: new ExplicitCriticalSampleSource(Array(100).fill(0)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
         appliesIgniteDamageMultiplier: false,
@@ -2702,7 +2706,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     const damageEntries = result.receiptEntries.filter(
       entry => entry.event === 'DamageApplied' && entry.sourceId === 'track:endministrator',
     );
-    expect(damageEntries).toHaveLength(5);
+    expect(damageEntries).toHaveLength(4);
     expect(damageEntries).toContainEqual(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -3169,8 +3173,10 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
   });
 
   it('runs every generated Perlica skill type through the production simulation flow', () => {
+    const scenario = placeGeneratedPerlicaFlow(perlicaFormalOperator);
+    // 此回归验证重叠目标下的完整回调链，不依赖新方案的默认交战距离。
     const result = runStandardPlayerDamageScenarioSimulation({
-      scenario: placeGeneratedPerlicaFlow(perlicaFormalOperator),
+      scenario,
       endFrame: 350,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
       resolveNonRandomRuntimeSnapshot: () => ({
@@ -3211,12 +3217,13 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       'chr_0004_pelica_attack4',
       'chr_0004_pelica_attack4_projhit',
       'chr_0004_pelica_combo_skill',
-      'chr_0004_pelica_combo_skill_projhit',
       'chr_0004_pelica_normal_skill',
+      'chr_0004_pelica_combo_skill_projhit',
       'chr_0004_pelica_ultimate_skill',
       'chr_0004_pelica_ultimate_skill_abilityrange',
       'chr_0004_pelica_plunging_attack_start',
       'chr_0004_pelica_plunging_attack_end',
+      // 下落攻击的四发短程散射止于自身周围，不会跨越5米站距命中敌人。
       'chr_0004_pelica_power_attack',
     ]);
     expect(result.receiptEntries.some(entry => entry.event === 'ComboWindowOpened')).toBe(true);
@@ -3390,17 +3397,19 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       },
     });
 
-    expect(result.enemy.health).toBe(scenario.enemy.editable.hp);
-    expect(result.enemyVitals.initialHealth).toBe(scenario.enemy.editable.hp);
-    expect(result.enemyVitals.maxHealth).toBeCloseTo(scenario.enemy.editable.hp * 1.5);
+    expect(result.enemy.health).toBe(firstScenarioEnemy(scenario).enemy.editable.hp);
+    expect(result.enemyVitals.initialHealth).toBe(firstScenarioEnemy(scenario).enemy.editable.hp);
+    expect(result.enemyVitals.maxHealth).toBeCloseTo(
+      firstScenarioEnemy(scenario).enemy.editable.hp * 1.5,
+    );
     expect(result.finalEnemyHealth).toBe(result.enemyVitals.maxHealth);
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({
         event: 'MaxHealthChanged',
         targetId: 'enemy',
         data: expect.objectContaining({
-          previousMaxHealth: scenario.enemy.editable.hp,
-          maxHealth: scenario.enemy.editable.hp * 1.5,
+          previousMaxHealth: firstScenarioEnemy(scenario).enemy.editable.hp,
+          maxHealth: firstScenarioEnemy(scenario).enemy.editable.hp * 1.5,
         }),
       }),
     );

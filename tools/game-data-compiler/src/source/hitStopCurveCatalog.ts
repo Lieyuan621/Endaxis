@@ -83,7 +83,7 @@ export function renderHitStopCurveCatalogModule(source: HitStopCurveCatalogSourc
   )
     .replaceAll('"__POSITIVE_INFINITY__"', 'Number.POSITIVE_INFINITY')
     .replaceAll('"__NEGATIVE_INFINITY__"', 'Number.NEGATIVE_INFINITY');
-  return `/** 由当前版本 HitStopConfig TypeTree dump 生成；不要手工编辑。\n * Source SHA-256: ${source.sha256}\n */\nimport type { TimeScaleCurveKeyDefinition } from '../../core/game-data/operatorDefinition';\n\nexport const HIT_STOP_NAMED_CURVE_DEFINITIONS = Object.freeze(${encoded} satisfies Readonly<Record<string, readonly TimeScaleCurveKeyDefinition[]>>);\n\nexport type HitStopNamedCurveKey = keyof typeof HIT_STOP_NAMED_CURVE_DEFINITIONS;\nexport const HIT_STOP_NAMED_CURVE_KEYS = Object.freeze(Object.keys(HIT_STOP_NAMED_CURVE_DEFINITIONS) as HitStopNamedCurveKey[]);\n`;
+  return `/** 由当前版本 HitStopConfig TypeTree dump 生成；不要手工编辑。\n */\nimport type { TimeScaleCurveKeyDefinition } from '../../core/game-data/operatorDefinition';\n\nexport const HIT_STOP_NAMED_CURVE_DEFINITIONS = Object.freeze(${encoded} satisfies Readonly<Record<string, readonly TimeScaleCurveKeyDefinition[]>>);\n\nexport type HitStopNamedCurveKey = keyof typeof HIT_STOP_NAMED_CURVE_DEFINITIONS;\nexport const HIT_STOP_NAMED_CURVE_KEYS = Object.freeze(Object.keys(HIT_STOP_NAMED_CURVE_DEFINITIONS) as HitStopNamedCurveKey[]);\n`;
 }
 
 function field(block: string, type: 'float' | 'int', name: string, sourcePath: string): number {

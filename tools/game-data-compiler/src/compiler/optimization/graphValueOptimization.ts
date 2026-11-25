@@ -1,3 +1,4 @@
+import { overwrittenInitialKeys } from './initialBlackboardOptimization.ts';
 import type { CombatCondition, LevelValues, SkillDefinition } from '../intermediateDefinitions.ts';
 import { visitActionGraphReferences } from './actionGraphReferences.ts';
 /**
@@ -40,6 +41,7 @@ import {
 } from './definitionUsageAnalysis.ts';
 import type { EquipmentValueOptimizationReport } from './equipmentValueOptimization.ts';
 import { analyzeGraphSequenceUsage } from './graphSequenceOptimization.ts';
+import { collectUnobservedGraphTargetGroups } from './graphTargetUsage.ts';
 import type { ResourceValueOptimizationReport } from './resourceValueOptimization.ts';
 
 const EMPTY_USAGE: DefinitionValueUsage = {
@@ -129,7 +131,7 @@ export interface GraphValueScope<Value = unknown> {
 }
 
 /** 返回值不外传的局部计算，仅在写入没有区域外消费者时整体删除。 */
-function pruneUnobservedConditionComputations<Value>(
+function pruneUnobservedLocalComputations<Value>(
   scope: GraphValueScope<Value>,
   protectedKeys: ReadonlySet<string>,
   context: DefinitionUsageContext | undefined,
@@ -141,7 +143,7 @@ function pruneUnobservedConditionComputations<Value>(
   let graph = scope.actionGraph.main;
   const entries = scope.entries.map(entry => entry.sequence);
   const outsideConditions = scope.conditions;
-  for (const [id, node] of Object.entries(graph.nodes)) {
+  const regions = Object.entries(graph.nodes).flatMap(([id, node]) => {
     const action = node.action;
     if (
       action.kind !== 'ifElse' ||
@@ -149,12 +151,40 @@ function pruneUnobservedConditionComputations<Value>(
       action.key !== undefined ||
       !action.parameters.alwaysNext
     )
-      continue;
+      return [];
     const pruneBranches = action.whenTrue.$sequence !== action.whenFalse.$sequence;
-    const region = pruneBranches
-      ? [action.condition.action, action.whenTrue, action.whenFalse]
-      : [action.condition.action];
+    return [
+      {
+        id,
+        entryIndex: -1,
+        region: pruneBranches
+          ? [action.condition.action, action.whenTrue, action.whenFalse]
+          : [action.condition.action],
+        replacement: {
+          ...node,
+          action: {
+            ...action,
+            condition: { kind: 'checkActionResult' as const, action: { $sequence: null } },
+            ...(pruneBranches
+              ? { whenTrue: { $sequence: null }, whenFalse: { $sequence: null } }
+              : {}),
+          },
+        } as ActionGraphNode | undefined,
+      },
+    ];
+  });
+  scope.entries.forEach((entry, entryIndex) => {
+    if (!entry.resultIsConsumed && entry.sequence.$sequence !== null)
+      regions.push({
+        id: entry.path,
+        entryIndex,
+        region: [entry.sequence],
+        replacement: undefined,
+      });
+  });
+  for (const { id, entryIndex, region, replacement } of regions) {
     const writes = new Set<string>();
+    const targetWrites = new Set<string>();
     let safe = true;
     const regionWrites: { path: string; key: string }[] = [];
     const inspect = (step: ActionGraphStep, nodeId: string) => {
@@ -188,9 +218,36 @@ function pruneUnobservedConditionComputations<Value>(
         return;
       }
       if (
+        step.kind === 'createSpatialPointTargets' &&
+        step.parameters.count.kind === 'constant' &&
+        Number.isSafeInteger(step.parameters.count.value) &&
+        step.parameters.count.value >= 0
+      ) {
+        const usage = analyzeStepUsage(step, context);
+        safe =
+          !usage.unknownAccess &&
+          usage.externalReads.length === 0 &&
+          [...usage.reads].every(key => Object.hasOwn(scope.blackboard ?? {}, key));
+        targetWrites.add(step.parameters.saveToContextKey);
+        return;
+      }
+      if (
         step.kind !== 'modifyActionValue' &&
         step.kind !== 'calculateActionValue' &&
-        step.kind !== 'saveTwoDirectionAngle'
+        step.kind !== 'evaluateCurve' &&
+        step.kind !== 'storeRandomFloat' &&
+        step.kind !== 'storeRandomInteger' &&
+        step.kind !== 'saveTwoDirectionAngle' &&
+        step.kind !== 'saveTargetDistance'
+      ) {
+        safe = false;
+        return;
+      }
+      if (
+        step.kind === 'saveTargetDistance' &&
+        [step.parameters.source, step.parameters.target].some(
+          query => !isReadOnlyTargetQuery(query),
+        )
       ) {
         safe = false;
         return;
@@ -215,32 +272,49 @@ function pruneUnobservedConditionComputations<Value>(
       for (const key of usage.writes) {
         if (protectedKeys.has(key) || key.startsWith('EntityBB_')) safe = false;
         writes.add(key);
-        regionWrites.push({ path: `condition:${id}→${nodeId}`, key });
+        regionWrites.push({ path: `${entryIndex < 0 ? 'condition:' : ''}${id}→${nodeId}`, key });
       }
     };
     const complete = region.every(reference => walkGraphActions(graph, reference, inspect));
     if (!complete || !safe) continue;
-    const candidate = {
-      ...graph,
-      nodes: {
-        ...graph.nodes,
-        [id]: {
-          ...node,
-          action: {
-            ...action,
-            condition: { kind: 'checkActionResult' as const, action: { $sequence: null } },
-            ...(pruneBranches
-              ? { whenTrue: { $sequence: null }, whenFalse: { $sequence: null } }
-              : {}),
-          },
-        },
-      },
-    };
+    const candidate = replacement
+      ? { ...graph, nodes: { ...graph.nodes, [id]: replacement } }
+      : graph;
+    const candidateEntries = entries.map((entry, index) =>
+      index === entryIndex ? { $sequence: null } : entry,
+    );
     // 从全部真实入口分析。共享调用、事件和继承接收方仍会看到这些写入，不能一起剪掉。
     const outside = mergeDefinitionValueUsage([
-      ...entries.map(entry => analyzeGraphSequenceUsage(candidate, entry, context)),
+      ...candidateEntries.map(entry => analyzeGraphSequenceUsage(candidate, entry, context)),
       ...outsideConditions.map(condition => analyzeConditionUsage(condition)),
     ]);
+    if (targetWrites.size) {
+      const reachable = new Set<string>();
+      const complete = candidateEntries.every(entry =>
+        walkGraphActions(candidate, entry, (_step, id) => {
+          reachable.add(id);
+        }),
+      );
+      if (!complete) continue;
+      const outsideResource = {
+        ...scope.actionGraph,
+        main: {
+          ...candidate,
+          nodes: Object.fromEntries(
+            Object.entries(candidate.nodes).filter(([id]) => reachable.has(id)),
+          ),
+        },
+      };
+      // 保留写入声明供同一用途扫描验证；被删除区域的读取不再参与保活。
+      const unobserved = collectUnobservedGraphTargetGroups(
+        {
+          conditions: outsideConditions,
+          writes: [...targetWrites].map(saveToContextKey => ({ saveToContextKey })),
+        },
+        outsideResource,
+      );
+      if ([...targetWrites].some(key => !unobserved.has(key))) continue;
+    }
     if (
       outside.unknownAccess ||
       [...writes].some(
@@ -252,13 +326,19 @@ function pruneUnobservedConditionComputations<Value>(
     )
       continue;
     graph = candidate;
+    if (entryIndex >= 0) entries[entryIndex] = { $sequence: null };
     removedWrites.push(...regionWrites);
   }
   return {
     scope:
-      graph === scope.actionGraph.main
+      graph === scope.actionGraph.main &&
+      entries.every((entry, i) => entry === scope.entries[i]!.sequence)
         ? scope
-        : { ...scope, actionGraph: { ...scope.actionGraph, main: graph } },
+        : {
+            ...scope,
+            entries: scope.entries.map((entry, i) => ({ ...entry, sequence: entries[i]! })),
+            actionGraph: { ...scope.actionGraph, main: graph },
+          },
     removedWrites,
   };
 }
@@ -272,12 +352,13 @@ export function pruneGraphValues<Value>(
   protectedKeys: ReadonlySet<string> = new Set(),
   usageContext?: DefinitionUsageContext,
   retainedInitialKeys: ReadonlySet<string> = new Set(),
+  pruneOverwrittenInitials = false,
 ): {
   readonly scope: GraphValueScope<Value>;
   readonly report: ResourceValueOptimizationReport;
 } {
-  const conditionPruning = pruneUnobservedConditionComputations(scope, protectedKeys, usageContext);
-  scope = conditionPruning.scope;
+  const localPruning = pruneUnobservedLocalComputations(scope, protectedKeys, usageContext);
+  scope = localPruning.scope;
   const graph = scope.actionGraph.main;
   const live = new Set(protectedKeys);
   const candidates: GraphWriteCandidate[] = [];
@@ -318,11 +399,15 @@ export function pruneGraphValues<Value>(
     switch (action.kind) {
       case 'modifyActionValue':
       case 'calculateActionValue':
+      case 'evaluateCurve':
+      case 'storeRandomFloat':
+      case 'storeRandomInteger':
+      case 'saveTargetDistance':
       case 'saveTwoDirectionAngle': {
         // 动作参数统一交给用途分析，不另建图专用读写规则。
         const usage = analyzeStepUsage(action, usageContext);
         const outputKey =
-          action.kind === 'saveTwoDirectionAngle'
+          action.kind === 'saveTwoDirectionAngle' || action.kind === 'saveTargetDistance'
             ? action.parameters.outputKey
             : action.parameters.key;
         const candidate: GraphWriteCandidate = {
@@ -334,11 +419,15 @@ export function pruneGraphValues<Value>(
         candidates.push(candidate);
         candidateByNode.set(nodeId, candidate);
         const operands =
-          action.kind === 'modifyActionValue'
-            ? [action.parameters.value]
-            : action.kind === 'calculateActionValue'
-              ? [action.parameters.left, action.parameters.right]
-              : [];
+          action.kind === 'storeRandomFloat' || action.kind === 'storeRandomInteger'
+            ? [action.parameters.minimum, action.parameters.maximum]
+            : action.kind === 'modifyActionValue'
+              ? [action.parameters.value]
+              : action.kind === 'evaluateCurve'
+                ? [action.parameters.input]
+                : action.kind === 'calculateActionValue'
+                  ? [action.parameters.left, action.parameters.right]
+                  : [];
         const canResolveInputs = operands.every(
           operand =>
             operand.kind === 'constant' ||
@@ -346,13 +435,17 @@ export function pruneGraphValues<Value>(
               (operand.fallback !== undefined || Object.hasOwn(initial, operand.key))),
         );
         const queryMayHaveEffects =
-          action.kind === 'saveTwoDirectionAngle' &&
-          [
-            action.parameters.direction1Source,
-            action.parameters.direction1Target,
-            action.parameters.direction2Source,
-            action.parameters.direction2Target,
-          ].some(query => !isReadOnlyTargetQuery(query));
+          action.kind === 'saveTargetDistance'
+            ? [action.parameters.source, action.parameters.target].some(
+                query => !isReadOnlyTargetQuery(query),
+              )
+            : action.kind === 'saveTwoDirectionAngle' &&
+              [
+                action.parameters.direction1Source,
+                action.parameters.direction1Target,
+                action.parameters.direction2Source,
+                action.parameters.direction2Target,
+              ].some(query => !isReadOnlyTargetQuery(query));
         // EntityBB_ 是原生动态写入路由，不是对象特例；它可能被同一实体的其他技能读取。
         if (
           action.key !== undefined ||
@@ -431,6 +524,10 @@ export function pruneGraphValues<Value>(
           ),
         );
         return;
+      case 'setHealthFloor':
+        observe(analyzeStepUsage(action, usageContext));
+        if (action.afterSet) collectReference(action.afterSet, `${path}.afterSet`, false);
+        return;
       case 'playAnimation':
         observe(analyzeStepUsage(action, usageContext));
         // 原生 OnEnd 调用 ExecuteInstant 后不读取返回值。
@@ -467,15 +564,13 @@ export function pruneGraphValues<Value>(
         // 回调沿自己的图分析；回调 direct 板继承创建时父快照，回调体读取上传为父板读取。
         observe(
           mergeDefinitionValueUsage([
-            ...Object.values(action.parameters.entityAssignments ?? {}).map(actionValueUsage),
-            ...action.callbacks.flatMap(callback =>
-              callback.skill.scheduledSequences.map(item =>
-                analyzeGraphSequenceUsage(
-                  callback.skill.actionGraph.main,
-                  item.sequence,
-                  usageContext,
-                ),
-              ),
+            analyzeStepUsage(action, usageContext),
+            ...action.callbacks.flatMap(({ skill }) =>
+              '$skill' in skill
+                ? [{ ...EMPTY_USAGE, unknownAccess: true, mayThrow: true, observable: true }]
+                : skill.scheduledSequences.map(item =>
+                    analyzeGraphSequenceUsage(skill.actionGraph.main, item.sequence, usageContext),
+                  ),
             ),
           ]),
         );
@@ -638,7 +733,7 @@ export function pruneGraphValues<Value>(
           connect(action.body, [...after, ...repeats]);
           reads.set(id, new Set());
         } else if (action.kind === 'createSpatialPointTargets') {
-          // 创建逻辑点只读取数量并更新目标组，不发布事件或传出变量快照。
+          // 创建空间点读取数量和位置参数并更新目标组，不发布事件。
           // 不能把它当成读取整张变量表，否则分支中无用的距离写入永远无法消除。
           reads.set(id, analyzeStepUsage(action, usageContext).reads);
         } else if (!candidateByNode.has(id)) {
@@ -770,7 +865,7 @@ export function pruneGraphValues<Value>(
       : Object.fromEntries(entries);
   };
   const removedWrites = [
-    ...conditionPruning.removedWrites,
+    ...localPruning.removedWrites,
     ...candidates
       .filter(candidate => deletable.has(candidate.nodeId))
       .map(candidate => ({ path: candidate.path, key: candidate.key })),
@@ -807,8 +902,14 @@ export function pruneGraphValues<Value>(
   };
   roots.forEach(visitReference);
   for (const id of Object.keys(nextNodes)) if (!reachable.has(id)) delete nextNodes[id];
+  const overwritten = pruneOverwrittenInitials
+    ? overwrittenInitialKeys(scope, protectedKeys, usageContext)
+    : new Set<string>();
   const removedInitialKeys = Object.keys(initial).filter(
-    key => !live.has(key) && !retainedInitialKeys.has(key) && !key.startsWith('EntityBB_'),
+    key =>
+      (!live.has(key) || overwritten.has(key)) &&
+      !retainedInitialKeys.has(key) &&
+      !key.startsWith('EntityBB_'),
   );
   let output = result;
   if (removedInitialKeys.length > 0) {
@@ -835,6 +936,7 @@ export function pruneUnusedGraphSkillValues<T extends ScheduledSkillValues>(
   protectedKeys: ReadonlySet<string> = new Set(),
   usageContext?: DefinitionUsageContext,
   retainedInitialKeys?: ReadonlySet<string>,
+  pruneOverwrittenInitials = false,
 ): { readonly skill: T; readonly report: ResourceValueOptimizationReport } {
   const entries: GraphValueScope['entries'][number][] = [];
   skill.scheduledSequences.forEach((item, index) =>
@@ -873,7 +975,13 @@ export function pruneUnusedGraphSkillValues<T extends ScheduledSkillValues>(
       ...(skill.eventHandlers?.map(handler => handler.condition) ?? []),
     ].filter(condition => condition !== undefined),
   };
-  const result = pruneGraphValues(scope, protectedKeys, usageContext, retainedInitialKeys);
+  const result = pruneGraphValues(
+    scope,
+    protectedKeys,
+    usageContext,
+    retainedInitialKeys,
+    pruneOverwrittenInitials,
+  );
   if (result.scope === scope) return { skill, report: result.report };
   const mapped = new Map(
     entries.map((entry, index) => [entry.sequence, result.scope.entries[index]!.sequence]),
@@ -964,7 +1072,7 @@ export function pruneUnusedGraphEquipmentContributionBlackboard(
           ? contribution
           : removedInitialKeys.length === 0
             ? value
-            : { ...contribution, blackboard: Object.fromEntries(remaining) },
+            : { ...value, blackboard: Object.fromEntries(remaining) },
     report: {
       ...report,
       removedInitialKeys,
@@ -1234,12 +1342,10 @@ export function createGraphEntityUsageContext(
       visiting.add(definition);
       try {
         const usages: DefinitionValueUsage[] = [];
-        // 只保护明确指向这个能力实体的读取；Buff 自有键不能仅因同名保护实体键。
+        // 未限制模板的查询可能读取任意实体，但读取的键仍然明确；不能扩大为整块黑板未知。
         for (const read of shared.externalReads) {
           if (read.kind !== 'abilityEntity') continue;
-          if (read.abilityEntityIds === undefined) return unresolved();
-          if (read.abilityEntityIds.includes(id))
-            usages.push({ ...empty(), reads: new Set([read.key]) });
+          usages.push({ ...empty(), reads: new Set([read.key]) });
         }
         const number = (value: AbilityEntityDefinition['maxStackingCount']) => {
           if (typeof value === 'object')

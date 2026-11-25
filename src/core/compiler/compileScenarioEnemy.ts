@@ -1,12 +1,23 @@
+import { getEnemyRuntimeDefinitionId } from '../game-data/enemyDefinition';
+import type { GameDataRepository } from '../game-data/gameDataRepository';
+import {
+  resolveEnemySpawn,
+  resolveEnemyBirthOptions,
+  resolveEnemyBirthValues,
+} from '../project/enemyBirthEffects';
+import { PROJECT_FPS } from '../project/schema';
+import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
+import { compileIndependentBuffResource } from './compileSkill';
 /**
  * 将项目持久化的敌人实例编译为战斗运行时使用的稳定输入。
  *
- * 这里只规整已有字段，不重新查询定义默认值。操作执行器从该结果读取防御、抗性和处决倍率；
- * 失衡节点阈值也原样进入运行时程序，由失衡系统按原生语义消费。
+ * 存档属性均作为基础值，按定义的固有修正与启用的出生效果结算。
+ * 失衡节点阈值原样进入运行时程序，由失衡系统按原生语义消费。
  */
 import type { PlayerDamageDefenderSnapshot } from '../combat/damage/playerActiveDamageInput';
 import type { CombatEnemyProgram } from '../combat/runtime/combatRuntimeAssembly';
 import type { EnemyDocument } from '../project/schema';
+import { compileEnemyLifecycle } from './compileEnemyLifecycle';
 
 const RESISTIBLE_DAMAGE_TYPES = [
   'physical',
@@ -62,23 +73,67 @@ function compileDefenderAttributes(enemy: EnemyDocument): PlayerDamageDefenderSn
   };
 }
 
-/** 编译单敌人场景中的完整静态敌人程序。 */
-export function compileScenarioEnemy(enemy: EnemyDocument): CombatEnemyProgram {
-  const source =
-    enemy.source.kind === 'prefab'
-      ? {
-          kind: 'prefab' as const,
-          enemyId: enemy.source.enemyId,
-          level: requireNonNegativeInteger(enemy.source.level, 'enemy.source.level'),
-        }
-      : {
-          kind: 'custom' as const,
-          level: requireNonNegativeInteger(enemy.source.level, 'enemy.source.level'),
-        };
+/** 编译单个敌人实例的静态运行时程序。 */
+export function compileScenarioEnemy(
+  enemy: EnemyDocument,
+  index?: Partial<
+    Pick<
+      GameDataRepository,
+      | 'getEnemyStage'
+      | 'getEnemy'
+      | 'getCommonBuffSource'
+      | 'getCommonDefinitionSources'
+      | 'actionPrograms'
+    >
+  >,
+): CombatEnemyProgram {
+  const source = {
+    ...enemy.source,
+    level: requireNonNegativeInteger(enemy.source.level, 'enemy.source.level'),
+  };
   if (source.level === 0) throw new RangeError('enemy.source.level must be positive');
 
+  const spawn = resolveEnemySpawn(
+    enemy.source,
+    enemy.source.kind === 'stage' ? (index?.getEnemyStage?.(enemy.source.stageId) ?? null) : null,
+  );
+  const definitionId = spawn?.definitionId ?? getEnemyRuntimeDefinitionId(enemy);
+  const definition = definitionId ? (index?.getEnemy?.(definitionId) ?? null) : null;
+  const selected = resolveEnemyBirthOptions(enemy, definition, spawn).filter(
+    buff => buff.runtimeBuffId,
+  );
+  const programs = index?.actionPrograms ?? new ActionGraphDefinitionRepository();
+  const definitions = new Map<string, ReturnType<typeof compileIndependentBuffResource>>();
+  for (const buff of selected) {
+    const id = buff.runtimeBuffId!;
+    const source =
+      index?.getCommonBuffSource?.(id) ??
+      index?.getCommonDefinitionSources?.().find(source => source.buffDefinitions?.[id]);
+    if (!source?.buffDefinitions?.[id]) throw new Error(`missing enemy birth Buff '${id}'`);
+    for (const [key, value] of Object.entries(source.buffDefinitions))
+      definitions.set(key, compileIndependentBuffResource(value, key, programs));
+  }
+  const buffDefinitions = Object.fromEntries(definitions);
+  enemy = {
+    ...enemy,
+    editable: resolveEnemyBirthValues(enemy, definition, PROJECT_FPS, spawn, false),
+  };
   return {
+    ...(selected.length
+      ? {
+          birthBuffs: {
+            definitions: buffDefinitions,
+            applications: selected.map(buff => ({
+              buffId: buff.runtimeBuffId!,
+              blackboard: buff.blackboard ?? {},
+            })),
+          },
+        }
+      : {}),
     source,
+    ...(enemy.lifecycle === undefined
+      ? {}
+      : { lifecycle: compileEnemyLifecycle(enemy.lifecycle, 0) }),
     rank: enemy.rank,
     health: requireNonNegative(enemy.editable.hp, 'enemy.editable.hp'),
     superArmor: requireNonNegative(enemy.editable.superArmor, 'enemy.editable.superArmor'),

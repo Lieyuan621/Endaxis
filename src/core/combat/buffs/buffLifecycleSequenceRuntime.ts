@@ -1,3 +1,7 @@
+import type { BuffFinishContext } from './combatBuffs';
+import type { EnemyPartTransferInfo } from '../state/foundationState';
+import type { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
+import { inheritCombatOperationContext } from '../actions/inheritCombatOperationContext';
 import { createModifierConditionRuntime } from '../actions/modifierConditionRuntime';
 import type { PoiseModifierConditionInput } from '../damage/poiseModifiers';
 import { skillAbilityEvent } from '../events/combatAbilityEvent';
@@ -28,7 +32,7 @@ import type {
   ResolvedSkillBuffLifecycleSequences,
 } from '../../compiler/combatProgram';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
-import { runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
+import { singleTargetList, runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
 import type { SkillBuffSlotReplacement } from '../../game-data/operatorDefinition';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import type { CombatActionExecution as ActionSequence } from '../actions/actionGraphExecution';
@@ -97,6 +101,10 @@ class BuffActionSequences {
     for (const sequence of this.#sequences) sequence.tryExecute(context);
   }
 
+  tick(deltaTime: number, context: CombatExecutionContext): void {
+    for (const sequence of this.#sequences) sequence.tick(deltaTime, context);
+  }
+
   end(context: CombatExecutionContext): void {
     for (const sequence of this.#sequences) sequence.end(context);
   }
@@ -150,6 +158,7 @@ class BuffScheduledSequenceAction<Key extends string> implements BuffDuringEnabl
   bindRestored(buff: CombatBuff<Key>): void {
     const saved = buff.runtimeState.actionHost?.scheduled;
     if (saved === null || saved === undefined) {
+      if (!buff.isEnabled) return;
       throw new Error(`restored Buff '${buff.definition.id}' has no scheduled action state`);
     }
     this.#state = saved;
@@ -394,6 +403,7 @@ export function attachBuffLifecycleSequences<Key extends string>(
     definitionOwnerId: string,
   ) => ProjectileRuntimeDependencies,
   bindRestoredSkillAffixObjectReference?: BindRestoredSkillAffixObjectReference,
+  semanticEvents?: CombatSemanticEventRuntime,
 ): CombatBuffDefinition<Key> {
   if (definition.actions !== undefined) {
     throw new Error(
@@ -402,6 +412,8 @@ export function attachBuffLifecycleSequences<Key extends string>(
   }
 
   const runtimes = new WeakMap<CombatBuff<Key>, CombatActionSequenceRuntime>();
+  // OnIgnite 的同步临时环境，不写入可恢复的 Buff 状态。
+  const ignitePartTransfers = new WeakMap<CombatBuff<Key>, EnemyPartTransferInfo>();
   const eventRegistrations = new WeakMap<CombatBuff<Key>, BuffAbilityEventRegistration[]>();
   const activeEnableSequences = new WeakMap<CombatBuff<Key>, BuffActionSequences>();
   const triggerSequences = new WeakMap<CombatBuff<Key>, BuffActionSequences>();
@@ -575,7 +587,8 @@ export function attachBuffLifecycleSequences<Key extends string>(
       actionOwnerId: buff.owner.ownerId,
       actionSourceId: buff.sourceId,
       // 普通生命周期使用 owner.selfTargetHandle；事件与点燃入口临时覆盖输入。
-      actionInputTarget: actionOwner,
+
+      actionInputTargets: singleTargetList(actionOwner),
       ...(actionOwner.kind === 'abilityEntity' ? { actionOwnerAbilityEntity: actionOwner } : {}),
       blackboard: buff.blackboard,
       canExecuteAction: () => buff.isEnabled && !buff.isFinished,
@@ -583,14 +596,19 @@ export function attachBuffLifecycleSequences<Key extends string>(
         damageSnapshotProgram,
         restoredHost?.damageSnapshots,
       ),
-      targetContext: new RuntimeTargetContext(restoredHost?.targets),
+      targetContext: new RuntimeTargetContext(
+        restoredHost?.targets ?? buff.runtimeState.inheritedTargetGroups ?? undefined,
+      ),
       ...(currentTarget === undefined ? {} : { currentTarget }),
-      ...(buff.skillCastInfo === null ? {} : { skillCastInfo: buff.skillCastInfo }),
+      get skillCastInfo() {
+        return buff.skillCastInfo ?? undefined;
+      },
+      overrideEnvironmentSkillCastInfo: info => buff.overrideSkillCastInfo(info),
       buffSourceId: buff.sourceId,
       buffOwnerId: buff.owner.ownerId,
-      ...(buff.runtimeState.partTransferInfo === null
-        ? {}
-        : { partTransferInfo: buff.runtimeState.partTransferInfo }),
+      get partTransferInfo() {
+        return ignitePartTransfers.get(buff) ?? buff.runtimeState.partTransferInfo ?? undefined;
+      },
       executingBuff: {
         buffId: buff.definition.id,
         buffOwnerId: buff.owner.ownerId,
@@ -602,6 +620,10 @@ export function attachBuffLifecycleSequences<Key extends string>(
       finishCurrentBuff: (reason, sourceId, skillCastInfo) =>
         buff.owner.finishInstance(buff, reason, sourceId, skillCastInfo),
       getCurrentBuffAffixSkillCastId: () => buff.affixSkillCastId,
+      hasCurrentBuffDamageSkillCastId: id => buff.runtimeState.recordedDamageSkillCastIds.has(id),
+      saveCurrentBuffDamageSkillCastId: id => {
+        buff.runtimeState.recordedDamageSkillCastIds.add(id);
+      },
       bindCurrentBuffSkillAffix: skillCastId => {
         buff.recordBuffAffixSkillCastId(skillCastId);
         const host = buff.runtimeState.actionHost!;
@@ -682,7 +704,7 @@ export function attachBuffLifecycleSequences<Key extends string>(
       },
       context,
       {},
-      undefined,
+      semanticEvents,
       buff.definitionOwnerId,
       restoredHost?.sequenceHost,
     );
@@ -709,7 +731,11 @@ export function attachBuffLifecycleSequences<Key extends string>(
     if (host === null) throw new Error(`buff '${definition.id}' has no saved action host`);
     const runtime = runtimeFor(buff, host);
     for (const affix of host.affixes) bindSkillAffixState(buff, affix, true);
-    if (scheduledSequences.length !== 0 || skillSlotReplacements.length !== 0)
+    if (
+      scheduledSequences.length !== 0 ||
+      skillSlotReplacements.length !== 0 ||
+      sequences.enable !== undefined
+    )
       buff.bindRestoredDuringEnableAction();
     else if (host.scheduled !== null)
       throw new Error(`buff '${definition.id}' saved an unexpected scheduled action`);
@@ -758,7 +784,12 @@ export function attachBuffLifecycleSequences<Key extends string>(
     | 'beforeEnhance'
     | 'enhanceChanged'
     | 'afterEnhance';
-  const execute = (key: InstantLifecycle, buff: CombatBuff<Key>, inputTargetId?: string): void => {
+  const execute = (
+    key: InstantLifecycle,
+    buff: CombatBuff<Key>,
+    inputTargetId?: string,
+    buffFinishContext?: BuffFinishContext,
+  ): void => {
     const definition = sequences[key];
     if (definition === undefined) return;
     const runtime = runtimeFor(buff);
@@ -767,12 +798,14 @@ export function attachBuffLifecycleSequences<Key extends string>(
     const sequence = new BuffActionSequences(
       runtime,
       definition,
-      {
-        ...runtime.context,
+      inheritCombatOperationContext(runtime.context, {
+        ...(buffFinishContext === undefined ? {} : { buffFinishContext }),
         ...(inputTargetId === undefined
           ? {}
-          : { actionInputTarget: runtimeTargetFromEntityId(inputTargetId) }),
-      },
+          : {
+              actionInputTargets: singleTargetList(runtimeTargetFromEntityId(inputTargetId)),
+            }),
+      }),
       states.get(key),
     );
     states.set(key, sequence.runtimeState);
@@ -831,11 +864,10 @@ export function attachBuffLifecycleSequences<Key extends string>(
           throw new Error(`buff '${definition.id}' saved event responses do not match its program`);
         }
         const runtime = runtimeFor(buff);
-        const context = {
-          ...runtime.context,
+        const context = inheritCombatOperationContext(runtime.context, {
           actionOwnerId: buff.owner.ownerId,
           actionSourceId: buff.sourceId,
-        };
+        });
         const sequence = runtime.createSequence(response.sequence, context, restored?.sequence);
         if (restored === undefined) sequence.reset({});
         const registration = registerAbilityEventAction(
@@ -870,11 +902,24 @@ export function attachBuffLifecycleSequences<Key extends string>(
     const savedResponses = buff.runtimeState.actionHost!.eventResponses;
     savedResponses.splice(0, savedResponses.length, ...responseStates);
   };
+  // 启用序列的创建、结束和恢复仍由生命周期钩子管理；通过已有的
+  // duringEnable 时钟推进其持续动作，使光环能跟随目标集合变化。
+  const createEnableSequenceTicker = (): BuffDuringEnableAction<Key> => ({
+    createRuntimeInstance: createEnableSequenceTicker,
+    bindRestored() {},
+    tryExecute: () => true,
+    tick: (deltaTime, buff) => activeEnableSequences.get(buff)?.tick(deltaTime, {}),
+    end() {},
+    reset() {},
+  });
   const actions: BuffLifecycleActions<Key> = {
-    ...(scheduledSequences.length === 0 && skillSlotReplacements.length === 0
+    ...(scheduledSequences.length === 0 &&
+    skillSlotReplacements.length === 0 &&
+    sequences.enable === undefined
       ? {}
       : {
           duringEnable: new CompositeBuffDuringEnableAction([
+            ...(sequences.enable === undefined ? [] : [createEnableSequenceTicker()]),
             ...(scheduledSequences.length === 0
               ? []
               : [new BuffScheduledSequenceAction(scheduledSequences, runtimeFor)]),
@@ -960,7 +1005,7 @@ export function attachBuffLifecycleSequences<Key extends string>(
     ...(igniteEventResponses.length === 0
       ? {}
       : {
-          ignite: (buff, igniteType, sourceId, skillCastInfo) => {
+          ignite: (buff, igniteType, sourceId, skillCastInfo, partTransferInfo) => {
             const responses = igniteEventResponses
               .map((response, index) => ({ response, index }))
               .filter(({ response }) => response.igniteType === igniteType);
@@ -974,17 +1019,21 @@ export function attachBuffLifecycleSequences<Key extends string>(
               const sequence = new BuffActionSequences(
                 runtime,
                 response.sequences,
-                {
-                  ...runtime.context,
+                inheritCombatOperationContext(runtime.context, {
                   // OnIgnite 保留 Buff 来源，只把点燃者作为输入目标。
                   actionSourceId: buff.sourceId,
                   ...(skillCastInfo === undefined ? {} : { skillCastInfo }),
-                  actionInputTarget: runtimeTargetFromEntityId(sourceId),
-                },
+                  actionInputTargets: singleTargetList(runtimeTargetFromEntityId(sourceId)),
+                }),
                 states.get(key),
               );
               states.set(key, sequence.runtimeState);
-              sequence.executeInstant({});
+              if (partTransferInfo !== undefined) ignitePartTransfers.set(buff, partTransferInfo);
+              try {
+                sequence.executeInstant({});
+              } finally {
+                ignitePartTransfers.delete(buff);
+              }
               finishAfterIgnited ||= response.finishAfterIgnited;
             }
             // 原生 OnIgnite 遍历映射后统一 ConsumeBuff；普通动作提前结束不会补造消费。
@@ -999,8 +1048,8 @@ export function attachBuffLifecycleSequences<Key extends string>(
     abilityEventResponses.length === 0
       ? {}
       : {
-          finish: buff => {
-            execute('finish', buff);
+          finish: (buff, context) => {
+            execute('finish', buff, undefined, context);
             endEnableSequence(buff);
             disposeEventResponses(buff);
           },

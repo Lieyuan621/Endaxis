@@ -276,7 +276,7 @@ describe('reference catalog transactions use the real asset session', () => {
     });
     const catalog = () => workspaceReferenceChoices(current(), [source, current()], []).skill;
     const initial = catalog();
-    const path = ['skills', 0, 'timelineContinuationSkillId'] as const;
+    const path = ['skills', 0, 'timelineBlockFollowUpSkillId'] as const;
     const beforeReference = fieldValueAt(session.current.edit.definition, path);
     session.editOperatorResources({ kind: 'addSkill', group: 0 });
     const added = catalog()!.candidates.find(

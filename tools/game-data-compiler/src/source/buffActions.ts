@@ -27,6 +27,7 @@ const ACTION_META_FIELDS = [
 ];
 
 export type BuffBlackboardAssignmentSource = BlackboardAssignmentSource;
+export const DELAY_TRIGGER_INPUT_KEY = 'delay_trigger_input_target';
 
 /** 点燃是调用目标 Buff 的响应，不等同于火元素附着或伤害。 */
 export interface BuffIgniteActionSource {
@@ -89,6 +90,8 @@ export interface BuffIconDurationSource {
 
 export interface BuffApplicationActionSource {
   readonly kind: 'buffApplication';
+  /** DelayTriggerAction 保存发起动作的黑板，供延时载体的回调读取。 */
+  readonly delayedTriggerInputKey?: string;
   /** 原生派生类只改变成功创建后的归属，不改变公共 Buff 创建数据结构。 */
   readonly lifetimeOwner: 'independent' | 'currentCastSkill';
   readonly buffs: readonly BuffApplicationEntrySource[];

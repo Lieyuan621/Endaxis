@@ -21,6 +21,47 @@ function receipt(
 }
 
 describe('combo window timeline projection', () => {
+  it('marks only windows behind queue locks, splitting at the final overlapping lock expiry', () => {
+    const lock = (
+      sequence: number,
+      frame: number,
+      event: string,
+      lockSequence: number,
+    ): CombatReceiptEntry => ({
+      sequence,
+      frame,
+      time: frame / 30,
+      event,
+      data: { lockSequence },
+    });
+    const segments = projectComboWindowTimelineViz(
+      [
+        receipt(0, 0, 'ComboWindowOpened', 'before', 0),
+        lock(1, 5, 'ComboLockQueued', 1),
+        lock(2, 5, 'ComboLockQueued', 2),
+        receipt(3, 5, 'ComboWindowOpened', 'after', 3),
+        lock(4, 10, 'ComboLockExpired', 1),
+        lock(5, 20, 'ComboLockExpired', 2),
+        receipt(6, 30, 'ComboWindowConsumed', 'after', 3),
+      ],
+      40,
+    );
+    expect(segments.filter(segment => segment.operatorId === 'before')).toEqual([
+      expect.objectContaining({ startFrame: 0, endFrame: 40 }),
+    ]);
+    expect(
+      segments.filter(segment => segment.operatorId === 'before').some(segment => segment.locked),
+    ).toBe(false);
+    expect(
+      segments
+        .filter(segment => segment.operatorId === 'after')
+        .map(segment => [segment.startFrame, segment.endFrame, segment.locked ?? false]),
+    ).toEqual([
+      [5, 10, true],
+      [10, 20, true],
+      [20, 30, false],
+    ]);
+  });
   it('renders one operator record while preserving multiple target candidates underneath', () => {
     const segments = projectComboWindowTimelineViz(
       [

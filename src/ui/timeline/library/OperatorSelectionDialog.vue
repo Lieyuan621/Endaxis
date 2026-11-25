@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SelectionIconFrame from './SelectionIconFrame.vue';
+import { groupOperatorsByRarity } from '../../appearance/operatorGroups';
 /**
  * Next 时间轴的干员定义选择器。
  *
@@ -8,7 +9,7 @@ import SelectionIconFrame from './SelectionIconFrame.vue';
  */
 import {
   EaButton,
-  EaDeleteIcon,
+  EaArrowOutIcon,
   EaDialog,
   EaFilterChip,
   EaInput,
@@ -32,6 +33,7 @@ import { matchesLocalizedNameSearch } from './localizedNameSearch';
 const props = defineProps<{
   visible: boolean;
   operators: readonly OperatorDefinition[];
+  selectedSlug: string | null;
   selectedSlugs: readonly string[];
 }>();
 
@@ -115,16 +117,7 @@ const groups = computed(() => {
     return matchesLocalizedNameSearch(operator.name, searchQuery.value);
   });
 
-  const byRarity = new Map<number, typeof operators>();
-  for (const operator of operators) {
-    const list = byRarity.get(operator.rarity) ?? [];
-    list.push(operator);
-    byRarity.set(operator.rarity, list);
-  }
-
-  return [...byRarity.entries()]
-    .sort(([left], [right]) => right - left)
-    .map(([level, list]) => ({ level, list }));
+  return groupOperatorsByRarity(operators).map(({ rarity, list }) => ({ level: rarity, list }));
 });
 
 function select(slug: string): void {
@@ -158,12 +151,13 @@ function clear(): void {
             style="width: 180px"
           />
           <EaButton
-            variant="danger"
+            class="selector-unequip-button"
             type="button"
+            :disabled="selectedSlug === null"
             :title="t('timelineGrid.operatorDialog.clearTrack')"
             @click="clear"
           >
-            <EaDeleteIcon />
+            <EaArrowOutIcon />
             {{ t('common.unequip') }}
           </EaButton>
         </div>

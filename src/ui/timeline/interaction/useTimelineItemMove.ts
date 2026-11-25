@@ -43,6 +43,7 @@ interface Options {
   readonly commit: (name: string, command: (s: ScenarioDocument) => ScenarioDocument) => boolean;
   readonly simulate: () => Promise<boolean>;
   readonly blocked: () => void;
+  readonly resolveDelta?: (plan: TimelineMovePlan, delta: number) => number | null;
   readonly dropped?: (event: PointerEvent, items: readonly TimelineItem[]) => void;
 }
 
@@ -80,10 +81,12 @@ export function useTimelineItemMove(options: Options) {
       current.anchorFrame + current.plan.maximumDelta,
       current.anchorFrame + current.plan.minimumDelta,
     );
+    const delta = options.resolveDelta?.(current.plan, frame - current.anchorFrame);
+    if (delta === null) return;
     const result = moveTimelineItems(
       current.baseScenario,
       current.plan,
-      frame - current.anchorFrame,
+      delta ?? frame - current.anchorFrame,
     );
     gesture.value = { ...current, delta: result.delta, dragStarted: true };
     if (result.delta !== current.delta) options.scenario.value = result.scenario;

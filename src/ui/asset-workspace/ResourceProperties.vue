@@ -36,7 +36,6 @@ const sections = computed(() => {
           'exclusiveFrame',
           'offsetRecordFrame',
           'dontInterruptCombo',
-          'timelineContinuationSkillId',
           'timelineBlockFollowUpSkillId',
         ],
       },
@@ -45,7 +44,6 @@ const sections = computed(() => {
         key: 'casting',
         fields: ['cooldownFrames', 'costs', 'costFrame', 'availability', 'switchToBuffCast'],
       },
-      { key: 'inputWindows', fields: ['inputWindows'] },
       { key: 'variables', fields: ['blackboard'] },
     ];
     return groups

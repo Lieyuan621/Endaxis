@@ -581,6 +581,12 @@
     "setName": "集成实训",
     "defense": 48
   },
+  "item_equip_t4_parts_wuling00_body_07": {
+    "name": "集成实训重械护甲",
+    "slotType": "护甲",
+    "setName": "集成实训",
+    "defense": 48
+  },
   "item_equip_t4_parts_wuling00_edc_01": {
     "name": "集成实训排障刀",
     "slotType": "配件",
@@ -617,6 +623,12 @@
     "setName": "集成实训",
     "defense": 18
   },
+  "item_equip_t4_parts_wuling00_edc_07": {
+    "name": "集成实训重械钢板",
+    "slotType": "配件",
+    "setName": "集成实训",
+    "defense": 18
+  },
   "item_equip_t4_parts_wuling00_hand_01": {
     "name": "集成实训手套",
     "slotType": "护手",
@@ -649,6 +661,12 @@
   },
   "item_equip_t4_parts_wuling00_hand_06": {
     "name": "集成实训刃装护手",
+    "slotType": "护手",
+    "setName": "集成实训",
+    "defense": 36
+  },
+  "item_equip_t4_parts_wuling00_hand_07": {
+    "name": "集成实训重械护手",
     "slotType": "护手",
     "setName": "集成实训",
     "defense": 36
@@ -725,6 +743,18 @@
     "setName": "",
     "defense": 56
   },
+  "item_equip_t4_parts_wuling02_body_05": {
+    "name": "涉渊重钢甲",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 56
+  },
+  "item_equip_t4_parts_wuling02_body_06": {
+    "name": "涉渊轻护甲",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 56
+  },
   "item_equip_t4_parts_wuling02_edc_01": {
     "name": "涉渊护甲板",
     "slotType": "配件",
@@ -733,6 +763,12 @@
   },
   "item_equip_t4_parts_wuling02_edc_02": {
     "name": "涉渊白刃",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 21
+  },
+  "item_equip_t4_parts_wuling02_edc_03": {
+    "name": "涉渊破岩锥",
     "slotType": "配件",
     "setName": "",
     "defense": 21
@@ -757,6 +793,18 @@
   },
   "item_equip_t4_parts_wuling02_hand_04": {
     "name": "涉渊手甲",
+    "slotType": "护手",
+    "setName": "",
+    "defense": 42
+  },
+  "item_equip_t4_parts_wuling02_hand_05": {
+    "name": "涉渊轻裹手",
+    "slotType": "护手",
+    "setName": "",
+    "defense": 42
+  },
+  "item_equip_t4_parts_wuling02_hand_06": {
+    "name": "涉渊重手甲",
     "slotType": "护手",
     "setName": "",
     "defense": 42
@@ -787,6 +835,18 @@
   },
   "item_equip_t4_suit_atb01_body_05": {
     "name": "拓荒护服",
+    "slotType": "护甲",
+    "setName": "拓荒",
+    "defense": 56
+  },
+  "item_equip_t4_suit_atb01_body_06": {
+    "name": "拓荒增重钢甲",
+    "slotType": "护甲",
+    "setName": "拓荒",
+    "defense": 56
+  },
+  "item_equip_t4_suit_atb01_body_07": {
+    "name": "拓荒减重护甲",
     "slotType": "护甲",
     "setName": "拓荒",
     "defense": 56
@@ -827,6 +887,18 @@
     "setName": "拓荒",
     "defense": 21
   },
+  "item_equip_t4_suit_atb01_edc_07": {
+    "name": "拓荒多层钢板",
+    "slotType": "配件",
+    "setName": "拓荒",
+    "defense": 21
+  },
+  "item_equip_t4_suit_atb01_edc_08": {
+    "name": "拓荒压合板",
+    "slotType": "配件",
+    "setName": "拓荒",
+    "defense": 21
+  },
   "item_equip_t4_suit_atb01_hand_01": {
     "name": "拓荒耐蚀手套",
     "slotType": "护手",
@@ -841,6 +913,18 @@
   },
   "item_equip_t4_suit_atb01_hand_03": {
     "name": "拓荒纤维手套·壹型",
+    "slotType": "护手",
+    "setName": "拓荒",
+    "defense": 42
+  },
+  "item_equip_t4_suit_atb01_hand_04": {
+    "name": "拓荒增重手甲",
+    "slotType": "护手",
+    "setName": "拓荒",
+    "defense": 42
+  },
+  "item_equip_t4_suit_atb01_hand_05": {
+    "name": "拓荒减重护手",
     "slotType": "护手",
     "setName": "拓荒",
     "defense": 42
@@ -1651,6 +1735,12 @@
   },
   "item_equip_t4_suit_usp02_hand_05": {
     "name": "长息导能护手",
+    "slotType": "护手",
+    "setName": "长息",
+    "defense": 42
+  },
+  "item_equip_t4_suit_usp02_hand_06": {
+    "name": "长息重手甲",
     "slotType": "护手",
     "setName": "长息",
     "defense": 42

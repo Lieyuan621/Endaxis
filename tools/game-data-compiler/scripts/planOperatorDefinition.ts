@@ -48,6 +48,7 @@ import { parseKnownSkillActionGraphSource } from '../src/source/skillActionGraph
 import type { SkillSlotReplacementActionSource } from '../src/source/skillSlotActions.ts';
 import {
   planOperatorActiveSkillRuntime,
+  collectProjectileLaunches,
   prepareProjectileProjection,
   type OperatorActiveSkillRuntimeArguments,
   type PlannedOperatorActiveSkillRuntime,
@@ -71,6 +72,11 @@ export function projectOperatorDefinition(
     /** 默认应用已验证的优化；report 仅报告候选，off 用于生成对照。 */
     readonly optimization?: DefinitionOptimizationMode;
     readonly skipContingencyContract?: boolean;
+    readonly contractPeriods?: readonly {
+      gameId: string;
+      tableRoot: string;
+      supplement: string;
+    }[];
   },
 ) {
   const args = { ...input, sources: input.sources ?? new OperatorPlanningSources(input) };
@@ -283,6 +289,27 @@ export function projectOperatorDefinition(
             blackboard: { dodgeSkillId: runtimeTemplate.playerActionSource.dodgeSkillId },
           },
         ]);
+  const resolveTimeDilationPriority = (tagId: number, sourcePath: string) => {
+    const priority = timeDilationPriorities.get(tagId);
+    if (priority === undefined)
+      throw new Error(`${sourcePath}: unknown time-dilation priority ${tagId}`);
+    return priority;
+  };
+  const projectileExtensions = (
+    launches: ReturnType<typeof collectProjectileLaunches>,
+    visualOnlyIds: ReadonlySet<string>,
+  ) => {
+    if (launches.length === 0) return { resolveTimeDilationPriority };
+    const { compileProjectileLaunch } = prepareProjectileProjection(args, launches, visualOnlyIds, {
+      gameplayTagRegistry,
+      predefinedTagQueries,
+      actionOwnerTarget: 'unavailable',
+      actionSourceTarget: 'caster',
+      actionTargetTarget: 'enemy',
+      fixedHittableTargetCount: 0,
+    });
+    return { resolveTimeDilationPriority, compileProjectileLaunch };
+  };
   const candidate = assembleOperatorDefinition({
     simulationEquivalentNativeSkillIds:
       skillGroupValidationOptions.simulationEquivalentNativeSkillIds,
@@ -324,6 +351,12 @@ export function projectOperatorDefinition(
     globalBuffCatalog: read(args.globalBuffCatalog),
     skillSettingCatalog: read(args.skillSettingCatalog),
     passiveSkills,
+    passiveSkillExtensions: projectileExtensions(
+      passiveSkills.definitions.flatMap(item =>
+        collectProjectileLaunches(item.definition.skill.actionGraph),
+      ),
+      new Set(),
+    ),
     basePassiveSkillRequests,
     ...(runtimeTemplate === undefined
       ? {}
@@ -339,12 +372,6 @@ export function projectOperatorDefinition(
           nativePlayerActionRouting,
         }),
     createBuffProjectionExtensions: (sources, visualOnlyIds) => {
-      const resolveTimeDilationPriority = (tagId: number, sourcePath: string) => {
-        const value = timeDilationPriorities.get(tagId);
-        if (value === undefined)
-          throw new Error(`${sourcePath}: unknown time-dilation priority ${tagId}`);
-        return value;
-      };
       const launches = [...sources.values()].flatMap(source =>
         [
           ...source.graph.timelineActions.map(item => item.sequence),
@@ -361,62 +388,20 @@ export function projectOperatorDefinition(
           ),
         ),
       );
-      if (launches.length === 0)
-        return {
-          resolveTimeDilationPriority,
-          compileSkillTypeMutation,
-          compileSkillSlotReplacement,
-        };
-      const prepared = prepareProjectileProjection(args, launches, visualOnlyIds, {
-        gameplayTagRegistry,
-        predefinedTagQueries,
-        actionOwnerTarget: 'unavailable',
-        actionSourceTarget: 'caster',
-        actionTargetTarget: 'enemy',
-        fixedHittableTargetCount: 0,
-      });
       return {
-        compileProjectileLaunch: prepared.compileProjectileLaunch,
-        resolveTimeDilationPriority,
+        ...projectileExtensions(launches, visualOnlyIds),
         compileSkillTypeMutation,
         compileSkillSlotReplacement,
       };
     },
     createAbilityEntityProjectionExtensions: (skillId, value, visualOnlyIds) => {
-      const resolveTimeDilationPriority = (tagId: number, sourcePath: string) => {
-        const priority = timeDilationPriorities.get(tagId);
-        if (priority === undefined)
-          throw new Error(`${sourcePath}: unknown time-dilation priority ${tagId}`);
-        return priority;
-      };
       const preparedInput = prepareSkillDefinitionInputSource(value, skillId, null);
       const graph = parseKnownSkillActionGraphSource(
         value,
         `SkillData.${skillId}`,
         preparedInput.blackboard.values,
       );
-      const launches = graph.actionGroup.timelineActions.flatMap(timeline =>
-        collectNativeActionNodes(timeline.sequence).flatMap(node =>
-          node.metadata.enabled &&
-          node.body.kind === 'leaf' &&
-          node.body.value.family === 'projectile'
-            ? [node.body.value.action]
-            : [],
-        ),
-      );
-      if (launches.length === 0) return { resolveTimeDilationPriority };
-      const projectile = prepareProjectileProjection(args, launches, visualOnlyIds, {
-        gameplayTagRegistry,
-        predefinedTagQueries,
-        actionOwnerTarget: 'unavailable',
-        actionSourceTarget: 'caster',
-        actionTargetTarget: 'enemy',
-        fixedHittableTargetCount: 0,
-      });
-      return {
-        compileProjectileLaunch: projectile.compileProjectileLaunch,
-        resolveTimeDilationPriority,
-      };
+      return projectileExtensions(collectProjectileLaunches(graph), visualOnlyIds);
     },
   });
   // 模板还登记外观等可选模式；仅发布默认开启或当前战斗闭包实际切入的模式。
@@ -452,6 +437,7 @@ export function projectOperatorDefinition(
       ...(modes === undefined ? {} : { playerActionModes: modes }),
     },
     activeSkills,
+    audit: candidate.audit,
   };
 }
 
@@ -462,7 +448,10 @@ export function planOperatorDefinition(input: Parameters<typeof projectOperatorD
   return {
     ...candidate,
     operator: optimized.operator,
-    audit: { ...candidate.audit, optimization: optimized.report },
+    audit: {
+      ...candidate.audit,
+      optimization: optimized.report,
+    },
   };
 }
 
@@ -670,7 +659,7 @@ function createActiveSkillSlotReplacementProjection(skills: readonly { readonly 
     context: CombatActionProjectionContextSource,
   ) => {
     // GetTargetsView 仅在 Context 来源读取 targetGroupKey；Owner/Source 中
-    // 序列化残留的组键不改变接收者（见 combat-spec 的 selector-pipeline）。
+    // 序列化残留的组键不改变接收者。
     if (
       !['Owner', 'Source'].includes(action.skillSource.targetSource) ||
       action.skillSource.selectorOwner !== 'ActionOwner' ||

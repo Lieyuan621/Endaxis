@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_MONITOR_SECTION_WEIGHTS,
+  monitorSectionBodyMinimums,
   resolveMonitorSectionLayout,
 } from './results/monitorSectionMinimums';
 import {
@@ -19,10 +20,16 @@ describe('workbench bottom panel geometry', () => {
   it.each([
     [0, 240],
     [1, 180],
-    [2, 120],
+    [2, 126],
   ])('folds %i sections without clipping the remaining monitor content', (count, minimum) => {
     expect(resolveWorkbenchBottomHeightBounds(1080, 240, count).minimum).toBe(minimum);
     expect(resolveWorkbenchBottomHeight(1080, 1, false, count)).toBe(minimum);
+    const collapsed = { affliction: count >= 1, poise: count >= 2, sp: false };
+    const layout = resolveMonitorSectionLayout(minimum, collapsed, DEFAULT_MONITOR_SECTION_WEIGHTS);
+    const bodyMinimums = monitorSectionBodyMinimums();
+    for (const key of ['affliction', 'poise', 'sp'] as const) {
+      if (!collapsed[key]) expect(layout.bodies[key]).toBeGreaterThanOrEqual(bodyMinimums[key]);
+    }
   });
   it.each([
     ['unmeasured root', 0, 240, 240],
@@ -62,7 +69,7 @@ describe('workbench bottom panel geometry', () => {
     });
     expect(height).toBe(200);
     expect(contentHeight).toBeLessThanOrEqual(height);
-    expect(resolveWorkbenchBottomHeight(400, 120, false, 2)).toBe(116);
+    expect(resolveWorkbenchBottomHeight(400, 120, false, 2)).toBe(126);
     expect(resolveWorkbenchBottomHeight(400, 240, true)).toBe(0);
   });
 

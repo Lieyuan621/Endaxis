@@ -124,7 +124,7 @@ const definition = {
               action: {
                 kind: 'readBuffStackCount',
                 parameters: {
-                  target: 'eventTarget',
+                  target: { kind: 'inputTarget' },
                   outputKey: 'count',
                   query: {
                     kind: 'tag',

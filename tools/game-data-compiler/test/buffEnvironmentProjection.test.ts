@@ -18,6 +18,12 @@ import { CombatAttributeSet } from '../../../src/core/combat/attributes/combatAt
 import { CombatActionSequenceRuntime } from '../../../src/core/combat/actions/combatActionSequenceRuntime';
 import { ActionBlackboard } from '../../../src/core/combat/actions/actionBlackboard';
 import { GameplayTagRegistry } from '../../../src/core/combat/tags/gameplayTags';
+import { TargetContextOperationExecutor } from '../../../src/core/combat/abilities/targetContextOperationExecutor';
+
+const targetQueries = new TargetContextOperationExecutor('caster', {
+  execute: () => false,
+  evaluate: () => false,
+});
 
 const meta = { isEnable: true, priorityLevel: 'Default', priorityOffset: 0, serverActionIndex: 0 };
 const context = {
@@ -105,7 +111,7 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
       {
         kind: 'readBuffBlackboard',
         parameters: {
-          target: 'buffOwner',
+          target: { kind: 'owner' },
           query: { kind: 'id', buffIds: ['buff.last-type'] },
           desiredKey: 'combotype',
           outputKey: 'lastType',
@@ -116,6 +122,8 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
     const blackboard = new ActionBlackboard({ lastType: 7 });
     const operations = new BuffOperationExecutor({
       sourceId: 'caster',
+      queryTargets: (query, context) => targetQueries.queryTargets(query, context),
+      resolvePartBuffSource: target => target,
       resolveTarget: () => owner,
       resolveEventTarget: () => owner,
       delegate: { execute: () => true, evaluate: () => true },
@@ -123,6 +131,8 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
     const runtime = new CombatActionSequenceRuntime(operations, {
       blackboard,
       buffOwnerId: 'enemy',
+      actionOwnerId: 'enemy',
+      actionSourceId: 'caster',
     });
     const sequence = runtime.createSequence(projected.compiled());
     sequence.reset({});
@@ -174,7 +184,7 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
       {
         kind: 'readBuffBlackboard',
         parameters: {
-          target: 'enemy',
+          target: { kind: 'context', key: 'smart_target' },
           query: { kind: 'tag', tagQueryType: 'hasAny', buffTags: [tagPath] },
           desiredKey: 'count',
           outputKey: 'copied',
@@ -196,6 +206,8 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
     const execute = vi.fn(() => true);
     const operations = new BuffOperationExecutor({
       sourceId: 'caster',
+      queryTargets: (query, context) => targetQueries.queryTargets(query, context),
+      resolvePartBuffSource: target => target,
       resolveTarget: () => owner,
       resolveEventTarget: () => owner,
       delegate: {
@@ -210,6 +222,8 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
       blackboard,
       getCurrentBuffEnhanceCount: reads,
       buffOwnerId: 'enemy',
+      actionOwnerId: 'enemy',
+      actionSourceId: 'caster',
     };
     const projected = project([rawCount(), rawRead()]);
     expect(projected.steps[0]).toMatchObject({
@@ -293,6 +307,8 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
     const blackboard = new ActionBlackboard({ copied: -1 });
     const operations = new BuffOperationExecutor({
       sourceId: 'caster',
+      queryTargets: (query, context) => targetQueries.queryTargets(query, context),
+      resolvePartBuffSource: target => target,
       resolveTarget: () => owner,
       resolveEventTarget: () => owner,
       delegate: { execute: () => false, evaluate: () => false },
@@ -300,6 +316,8 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
     const runtime = new CombatActionSequenceRuntime(operations, {
       blackboard,
       buffOwnerId: 'enemy',
+      actionOwnerId: 'enemy',
+      actionSourceId: 'caster',
     });
     const program = project([rawRead(target)]).compiled();
     const run = () => runtime.createSequence(program).executeInstant({});
@@ -322,6 +340,8 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
     const execute = vi.fn(() => true);
     const operations = new BuffOperationExecutor({
       sourceId: 'caster',
+      queryTargets: (query, context) => targetQueries.queryTargets(query, context),
+      resolvePartBuffSource: target => target,
       resolveTarget: () => owner,
       resolveEventTarget: () => owner,
       delegate: { execute, evaluate: () => false },
@@ -329,6 +349,8 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
     const runtime = new CombatActionSequenceRuntime(operations, {
       blackboard: new ActionBlackboard(),
       buffOwnerId: 'enemy',
+      actionOwnerId: 'enemy',
+      actionSourceId: 'caster',
     });
     const projected = project([rawRead()]);
     const program = compileFlatSteps(

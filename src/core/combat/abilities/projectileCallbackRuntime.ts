@@ -1,4 +1,7 @@
-/** 绑定投射物回调宿主；对应事件发生时才施放，恢复已有宿主时不再次施放。 */
+import type { ProjectileCallbackSchedule } from '../../../../packages/game-data-contract/src/projectileSchedule';
+import { singleTargetList, runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import type { ProjectileHitTargets } from '../state/instanceState';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import type { BuffApplicationHandle } from '../buffs/buffOperationExecutor';
 import type {
@@ -12,25 +15,56 @@ import type { CallbackSkillHost } from './callbackSkillHost';
 import type { ProjectileCallbackPrograms } from './projectileCallbackPrograms';
 import type { ProjectileHostPorts } from './projectileLifecycleRuntime';
 
-/** 新建与恢复共用事件绑定；所有回调使用同一投射物时钟。 */
+export interface ProjectileHitBinding {
+  readonly kind?: ProjectileCallbackSchedule['hitKind'];
+  readonly state: ProjectileHitTargets;
+  readonly canHit?: (target: RuntimeTargetRef) => boolean;
+  readonly resolveTargets?: () => readonly RuntimeTargetRef[];
+  readonly targetExists?: (target: RuntimeTargetRef) => boolean;
+  readonly matchesTags?: (
+    target: RuntimeTargetRef,
+    query: NonNullable<ProjectileHitTargets['hitTagFilter']>,
+  ) => boolean;
+}
+
+/** 新建与恢复共用事件绑定；目标选择方式和过滤条件随投射物状态保存。 */
 export function bindProjectileCallbackLifecycle(
   callbacks: readonly ProjectileCallbackRuntime[],
   resolveTickDeltaSeconds: () => number | null,
+  hit?: ProjectileHitBinding,
 ): ProjectileHostPorts {
-  const start = (event: 'block' | 'reach' | 'finish') => {
-    for (const callback of callbacks) if (callback.runtimeState.event === event) callback.start();
-  };
   return {
     resolveTickDeltaSeconds,
-    reach: () => start('reach'),
-    block: () => start('block'),
-    hit: () => {
-      let accepted = false;
-      for (const callback of callbacks)
-        if (callback.runtimeState.event === 'hit' && callback.hit()) accepted = true;
-      return accepted;
+    invokeScheduledCallback: index => {
+      const callback = callbacks[index];
+      if (!callback) throw new Error(`unknown projectile callback index ${index}`);
+      if (callback.runtimeState.event !== 'hit') {
+        callback.invoke();
+        return;
+      }
+      if (!hit) throw new Error('scheduled hit requires target binding');
+      const targets = hit.state.resolveOnHit ? hit.resolveTargets?.() : hit.state.targets;
+      if (!targets) throw new Error('projectile collision requires target resolution');
+      for (const target of targets) {
+        if (target.kind !== 'spatialPoint' && hit.canHit?.(target) === false) continue;
+        if (target.kind !== 'spatialPoint' && hit.targetExists?.(target) === false) continue;
+        if (
+          hit.kind !== 'arrival' &&
+          hit.state.onlyHitTargets !== undefined &&
+          !hit.state.onlyHitTargets.some(
+            allowed =>
+              runtimeTargetEntityId(allowed) !== undefined &&
+              runtimeTargetEntityId(allowed) === runtimeTargetEntityId(target),
+          )
+        )
+          continue;
+        if (hit.kind !== 'arrival' && hit.state.hitTagFilter) {
+          if (!hit.matchesTags) throw new Error('projectile hit filtering requires target tags');
+          if (!hit.matchesTags(target, hit.state.hitTagFilter)) continue;
+        }
+        callback.invoke(target);
+      }
     },
-    finish: () => start('finish'),
     beforeReset: () => callbacks.forEach(callback => callback.beforeReset()),
     abilityRuntime: {
       advanceFrame: () => {
@@ -60,7 +94,7 @@ export function restoreProjectileCallback(
   if (!Number.isSafeInteger(instanceId) || instanceId <= 0)
     throw new Error('invalid projectile identity');
   const context = {
-    actionInputTarget: state.inputTarget,
+    actionInputTargets: singleTargetList(state.inputTarget),
     blackboard: ActionBlackboard.bindRuntimeState(state.blackboard),
     skillCastInfo: state.skillCastInfo ?? undefined,
     actionOwnerAbilityEntity: { kind: 'abilityEntity' as const, instanceId },
@@ -68,27 +102,19 @@ export function restoreProjectileCallback(
     actionSourceId: sourceId ?? `ability-entity:${instanceId}`,
     ...dependencies,
   };
-  return new ProjectileCallbackRuntime(
-    state,
-    saved =>
-      dependencies.createCallbackSkillHost(
-        program,
-        context,
-        operations,
-        saved === null
-          ? undefined
-          : {
-              state: saved,
-              damageSnapshotProgram: programs.resolveDamageSnapshots(state.programId!),
-              resolveAttachedBuff,
-            },
-      ),
-    () =>
-      state.hitTagFilter === undefined ||
-      operations.evaluate(
-        { kind: 'entityTagMatch', target: { kind: 'inputTarget' }, ...state.hitTagFilter },
-        context,
-      ),
+  return new ProjectileCallbackRuntime(state, saved =>
+    dependencies.createCallbackSkillHost(
+      program,
+      context,
+      operations,
+      saved === null
+        ? undefined
+        : {
+            state: saved,
+            damageSnapshotProgram: programs.resolveDamageSnapshots(state.programId!),
+            resolveAttachedBuff,
+          },
+    ),
   );
 }
 
@@ -98,7 +124,6 @@ export class ProjectileCallbackRuntime {
   constructor(
     readonly runtimeState: ProjectileCallbackState,
     readonly createHost: (saved: CallbackSkillHostState | null) => CallbackSkillHost,
-    readonly acceptsHit: () => boolean = () => true,
   ) {
     if (
       runtimeState.event !== 'hit' &&
@@ -113,23 +138,12 @@ export class ProjectileCallbackRuntime {
       throw new Error('restored projectile callback must bind the saved host data');
   }
 
-  start(inputTarget = this.runtimeState.inputTarget): void {
-    if (this.#host !== null) throw new Error('projectile callback has already started');
+  /** 时间表允许再次调用同一回调，复用原能力系统的重启语义。 */
+  invoke(inputTarget = this.runtimeState.inputTarget): void {
     this.runtimeState.inputTarget = inputTarget;
-    this.#startHost(inputTarget);
-  }
-
-  #startHost(inputTarget = this.runtimeState.inputTarget): void {
     this.#host ??= this.createHost(null);
     this.runtimeState.host = this.#host.runtimeState;
     this.#host.start(inputTarget);
-  }
-
-  hit(): boolean {
-    if (!this.acceptsHit()) return false;
-    const targets = this.runtimeState.inputTargets ?? [this.runtimeState.inputTarget];
-    for (const target of targets) this.#startHost(target);
-    return targets.length > 0;
   }
 
   advance(deltaSeconds: number): void {

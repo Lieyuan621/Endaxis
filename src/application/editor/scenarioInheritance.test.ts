@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../core/project/level';
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../core/project/createProject';
 import { createInheritedScenario } from './scenarioInheritance';
@@ -209,7 +210,16 @@ it('继承文档自动启用通用配置与历史约束，不能清除元数据�
     'fixed-inheritance',
   );
   expect(() =>
-    session.commit('enemy', before => ({ ...before, enemy: { ...before.enemy, rank: 'elite' } })),
+    session.commit('enemy', before => ({
+      ...before,
+      level: {
+        kind: 'singleEnemy',
+        enemy: {
+          ...firstScenarioEnemy(before),
+          enemy: { ...firstScenarioEnemy(before).enemy, rank: 'elite' },
+        },
+      },
+    })),
   ).toThrow('locked-configuration');
   expect(() =>
     session.commit('past', before => ({

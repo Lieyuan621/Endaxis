@@ -1,3 +1,8 @@
+import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags.ts';
+export {
+  BUFF_FINISH_REASONS,
+  type BuffFinishReason,
+} from '../../../../packages/game-data-contract/src/conditions';
 /** 跨状态层共享的数据节点、稳定身份和修正项；不引用执行实现或上层状态。 */
 import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
 import type {
@@ -98,6 +103,7 @@ export interface AttackReceiptSnapshot {
 }
 
 export interface SkillCastEventData extends AbilityOriginPayload {
+  readonly skillTags?: readonly GameplayTag[];
   readonly element?: DamageElement;
   /** 玩家技能库分类；实体内部技能没有此分类。 */
   readonly skillType?: SkillType;
@@ -227,10 +233,20 @@ export interface CombatAttributeState<Key extends string> {
   readonly rawValues: Map<Key, number>;
   readonly definitions: Map<Key, CombatAttributeDefinition>;
   readonly modifiers: CombatAttributeModifier<Key>[];
+  readonly rawOverrides: Map<Key, { token: number; value: number }[]>;
+  readonly rawBeneathOverrides: Map<Key, number>;
+  nextRawOverrideToken: number;
 }
 
 export function createCombatAttributeState<Key extends string>(): CombatAttributeState<Key> {
-  return { rawValues: new Map(), definitions: new Map(), modifiers: [] };
+  return {
+    rawValues: new Map(),
+    definitions: new Map(),
+    modifiers: [],
+    rawOverrides: new Map(),
+    rawBeneathOverrides: new Map(),
+    nextRawOverrideToken: 1,
+  };
 }
 
 export interface DamageModifierState {
@@ -294,22 +310,13 @@ export interface SharedSpRecoveryModifierState {
   readonly modifiers: SharedSpRecoveryModifier[];
 }
 
-export const BUFF_FINISH_REASONS = [
-  'lifetime',
-  'ignite',
-  'early',
-  'dispelled',
-  'absorbed',
-  'other',
-] as const;
-
-/** Buff 结束时记录并传给生命周期行为的原因。 */
-export type BuffFinishReason = (typeof BUFF_FINISH_REASONS)[number];
 /**
  * 描述一次技能释放在战斗运行时中的来源身份。
  * 该值只在单场模拟内流转并由 Buff 等实例复制，不属于项目存档或编辑器对象身份。
  */
 export interface CombatSkillCastInfo {
+  /** 来源技能定义的标签，随施法来源继承，不读取接收者的技能。 */
+  readonly originSkillTags?: readonly GameplayTag[];
   /** 单场运行时内的非零释放序号；0 保留为“没有来源施法”。 */
   readonly skillCastId: number;
   /** 最初发起本次施法链的技能；当前直接释放时就是正在执行的技能。 */
@@ -374,15 +381,15 @@ export interface AbilityOriginPayload extends AbilityEntityPair {
 export type AbilityResponseEventName = AbilityEvent;
 
 export interface SkillCastStartPreparation {
-  readonly trigger?: RuntimeTargetRef;
+  readonly trigger?: readonly RuntimeTargetRef[];
   readonly smartTarget?: RuntimeTargetRef;
   readonly assignPairs: Readonly<Record<string, ActionBlackboardValue>> | null;
 }
 
 /** 一次人工施放的模拟参数，不属于技能定义。 */
 export interface SkillSimulationInputs {
+  readonly initialBlackboard?: Readonly<Record<string, number>>;
   readonly randomSeed?: number;
-  readonly criticalOverrides?: Readonly<Record<string, boolean>>;
 }
 
 /** 原生单槽延迟施放目前已进入模拟器的稳定字段。 */
@@ -406,5 +413,6 @@ export type LogicalAbilityEntityFinishReason =
   | 'explicit'
   | 'ownerFinished'
   | 'sourceDied'
+  | 'targetDied'
   | 'stackingLimit'
   | 'soulMainBodyDied';

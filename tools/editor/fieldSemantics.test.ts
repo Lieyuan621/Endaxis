@@ -8,10 +8,25 @@ import { schemaSourceLocation } from './schemaSourceLocation.ts';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { resolveDefinitionSchema } from '../../src/core/editor/resolveDefinitionSchema.ts';
-import { describeDefinitionType } from './describeDefinitionType.ts';
+import { describeDefinitionType, composeDefinitionSchemas } from './describeDefinitionType.ts';
+import type { DefinitionFieldSchema } from '../../src/ui/definition-editor/fieldSchema.ts';
 import { describeNodeFields } from './generateActionNodeSchema.ts';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
+test('composing repeated recursive shapes preserves sharing and optionality', () => {
+  let value: DefinitionFieldSchema = { kind: 'string' };
+  for (let depth = 0; depth < 24; depth++)
+    value = { kind: 'object', fields: { left: value, right: value } };
+  let composed = composeDefinitionSchemas([{ ...value, optional: true }, value]);
+  assert.equal(composed.optional, true);
+  for (let depth = 0; depth < 24; depth++) {
+    assert.equal(composed.kind, 'object');
+    if (composed.kind !== 'object') throw new Error('object branch missing');
+    assert.equal(composed.fields.left, composed.fields.right);
+    composed = composed.fields.left!;
+  }
+  assert.equal(composed.kind, 'string');
+});
 const fixturePath = resolve(root, 'tools/editor/fieldSemantics.fixture.ts');
 const source = `
 import type { GameplayTag as ImportedTag } from '../../packages/game-data-contract/src/gameplayTags.ts';

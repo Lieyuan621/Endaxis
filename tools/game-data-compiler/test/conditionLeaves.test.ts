@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../../src/core/game-data/logicalAbilityEntity.ts';
 import { TargetContextOperationExecutor } from '../../../src/core/combat/abilities/targetContextOperationExecutor';
 import { RuntimeTargetContext } from '../../../src/core/combat/abilities/runtimeTargetContext';
 import { parseTargetReferenceSource } from '../src/source/target.ts';
@@ -37,6 +38,84 @@ const TARGET_CONTEXT = {
 } as const;
 
 describe('公共条件叶子 IR', () => {
+  it('全部敌人查询保留全局范围、目录顺序及真实 selector owner 排除', () => {
+    const raw = targetFixture('InstantSearch', {
+      finderData: { $type: 'Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond' },
+      validatorData: [
+        { $type: 'Beyond.Gameplay.Core.Selector+ExcludeOwnerValidator+Data, Gameplay.Beyond' },
+      ],
+      postProcessorData: [],
+    });
+    const target = parseTargetReferenceSource({ ...raw, selectorOwner: 'ActionSource' }, 'target');
+    const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+    expect(projectActionTargetQuery(target, { ...TARGET_CONTEXT, graph }, 'target')).toEqual({
+      kind: 'exclude',
+      targets: {
+        kind: 'enemyByTags',
+        scope: 'global',
+        reverse: true,
+        tagQueryType: 'hasAll',
+        tags: [],
+      },
+      excludeTargets: { kind: 'source' },
+    });
+  });
+  it('BuffValidator 保留查询组合、匹配模式与空 ID，不额外生成行为', () => {
+    const validator = (mode: string, checkType: string) => ({
+      $type: 'Beyond.Gameplay.Core.Selector+BuffValidator+Data, Gameplay.Beyond',
+      validateMode: mode,
+      buffFindSettings: {
+        checkType,
+        buffIdList: ['', 'mark'],
+        tagQuery: { queryType: 'HasAny', tags: [] },
+      },
+    });
+    const raw = targetFixture('InstantSearch', {
+      finderData: { $type: 'Beyond.Gameplay.Core.Selector+SourceFinder+Data, Gameplay.Beyond' },
+      validatorData: [validator('HasBuff', 'Id'), validator('NotHasBuff', 'Id')],
+      postProcessorData: [],
+    });
+    const target = parseTargetReferenceSource(raw, 'target');
+    const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+    expect(projectActionTargetQuery(target, { ...TARGET_CONTEXT, graph }, 'target')).toEqual({
+      kind: 'buffFilter',
+      requireBuff: false,
+      query: { kind: 'id', buffIds: ['', 'mark'] },
+      targets: {
+        kind: 'buffFilter',
+        requireBuff: true,
+        query: { kind: 'id', buffIds: ['', 'mark'] },
+        targets: { kind: 'abilitySystemSource', owner: { kind: 'owner' } },
+      },
+    });
+    expect(() =>
+      parseTargetReferenceSource(
+        targetFixture('InstantSearch', {
+          finderData: { $type: 'Beyond.Gameplay.Core.Selector+SourceFinder+Data, Gameplay.Beyond' },
+          validatorData: [validator('Unknown', 'Id')],
+          postProcessorData: [],
+        }),
+        'invalid',
+      ),
+    ).toThrow('validateMode');
+  });
+  it('Buff 结束原因保留原生列表且不接受能力实体专属枚举', () => {
+    expect(
+      parseConditionLeafSource(
+        condition('CheckBuffFinishReason', { reasonList: ['LifeTime', 'Other'] }),
+        'reason',
+        {},
+      ),
+    ).toMatchObject({ kind: 'buffFinishReason', reasons: ['lifetime', 'other'] });
+    expect(() =>
+      parseConditionLeafSource(
+        condition('CheckBuffFinishReason', { reasonList: ['StackEvicted'] }),
+        'reason',
+        {},
+      ),
+    ).toThrow();
+  });
+
   it('实体技能中的当前主控技能检查不读取来源干员或事件技能', () => {
     const source = parseKnownNativeActionSequenceSource(
       {
@@ -57,15 +136,12 @@ describe('公共条件叶子 IR', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        source.actions[0]!,
-        {
-          actionOwnerTarget: 'currentAbilityEntity',
-          actionSourceTarget: 'caster',
-          actionTargetTarget: 'enemy',
-          graph: createActionGraphBuilder(),
-        },
-      ),
+      compileEventCondition(source.actions[0]!, {
+        actionOwnerTarget: 'currentAbilityEntity',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+        graph: createActionGraphBuilder(),
+      }),
     ).toEqual({
       kind: 'currentSkillTypeIn',
       target: { kind: 'mainCharacter' },
@@ -103,7 +179,93 @@ describe('公共条件叶子 IR', () => {
     });
     expect(isPresentationOnlyActionSequence(source)).toBe(false);
   });
-  it('静态敌人证明用于公共目标查询，未证明的组仍在运行时读取', () => {
+  it.each([true, false])('即时敌对命中盒保留范围查询及存活筛选 %s，不折叠为主敌人', checkAlive => {
+    const target = {
+      ...parseTargetReferenceSource(targetFixture('Owner'), 'target'),
+      targetSource: 'InstantSearch' as const,
+      finderType: 'HitBoxFinder' as const,
+      finderAutoSetTargetFaction: true,
+      finderFactionTarget: 'Anti' as const,
+      finderTargetObjectType: 'Normal' as const,
+      finderCheckAlive: checkAlive,
+      finderContainsUnMarkable: false,
+    };
+    const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+    expect(projectActionTargetQuery(target, { ...TARGET_CONTEXT, graph }, 'target')).toEqual({
+      kind: 'factionHitBox',
+      factionTarget: 'anti',
+      owner: { kind: 'owner' },
+      checkAlive,
+      containsUnmarkable: false,
+      replacePartsWithMainBodies: false,
+    });
+    expect(() =>
+      projectActionTargetQuery(
+        { ...target, postProcessorTypes: ['RandomPostProcessor'] },
+        { ...TARGET_CONTEXT, graph },
+        'target',
+      ),
+    ).toThrow();
+  });
+
+  it('普通队伍 finder 复用队伍查询，不吞掉未实现的后处理', () => {
+    const target = {
+      ...parseTargetReferenceSource(targetFixture('Owner'), 'target'),
+      targetSource: 'InstantSearch' as const,
+      finderType: 'CharacterTeamFinder' as const,
+    };
+    const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+    expect(projectActionTargetQuery(target, { ...TARGET_CONTEXT, graph }, 'target')).toEqual({
+      kind: 'characterTeam',
+      excludeOwner: false,
+    });
+    expect(() =>
+      projectActionTargetQuery(
+        { ...target, postProcessorTypes: ['RandomPostProcessor'] },
+        { ...TARGET_CONTEXT, graph },
+        'target',
+      ),
+    ).toThrow();
+  });
+
+  it('队伍排除后处理保留完整嵌套查询与selector owner身份', () => {
+    const target = parseTargetReferenceSource(
+      {
+        ...targetFixture('InstantSearch', {
+          finderData: {
+            $type: 'Beyond.Gameplay.Core.Selector+CharacterTeamFinder+Data, Gameplay.Beyond',
+          },
+          validatorData: [
+            { $type: 'Beyond.Gameplay.Core.Selector+ExcludeOwnerValidator+Data, Gameplay.Beyond' },
+          ],
+          postProcessorData: [
+            {
+              $type: 'Beyond.Gameplay.Core.Selector+ExcludeTarget+Data, Gameplay.Beyond',
+              excludedTargetSettings: targetFixture('MainCharacter'),
+              processTargetType: 'Targets',
+            },
+          ],
+        }),
+        selectorOwner: 'ActionSource',
+      },
+      'team',
+    );
+    const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+    expect(projectActionTargetQuery(target, { ...TARGET_CONTEXT, graph }, 'team')).toEqual({
+      kind: 'exclude',
+      targets: { kind: 'characterTeam', excludeOwner: true, owner: { kind: 'source' } },
+      excludeTargets: { kind: 'mainCharacter' },
+    });
+    expect(() =>
+      projectActionTargetQuery(
+        { ...target, postProcessorTypes: ['ExcludeTarget', 'RandomPostProcessor'] },
+        { ...TARGET_CONTEXT, graph },
+        'team',
+      ),
+    ).toThrow();
+  });
+
+  it('静态敌人证明不替代运行时命名目标组查询', () => {
     const target = parseTargetReferenceSource(
       targetFixture('Context', undefined, 'targets'),
       'target',
@@ -119,7 +281,7 @@ describe('公共条件叶子 IR', () => {
         { ...TARGET_CONTEXT, graph, staticEnemyTargetGroupKeys: new Set(['targets']) },
         'target',
       ),
-    ).toEqual({ kind: 'fixed', target: 'enemy' });
+    ).toEqual({ kind: 'context', key: 'targets' });
     expect(
       projectActionTargetQuery(
         target,
@@ -132,8 +294,7 @@ describe('公共条件叶子 IR', () => {
       expect(
         projectActionTargetQuery(input, { ...TARGET_CONTEXT, graph, actionTargetTarget }, 'target'),
       ).toEqual({
-        kind: 'fixed',
-        target: actionTargetTarget,
+        kind: 'inputTarget',
       });
     }
     for (const actionTargetTarget of ['actionInputTarget', 'eventTarget', 'eventSource'] as const) {
@@ -164,15 +325,16 @@ describe('公共条件叶子 IR', () => {
     );
     for (const actionTargetTarget of ['enemy', 'currentOperator', 'eventTarget'] as const) {
       expect(
-        compileEventCondition(
-          source.actions[0]!,
-          {
-            ...TARGET_CONTEXT,
-            actionTargetTarget,
-            graph: createActionGraphBuilder<CompiledBuffStepSource>(),
-          },
-        ),
-      ).toEqual({ kind: 'targetObjectTypeMatch', target: actionTargetTarget === 'enemy' ? { kind: 'fixed', target: 'enemy' } : { kind: 'inputTarget' }, objectTypes: ['character'] });
+        compileEventCondition(source.actions[0]!, {
+          ...TARGET_CONTEXT,
+          actionTargetTarget,
+          graph: createActionGraphBuilder<CompiledBuffStepSource>(),
+        }),
+      ).toEqual({
+        kind: 'targetObjectTypeMatch',
+        target: { kind: 'inputTarget' },
+        objectTypes: ['character'],
+      });
     }
   });
   it('查找主目标：缺宿主保留旧组，空结果覆盖旧组，敌方宿主仍查询全局主目标', () => {
@@ -187,9 +349,8 @@ describe('公共条件叶子 IR', () => {
       undefined,
       undefined,
       undefined,
-      undefined,
       {
-        mainTarget: () => (hasTarget ? { kind: 'enemy' } : undefined),
+        mainTarget: () => (hasTarget ? { kind: 'enemy', enemyId: 'enemy' } : undefined),
         ownerSpawned: () => [],
       },
     );
@@ -207,7 +368,7 @@ describe('公共条件叶子 IR', () => {
     expect(executor.execute(step, context)).toBe(false);
     expect(targets.get('result')).toEqual([{ kind: 'operator', operatorId: 'old' }]);
     expect(executor.execute(step, { ...context, actionOwnerId: 'enemy' })).toBe(true);
-    expect(targets.get('result')).toEqual([{ kind: 'enemy' }]);
+    expect(targets.get('result')).toEqual([{ kind: 'enemy', enemyId: 'enemy' }]);
     hasTarget = false;
     expect(executor.execute(step, { ...context, actionOwnerId: 'enemy' })).toBe(true);
     expect(targets.get('result')).toEqual([]);
@@ -219,7 +380,6 @@ describe('公共条件叶子 IR', () => {
         execute: () => true,
         evaluate: () => false,
       },
-      undefined,
       {
         listOperatorIds: () => ['first', 'second', 'third'],
         isOperatorControlled: () => false,
@@ -249,17 +409,27 @@ describe('公共条件叶子 IR', () => {
       },
       'target',
     );
-    const executor = new TargetContextOperationExecutor('operator', {
-      execute: () => true,
-      evaluate: () => false,
-    });
+    const executor = new TargetContextOperationExecutor(
+      'operator',
+      {
+        execute: () => true,
+        evaluate: () => false,
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+    );
+    if (query.kind !== 'battleMainTarget')
+      throw new Error('MainTarget must resolve to the battle target');
     expect(
       executor.queryTargets(query, {
         blackboard: new ActionBlackboard(),
         actionOwnerId: 'enemy',
-        actionInputTarget: { kind: 'operator', operatorId: 'operator' },
+        actionInputTargets: singleTargetList({ kind: 'operator', operatorId: 'operator' }),
       }),
-    ).toEqual([{ kind: 'enemy' }]);
+    ).toEqual([{ kind: 'enemy', enemyId: 'enemy' }]);
   });
   it('原始 SkillData 的技能类型数字枚举与已解码名称一致', () => {
     const payload = {
@@ -621,6 +791,102 @@ it.each([false, true])('队友遍历保留独立循环和条件调用，排除 O
   expect(formal.nodes[action.body.$sequence!]!.action.kind).toBe('checkCondition');
 });
 
+it('原生队伍遍历在已编译图中实时排除Owner与保护组，并把迭代目标传给属性读取', () => {
+  const sequence = (actionData: unknown[]) => ({
+    actionData,
+    onlyExecuteWhenSourceIsMainChar: false,
+    onlyExecuteWhenSourceIsGuard: false,
+  });
+  const source = parseKnownNativeActionSequenceSource(
+    sequence([
+      condition('ForEachAction', {
+        target: targetFixture('InstantSearch', {
+          finderData: {
+            $type: 'Beyond.Gameplay.Core.Selector+CharacterTeamFinder+Data, Gameplay.Beyond',
+          },
+          validatorData: [
+            { $type: 'Beyond.Gameplay.Core.Selector+ExcludeOwnerValidator+Data, Gameplay.Beyond' },
+          ],
+          postProcessorData: [
+            {
+              $type: 'Beyond.Gameplay.Core.Selector+ExcludeTarget+Data, Gameplay.Beyond',
+              excludedTargetSettings: targetFixture('Context', undefined, 'protected'),
+              processTargetType: 'Targets',
+            },
+          ],
+        }),
+        action: sequence([
+          condition('SaveCharTypeIdToInt', { target: targetFixture('Target'), storeKey: 'code' }),
+        ]),
+      }),
+    ]),
+    'loop',
+    {},
+  );
+  const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(source, { ...TARGET_CONTEXT, graph }, new Set());
+  const formal = extractGraphDataNodes(graph.finish());
+  expect(
+    Object.values(formal.nodes)
+      .map(node => node.action.kind)
+      .sort(),
+  ).toEqual(['forEachContextTarget', 'storeCharacterTypeCode']);
+  const compiled = createActionGraphCompilation(formal, 1).compileEntry(entry, 'loop');
+  const targets = new TargetContextOperationExecutor(
+    'owner',
+    { execute: () => false, evaluate: () => false },
+    {
+      listOperatorIds: () => ['owner', 'second', 'protected', 'last'],
+      isOperatorControlled: () => false,
+      resolveVitals: () => {
+        throw new Error('identity lookup must not query health');
+      },
+    },
+    undefined,
+    undefined,
+    undefined,
+    {
+      mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }),
+      ownerSpawned: () => [],
+      exclusionTarget: target => target,
+    },
+  );
+  const visited: string[] = [];
+  const board = new ActionBlackboard({ code: -1 });
+  const targetContext = new RuntimeTargetContext();
+  targetContext.set('protected', [{ kind: 'operator', operatorId: 'protected' }]);
+  const blackboard = new ActionBlackboardOperationExecutor(
+    targets,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      sourceId: 'owner',
+      queryTargets: (query, context) => targets.queryTargets(query, context),
+      resolve: id => {
+        visited.push(id);
+        return id === 'second' ? 'nature' : 'heat';
+      },
+    },
+  );
+  const runtime = new CombatActionSequenceRuntime(
+    {
+      execute: (step, context) => blackboard.execute(step, context),
+      evaluate: (condition, context) => blackboard.evaluate(condition, context),
+      queryTargets: (query, context) => targets.queryTargets(query, context),
+    },
+    { blackboard: board, targetContext, actionOwnerId: 'owner' },
+  ).createSequence(compiled);
+  expect(runtime.executeInstant({})).toBe(true);
+  expect(visited).toEqual(['last', 'second']);
+  expect(board.getNumber('code')).toBe(3);
+  visited.length = 0;
+  targetContext.set('protected', [{ kind: 'operator', operatorId: 'last' }]);
+  expect(runtime.executeInstant({})).toBe(true);
+  expect(visited).toEqual(['protected', 'second']);
+});
+
 it('仍影响返回结果的方向夹角条件拒绝发布，不以零度代算', () => {
   const graph = createActionGraphBuilder<CompiledBuffStepSource>();
   const source = parseKnownNativeActionSequenceSource(
@@ -733,7 +999,7 @@ it('距离检查保留一个原生调用，查询在每次执行时读取，空�
     { blackboard: new ActionBlackboard(), targetContext: targets, actionOwnerId: 'owner' },
   ).createSequence(compiled);
   expect(runtime.executeInstant({})).toBe(false);
-  targets.set('target', [{ kind: 'enemy' }]);
+  targets.set('target', [{ kind: 'enemy', enemyId: 'enemy' }]);
   expect(runtime.executeInstant({})).toBe(true);
   targets.set('target', []);
   expect(runtime.executeInstant({})).toBe(false);
@@ -896,9 +1162,8 @@ it('原生实体计数每次重新查询，比较失败不写值，保留一个�
       undefined,
       undefined,
       undefined,
-      undefined,
       {
-        mainTarget: () => ({ kind: 'enemy' }),
+        mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }),
         ownerSpawned: () => [],
         entityLifeState: () => (alive ? 'alive' : 'dead'),
       },
@@ -1010,4 +1275,108 @@ it('裁空方向分支时删除直接读取条件，但不吞掉未证明无副�
     finderType: 'RandomPointFinder',
   });
   expect(compile).toThrow('unsupported');
+});
+
+it('武器类型条件动态读取查询首目标，掩码不与武器编号混淆', () => {
+  const projectionContext = {
+    ...TARGET_CONTEXT,
+    graph: createActionGraphBuilder<CompiledBuffStepSource>(),
+  };
+  const parse = (weaponTypes: string | number) =>
+    parseKnownNativeActionSequenceSource(
+      {
+        onlyExecuteWhenSourceIsMainChar: false,
+        onlyExecuteWhenSourceIsGuard: false,
+        actionData: [
+          condition('CheckWeaponTypeCondition', {
+            checkTarget: targetFixture('Target'),
+            weaponTypes,
+          }),
+        ],
+      },
+      'weapon',
+      {},
+    ).actions[0]!;
+  const source = parse('Sword, Claymores, Lance');
+  const projected = compileEventCondition(source, projectionContext);
+  if (projected?.kind !== 'operatorWeaponTypeIn') throw new Error('expected weapon condition');
+  expect(projected).toEqual({
+    kind: 'operatorWeaponTypeIn',
+    target: { kind: 'inputTarget' },
+    weaponTypes: ['sword', 'claym', 'lance'],
+  });
+  expect(parse(42)).toEqual(source);
+  expect(compileEventCondition(parse('None'), projectionContext)).toMatchObject({
+    weaponTypes: [],
+  });
+  expect(compileEventCondition(parse('All'), projectionContext)).toMatchObject({
+    weaponTypes: ['sword', 'funnel', 'claym', 'lance', 'pistol'],
+  });
+  expect(compileEventCondition(parse('Gun'), projectionContext)).toMatchObject({
+    weaponTypes: [],
+  });
+  expect(() => parse(128)).toThrow('unknown weapon type mask');
+  expect(() => parse('Sword, FutureWeapon')).toThrow('unknown weapon type');
+
+  const targets = new RuntimeTargetContext();
+  targets.set('picked', [
+    { kind: 'operator', operatorId: 'first' },
+    { kind: 'operator', operatorId: 'second' },
+  ]);
+  const queryRuntime = new TargetContextOperationExecutor('owner', {
+    execute: () => false,
+    evaluate: () => false,
+  });
+  const executor = new ActionBlackboardOperationExecutor(
+    queryRuntime,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      queryTargets: (query, context) => queryRuntime.queryTargets(query, context),
+      resolve: () => undefined,
+      readWeaponType: id => (id === 'first' ? 'funnel' : 'sword'),
+    },
+  );
+  const context = { blackboard: new ActionBlackboard(), targetContext: targets };
+  const runtimeCondition = { ...projected, target: { kind: 'context', key: 'picked' } } as const;
+  expect(executor.evaluate(runtimeCondition, context)).toBe(false);
+  targets.set('picked', [{ kind: 'operator', operatorId: 'second' }]);
+  expect(executor.evaluate(runtimeCondition, context)).toBe(true);
+  targets.set('picked', [
+    { kind: 'enemy', enemyId: 'enemy' },
+    { kind: 'operator', operatorId: 'second' },
+  ]);
+  expect(executor.evaluate(runtimeCondition, context)).toBe(false);
+  targets.set('picked', []);
+  expect(executor.evaluate(runtimeCondition, context)).toBe(false);
+});
+
+it('全局Buff条件保留运行时查询和黑板阈值，不把缺少当前实例折叠为0', () => {
+  const sequence = parseKnownNativeActionSequenceSource(
+    {
+      onlyExecuteWhenSourceIsMainChar: false,
+      onlyExecuteWhenSourceIsGuard: false,
+      actionData: [
+        {
+          ...CONDITION_META,
+          $type: 'Beyond.Gameplay.Core.CheckGlobalBuffStackNum+Data, Gameplay.Beyond',
+          buffId: 'global',
+          compareType: 'GE',
+          value: scalarFixture(0, 'minimum'),
+        },
+      ],
+    },
+    'global',
+    {},
+  );
+  const graph = createActionGraphBuilder<CompiledBuffStepSource>();
+  expect(compileEventCondition(sequence.actions[0]!, { ...TARGET_CONTEXT, graph })).toEqual({
+    kind: 'globalBuffCountCompare',
+    globalBuffId: 'global',
+    operator: 'greaterOrEqual',
+    value: { kind: 'blackboard', key: 'minimum' },
+  });
 });

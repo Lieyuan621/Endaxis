@@ -61,6 +61,14 @@ export class RuntimeTargetContext {
     this.set(key, [target]);
   }
 
+  /** Buff 创建等原生复制边沿使用独立容器，之后的写入互不影响。 */
+  snapshot(): RuntimeTargetContextState {
+    const copy = createRuntimeTargetContextState();
+    for (const [key, targets] of this.runtimeState.groups)
+      setRuntimeTargetGroup(copy, key, targets);
+    return copy;
+  }
+
   get(key: string): RuntimeTargetGroup {
     const targets = this.runtimeState.groups.get(key);
     if (targets === undefined) {
@@ -90,7 +98,10 @@ export class RuntimeTargetContext {
 /** 比较稳定目标身份，不序列化或分配临时字符串。 */
 export function sameRuntimeTarget(left: RuntimeTargetRef, right: RuntimeTargetRef): boolean {
   if (left.kind !== right.kind) return false;
-  if (left.kind === 'enemy' || left.kind === 'godEntity') return true;
+  if (left.kind === 'godEntity') return true;
+  if (left.kind === 'enemy' && right.kind === 'enemy') {
+    return left.enemyId === right.enemyId;
+  }
   if (left.kind === 'operator' && right.kind === 'operator') {
     return left.operatorId === right.operatorId;
   }

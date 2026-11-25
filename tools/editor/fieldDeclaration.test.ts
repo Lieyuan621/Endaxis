@@ -81,12 +81,12 @@ test('readonly slots, native IDs and blackboard origins require their declaratio
   assert.deepEqual(
     metadata(
       'interface EnemyDefinition { levelHp: number[] }',
-      'src/core/game-data/enemyDefinition.ts',
+      'packages/game-data-contract/src/enemies.ts',
     ).levelHp,
     [{ readonlyDeclaration: true }],
   );
   assert.deepEqual(
-    metadata('interface Other { levelHp: number[] }', 'src/core/game-data/enemyDefinition.ts')
+    metadata('interface Other { levelHp: number[] }', 'packages/game-data-contract/src/enemies.ts')
       .levelHp,
     [{}],
   );

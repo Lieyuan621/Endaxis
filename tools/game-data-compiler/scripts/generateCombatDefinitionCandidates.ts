@@ -12,7 +12,7 @@ import {
 } from './generateOperatorDefinitionCandidates.ts';
 import { compileEntityValueConsumers } from './compileEntityValueConsumers.ts';
 import { renderWeaponDefinitionsFromCompiled } from './generateWeaponDefinitions.ts';
-import { formatGeneratedSource } from './formatGeneratedSource.ts';
+import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 import { renderGearDefinitionsFromCompiled } from './generateGearDefinitions.ts';
 import { renderGearSetDefinitionsFromCompiled } from './generateGearSetDefinitions.ts';
 import { renderContingencyContractDefinitionsFromCompiled } from './generateContingencyContractDefinitions.ts';
@@ -77,6 +77,7 @@ export async function generateCombatDefinitionCandidates(args: CombatDefinitionC
     readonly files: readonly RenderedDefinitionFileSource[];
   }[] = [];
   const resources: ResourceDomainReport[] = [];
+  const mechanicFiles: RenderedDefinitionFileSource[] = [];
   let consumableBuffFile: RenderedDefinitionFileSource | undefined;
   // 只保留投影后的定义；全部消费者收齐后再优化，不重复编译来源。
   const pendingRendering: ((
@@ -142,10 +143,12 @@ export async function generateCombatDefinitionCandidates(args: CombatDefinitionC
           args.optimization,
           sharedUsage,
         );
-        outputs.push({
-          directory: path.join(candidateRoot, 'src/data/contingencyContract/generated'),
-          files: rendered.files,
-        });
+        if (mechanicFiles.length === 0)
+          outputs.push({
+            directory: path.join(candidateRoot, 'src/data/contingencyContract/generated'),
+            files: mechanicFiles,
+          });
+        mechanicFiles.push(...rendered.files);
         resources.push({ domain: 'mechanics', summary: rendered.summary });
       });
     },

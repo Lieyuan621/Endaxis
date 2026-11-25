@@ -8,7 +8,7 @@ import type { BuffOperationTarget } from '../../buffs/buffOperationExecutor';
 import { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRuntime';
 import type { CriticalSampleSource } from '../../random/criticalSampleSource';
 import type { ProbabilitySampleSource } from '../../random/probabilitySampleSource';
-import type { SimulationRandomMode } from '../../random/simulationRandom';
+import type { SimulationRandomMode, RangeSampleSource } from '../../random/simulationRandom';
 import {
   SimulationRandomSource,
   type SimulationRandomSettings,
@@ -33,6 +33,7 @@ import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePrep
 
 type RestoredCombatEnvironmentBase = Omit<
   StandardPlayerDamageEnvironmentOptions,
+  | 'primaryEnemyId'
   | 'enemyVitals'
   | 'randomState'
   | 'restoredState'
@@ -40,12 +41,14 @@ type RestoredCombatEnvironmentBase = Omit<
   | 'restoredBuffStates'
   | 'criticalSamples'
   | 'probabilitySamples'
+  | 'rangeSamples'
   | 'randomMode'
 >;
 
 type DirectRestoredCombatEnvironmentInput = RestoredCombatEnvironmentBase & {
   readonly criticalSamples: CriticalSampleSource;
   readonly probabilitySamples?: ProbabilitySampleSource;
+  readonly rangeSamples?: RangeSampleSource;
   readonly randomMode?: SimulationRandomMode;
   readonly simulationRandomSettings?: never;
 };
@@ -56,6 +59,7 @@ export type RestoredCombatEnvironmentInput =
       readonly simulationRandomSettings: SimulationRandomSettings;
       readonly criticalSamples?: never;
       readonly probabilitySamples?: never;
+      readonly rangeSamples?: never;
       readonly randomMode?: never;
     });
 
@@ -133,14 +137,17 @@ export function bindRestoredCombatRuntimeFoundation(
       ? new StandardPlayerDamageEnvironment({
           ...(environmentInput as DirectRestoredCombatEnvironmentInput),
           ...restorationOptions,
+          primaryEnemyId: graph.enemy.id,
         })
       : new StandardPlayerDamageEnvironment({
           ...environmentInput,
           criticalSamples: restoredRandomSource!,
           probabilitySamples: restoredRandomSource!,
+          rangeSamples: restoredRandomSource!,
           randomMode: simulationRandomSettings!.mode,
           randomState,
           ...restorationOptions,
+          primaryEnemyId: graph.enemy.id,
         });
   const boundEnvironment =
     environment.runtimeOptions.bindBattleRuntime?.({
@@ -149,6 +156,7 @@ export function bindRestoredCombatRuntimeFoundation(
       clock: shared.clock,
       resources: shared.resources,
       receipt: shared.receipt,
+      resolveCombatSemanticEvents: (): CombatSemanticEventRuntime => semanticEvents,
       resolveProjectileRuntimeDependencies: options.resolveProjectileRuntimeDependencies,
     }) ?? {};
   if (boundEnvironment.environmentState !== graph.environment) {
@@ -174,7 +182,6 @@ export function bindRestoredCombatRuntimeFoundation(
     const target = createOperatorBuffRuntime(
       operatorId,
       program.panel,
-      program.reactionModifiers,
       operatorBuffStates.get(operatorId),
     );
     if (target.runtimeState !== operatorBuffStates.get(operatorId)) {

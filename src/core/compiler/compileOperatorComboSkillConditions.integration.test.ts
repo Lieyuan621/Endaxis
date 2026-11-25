@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../project/level';
 import { fixtureGameplayTagRegistry } from '../../../tools/game-data-compiler/test/gameplayTagFixtures.ts';
 import { describe, expect, it } from 'vitest';
 import { unityComboConditionFixture } from '../../../tools/game-data-compiler/test/unityComboConditionFixture.ts';
@@ -12,6 +13,8 @@ import { compileSkillTargetSelection } from '../../../tools/game-data-compiler/s
 import { createGameDataRepository } from '../../data/gameDataRepository';
 import { elementalAttachments } from '../../data/buffs/elementalAttachments';
 import { skillSettings } from '../../data/combat/skillSettings';
+import { GAMEPLAY_TAG_PREDEFINE } from '../../data/combat/gameplayTagPredefine.generated';
+import { GameplayTagPredefine } from '../combat/tags/gameplayTagPredefine';
 import { commonBuffDefinitions } from '../../data/buffs/commonDefinitions';
 import { timeDilationRuntimeConfig } from '../../data/combat/timeDilationConfig';
 import { createEmptyProject } from '../project/createProject';
@@ -271,13 +274,16 @@ describe('原生条件经正式项目定义进入实际附着', () => {
         expect(restoredDefinition.entityBlackboard?.EntityBB_wisd_greater_will).toBe(deckGate);
         expect(restoredDefinition.entityBlackboardInitializers).toEqual([]);
         const environment = new StandardPlayerDamageEnvironment({
+          primaryEnemyId: 'enemy',
           criticalSamples: { nextCriticalSample: () => 1 },
           resolveNonRandomRuntimeSnapshot: () => ({
             runtimeExtensionMultiplier: 1,
             appliesIgniteDamageMultiplier: false,
             appliesPhysicalInflictionDamageMultiplier: false,
           }),
-          enemyVitals: createEnemyCombatVitals(compileScenarioEnemy(restoredScenario.enemy)),
+          enemyVitals: createEnemyCombatVitals(
+            compileScenarioEnemy(firstScenarioEnemy(restoredScenario).enemy),
+          ),
           elementalInflictionDocument: elementalAttachments,
           spellInflictionSettings: skillSettings,
         });
@@ -293,14 +299,15 @@ describe('原生条件经正式项目定义进入实际附着', () => {
           environment: {
             comboSkillPendingInterval: 5,
             ...environment.runtimeOptions,
+            skillAvailabilityTags: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
             timeDilation: {
               config: timeDilationRuntimeConfig,
             },
             onPendingComboCondition: (operatorId, program, value) => {
               expect(operatorId).toBe('owner');
               expect(value.assignPairs).toEqual({ consumed_layer: 0, consumed_type: 0 });
-              expect(value.inputTarget).toEqual({ kind: 'operator', operatorId: 'owner' });
-              expect(value.triggerTarget).toEqual({ kind: 'enemy' });
+              expect(value.inputTargets).toEqual([{ kind: 'operator', operatorId: 'owner' }]);
+              expect(value.triggerTargets).toEqual([{ kind: 'enemy', enemyId: 'enemy' }]);
               pending.push(program.key);
             },
           },

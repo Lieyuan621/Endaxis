@@ -1,9 +1,10 @@
+import { EMPTY_GRAPH_IMPORTS } from './actionGraphImports';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs.ts';
 import type { AbilityEntityDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import type {
   ActionGraphDefinitionRepository,
-  ImportedAbilityEntityDefinitions,
+  ActionGraphImports,
 } from './actionGraphDefinitionRepository';
 
 import { compileSkillProgram } from './compileSkillProgram';
@@ -25,7 +26,7 @@ interface CompileSkillMetadata {
 
 export interface CompileSkillInput extends CompileSkillMetadata {
   readonly programs: ActionGraphDefinitionRepository;
-  readonly importedAbilityEntityDefinitions?: ImportedAbilityEntityDefinitions;
+  readonly resourceImports?: ActionGraphImports;
 }
 
 /** 分别编译 Buff 的局部图；调用方用原生 Buff ID 组织这些独立结果。 */
@@ -33,7 +34,7 @@ export function compileIndependentBuffResource(
   definition: SkillBuffDefinition | StaticBuffDefinition,
   id: string,
   programs: ActionGraphDefinitionRepository,
-  imports?: ImportedAbilityEntityDefinitions,
+  imports?: ActionGraphImports,
 ): ResolvedSkillBuffDefinition {
   const compiler = createProgramDefinitionCompiler(
     0,
@@ -51,13 +52,13 @@ export function compileIndependentAbilityEntityResource(
   id: string,
   level: number,
   programs: ActionGraphDefinitionRepository,
-  imports?: ImportedAbilityEntityDefinitions,
+  imports?: ActionGraphImports,
 ): ResolvedAbilityEntityDefinition {
   return createIndependentAbilityEntityImportResolver(
     { [id]: definition },
     programs,
-    () => imports ?? {},
-  )(level)[id]!;
+    () => imports ?? EMPTY_GRAPH_IMPORTS,
+  )(level).abilityEntities[id]!;
 }
 
 export function compileSkill(input: CompileSkillInput) {
@@ -65,7 +66,7 @@ export function compileSkill(input: CompileSkillInput) {
     input.skill.actionGraph,
     input.skillLevel,
     input.abilityEntityDefinitions,
-    input.importedAbilityEntityDefinitions,
+    input.resourceImports,
   );
   const program = compileSkillProgram(
     input,

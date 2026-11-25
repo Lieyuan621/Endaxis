@@ -9,7 +9,15 @@ function receipt(
   sourceId?: string,
   data?: CombatReceiptEntry['data'],
 ): CombatReceiptEntry {
-  return { sequence, frame, time: frame / 30, event, sourceId, data };
+  return {
+    sequence,
+    frame,
+    time: frame / 30,
+    event,
+    sourceId,
+    data,
+    ...(event.startsWith('Poise') ? { targetId: 'enemy' } : {}),
+  };
 }
 
 const curves = {
@@ -40,6 +48,7 @@ function project(
   operatorPassiveUis: Parameters<typeof projectCombatHudSnapshot>[0]['operatorPassiveUis'] = [],
 ) {
   return projectCombatHudSnapshot({
+    enemyTargetId: 'enemy',
     frame,
     endFrame: 60,
     resourceCurves: curves,
@@ -136,6 +145,7 @@ describe('projectCombatHudSnapshot', () => {
   it('rejects frames outside the simulated snapshot range', () => {
     expect(() =>
       projectCombatHudSnapshot({
+        enemyTargetId: 'enemy',
         frame: 61,
         endFrame: 60,
         resourceCurves: curves,

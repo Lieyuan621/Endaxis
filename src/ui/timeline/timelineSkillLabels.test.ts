@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createI18n } from 'vue-i18n';
-import zh from '../../i18n/locales/zh-CN.json';
+import zh from '../../i18n/locales/zh-CN/common.json';
 import { operationName } from './operationNames';
 import type { TimelineSkillLibraryEntryViewModel } from './timelineEditorViewModel';
 import {

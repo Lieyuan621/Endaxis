@@ -1,9 +1,27 @@
+import { readGameplayTagPaths } from './readGameplayTagPaths.ts';
+import {
+  projectEnemyAttributeModifier,
+  projectEnemyBirthBuffOption,
+} from '../src/domains/enemy/birthBuffOptions.ts';
+import type { AttributeModifier } from '../../../packages/game-data-contract/src/modifiers.ts';
+
+import { isDeepStrictEqual } from 'node:util';
+import type { OperatorBuffDefinitions } from '../../../packages/game-data-contract/src/index.ts';
+import { compileEnemyBirthBuffPrograms } from '../src/domains/enemy/birthBuffPrograms.ts';
+import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/definitionSourceRenderer.ts';
+import type {
+  EnemyBirthBuffOption,
+  EnemyWeaknessBreakOption,
+} from '../../../packages/game-data-contract/src/enemies.ts';
+import { compileEnemyWeaknessBreakOptions } from '../src/domains/enemy/weaknessBreakOptions.ts';
 import { imageRefFromPath } from '../src/compiler/publication/imageResources.ts';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
-import { isAbsolute, join, resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { format, resolveConfig } from 'prettier';
 import { ENEMY_LEVELS } from '../../../packages/game-data-contract/src/enemies.ts';
+import { generateEnemyStageCatalog } from './generateEnemyStageCatalog.ts';
+import { parseModifierTypeValue } from '../src/source/attributeModifiers.ts';
 
 const TIER_BY_DISPLAY_TYPE = {
   0: 'normal',
@@ -19,22 +37,31 @@ interface Arguments {
   readonly runtimeDefaults: string;
   readonly selectionCategories?: string;
   readonly outputDirectory: string;
+  readonly localeDirectory: string;
+  readonly buffDirectory: string;
+  readonly skillDirectory: string;
+  readonly spawnerDirectory: string;
+  readonly levelDirectory?: string;
   readonly check: boolean;
 }
 
 const DEFAULT_SELECTION_CATEGORIES = resolve(
-  'tools/game-data-compiler/config/enemies/selection-categories.json',
+  'tools/game-data-compiler/config/enemies/hidden-enemies.json',
 );
 
 interface EnemySelectionCatalog {
   readonly categories: readonly string[];
+  readonly enemyOrder: readonly string[];
   readonly categoryByEnemyId: Readonly<Record<string, string>>;
   readonly hiddenEnemyIds: readonly string[];
 }
 
 interface EnemyDefinitionSource {
+  readonly attributeModifiers?: readonly AttributeModifier[];
+  readonly birthBuffs?: readonly EnemyBirthBuffOption[];
   readonly id: string;
   readonly gameId: string;
+  readonly templateId: string;
   readonly icon?: string;
   readonly tier: (typeof TIER_BY_DISPLAY_TYPE)[keyof typeof TIER_BY_DISPLAY_TYPE];
   readonly rank: 'mob' | 'boss' | 'elite';
@@ -49,6 +76,7 @@ interface EnemyDefinitionSource {
     readonly knotThresholds: readonly number[];
     readonly knotBreakDurationSeconds: number;
     readonly brokenDurationSeconds: number;
+    readonly recoveryTimeMultiplier?: number;
     readonly finisherSpRecovery: number;
   };
   readonly finisherMultiplier: number;
@@ -59,6 +87,8 @@ export async function planEnemyDefinitions(
   rankEvidencePath: string,
   runtimeDefaultsPath: string,
   selectionCategoriesPath = DEFAULT_SELECTION_CATEGORIES,
+  stageVariantIds: readonly string[] = [],
+  buffDirectory?: string,
 ) {
   const displayTable = await readTable(tablesDirectory, 'EnemyTemplateDisplayInfoTable');
   const enemyTable = await readTable(tablesDirectory, 'EnemyTable');
@@ -84,18 +114,73 @@ export async function planEnemyDefinitions(
   const excludedDisplayIds = Object.keys(displayTable)
     .filter(gameId => !gameId.startsWith('eny_'))
     .sort((left, right) => left.localeCompare(right));
-  const selection = await readEnemySelectionCatalog(selectionCategoriesPath, gameIds);
-  const definitions = gameIds.map(gameId => {
-    const display = requireRecord(displayTable[gameId], `EnemyTemplateDisplayInfoTable.${gameId}`);
-    if (requireString(display.templateId, `${gameId}.display.templateId`) !== gameId) {
+  const selection = await readEnemySelectionCatalog(
+    selectionCategoriesPath,
+    gameIds,
+    tablesDirectory,
+  );
+  const definitionIds = [...gameIds, ...stageVariantIds.filter(id => !gameIds.includes(id))];
+  const birthSources = new Map<string, Record<string, unknown>>();
+  if (buffDirectory) {
+    const ids = new Set(
+      definitionIds.flatMap(id =>
+        requireArray(requireRecord(enemyTable[id], id).bornBuffs ?? [], `${id}.bornBuffs`).map(
+          buffId => requireString(buffId, `${id}.bornBuffs`),
+        ),
+      ),
+    );
+    for (const id of ids) {
+      const path = join(buffDirectory, `${id}.json`);
+      birthSources.set(id, JSON.parse(await readFile(path, 'utf8')));
+    }
+  }
+  const birthPrograms = buffDirectory
+    ? compileEnemyBirthBuffPrograms(
+        buffDirectory,
+        readGameplayTagPaths('src/data/combat/gameplayTagCatalog.generated.ts'),
+      )
+    : {};
+  const definitions = definitionIds.map(gameId => {
+    const enemy = requireRecord(enemyTable[gameId], `EnemyTable.${gameId}`);
+    const baseId = requireString(enemy.templateId, `${gameId}.enemy.templateId`);
+    const birthBuffs: EnemyBirthBuffOption[] = [];
+    for (const [index, rawId] of requireArray(
+      enemy.bornBuffs ?? [],
+      `${gameId}.bornBuffs`,
+    ).entries()) {
+      const buffId = requireString(rawId, gameId);
+      const source = birthSources.get(buffId);
+      if (source) {
+        const option = projectEnemyBirthBuffOption(
+          source,
+          buffId,
+          'enemy',
+          index,
+          {},
+          buffDirectory,
+        );
+        if (option) birthBuffs.push(option);
+      }
+    }
+    const attributeModifiers = requireArray(enemy.attrModifiers ?? [], gameId).map(raw => {
+      const modifier = requireRecord(raw, gameId);
+      if (modifier.modifyAttributeType !== 0)
+        throw new Error(`${gameId}: expected Specific target`);
+      return projectEnemyAttributeModifier(
+        requireInteger(modifier.attrType, gameId),
+        parseModifierTypeValue(modifier.modifierType, gameId),
+        requireFinite(modifier.attrValue, gameId),
+      );
+    });
+    const display = requireRecord(displayTable[baseId], `EnemyTemplateDisplayInfoTable.${baseId}`);
+    if (requireString(display.templateId, `${gameId}.display.templateId`) !== baseId) {
       throw new Error(`${gameId}: display template identity mismatch`);
     }
-    const template = requireRecord(templateTable[gameId], `EnemyTemplateTable.${gameId}`);
-    if (requireString(template.templateId, `${gameId}.template.templateId`) !== gameId) {
+    const template = requireRecord(templateTable[baseId], `EnemyTemplateTable.${baseId}`);
+    if (requireString(template.templateId, `${gameId}.template.templateId`) !== baseId) {
       throw new Error(`${gameId}: template identity mismatch`);
     }
-    const enemy = requireRecord(enemyTable[gameId], `EnemyTable.${gameId}`);
-    if (requireString(enemy.templateId, `${gameId}.enemy.templateId`) !== gameId) {
+    if (!stageVariantIds.includes(gameId) && baseId !== gameId) {
       throw new Error(`${gameId}: enemy template identity mismatch`);
     }
     const attributeTemplateId = requireString(
@@ -106,7 +191,7 @@ export async function planEnemyDefinitions(
       attributeTable[attributeTemplateId],
       `EnemyAttributeTemplateTable.${attributeTemplateId}`,
     );
-    const rankEntry = requireRecord(ranks[gameId], `${rankEvidencePath}.enemies.${gameId}`);
+    const rankEntry = requireRecord(ranks[baseId], `${rankEvidencePath}.enemies.${baseId}`);
     const rank = requireRank(rankEntry.rank, `${gameId}.rank`);
     const iconAssetPath = optionalString(rankEntry.iconAssetPath, `${gameId}.iconAssetPath`);
     const displayType = requireInteger(display.displayType, `${gameId}.displayType`);
@@ -123,11 +208,17 @@ export async function planEnemyDefinitions(
         `${gameId}.levelDependentAttributes[${index}].attrs`,
       );
       const level = requirePositiveInteger(values.get(0), `${gameId}.level[${index}]`);
-      const hp = requirePositive(values.get(1), `${gameId}.hp[${index}]`);
+      const hp = requirePositive(
+        requireFinite(values.get(1), `${gameId}.hp[${index}]`),
+        `${gameId}.hp[${index}]`,
+      );
       return {
         level,
         hp,
-        defense: requireFiniteNonNegative(values.get(3), `${gameId}.defense[${index}]`),
+        defense: requireFiniteNonNegative(
+          requireFinite(values.get(3), `${gameId}.defense[${index}]`),
+          `${gameId}.defense[${index}]`,
+        ),
       };
     });
     if (levelHp.length === 0) throw new Error(`${gameId}: no level-dependent attributes`);
@@ -166,8 +257,11 @@ export async function planEnemyDefinitions(
 
     return {
       id: gameId.replaceAll('_', '-'),
+      ...(attributeModifiers.length ? { attributeModifiers } : {}),
+      ...(birthBuffs.length ? { birthBuffs } : {}),
       gameId,
-      ...(iconAssetPath === undefined ? {} : { icon: imageRefFromPath(`/enemies/${gameId}.webp`) }),
+      templateId: baseId,
+      ...(iconAssetPath === undefined ? {} : { icon: imageRefFromPath(`/enemies/${baseId}.webp`) }),
       tier,
       rank,
       levelHp: levelHp.map(({ level, hp }) => ({ level, hp })),
@@ -189,8 +283,16 @@ export async function planEnemyDefinitions(
         knotBreakDurationSeconds,
         brokenDurationSeconds: requireFiniteNonNegative(
           independentValues.get(21),
-          `${gameId}.brokenDuration`,
+          `${gameId}.PoiseRecTime`,
         ),
+        ...(independentValues.has(31) && independentValues.get(31) !== 1
+          ? {
+              recoveryTimeMultiplier: requireFiniteNonNegative(
+                independentValues.get(31),
+                `${gameId}.PoiseRecTimeScalar`,
+              ),
+            }
+          : {}),
         finisherSpRecovery: requireFiniteNonNegative(
           attributes.breakingAttackedAtbObtain,
           `${gameId}.finisherSpRecovery`,
@@ -215,7 +317,14 @@ export async function planEnemyDefinitions(
     throw new Error(`rank evidence has non-display enemies: ${extraRanks.join(', ')}`);
   return {
     definitions,
-    selection,
+    birthPrograms,
+    selection: {
+      ...selection,
+      hiddenEnemyIds: [
+        ...selection.hiddenEnemyIds,
+        ...stageVariantIds.filter(id => !gameIds.includes(id)).map(id => id.replaceAll('_', '-')),
+      ],
+    },
     excludedDisplayIds,
     compatibilityDefaults: {
       knotBreakDurationSeconds,
@@ -225,15 +334,44 @@ export async function planEnemyDefinitions(
 }
 
 export async function generateEnemyDefinitions(args: Arguments) {
+  const stageCatalog = await generateEnemyStageCatalog(args);
+  const stageVariantIds = [
+    ...new Set(
+      stageCatalog.stages.flatMap(stage => stage.enemies.map(enemy => enemy.source.enemyId)),
+    ),
+  ];
   const plan = await planEnemyDefinitions(
     args.tablesDirectory,
     args.rankEvidence,
     args.runtimeDefaults,
     args.selectionCategories,
+    stageVariantIds,
+    args.buffDirectory,
   );
   const prettierConfig = (await resolveConfig(resolve('.prettierrc.json'))) ?? {};
+  const weaknessOptions = compileEnemyWeaknessBreakOptions(
+    [...new Set(plan.definitions.map(enemy => enemy.templateId))],
+    args.skillDirectory,
+    args.buffDirectory,
+  );
+  const requiredLevels = new Map<string, Set<number>>();
+  for (const stage of stageCatalog.stages) {
+    for (const enemy of stage.enemies) {
+      if (enemy.definitionId === null || enemy.level === null) continue;
+      const levels = requiredLevels.get(enemy.definitionId) ?? new Set<number>();
+      levels.add(enemy.level);
+      requiredLevels.set(enemy.definitionId, levels);
+    }
+  }
   const content = await format(
-    renderDefinitions(plan.definitions, plan.selection, plan.compatibilityDefaults.evidence),
+    renderDefinitions(
+      plan.definitions,
+      plan.selection,
+      plan.compatibilityDefaults.evidence,
+      requiredLevels,
+      plan.birthPrograms,
+      weaknessOptions,
+    ),
     {
       ...prettierConfig,
       parser: 'typescript',
@@ -249,6 +387,7 @@ export async function generateEnemyDefinitions(args: Arguments) {
   }
   return {
     definitionCount: plan.definitions.length,
+    stageCount: stageCatalog.stageCount,
     excludedDisplayIds: plan.excludedDisplayIds,
     compatibilityDefaults: plan.compatibilityDefaults,
     output,
@@ -259,22 +398,61 @@ function renderDefinitions(
   definitions: readonly EnemyDefinitionSource[],
   selection: EnemySelectionCatalog,
   evidence: string,
+  requiredLevels: ReadonlyMap<string, ReadonlySet<number>>,
+  birthPrograms: ReturnType<typeof compileEnemyBirthBuffPrograms>,
+  weaknessOptions: ReadonlyMap<string, readonly EnemyWeaknessBreakOption[]>,
 ): string {
   // Keep raw identities in the audit plan only; runtime references use the stable id.
-  const runtimeDefinitions = definitions.map(({ gameId: _gameId, levelHp, ...definition }) => ({
-    ...definition,
-    levelHp: ENEMY_LEVELS.map(level => {
-      const node = levelHp.find(node => node.level === level);
-      if (node === undefined) throw new Error(`${definition.id}: missing HP at level ${level}`);
-      return node.hp;
-    }),
-  }));
-  return `import type { EnemyDefinition } from '../../../core/game-data/enemyDefinition';
+  const runtimeDefinitions = definitions.map(
+    ({ gameId: _gameId, templateId, levelHp, ...definition }) => {
+      const data = {
+        ...definition,
+        levelHp: Object.fromEntries(
+          [...new Set([...ENEMY_LEVELS, ...(requiredLevels.get(definition.id) ?? [])])]
+            .sort((a, b) => a - b)
+            .map(level => {
+              const node = levelHp.find(node => node.level === level);
+              if (node === undefined)
+                throw new Error(`${definition.id}: missing HP at level ${level}`);
+              return [level, node.hp];
+            }),
+        ),
+      };
+      const source = JSON.stringify(data, null, 2);
+      if (!weaknessOptions.has(templateId)) return source;
+      return (
+        source.slice(0, -2) +
+        ',\n  weaknessBreakOptions: weaknessBreakOptions[' +
+        JSON.stringify(templateId) +
+        ']\n}'
+      );
+    },
+  );
+  const runtimeDefinitionsById: Record<string, OperatorBuffDefinitions[string]> = {};
+  for (const runtime of Object.values(birthPrograms)) {
+    for (const [id, definition] of Object.entries(runtime.buffDefinitions)) {
+      const previous = runtimeDefinitionsById[id];
+      if (previous && !isDeepStrictEqual(previous, definition)) {
+        throw new Error(`Conflicting enemy birth Buff definition: ${id}`);
+      }
+      runtimeDefinitionsById[id] = definition;
+    }
+  }
+  const runtimeSource = Object.keys(runtimeDefinitionsById).length
+    ? renderCommonBuffDefinitionsSource(runtimeDefinitionsById, 'enemyBirthBuffDefinitions')
+    : `export const enemyBirthBuffDefinitions = {};`;
+  const definitionSource = '[' + runtimeDefinitions.join(',\n') + ']';
+  return `import type { EnemyDefinition } from '../../../../packages/game-data-contract/src/enemies';
+
+${runtimeSource}
+
+const weaknessBreakOptions = ${JSON.stringify(Object.fromEntries(weaknessOptions))} as const;
 
 // knotBreakDurationSeconds is a project compatibility default: ${evidence}.
 // Every other field below is compiled from the same source snapshot and strict rank evidence.
-export const generatedEnemyDefinitions = ${JSON.stringify(runtimeDefinitions, null, 2)} as const satisfies readonly EnemyDefinition[];
+export const generatedEnemyDefinitions = ${definitionSource} as const satisfies readonly EnemyDefinition[];
 
+export const generatedEnemySelectionOrder = ${JSON.stringify(selection.enemyOrder)} as const;
 export const generatedEnemySelectionCategories = ${JSON.stringify(selection.categories, null, 2)} as const;
 export const generatedEnemySelectionCategoryById = ${JSON.stringify(selection.categoryByEnemyId, null, 2)} as const satisfies Readonly<Record<string, (typeof generatedEnemySelectionCategories)[number]>>;
 export const generatedHiddenEnemyIds = ${JSON.stringify(selection.hiddenEnemyIds, null, 2)} as const;
@@ -284,46 +462,40 @@ export const generatedHiddenEnemyIds = ${JSON.stringify(selection.hiddenEnemyIds
 async function readEnemySelectionCatalog(
   path: string,
   gameIds: readonly string[],
+  tablesDirectory: string,
 ): Promise<EnemySelectionCatalog> {
   const source = requireRecord(JSON.parse(await readFile(path, 'utf8')), path);
-  const categories = requireArray(source.categories, `${path}.categories`);
-  const categoryIds: string[] = [];
-  const categoryByEnemyId: Record<string, string> = {};
-  const assigned = new Set<string>();
+  const groups = await readTable(tablesDirectory, 'WikiGroupTable');
+  const entries = await readTable(tablesDirectory, 'WikiEntryTable');
+  const data = await readTable(tablesDirectory, 'WikiEntryDataTable');
+  const monster = requireRecord(groups.wiki_type_monster, 'WikiGroupTable.wiki_type_monster');
   const known = new Set(gameIds);
-  function claim(rawId: unknown, label: string): string {
-    const gameId = requireString(rawId, label);
-    if (!known.has(gameId)) throw new Error(`${label}: unknown enemy ${gameId}`);
-    if (assigned.has(gameId)) throw new Error(`${label}: duplicate enemy ${gameId}`);
-    assigned.add(gameId);
-    return gameId.replaceAll('_', '-');
-  }
-  categories.forEach((rawCategory, categoryIndex) => {
-    const label = `${path}.categories[${categoryIndex}]`;
-    const category = requireRecord(rawCategory, label);
-    const id = requireString(category.id, `${label}.id`);
-    if (!/^[a-z][A-Za-z0-9]*$/.test(id) || categoryIds.includes(id))
-      throw new Error(`${label}.id: invalid or duplicate category ${id}`);
-    categoryIds.push(id);
-    for (const [enemyIndex, rawId] of requireArray(
-      category.enemyIds,
-      `${label}.enemyIds`,
-    ).entries()) {
-      categoryByEnemyId[claim(rawId, `${label}.enemyIds[${enemyIndex}]`)] = id;
+  const categories: string[] = [];
+  const categoryByEnemyId: Record<string, string> = {};
+  const enemyOrder: string[] = [];
+  for (const raw of requireArray(monster.list, 'wiki_type_monster.list')) {
+    const group = requireRecord(raw, 'wiki group');
+    const id = requireString(group.groupId, 'wiki group.groupId');
+    categories.push(id);
+    const groupEntries = requireRecord(entries[id], `WikiEntryTable.${id}`);
+    for (const entryId of requireArray(groupEntries.list, `${id}.list`)) {
+      const key = requireString(entryId, `${id}.entryId`);
+      const entry = requireRecord(data[key], `WikiEntryDataTable.${key}`);
+      const enemyId = requireString(entry.refMonsterTemplateId, `${key}.refMonsterTemplateId`);
+      if (!known.has(enemyId)) continue;
+      const slug = enemyId.replaceAll('_', '-');
+      if (entry.groupId !== id || categoryByEnemyId[slug])
+        throw new Error(`${key}: conflicting wiki category`);
+      categoryByEnemyId[slug] = id;
+      enemyOrder.push(slug);
     }
-  });
-  for (const [index, rawId] of requireArray(
-    source.uncategorizedEnemyIds,
-    `${path}.uncategorizedEnemyIds`,
-  ).entries()) {
-    claim(rawId, `${path}.uncategorizedEnemyIds[${index}]`);
   }
-  const hiddenEnemyIds = requireArray(source.hiddenEnemyIds, `${path}.hiddenEnemyIds`).map(
-    (rawId, index) => claim(rawId, `${path}.hiddenEnemyIds[${index}]`),
-  );
-  const missing = gameIds.filter(gameId => !assigned.has(gameId));
-  if (missing.length) throw new Error(`${path}: unclassified enemies ${missing.join(', ')}`);
-  return { categories: categoryIds, categoryByEnemyId, hiddenEnemyIds };
+  const hiddenEnemyIds = requireArray(source.hiddenEnemyIds, `${path}.hiddenEnemyIds`).map(raw => {
+    const id = requireString(raw, 'hidden enemy');
+    if (!known.has(id)) throw new Error(`unknown hidden enemy ${id}`);
+    return id.replaceAll('_', '-');
+  });
+  return { categories, categoryByEnemyId, enemyOrder, hiddenEnemyIds };
 }
 
 async function readTable(directory: string, name: string): Promise<Record<string, unknown>> {
@@ -423,14 +595,32 @@ function parseArguments(values: readonly string[]): Arguments {
     parsed.get('--selection-categories') ?? DEFAULT_SELECTION_CATEGORIES,
   );
   const outputDirectory = resolve(parsed.get('--output') ?? 'src/data/enemies/generated');
-  if (!isAbsolute(tablesDirectory) || !isAbsolute(rankEvidence))
-    throw new Error('--tables and --rank-evidence are required');
+  if (parsed.has('--output') && !parsed.has('--locale-output'))
+    throw new Error('--locale-output is required with --output');
+  const localeDirectory = resolve(parsed.get('--locale-output') ?? 'src/i18n/game-locales');
+  if (
+    !parsed.has('--tables') ||
+    !parsed.has('--rank-evidence') ||
+    !parsed.has('--buff-directory') ||
+    !parsed.has('--spawner-directory') ||
+    !parsed.has('--skill-directory')
+  )
+    throw new Error(
+      '--tables, --rank-evidence, --buff-directory, --skill-directory and --spawner-directory are required',
+    );
   return {
     tablesDirectory,
     rankEvidence,
     runtimeDefaults,
     selectionCategories,
     outputDirectory,
+    localeDirectory,
+    buffDirectory: resolve(parsed.get('--buff-directory')!),
+    skillDirectory: resolve(parsed.get('--skill-directory')!),
+    spawnerDirectory: resolve(parsed.get('--spawner-directory')!),
+    levelDirectory: resolve(
+      parsed.get('--level-directory') ?? join(parsed.get('--spawner-directory')!, '../LevelData'),
+    ),
     check,
   };
 }

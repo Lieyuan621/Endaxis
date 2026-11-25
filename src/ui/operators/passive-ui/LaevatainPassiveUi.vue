@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { publicAssetUrl } from '../../../utils/publicAssetUrl';
 import type { PassiveUiWidgetState } from './state';
 defineProps<PassiveUiWidgetState>();
 </script>
 <template>
   <span class="passive-ui-skin">
-    <img class="laevatain-bg" src="/next/passive-ui/laevatain-bg.webp" alt="" />
+    <img class="laevatain-bg" :src="publicAssetUrl('/next/passive-ui/laevatain-bg.webp')" alt="" />
     <span v-if="value >= maximum" class="laevatain-max" />
     <template v-else>
       <span

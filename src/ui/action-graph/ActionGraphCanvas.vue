@@ -13,7 +13,7 @@ import {
   watch,
 } from 'vue';
 import * as dagre from '@dagrejs/dagre';
-import { EaButton, EaInput } from '@/design-system';
+import { EaButton, EaChevronIcon, EaInput } from '@/design-system';
 import type { ActionGraphDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import type { GraphEntryGroup } from '../../application/editor/actionGraphEditing';
 import {
@@ -2010,7 +2010,7 @@ defineExpose({
             :class="{ active: menuGroup === group }"
             @click.stop="menuGroup = group"
           >
-            {{ group }} <span aria-hidden="true">›</span>
+            {{ group }} <EaChevronIcon :size="12" />
           </button>
         </div>
         <div class="menu-results">

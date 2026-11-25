@@ -17,6 +17,12 @@ import {
 } from './tagQuery.ts';
 import { parseScalarSource, type ScalarSource, type BlackboardLevelValues } from './scalar.ts';
 import { readCompareType } from './nativeEnums.ts';
+import { parseBuffFindSettingsSource, type BuffFindSettingsSource } from './buffFindSettings.ts';
+
+export interface BuffValidatorSource {
+  readonly settings: BuffFindSettingsSource;
+  readonly mode: 'HasBuff' | 'NotHasBuff';
+}
 
 /** 原生按目标自身 hp/maxHp 筛选；阈值在执行筛选时读取。 */
 export interface HpRatioValidatorSource {
@@ -54,7 +60,32 @@ import {
   readHitBoxObjectType,
 } from './targetEnums.ts';
 
+export interface PointFinderOffsetSource {
+  readonly position: readonly [ScalarSource, ScalarSource, ScalarSource];
+  readonly rotation: readonly [ScalarSource, ScalarSource, ScalarSource];
+}
+
+/** 保留 RandomPointFinder 的采样参数，不能只留下点数而丢弃飞行端点。 */
+export interface RandomPointFinderSource {
+  readonly count: Pick<ScalarSource, 'value' | 'blackboardKey'>;
+  readonly shape: string;
+  readonly localPlaneRotation: readonly [
+    Pick<ScalarSource, 'value' | 'blackboardKey'>,
+    Pick<ScalarSource, 'value' | 'blackboardKey'>,
+    Pick<ScalarSource, 'value' | 'blackboardKey'>,
+  ];
+  readonly radius: Pick<ScalarSource, 'value' | 'blackboardKey'>;
+  readonly minimumRadius: Pick<ScalarSource, 'value' | 'blackboardKey'>;
+  readonly angle: Pick<ScalarSource, 'value' | 'blackboardKey'>;
+  readonly extraJitter: boolean;
+  readonly snapToNavMesh: boolean;
+}
+
 export interface TargetReferenceSource {
+  readonly finderRandomPoint?: RandomPointFinderSource;
+  readonly finderPointOffset?: PointFinderOffsetSource;
+  readonly buffValidators?: readonly BuffValidatorSource[];
+  readonly excludeTargets?: readonly TargetReferenceSource[];
   readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
   readonly targetSource: string;
   readonly targetGroupKey: string;
@@ -94,6 +125,8 @@ export interface TargetReferenceSource {
 }
 
 export interface SelectorSummarySource {
+  readonly finderPointOffset?: PointFinderOffsetSource;
+  readonly buffValidators?: readonly BuffValidatorSource[];
   readonly finderSpatialPoint?: SpatialPointFinderSource;
   readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
   readonly finderType: string | null;
@@ -108,11 +141,7 @@ export interface SelectorSummarySource {
   readonly finderProjectileShape?: ColliderShapeSource;
   readonly finderOwnerPartsQuery: TagQuerySource | null;
   readonly finderPointBlackboardKeys: readonly string[];
-  /** RandomPointFinder 生成的目标点数量；几何在来源层验证，数量留给零空间投影。 */
-  readonly finderRandomPointCount: {
-    readonly value: number;
-    readonly blackboardKey: string | null;
-  } | null;
+  readonly finderRandomPoint: RandomPointFinderSource | null;
   readonly finderFixedPoint: FixedPointFinderSource | null;
   readonly validatorTypes: readonly string[];
   readonly postProcessorTypes: readonly string[];
@@ -120,15 +149,9 @@ export interface SelectorSummarySource {
   readonly shuffleTargets: readonly ShuffleTargetSource[];
   readonly distanceValidators: readonly DistanceValidatorSource[];
   /** TargetContainsValidator 解析的父集合来源；顺序与 validatorData 一致。 */
-  readonly targetContainsParents: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
+  readonly targetContainsParents: readonly TargetReferenceSource[];
   /** ExcludeTarget 后处理器引用的排除集合；顺序与 postProcessorData 一致。 */
-  readonly excludeTargets: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
+  readonly excludeTargets: readonly TargetReferenceSource[];
 }
 
 export interface FixedPointFinderSource {
@@ -221,6 +244,7 @@ const KNOWN_FINDERS = new Set([
   'TyphoeaArcherySelectedFinder',
 ]);
 const KNOWN_VALIDATORS = new Set([
+  'BuffValidator',
   'CurHpRatioValidator',
   'DistanceValidator',
   'ExcludeOwnerValidator',
@@ -296,14 +320,18 @@ export function parseTargetReferenceSource(value: unknown, path: string): Target
     ...(summary.finderPointBlackboardKeys.length === 0
       ? {}
       : { finderPointBlackboardKeys: summary.finderPointBlackboardKeys }),
+    ...(summary.finderRandomPoint === null ? {} : { finderRandomPoint: summary.finderRandomPoint }),
     ...(summary.finderFixedPoint === null ? {} : { finderFixedPoint: summary.finderFixedPoint }),
     ...(summary.finderSpatialPoint ? { finderSpatialPoint: summary.finderSpatialPoint } : {}),
+    ...(summary.finderPointOffset ? { finderPointOffset: summary.finderPointOffset } : {}),
+    ...(summary.excludeTargets.length ? { excludeTargets: summary.excludeTargets } : {}),
     validatorTypes: summary.validatorTypes,
     postProcessorTypes: summary.postProcessorTypes,
     priorityFilters: summary.priorityFilters,
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
     ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+    ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
     finderSpawnedObjectType: spawnedIdentity.spawnedObjectType,
     validatorTagQueries: spawnedIdentity.tagQueries,
   };
@@ -331,9 +359,10 @@ export function parseSelectorSummarySource(
   let finderProjectileShape: ColliderShapeSource | undefined;
   let finderOwnerPartsQuery: TagQuerySource | null = null;
   let finderPointBlackboardKeys: string[] = [];
-  let finderRandomPointCount: SelectorSummarySource['finderRandomPointCount'] = null;
+  let finderRandomPoint: RandomPointFinderSource | null = null;
   let finderFixedPoint: FixedPointFinderSource | null = null;
   let finderSpatialPoint: SpatialPointFinderSource | undefined;
+  let finderPointOffset: PointFinderOffsetSource | undefined;
   // 非搜索来源不会执行 finder，VFS 的显式 null 与旧导出省略字段都表示没有配置。
   // finderRequired 为 true 时仍进入下方拒绝路径，不把空 finder 解释成零个目标。
   if ('finderData' in selector && selector.finderData !== null) {
@@ -342,8 +371,21 @@ export function parseSelectorSummarySource(
     if (!KNOWN_FINDERS.has(finderType)) {
       throw new Error(`${path}.finderData: unsupported finder ${JSON.stringify(finderType)}`);
     }
-    if (
-      finderType === 'AllEnemyFinder' ||
+    if (finderType === 'AllEnemyFinder') {
+      requireExactFields(
+        finder,
+        new Set([
+          '$type',
+          ...('includeIndividualParts' in finder ? ['includeIndividualParts'] : []),
+        ]),
+        `${path}.finderData`,
+      );
+      if (
+        'includeIndividualParts' in finder &&
+        requireBoolean(finder.includeIndividualParts, `${path}.finderData.includeIndividualParts`)
+      )
+        throw new Error(`${path}.finderData: enumerating individual enemy parts is unsupported`);
+    } else if (
       finderType === 'OwnerSoulFinder' ||
       finderType === 'GodEntityFinder' ||
       finderType === 'AbilityEntityTargetFinder' ||
@@ -412,10 +454,22 @@ export function parseSelectorSummarySource(
         new Set(['$type', 'positionOffset', 'rotationOffset']),
         `${path}.finderData`,
       );
+      finderPointOffset = {
+        position: parsePointFinderVector(
+          finder.positionOffset,
+          `${path}.finderData.positionOffset`,
+          inheritedBlackboard,
+        ),
+        rotation: parsePointFinderVector(
+          finder.rotationOffset,
+          `${path}.finderData.rotationOffset`,
+          inheritedBlackboard,
+        ),
+      };
       finderPointBlackboardKeys = [
-        ...parsePointFinderVector(finder.positionOffset, `${path}.finderData.positionOffset`),
-        ...parsePointFinderVector(finder.rotationOffset, `${path}.finderData.rotationOffset`),
-      ];
+        ...finderPointOffset.position,
+        ...finderPointOffset.rotation,
+      ].flatMap(component => (component.blackboardKey === null ? [] : [component.blackboardKey]));
     } else if (finderType === 'RandomPointFinder') {
       requireExactFields(
         finder,
@@ -452,7 +506,7 @@ export function parseSelectorSummarySource(
           blackboardKey: useBlackboardKey ? blackboardKey : null,
         };
       };
-      finderRandomPointCount = parseNumber(finder.pointNum, `${path}.finderData.pointNum`);
+      const count = parseNumber(finder.pointNum, `${path}.finderData.pointNum`);
       if ('extent2D' in finder) {
         // 二维尺寸由另一形状分支消费；本轮仅接入现有 Circle/Sector 的零默认载荷。
         // 点数与已有几何黑板依赖保持原样，不能把生成点数量一起当成空间效果消除。
@@ -483,13 +537,20 @@ export function parseSelectorSummarySource(
         parseNumber(finder.radius, `${path}.finderData.radius`),
         parseNumber(finder.minRadius, `${path}.finderData.minRadius`),
         parseNumber(finder.angle, `${path}.finderData.angle`),
-      ];
-      finderPointBlackboardKeys = [finderRandomPointCount, ...geometryNumbers].flatMap(number =>
+      ] as const;
+      finderPointBlackboardKeys = [count, ...geometryNumbers].flatMap(number =>
         number.blackboardKey === null ? [] : [number.blackboardKey],
       );
-      requireNonEmptyString(finder.shape, `${path}.finderData.shape`);
-      requireBoolean(finder.useExtraJitter, `${path}.finderData.useExtraJitter`);
-      requireBoolean(finder.snapToNavMesh, `${path}.finderData.snapToNavMesh`);
+      finderRandomPoint = {
+        count,
+        shape: requireNonEmptyString(finder.shape, `${path}.finderData.shape`),
+        localPlaneRotation: [geometryNumbers[0], geometryNumbers[1], geometryNumbers[2]],
+        radius: geometryNumbers[3],
+        minimumRadius: geometryNumbers[4],
+        angle: geometryNumbers[5],
+        extraJitter: requireBoolean(finder.useExtraJitter, `${path}.finderData.useExtraJitter`),
+        snapToNavMesh: requireBoolean(finder.snapToNavMesh, `${path}.finderData.snapToNavMesh`),
+      };
     }
   } else if (finderRequired) {
     throw new Error(`${path}.finderData: expected object`);
@@ -524,6 +585,36 @@ export function parseSelectorSummarySource(
       ];
     },
   );
+  const buffValidators: BuffValidatorSource[] = requireArray(
+    selector.validatorData,
+    `${path}.validatorData`,
+  ).flatMap((raw, index) => {
+    const validatorPath = `${path}.validatorData[${index}]`;
+    const validator = requireRecord(raw, validatorPath);
+    if (selectorComponentName(validator, validatorPath) !== 'BuffValidator') return [];
+    requireExactFields(
+      validator,
+      new Set(['$type', 'buffFindSettings', 'validateMode']),
+      validatorPath,
+    );
+    const mode =
+      validator.validateMode === 0
+        ? 'HasBuff'
+        : validator.validateMode === 1
+          ? 'NotHasBuff'
+          : validator.validateMode;
+    if (mode !== 'HasBuff' && mode !== 'NotHasBuff')
+      throw new Error(`${validatorPath}.validateMode: unsupported BuffValidator mode`);
+    return [
+      {
+        settings: parseBuffFindSettingsSource(
+          validator.buffFindSettings,
+          `${validatorPath}.buffFindSettings`,
+        ),
+        mode,
+      },
+    ];
+  });
   const targetContainsParents = requireArray(
     selector.validatorData,
     `${path}.validatorData`,
@@ -536,7 +627,7 @@ export function parseSelectorSummarySource(
       validator.parentTargetSettings,
       `${validatorPath}.parentTargetSettings`,
     );
-    return [{ targetSource: parent.targetSource, targetGroupKey: parent.targetGroupKey }];
+    return [parent];
   });
   const excludeTargets = requireArray(
     selector.postProcessorData,
@@ -551,7 +642,7 @@ export function parseSelectorSummarySource(
     }
     if (selectorComponentName(processor, processorPath) !== 'ExcludeTarget') return [];
     const excluded = parseExcludeTargetSource(processor, processorPath);
-    return [{ targetSource: excluded.targetSource, targetGroupKey: excluded.targetGroupKey }];
+    return [excluded];
   });
   return {
     finderType,
@@ -565,15 +656,17 @@ export function parseSelectorSummarySource(
     ...(finderProjectileShape ? { finderProjectileShape } : {}),
     finderOwnerPartsQuery,
     finderPointBlackboardKeys,
-    finderRandomPointCount,
+    finderRandomPoint,
     finderFixedPoint,
     ...(finderSpatialPoint ? { finderSpatialPoint } : {}),
+    ...(finderPointOffset ? { finderPointOffset } : {}),
     validatorTypes,
     postProcessorTypes,
     priorityFilters,
     shuffleTargets,
     distanceValidators,
     ...(hpRatioValidators.length ? { hpRatioValidators } : {}),
+    ...(buffValidators.length ? { buffValidators } : {}),
     targetContainsParents,
     excludeTargets,
   };
@@ -629,32 +722,18 @@ function parseFixedPointFinderSource(
   };
 }
 
-function parsePointFinderVector(value: unknown, path: string): string[] {
+function parsePointFinderVector(
+  value: unknown,
+  path: string,
+  inheritedBlackboard: BlackboardLevelValues,
+): readonly [ScalarSource, ScalarSource, ScalarSource] {
   const vector = requireRecord(value, path);
   requireExactFields(vector, new Set(['x', 'y', 'z']), path);
-  const blackboardKeys: string[] = [];
-  for (const axis of ['x', 'y', 'z'] as const) {
-    const componentPath = `${path}.${axis}`;
-    const component = requireRecord(vector[axis], componentPath);
-    requireExactFields(
-      component,
-      new Set(['useBlackboardKey', 'value', 'blackboardKey']),
-      componentPath,
-    );
-    const useBlackboardKey = requireBoolean(
-      component.useBlackboardKey,
-      `${componentPath}.useBlackboardKey`,
-    );
-    requireNumber(component.value, `${componentPath}.value`);
-    const blackboardKey = readOptionalReferenceKey(
-      component.blackboardKey,
-      `${componentPath}.blackboardKey`,
-    );
-    if (useBlackboardKey && blackboardKey.length === 0)
-      throw new Error(`${componentPath}.blackboardKey: expected non-empty string`);
-    if (useBlackboardKey) blackboardKeys.push(blackboardKey);
-  }
-  return blackboardKeys;
+  return [
+    parseScalarSource(vector.x, `${path}.x`, inheritedBlackboard),
+    parseScalarSource(vector.y, `${path}.y`, inheritedBlackboard),
+    parseScalarSource(vector.z, `${path}.z`, inheritedBlackboard),
+  ];
 }
 
 function parseShapeFinderSource(finder: Record<string, unknown>, path: string): ShapeFinderSource {

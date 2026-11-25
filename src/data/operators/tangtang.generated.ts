@@ -15,29 +15,21 @@ export const tangtangChr_0027_tangtang_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0027_tangtang_attack1',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0027_tangtang_attack1_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0.1 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -45,6 +37,8 @@ export const tangtangChr_0027_tangtang_attack1ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'cryo',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['normalAttack'],
@@ -62,13 +56,33 @@ export const tangtangChr_0027_tangtang_attack1ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0027_tangtang_attack1_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0.1 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_2: {
+      overrideBasicAttackMapping_2: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0027_tangtang_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_3: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0027_tangtang_attack2'] },
@@ -81,6 +95,7 @@ export const tangtangChr_0027_tangtang_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_attack1: SkillDefinition = {
+  actionGraph: tangtangChr_0027_tangtang_attack1ActionGraph,
   key: 'chr_0027_tangtang_attack1',
   element: 'cryo',
   blackboard: {
@@ -90,28 +105,16 @@ export const tangtangChr_0027_tangtang_attack1: SkillDefinition = {
   naturalDurationFrames: 90,
   exclusiveFrame: 15,
   offsetRecordFrame: 3,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 30,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0027_tangtang_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 7, endFrame: 30, skillIds: ['chr_0027_tangtang_attack2'] }],
-  },
   costFrame: 3,
   scheduledSequences: [
     { startFrame: 3, endFrame: 3, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 7, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_2' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_2' } },
+    { startFrame: 7, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0027_tangtang_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: tangtangChr_0027_tangtang_attack1ActionGraph,
 };
 
 export const tangtangChr_0027_tangtang_attack2ActionGraph = {
@@ -121,29 +124,21 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0027_tangtang_attack2',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0027_tangtang_attack2_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale_1: 0.09 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -151,6 +146,8 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'cryo',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['normalAttack'],
@@ -168,6 +165,19 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0027_tangtang_attack2_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale_1: 0.09 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
+                ],
               },
             },
           ],
@@ -178,29 +188,21 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0027_tangtang_attack2_2',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0027_tangtang_attack2_02_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale_2: 0.09 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -248,6 +250,8 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'cryo',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
@@ -262,7 +266,7 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -288,13 +292,33 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0027_tangtang_attack2_02_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale_2: 0.09 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_3: {
+      overrideBasicAttackMapping_3: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0027_tangtang_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_4: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0027_tangtang_attack3'] },
@@ -307,6 +331,7 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_attack2: SkillDefinition = {
+  actionGraph: tangtangChr_0027_tangtang_attack2ActionGraph,
   key: 'chr_0027_tangtang_attack2',
   element: 'cryo',
   blackboard: {
@@ -318,96 +343,115 @@ export const tangtangChr_0027_tangtang_attack2: SkillDefinition = {
   naturalDurationFrames: 117,
   exclusiveFrame: 18,
   offsetRecordFrame: 6,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 39,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0027_tangtang_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 18, endFrame: 39, skillIds: ['chr_0027_tangtang_attack3'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 6, endFrame: 6, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 10, endFrame: 10, sequence: { $sequence: 'launchProjectile_2' } },
-    { startFrame: 18, endFrame: 39, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 0, endFrame: 39, sequence: { $sequence: 'overrideBasicAttackMapping_3' } },
+    { startFrame: 18, endFrame: 39, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0027_tangtang_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: tangtangChr_0027_tangtang_attack2ActionGraph,
 };
 
 export const tangtangChr_0027_tangtang_attack3ActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
-        },
-        next: null,
-      },
-      dealDamage_2: {
-        action: {
-          kind: 'dealDamage',
+          kind: 'findTargets',
           parameters: {
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['normalAttack'],
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.066,
           },
         },
         next: null,
       },
-      repeatEachTick_3: {
+      startTimeDilation_3: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.05 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: null,
+      },
+      ifElse_4: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'startTimeDilation_3' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_5: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            tags: ['normalAttack'],
+          },
+        },
+        next: 'ifElse_4',
+      },
+      repeatEachTick_6: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: false,
               triggerIntervalSeconds: 0.06,
               maxCountPerTarget: -1,
               targetTriggerIntervalSeconds: -1,
             },
           },
-          body: { $sequence: 'dealDamage_2' },
+          body: { $sequence: 'dealDamage_5' },
         },
         next: null,
       },
-      launchProjectile_4: {
+      launchProjectile_7: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 8,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0027_tangtang_attack3',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0027_tangtang_attack3_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale_2: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -415,6 +459,8 @@ export const tangtangChr_0027_tangtang_attack3ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'cryo',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['normalAttack'],
@@ -432,13 +478,33 @@ export const tangtangChr_0027_tangtang_attack3ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0027_tangtang_attack3_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale_2: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_8: {
+      overrideBasicAttackMapping_11: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0027_tangtang_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0027_tangtang_attack4'] },
@@ -447,13 +513,18 @@ export const tangtangChr_0027_tangtang_attack3ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_attack3: SkillDefinition = {
+  actionGraph: tangtangChr_0027_tangtang_attack3ActionGraph,
   key: 'chr_0027_tangtang_attack3',
   element: 'cryo',
   blackboard: {
@@ -464,86 +535,143 @@ export const tangtangChr_0027_tangtang_attack3: SkillDefinition = {
   naturalDurationFrames: 115,
   exclusiveFrame: 30,
   offsetRecordFrame: 5,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 43,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0027_tangtang_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 26, endFrame: 43, skillIds: ['chr_0027_tangtang_attack4'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
-    { startFrame: 5, endFrame: 13, sequence: { $sequence: 'repeatEachTick_3' } },
-    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 26, endFrame: 43, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
+    { startFrame: 5, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 5, endFrame: 13, sequence: { $sequence: 'repeatEachTick_6' } },
+    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'launchProjectile_7' } },
+    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'launchProjectile_7' } },
+    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_7' } },
+    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_7' } },
+    { startFrame: 0, endFrame: 43, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
+    { startFrame: 26, endFrame: 43, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0027_tangtang_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: tangtangChr_0027_tangtang_attack3ActionGraph,
 };
 
 export const tangtangChr_0027_tangtang_attack4ActionGraph = {
   main: {
     nodes: {
-      dealDamage_4: {
+      findTargets_1: {
         action: {
-          kind: 'dealDamage',
+          kind: 'findTargets',
           parameters: {
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['normalAttack'],
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
           },
         },
         next: null,
       },
-      startTimeDilation_7: {
+      startTimeDilation_5: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.06 },
             priority: 10,
-            curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['caster'],
+            curve: { kind: 'named', key: 'char_hard_stop' },
           },
         },
         next: null,
       },
-      ifElse_8: {
+      ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'startTimeDilation_7' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'startTimeDilation_5' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_9: {
+      dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack'],
           },
         },
-        next: 'ifElse_8',
+        next: 'ifElse_6',
       },
-      reachSkillOperableBoundary_10: {
+      startTimeDilation_13: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.15 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_14: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyAttacker',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: 'startTimeDilation_13',
+      },
+      ifElse_15: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'startTimeDilation_14' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_16: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            tags: ['normalAttack'],
+          },
+        },
+        next: 'ifElse_15',
+      },
+      overrideBasicAttackMapping_17: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0027_tangtang_attack5'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_18: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0027_tangtang_attack5'] },
@@ -552,18 +680,23 @@ export const tangtangChr_0027_tangtang_attack4ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
-      data_2: {
+      data_1: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_attack4: SkillDefinition = {
+  actionGraph: tangtangChr_0027_tangtang_attack4ActionGraph,
   key: 'chr_0027_tangtang_attack4',
   element: 'cryo',
   blackboard: {
@@ -574,30 +707,21 @@ export const tangtangChr_0027_tangtang_attack4: SkillDefinition = {
   naturalDurationFrames: 143,
   exclusiveFrame: 28,
   offsetRecordFrame: 12,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 50,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0027_tangtang_attack5',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 24, endFrame: 50, skillIds: ['chr_0027_tangtang_attack5'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 6, endFrame: 8, sequence: { $sequence: 'dealDamage_4' } },
-    { startFrame: 10, endFrame: 12, sequence: { $sequence: 'dealDamage_4' } },
-    { startFrame: 23, endFrame: 28, sequence: { $sequence: 'dealDamage_9' } },
-    { startFrame: 24, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
+    { startFrame: 6, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 10, endFrame: 12, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 23, endFrame: 28, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 6, endFrame: 8, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 10, endFrame: 12, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 23, endFrame: 28, sequence: { $sequence: 'dealDamage_16' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'overrideBasicAttackMapping_17' } },
+    { startFrame: 24, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_18' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0027_tangtang_attack5',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: tangtangChr_0027_tangtang_attack4ActionGraph,
 };
 
 export const tangtangChr_0027_tangtang_attack5ActionGraph = {
@@ -607,29 +731,21 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 7,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: { EntityBB_atk05_cnt: 0 },
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0027_tangtang_attack5',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: { EntityBB_atk05_cnt: 0 },
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0027_tangtang_attack5_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0, poise: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_8' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -669,7 +785,11 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
                       dealStagger_6: {
                         action: {
                           kind: 'dealStagger',
-                          parameters: { value: { kind: 'valueNode', nodeId: 'data_4' } },
+                          parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
+                            value: { kind: 'valueNode', nodeId: 'data_4' },
+                          },
                         },
                         next: 'checkCondition_5',
                       },
@@ -701,6 +821,8 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'cryo',
                             attackScale: { kind: 'valueNode', nodeId: 'data_8' },
                             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -729,7 +851,7 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -755,13 +877,33 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0027_tangtang_attack5_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0, poise: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_8' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_2: {
+      overrideBasicAttackMapping_2: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0027_tangtang_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_3: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0027_tangtang_attack1'] },
@@ -774,6 +916,7 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_attack5: SkillDefinition = {
+  actionGraph: tangtangChr_0027_tangtang_attack5ActionGraph,
   key: 'chr_0027_tangtang_attack5',
   element: 'cryo',
   blackboard: {
@@ -785,28 +928,16 @@ export const tangtangChr_0027_tangtang_attack5: SkillDefinition = {
   naturalDurationFrames: 190,
   exclusiveFrame: 36,
   offsetRecordFrame: 22,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 77,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0027_tangtang_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 36, endFrame: 77, skillIds: ['chr_0027_tangtang_attack1'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 22, endFrame: 22, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 36, endFrame: 77, sequence: { $sequence: 'reachSkillOperableBoundary_2' } },
+    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'overrideBasicAttackMapping_2' } },
+    { startFrame: 36, endFrame: 77, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0027_tangtang_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: tangtangChr_0027_tangtang_attack5ActionGraph,
 };
 
 export const tangtangChr_0027_tangtang_power_attackActionGraph = {
@@ -816,9 +947,66 @@ export const tangtangChr_0027_tangtang_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: 0,
+                  value: 0.8,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.1,
+                  value: 0.015,
+                  inTangent: -0.0608355,
+                  outTangent: -0.0608355,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.8860931,
+                  value: 0.3503852,
+                  inTangent: 1.160006,
+                  outTangent: 1.160006,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 0.5,
+                  inTangent: 1.079618,
+                  outTangent: 1.079618,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+            },
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_10: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyAttacker',
+            durationSeconds: { kind: 'constant', value: 0.4 },
             priority: 10,
             curve: {
               kind: 'inline',
@@ -861,23 +1049,21 @@ export const tangtangChr_0027_tangtang_power_attackActionGraph = {
                 },
               ],
             },
-            finishByAction: false,
-            targets: ['caster'],
           },
         },
-        next: null,
+        next: 'startTimeDilation_9',
       },
-      ifElse_10: {
+      ifElse_11: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'startTimeDilation_9' },
+          whenTrue: { $sequence: 'startTimeDilation_10' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      applyBuff_22: {
+      applyBuff_24: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -890,7 +1076,7 @@ export const tangtangChr_0027_tangtang_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_23: {
+      applyBuff_25: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -911,17 +1097,19 @@ export const tangtangChr_0027_tangtang_power_attackActionGraph = {
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: null },
         },
-        next: 'ifElse_10',
+        next: 'ifElse_11',
       },
       dealDamage_opt2: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.3,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'ifElse_opt1',
@@ -930,33 +1118,57 @@ export const tangtangChr_0027_tangtang_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.35 },
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['caster'],
           },
         },
         next: null,
       },
-      dealDamage_opt4: {
+      startTimeDilation_opt4: {
         action: {
-          kind: 'dealDamage',
+          kind: 'startTimeDilation',
           parameters: {
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-            calculation: 'breakingAttack',
-            calculationMultiplier: 0.7,
-            tags: ['normalAttack', 'powerAttack'],
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'OnlyAttacker',
+            durationSeconds: { kind: 'constant', value: 0.3 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
           },
         },
         next: 'startTimeDilation_opt3',
       },
-      gainFinisherSp_opt5: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
-        next: 'dealDamage_opt4',
+      dealDamage_opt5: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            calculation: 'breakingAttack',
+            calculationMultiplier: 0.7,
+            tags: ['powerAttack', 'normalAttack'],
+          },
+        },
+        next: 'startTimeDilation_opt4',
+      },
+      gainFinisherSp_opt6: {
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'dealDamage_opt5',
       },
     },
     dataNodes: {
@@ -964,7 +1176,7 @@ export const tangtangChr_0027_tangtang_power_attackActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -982,6 +1194,7 @@ export const tangtangChr_0027_tangtang_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_power_attack: SkillDefinition = {
+  actionGraph: tangtangChr_0027_tangtang_power_attackActionGraph,
   key: 'chr_0027_tangtang_power_attack',
   element: 'cryo',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -993,36 +1206,67 @@ export const tangtangChr_0027_tangtang_power_attack: SkillDefinition = {
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 9, endFrame: 9, sequence: { $sequence: 'dealDamage_opt2' } },
-    { startFrame: 21, endFrame: 21, sequence: { $sequence: 'gainFinisherSp_opt5' } },
-    { startFrame: 0, endFrame: 47, sequence: { $sequence: 'applyBuff_22' } },
-    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'applyBuff_23' } },
+    { startFrame: 21, endFrame: 21, sequence: { $sequence: 'gainFinisherSp_opt6' } },
+    { startFrame: 0, endFrame: 47, sequence: { $sequence: 'applyBuff_24' } },
+    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'applyBuff_25' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: tangtangChr_0027_tangtang_power_attackActionGraph,
 };
 
 export const tangtangChr_0027_tangtang_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      dealDamage_3: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.07,
+          },
+        },
+        next: null,
+      },
+      pushBack_3: {
+        action: {
+          kind: 'pushBack',
+          parameters: {
+            source: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            sourcePoint: { kind: 'source' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_4: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack', 'plungingAttack'],
           },
         },
-        next: null,
+        next: 'pushBack_3',
       },
-      repeatEachTick_4: {
+      repeatEachTick_5: {
         action: {
           kind: 'repeatEachTick',
           parameters: { nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.07 } },
-          body: { $sequence: 'dealDamage_3' },
+          body: { $sequence: 'dealDamage_4' },
         },
         next: null,
       },
@@ -1033,6 +1277,7 @@ export const tangtangChr_0027_tangtang_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_plunging_attack_end: SkillDefinition = {
+  actionGraph: tangtangChr_0027_tangtang_plunging_attack_endActionGraph,
   key: 'chr_0027_tangtang_plunging_attack_end',
   element: 'cryo',
   blackboard: { atk_scale: [0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39, 0.42, 0.45] },
@@ -1042,18 +1287,36 @@ export const tangtangChr_0027_tangtang_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 3, endFrame: 11, sequence: { $sequence: 'repeatEachTick_4' } },
+    { startFrame: 3, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 3, endFrame: 11, sequence: { $sequence: 'repeatEachTick_5' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: tangtangChr_0027_tangtang_plunging_attack_endActionGraph,
 };
 
 export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       applyBuff_2: {
         action: {
           kind: 'applyBuff',
@@ -1070,52 +1333,68 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyAttacker',
             durationSeconds: { kind: 'constant', value: 0.02 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['caster'],
           },
         },
         next: null,
       },
-      once_4: {
-        action: { kind: 'once', parameters: {}, body: { $sequence: 'applyBuff_2' } },
+      startTimeDilation_4: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.05 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
         next: 'startTimeDilation_3',
       },
-      dealDamage_5: {
+      once_5: {
+        action: { kind: 'once', parameters: {}, body: { $sequence: 'applyBuff_2' } },
+        next: 'startTimeDilation_4',
+      },
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['normalSkill', 'canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
-        next: 'once_4',
+        next: 'once_5',
       },
-      repeatEachTick_6: {
+      repeatEachTick_7: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 5,
               targetTriggerIntervalSeconds: 0.075,
             },
           },
-          body: { $sequence: 'dealDamage_5' },
+          body: { $sequence: 'dealDamage_6' },
         },
         next: null,
       },
-      applyBuff_38: {
+      applyBuff_41: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1127,22 +1406,23 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
         },
         next: null,
       },
-      spawnAbilityEntity_39: {
+      spawnAbilityEntity_42: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_move',
             childSkillId: 'chr_0027_tangtang_normal_skill_abilityentitymove',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'caster',
+            target: { kind: 'source' },
             saveToContextKey: 'normalskill_watermove_1',
           },
         },
-        next: 'applyBuff_38',
+        next: 'applyBuff_41',
       },
-      applyBuff_25: {
+      applyBuff_28: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1154,24 +1434,24 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
         },
         next: null,
       },
-      modifyActionValue_26: {
+      modifyActionValue_29: {
         action: {
           kind: 'modifyActionValue',
           parameters: { key: 'water_cnt', operation: 'add', value: { kind: 'constant', value: 1 } },
         },
-        next: 'applyBuff_25',
+        next: 'applyBuff_28',
       },
-      ifElse_27: {
+      ifElse_30: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'modifyActionValue_26' },
+          whenTrue: { $sequence: 'modifyActionValue_29' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      changeResource_29: {
+      changeResource_32: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1186,17 +1466,17 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_32: {
+      ifElse_35: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'changeResource_29' },
+          whenTrue: { $sequence: 'changeResource_32' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      changeResource_31: {
+      changeResource_34: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1211,7 +1491,7 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_34: {
+      applyBuff_37: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1223,50 +1503,51 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
         },
         next: null,
       },
-      spawnAbilityEntity_35: {
+      spawnAbilityEntity_38: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_move',
             childSkillId: 'chr_0027_tangtang_normal_skill_abilityentitymove',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'caster',
+            target: { kind: 'source' },
             saveToContextKey: 'normalskill_watermove',
           },
         },
-        next: 'applyBuff_34',
+        next: 'applyBuff_37',
       },
-      ifElse_36: {
+      ifElse_39: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'changeResource_31' },
-          whenFalse: { $sequence: 'ifElse_32' },
+          whenTrue: { $sequence: 'changeResource_34' },
+          whenFalse: { $sequence: 'ifElse_35' },
         },
-        next: 'spawnAbilityEntity_35',
+        next: 'spawnAbilityEntity_38',
       },
-      forEachContextTarget_37: {
+      forEachContextTarget_40: {
         action: {
           kind: 'forEachContextTarget',
           parameters: { targets: { kind: 'context', key: 'water' } },
-          body: { $sequence: 'ifElse_27' },
+          body: { $sequence: 'ifElse_30' },
         },
-        next: 'ifElse_36',
+        next: 'ifElse_39',
       },
-      ifElse_40: {
+      ifElse_43: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: 'forEachContextTarget_37' },
-          whenFalse: { $sequence: 'spawnAbilityEntity_39' },
+          whenTrue: { $sequence: 'forEachContextTarget_40' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_42' },
         },
         next: null,
       },
-      modifyActionValue_41: {
+      modifyActionValue_44: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1275,9 +1556,9 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_9' },
           },
         },
-        next: 'ifElse_40',
+        next: 'ifElse_43',
       },
-      modifyActionValue_42: {
+      modifyActionValue_45: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1286,9 +1567,9 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_10' },
           },
         },
-        next: 'modifyActionValue_41',
+        next: 'modifyActionValue_44',
       },
-      modifyActionValue_43: {
+      modifyActionValue_46: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1297,20 +1578,22 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_11' },
           },
         },
-        next: 'modifyActionValue_42',
+        next: 'modifyActionValue_45',
       },
-      findOwnerSpawnedAbilityEntities_44: {
+      findOwnerSpawnedAbilityEntities_47: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'water',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0027_tangtang/ComboSkillWater'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
-        next: 'modifyActionValue_43',
+        next: 'modifyActionValue_46',
       },
-      applyBuff_45: {
+      applyBuff_48: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1322,41 +1605,53 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_46: {
+      checkCondition_49: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
         },
-        next: 'applyBuff_45',
+        next: 'applyBuff_48',
       },
-      forEachContextTarget_47: {
+      forEachContextTarget_50: {
         action: {
           kind: 'forEachContextTarget',
           parameters: { targets: { kind: 'context', key: 'normalwater_move' } },
-          body: { $sequence: 'checkCondition_46' },
+          body: { $sequence: 'checkCondition_49' },
         },
         next: null,
       },
-      checkCondition_48: {
+      checkCondition_51: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
         },
-        next: 'forEachContextTarget_47',
+        next: 'forEachContextTarget_50',
       },
-      findOwnerSpawnedAbilityEntities_49: {
+      findOwnerSpawnedAbilityEntities_52: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'normalwater_move',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+            tagFilters: [
+              {
+                queryType: 'hasAny',
+                tags: ['Skill/Character/chr_0027_tangtang/NormalSkillWaterMove'],
+              },
+            ],
             owner: { kind: 'owner' },
             sameSourceSkillCast: true,
           },
         },
-        next: 'checkCondition_48',
+        next: 'checkCondition_51',
       },
-      applyBuff_50: {
+      reachSkillOperableBoundary_53: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0027_tangtang_normal_skill'] },
+        },
+        next: null,
+      },
+      applyBuff_54: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1458,6 +1753,7 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_normal_skill: SkillDefinition = {
+  actionGraph: tangtangChr_0027_tangtang_normal_skillActionGraph,
   key: 'chr_0027_tangtang_normal_skill',
   element: 'cryo',
   blackboard: {
@@ -1486,38 +1782,24 @@ export const tangtangChr_0027_tangtang_normal_skill: SkillDefinition = {
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 50, endFrame: 76, skillIds: ['chr_0027_tangtang_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 27, endFrame: 39, sequence: { $sequence: 'repeatEachTick_6' } },
-    { startFrame: 11, endFrame: 11, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_44' } },
-    { startFrame: 44, endFrame: 45, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_49' } },
-    { startFrame: 1, endFrame: 24, sequence: { $sequence: 'applyBuff_50' } },
+    { startFrame: 27, endFrame: 39, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 27, endFrame: 39, sequence: { $sequence: 'repeatEachTick_7' } },
+    { startFrame: 11, endFrame: 11, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_47' } },
+    { startFrame: 44, endFrame: 45, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_52' } },
+    { startFrame: 50, endFrame: 76, sequence: { $sequence: 'reachSkillOperableBoundary_53' } },
+    { startFrame: 1, endFrame: 24, sequence: { $sequence: 'applyBuff_54' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'input',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: tangtangChr_0027_tangtang_normal_skillActionGraph,
 };
 
 const tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 = {
-  skillId: 'chr_0027_tangtang_combo_skill_water_gene',
-  nativeSkillType: 'normalSkill',
-  naturalDurationFrames: 900,
-  castResource: {
-    costFrame: 0,
-    cooldownSeconds: 0,
-    maxChargeTime: 1,
-    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-  },
-  blackboard: { duration_water: 30 },
-  scheduledSequences: [{ startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_15' } }],
   actionGraph: {
     main: {
       nodes: {
@@ -1555,9 +1837,10 @@ const tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 = {
           action: {
             kind: 'spawnAbilityEntity',
             parameters: {
-              bornAt: { kind: 'fixed', target: 'enemy' },
+              bornAt: { kind: 'inputTarget' },
               abilityEntityId: 'abilityentity_chr_0027_tangtang_comboskill_water',
               childSkillId: 'chr_0027_tangtang_combo_skill_water',
+              source: { kind: 'source' },
               inheritActionBlackboard: true,
               dieWhenSourceDies: false,
               saveToContextKey: 'water_abilityentity01',
@@ -1629,7 +1912,12 @@ const tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 = {
             kind: 'findOwnerSpawnedAbilityEntities',
             parameters: {
               saveToContextKey: 'water_group',
-              abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+              tagFilters: [
+                {
+                  queryType: 'hasAny',
+                  tags: ['Skill/Character/chr_0027_tangtang/ComboSkillWater'],
+                },
+              ],
               owner: { kind: 'source' },
             },
           },
@@ -1656,9 +1944,10 @@ const tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 = {
           action: {
             kind: 'spawnAbilityEntity',
             parameters: {
-              bornAt: { kind: 'fixed', target: 'enemy' },
+              bornAt: { kind: 'inputTarget' },
               abilityEntityId: 'abilityentity_chr_0027_tangtang_comboskill_water',
               childSkillId: 'chr_0027_tangtang_combo_skill_water',
+              source: { kind: 'source' },
               inheritActionBlackboard: true,
               dieWhenSourceDies: false,
               saveToContextKey: 'water_abilityentity02',
@@ -1712,15 +2001,37 @@ const tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 = {
     },
     macros: {},
   },
+  skillId: 'chr_0027_tangtang_combo_skill_water_gene',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 900,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { duration_water: 30 },
+  scheduledSequences: [{ startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_15' } }],
 } as const;
 
 export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      findTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1728,10 +2039,18 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 18,
+              callbacks: [
+                { event: 'block', triggerFrames: [18] },
+                { event: 'finish', triggerFrames: [] },
+              ],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickBlock',
+            projectileId: 'projectile_chr_0027_tangtang_water',
+            faction: 'good',
             recycleDelaySeconds: 30,
+            entityInitialValues: {},
           },
           callbacks: [
             { event: 'block', skill: tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 },
@@ -1768,18 +2087,33 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyTarget',
+            durationSeconds: { kind: 'constant', value: 0.15 },
             priority: 10,
-            curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['caster'],
+            curve: { kind: 'named', key: 'char_hard_stop' },
           },
         },
         next: null,
       },
-      ifElse_23: {
+      startTimeDilation_23: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'OnlyAttacker',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+          },
+        },
+        next: 'startTimeDilation_22',
+      },
+      ifElse_24: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
@@ -1787,28 +2121,33 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
           whenTrue: { $sequence: 'changeResource_21' },
           whenFalse: { $sequence: null },
         },
-        next: 'startTimeDilation_22',
+        next: 'startTimeDilation_23',
       },
-      dealStagger_24: {
+      dealStagger_25: {
         action: {
           kind: 'dealStagger',
-          parameters: { value: { kind: 'valueNode', nodeId: 'data_4' } },
+          parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
+            value: { kind: 'valueNode', nodeId: 'data_4' },
+          },
         },
-        next: 'ifElse_23',
+        next: 'ifElse_24',
       },
-      dealDamage_25: {
+      dealDamage_26: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
           },
         },
-        next: 'dealStagger_24',
+        next: 'dealStagger_25',
       },
-      startTimeDilation_32: {
+      startTimeDilation_33: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1818,13 +2157,20 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
       },
-      startTimeDilation_33: {
+      startTimeDilation_34: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1834,9 +2180,22 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            targets: [],
-            abilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            targets: [
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_35: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0027_tangtang_normal_skill'] },
         },
         next: null,
       },
@@ -1865,7 +2224,9 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'water_group',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0027_tangtang/ComboSkillWater'] },
+            ],
             owner: { kind: 'source' },
           },
         },
@@ -1881,10 +2242,13 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_opt5: {
+      copyContextTargets_opt5: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar01', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'copyContextTargets',
+          parameters: {
+            source: { kind: 'limit', targets: { kind: 'context', key: 'tar' }, count: 1 },
+            saveToContextKey: 'tar01',
+          },
         },
         next: 'ifElse_opt4',
       },
@@ -1897,7 +2261,7 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
             value: { kind: 'constant', value: 1 },
           },
         },
-        next: 'mergeContextTargets_opt5',
+        next: 'copyContextTargets_opt5',
       },
       ifElse_opt7: {
         action: {
@@ -1907,7 +2271,7 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
           whenTrue: { $sequence: 'modifyActionValue_opt6' },
           whenFalse: { $sequence: null },
         },
-        next: 'dealDamage_25',
+        next: 'dealDamage_26',
       },
       checkCondition_opt8: {
         action: {
@@ -1967,7 +2331,7 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1980,6 +2344,7 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_combo_skill: SkillDefinition = {
+  actionGraph: tangtangChr_0027_tangtang_combo_skillActionGraph,
   key: 'chr_0027_tangtang_combo_skill',
   element: 'cryo',
   blackboard: {
@@ -2005,24 +2370,20 @@ export const tangtangChr_0027_tangtang_combo_skill: SkillDefinition = {
   exclusiveFrame: 41,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 31, endFrame: 93, skillIds: ['chr_0027_tangtang_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 26, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 26, endFrame: 29, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 26, endFrame: 29, sequence: { $sequence: 'checkCondition_opt8' } },
-    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'startTimeDilation_32' } },
-    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'startTimeDilation_33' } },
+    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'startTimeDilation_33' } },
+    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'startTimeDilation_34' } },
+    { startFrame: 31, endFrame: 93, sequence: { $sequence: 'reachSkillOperableBoundary_35' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [420, 420, 420, 420, 420, 420, 420, 420, 390, 390, 390, 360],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: tangtangChr_0027_tangtang_combo_skillActionGraph,
 };
 
 export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
@@ -2080,20 +2441,28 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      spawnAbilityEntity_9: {
+      overrideBasicAttackMapping_6: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0027_tangtang_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_10: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0027_tangtang_ultskill',
             childSkillId: 'chr_0027_tangtang_ultimate_skill_1',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
         },
         next: null,
       },
-      modifyActionValue_8: {
+      modifyActionValue_9: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -2102,19 +2471,19 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
             value: { kind: 'constant', value: 1 },
           },
         },
-        next: 'spawnAbilityEntity_9',
+        next: 'spawnAbilityEntity_10',
       },
-      ifElse_10: {
+      ifElse_11: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'modifyActionValue_8' },
-          whenFalse: { $sequence: 'spawnAbilityEntity_9' },
+          whenTrue: { $sequence: 'modifyActionValue_9' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_10' },
         },
         next: null,
       },
-      modifyActionValue_11: {
+      modifyActionValue_12: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -2123,9 +2492,9 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
-        next: 'ifElse_10',
+        next: 'ifElse_11',
       },
-      modifyActionValue_12: {
+      modifyActionValue_13: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -2134,9 +2503,9 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'modifyActionValue_11',
+        next: 'modifyActionValue_12',
       },
-      modifyActionValue_13: {
+      modifyActionValue_14: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -2145,9 +2514,9 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
-        next: 'modifyActionValue_12',
+        next: 'modifyActionValue_13',
       },
-      modifyActionValue_14: {
+      modifyActionValue_15: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -2156,9 +2525,9 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_6' },
           },
         },
-        next: 'modifyActionValue_13',
+        next: 'modifyActionValue_14',
       },
-      modifyActionValue_15: {
+      modifyActionValue_16: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -2167,9 +2536,9 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
-        next: 'modifyActionValue_14',
+        next: 'modifyActionValue_15',
       },
-      modifyActionValue_16: {
+      modifyActionValue_17: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -2178,7 +2547,17 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_8' },
           },
         },
-        next: 'modifyActionValue_15',
+        next: 'modifyActionValue_16',
+      },
+      addEntityTags_18: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: {
+            targets: { kind: 'owner' },
+            tags: ['Status/Ability/Skill/CantSwitchTocCenter'],
+          },
+        },
+        next: null,
       },
     },
     dataNodes: {
@@ -2222,6 +2601,7 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_ultimate_skill: SkillDefinition = {
+  actionGraph: tangtangChr_0027_tangtang_ultimate_skillActionGraph,
   key: 'chr_0027_tangtang_ultimate_skill',
   element: 'cryo',
   blackboard: {
@@ -2248,16 +2628,6 @@ export const tangtangChr_0027_tangtang_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 202,
   exclusiveFrame: 84,
   offsetRecordFrame: 0,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 82,
-        endFrame: 174,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0027_tangtang_attack1',
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
@@ -2265,7 +2635,9 @@ export const tangtangChr_0027_tangtang_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 84, sequence: { $sequence: 'applyBuff_3' } },
     { startFrame: 0, endFrame: 82, sequence: { $sequence: 'hideUi_4' } },
     { startFrame: 0, endFrame: 82, sequence: { $sequence: 'startUltimateTimeDilation_5' } },
-    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'modifyActionValue_16' } },
+    { startFrame: 82, endFrame: 174, sequence: { $sequence: 'overrideBasicAttackMapping_6' } },
+    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'modifyActionValue_17' } },
+    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'addEntityTags_18' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -2273,7 +2645,6 @@ export const tangtangChr_0027_tangtang_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: tangtangChr_0027_tangtang_ultimate_skillActionGraph,
 };
 
 export const tangtangCommon_character_perfect_dodgeActionGraph = {
@@ -3040,7 +3411,12 @@ const tangtangBuff10ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'water_move',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+            tagFilters: [
+              {
+                queryType: 'hasAny',
+                tags: ['Skill/Character/chr_0027_tangtang/NormalSkillWaterMove'],
+              },
+            ],
             owner: { kind: 'owner' },
             sameSourceSkillCast: true,
           },
@@ -3087,7 +3463,10 @@ const tangtangBuff11ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'ultwater_abilityentity',
-            abilityEntityIds: [],
+            objectType: 'none',
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0027_tangtang/UltSkillWater'] },
+            ],
             owner: { kind: 'source' },
           },
         },
@@ -3243,31 +3622,7 @@ const tangtangBuff14: SkillBuffDefinition = {
 };
 
 const tangtangBuff15ActionGraph = {
-  main: {
-    nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: { kind: 'owner' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'less',
-          value: { kind: 'constant', value: 1 },
-          tagQueryType: 'hasAny',
-          buffTags: ['Immune/Static'],
-        },
-      },
-    },
-  },
+  main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -3284,7 +3639,6 @@ const tangtangBuff15: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { ultskill_debuff_duration: 4 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: [{ $sequence: 'checkCondition_1' }] },
   actionGraph: tangtangBuff15ActionGraph,
 };
 
@@ -3310,9 +3664,10 @@ const tangtangBuff16ActionGraph = {
             bornAt: { kind: 'context', key: 'ultwater_abilityentity' },
             abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_move',
             childSkillId: 'chr_0027_tangtang_ult_skill_abilityentitymove',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'caster',
+            target: { kind: 'source' },
             saveToContextKey: 'ultskill_watermove',
           },
         },
@@ -3403,7 +3758,9 @@ const tangtangBuff16ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'ultwater_abilityentity',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_ultskill'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0027_tangtang/UltSkillWater'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -3414,7 +3771,9 @@ const tangtangBuff16ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'water',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0027_tangtang/ComboSkillWater'] },
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -3459,7 +3818,12 @@ const tangtangBuff16ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'ultwater_move',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+            tagFilters: [
+              {
+                queryType: 'hasAny',
+                tags: ['Skill/Character/chr_0027_tangtang/NormalSkillWaterMove'],
+              },
+            ],
             owner: { kind: 'owner' },
             sameSourceSkillCast: true,
           },
@@ -3607,7 +3971,7 @@ const tangtangBuff19ActionGraph = {
       setCharacterPassiveUiValue_7: {
         action: {
           kind: 'setCharacterPassiveUiValue',
-          parameters: { target: 'caster', value: { kind: 'valueNode', nodeId: 'data_1' } },
+          parameters: { target: { kind: 'owner' }, value: { kind: 'valueNode', nodeId: 'data_1' } },
         },
         next: null,
       },
@@ -4112,21 +4476,6 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_abilityentitymove: {
-          skillId: 'chr_0027_tangtang_normal_skill_abilityentitymove',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 300,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: { atk_scale: 0.1, duration: 5, poise: 5, poise_tornado: 0, water_cnt: 0 },
-          scheduledSequences: [
-            { startFrame: 12, endFrame: 12, sequence: { $sequence: 'ifElse_13' } },
-            { startFrame: 298, endFrame: 298, sequence: { $sequence: 'finishOwner_14' } },
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'applyBuff_15' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
@@ -4137,9 +4486,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: null,
@@ -4151,9 +4501,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_02_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: null,
@@ -4165,9 +4516,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: 'spawnAbilityEntity_7',
@@ -4179,9 +4531,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03_03',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: null,
@@ -4193,9 +4546,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: 'spawnAbilityEntity_3',
@@ -4207,9 +4561,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: 'spawnAbilityEntity_4',
@@ -4278,30 +4633,23 @@ export const tangtang: OperatorDefinition = {
             },
             macros: {},
           },
-        },
-        chr_0027_tangtang_ult_skill_abilityentitymove: {
-          skillId: 'chr_0027_tangtang_ult_skill_abilityentitymove',
+          skillId: 'chr_0027_tangtang_normal_skill_abilityentitymove',
           nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 151,
+          naturalDurationFrames: 300,
           castResource: {
             costFrame: 0,
             cooldownSeconds: 0,
             maxChargeTime: 1,
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
-          blackboard: {
-            atk_scale: 0.1,
-            dmg_up_water_ult: 0,
-            duration: 5,
-            poise: 5,
-            poise_tornado: 0,
-            talent2_ultskill: 0,
-            water_cnt: 0,
-          },
+          blackboard: { atk_scale: 0.1, duration: 5, poise: 5, poise_tornado: 0, water_cnt: 0 },
           scheduledSequences: [
-            { startFrame: 18, endFrame: 18, sequence: { $sequence: 'ifElse_13' } },
-            { startFrame: 150, endFrame: 150, sequence: { $sequence: 'finishOwner_14' } },
+            { startFrame: 12, endFrame: 12, sequence: { $sequence: 'ifElse_13' } },
+            { startFrame: 298, endFrame: 298, sequence: { $sequence: 'finishOwner_14' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'applyBuff_15' } },
           ],
+        },
+        chr_0027_tangtang_ult_skill_abilityentitymove: {
           actionGraph: {
             main: {
               nodes: {
@@ -4312,9 +4660,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: null,
@@ -4326,9 +4675,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_02_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: null,
@@ -4340,9 +4690,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: 'spawnAbilityEntity_7',
@@ -4354,9 +4705,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03_03',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: null,
@@ -4368,9 +4720,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: 'spawnAbilityEntity_3',
@@ -4382,9 +4735,10 @@ export const tangtang: OperatorDefinition = {
                       bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
+                      target: { kind: 'owner' },
                     },
                   },
                   next: 'spawnAbilityEntity_4',
@@ -4441,6 +4795,28 @@ export const tangtang: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0027_tangtang_ult_skill_abilityentitymove',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 151,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            atk_scale: 0.1,
+            dmg_up_water_ult: 0,
+            duration: 5,
+            poise: 5,
+            poise_tornado: 0,
+            talent2_ultskill: 0,
+            water_cnt: 0,
+          },
+          scheduledSequences: [
+            { startFrame: 18, endFrame: 18, sequence: { $sequence: 'ifElse_13' } },
+            { startFrame: 150, endFrame: 150, sequence: { $sequence: 'finishOwner_14' } },
+          ],
         },
       },
     },
@@ -4464,57 +4840,10 @@ export const tangtang: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 30 },
       maxStackingCount: 2,
       childSkill: {
-        skillId: 'chr_0027_tangtang_combo_skill_water',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 1550,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: {
-          duration_talent1buff: 3,
-          ratio_speed: 0.2,
-          ratio_speedreduction: 0.8,
-          talent1_speed: 0,
-        },
-        scheduledSequences: [
-          {
-            startFrame: 1500,
-            endFrame: 1501,
-            sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt4' },
-          },
-          {
-            startFrame: 1515,
-            endFrame: 1516,
-            sequence: { $sequence: 'createSpatialPointTargets_opt9' },
-          },
-          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_25' } },
-          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_27' } },
-          { startFrame: 1500, endFrame: 1501, sequence: { $sequence: 'finishOwner_28' } },
-          { startFrame: 1515, endFrame: 1516, sequence: { $sequence: 'finishOwner_28' } },
-          { startFrame: 900, endFrame: 901, sequence: { $sequence: 'finishOwner_31' } },
-          { startFrame: 1500, endFrame: 1501, sequence: { $sequence: 'finishOwner_28' } },
-          { startFrame: 1515, endFrame: 1516, sequence: { $sequence: 'finishOwner_28' } },
-          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'checkCondition_40' } },
-        ],
         actionGraph: {
           main: {
             nodes: {
-              launchProjectile_3: {
-                action: {
-                  kind: 'launchProjectile',
-                  parameters: {
-                    inheritActionBlackboard: true,
-                    finish: { reachAfterTicks: 2, maxDurationSeconds: 2 },
-                    targets: { kind: 'context', contextKey: 'tangtang' },
-                  },
-                  callbacks: [],
-                },
-                next: null,
-              },
-              finishBuffsById_7: {
+              finishBuffsById_4: {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
@@ -4527,33 +4856,21 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              launchProjectile_13: {
-                action: {
-                  kind: 'launchProjectile',
-                  parameters: {
-                    inheritActionBlackboard: true,
-                    finish: { reachAfterTicks: 2, maxDurationSeconds: 2 },
-                    targets: { kind: 'context', contextKey: 'ultskill_center_abilityentity' },
-                  },
-                  callbacks: [],
-                },
-                next: null,
-              },
-              checkCondition_17: {
+              checkCondition_11: {
                 action: {
                   kind: 'checkCondition',
                   parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 },
                 next: null,
               },
-              checkCondition_18: {
+              checkCondition_12: {
                 action: {
                   kind: 'checkCondition',
                   parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 },
-                next: 'checkCondition_17',
+                next: 'checkCondition_11',
               },
-              jumpTimeline_25: {
+              jumpTimeline_19: {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 1500 },
@@ -4561,7 +4878,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              jumpTimeline_27: {
+              jumpTimeline_21: {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 1515 },
@@ -4569,15 +4886,15 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              finishOwner_28: {
+              finishOwner_22: {
                 action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                 next: null,
               },
-              finishOwner_31: {
+              finishOwner_25: {
                 action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
-                next: 'finishBuffsById_7',
+                next: 'finishBuffsById_4',
               },
-              applyBuff_35: {
+              applyBuff_29: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -4590,18 +4907,18 @@ export const tangtang: OperatorDefinition = {
                         },
                       },
                     ],
-                    targets: { kind: 'fixed', target: 'enemy' },
+                    targets: { kind: 'inputTarget' },
                     source: { kind: 'source' },
                     inheritSourceSkillCastInfo: true,
                   },
                 },
                 next: null,
               },
-              finishBuffsById_34: {
+              finishBuffsById_28: {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
-                    targets: { kind: 'fixed', target: 'enemy' },
+                    targets: { kind: 'inputTarget' },
                     finishSource: { kind: 'source' },
                     buffIds: ['buff_chr_0027_tangtang_comboskill_waterdebuff_outaura'],
                     reason: 'other',
@@ -4609,7 +4926,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              applyBuff_37: {
+              applyBuff_31: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -4629,7 +4946,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              finishBuffsById_36: {
+              finishBuffsById_30: {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
@@ -4641,7 +4958,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              aura_38: {
+              aura_32: {
                 action: {
                   kind: 'aura',
                   parameters: {
@@ -4658,16 +4975,20 @@ export const tangtang: OperatorDefinition = {
                       },
                     ],
                   },
-                  onEnter: { $sequence: 'finishBuffsById_36' },
-                  onExit: { $sequence: 'applyBuff_37' },
+                  onEnter: { $sequence: 'finishBuffsById_30' },
+                  onExit: { $sequence: 'applyBuff_31' },
                 },
                 next: null,
               },
-              aura_39: {
+              aura_33: {
                 action: {
                   kind: 'aura',
                   parameters: {
-                    targets: { kind: 'fixed', target: 'enemy' },
+                    targets: {
+                      kind: 'exclude',
+                      targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [] },
+                      excludeTargets: { kind: 'owner' },
+                    },
                     source: { kind: 'source' },
                     inheritSourceSkillCastInfo: true,
                     buffs: [
@@ -4680,109 +5001,91 @@ export const tangtang: OperatorDefinition = {
                       },
                     ],
                   },
-                  onEnter: { $sequence: 'finishBuffsById_34' },
-                  onExit: { $sequence: 'applyBuff_35' },
+                  onEnter: { $sequence: 'finishBuffsById_28' },
+                  onExit: { $sequence: 'applyBuff_29' },
                 },
-                next: 'aura_38',
+                next: 'aura_32',
               },
-              checkCondition_40: {
+              checkCondition_34: {
                 action: {
                   kind: 'checkCondition',
                   parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 },
-                next: 'aura_39',
+                next: 'aura_33',
               },
               ifElse_opt1: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
                   condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                  whenTrue: { $sequence: 'launchProjectile_3' },
-                  whenFalse: { $sequence: 'launchProjectile_3' },
+                  whenTrue: { $sequence: null },
+                  whenFalse: { $sequence: null },
                 },
-                next: null,
+                next: 'finishBuffsById_4',
               },
-              ifElse_opt2: {
-                action: {
-                  kind: 'ifElse',
-                  parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_10' },
-                  whenTrue: { $sequence: 'launchProjectile_3' },
-                  whenFalse: { $sequence: 'ifElse_opt1' },
-                },
-                next: 'finishBuffsById_7',
-              },
-              createSpatialPointTargets_opt3: {
+              createSpatialPointTargets_opt2: {
                 action: {
                   kind: 'createSpatialPointTargets',
                   parameters: {
                     saveToContextKey: 'water_back_pos',
                     count: { kind: 'constant', value: 1 },
+                    origin: { kind: 'owner' },
                   },
                 },
-                next: 'ifElse_opt2',
+                next: 'ifElse_opt1',
               },
-              findOwnerSpawnedAbilityEntities_opt4: {
+              findOwnerSpawnedAbilityEntities_opt3: {
                 action: {
                   kind: 'findOwnerSpawnedAbilityEntities',
                   parameters: {
                     saveToContextKey: 'tangtang',
-                    abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+                    tagFilters: [
+                      {
+                        queryType: 'hasAny',
+                        tags: ['Skill/Character/chr_0027_tangtang/NormalSkillWaterMove'],
+                      },
+                    ],
                     owner: { kind: 'source' },
                   },
                 },
-                next: 'createSpatialPointTargets_opt3',
+                next: 'createSpatialPointTargets_opt2',
               },
-              ifElse_opt5: {
+              ifElse_opt4: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_11' },
-                  whenTrue: { $sequence: 'launchProjectile_13' },
-                  whenFalse: { $sequence: 'launchProjectile_13' },
-                },
-                next: null,
-              },
-              ifElse_opt6: {
-                action: {
-                  kind: 'ifElse',
-                  parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_12' },
-                  whenTrue: { $sequence: 'launchProjectile_13' },
-                  whenFalse: { $sequence: 'ifElse_opt5' },
-                },
-                next: 'finishBuffsById_7',
-              },
-              ifElse_opt7: {
-                action: {
-                  kind: 'ifElse',
-                  parameters: { alwaysNext: true },
-                  condition: { kind: 'conditionNode', nodeId: 'data_13' },
-                  whenTrue: { $sequence: 'ifElse_opt6' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_10' },
+                  whenTrue: { $sequence: 'ifElse_opt1' },
                   whenFalse: { $sequence: null },
                 },
                 next: null,
               },
-              findOwnerSpawnedAbilityEntities_opt8: {
+              findOwnerSpawnedAbilityEntities_opt5: {
                 action: {
                   kind: 'findOwnerSpawnedAbilityEntities',
                   parameters: {
                     saveToContextKey: 'ultskill_center_abilityentity',
-                    abilityEntityIds: ['abilityentity_chr_0027_tangtang_ultskill'],
+                    tagFilters: [
+                      {
+                        queryType: 'hasAny',
+                        tags: ['Skill/Character/chr_0027_tangtang/UltSkillWater'],
+                      },
+                    ],
                     owner: { kind: 'source' },
                   },
                 },
-                next: 'ifElse_opt7',
+                next: 'ifElse_opt4',
               },
-              createSpatialPointTargets_opt9: {
+              createSpatialPointTargets_opt6: {
                 action: {
                   kind: 'createSpatialPointTargets',
                   parameters: {
                     saveToContextKey: 'water_back_pos',
                     count: { kind: 'constant', value: 1 },
+                    origin: { kind: 'owner' },
                   },
                 },
-                next: 'findOwnerSpawnedAbilityEntities_opt8',
+                next: 'findOwnerSpawnedAbilityEntities_opt5',
               },
             },
             dataNodes: {
@@ -4856,36 +5159,49 @@ export const tangtang: OperatorDefinition = {
               data_10: {
                 type: 'boolean',
                 expression: {
-                  kind: 'timedMarkerPresent',
-                  target: { kind: 'owner' },
-                  returnTrueIfNotExists: false,
-                  markerId: 'tangtang_waterabilityentity01',
-                },
-              },
-              data_11: {
-                type: 'boolean',
-                expression: { kind: 'checkActionResult', action: { $sequence: null } },
-              },
-              data_12: {
-                type: 'boolean',
-                expression: {
-                  kind: 'timedMarkerPresent',
-                  target: { kind: 'owner' },
-                  returnTrueIfNotExists: false,
-                  markerId: 'tangtang_waterabilityentity01',
-                },
-              },
-              data_13: {
-                type: 'boolean',
-                expression: {
                   kind: 'checkActionResult',
-                  action: { $sequence: 'checkCondition_18' },
+                  action: { $sequence: 'checkCondition_12' },
                 },
               },
             },
           },
           macros: {},
         },
+        skillId: 'chr_0027_tangtang_combo_skill_water',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1550,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {
+          duration_talent1buff: 3,
+          ratio_speed: 0.2,
+          ratio_speedreduction: 0.8,
+          talent1_speed: 0,
+        },
+        scheduledSequences: [
+          {
+            startFrame: 1500,
+            endFrame: 1501,
+            sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt3' },
+          },
+          {
+            startFrame: 1515,
+            endFrame: 1516,
+            sequence: { $sequence: 'createSpatialPointTargets_opt6' },
+          },
+          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_19' } },
+          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_21' } },
+          { startFrame: 1500, endFrame: 1501, sequence: { $sequence: 'finishOwner_22' } },
+          { startFrame: 1515, endFrame: 1516, sequence: { $sequence: 'finishOwner_22' } },
+          { startFrame: 900, endFrame: 901, sequence: { $sequence: 'finishOwner_25' } },
+          { startFrame: 1500, endFrame: 1501, sequence: { $sequence: 'finishOwner_22' } },
+          { startFrame: 1515, endFrame: 1516, sequence: { $sequence: 'finishOwner_22' } },
+          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'checkCondition_34' } },
+        ],
       },
     },
     abilityentity_chr_0027_tangtang_ultskill: {
@@ -4899,43 +5215,46 @@ export const tangtang: OperatorDefinition = {
       ],
       lifetime: { kind: 'limited', durationSeconds: 10 },
       childSkill: {
-        skillId: 'chr_0027_tangtang_ultimate_skill_1',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 210,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: {
-          atk_scale_1: 0,
-          atk_scale_2: 0,
-          atk_scale_3: 0,
-          dmg_up_water_ult: 0,
-          duration_spellvulnerable: 0,
-          poise2: 0,
-          poise3: 0,
-          rate_spellvulnerable: 0,
-          rate_spellvulnerable_02: 0,
-          talent2: 0,
-          talent2_ultskill: 0,
-        },
-        scheduledSequences: [
-          { startFrame: 0, endFrame: 120, sequence: { $sequence: 'repeatEachTick_6' } },
-          { startFrame: 120, endFrame: 123, sequence: { $sequence: 'dealDamage_7' } },
-          { startFrame: 133, endFrame: 136, sequence: { $sequence: 'dealDamage_9' } },
-          { startFrame: 0, endFrame: 121, sequence: { $sequence: 'createTimedMarker_14' } },
-          { startFrame: 128, endFrame: 136, sequence: { $sequence: 'ifElse_opt1' } },
-          { startFrame: 128, endFrame: 128, sequence: { $sequence: 'checkCondition_23' } },
-          { startFrame: 127, endFrame: 128, sequence: { $sequence: 'interruptCurrentSkill_24' } },
-          { startFrame: 0, endFrame: 119, sequence: { $sequence: 'listenForCombatEvents_27' } },
-          { startFrame: 127, endFrame: 128, sequence: { $sequence: 'finishOwner_28' } },
-          { startFrame: 156, endFrame: 157, sequence: { $sequence: 'finishOwner_28' } },
-        ],
         actionGraph: {
           main: {
             nodes: {
+              findTargets_1: {
+                action: {
+                  kind: 'findTargets',
+                  parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
+                    saveToContextKey: 'tar',
+                    continuousIntervalSeconds: 0.0333333351,
+                  },
+                },
+                next: null,
+              },
+              findTargets_2: {
+                action: {
+                  kind: 'findTargets',
+                  parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
+                    saveToContextKey: 'tar2',
+                  },
+                },
+                next: null,
+              },
               once_4: {
                 action: { kind: 'once', parameters: {}, body: { $sequence: null } },
                 next: null,
@@ -4944,10 +5263,11 @@ export const tangtang: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'inputTarget' },
                     damageType: 'cryo',
                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                    tags: ['ultimateSkill'],
-                    features: ['canBreakWeakness'],
+                    tags: ['ultimateSkill', 'canBreakWeakness'],
                   },
                   key: 'abilityentity_chr_0027_tangtang_ultskill:chr_0027_tangtang_ultimate_skill_1:/childSkill/actionGraph/main/nodes/dealDamage_5/action',
                 },
@@ -4959,7 +5279,7 @@ export const tangtang: OperatorDefinition = {
                   parameters: {
                     nativeChanneling: {
                       catchUpMissedTicks: false,
-                      target: { kind: 'fixed', target: 'enemy' },
+                      target: { kind: 'context', key: 'tar' },
                       executeEachFrame: true,
                       triggerIntervalSeconds: 0.033,
                       maxCountPerTarget: 8,
@@ -4974,11 +5294,12 @@ export const tangtang: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar2' },
                     damageType: 'cryo',
                     attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                     takeAttackSnapshot: true,
-                    tags: ['ultimateSkill'],
-                    features: ['canBreakWeakness'],
+                    tags: ['ultimateSkill', 'canBreakWeakness'],
                     stagger: { kind: 'valueNode', nodeId: 'data_3' },
                   },
                   key: 'abilityentity_chr_0027_tangtang_ultskill:chr_0027_tangtang_ultimate_skill_1:/childSkill/actionGraph/main/nodes/dealDamage_7/action',
@@ -4989,37 +5310,53 @@ export const tangtang: OperatorDefinition = {
                 action: {
                   kind: 'startTimeDilation',
                   parameters: {
-                    scope: 'entity',
-                    durationSeconds: { kind: 'constant', value: 0.15 },
-                    slot: 'TimeDilation/Layer/Entity/HitStop',
+                    scope: 'hitStop',
+                    attacker: { kind: 'mainCharacter' },
+                    targets: { kind: 'context', key: 'tar2' },
+                    affectType: 'OnlyTarget',
+                    durationSeconds: { kind: 'constant', value: 0.2 },
                     priority: 10,
                     curve: { kind: 'named', key: 'char_hard_stop' },
-                    finishByAction: false,
-                    targets: ['controlled'],
                   },
                 },
                 next: null,
               },
-              dealDamage_9: {
+              startTimeDilation_9: {
                 action: {
-                  kind: 'dealDamage',
+                  kind: 'startTimeDilation',
                   parameters: {
-                    damageType: 'cryo',
-                    attackScale: { kind: 'valueNode', nodeId: 'data_4' },
-                    takeAttackSnapshot: true,
-                    tags: ['ultimateSkill'],
-                    features: ['canBreakWeakness'],
-                    stagger: { kind: 'valueNode', nodeId: 'data_5' },
+                    scope: 'hitStop',
+                    attacker: { kind: 'mainCharacter' },
+                    targets: { kind: 'context', key: 'tar2' },
+                    affectType: 'OnlyAttacker',
+                    durationSeconds: { kind: 'constant', value: 0.15 },
+                    priority: 10,
+                    curve: { kind: 'named', key: 'char_hard_stop' },
                   },
-                  key: 'abilityentity_chr_0027_tangtang_ultskill:chr_0027_tangtang_ultimate_skill_1:/childSkill/actionGraph/main/nodes/dealDamage_9/action',
                 },
                 next: 'startTimeDilation_8',
               },
-              finishBuffsById_10: {
+              dealDamage_10: {
+                action: {
+                  kind: 'dealDamage',
+                  parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar2' },
+                    damageType: 'cryo',
+                    attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                    takeAttackSnapshot: true,
+                    tags: ['ultimateSkill', 'canBreakWeakness'],
+                    stagger: { kind: 'valueNode', nodeId: 'data_5' },
+                  },
+                  key: 'abilityentity_chr_0027_tangtang_ultskill:chr_0027_tangtang_ultimate_skill_1:/childSkill/actionGraph/main/nodes/dealDamage_10/action',
+                },
+                next: 'startTimeDilation_9',
+              },
+              finishBuffsById_11: {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
-                    targets: { kind: 'fixed', target: 'enemy' },
+                    targets: { kind: 'inputTarget' },
                     finishSource: { kind: 'source' },
                     buffIds: ['buff_chr_0027_tangtang_ultskill_debuff'],
                     reason: 'other',
@@ -5027,7 +5364,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              finishBuffsById_11: {
+              finishBuffsById_12: {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
@@ -5039,7 +5376,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              aura_12: {
+              aura_13: {
                 action: {
                   kind: 'aura',
                   parameters: {
@@ -5053,15 +5390,19 @@ export const tangtang: OperatorDefinition = {
                     buffs: [{ buffId: 'buff_chr_0027_tangtang_ultskill_buff' }],
                   },
                   onEnter: { $sequence: null },
-                  onExit: { $sequence: 'finishBuffsById_11' },
+                  onExit: { $sequence: 'finishBuffsById_12' },
                 },
                 next: null,
               },
-              aura_13: {
+              aura_14: {
                 action: {
                   kind: 'aura',
                   parameters: {
-                    targets: { kind: 'fixed', target: 'enemy' },
+                    targets: {
+                      kind: 'exclude',
+                      targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [] },
+                      excludeTargets: { kind: 'owner' },
+                    },
                     source: { kind: 'source' },
                     iconDurationSource: {
                       kind: 'actionOwnerTimedMarker',
@@ -5071,11 +5412,11 @@ export const tangtang: OperatorDefinition = {
                     buffs: [{ buffId: 'buff_chr_0027_tangtang_ultskill_debuff' }],
                   },
                   onEnter: { $sequence: null },
-                  onExit: { $sequence: 'finishBuffsById_10' },
+                  onExit: { $sequence: 'finishBuffsById_11' },
                 },
-                next: 'aura_12',
+                next: 'aura_13',
               },
-              createTimedMarker_14: {
+              createTimedMarker_15: {
                 action: {
                   kind: 'createTimedMarker',
                   parameters: {
@@ -5086,23 +5427,27 @@ export const tangtang: OperatorDefinition = {
                     timeDomain: 'self',
                   },
                 },
-                next: 'aura_13',
+                next: 'aura_14',
               },
-              aura_20: {
+              aura_21: {
                 action: {
                   kind: 'aura',
                   parameters: {
-                    targets: { kind: 'fixed', target: 'enemy' },
+                    targets: {
+                      kind: 'exclude',
+                      targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [] },
+                      excludeTargets: { kind: 'owner' },
+                    },
                     source: { kind: 'source' },
                     inheritSourceSkillCastInfo: true,
                     buffs: [{ buffId: 'buff_chr_0027_tangtang_ultskill_debuff' }],
                   },
                   onEnter: { $sequence: null },
-                  onExit: { $sequence: 'finishBuffsById_10' },
+                  onExit: { $sequence: 'finishBuffsById_11' },
                 },
                 next: null,
               },
-              applyBuff_22: {
+              applyBuff_23: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
@@ -5125,21 +5470,21 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              checkCondition_23: {
+              checkCondition_24: {
                 action: {
                   kind: 'checkCondition',
                   parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
                 },
-                next: 'applyBuff_22',
+                next: 'applyBuff_23',
               },
-              interruptCurrentSkill_24: {
+              interruptCurrentSkill_25: {
                 action: {
                   kind: 'interruptCurrentSkill',
                   parameters: { targets: { kind: 'owner' } },
                 },
                 next: null,
               },
-              jumpTimeline_25: {
+              jumpTimeline_26: {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 128 },
@@ -5147,14 +5492,14 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              checkCondition_26: {
+              checkCondition_27: {
                 action: {
                   kind: 'checkCondition',
                   parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                 },
-                next: 'jumpTimeline_25',
+                next: 'jumpTimeline_26',
               },
-              listenForCombatEvents_27: {
+              listenForCombatEvents_28: {
                 action: {
                   kind: 'listenForCombatEvents',
                   parameters: {
@@ -5164,14 +5509,14 @@ export const tangtang: OperatorDefinition = {
                         event: { kind: 'abilityEvent', event: 'outputBuff' },
                         phase: 'dataAction',
                         priority: 0,
-                        sequence: { $sequence: 'checkCondition_26' },
+                        sequence: { $sequence: 'checkCondition_27' },
                       },
                     ],
                   },
                 },
                 next: null,
               },
-              finishOwner_28: {
+              finishOwner_29: {
                 action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                 next: null,
               },
@@ -5180,8 +5525,8 @@ export const tangtang: OperatorDefinition = {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
                   condition: { kind: 'conditionNode', nodeId: 'data_10' },
-                  whenTrue: { $sequence: 'aura_20' },
-                  whenFalse: { $sequence: 'aura_20' },
+                  whenTrue: { $sequence: 'aura_21' },
+                  whenFalse: { $sequence: 'aura_21' },
                 },
                 next: null,
               },
@@ -5228,6 +5573,43 @@ export const tangtang: OperatorDefinition = {
           },
           macros: {},
         },
+        skillId: 'chr_0027_tangtang_ultimate_skill_1',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 210,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {
+          atk_scale_1: 0,
+          atk_scale_2: 0,
+          atk_scale_3: 0,
+          dmg_up_water_ult: 0,
+          duration_spellvulnerable: 0,
+          poise2: 0,
+          poise3: 0,
+          rate_spellvulnerable: 0,
+          rate_spellvulnerable_02: 0,
+          talent2: 0,
+          talent2_ultskill: 0,
+        },
+        scheduledSequences: [
+          { startFrame: 0, endFrame: 120, sequence: { $sequence: 'findTargets_1' } },
+          { startFrame: 120, endFrame: 123, sequence: { $sequence: 'findTargets_2' } },
+          { startFrame: 133, endFrame: 136, sequence: { $sequence: 'findTargets_2' } },
+          { startFrame: 0, endFrame: 120, sequence: { $sequence: 'repeatEachTick_6' } },
+          { startFrame: 120, endFrame: 123, sequence: { $sequence: 'dealDamage_7' } },
+          { startFrame: 133, endFrame: 136, sequence: { $sequence: 'dealDamage_10' } },
+          { startFrame: 0, endFrame: 121, sequence: { $sequence: 'createTimedMarker_15' } },
+          { startFrame: 128, endFrame: 136, sequence: { $sequence: 'ifElse_opt1' } },
+          { startFrame: 128, endFrame: 128, sequence: { $sequence: 'checkCondition_24' } },
+          { startFrame: 127, endFrame: 128, sequence: { $sequence: 'interruptCurrentSkill_25' } },
+          { startFrame: 0, endFrame: 119, sequence: { $sequence: 'listenForCombatEvents_28' } },
+          { startFrame: 127, endFrame: 128, sequence: { $sequence: 'finishOwner_29' } },
+          { startFrame: 156, endFrame: 157, sequence: { $sequence: 'finishOwner_29' } },
+        ],
       },
       presentation: {
         icon: 'endaxis:operators/tangtang/ultimate_01',
@@ -5249,38 +5631,34 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit_2: {
-          skillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 95,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: {
-            dmg_up_water_ult: 0.3,
-            duration_spellvulnerable: 10,
-            hit_spelllnflictionmax02: 1,
-            hit_spellvulnerablemax: 1,
-            poise_tornado: 0,
-            rate_spellvulnerable_02: 0.1,
-            talent2_ultskill: 0,
-            tornado_atk_scale01: 0,
-          },
-          scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
-            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
+                findTargets_1: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar',
+                      continuousIntervalSeconds: 0.0333333351,
+                    },
+                  },
+                  next: null,
+                },
                 applyBuff_3: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
                       buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
@@ -5290,7 +5668,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_4: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'inputTarget' },
+                    },
                   },
                   next: 'applyBuff_3',
                 },
@@ -5307,7 +5689,7 @@ export const tangtang: OperatorDefinition = {
                           },
                         },
                       ],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'context', key: 'tar' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
@@ -5318,11 +5700,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       instantDamageScaleModifiers: [
                         {
                           side: 'attacker',
@@ -5340,11 +5724,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill_03_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
@@ -5387,7 +5773,7 @@ export const tangtang: OperatorDefinition = {
                     parameters: {
                       nativeChanneling: {
                         catchUpMissedTicks: false,
-                        target: { kind: 'fixed', target: 'enemy' },
+                        target: { kind: 'context', key: 'tar' },
                         executeEachFrame: false,
                         triggerIntervalSeconds: 0.26,
                         maxCountPerTarget: -1,
@@ -5441,7 +5827,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'data_6' },
@@ -5457,7 +5843,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'data_8' },
@@ -5469,6 +5855,30 @@ export const tangtang: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 95,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            dmg_up_water_ult: 0.3,
+            duration_spellvulnerable: 10,
+            hit_spelllnflictionmax02: 1,
+            hit_spellvulnerablemax: 1,
+            poise_tornado: 0,
+            rate_spellvulnerable_02: 0.1,
+            talent2_ultskill: 0,
+            tornado_atk_scale01: 0,
+          },
+          scheduledSequences: [
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_1' } },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
+          ],
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -5478,7 +5888,7 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'context', key: 'tar' },
                       finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
@@ -5490,7 +5900,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_2: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'context', key: 'tar' },
+                    },
                   },
                   next: 'finishBuffsById_1',
                 },
@@ -5517,6 +5931,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['normalSkill'],
@@ -5526,12 +5942,21 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
-                mergeContextTargets_6: {
+                findTargets_6: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      center: { kind: 'inputTarget' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_5',
@@ -5542,7 +5967,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'context', key: 'tar' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 5 },
@@ -5566,7 +5991,7 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_6' } },
           ],
         },
       },
@@ -5589,38 +6014,34 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit_2: {
-          skillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 95,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: {
-            dmg_up_water_ult: 0.3,
-            duration_spellvulnerable: 10,
-            hit_spelllnflictionmax02: 1,
-            hit_spellvulnerablemax: 1,
-            poise_tornado: 0,
-            rate_spellvulnerable_02: 0.1,
-            talent2_ultskill: 0,
-            tornado_atk_scale01: 0,
-          },
-          scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
-            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
+                findTargets_1: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar',
+                      continuousIntervalSeconds: 0.0333333351,
+                    },
+                  },
+                  next: null,
+                },
                 applyBuff_3: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
                       buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
@@ -5630,7 +6051,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_4: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'inputTarget' },
+                    },
                   },
                   next: 'applyBuff_3',
                 },
@@ -5647,7 +6072,7 @@ export const tangtang: OperatorDefinition = {
                           },
                         },
                       ],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'context', key: 'tar' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
@@ -5658,11 +6083,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       instantDamageScaleModifiers: [
                         {
                           side: 'attacker',
@@ -5680,11 +6107,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill_03_02:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
@@ -5727,7 +6156,7 @@ export const tangtang: OperatorDefinition = {
                     parameters: {
                       nativeChanneling: {
                         catchUpMissedTicks: false,
-                        target: { kind: 'fixed', target: 'enemy' },
+                        target: { kind: 'context', key: 'tar' },
                         executeEachFrame: false,
                         triggerIntervalSeconds: 0.26,
                         maxCountPerTarget: -1,
@@ -5781,7 +6210,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'data_6' },
@@ -5797,7 +6226,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'data_8' },
@@ -5809,6 +6238,30 @@ export const tangtang: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 95,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            dmg_up_water_ult: 0.3,
+            duration_spellvulnerable: 10,
+            hit_spelllnflictionmax02: 1,
+            hit_spellvulnerablemax: 1,
+            poise_tornado: 0,
+            rate_spellvulnerable_02: 0.1,
+            talent2_ultskill: 0,
+            tornado_atk_scale01: 0,
+          },
+          scheduledSequences: [
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_1' } },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
+          ],
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -5818,7 +6271,7 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'context', key: 'tar' },
                       finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
@@ -5830,7 +6283,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_2: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'context', key: 'tar' },
+                    },
                   },
                   next: 'finishBuffsById_1',
                 },
@@ -5857,6 +6314,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['normalSkill'],
@@ -5866,12 +6325,21 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
-                mergeContextTargets_6: {
+                findTargets_6: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      center: { kind: 'inputTarget' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_5',
@@ -5882,7 +6350,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'context', key: 'tar' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 5 },
@@ -5906,7 +6374,7 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_6' } },
           ],
         },
       },
@@ -5929,38 +6397,34 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit_2: {
-          skillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 95,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: {
-            dmg_up_water_ult: 0.3,
-            duration_spellvulnerable: 10,
-            hit_spelllnflictionmax02: 1,
-            hit_spellvulnerablemax: 1,
-            poise_tornado: 0,
-            rate_spellvulnerable_02: 0.1,
-            talent2_ultskill: 0,
-            tornado_atk_scale01: 0,
-          },
-          scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
-            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
+                findTargets_1: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar',
+                      continuousIntervalSeconds: 0.0333333351,
+                    },
+                  },
+                  next: null,
+                },
                 applyBuff_3: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
                       buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
@@ -5970,7 +6434,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_4: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'inputTarget' },
+                    },
                   },
                   next: 'applyBuff_3',
                 },
@@ -5987,7 +6455,7 @@ export const tangtang: OperatorDefinition = {
                           },
                         },
                       ],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'context', key: 'tar' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
@@ -5998,11 +6466,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       instantDamageScaleModifiers: [
                         {
                           side: 'attacker',
@@ -6020,11 +6490,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
@@ -6067,7 +6539,7 @@ export const tangtang: OperatorDefinition = {
                     parameters: {
                       nativeChanneling: {
                         catchUpMissedTicks: false,
-                        target: { kind: 'fixed', target: 'enemy' },
+                        target: { kind: 'context', key: 'tar' },
                         executeEachFrame: false,
                         triggerIntervalSeconds: 0.26,
                         maxCountPerTarget: -1,
@@ -6121,7 +6593,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'data_6' },
@@ -6137,7 +6609,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'data_8' },
@@ -6149,6 +6621,30 @@ export const tangtang: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 95,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            dmg_up_water_ult: 0.3,
+            duration_spellvulnerable: 10,
+            hit_spelllnflictionmax02: 1,
+            hit_spellvulnerablemax: 1,
+            poise_tornado: 0,
+            rate_spellvulnerable_02: 0.1,
+            talent2_ultskill: 0,
+            tornado_atk_scale01: 0,
+          },
+          scheduledSequences: [
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_1' } },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
+          ],
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -6158,7 +6654,7 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'context', key: 'tar' },
                       finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
@@ -6170,7 +6666,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_2: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'context', key: 'tar' },
+                    },
                   },
                   next: 'finishBuffsById_1',
                 },
@@ -6197,6 +6697,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['normalSkill'],
@@ -6206,12 +6708,21 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
-                mergeContextTargets_6: {
+                findTargets_6: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      center: { kind: 'inputTarget' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_5',
@@ -6222,7 +6733,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'context', key: 'tar' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 5 },
@@ -6246,7 +6757,7 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_6' } },
           ],
         },
       },
@@ -6270,38 +6781,34 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit_1: {
-          skillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 95,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: {
-            dmg_up_water_ult: 0,
-            duration_spellvulnerable: 10,
-            hit_spelllnflictionmax02: 1,
-            hit_spellvulnerablemax: 1,
-            poise_tornado: 0,
-            rate_spellvulnerable: 0.05,
-            talent2_ultskill: 0,
-            tornado_atk_scale01: 0,
-          },
-          scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
-            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
+                findTargets_1: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar',
+                      continuousIntervalSeconds: 0.0333333351,
+                    },
+                  },
+                  next: null,
+                },
                 applyBuff_3: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
                       buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
@@ -6311,7 +6818,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_4: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'inputTarget' },
+                    },
                   },
                   next: 'applyBuff_3',
                 },
@@ -6328,7 +6839,7 @@ export const tangtang: OperatorDefinition = {
                           },
                         },
                       ],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
@@ -6339,11 +6850,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       instantDamageScaleModifiers: [
                         {
                           side: 'attacker',
@@ -6361,11 +6874,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill_02_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_9/action',
@@ -6408,7 +6923,7 @@ export const tangtang: OperatorDefinition = {
                     parameters: {
                       nativeChanneling: {
                         catchUpMissedTicks: false,
-                        target: { kind: 'fixed', target: 'enemy' },
+                        target: { kind: 'context', key: 'tar' },
                         executeEachFrame: false,
                         triggerIntervalSeconds: 0.26,
                         maxCountPerTarget: -1,
@@ -6462,7 +6977,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'data_6' },
@@ -6478,7 +6993,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'data_8' },
@@ -6490,6 +7005,30 @@ export const tangtang: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 95,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            dmg_up_water_ult: 0,
+            duration_spellvulnerable: 10,
+            hit_spelllnflictionmax02: 1,
+            hit_spellvulnerablemax: 1,
+            poise_tornado: 0,
+            rate_spellvulnerable: 0.05,
+            talent2_ultskill: 0,
+            tornado_atk_scale01: 0,
+          },
+          scheduledSequences: [
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_1' } },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
+          ],
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -6499,7 +7038,7 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'context', key: 'tar' },
                       finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
@@ -6511,7 +7050,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_2: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'context', key: 'tar' },
+                    },
                   },
                   next: 'finishBuffsById_1',
                 },
@@ -6538,6 +7081,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['normalSkill'],
@@ -6547,12 +7092,21 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
-                mergeContextTargets_6: {
+                findTargets_6: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      center: { kind: 'inputTarget' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_5',
@@ -6563,7 +7117,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'context', key: 'tar' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 5 },
@@ -6587,7 +7141,7 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_6' } },
           ],
         },
       },
@@ -6610,38 +7164,34 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit_1: {
-          skillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 95,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: {
-            dmg_up_water_ult: 0,
-            duration_spellvulnerable: 10,
-            hit_spelllnflictionmax02: 1,
-            hit_spellvulnerablemax: 1,
-            poise_tornado: 0,
-            rate_spellvulnerable: 0.05,
-            talent2_ultskill: 0,
-            tornado_atk_scale01: 0,
-          },
-          scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
-            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
+                findTargets_1: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar',
+                      continuousIntervalSeconds: 0.0333333351,
+                    },
+                  },
+                  next: null,
+                },
                 applyBuff_3: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
                       buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
@@ -6651,7 +7201,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_4: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'inputTarget' },
+                    },
                   },
                   next: 'applyBuff_3',
                 },
@@ -6668,7 +7222,7 @@ export const tangtang: OperatorDefinition = {
                           },
                         },
                       ],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
@@ -6679,11 +7233,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       instantDamageScaleModifiers: [
                         {
                           side: 'attacker',
@@ -6701,11 +7257,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_9/action',
@@ -6748,7 +7306,7 @@ export const tangtang: OperatorDefinition = {
                     parameters: {
                       nativeChanneling: {
                         catchUpMissedTicks: false,
-                        target: { kind: 'fixed', target: 'enemy' },
+                        target: { kind: 'context', key: 'tar' },
                         executeEachFrame: false,
                         triggerIntervalSeconds: 0.26,
                         maxCountPerTarget: -1,
@@ -6802,7 +7360,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'data_6' },
@@ -6818,7 +7376,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'data_8' },
@@ -6830,6 +7388,30 @@ export const tangtang: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 95,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            dmg_up_water_ult: 0,
+            duration_spellvulnerable: 10,
+            hit_spelllnflictionmax02: 1,
+            hit_spellvulnerablemax: 1,
+            poise_tornado: 0,
+            rate_spellvulnerable: 0.05,
+            talent2_ultskill: 0,
+            tornado_atk_scale01: 0,
+          },
+          scheduledSequences: [
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_1' } },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
+          ],
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -6839,7 +7421,7 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'context', key: 'tar' },
                       finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
@@ -6851,7 +7433,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_2: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'context', key: 'tar' },
+                    },
                   },
                   next: 'finishBuffsById_1',
                 },
@@ -6878,6 +7464,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['normalSkill'],
@@ -6887,12 +7475,21 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
-                mergeContextTargets_6: {
+                findTargets_6: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      center: { kind: 'inputTarget' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_5',
@@ -6903,7 +7500,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'context', key: 'tar' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 5 },
@@ -6927,7 +7524,7 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_6' } },
           ],
         },
       },
@@ -6950,35 +7547,34 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit: {
-          skillId: 'chr_0027_tangtang_normal_skill_water_projhit',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 95,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: {
-            dmg_up_water_ult: 0.3,
-            hit_spelllnflictionmax_01: 1,
-            poise_tornado: 0,
-            talent2_ultskill: 0,
-            tornado_atk_scale01: 0,
-          },
-          scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_11' } },
-            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_12' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
+                findTargets_1: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar',
+                      continuousIntervalSeconds: 0.0333333351,
+                    },
+                  },
+                  next: null,
+                },
                 applyBuff_3: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
                       buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
@@ -6988,7 +7584,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_4: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'inputTarget' },
+                    },
                   },
                   next: 'applyBuff_3',
                 },
@@ -6996,11 +7596,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       instantDamageScaleModifiers: [
                         {
                           side: 'attacker',
@@ -7018,11 +7620,13 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['normalSkill', 'canBreakWeakness'],
                       stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill:chr_0027_tangtang_normal_skill_water_projhit|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit/actionGraph/main/nodes/dealDamage_7/action',
@@ -7055,7 +7659,7 @@ export const tangtang: OperatorDefinition = {
                     parameters: {
                       nativeChanneling: {
                         catchUpMissedTicks: false,
-                        target: { kind: 'fixed', target: 'enemy' },
+                        target: { kind: 'context', key: 'tar' },
                         executeEachFrame: false,
                         triggerIntervalSeconds: 0.26,
                         maxCountPerTarget: -1,
@@ -7109,7 +7713,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'data_6' },
@@ -7121,6 +7725,27 @@ export const tangtang: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0027_tangtang_normal_skill_water_projhit',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 95,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            dmg_up_water_ult: 0.3,
+            hit_spelllnflictionmax_01: 1,
+            poise_tornado: 0,
+            talent2_ultskill: 0,
+            tornado_atk_scale01: 0,
+          },
+          scheduledSequences: [
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_1' } },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_11' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_12' } },
+          ],
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -7130,7 +7755,7 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'context', key: 'tar' },
                       finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
@@ -7142,7 +7767,11 @@ export const tangtang: OperatorDefinition = {
                 applyElementalInfliction_2: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
+                    parameters: {
+                      element: 'cryo',
+                      isExtra: false,
+                      target: { kind: 'context', key: 'tar' },
+                    },
                   },
                   next: 'finishBuffsById_1',
                 },
@@ -7169,6 +7798,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'cryo',
                       attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['normalSkill'],
@@ -7178,12 +7809,21 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
-                mergeContextTargets_6: {
+                findTargets_6: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      center: { kind: 'inputTarget' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_5',
@@ -7194,7 +7834,7 @@ export const tangtang: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'context', key: 'tar' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 5 },
@@ -7218,7 +7858,7 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_6' } },
           ],
         },
       },

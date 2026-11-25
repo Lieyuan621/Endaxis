@@ -26,7 +26,7 @@ it('跨场景重建解析器仍复用实体定义表，修订、等级、外部�
   const changed = { entity: { lifetime: { kind: 'limited' as const, durationSeconds: 3 } } };
   const second = programs.compileAbilityEntities(changed, 1);
   expect(second).not.toBe(first);
-  expect(second.entity!.lifetime).toEqual({ kind: 'limited', durationSeconds: 3 });
+  expect(second.abilityEntities.entity!.lifetime).toEqual({ kind: 'limited', durationSeconds: 3 });
   expect(() => Object.assign(definitions.entity.lifetime, { durationSeconds: 4 })).toThrow();
   expect(new ActionGraphDefinitionRepository().compileAbilityEntities(definitions, 1)).not.toBe(
     first,
@@ -45,11 +45,11 @@ it('跨场景重建解析器仍复用实体定义表，修订、等级、外部�
   expect(() => programs.compileAbilityEntities(definitions, 1, first)).toThrow(
     'duplicate imported',
   );
-  expect(programs.mergeAbilityEntityImports(external, first)).toBe(
-    programs.mergeAbilityEntityImports(external, resolve()(1)),
+  expect(programs.mergeResourceImports(external, first)).toBe(
+    programs.mergeResourceImports(external, resolve()(1)),
   );
-  expect(programs.mergeAbilityEntityImports(external, second)).not.toBe(
-    programs.mergeAbilityEntityImports(external, first),
+  expect(programs.mergeResourceImports(external, second)).not.toBe(
+    programs.mergeResourceImports(external, first),
   );
   expect(createIndependentAbilityEntityImportResolver(undefined, programs)(0)).toBe(
     createIndependentAbilityEntityImportResolver(undefined, programs)(0),
@@ -77,8 +77,8 @@ it('已发布图只准备一次，不同等级与导入目录仍分别编译，�
   try {
     const programs = new ActionGraphDefinitionRepository();
     const resource = { main: definition(), macros: {} };
-    const first = programs.compile(resource, 1, undefined, {}).compileAll();
-    const second = programs.compile(resource, 2, undefined, {}).compileAll();
+    const first = programs.compile(resource, 1, undefined, { abilityEntities: {} }).compileAll();
+    const second = programs.compile(resource, 2, undefined, { abilityEntities: {} }).compileAll();
     expect(prepare).toHaveBeenCalledTimes(1);
     expect(first).not.toBe(second);
     expect(first.nodes.get('[null,"first"]')!.action).toMatchObject({ parameters: { value: 1 } });
@@ -178,7 +178,7 @@ it('imported entity entries retain their owning graph when local node IDs collid
     },
     'common.entity',
   );
-  const imports = { entity };
+  const imports = { abilityEntities: { entity } };
   const local: ActionGraphDefinition = {
     nodes: {
       same: {
@@ -218,13 +218,15 @@ it('imported entity entries retain their owning graph when local node IDs collid
       actionGraph: localResource,
     }),
     programs,
-    importedAbilityEntityDefinitions: imports,
+    resourceImports: imports,
   });
   expect(skill.abilityEntityDefinitions!.entity).toBe(entity);
   expect(skill.timelineActions[0]!.sequence.graph).toBe(compiled.program);
 
   expect(programs.compile(localResource, 1, undefined, imports)).toBe(compiled);
-  expect(programs.compile(localResource, 1, undefined, { entity })).not.toBe(compiled);
+  expect(programs.compile(localResource, 1, undefined, { abilityEntities: { entity } })).not.toBe(
+    compiled,
+  );
   expect(() =>
     programs
       .compile(localResource, 1, { entity: { lifetime: { kind: 'infinite' } } }, imports)

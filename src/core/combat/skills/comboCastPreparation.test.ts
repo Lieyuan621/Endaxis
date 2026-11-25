@@ -25,8 +25,8 @@ function pending(
         isExtra: false,
       },
     },
-    inputTarget: { kind: 'operator', operatorId: 'owner' },
-    triggerTarget: { kind: 'enemy' },
+    inputTargets: [{ kind: 'operator', operatorId: 'owner' }],
+    triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
     assignPairs,
   };
 }
@@ -37,13 +37,31 @@ describe('木桩连携施法准备', () => {
       blackboard: new ActionBlackboard(),
       targetContext: new RuntimeTargetContext(),
     };
-    applySkillCastStartPreparation(prepareComboCast({ smartTarget: 'enemy' }), context);
-    expect(context.targetContext.get('smart_target')).toEqual([{ kind: 'enemy' }]);
+    applySkillCastStartPreparation(
+      prepareComboCast(
+        { smartTarget: 'enemy' },
+        undefined,
+        { kind: 'enemy', enemyId: 'enemy' },
+        () => true,
+      ),
+      context,
+    );
+    expect(context.targetContext.get('smart_target')).toEqual([
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
   });
 
   it('绑定真实 trigger/smart_target，快照只覆盖 direct，保留字符串/null', () => {
     const source = { local: 4, label: 'saved', empty: null, EntityBB_value: 9 };
-    const callback = prepareComboCast({ smartTarget: 'trigger' }, pending(source));
+    const callback = prepareComboCast(
+      { smartTarget: 'trigger' },
+      pending(source),
+      {
+        kind: 'enemy',
+        enemyId: 'enemy',
+      },
+      () => true,
+    );
     source.local = 99;
     const entity = new ActionBlackboard({ EntityBB_value: 2 });
     const context = {
@@ -64,8 +82,10 @@ describe('木桩连携施法准备', () => {
       EntityBB_value: 9,
     });
     expect(entity.getNumber('EntityBB_value')).toBe(2);
-    expect(context.targetContext.get('trigger')).toEqual([{ kind: 'enemy' }]);
-    expect(context.targetContext.get('smart_target')).toEqual([{ kind: 'enemy' }]);
+    expect(context.targetContext.get('trigger')).toEqual([{ kind: 'enemy', enemyId: 'enemy' }]);
+    expect(context.targetContext.get('smart_target')).toEqual([
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
   });
 
   it.each([null, {}])('禁用/空局部板 %j 不覆盖技能初值', assignPairs => {
@@ -73,7 +93,10 @@ describe('木桩连携施法准备', () => {
       blackboard: new ActionBlackboard({ local: 3 }),
       targetContext: new RuntimeTargetContext(),
     };
-    applySkillCastStartPreparation(prepareComboCast({}, pending(assignPairs)), context);
+    applySkillCastStartPreparation(
+      prepareComboCast({}, pending(assignPairs), { kind: 'enemy', enemyId: 'enemy' }, () => true),
+      context,
+    );
     expect(context.blackboard.snapshot()).toEqual({ local: 3 });
     expect(context.targetContext.getOptional('smart_target')).toBeUndefined();
   });
@@ -83,10 +106,20 @@ describe('木桩连携施法准备', () => {
       blackboard: new ActionBlackboard({ local: 0 }),
       targetContext: new RuntimeTargetContext(),
     };
-    applySkillCastStartPreparation(prepareComboCast({ smartTarget: 'trigger' }), context);
+    applySkillCastStartPreparation(
+      prepareComboCast(
+        { smartTarget: 'trigger' },
+        undefined,
+        { kind: 'enemy', enemyId: 'enemy' },
+        () => true,
+      ),
+      context,
+    );
     expect(context.blackboard.snapshot()).toEqual({ local: 0 });
     expect(context.targetContext.getOptional('trigger')).toBeUndefined();
-    expect(context.targetContext.get('smart_target')).toEqual([{ kind: 'enemy' }]);
+    expect(context.targetContext.get('smart_target')).toEqual([
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
   });
 
   it('output 事件 input 为木桩时可以选择 input，但保留友方 trigger 身份', () => {
@@ -99,23 +132,32 @@ describe('木桩连携施法准备', () => {
         { smartTarget: 'input' },
         {
           ...pending(),
-          inputTarget: { kind: 'enemy' },
-          triggerTarget: { kind: 'operator', operatorId: 'owner' },
+          inputTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
+          triggerTargets: [{ kind: 'operator', operatorId: 'owner' }],
         },
+        { kind: 'enemy', enemyId: 'enemy' },
+        () => true,
       ),
       context,
     );
     expect(context.targetContext.get('trigger')).toEqual([
       { kind: 'operator', operatorId: 'owner' },
     ]);
-    expect(context.targetContext.get('smart_target')).toEqual([{ kind: 'enemy' }]);
+    expect(context.targetContext.get('smart_target')).toEqual([
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
   });
 
   it.each(['input', 'trigger'] as const)('保留 %s 中的真实干员目标，不强换成敌人', smartTarget => {
     const operator = { kind: 'operator' as const, operatorId: 'owner' };
-    const result = prepareComboCast({ smartTarget }, { ...pending(), triggerTarget: operator });
+    const result = prepareComboCast(
+      { smartTarget },
+      { ...pending(), triggerTargets: [operator] },
+      { kind: 'enemy', enemyId: 'enemy' },
+      () => true,
+    );
     expect(result.smartTarget).toEqual(operator);
-    expect(result.trigger).toEqual(operator);
+    expect(result.trigger).toEqual([operator]);
     expect(result.smartTarget).not.toBe(operator);
   });
 
@@ -125,9 +167,53 @@ describe('木桩连携施法准备', () => {
         { smartTarget: 'input' },
         {
           ...pending(),
-          inputTarget: { kind: 'abilityEntity', instanceId: 1 },
+          inputTargets: [{ kind: 'abilityEntity', instanceId: 1 }],
         },
+        { kind: 'enemy', enemyId: 'enemy' },
+        () => true,
       ),
     ).toThrow('abilityEntity target');
   });
+});
+
+it.each(['enemy', 'input', 'trigger'] as const)(
+  '无候选的 %s 连携使用当前可用目标，不回退已离场主敌人',
+  smartTarget => {
+    expect(
+      prepareComboCast(
+        { smartTarget },
+        undefined,
+        { kind: 'enemy', enemyId: 'enemy:other' },
+        () => true,
+      ).smartTarget,
+    ).toEqual({ kind: 'enemy', enemyId: 'enemy:other' });
+    expect(
+      prepareComboCast({ smartTarget }, undefined, undefined, () => true).smartTarget,
+    ).toBeUndefined();
+  },
+);
+
+it('智能目标跳过离场者，但保留完整触发目标组与空组语义', () => {
+  const targets = [
+    { kind: 'enemy' as const, enemyId: 'enemy' },
+    { kind: 'enemy' as const, enemyId: 'enemy:second' },
+  ];
+  const preparation = prepareComboCast(
+    { smartTarget: 'input' },
+    { ...pending(), inputTargets: targets, triggerTargets: targets },
+    undefined,
+    target => target.kind === 'enemy' && target.enemyId === 'enemy:second',
+  );
+  expect(preparation.smartTarget).toEqual(targets[1]);
+  const context = { blackboard: new ActionBlackboard(), targetContext: new RuntimeTargetContext() };
+  applySkillCastStartPreparation(preparation, context);
+  expect(context.targetContext.get('trigger')).toEqual(targets);
+  const empty = prepareComboCast(
+    { smartTarget: 'input' },
+    { ...pending(), inputTargets: [], triggerTargets: [] },
+    { kind: 'enemy', enemyId: 'enemy' },
+    () => true,
+  );
+  expect(empty.smartTarget).toBeUndefined();
+  expect(empty.trigger).toEqual([]);
 });

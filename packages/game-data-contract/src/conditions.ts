@@ -1,3 +1,15 @@
+import type { CombatFaction } from './primitives.ts';
+export const BUFF_FINISH_REASONS = [
+  'lifetime',
+  'ignite',
+  'early',
+  'dispelled',
+  'absorbed',
+  'other',
+] as const;
+
+/** Buff 结束时记录并传给生命周期行为的原因。 */
+export type BuffFinishReason = (typeof BUFF_FINISH_REASONS)[number];
 /**
  * 定义技能、Buff、装备和事件响应共用的条件表达式。
  *
@@ -25,13 +37,13 @@ import {
   type CombatTarget,
   type ComparisonOperator,
   type DamageElement,
-  type DamageFeature,
   type DamageTag,
   type DamageType,
   type EnemyRank,
   type InflictionElement,
   type OperatorAttribute,
   type OperatorRole,
+  type OperatorWeaponType,
   type SkillType,
   type SpGainKind,
   type SpGainSource,
@@ -47,18 +59,56 @@ export type ActionEntitySelection =
   | { readonly kind: 'mainCharacter' }
   | { readonly kind: 'context'; readonly key: string };
 
+/** 按实际 Buff 实例查询，不将实体自身标签当作 Buff 标签。 */
+export type BuffLookupQuery =
+  | { readonly kind: 'id'; readonly buffIds: readonly string[] }
+  | {
+      readonly kind: 'tag';
+      readonly buffTags: readonly GameplayTag[];
+      readonly tagQueryType: GameplayTagQueryType;
+    };
+
 /** 动作内部解析的目标配置，不增加图中的调用或临时目标组。 */
 export type ActionTargetQuery =
+  | {
+      /** 原生 TargetContainsValidator；仅比较时归一化不能直接附加 Buff 的部位。 */
+      readonly kind: 'intersection';
+      readonly targets: ActionTargetQuery;
+      readonly parentTargets: ActionTargetQuery;
+    }
+  /** 保留候选顺序中的前 N 项；用于简化模型中优先级并列后的数量限制。 */
+  | { readonly kind: 'limit'; readonly targets: ActionTargetQuery; readonly count: number }
+  | {
+      readonly kind: 'distanceFilter';
+      readonly targets: ActionTargetQuery;
+      readonly center: ActionTargetQuery;
+      readonly operator: ComparisonOperator;
+      readonly threshold: ActionValueOperand;
+      readonly clampToXZ: boolean;
+    }
+  | {
+      /** 原生 BuffValidator，在候选集合上动态筛选，不另起行为动作。 */
+      readonly kind: 'buffFilter';
+      readonly targets: ActionTargetQuery;
+      readonly query: BuffLookupQuery;
+      readonly requireBuff: boolean;
+    }
   | ActionEntitySelection
   | { readonly kind: 'battleMainTarget' }
+  /** 读取提弗洛斯瞄准系统已选列表，不执行新的敌人搜索。 */
+  | { readonly kind: 'typhoeaArcherySelected' }
   /** 战斗全局机制对象，独立于主控和敌人。 */
   | { readonly kind: 'godEntity' }
   /** 零空间模型中已证明查询范围覆盖的未结束投射物。 */
   | { readonly kind: 'unfinishedProjectiles' }
   | { readonly kind: 'fixed'; readonly target: 'enemy' | 'caster' }
-  /** 固定单敌人候选经原生 TagValidator 筛选，空结果仍覆盖目标组。 */
+  /** 敌人候选经原生 TagValidator 筛选，空结果仍覆盖目标组。 */
   | {
       readonly kind: 'enemyByTags';
+      /** global 包括已出生且存活的范围外敌人；省略时仅取可命中范围。 */
+      readonly scope?: 'global';
+      /** 逆序遍历敌人目录，供原生 AllEnemy/InFight Finder 保留候选顺序。 */
+      readonly reverse?: boolean;
       readonly tagQueryType: GameplayTagQueryType;
       readonly tags: readonly GameplayTag[];
     }
@@ -68,6 +118,32 @@ export type ActionTargetQuery =
       /** 排除的 selector owner；省略时使用动作 Owner，不能替换成定义所属干员。 */
       readonly owner?: ActionEntitySelection;
     }
+  /** 按实体当前标签筛选，匹配部位的 Buff 归属但保留原始目标身份。 */
+  | {
+      readonly kind: 'tagFilter';
+      readonly targets: ActionTargetQuery;
+      readonly tags: readonly GameplayTag[];
+      readonly tagQueryType: GameplayTagQueryType;
+    }
+  /** 原生ExcludeTarget后处理：先求候选，再求排除组并按归一化实体身份移除。 */
+  | {
+      readonly kind: 'exclude';
+      readonly targets: ActionTargetQuery;
+      readonly excludeTargets: ActionTargetQuery;
+    }
+  /** 简化场景中按稳定目标顺序选首个标签匹配者；无匹配时回退主目标。 */
+  | {
+      readonly kind: 'smartTargetByTag';
+      readonly owner: ActionEntitySelection;
+      readonly tagQueryType: GameplayTagQueryType;
+      readonly tags: readonly GameplayTag[];
+    }
+  /** 原生 SelectByBuff：按稳定候选顺序找任一指定 Buff，未找到才回退主目标。 */
+  | {
+      readonly kind: 'smartTargetByBuff';
+      readonly owner: ActionEntitySelection;
+      readonly buffIds: readonly string[];
+    }
   | { readonly kind: 'mainTarget'; readonly owner: ActionEntitySelection }
   /** SourceFinder 只读取所选对象的一层 AbilitySystem.source，不递归追溯干员。 */
   | { readonly kind: 'abilitySystemSource'; readonly owner: ActionEntitySelection }
@@ -75,9 +151,14 @@ export type ActionTargetQuery =
   | { readonly kind: 'abilityEntityTarget'; readonly owner: ActionEntitySelection }
   /** 读取所选对象主体的 soulPart，不按来源干员枚举召唤物。 */
   | { readonly kind: 'ownerSoul'; readonly owner: ActionEntitySelection }
-  /** 零空间 Normal 命中盒的同阵营候选；查询时读取实体当前状态。 */
+  /** 原生部位 Buff/HitStop 归属：不可直接挂 Buff 的部位转交本体。 */
+  | { readonly kind: 'partBuffSource'; readonly targets: ActionTargetQuery }
+  /** 零空间 Normal 命中盒的阵营候选；查询时读取实体当前状态。 */
   | {
-      readonly kind: 'allyHitBox';
+      readonly kind: 'factionHitBox';
+      readonly factionTarget: 'ally' | 'anti';
+      /** 原生显式阵营掩码；提供时不从宿主推导候选阵营。标签检查仍使用宿主阵营。 */
+      readonly targetFactions?: readonly CombatFaction[];
       readonly owner: ActionEntitySelection;
       readonly checkAlive: boolean;
       readonly containsUnmarkable: boolean;
@@ -93,14 +174,9 @@ export type ActionTargetQuery =
       readonly kind: 'ownerSpawned';
       readonly owner: ActionEntitySelection;
       readonly objectType: 'abilityEntity' | 'all';
-      readonly abilityEntityIds?: readonly string[];
       readonly sameSourceSkillCast: boolean;
     };
 
-/**
- * 技能可用性、条件动作、Buff 修正和事件响应使用的布尔输入。
- * 固定真假直接保存；其余判断通过本图的布尔数据节点连接。
- */
 export const ABILITY_ENTITY_FINISH_REASONS = [
   'other',
   'lifetime',
@@ -111,6 +187,10 @@ export const ABILITY_ENTITY_FINISH_REASONS = [
 ] as const;
 export type AbilityEntityFinishReason = (typeof ABILITY_ENTITY_FINISH_REASONS)[number];
 
+/**
+ * 技能可用性、条件动作、Buff 修正和事件响应使用的布尔输入。
+ * 固定真假直接保存；其余判断通过本图的布尔数据节点连接。
+ */
 export type CombatCondition =
   | { readonly kind: 'constant'; readonly value: boolean }
   | { readonly kind: 'conditionNode'; readonly nodeId: string };
@@ -123,6 +203,13 @@ export type CombatConditionExpression =
       action: ActionGraphReference;
     }
   | { /** 当前技能在本次施放中是否进入过战斗伤害处理。 */ readonly kind: 'skillHasHit' }
+  | {
+      /** 比较战斗级目录中已启用、未结束的同ID全局Buff父实例数。 */
+      kind: 'globalBuffCountCompare';
+      globalBuffId: string;
+      operator: ComparisonOperator;
+      value: ActionValueOperand;
+    }
   | CombatCondition
   | {
       kind: 'entityCountCompare';
@@ -154,11 +241,6 @@ export type CombatConditionExpression =
       /** 条件种类判别值。 */
       kind: 'combatActive';
     }
-  /** Endaxis 固定单敌人场景中，表示原生智能目标数量检查已被模型保证。 */
-  | {
-      /** 条件种类判别值。 */
-      kind: 'singleEnemyPresent';
-    }
   /** 原生 CheckMainCharacterCondition：查询指定对象是否为当前主控。 */
   | {
       /** 条件种类判别值。 */
@@ -183,6 +265,13 @@ export type CombatConditionExpression =
       target: ActionTargetQuery;
       /** 任一匹配即可成立的职业。 */
       roles: readonly OperatorRole[];
+    }
+  /** 原生 CheckWeaponTypeCondition：只读取首个角色的武器类型。 */
+  | {
+      kind: 'operatorWeaponTypeIn';
+      target: ActionTargetQuery;
+      /** 空列表恒不匹配，保留原生 None 掩码的语义。 */
+      weaponTypes: readonly OperatorWeaponType[];
     }
   /** 查询首个目标是否为指定原生 EnemyTemplateData.rank 的敌人。 */
   | {
@@ -285,6 +374,10 @@ export type CombatConditionExpression =
     }
   | {
       /** 检查当前能力实体事件中的原生结束原因。 */
+      kind: 'eventBuffFinishReasonIn';
+      reasons: readonly BuffFinishReason[];
+    }
+  | {
       kind: 'eventAbilityEntityFinishReasonIn';
       reasons: readonly AbilityEntityFinishReason[];
     }
@@ -359,6 +452,8 @@ export type CombatConditionExpression =
   | {
       /** 查询目标实体当前持有的 GameplayTag；它与 Buff 身份、数量和层数无关。 */
       kind: 'entityTagMatch';
+      /** 原生 CheckPartTagMatch 直接检查部位；缺省按 CheckTagMatch 解析部位标签归属。 */
+      checkPartTags?: boolean;
       /** 要检查的对象。 */
       target: ActionTargetQuery;
       /** 标签集合匹配方式。 */
@@ -431,18 +526,13 @@ export type CombatConditionExpression =
       tags: readonly GameplayTag[];
     }
   | {
-      /** 匹配触发当前响应的伤害行为特征；普通技能步骤没有事件上下文。 */
-      kind: 'eventDamageFeaturesMatch';
-      /** 特征集合匹配方式。 */
-      match: GameplayTagMatchType;
-      /** 参与匹配的伤害特征。 */
-      features: readonly DamageFeature[];
-    }
-  | {
       /** 匹配触发当前响应的伤害类型；未声明类型的外部事实不会命中。 */
       kind: 'eventDamageTypeIn';
       /** 任一匹配即可成立的伤害类型。 */
       damageTypes: readonly DamageType[];
+    }
+  | {
+      kind: 'eventDamageSkillCastRecorded';
     }
   | {
       /** 匹配触发当前响应的元素附着类型。 */
@@ -467,6 +557,12 @@ export type CombatConditionExpression =
       normalSkillSubType?: 'normal' | 'additionalNormalSkill';
       /** 任一匹配即可成立的技能分类。 */
       skillTypes: readonly SkillType[];
+    }
+  | {
+      /** 判断当前事件关联技能的定义标签；没有技能时为假。 */
+      kind: 'eventSkillTagsMatch';
+      tagQueryType: GameplayTagQueryType;
+      tags: readonly GameplayTag[];
     }
   | {
       /** 检查技能事件中的技能配置属性；无技能事件时读取当前执行技能。 */
@@ -597,10 +693,8 @@ export type CombatConditionExpression =
   /** 事件来源是否等于 Buff 来源能力实体的原生 AbilitySystem.source。 */
   /** 当前 Buff 的创建来源实体是否也是其宿主。 */
   | {
-      /** 当前施术者生成的活动能力实体中是否存在匹配模板（零空间不再做距离裁剪）。 */
+      /** 当前施术者是否存在符合施法来源限制的活动能力实体。 */
       kind: 'ownerSpawnedAbilityEntityPresent';
-      /** 只匹配这些能力实体 ID；省略时接受任意 ID。 */
-      abilityEntityIds?: readonly string[];
       /** 是否只接受和当前 Buff 来自同一次技能施放的实体。 */
       sameSourceSkillCast?: boolean;
     }
@@ -640,10 +734,11 @@ export const COMBAT_CONDITION_KINDS = [
   'constant',
   'combatActive',
   'skillHasHit',
-  'singleEnemyPresent',
   'checkMainCharacter',
   'characterTypeIn',
   'operatorRoleIn',
+  'operatorWeaponTypeIn',
+  'globalBuffCountCompare',
   'enemyRankIn',
   'enemySuperArmorCompare',
   'targetDistance',
@@ -668,15 +763,18 @@ export const COMBAT_CONDITION_KINDS = [
   'eventDamageTagsMatch',
   'eventTransferredPartTagsMatch',
   'eventDamageGameplayTagsMatch',
-  'eventDamageFeaturesMatch',
+  'eventDamageTagsMatch',
   'eventDamageTypeIn',
+  'eventDamageSkillCastRecorded',
   'eventInflictionElementIn',
   'eventPhysicalInflictionTypeIn',
   'eventProjectilePerfectDodgeCooldownEquals',
+  'eventBuffFinishReasonIn',
   'eventAbilityEntityFinishReasonIn',
   'eventProjectileIgnoreImmuneLevelCompare',
   'eventSkillTypeIn',
   'skillDamageTypeIn',
+  'eventSkillTagsMatch',
   'eventCustomAbilityNameMatch',
   'currentSkillTypeIn',
   'originSkillTypeIn',

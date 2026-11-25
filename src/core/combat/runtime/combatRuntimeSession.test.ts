@@ -30,7 +30,13 @@ const compileGraphEntry = (
   nodes: Record<string, ActionGraphNode>,
   dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation(
+    { nodes, dataNodes },
+    1,
+    revision,
+    {},
+    { abilityEntities: {} },
+  ).compileAll(),
   entry,
   callSite: revision,
 });
@@ -118,6 +124,7 @@ function createFixture(
   operatorControl?: OperatorControlConfiguration,
 ) {
   const environment = new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     ...environmentInput(isOperatorControlled),
     enemyVitals: new CombatVitals({
       health: 100,
@@ -324,6 +331,7 @@ function createFixture(
     inputs,
     externalEvents,
     operators,
+    skillPrograms,
   };
 }
 
@@ -344,7 +352,13 @@ it.each([0, 4, 6])('投射物在第 %i 帧分支恢复后保留伤害的技能�
         sequence: chainEntry('launch', [
           {
             kind: 'launchProjectile',
-            parameters: { inheritActionBlackboard: true, finish: 0.1, recycleDelaySeconds: 0.5 },
+            parameters: {
+              projectileId: 'stationary',
+
+              inheritActionBlackboard: true,
+
+              recycleDelaySeconds: 0.5,
+            },
             callbacks: [
               {
                 event: 'finish',
@@ -420,6 +434,7 @@ it.each([0, 4, 6])('投射物在第 %i 帧分支恢复后保留伤害的技能�
     { frame: 0, operatorId: 'operator', skillId: 'launch', castId: 'cast:projectile' },
   ];
   const environment = new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     ...environmentInput(),
     enemyVitals: createEnemyCombatVitals(enemy),
   });
@@ -482,6 +497,7 @@ it('恢复后群体 GlobalBuff 仍按原生队伍逆序应用子 Buff', () => {
   };
   const createEnvironment = () =>
     new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       ...environmentInput(),
       enemyVitals: new CombatVitals({
         health: 100,
@@ -943,4 +959,29 @@ it('试探分支独立推进，显式丢弃检查点后不再保留历史入口'
   session.discardCheckpoint(checkpoint);
   expect(() => session.restore(checkpoint)).toThrow('does not belong');
   expect(() => session.fork(checkpoint)).toThrow('does not belong');
+});
+
+it('恢复装配后切主控仍清理普攻接续，恢复本身不清理', () => {
+  const { session, createRestore, skillPrograms } = createFixture(
+    undefined,
+    true,
+    true,
+    false,
+    false,
+    {
+      initialOperatorId: 'operator',
+      automaticSwitches: false,
+      scheduledSwitches: [],
+    },
+  );
+  const graph = session.readState();
+  graph.operators.get('operator')!.ability.comboOffsetTargetSkillKey = 'skill';
+  const restored = createRestore()(graph, skillPrograms.fork(), session.readHistory());
+  expect(restored.stateGraph.operators.get('operator')!.ability.comboOffsetTargetSkillKey).toBe(
+    'skill',
+  );
+  restored.applyInitialInput({ controlledOperatorId: null });
+  expect(
+    restored.stateGraph.operators.get('operator')!.ability.comboOffsetTargetSkillKey,
+  ).toBeNull();
 });

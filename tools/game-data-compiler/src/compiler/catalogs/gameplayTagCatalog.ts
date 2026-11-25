@@ -81,17 +81,10 @@ export function compileGameplayTagConfigSetSource(
   };
 }
 
-export function renderGameplayTagCatalogModule(
-  catalog: CompiledGameplayTagCatalogSource,
-  sourceSha256: string,
-): string {
-  if (!/^[0-9a-f]{64}$/i.test(sourceSha256)) {
-    throw new Error('GameplayTagConfig source SHA-256 is invalid');
-  }
+export function renderGameplayTagCatalogModule(catalog: CompiledGameplayTagCatalogSource): string {
   const paths = catalog.paths.map(path => `  ${quoteTypeScriptString(path)},`).join('\n');
   return `/**
  * 由已核验的 GameplayTagConfig / GameplayTagConfigSet 来源生成；只输出可读路径。
- * Source SHA-256: ${sourceSha256.toUpperCase()}
  * Do not edit by hand; rerun npm run generate:game-data:gameplay-tags.
  */
 export const GAMEPLAY_TAG_PATHS = Object.freeze([

@@ -1,3 +1,7 @@
+import {
+  publishBeforeBuffImmunity,
+  type BeforeBuffImmunityEvents,
+} from '../buffs/buffApplicationEvents';
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
 /**
  * 元素附着纯决策结果与目标 Buff 容器之间的执行适配层。
@@ -81,6 +85,7 @@ export class ElementalInflictionBuffAdapter<Key extends string> {
     readonly onBeforeOutputBuff?: (event: ElementalBuffAppliedPayload) => void,
     readonly onOutputBuff?: (event: AbilityOutputBuffPayload) => void,
     readonly onBeforeAddedBuff?: (event: ElementalBuffAppliedPayload) => void,
+    readonly beforeImmunityEvents?: BeforeBuffImmunityEvents,
   ) {}
 
   getExistingAttachment(): ExistingElementalAttachment | null {
@@ -169,9 +174,11 @@ export class ElementalInflictionBuffAdapter<Key extends string> {
       buffTags: definition.applyTags ?? [],
       skillCastInfo: options?.skillCastInfo ?? null,
     };
-    this.onBeforeOutputBuff?.(event);
-    this.onBeforeAddedBuff?.(event);
-    const added = this.target.add(definition, this.sourceId, options);
+    if (!publishBeforeBuffImmunity(event, this.beforeImmunityEvents)) return;
+    const added = this.target.add(definition, this.sourceId, options, undefined, () => {
+      this.onBeforeOutputBuff?.(event);
+      this.onBeforeAddedBuff?.(event);
+    });
     if (added === null) return;
     this.onBuffApplied?.(event, added);
     this.onOutputBuff?.({ ...event, buff: added });

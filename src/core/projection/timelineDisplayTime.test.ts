@@ -18,6 +18,52 @@ function receipt(
 }
 
 describe('timeline display time', () => {
+  it('falls back per ultimate cast to global intervals, prioritizing its dedicated ultimate interval', () => {
+    const entries = [
+      receipt(1, 1, 'TimeDilationStarted', {
+        instanceId: 1,
+        kind: 'global',
+        sourceCastId: 'u1',
+        curveKey: 'Other',
+      }),
+      receipt(2, 2, 'TimeDilationStarted', { instanceId: 2, kind: 'entity', sourceCastId: 'u1' }),
+      receipt(3, 3, 'TimeDilationStarted', {
+        instanceId: 3,
+        kind: 'global',
+        sourceCastId: 'u2',
+        curveKey: 'ComboSkill',
+      }),
+      receipt(4, 4, 'TimeDilationStarted', {
+        instanceId: 4,
+        kind: 'global',
+        sourceCastId: 'u2',
+        slot: 'ultimate',
+      }),
+      receipt(5, 5, 'TimeDilationStarted', {
+        instanceId: 5,
+        kind: 'global',
+        sourceCastId: 'battle',
+        curveKey: 'Other',
+      }),
+      receipt(6, 6, 'TimeDilationStarted', {
+        instanceId: 6,
+        kind: 'global',
+        sourceCastId: 'combo',
+        curveKey: 'ComboSkill',
+      }),
+      receipt(7, 7, 'TimeDilationRejected', {
+        instanceId: 7,
+        kind: 'global',
+        sourceCastId: 'u1',
+        slot: 'ultimate',
+      }),
+      receipt(8, 8, 'TimeDilationEnded', { instanceId: 1 }),
+    ];
+    const bands = projectTimelineTimeDilationBands(entries, 100, new Set(['u1', 'u2']));
+    expect(bands.map(band => band.instanceId)).toEqual([1, 4, 6]);
+    expect(bands[0]).toMatchObject({ sourceCastId: 'u1', startFrame: 1, endFrame: 8 });
+    expect(bands[1]).toMatchObject({ sourceCastId: 'u2', startFrame: 4, endFrame: 100 });
+  });
   it('keeps one input frame for a boundary reached at cast start', () => {
     expect([
       ...projectSkillCastActualDurationFrames([

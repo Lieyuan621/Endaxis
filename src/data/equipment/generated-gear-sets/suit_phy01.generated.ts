@@ -28,7 +28,7 @@ const definition = {
               action: {
                 kind: 'setGlobalCooldown',
                 parameters: {
-                  target: 'caster',
+                  target: { kind: 'source' },
                   markerId: 'buff_equipsuit_physuit_01',
                   durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                 },
@@ -39,6 +39,8 @@ const definition = {
               action: {
                 kind: 'dealDamage',
                 parameters: {
+                  attacker: 'actionOwner',
+                  target: { kind: 'inputTarget' },
                   damageType: 'physical',
                   attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                   tags: [],

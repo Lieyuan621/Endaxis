@@ -54,8 +54,8 @@ export interface TimelineHitMarkerView {
   readonly title?: string;
   /** 该次命中实际获得了“连击”伤害 Buff；沿用 main 的蓝色命中点反馈。 */
   readonly linkBuffed?: boolean;
-  /** 该命中是否被编辑器强制设为暴击；仅用于复刻旧版命中点反馈。 */
-  readonly forcedCritical?: boolean;
+  /** 聚合命中中至少有一笔伤害带有用户设置。 */
+  readonly hasOverride?: boolean;
 }
 
 /**

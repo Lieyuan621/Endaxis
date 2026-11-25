@@ -47,6 +47,8 @@ export interface GlobalBuffTemplateSource {
     readonly applyToReturnSpGain: boolean;
   }[];
   readonly globalEventCount: number;
+  /** 已核实整个事件体仅含无载荷 ShowSquadTipsAction 的事件数，不参与战斗执行。 */
+  readonly presentationOnlyGlobalEventCount?: number;
   readonly blackboard: readonly DeclaredBlackboardValueSource[];
 }
 
@@ -77,6 +79,9 @@ export function parseGlobalBuffTemplateSource(
       'globalModifierCount',
       'globalModifiers',
       'globalEventCount',
+      ...('presentationOnlyGlobalEventCount' in template
+        ? ['presentationOnlyGlobalEventCount']
+        : []),
       'blackboard',
     ]),
     path,
@@ -147,6 +152,14 @@ export function parseGlobalBuffTemplateSource(
       inherited,
     ),
     globalEventCount: requireInteger(template.globalEventCount, `${path}.globalEventCount`),
+    ...(template.presentationOnlyGlobalEventCount === undefined
+      ? {}
+      : {
+          presentationOnlyGlobalEventCount: requireInteger(
+            template.presentationOnlyGlobalEventCount,
+            `${path}.presentationOnlyGlobalEventCount`,
+          ),
+        }),
     blackboard: parseBlackboardDataPairs(template.blackboard, `${path}.blackboard`),
   };
 }

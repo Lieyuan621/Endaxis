@@ -45,5 +45,5 @@ export function parseMovementSettingCatalogDumpSource(
 
 export function renderMovementSettingCatalogModule(source: MovementSettingCatalogSource): string {
   const { sha256, ...config } = source;
-  return `/** 由当前版本 MovementSetting_Default 与 GameplayMiscSetting 生成；不要手工编辑。\n * Source SHA-256: ${sha256}\n */\nexport const MOVEMENT_SETTING_DEFAULT = ${JSON.stringify(config, null, 2)} as const;\n`;
+  return `/** 由当前版本 MovementSetting_Default 与 GameplayMiscSetting 生成；不要手工编辑。\n */\nexport const MOVEMENT_SETTING_DEFAULT = ${JSON.stringify(config, null, 2)} as const;\n`;
 }

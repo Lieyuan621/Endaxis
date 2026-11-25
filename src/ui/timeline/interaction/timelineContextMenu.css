@@ -1,0 +1,171 @@
+.timeline-context-menu {
+  position: fixed;
+  z-index: var(--ea-z-context-menu, 10000);
+  min-width: 180px;
+  max-width: calc(100vw - 12px);
+  padding: 5px 0;
+  border: 1px solid var(--ea-floating-border);
+  border-radius: var(--ea-control-radius);
+  background: var(--ea-floating-bg);
+  box-shadow:
+    var(--ea-floating-shadow),
+    0 2px 8px var(--ea-shadow);
+  color: var(--ea-floating-fg);
+  font:
+    13px/1 'Segoe UI',
+    Roboto,
+    sans-serif;
+  user-select: none;
+}
+
+.timeline-context-menu .menu-header {
+  max-width: 280px;
+  margin-bottom: 4px;
+  padding: 7px 12px 9px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--ea-border-soft);
+  color: var(--ea-fg-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-context-menu .menu-item.ea-button,
+.timeline-context-menu .menu-item.has-submenu {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 33px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ea-fg-secondary);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.timeline-context-menu .menu-item:hover:not(:disabled),
+.timeline-context-menu .menu-item:focus-visible,
+.timeline-context-menu .menu-item:focus-within {
+  border-color: transparent;
+  background: var(--ea-menu-hover-bg);
+  color: var(--ea-fg);
+}
+
+.timeline-context-menu .menu-item:focus-visible {
+  outline: 1px solid var(--ea-menu-hover-fg);
+  outline-offset: -1px;
+}
+
+.timeline-context-menu .menu-item:disabled {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ea-fg-faint);
+  cursor: not-allowed;
+}
+
+.timeline-context-menu .menu-item.delete-item:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ea-danger) 14%, transparent);
+  color: var(--ea-danger);
+}
+
+.timeline-context-menu .menu-item > .menu-icon,
+.timeline-context-menu .menu-item > .icon {
+  display: inline-flex;
+  width: 20px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.timeline-context-menu .menu-item > span:not(.menu-icon):not(.icon) {
+  white-space: nowrap;
+}
+
+.timeline-context-menu .menu-item svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.timeline-context-menu .menu-item .ea-chevron-icon {
+  width: 12px;
+  height: 12px;
+  color: var(--ea-fg-muted);
+  stroke-width: 3;
+}
+
+.timeline-context-menu .menu-item kbd,
+.timeline-context-menu .menu-item .shortcut-hint {
+  color: var(--ea-fg-faint);
+  font:
+    11px/1 Consolas,
+    monospace;
+}
+
+.timeline-context-menu .menu-item:hover kbd,
+.timeline-context-menu .menu-item:hover .shortcut-hint {
+  color: var(--ea-fg-secondary);
+}
+
+.timeline-context-menu .divider {
+  height: 1px;
+  margin: 5px 0;
+  background: var(--ea-border-soft);
+}
+
+.timeline-context-menu .menu-label {
+  display: block;
+  padding: 7px 12px 5px;
+  color: var(--ea-fg-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.timeline-context-submenu {
+  border: 1px solid var(--ea-floating-border);
+  border-radius: var(--ea-control-radius);
+  background: var(--ea-floating-bg);
+  box-shadow:
+    var(--ea-floating-shadow),
+    0 2px 8px var(--ea-shadow);
+}
+
+.timeline-context-menu-motion-enter-active,
+.timeline-context-menu-motion-leave-active {
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.timeline-context-menu-motion-leave-active {
+  pointer-events: none;
+  transition-duration: 100ms;
+}
+
+.timeline-context-menu-motion-enter-from,
+.timeline-context-menu-motion-leave-to {
+  opacity: 0;
+  transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline-context-menu-motion-enter-active,
+  .timeline-context-menu-motion-leave-active,
+  .timeline-context-menu .submenu-list,
+  .timeline-context-menu .submenu-grid {
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+  }
+}

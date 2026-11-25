@@ -63,6 +63,8 @@ const PROJECTILE_TARGET_FILTER_MODES = new Map<number, ProjectileTargetFilterMod
 
 export interface ProjectileLaunchActionSource {
   readonly kind: 'projectileLaunch';
+  /** 原始资源内的动作身份，保留到时延配置匹配阶段。 */
+  readonly serverActionIndex: number;
   readonly projectileId: string;
   readonly projectileSkillId: string;
   readonly projectileSource: TargetReferenceSource;
@@ -87,6 +89,11 @@ export interface ProjectileLaunchActionSource {
   readonly alsoLaunchToHittableTarget: boolean;
   readonly overrideHitBone: boolean;
   readonly hitMountPoint: string;
+  readonly hitWeaponMount?: {
+    readonly enabled: boolean;
+    readonly weaponIndex: number;
+    readonly mountPoint: string | number;
+  };
   readonly hitBoneFixedOffset: Vector3Source;
   readonly hitBoneForwardMode: string;
   readonly hitBoneProjectileOffsetDirectionMode?: 'FixedAtLaunch' | 'FollowTarget';
@@ -257,6 +264,8 @@ export function parseProjectileLaunchActionSource(
     'alsoLaunchToHittableTarget',
   ];
   const hasTargetControls = targetControlFields.some(field => Object.hasOwn(action, field));
+  const hitWeaponFields = ['useWeaponHitMp', 'hitWeaponIndex', 'hitWeaponMp'];
+  const hasHitWeaponMount = hitWeaponFields.some(field => Object.hasOwn(action, field));
   if (hasTargetControls) {
     for (const field of targetControlFields) {
       if (!Object.hasOwn(action, field)) throw new Error(`${path}.${field}: missing field`);
@@ -286,6 +295,7 @@ export function parseProjectileLaunchActionSource(
       ...(hasTargetControls ? targetControlFields : []),
       'overrideHitBone',
       'hitMountPoint',
+      ...(hasHitWeaponMount ? hitWeaponFields : []),
       'hitBoneFixedOffset',
       'hitBoneOffsetForward',
       ...(Object.hasOwn(action, 'hitBoneProjectileOffsetDirectionMode')
@@ -353,6 +363,7 @@ export function parseProjectileLaunchActionSource(
     : 'None';
   return {
     kind: 'projectileLaunch',
+    serverActionIndex: requireInteger(action.serverActionIndex, `${path}.serverActionIndex`),
     projectileId: requireNonEmptyString(action.projectileId, `${path}.projectileId`),
     projectileSkillId,
     projectileSource: parseTargetReferenceSource(
@@ -393,6 +404,15 @@ export function parseProjectileLaunchActionSource(
       : false,
     overrideHitBone: requireBoolean(action.overrideHitBone, `${path}.overrideHitBone`),
     hitMountPoint: readMountPoint(action.hitMountPoint, `${path}.hitMountPoint`),
+    ...(hasHitWeaponMount
+      ? {
+          hitWeaponMount: {
+            enabled: requireBoolean(action.useWeaponHitMp, `${path}.useWeaponHitMp`),
+            weaponIndex: requireInteger(action.hitWeaponIndex, `${path}.hitWeaponIndex`),
+            mountPoint: parseOpaqueWeaponMountPoint(action.hitWeaponMp, `${path}.hitWeaponMp`),
+          },
+        }
+      : {}),
     hitBoneFixedOffset: parseVector3Source(action.hitBoneFixedOffset, `${path}.hitBoneFixedOffset`),
     hitBoneForwardMode: readDirectionType(
       action.hitBoneOffsetForward,
@@ -446,6 +466,9 @@ export function parseAbilityEntitySpawnActionSource(
       'bornAt',
       'bornMountPoint',
       'bornPosOffset',
+      ...['useBornPosOffsetDirection', 'bornPosOffsetDirection'].filter(field =>
+        Object.hasOwn(action, field),
+      ),
       'checkNavmeshAreaName',
       'forbiddenAreaNames',
       'attachToClosestMeshPoint',
@@ -468,6 +491,7 @@ export function parseAbilityEntitySpawnActionSource(
       'contextKey',
       'pauseEffectOnEnd',
       'inheritSourceSkillCastId',
+      ...(Object.hasOwn(action, 'inheritSourceTimeScale') ? ['inheritSourceTimeScale'] : []),
       'dieWhenSourceDie',
       ...[
         'dieWhenTargetDie',
@@ -480,6 +504,12 @@ export function parseAbilityEntitySpawnActionSource(
     ]),
     path,
   );
+  if (action.useBornPosOffsetDirection !== undefined && action.useBornPosOffsetDirection !== false)
+    throw new Error(
+      `${path}.useBornPosOffsetDirection: directional spawn offsets are not supported`,
+    );
+  if (action.inheritSourceTimeScale !== undefined && action.inheritSourceTimeScale !== false)
+    throw new Error(`${path}.inheritSourceTimeScale: inherited entity time scale is not supported`);
   const assignEntityBlackboard = requireBoolean(
     action.assignEntityBlackboard,
     `${path}.assignEntityBlackboard`,

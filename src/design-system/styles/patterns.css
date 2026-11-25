@@ -259,9 +259,61 @@
 .ea-floating-surface {
   border: 1px solid var(--ea-floating-border) !important;
   border-radius: var(--ea-control-radius) !important;
-  background: var(--ea-floating-bg) !important;
+  background: var(--ea-floating-surface-fill, var(--ea-floating-bg)) !important;
   color: var(--ea-floating-fg) !important;
   box-shadow: var(--ea-floating-shadow) !important;
+}
+
+/* Shared visual language for short hints; pointer and Popper positioning stay independent. */
+.ea-tooltip-surface {
+  --ea-floating-surface-fill: var(--ea-tooltip-surface-bg);
+  box-sizing: border-box;
+  padding: 7px 10px;
+  box-shadow: 0 5px 16px var(--ea-shadow) !important;
+  font-size: var(--ea-control-font-size-sm);
+  line-height: 1.45;
+  white-space: pre-line;
+}
+
+/* Single-value editors used by the timeline's compact controls. */
+.ea-compact-number-popover,
+.ea-compact-number-popover__content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ea-compact-number-popover {
+  padding: 6px 8px;
+  --ea-number-input-accent: var(--ea-compact-number-accent, var(--ea-gold));
+}
+
+.ea-compact-number-popover.el-popover {
+  width: max-content !important;
+  min-width: 0 !important;
+}
+
+.ea-compact-number-popover--energy {
+  --ea-compact-number-accent: #7dd3fc;
+}
+
+html[data-theme='light'] .ea-compact-number-popover--energy {
+  --ea-compact-number-accent: #0b6e99;
+}
+
+.ea-compact-number-popover .ea-number-input {
+  --ea-number-input-compact-height: 24px;
+  --ea-number-input-compact-controls-width: 16px;
+  width: 72px;
+}
+
+.ea-compact-number-popover__unit {
+  color: var(--ea-fg-muted);
+  font:
+    11px/1 'Roboto Mono',
+    Consolas,
+    monospace;
+  white-space: nowrap;
 }
 
 /* Shared section/table treatment for stat and damage breakdown dialogs. */

@@ -119,7 +119,7 @@ describe('executeHealthDamage', () => {
       originSkillType: 'comboSkill' as const,
       nonReturnedSpCost: 0,
     },
-  ])('preserves source identity %j without adding it to target contexts', skillCastInfo => {
+  ])('preserves source identity %j in both source and target contexts', skillCastInfo => {
     const output: unknown[] = [];
     const target = new CombatVitals({
       health: 100,
@@ -142,7 +142,7 @@ describe('executeHealthDamage', () => {
       clock: new CombatClock(),
       receipt: { record: () => undefined },
       emitSourceEvent: (_event, payload) => output.push(payload.skillCastInfo),
-      emitTargetEvent: (_event, payload) => expect(payload).not.toHaveProperty('skillCastInfo'),
+      emitTargetEvent: (_event, payload) => expect(payload.skillCastInfo).toEqual(skillCastInfo),
     });
     expect(output).toEqual([skillCastInfo, skillCastInfo]);
   });
@@ -186,48 +186,52 @@ describe('executeHealthDamage', () => {
       'target:beforeTakeDamage',
       'source:beforeOutputDamage',
       'source:beforeKillEntity',
-      'source:afterKillEntity',
       'receipt:DamageApplied',
+      'source:afterKillEntity',
       'target:takeDamage',
       'source:outputDamage',
     ]);
   });
 
-  it('does not emit kill events for non-lethal damage or an already defeated target', () => {
-    const sourceEvents: string[] = [];
-    const target = new CombatVitals({
-      health: 100,
-      maxHealth: 100,
-      maxPoise: 0,
-      poise: 0,
-      poiseRecoveryTime: 0,
-      poiseRecoveryTimeMultiplier: 1,
-      poiseBrokenEndTime: 0,
-      poiseImmune: false,
-    });
-    const execute = (value: number) =>
-      executeHealthDamage({
-        sourceId: 'operator',
-        targetId: 'enemy',
-        damageType: 'electric',
-        tags: ['normalSkill'],
-        result: createDamageResult(value),
-        target,
-        clock: new CombatClock(),
-        receipt: { record: () => undefined },
-        emitSourceEvent: event => sourceEvents.push(event),
-        emitTargetEvent: () => undefined,
+  it.each([false, true])(
+    '目标允许死亡=%s：击杀事件仅在可死亡目标首次被扣到零时派发',
+    targetCanDie => {
+      const sourceEvents: string[] = [];
+      const target = new CombatVitals({
+        health: 100,
+        maxHealth: 100,
+        maxPoise: 0,
+        poise: 0,
+        poiseRecoveryTime: 0,
+        poiseRecoveryTimeMultiplier: 1,
+        poiseBrokenEndTime: 0,
+        poiseImmune: false,
       });
+      const execute = (value: number) =>
+        executeHealthDamage({
+          targetCanDie,
+          sourceId: 'operator',
+          targetId: 'enemy',
+          damageType: 'electric',
+          tags: ['normalSkill'],
+          result: createDamageResult(value),
+          target,
+          clock: new CombatClock(),
+          receipt: { record: () => undefined },
+          emitSourceEvent: event => sourceEvents.push(event),
+          emitTargetEvent: () => undefined,
+        });
 
-    execute(40);
-    execute(60);
-    execute(10);
+      execute(40);
+      execute(60);
+      execute(10);
 
-    expect(sourceEvents.filter(event => event.includes('KillEntity'))).toEqual([
-      'beforeKillEntity',
-      'afterKillEntity',
-    ]);
-  });
+      expect(target.health).toBe(0);
+      expect(sourceEvents.filter(event => event.includes('KillEntity'))).toEqual(
+        targetCanDie ? ['beforeKillEntity', 'afterKillEntity'] : [],
+      );
+    },
+  );
 
   it('runs shield absorption after before events and exposes the reduced value afterwards', () => {
     const values: number[] = [];

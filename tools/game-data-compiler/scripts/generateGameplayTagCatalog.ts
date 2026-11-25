@@ -31,7 +31,7 @@ export async function generateGameplayTagCatalog(args: ReturnType<typeof parseAr
   const catalog =
     completeSet?.catalog ??
     compileGameplayTagCatalogSource(parseGameplayTagConfigDumpSource(bytes, args.dump));
-  const content = renderGameplayTagCatalogModule(catalog, sha256);
+  const content = renderGameplayTagCatalogModule(catalog);
   if (args.check) {
     const existing = await fs.readFile(args.output, 'utf8');
     if (existing !== content) {

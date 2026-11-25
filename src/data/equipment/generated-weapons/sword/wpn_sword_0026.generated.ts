@@ -153,7 +153,8 @@ const definition = {
               action: {
                 kind: 'heal',
                 parameters: {
-                  target: 'buffOwner',
+                  target: { kind: 'owner' },
+                  healer: { kind: 'source' },
                   alwaysNext: true,
                   tags: [],
                   amount: { kind: 'valueNode', nodeId: 'data_1' },

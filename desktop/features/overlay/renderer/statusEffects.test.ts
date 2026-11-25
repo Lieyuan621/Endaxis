@@ -42,7 +42,7 @@ it('groups actual enemy effects by cast and preserves the recorded conversion ou
     { outcomeKind: 'attachmentOnly', currentElement: 'nature', currentLayers: 1 },
     'operator',
   );
-  expect(projectOverlayStatusEffects(rows).get('cast')).toEqual([
+  expect(projectOverlayStatusEffects(rows, 'enemy').get('cast')).toEqual([
     { result: 'heat' },
     { result: 'airborne', from: undefined },
     { result: 'Cryst', from: 'heat' },

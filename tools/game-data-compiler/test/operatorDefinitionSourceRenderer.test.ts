@@ -61,7 +61,9 @@ describe('independent operator resource renderer', () => {
     const launch = (skill: typeof callback, next: string | null) => ({
       action: {
         kind: 'launchProjectile',
-        parameters: { finish: 'firstTickReach' },
+        parameters: {
+          schedule: { endFrame: 30, callbacks: [] },
+        },
         callbacks: [{ event: 'hit', skill }],
       },
       next,
@@ -264,6 +266,22 @@ it('公共 Buff 生成的生命周期保留共享图引用，可直接进入正�
   expect(rootActionSteps(lifecycle.start![0]!)[0]!.parameters).toMatchObject({
     value: { kind: 'valueNode', node: { expression: { kind: 'blackboard', key: 'poise' } } },
   });
+});
+
+it('公共 Buff 增删不改变现有声明，特殊字符不会导致名称冲突', () => {
+  const definitions = Object.fromEntries(
+    ['buff_a-b', 'buff_a_b', 'buff_a$2d$b'].map(id => [id, { stackingType: 'unlimited' }]),
+  );
+  const original = renderCommonBuffDefinitionsSource(definitions);
+  const expanded = renderCommonBuffDefinitionsSource({
+    aaa: { stackingType: 'refresh' },
+    ...definitions,
+  });
+  const declarations = (source: string) =>
+    source.split('\n').filter(line => line.startsWith('const '));
+  for (const declaration of declarations(original))
+    expect(declarations(expanded)).toContain(declaration);
+  expect(evaluate(original).commonBuffDefinitions).toEqual(definitions);
 });
 
 it('只有数值的 Buff 不生成空动作图', () => {

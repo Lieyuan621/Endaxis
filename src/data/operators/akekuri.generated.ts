@@ -8,17 +8,35 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const akekuriChr_0019_karin_attack1ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.08 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -37,6 +55,8 @@ export const akekuriChr_0019_karin_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack'],
@@ -44,7 +64,14 @@ export const akekuriChr_0019_karin_attack1ActionGraph = {
         },
         next: 'ifElse_4',
       },
-      reachSkillOperableBoundary_6: {
+      overrideBasicAttackMapping_6: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0019_karin_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0019_karin_attack2'] },
@@ -64,6 +91,7 @@ export const akekuriChr_0019_karin_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const akekuriChr_0019_karin_attack1: SkillDefinition = {
+  actionGraph: akekuriChr_0019_karin_attack1ActionGraph,
   key: 'chr_0019_karin_attack1',
   element: 'physical',
   blackboard: { atk_scale: [0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39, 0.42, 0.45] },
@@ -71,33 +99,40 @@ export const akekuriChr_0019_karin_attack1: SkillDefinition = {
   naturalDurationFrames: 90,
   exclusiveFrame: 17,
   offsetRecordFrame: 9,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 1,
-        endFrame: 32,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0019_karin_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 14, endFrame: 32, skillIds: ['chr_0019_karin_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 14, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 1, endFrame: 32, sequence: { $sequence: 'overrideBasicAttackMapping_6' } },
+    { startFrame: 14, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0019_karin_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: akekuriChr_0019_karin_attack1ActionGraph,
 };
 
 export const akekuriChr_0019_karin_attack2ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_4: {
         action: {
           kind: 'changeResource',
@@ -127,6 +162,8 @@ export const akekuriChr_0019_karin_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -138,13 +175,13 @@ export const akekuriChr_0019_karin_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.08 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -178,6 +215,8 @@ export const akekuriChr_0019_karin_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['normalAttack'],
@@ -185,7 +224,14 @@ export const akekuriChr_0019_karin_attack2ActionGraph = {
         },
         next: 'ifElse_10',
       },
-      reachSkillOperableBoundary_12: {
+      overrideBasicAttackMapping_12: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0019_karin_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_13: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0019_karin_attack3'] },
@@ -211,6 +257,7 @@ export const akekuriChr_0019_karin_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const akekuriChr_0019_karin_attack2: SkillDefinition = {
+  actionGraph: akekuriChr_0019_karin_attack2ActionGraph,
   key: 'chr_0019_karin_attack2',
   element: 'physical',
   blackboard: {
@@ -222,45 +269,53 @@ export const akekuriChr_0019_karin_attack2: SkillDefinition = {
   naturalDurationFrames: 112,
   exclusiveFrame: 28,
   offsetRecordFrame: 16,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 13,
-        endFrame: 38,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0019_karin_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 22, endFrame: 38, skillIds: ['chr_0019_karin_attack3'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 16, endFrame: 17, sequence: { $sequence: 'dealDamage_11' } },
-    { startFrame: 22, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
+    { startFrame: 13, endFrame: 38, sequence: { $sequence: 'overrideBasicAttackMapping_12' } },
+    { startFrame: 22, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0019_karin_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: akekuriChr_0019_karin_attack2ActionGraph,
 };
 
 export const akekuriChr_0019_karin_attack3ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -294,6 +349,8 @@ export const akekuriChr_0019_karin_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -301,7 +358,14 @@ export const akekuriChr_0019_karin_attack3ActionGraph = {
         },
         next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_7: {
+      overrideBasicAttackMapping_7: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0019_karin_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0019_karin_attack4'] },
@@ -322,6 +386,7 @@ export const akekuriChr_0019_karin_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const akekuriChr_0019_karin_attack3: SkillDefinition = {
+  actionGraph: akekuriChr_0019_karin_attack3ActionGraph,
   key: 'chr_0019_karin_attack3',
   element: 'physical',
   blackboard: {
@@ -332,37 +397,46 @@ export const akekuriChr_0019_karin_attack3: SkillDefinition = {
   naturalDurationFrames: 95,
   exclusiveFrame: 27,
   offsetRecordFrame: 10,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 11,
-        endFrame: 36,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0019_karin_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 21, endFrame: 36, skillIds: ['chr_0019_karin_attack4'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 21, endFrame: 36, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 11, endFrame: 36, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 21, endFrame: 36, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0019_karin_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: akekuriChr_0019_karin_attack3ActionGraph,
 };
 
 export const akekuriChr_0019_karin_attack4ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       dealDamage_4: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack'],
@@ -374,13 +448,13 @@ export const akekuriChr_0019_karin_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.02 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -399,6 +473,8 @@ export const akekuriChr_0019_karin_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack'],
@@ -410,13 +486,13 @@ export const akekuriChr_0019_karin_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.35 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -450,6 +526,8 @@ export const akekuriChr_0019_karin_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -459,7 +537,14 @@ export const akekuriChr_0019_karin_attack4ActionGraph = {
         },
         next: 'ifElse_12',
       },
-      reachSkillOperableBoundary_14: {
+      overrideBasicAttackMapping_14: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0019_karin_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_15: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0019_karin_attack1'] },
@@ -485,6 +570,7 @@ export const akekuriChr_0019_karin_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const akekuriChr_0019_karin_attack4: SkillDefinition = {
+  actionGraph: akekuriChr_0019_karin_attack4ActionGraph,
   key: 'chr_0019_karin_attack4',
   element: 'physical',
   blackboard: {
@@ -496,46 +582,55 @@ export const akekuriChr_0019_karin_attack4: SkillDefinition = {
   naturalDurationFrames: 110,
   exclusiveFrame: 34,
   offsetRecordFrame: 19,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 24,
-        endFrame: 52,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0019_karin_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 35, endFrame: 52, skillIds: ['chr_0019_karin_attack1'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 19, endFrame: 20, sequence: { $sequence: 'dealDamage_4' } },
     { startFrame: 20, endFrame: 21, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 21, endFrame: 22, sequence: { $sequence: 'dealDamage_13' } },
-    { startFrame: 35, endFrame: 52, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
+    { startFrame: 24, endFrame: 52, sequence: { $sequence: 'overrideBasicAttackMapping_14' } },
+    { startFrame: 35, endFrame: 52, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0019_karin_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: akekuriChr_0019_karin_attack4ActionGraph,
 };
 
 export const akekuriChr_0019_karin_power_attackActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.16 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -554,17 +649,26 @@ export const akekuriChr_0019_karin_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.2,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'ifElse_5',
       },
       gainFinisherSp_8: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       ifElse_9: {
@@ -581,11 +685,13 @@ export const akekuriChr_0019_karin_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.8,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'ifElse_9',
@@ -594,13 +700,13 @@ export const akekuriChr_0019_karin_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.35 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'common' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -631,6 +737,13 @@ export const akekuriChr_0019_karin_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_14: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0019_karin_normal_skill', 'chr_0019_karin_combo_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
@@ -648,6 +761,7 @@ export const akekuriChr_0019_karin_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const akekuriChr_0019_karin_power_attack: SkillDefinition = {
+  actionGraph: akekuriChr_0019_karin_power_attackActionGraph,
   key: 'chr_0019_karin_power_attack',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -656,33 +770,44 @@ export const akekuriChr_0019_karin_power_attack: SkillDefinition = {
   exclusiveFrame: 60,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 37,
-        endFrame: 60,
-        skillIds: ['chr_0019_karin_normal_skill', 'chr_0019_karin_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 36, endFrame: 37, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 36, endFrame: 37, sequence: { $sequence: 'dealDamage_10' } },
     { startFrame: 40, endFrame: 43, sequence: { $sequence: 'startTimeDilation_11' } },
     { startFrame: 0, endFrame: 60, sequence: { $sequence: 'applyBuff_12' } },
     { startFrame: 0, endFrame: 36, sequence: { $sequence: 'applyBuff_13' } },
+    { startFrame: 37, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: akekuriChr_0019_karin_power_attackActionGraph,
 };
 
 export const akekuriChr_0019_karin_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -712,6 +837,8 @@ export const akekuriChr_0019_karin_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -733,6 +860,7 @@ export const akekuriChr_0019_karin_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const akekuriChr_0019_karin_plunging_attack_end: SkillDefinition = {
+  actionGraph: akekuriChr_0019_karin_plunging_attack_endActionGraph,
   key: 'chr_0019_karin_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -744,12 +872,14 @@ export const akekuriChr_0019_karin_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 13,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: akekuriChr_0019_karin_plunging_attack_endActionGraph,
 };
 
 export const akekuriChr_0019_karin_normal_skillActionGraph = {
@@ -766,42 +896,72 @@ export const akekuriChr_0019_karin_normal_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_21: {
+      findTargets_20: {
         action: {
-          kind: 'startTimeDilation',
+          kind: 'findTargets',
           parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
           },
         },
         next: null,
       },
-      dealDamage_22: {
+      startTimeDilation_21: {
         action: {
-          kind: 'dealDamage',
+          kind: 'startTimeDilation',
           parameters: {
-            damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
+            durationSeconds: { kind: 'constant', value: 0.2 },
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+          },
+        },
+        next: null,
+      },
+      blowOffEnemy_22: {
+        action: {
+          kind: 'blowOffEnemy',
+          parameters: {
+            source: { kind: 'owner' },
+            targets: { kind: 'context', key: 'tar' },
+            deadOption: 'OnlyDead',
           },
         },
         next: 'startTimeDilation_21',
       },
-      applyElementalInfliction_23: {
+      dealDamage_23: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
+            damageType: 'heat',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            tags: ['normalSkill', 'canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+        },
+        next: 'blowOffEnemy_22',
+      },
+      applyElementalInfliction_24: {
         action: {
           kind: 'applyElementalInfliction',
-          parameters: { element: 'heat', isExtra: false },
+          parameters: { element: 'heat', isExtra: false, target: { kind: 'context', key: 'tar' } },
         },
-        next: 'dealDamage_22',
+        next: 'dealDamage_23',
       },
-      applyBuff_24: {
+      applyBuff_26: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -813,12 +973,12 @@ export const akekuriChr_0019_karin_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_25: {
+      ifElse_27: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'applyBuff_24' },
+          whenTrue: { $sequence: 'applyBuff_26' },
           whenFalse: { $sequence: null },
         },
         next: null,
@@ -829,7 +989,14 @@ export const akekuriChr_0019_karin_normal_skillActionGraph = {
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_3: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
     },
   },
@@ -837,6 +1004,7 @@ export const akekuriChr_0019_karin_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const akekuriChr_0019_karin_normal_skill: SkillDefinition = {
+  actionGraph: akekuriChr_0019_karin_normal_skillActionGraph,
   key: 'chr_0019_karin_normal_skill',
   element: 'heat',
   blackboard: {
@@ -852,15 +1020,15 @@ export const akekuriChr_0019_karin_normal_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 125, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 16, endFrame: 21, sequence: { $sequence: 'findTargets_1' } },
-    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'applyElementalInfliction_23' } },
-    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'ifElse_25' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'findTargets_20' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'applyElementalInfliction_24' } },
+    { startFrame: 20, endFrame: 21, sequence: { $sequence: 'ifElse_27' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: akekuriChr_0019_karin_normal_skillActionGraph,
 };
 
 export const akekuriChr_0019_karin_combo_skillActionGraph = {
@@ -888,7 +1056,7 @@ export const akekuriChr_0019_karin_combo_skillActionGraph = {
         },
         next: null,
       },
-      changeResource_6: {
+      changeResource_7: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -903,7 +1071,7 @@ export const akekuriChr_0019_karin_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_7: {
+      ifElse_8: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
@@ -911,19 +1079,20 @@ export const akekuriChr_0019_karin_combo_skillActionGraph = {
           whenTrue: { $sequence: 'modifyActionValue_4' },
           whenFalse: { $sequence: 'modifyActionValue_5' },
         },
-        next: 'changeResource_6',
+        next: 'changeResource_7',
       },
-      modifyActionValue_8: {
+      modifyActionValue_9: {
         action: {
           kind: 'modifyActionValue',
           parameters: { key: 'max_ratio', operation: 'add', value: { kind: 'constant', value: 1 } },
         },
-        next: 'ifElse_7',
+        next: 'ifElse_8',
       },
-      storeSourceAttributeValue_9: {
+      storeSourceAttributeValue_10: {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'owner' },
             attribute: { kind: 'secondary' },
             stage: 'finalNonConverted',
             useFloor: false,
@@ -933,9 +1102,9 @@ export const akekuriChr_0019_karin_combo_skillActionGraph = {
             targetKey: 'atb_up',
           },
         },
-        next: 'modifyActionValue_8',
+        next: 'modifyActionValue_9',
       },
-      modifyActionValue_10: {
+      modifyActionValue_11: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -944,9 +1113,9 @@ export const akekuriChr_0019_karin_combo_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_8' },
           },
         },
-        next: 'storeSourceAttributeValue_9',
+        next: 'storeSourceAttributeValue_10',
       },
-      changeResource_12: {
+      changeResource_13: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -959,138 +1128,162 @@ export const akekuriChr_0019_karin_combo_skillActionGraph = {
         },
         next: null,
       },
-      modifyActionValue_13: {
+      modifyActionValue_14: {
         action: {
           kind: 'modifyActionValue',
           parameters: { key: 'count', operation: 'add', value: { kind: 'constant', value: 1 } },
         },
-        next: 'changeResource_12',
+        next: 'changeResource_13',
       },
-      startTimeDilation_14: {
+      startTimeDilation_15: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'modifyActionValue_13',
+        next: 'modifyActionValue_14',
       },
-      ifElse_15: {
+      ifElse_16: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_11' },
-          whenTrue: { $sequence: 'startTimeDilation_14' },
+          whenTrue: { $sequence: 'startTimeDilation_15' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_16: {
+      dealDamage_17: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_12' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_13' },
           },
         },
-        next: 'ifElse_15',
+        next: 'ifElse_16',
       },
-      ifElse_17: {
+      ifElse_18: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_14' },
-          whenTrue: { $sequence: 'modifyActionValue_10' },
+          whenTrue: { $sequence: 'modifyActionValue_11' },
           whenFalse: { $sequence: null },
         },
-        next: 'dealDamage_16',
+        next: 'dealDamage_17',
       },
-      mergeContextTargets_18: {
+      findTargets_19: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
-        next: 'ifElse_17',
+        next: 'ifElse_18',
       },
-      startTimeDilation_22: {
+      startTimeDilation_24: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'changeResource_12',
+        next: 'changeResource_13',
       },
-      modifyActionValue_23: {
+      modifyActionValue_25: {
         action: {
           kind: 'modifyActionValue',
           parameters: { key: 'count', operation: 'add', value: { kind: 'constant', value: 1 } },
         },
-        next: 'startTimeDilation_22',
-      },
-      ifElse_24: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'modifyActionValue_23' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      dealDamage_25: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_12' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_13' },
-          },
-        },
-        next: 'ifElse_24',
+        next: 'startTimeDilation_24',
       },
       ifElse_26: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'changeResource_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
+          whenTrue: { $sequence: 'modifyActionValue_25' },
           whenFalse: { $sequence: null },
         },
-        next: 'dealDamage_25',
+        next: null,
       },
-      mergeContextTargets_27: {
+      dealDamage_27: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'dealDamage',
+          parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_12' },
+            tags: ['canBreakWeakness', 'comboSkill'],
+            stagger: { kind: 'valueNode', nodeId: 'data_13' },
+          },
         },
         next: 'ifElse_26',
       },
-      modifyActionValue_28: {
+      ifElse_28: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
+          whenTrue: { $sequence: 'changeResource_7' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'dealDamage_27',
+      },
+      findTargets_29: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: 'ifElse_28',
+      },
+      modifyActionValue_30: {
         action: {
           kind: 'modifyActionValue',
           parameters: { key: 'count', operation: 'assign', value: { kind: 'constant', value: 0 } },
         },
-        next: 'mergeContextTargets_27',
+        next: 'findTargets_29',
       },
-      startTimeDilation_29: {
+      startTimeDilation_31: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1100,9 +1293,23 @@ export const akekuriChr_0019_karin_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_32: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0019_karin_normal_skill'] },
         },
         next: null,
       },
@@ -1150,7 +1357,14 @@ export const akekuriChr_0019_karin_combo_skillActionGraph = {
       data_13: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_14: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_15: {
         type: 'boolean',
@@ -1163,7 +1377,14 @@ export const akekuriChr_0019_karin_combo_skillActionGraph = {
       },
       data_16: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
     },
   },
@@ -1171,6 +1392,7 @@ export const akekuriChr_0019_karin_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const akekuriChr_0019_karin_combo_skill: SkillDefinition = {
+  actionGraph: akekuriChr_0019_karin_combo_skillActionGraph,
   key: 'chr_0019_karin_combo_skill',
   element: 'physical',
   blackboard: {
@@ -1189,24 +1411,19 @@ export const akekuriChr_0019_karin_combo_skill: SkillDefinition = {
   exclusiveFrame: 55,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 38, endFrame: 71, skillIds: ['chr_0019_karin_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_opt1' } },
-    { startFrame: 22, endFrame: 26, sequence: { $sequence: 'mergeContextTargets_18' } },
-    { startFrame: 31, endFrame: 36, sequence: { $sequence: 'modifyActionValue_28' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_29' } },
+    { startFrame: 22, endFrame: 26, sequence: { $sequence: 'findTargets_19' } },
+    { startFrame: 31, endFrame: 36, sequence: { $sequence: 'modifyActionValue_30' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_31' } },
+    { startFrame: 38, endFrame: 71, sequence: { $sequence: 'reachSkillOperableBoundary_32' } },
   ],
   defaultTarget: 'owner',
   cooldownFrames: [300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 270],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: akekuriChr_0019_karin_combo_skillActionGraph,
 };
 
 export const akekuriChr_0019_karin_ultimate_skillActionGraph = {
@@ -1339,6 +1556,7 @@ export const akekuriChr_0019_karin_ultimate_skillActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'owner' },
             attribute: { kind: 'secondary' },
             stage: 'finalNonConverted',
             useFloor: false,
@@ -1437,7 +1655,27 @@ export const akekuriChr_0019_karin_ultimate_skillActionGraph = {
         },
         next: 'applyBuff_18',
       },
-      applyBuff_20: {
+      overrideBasicAttackMapping_20: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0019_karin_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_21: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0019_karin_normal_skill',
+              'chr_0019_karin_attack1',
+              'chr_0019_karin_combo_skill',
+            ],
+          },
+        },
+        next: null,
+      },
+      applyBuff_22: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1450,8 +1688,8 @@ export const akekuriChr_0019_karin_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      hideUi_21: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_22: {
+      hideUi_23: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_24: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -1510,6 +1748,7 @@ export const akekuriChr_0019_karin_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const akekuriChr_0019_karin_ultimate_skill: SkillDefinition = {
+  actionGraph: akekuriChr_0019_karin_ultimate_skillActionGraph,
   key: 'chr_0019_karin_ultimate_skill',
   element: 'heat',
   blackboard: {
@@ -1530,27 +1769,6 @@ export const akekuriChr_0019_karin_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 233,
   exclusiveFrame: 150,
   offsetRecordFrame: 0,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 120,
-        endFrame: 201,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0019_karin_attack1',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 129,
-        endFrame: 201,
-        skillIds: [
-          'chr_0019_karin_normal_skill',
-          'chr_0019_karin_attack1',
-          'chr_0019_karin_combo_skill',
-        ],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 150, sequence: { $sequence: 'checkCondition_2' } },
@@ -1560,9 +1778,11 @@ export const akekuriChr_0019_karin_ultimate_skill: SkillDefinition = {
     { startFrame: 86, endFrame: 115, sequence: { $sequence: 'changeResource_15' } },
     { startFrame: 119, endFrame: 159, sequence: { $sequence: 'changeResource_16' } },
     { startFrame: 1, endFrame: 150, sequence: { $sequence: 'checkCondition_19' } },
-    { startFrame: 0, endFrame: 83, sequence: { $sequence: 'applyBuff_20' } },
-    { startFrame: 0, endFrame: 55, sequence: { $sequence: 'hideUi_21' } },
-    { startFrame: 0, endFrame: 55, sequence: { $sequence: 'startUltimateTimeDilation_22' } },
+    { startFrame: 120, endFrame: 201, sequence: { $sequence: 'overrideBasicAttackMapping_20' } },
+    { startFrame: 129, endFrame: 201, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
+    { startFrame: 0, endFrame: 83, sequence: { $sequence: 'applyBuff_22' } },
+    { startFrame: 0, endFrame: 55, sequence: { $sequence: 'hideUi_23' } },
+    { startFrame: 0, endFrame: 55, sequence: { $sequence: 'startUltimateTimeDilation_24' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -1570,7 +1790,6 @@ export const akekuriChr_0019_karin_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: akekuriChr_0019_karin_ultimate_skillActionGraph,
 };
 
 export const akekuriCommon_character_perfect_dodgeActionGraph = {

@@ -80,8 +80,16 @@ export function getUltimateEnergy(state: CombatResourceState, operatorId: string
   return requireOperator(state, operatorId).ultimateEnergy;
 }
 
-export function getMaxUltimateEnergy(state: CombatResourceState, operatorId: string): number {
-  return requireOperator(state, operatorId).maxUltimateEnergy;
+export function getMaxUltimateEnergy(
+  state: CombatResourceState,
+  operatorId: string,
+  resolvers: CombatResourceRuntimeResolvers = {},
+): number {
+  const value =
+    resolvers.maxUltimateEnergy?.(operatorId) ??
+    requireOperator(state, operatorId).maxUltimateEnergy;
+  requireFinite(value, 'maximum ultimate energy');
+  return value;
 }
 
 /** 按回能倍率、百分比上限、系数、许可标签的顺序结算，保留原生单精度舍入。 */
@@ -104,7 +112,9 @@ export function changeUltimateEnergy(
     requestedValue = Math.fround(requestedValue * multiplier);
   }
   if (options.isPercentValue) {
-    requestedValue = Math.fround(requestedValue * operator.maxUltimateEnergy);
+    requestedValue = Math.fround(
+      requestedValue * getMaxUltimateEnergy(state, operatorId, resolvers),
+    );
   }
   requestedValue = Math.fround(requestedValue * coefficient);
   const previousValue = operator.ultimateEnergy;
@@ -112,6 +122,7 @@ export function changeUltimateEnergy(
     state,
     operator,
     previousValue + requestedValue,
+    getMaxUltimateEnergy(state, operatorId, resolvers),
     options.recoveryTag,
   );
   return {
@@ -143,6 +154,7 @@ export function pay(
   operatorId: string,
   costs: readonly CompiledSkillCost[],
   options: { readonly forceTimelinePayment?: boolean } = {},
+  resolvers: CombatResourceRuntimeResolvers = {},
 ): SkillPaymentResult {
   if (!options.forceTimelinePayment && !canPay(state, operatorId, costs)) {
     return { paid: false, nonReturnedSpCost: 0, changes: [] };
@@ -176,6 +188,7 @@ export function pay(
         state,
         requireOperator(state, operatorId),
         previousValue - Math.fround(cost.value),
+        getMaxUltimateEnergy(state, operatorId, resolvers),
       );
       const currentValue = getUltimateEnergy(state, operatorId);
       changes.push({
@@ -272,6 +285,7 @@ function trySetUltimateEnergy(
   state: CombatResourceState,
   operator: OperatorResources,
   value: number,
+  maxUltimateEnergy: number,
   recoveryTag?: GameplayTag,
 ): boolean {
   const restriction = operator.allowedUltimateEnergyRecoveryTags;
@@ -285,10 +299,7 @@ function trySetUltimateEnergy(
   }
   // 原生余额和Setter入参为float，上限从double属性转float，差值也以float比较。
   // 保留双精度加减会让靠近容差的小额支付产生原生没有的写入与applied回执。
-  const clamped = Math.min(
-    Math.fround(operator.maxUltimateEnergy),
-    Math.max(0, Math.fround(value)),
-  );
+  const clamped = Math.min(Math.fround(maxUltimateEnergy), Math.max(0, Math.fround(value)));
   const difference = Math.fround(clamped - operator.ultimateEnergy);
   if (Math.abs(difference) <= ULTIMATE_ENERGY_EPSILON) return false;
   operator.ultimateEnergy = clamped;

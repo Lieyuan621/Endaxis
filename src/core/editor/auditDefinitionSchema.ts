@@ -1,17 +1,19 @@
 import type { DefinitionFieldSchema, DefinitionSchemaReferences } from './fieldSchema.ts';
 import { EMPTY_SCHEMA_REFERENCES, resolveDefinitionSchema } from './resolveDefinitionSchema.ts';
 
-/** Finite census: inline positions plus each reachable reference body once per root context.
- * It never expands a recursive path indefinitely or treats a missing body as an opaque value. */
+/** 每个共享定义只检查一次；递归引用单独遍历，内联对象循环仍视为错误。 */
 export function auditDefinitionSchema(root: DefinitionFieldSchema) {
   const references: DefinitionSchemaReferences = root.references ?? EMPTY_SCHEMA_REFERENCES;
   const pending = new Set<string>();
   const ancestors = new Set<DefinitionFieldSchema>();
+  const visited = new Set<DefinitionFieldSchema>();
   let nodes = 0;
   let edges = 0;
   function visit(schema: DefinitionFieldSchema) {
-    if (++nodes > 100_000) throw new Error('schema traversal budget exceeded');
     if (ancestors.has(schema)) throw new Error('cyclic inline schema object');
+    if (visited.has(schema)) return;
+    visited.add(schema);
+    nodes++;
     if (schema.kind === 'ref') {
       resolveDefinitionSchema(schema, references);
       pending.add(schema.ref);

@@ -107,9 +107,10 @@ export function createTimelineRouter(options: TimelineRouterOptions = {}) {
 
   const router = createRouter({
     history:
-      typeof window !== 'undefined' && window.location.hostname === 'appassets.androidplatform.net'
-        ? createWebHashHistory('/')
-        : createWebHistory('/'),
+      import.meta.env.BASE_URL !== '/' ||
+      (typeof window !== 'undefined' && window.location.hostname === 'appassets.androidplatform.net')
+        ? createWebHashHistory(import.meta.env.BASE_URL)
+        : createWebHistory(import.meta.env.BASE_URL),
     routes,
   });
 

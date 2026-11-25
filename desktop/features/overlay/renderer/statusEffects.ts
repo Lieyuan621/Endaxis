@@ -15,7 +15,10 @@ const physical = new Map<string, string>(
 physical.set('buff_physical_do_fracture', 'fracture');
 
 /** 只汇总实际落到敌人身上的效果，按施放身份归属，不以时间相邻推测来源。 */
-export function projectOverlayStatusEffects(entries: readonly CombatReceiptEntry[]) {
+export function projectOverlayStatusEffects(
+  entries: readonly CombatReceiptEntry[],
+  enemyId: string,
+) {
   const result = new Map<string, NonNullable<OverlayCast['statusEffects']>>();
   const origins = new CombatObjectOrigins(entries);
   const presentations = new Map<string, string>();
@@ -32,7 +35,7 @@ export function projectOverlayStatusEffects(entries: readonly CombatReceiptEntry
     }
   }
   for (const entry of entries) {
-    if (entry.targetId !== 'enemy' || !entry.data) continue;
+    if (entry.targetId !== enemyId || !entry.data) continue;
     const data = entry.data;
     let effect: NonNullable<OverlayCast['statusEffects']>[number] | undefined;
     if (entry.event === 'ElementalInflictionApplied') {

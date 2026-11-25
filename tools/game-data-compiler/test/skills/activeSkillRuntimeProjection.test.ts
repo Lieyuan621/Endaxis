@@ -1,3 +1,4 @@
+import { collectCompiledBuffApplications } from '../../src/compiler/references/compiledReferences.ts';
 import { CombatActionSequenceRuntime } from '../../../../src/core/combat/actions/combatActionSequenceRuntime';
 import { ActionBlackboard } from '../../../../src/core/combat/actions/actionBlackboard';
 import { compileGraphSequence } from '../support/graphSequence.ts';
@@ -40,6 +41,16 @@ const ACTIVE_CONTEXT = {
 } as const;
 
 describe('HideUI active source projection', () => {
+  it.each([false, true])('保留原生施放前切主控标志：%s', switchToCenterBeforeCast => {
+    const compiled = compileActiveSkillRuntimeProjectionSource({
+      value: { ...activeWithActions([]), switchToCenterBeforeCast },
+      sourcePath: 'fixture',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+    });
+    expect(compiled.switchToCenterBeforeCast).toBe(switchToCenterBeforeCast ? true : undefined);
+  });
+
   it('保留原生追加战技身份，不改变技能执行图和时长', () => {
     const source = activeWithActions([]);
     const compile = (normalSkillSubType: string | number) =>
@@ -187,7 +198,14 @@ describe('HideUI active source projection', () => {
       action: { $sequence: null },
     });
     expect(readResourceActions(compiled, equivalent.whenTrue)).toEqual([
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 1 },
+        },
+      },
     ]);
     expect(equivalent.whenFalse).toEqual(equivalent.whenTrue);
     branch.failActions = wrapper([gain(0.75)]);
@@ -379,17 +397,9 @@ describe('player input windows', () => {
       context: ACTIVE_CONTEXT,
     });
 
-    expect(result.inputWindows).toEqual({
-      commandMappings: [
-        {
-          startFrame: 5,
-          endFrame: 8,
-          input: 'basicAttack',
-          targetSkillId: 'native.attack2',
-        },
-      ],
-      allowedNextSkills: [{ startFrame: 5, endFrame: 8, skillIds: ['native.attack2'] }],
-    });
+    expect(result.allowNextSkillTransitions).toEqual([
+      { startFrame: 5, endFrame: 8, skillIds: ['native.attack2'], direct: true },
+    ]);
     expect(result.timelineBlockFrames).toBe(31);
     expect(result.scheduledSequences).toEqual([]);
   });
@@ -397,6 +407,7 @@ describe('player input windows', () => {
 
 function tangtangTargetPostProcessor(
   overrides: Record<string, unknown> = {},
+  sorting = 'DistanceFromMainCharAsc',
 ): Record<string, unknown> {
   return meta('TargetPostProcessorAction', {
     target: targetFixture('Context', undefined, 'tar'),
@@ -416,7 +427,7 @@ function tangtangTargetPostProcessor(
     postProcessorData: [
       {
         $type: 'Beyond.Gameplay.Core.Selector+PriorityFilter+Data, Gameplay.Beyond',
-        filterType: 'DistanceFromMainCharAsc',
+        filterType: sorting,
         onlyReserveMaxPriorityTargets: false,
         limitMaxNum: true,
         maxNum: 1,
@@ -486,7 +497,7 @@ describe('主动技能正式时间轴投影', () => {
     ).toMatchObject([
       {
         kind: 'mergeContextTargets',
-        parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+        parameters: { saveToContextKey: 'tar', sources: [{ kind: 'inputTarget' }] },
       },
       {
         kind: 'copyContextTargets',
@@ -506,7 +517,14 @@ describe('主动技能正式时间轴投影', () => {
           },
         },
       },
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 1 },
+        },
+      },
     ]);
   });
 
@@ -530,53 +548,69 @@ describe('主动技能正式时间轴投影', () => {
     ).toEqual([]);
   });
 
-  it('把汤汤的距离排序 TargetPostProcessor 严格归约为唯一敌人组复制', () => {
-    const result = compileActiveSkillRuntimeProjectionSource({
-      value: activeWithActions([
-        meta('MergeTargetAction', {
-          targets: [targetFixture('Target')],
-          targetGroupKey: 'tar',
-        }),
-        tangtangTargetPostProcessor(),
+  it.each(['DistanceFromMainCharAsc', 'DistanceFromMainCharDes'])(
+    '汤汤后处理 %s 保留上下文查询与限数',
+    sorting => {
+      const result = compileActiveSkillRuntimeProjectionSource({
+        value: activeWithActions([
+          meta('MergeTargetAction', {
+            targets: [targetFixture('Target')],
+            targetGroupKey: 'tar',
+          }),
+          tangtangTargetPostProcessor({}, sorting),
+          {
+            $type: 'Beyond.Gameplay.Core.Conditions.CheckEntityNum+Data, Gameplay.Beyond',
+            isEnable: true,
+            priorityLevel: 'Default',
+            priorityOffset: 0,
+            serverActionIndex: 2,
+            checkTarget: targetFixture('Context', undefined, 'tar01'),
+            minNum: 1,
+            containsHittableTarget: false,
+            compareType: 'GE',
+            excludeDeadEntity: false,
+            storeKey: '',
+          },
+          meta('GainBreakingAttackAtb', {
+            source: targetFixture('Source'),
+            target: targetFixture('Target'),
+            factor: scalarFixture(1),
+          }),
+        ]),
+        sourcePath: 'active.tangtang.combo',
+        patch: null,
+        context: ACTIVE_CONTEXT,
+      });
+      expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toMatchObject([
+        { kind: 'mergeContextTargets', parameters: { saveToContextKey: 'tar' } },
         {
-          $type: 'Beyond.Gameplay.Core.Conditions.CheckEntityNum+Data, Gameplay.Beyond',
-          isEnable: true,
-          priorityLevel: 'Default',
-          priorityOffset: 0,
-          serverActionIndex: 2,
-          checkTarget: targetFixture('Context', undefined, 'tar01'),
-          minNum: 1,
-          containsHittableTarget: false,
-          compareType: 'GE',
-          excludeDeadEntity: false,
-          storeKey: '',
-        },
-        meta('GainBreakingAttackAtb', {
-          source: targetFixture('Source'),
-          target: targetFixture('Target'),
-          factor: scalarFixture(1),
-        }),
-      ]),
-      sourcePath: 'active.tangtang.combo',
-      patch: null,
-      context: ACTIVE_CONTEXT,
-    });
-    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toMatchObject([
-      { kind: 'mergeContextTargets', parameters: { saveToContextKey: 'tar' } },
-      { kind: 'mergeContextTargets', parameters: { saveToContextKey: 'tar01' } },
-      {
-        kind: 'checkCondition',
-        parameters: {
-          condition: {
-            kind: 'entityCountCompare',
-            target: { kind: 'fixed', target: 'enemy' },
-            value: 1,
+          kind: 'copyContextTargets',
+          parameters: {
+            saveToContextKey: 'tar01',
+            source: { kind: 'limit', count: 1, targets: { kind: 'context', key: 'tar' } },
           },
         },
-      },
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
-    ]);
-  });
+        {
+          kind: 'checkCondition',
+          parameters: {
+            condition: {
+              kind: 'entityCountCompare',
+              target: { kind: 'context', key: 'tar01' },
+              value: 1,
+            },
+          },
+        },
+        {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
+      ]);
+    },
+  );
 
   it('破防回能可读取已证明为唯一木桩的命名 Context', () => {
     const result = compileActiveSkillRuntimeProjectionSource({
@@ -597,19 +631,23 @@ describe('主动技能正式时间轴投影', () => {
     });
     expect(readResourceActions(result, result.scheduledSequences[0]!.sequence).at(-1)).toEqual({
       kind: 'gainFinisherSp',
-      parameters: { factor: 1, recipient: 'team' },
+      parameters: {
+        source: { kind: 'source' },
+        target: { kind: 'context', key: 'mainTar' },
+        factor: { kind: 'constant', value: 1 },
+      },
     });
   });
 
   it.each([
     ['a non-proven source group', { target: targetFixture('Context', undefined, 'unknown') }],
     [
-      'a different sorting rule',
+      'a non-distance sorting rule',
       {
         postProcessorData: [
           {
             $type: 'Beyond.Gameplay.Core.Selector+PriorityFilter+Data, Gameplay.Beyond',
-            filterType: 'DistanceFromMainCharDesc',
+            filterType: 'BuffCountDesc',
             onlyReserveMaxPriorityTargets: false,
             limitMaxNum: true,
             maxNum: 1,
@@ -657,7 +695,11 @@ describe('主动技能正式时间轴投影', () => {
         patch: null,
         context: ACTIVE_CONTEXT,
       }),
-    ).toThrow('unaudited single-enemy action target group');
+    ).toThrow(
+      _label === 'a non-distance sorting rule'
+        ? 'unsupported enemy priority'
+        : 'unaudited single-enemy action target group',
+    );
   });
 
   it('把只供表现叶子读取的直接赋值键识别为战斗不可见数据流', () => {
@@ -1344,7 +1386,7 @@ describe('主动技能正式时间轴投影', () => {
       'direction angle still affects combat and cannot be published',
     );
   });
-  it('把干员受伤前监听接到显式受击标记，不吞掉干员输出伤害监听', () => {
+  it('干员受伤前监听保持原生事件阶段，不降为受伤后的受击标记', () => {
     const listener = (abilityEvent: string) =>
       meta('EventListenerAction', {
         abilityActionMap: [{ abilityEvent, actions: [seq([])] }],
@@ -1366,13 +1408,22 @@ describe('主动技能正式时间轴投影', () => {
           responses: [
             {
               key: 'fixture.actionGroupData.timelineActions[0]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-              event: { kind: 'operatorHit' },
+              event: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
               phase: 'dataAction',
               priority: 0,
               sequence: graphBranch(takeDamageResult.actionGraph!.main, []),
             },
           ],
         },
+      },
+    ]);
+    const killResult = compile('OnAfterKillEntity');
+    expect(
+      readResourceActions(killResult, killResult.scheduledSequences[0]!.sequence),
+    ).toMatchObject([
+      {
+        kind: 'listenForCombatEvents',
+        parameters: { responses: [{ event: { kind: 'abilityEvent', event: 'afterKillEntity' } }] },
       },
     ]);
     expect(compile('OnBeforeOutputAirborne').scheduledSequences).toEqual([]);
@@ -1468,9 +1519,9 @@ describe('主动技能正式时间轴投影', () => {
         kind: 'checkCondition',
         parameters: {
           condition: {
-            kind: 'eventDamageFeaturesMatch',
+            kind: 'eventDamageTagsMatch',
             match: 'exceptAny',
-            features: ['dot', 'remainArea'],
+            tags: ['dot', 'remainArea'],
           },
         },
       },
@@ -1502,7 +1553,7 @@ describe('主动技能正式时间轴投影', () => {
     });
     expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)[0]).toEqual({
       kind: 'applyElementalInfliction',
-      parameters: { element, isExtra: false },
+      parameters: { element, isExtra: false, target: { kind: 'inputTarget' } },
     });
   });
 
@@ -1544,7 +1595,7 @@ describe('主动技能正式时间轴投影', () => {
     });
   });
 
-  it('已存在的智能目标使近距离分支确定，不编译不可达的距离写入', () => {
+  it('智能目标可能随生命周期消失，距离条件及两个分支均保留', () => {
     const skill = activeWithActions([
       meta('IfElseAction', {
         conditionAction: seq([
@@ -1567,7 +1618,7 @@ describe('主动技能正式时间轴投影', () => {
         failActions: seq([
           meta('SaveTargetDistanceAction', {
             source: targetFixture('Source'),
-            target: targetFixture('MainTarget'),
+            target: targetFixture('Context', undefined, 'unresolved_distance_target'),
             bbKey: 'unused_distance',
           }),
         ]),
@@ -1587,17 +1638,34 @@ describe('主动技能正式时间轴投影', () => {
     const branch = readResourceActions(result, result.scheduledSequences[0]!.sequence)[0]!;
     expect(branch.kind).toBe('ifElse');
     if (branch.kind !== 'ifElse') throw new Error('missing branch');
-    expect(branch.condition).toEqual({ kind: 'checkActionResult', action: { $sequence: null } });
+    expect(branch.condition).toMatchObject({
+      kind: 'targetDistance',
+      target: { kind: 'context', key: 'smart_target' },
+    });
     expect(readResourceActions(result, branch.whenTrue)).toMatchObject([
       { kind: 'gainFinisherSp' },
     ]);
-    expect(readResourceActions(result, branch.whenFalse)).toEqual([]);
+    expect(readResourceActions(result, branch.whenFalse)).toMatchObject([
+      { kind: 'saveTargetDistance' },
+    ]);
     // 相同组名没有入口目标保证时，不得凭名字裁剪另一个分支。
     skill.selectStrategy = 'SelectObject';
-    expect(compile).toThrow('unresolved target-distance endpoint');
+    const unresolved = compile();
+    const unresolvedBranch = readResourceActions(
+      unresolved,
+      unresolved.scheduledSequences[0]!.sequence,
+    )[0]!;
+    expect(unresolvedBranch.kind).toBe('ifElse');
+    if (unresolvedBranch.kind !== 'ifElse') throw new Error('missing branch');
+    expect(readResourceActions(unresolved, unresolvedBranch.whenFalse)).toMatchObject([
+      {
+        kind: 'saveTargetDistance',
+        parameters: { target: { kind: 'context', key: 'unresolved_distance_target' } },
+      },
+    ]);
   });
 
-  it('零距离恒真分支排除不可达的空间写入，并传播唯一敌人 Context', () => {
+  it('零距离不证明目标存在，保留空目标分支的空间写入', () => {
     const skill = activeWithActions([
       meta('IfElseAction', {
         conditionAction: seq([
@@ -1636,8 +1704,7 @@ describe('主动技能正式时间轴投影', () => {
     ).toMatchObject([
       {
         kind: 'ifElse',
-        condition: { kind: 'checkActionResult', action: { $sequence: null } },
-        whenFalse: { $sequence: null },
+        whenFalse: { $sequence: expect.any(String) },
       },
       {
         kind: 'checkCondition',
@@ -1649,9 +1716,89 @@ describe('主动技能正式时间轴投影', () => {
           },
         },
       },
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 1 },
+        },
+      },
+    ]);
+    const branch = readResourceActions(
+      staticBranchResult,
+      staticBranchResult.scheduledSequences[0]!.sequence,
+    )[0]!;
+    if (branch.kind !== 'ifElse') throw new Error('missing branch');
+    expect(readResourceActions(staticBranchResult, branch.whenFalse)).toMatchObject([
+      { kind: 'createSpatialPointTargets' },
     ]);
   });
+
+  it.each(['MainTarget', 'MainCharacter'] as const)(
+    '混合位置目标的 Buff 闭包只推断真实实体种类：%s',
+    targetSource => {
+      const skill = activeWithActions([
+        meta('IfElseAction', {
+          conditionAction: seq([entityCount('smart_target')]),
+          succeedActions: seq([
+            meta('MergeTargetAction', {
+              targets: [targetFixture(targetSource)],
+              targetGroupKey: 'selected',
+              mergeHittableTargets: false,
+            }),
+          ]),
+          failActions: seq([fixedPoint('selected')]),
+          alwaysNext: true,
+        }),
+        meta('CreateBuffAction', {
+          buffs: [
+            {
+              buffId: 'buff_fixture_mixed_target',
+              assignBlackboard: false,
+              assignItems: [],
+              readIdFromBlackboard: false,
+              buffIdKey: '',
+            },
+          ],
+          count: scalarFixture(1),
+          targetSettings: targetFixture('Context', undefined, 'selected'),
+          buffSource: 'ActionSource',
+          contextKey: '',
+          autoFinishByAction: false,
+          inheritSkillIdList: [],
+          finishWithNextSkillIfNotInherited: false,
+          asChildBuff: false,
+          inheritSourceSkillCastId: false,
+          inheritSourceSkillCastInfo: false,
+          isExtra: false,
+          passTargetGroupsToBuff: false,
+          overrideBuffIconDuration: false,
+          buffIconDurationSource: {
+            m_abilityEntityTypeInfo: '',
+            m_timedMarkerInfo: '',
+            durationSourceType: 'AbilityEntity',
+            timedMarkerId: '',
+          },
+        }),
+      ]);
+      const result = compileActiveSkillRuntimeProjectionSource({
+        value: skill,
+        sourcePath: 'active.mixed-buff-target',
+        patch: null,
+        context: ACTIVE_CONTEXT,
+      });
+      const actions = readResourceActions(result, result.scheduledSequences[0]!.sequence);
+      expect(actions.at(-1)).toMatchObject({
+        kind: 'applyBuff',
+        parameters: { targets: { kind: 'context', key: 'selected' } },
+      });
+      const applications = collectCompiledBuffApplications(result.actionGraph.main);
+      expect(applications).toHaveLength(1);
+      if (targetSource === 'MainTarget') expect(applications[0]).toMatchObject({ target: 'enemy' });
+      else expect(applications[0]!.target).not.toBe('enemy');
+    },
+  );
 
   it('不能证明距离分支时仍计入空间写入，不按 Context 名称放行', () => {
     const skill = activeWithActions([
@@ -1681,14 +1828,18 @@ describe('主动技能正式时间轴投影', () => {
     skill.selectStrategy = 'SelectSmartObject';
     skill.smartTargetSelectStrategy = 'SelectComboSkillTrigger';
 
-    expect(() =>
-      compileActiveSkillRuntimeProjectionSource({
-        value: skill,
-        sourcePath: 'active.unknown-branch',
-        patch: null,
-        context: ACTIVE_CONTEXT,
-      }),
-    ).toThrow('unaudited single-enemy action target group');
+    const result = compileActiveSkillRuntimeProjectionSource({
+      value: skill,
+      sourcePath: 'active.unknown-branch',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+    });
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'ifElse' }),
+        expect.objectContaining({ kind: 'checkCondition' }),
+      ]),
+    );
   });
 
   it('跨调度的敌人目标并集允许把输出自身作为幂等累加输入', () => {
@@ -1745,7 +1896,14 @@ describe('主动技能正式时间轴投影', () => {
           },
         },
       },
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 1 },
+        },
+      },
     ]);
   });
 
@@ -1878,74 +2036,161 @@ describe('主动技能正式时间轴投影', () => {
       kind: 'spawnAbilityEntity',
       parameters: expect.objectContaining({
         abilityEntityId: 'abilityentity_fixture',
-        target: 'caster',
+        target: { kind: 'owner' },
+        source: { kind: 'owner' },
       }),
     });
   });
 
-  it.each([false, true])('RandomPointFinder 跨 Context 保留点数（新版二维尺寸=%s）', withExtent => {
-    const randomPoint = meta('FindTargetAction', {
-      targetGroupKey: 'random-points',
-      center: 'ContextTarget',
-      centerContextKey: 'anchor',
-      useCenterEntityMountPoint: false,
-      centerMountPoint: 'None',
-      centerToGround: false,
-      selectorOwner: 'ActionOwner',
-      selectorOwnerContextKey: '',
-      selectorData: {
-        finderData: {
-          $type: 'Beyond.Gameplay.Core.Selector+RandomPointFinder+Data, Gameplay.Beyond',
-          pointNum: scalarFixture(2),
-          shape: 'Sector',
-          ...(withExtent ? { extent2D: { x: scalarFixture(0), y: scalarFixture(0) } } : {}),
-          localPlaneRotationEulers: {
-            x: scalarFixture(-90),
-            y: scalarFixture(0),
-            z: scalarFixture(0),
+  it.each(
+    ['SourceToTarget', 'TargetToSource'].flatMap(direction => [
+      { direction, dynamic: false },
+      { direction, dynamic: true },
+    ]),
+  )(
+    '固定点保留目标来源，方向配置不影响逻辑身份 %s',
+    ({ direction: selectorDirection, dynamic }) => {
+      const point = {
+        ...fixedPoint('launchPos'),
+        center: 'CurrentTarget',
+        selectorOwner: 'CurrentTarget',
+        target: 'ActionSource',
+        selectorDirection,
+      };
+      const result = compileActiveSkillRuntimeProjectionSource({
+        value: activeWithActions([
+          point,
+          {
+            ...spawnAbilityEntity('spawned'),
+            bornAt: targetFixture('Context', undefined, 'launchPos'),
           },
-          radius: scalarFixture(1.6),
-          minRadius: scalarFixture(0.4),
-          angle: scalarFixture(180),
-          useExtraJitter: false,
-          snapToNavMesh: false,
+        ]),
+        sourcePath: 'active.enemy-owner-point',
+        patch: null,
+        context: {
+          ...ACTIVE_CONTEXT,
+          ...(dynamic ? { actionTargetTarget: 'actionInputTarget' as const } : {}),
         },
-        validatorData: [],
-        postProcessorData: [],
-      },
-      selectorDirection: 'SourceForward',
-      target: 'ActionSource',
-      contextKey: '',
-      useAdvancedDirectionSetting: false,
-      advancedSelectorDirection: {
-        directionType: 'SourceForward',
-        sourceMountPoint: 'None',
-        targetMountPoint: 'None',
-        customSourceAndTarget: false,
-        clampToXZ: true,
-        invertDirection: false,
-      },
-    });
+      });
+      expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
+        kind: 'createSpatialPointTargets',
+        parameters: {
+          saveToContextKey: 'launchPos',
+          count: { kind: 'constant', value: 1 },
+          origin: { kind: 'inputTarget' },
+        },
+      });
+    },
+  );
+
+  it.each([false, true])(
+    'RandomPointFinder 跨 Context 保留点数（镜头朝向与新版二维尺寸=%s）',
+    withExtent => {
+      const randomPoint = meta('FindTargetAction', {
+        targetGroupKey: 'random-points',
+        center: 'ContextTarget',
+        centerContextKey: 'anchor',
+        useCenterEntityMountPoint: false,
+        centerMountPoint: 'None',
+        centerToGround: false,
+        selectorOwner: 'ActionOwner',
+        selectorOwnerContextKey: '',
+        selectorData: {
+          finderData: {
+            $type: 'Beyond.Gameplay.Core.Selector+RandomPointFinder+Data, Gameplay.Beyond',
+            pointNum: scalarFixture(2),
+            shape: 'Sector',
+            ...(withExtent ? { extent2D: { x: scalarFixture(0), y: scalarFixture(0) } } : {}),
+            localPlaneRotationEulers: {
+              x: scalarFixture(-90),
+              y: scalarFixture(0),
+              z: scalarFixture(0),
+            },
+            radius: scalarFixture(1.6),
+            minRadius: scalarFixture(0.4),
+            angle: scalarFixture(180),
+            useExtraJitter: false,
+            snapToNavMesh: false,
+          },
+          validatorData: [],
+          postProcessorData: [],
+        },
+        selectorDirection: withExtent ? 'CameraForward' : 'SourceForward',
+        target: 'ActionSource',
+        contextKey: '',
+        useAdvancedDirectionSetting: false,
+        advancedSelectorDirection: {
+          directionType: 'SourceForward',
+          sourceMountPoint: 'None',
+          targetMountPoint: 'None',
+          customSourceAndTarget: false,
+          clampToXZ: true,
+          invertDirection: false,
+        },
+      });
+      const result = compileActiveSkillRuntimeProjectionSource({
+        value: activeWithActions([
+          fixedPoint('anchor'),
+          randomPoint,
+          entityCount('random-points'),
+          meta('GainBreakingAttackAtb', {
+            source: targetFixture('Source'),
+            target: targetFixture('Target'),
+            factor: scalarFixture(1),
+          }),
+        ]),
+        sourcePath: 'active.context-random-point',
+        patch: null,
+        context: ACTIVE_CONTEXT,
+      });
+      // 没有消费者时无需解释镜头方向，也不能恢复无效的空间计算。
+      expect(() =>
+        compileActiveSkillRuntimeProjectionSource({
+          value: activeWithActions([
+            fixedPoint('anchor'),
+            { ...randomPoint, selectorDirection: 'CameraForward' },
+          ]),
+          sourcePath: 'active.unused-random-point',
+          patch: null,
+          context: ACTIVE_CONTEXT,
+        }),
+      ).not.toThrow();
+      expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
+        kind: 'createSpatialPointTargets',
+        parameters: {
+          saveToContextKey: 'random-points',
+          count: { kind: 'constant', value: 2 },
+          origin: { kind: 'context', key: 'anchor' },
+        },
+      });
+    },
+  );
+
+  it('实体转位置保留来源查询，供后续消费者读取执行时的位置快照', () => {
     const result = compileActiveSkillRuntimeProjectionSource({
       value: activeWithActions([
-        fixedPoint('anchor'),
-        randomPoint,
-        entityCount('random-points'),
-        meta('GainBreakingAttackAtb', {
-          source: targetFixture('Source'),
-          target: targetFixture('Target'),
-          factor: scalarFixture(1),
+        meta('ConvertToTargetContext', {
+          convertFrom: targetFixture('Source'),
+          targetGroupKey: 'tarPos',
+          operationType: 'ConvertEntityToPosition',
+          translateOperation: 'Rotate180DegAroundRef',
+          translationRef: 'ActionSource',
+          translationDeg: 0,
+          excludeTarget: 'ActionSource',
+          blackboardVector3: { x: scalarFixture(0), y: scalarFixture(0), z: scalarFixture(0) },
         }),
+        entityCount('tarPos'),
       ]),
-      sourcePath: 'active.context-random-point',
+      sourcePath: 'active.entity-position',
       patch: null,
       context: ACTIVE_CONTEXT,
     });
     expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
-      kind: 'createSpatialPointTargets',
+      kind: 'copyContextTargets',
       parameters: {
-        saveToContextKey: 'random-points',
-        count: { kind: 'constant', value: 2 },
+        saveToContextKey: 'tarPos',
+        convertEntitiesToPositions: true,
+        source: { kind: 'source' },
       },
     });
   });
@@ -1990,10 +2235,25 @@ describe('主动技能正式时间轴投影', () => {
         context: ACTIVE_CONTEXT,
       });
     const result = compile();
-    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
-      kind: 'createSpatialPointTargets',
-      parameters: { saveToContextKey: 'point', count: { kind: 'constant', value: 1 } },
+
+    Object.assign(point, {
+      selectorDirection: 'SourceForward',
+      useAdvancedDirectionSetting: false,
     });
+    const positioned = compile();
+    expect(
+      readResourceActions(positioned, positioned.scheduledSequences[0]!.sequence),
+    ).toContainEqual({
+      kind: 'createSpatialPointTargets',
+      parameters: {
+        saveToContextKey: 'point',
+        count: { kind: 'constant', value: 1 },
+        origin: { kind: 'mainCharacter' },
+      },
+    });
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual(
+      readResourceActions(positioned, positioned.scheduledSequences[0]!.sequence),
+    );
     // 动态组可以为空，所以不能同样归约为必定存在的中心。
     point.center = 'ContextTarget';
     expect(compile).toThrow('unaudited single-enemy action target group');
@@ -2097,8 +2357,10 @@ describe('主动技能正式时间轴投影', () => {
     expect(readActionGraphChain(builder.finish(), entry)[0]).toMatchObject({
       kind: 'startTimeDilation',
       parameters: {
-        targets: ['caster'],
-        abilityEntityTargets: [{ kind: 'context', contextKey: 'projectiles' }],
+        scope: 'hitStop',
+        attacker: { kind: 'source' },
+        targets: { kind: 'context', key: 'projectiles' },
+        affectType: 'Both',
       },
     });
   });
@@ -2110,30 +2372,26 @@ describe('主动技能正式时间轴投影', () => {
       affectType: 'Both',
       attacker: 'Source',
       target: 'Target',
-      targets: ['enemy', 'caster'],
     },
     {
       name: '双方：Owner',
       affectType: 'Both',
       attacker: 'Owner',
       target: 'Target',
-      targets: ['enemy', 'caster'],
     },
     {
-      name: '仅施法者，忽略目标与内联曲线残值',
+      name: '仅施法者，保留目标查询并忽略内联曲线残值',
       affectType: 'OnlyAttacker',
       attacker: 'Source',
       target: 'Source',
-      targets: ['caster'],
     },
     {
       name: '仅当前主控',
       affectType: 'OnlyAttacker',
       attacker: 'MainCharacter',
       target: 'Context',
-      targets: ['controlled'],
     },
-  ])('命中停顿保留实体时间域和实际目标：$name', ({ affectType, attacker, target, targets }) => {
+  ])('命中停顿保留实体时间域和实际目标：$name', ({ affectType, attacker, target }) => {
     const result = compileActiveSkillRuntimeProjectionSource({
       value: activeWithActions([
         meta('HitStopAction', {
@@ -2158,13 +2416,19 @@ describe('主动技能正式时间轴投影', () => {
       {
         kind: 'startTimeDilation',
         parameters: {
-          scope: 'entity',
+          scope: 'hitStop',
           durationSeconds: { kind: 'constant', value: 0.15 },
-          slot: 'TimeDilation/Layer/Entity/HitStop',
           priority: 10,
           curve: { kind: 'named', key: 'char_hard_stop' },
-          finishByAction: false,
-          targets,
+          affectType,
+          attacker: {
+            kind:
+              attacker === 'Source' ? 'source' : attacker === 'Owner' ? 'owner' : 'mainCharacter',
+          },
+          targets:
+            target === 'Context'
+              ? { kind: 'context', key: 'unresolved' }
+              : { kind: target === 'Target' ? 'inputTarget' : 'source' },
         },
       },
     ]);
@@ -2316,8 +2580,15 @@ describe('主动技能正式时间轴投影', () => {
           priority: 20,
           curve: { kind: 'named', key: 'ComboSkill' },
           finishByAction: false,
-          ignoredTargets: ['caster'],
-          ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          ignoredTargets: [
+            { kind: 'owner' },
+            {
+              kind: 'ownerSpawned',
+              owner: { kind: 'owner' },
+              objectType: 'abilityEntity',
+              sameSourceSkillCast: false,
+            },
+          ],
           influenceSkillCooldownSeconds: { kind: 'constant', value: 0.4 },
         },
       },
@@ -2358,7 +2629,7 @@ describe('主动技能正式时间轴投影', () => {
           priority: 20,
           curve: { kind: 'named', key: 'ComboSkill' },
           finishByAction: false,
-          ignoredTargets: ['caster'],
+          ignoredTargets: [{ kind: 'owner' }],
         },
       },
     ]);
@@ -2439,13 +2710,13 @@ describe('主动技能正式时间轴投影', () => {
             ],
           },
           finishByAction: false,
-          ignoredTargets: ['caster'],
+          ignoredTargets: [{ kind: 'owner' }],
         },
       },
     ]);
   });
 
-  it('按静态 born tag 目录筛选自有能力实体的全局时间倍率忽略目标', () => {
+  it('保留运行时标签筛选的自有能力实体时间倍率忽略目标', () => {
     const tagId = gameplayTagIdFromPath('Test/Tag123');
     const catalog = compileAbilityEntityTemplateCatalogSource({
       abilityentity_matching: {
@@ -2497,9 +2768,17 @@ describe('主动技能正式时间轴投影', () => {
       {
         kind: 'setIgnoreGlobalTimeScale',
         parameters: {
-          abilityEntityTargets: [
-            { kind: 'ownerSpawned', abilityEntityIds: ['abilityentity_matching'] },
-          ],
+          targets: {
+            kind: 'tagFilter',
+            tagQueryType: 'hasAny',
+            tags: ['Test/Tag123'],
+            targets: {
+              kind: 'ownerSpawned',
+              owner: { kind: 'owner' },
+              objectType: 'abilityEntity',
+              sameSourceSkillCast: false,
+            },
+          },
           ignore: true,
           revertOnEnd: true,
         },
@@ -2507,7 +2786,7 @@ describe('主动技能正式时间轴投影', () => {
     ]);
   });
 
-  it('实体自身忽略全局时间流速使用当前宿主，不能误用于干员 Owner', () => {
+  it('忽略全局时间流速保留 Owner 查询，由运行时区分实体与干员宿主', () => {
     const input = {
       value: activeWithActions([
         meta('SetIgnoreGlobalTimeScaleAction', {
@@ -2528,15 +2807,16 @@ describe('主动技能正式时间轴投影', () => {
       {
         kind: 'setIgnoreGlobalTimeScale',
         parameters: {
-          abilityEntityTargets: [{ kind: 'current' }],
+          targets: { kind: 'owner' },
           ignore: true,
           revertOnEnd: true,
         },
       },
     ]);
-    expect(() =>
-      compileActiveSkillRuntimeProjectionSource({ ...input, context: ACTIVE_CONTEXT }),
-    ).toThrow('unsupported global-time-scale ignore target');
+    const caster = compileActiveSkillRuntimeProjectionSource({ ...input, context: ACTIVE_CONTEXT });
+    expect(readResourceActions(caster, caster.scheduledSequences[0]!.sequence)).toEqual(
+      readResourceActions(result, result.scheduledSequences[0]!.sequence),
+    );
   });
 
   it('空合并显式覆盖目标组，不因没有输入而省略写入', () => {
@@ -2631,7 +2911,14 @@ describe('主动技能正式时间轴投影', () => {
       kind: 'findTargets',
       parameters: {
         owner: { kind: 'mainCharacter' },
-        query: { kind: 'enemyByTags', tagQueryType: 'hasAny', tags: ['Test/Tag123'] },
+        center: { kind: 'mainCharacter' },
+        query: {
+          kind: 'enemyByTags',
+          scope: 'global',
+          reverse: true,
+          tagQueryType: 'hasAny',
+          tags: ['Test/Tag123'],
+        },
         saveToContextKey: 'selected',
       },
     });
@@ -2735,11 +3022,15 @@ describe('主动技能正式时间轴投影', () => {
           kind: 'finishOwner',
           parameters: {
             targets: {
-              kind: 'ownerSpawned',
-              objectType: 'abilityEntity',
-              owner: { kind: selectorOwner === 'ActionOwner' ? 'owner' : 'source' },
-              abilityEntityIds: ['abilityentity_matching'],
-              sameSourceSkillCast: false,
+              kind: 'tagFilter',
+              tagQueryType: 'hasAny',
+              tags: ['Test/Tag123'],
+              targets: {
+                kind: 'ownerSpawned',
+                objectType: 'abilityEntity',
+                owner: { kind: selectorOwner === 'ActionOwner' ? 'owner' : 'source' },
+                sameSourceSkillCast: false,
+              },
             },
           },
         },
@@ -2747,7 +3038,22 @@ describe('主动技能正式时间轴投影', () => {
     },
   );
 
-  it('实体内联时间膨胀忽略未选中的命名曲线残值', () => {
+  it.each([
+    { name: '动作宿主', effectTargets: [targetFixture('Owner')], targets: [{ kind: 'owner' }] },
+    {
+      name: '混合目标集合',
+      effectTargets: [
+        targetFixture('Context', undefined, 'selected'),
+        targetFixture('Target'),
+        targetFixture('MainTarget'),
+      ],
+      targets: [
+        { kind: 'context', key: 'selected' },
+        { kind: 'inputTarget' },
+        { kind: 'battleMainTarget' },
+      ],
+    },
+  ])('$name 的实体时缓保留查询并忽略未选中的命名曲线残值', ({ effectTargets, targets }) => {
     const result = compileActiveSkillRuntimeProjectionSource({
       value: activeWithActions([
         meta('TimeDilationAction', {
@@ -2779,7 +3085,7 @@ describe('主动技能正式时间轴投影', () => {
           ],
           finishByAction: true,
           ignoreTargets: [],
-          effectTargets: [targetFixture('Owner')],
+          effectTargets,
           useTimeScaleForSkillCdTick: false,
           influenceSkillCdTime: scalarFixture(0),
         }),
@@ -2794,7 +3100,7 @@ describe('主动技能正式时间轴投影', () => {
       {
         kind: 'startTimeDilation',
         parameters: {
-          targets: [{ kind: 'owner' }],
+          targets,
           curve: {
             kind: 'inline',
             keys: [
@@ -2949,7 +3255,14 @@ describe('主动技能正式时间轴投影', () => {
     });
 
     expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 1 },
+        },
+      },
     ]);
 
     const groupedTargetResult = compileActiveSkillRuntimeProjectionSource({
@@ -2971,7 +3284,20 @@ describe('主动技能正式时间轴投影', () => {
 
     expect(
       readResourceActions(groupedTargetResult, groupedTargetResult.scheduledSequences[0]!.sequence),
-    ).toEqual([{ kind: 'gainFinisherSp', parameters: { factor: 0.75, recipient: 'team' } }]);
+    ).toEqual([
+      {
+        kind: 'mergeContextTargets',
+        parameters: { saveToContextKey: 'myTar', sources: [{ kind: 'inputTarget' }] },
+      },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 0.75 },
+        },
+      },
+    ]);
   });
 
   it('裁剪无有效回调的动画，战斗回调保留在原生动画动作内', () => {

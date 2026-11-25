@@ -1,20 +1,29 @@
+import type { EnemySpawnDefinition } from '../../../packages/game-data-contract/src/enemies';
+import { enemyBirthOptions } from '../../core/project/enemyBirthEffects';
+import { firstScenarioEnemy, levelEnemies, mapLevelEnemies } from '../../core/project/level';
 /**
  * 将敌人预制体默认值转换为项目实例，并提供不可变的敌人覆盖命令。
- * 切换定义会重新捕获完整默认值；单项编辑只记录用户接管的字段，不修改定义。
+ * 切换定义会重新捕获完整默认值；单项编辑只修改实例数值，不修改定义。
  */
-import { getEnemyHpAtLevel, type EnemyDefinition } from '../../core/game-data/enemyDefinition';
+import {
+  getEnemyHpAtLevel,
+  getEnemyRuntimeDefinitionId,
+  type EnemyDefinition,
+} from '../../core/game-data/enemyDefinition';
 import type {
   EnemyDocument,
-  EnemyEditableField,
+  EnemyInstanceDocument,
+  StageEnemyIdentity,
   EnemyEditableValues,
   ScenarioDocument,
 } from '../../core/project/schema';
 
-function addEditedField(
-  edited: readonly EnemyEditableField[],
-  field: EnemyEditableField,
-): EnemyEditableField[] {
-  return edited.includes(field) ? [...edited] : [...edited, field];
+/** 关卡选择中的一个已具备完整属性数据的敌人条目。 */
+export interface StageEnemySelection {
+  count: number;
+  definitionId: string;
+  level: number;
+  source: StageEnemyIdentity;
 }
 
 function secondsToFrames(seconds: number, fps: number): number {
@@ -27,13 +36,18 @@ export function createDefinitionEnemyDocument(
   definition: EnemyDefinition,
   level: number,
   fps: number,
+  stage?: StageEnemyIdentity,
+  enabledBirthBuffs?: readonly string[],
+  spawn?: EnemySpawnDefinition | null,
 ): EnemyDocument {
   const hp = getEnemyHpAtLevel(definition, level);
   if (hp === null) {
     throw new Error(`enemy '${definition.id}' has no HP value at level ${level}`);
   }
-  return {
-    source: { kind: 'prefab', enemyId: definition.id, level },
+  const document: EnemyDocument = {
+    source: stage
+      ? { kind: 'stage', ...stage, level }
+      : { kind: 'prefab', enemyId: definition.id, level },
     rank: definition.rank,
     editable: {
       hp,
@@ -49,16 +63,51 @@ export function createDefinitionEnemyDocument(
         finisherSpRecovery: definition.stagger.finisherSpRecovery,
       },
     },
-    edited: [],
+  };
+  const options = enemyBirthOptions(definition, spawn);
+  if (
+    !options.length &&
+    !definition.attributeModifiers?.length &&
+    definition.stagger.recoveryTimeMultiplier === undefined
+  )
+    return document;
+  return {
+    ...document,
+    birthEffects: {
+      enabledBuffs: [
+        ...(enabledBirthBuffs ?? options.filter(buff => buff.supported).map(buff => buff.key)),
+      ],
+    },
   };
 }
 
 export function setScenarioEnemy(
   scenario: ScenarioDocument,
   enemy: EnemyDocument,
+  instanceId?: string,
 ): ScenarioDocument {
-  if (scenario.enemy === enemy) return scenario;
-  return { ...scenario, enemy };
+  return updateEnemyInstance(
+    scenario,
+    item => ({
+      id: item.id,
+      enemy: { ...enemy, lifecycle: item.enemy.lifecycle },
+    }),
+    instanceId,
+  );
+}
+
+function updateEnemyInstance(
+  scenario: ScenarioDocument,
+  update: (item: EnemyInstanceDocument) => EnemyInstanceDocument,
+  instanceId?: string,
+): ScenarioDocument {
+  const id = instanceId ?? firstScenarioEnemy(scenario).id;
+  if (!levelEnemies(scenario.level).some(item => item.id === id))
+    throw new Error('unknown enemy instance: ' + id);
+  return {
+    ...scenario,
+    level: mapLevelEnemies(scenario.level, item => (item.id === id ? update(item) : item)),
+  };
 }
 
 /** 创建一个带明确项目默认值的自定义敌人；这些值本来就由用户决定，因此不标记为预制体覆盖。 */
@@ -81,26 +130,39 @@ export function createCustomEnemyDocument(level = 90): EnemyDocument {
         finisherSpRecovery: 100,
       },
     },
-    edited: [],
   };
 }
 
-/** 把属性弹窗的一次确认合并为一次场景修改，并逐字段记录本次新增的用户覆盖。 */
+/** 把属性弹窗的一次确认合并为一次场景修改，并隔离编辑草稿。 */
 export function replaceEnemyEditableValues(
   scenario: ScenarioDocument,
   values: EnemyEditableValues,
+  instanceId?: string,
+  enabledBirthBuffs?: readonly string[],
 ): ScenarioDocument {
-  const current = scenario.enemy.editable;
-  const changedFields: EnemyEditableField[] = [];
+  const enemy =
+    instanceId === undefined
+      ? firstScenarioEnemy(scenario).enemy
+      : levelEnemies(scenario.level).find(item => item.id === instanceId)?.enemy;
+  if (!enemy) throw new Error('unknown enemy instance: ' + instanceId);
+  const definitionId = getEnemyRuntimeDefinitionId(enemy);
+  const configuration =
+    definitionId && (enemy.birthEffects || enabledBirthBuffs?.length)
+      ? {
+          enabledBuffs: [...(enabledBirthBuffs ?? enemy.birthEffects?.enabledBuffs ?? [])],
+        }
+      : undefined;
+  const current = enemy.editable;
+  let changed = false;
   for (const field of ['hp', 'defense', 'superArmor', 'finisherMultiplier'] as const) {
-    if (current[field] !== values[field]) changedFields.push(field);
+    if (current[field] !== values[field]) changed = true;
   }
   const resistanceKeys = new Set([
     ...Object.keys(current.resistances),
     ...Object.keys(values.resistances),
   ]);
   if ([...resistanceKeys].some(key => current.resistances[key] !== values.resistances[key])) {
-    changedFields.push('resistances');
+    changed = true;
   }
   for (const field of [
     'maximum',
@@ -117,26 +179,45 @@ export function replaceEnemyEditableValues(
           )
         : current.stagger[field] === values.stagger[field];
     if (!unchanged) {
-      changedFields.push(`stagger.${field}`);
+      changed = true;
     }
   }
-  if (changedFields.length === 0) return scenario;
+  const previousEnabled = enemy.birthEffects?.enabledBuffs ?? [];
+  const enabledChanged =
+    configuration &&
+    (configuration.enabledBuffs.length !== previousEnabled.length ||
+      configuration.enabledBuffs.some(key => !previousEnabled.includes(key)));
+  if (!changed && !enabledChanged) return scenario;
+  if (configuration)
+    return updateEnemyInstance(
+      scenario,
+      item => ({
+        ...item,
+        enemy: {
+          ...enemy,
+          birthEffects: configuration,
+          editable: structuredClone(values),
+        },
+      }),
+      instanceId,
+    );
 
-  return {
-    ...scenario,
-    enemy: {
-      ...scenario.enemy,
-      editable: {
-        ...values,
-        resistances: { ...values.resistances },
-        stagger: {
-          ...values.stagger,
-          knotThresholds: [...values.stagger.knotThresholds],
+  return updateEnemyInstance(
+    scenario,
+    item => ({
+      ...item,
+      enemy: {
+        ...enemy,
+        editable: {
+          ...values,
+          resistances: { ...values.resistances },
+          stagger: {
+            ...values.stagger,
+            knotThresholds: [...values.stagger.knotThresholds],
+          },
         },
       },
-      edited: changedFields.reduce<EnemyEditableField[]>(addEditedField, [
-        ...scenario.enemy.edited,
-      ]),
-    },
-  };
+    }),
+    instanceId,
+  );
 }

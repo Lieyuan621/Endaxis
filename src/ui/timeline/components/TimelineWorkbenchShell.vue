@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { publicAssetUrl } from '../../../utils/publicAssetUrl';
 /**
  * 时间轴的七列工作台外壳，复刻既有面板几何和活动栏交互。
  * 内容区只通过插槽接入；本组件不读取项目、时间轴或战斗状态。
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { EaButton, EaActivityRailButton } from '@/design-system';
+import { EaButton, EaActivityRailButton, EaChevronIcon } from '@/design-system';
 import { useInteractionSession } from '../../interaction/interactionSessionContext';
 import {
   resolveWorkbenchSidePanelMaximumWidth,
@@ -299,7 +300,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!leftCollapsed"
           :label="props.labels.library"
           @click="toggleLeft"
-          icon="/icons/btn_character.webp"
+          :icon="publicAssetUrl('/icons/btn_character.webp')"
         />
       </div>
       <div class="activity-group activity-group--bottom">
@@ -309,7 +310,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!bottomCollapsed && bottomTool === 'global'"
           :label="props.labels.globalConfig"
           @click="selectBottom('global')"
-          icon="/icons/global_config.webp"
+          :icon="publicAssetUrl('/icons/global_config.webp')"
         />
         <EaActivityRailButton
           class="activity-button activity-button--contract"
@@ -317,7 +318,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!bottomCollapsed && bottomTool === 'contract'"
           :label="props.labels.contract"
           @click="selectBottom('contract')"
-          icon="/contingency_contract/deco_contract_028.webp"
+          :icon="publicAssetUrl('/contingency_contract/deco_contract_0.webp')"
           :icon-size="28"
         />
         <EaActivityRailButton
@@ -326,7 +327,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!bottomCollapsed && bottomTool === 'enemy'"
           :label="props.labels.resourceMonitor"
           @click="selectBottom('enemy')"
-          icon="/icons/icon_wiki_group_monster_hongshan.webp"
+          :icon="publicAssetUrl('/icons/icon_wiki_group_monster_hongshan.webp')"
         />
       </div>
     </aside>
@@ -374,7 +375,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :aria-label="props.labels.collapsePanel"
           @click="collapseBottom"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+          <EaChevronIcon direction="down" :size="16" :stroke-width="2.5" />
         </EaButton>
         <slot
           name="bottom"
@@ -404,7 +405,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!rightCollapsed && rightTool === 'inspector'"
           :label="props.labels.inspector"
           @click="selectRight('inspector')"
-          icon="/icons/btn_week_raid.webp"
+          :icon="publicAssetUrl('/icons/btn_week_raid.webp')"
         />
         <EaActivityRailButton
           class="activity-button activity-button--battle-log"
@@ -412,7 +413,7 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
           :active="!rightCollapsed && rightTool === 'battleLog'"
           :label="props.labels.battleLog"
           @click="selectRight('battleLog')"
-          icon="/icons/btn_manual.webp"
+          :icon="publicAssetUrl('/icons/btn_manual.webp')"
         />
         <EaActivityRailButton
           class="activity-button activity-button--performance"
@@ -622,8 +623,8 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
   z-index: 45;
   top: 0;
   left: calc(180px + (100% - 180px) / 2);
-  width: 28px;
-  height: 16px;
+  width: 30px;
+  height: 20px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -631,27 +632,16 @@ watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
   background: transparent;
   color: var(--ea-fg-secondary);
   cursor: pointer;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
 }
 
 .bottom-panel-collapse.ea-button.ea-button--icon-only {
-  width: 28px;
-  min-width: 28px;
-  height: 16px;
+  width: 30px;
+  min-width: 30px;
 }
 
 .bottom-panel-collapse:focus-visible {
   color: var(--ea-fg);
-}
-
-.bottom-panel-collapse svg {
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .right-panel {

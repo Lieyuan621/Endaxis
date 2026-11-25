@@ -1,3 +1,5 @@
+import { resolveImage } from '../../imageResources';
+import type { ImageRef } from '../../../../packages/game-data-contract/src/primitives';
 /**
  * 物理异常展示投影。
  *
@@ -7,6 +9,7 @@
  */
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import type { PhysicalInflictionType } from '../../../../packages/game-data-contract/src/primitives';
+import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 import {
   projectBuffIconTimelineMetadata,
   type BuffTimelineSegment,
@@ -16,11 +19,11 @@ import {
 const NO_GUARD = 'buff_physical_no_guard';
 
 /** 时间轴和对象来源图的物理异常入口沿用原生 termicon；Buff 自身的原生 presentation 保持原样。 */
-const actionIcons: Readonly<Record<PhysicalInflictionType, string>> = {
-  airborne: '/icons/icon_term_ba_airborne.webp',
-  knockDown: '/icons/icon_term_ba_knockdown.webp',
-  crush: '/icons/icon_term_ba_crush.webp',
-  fracture: '/icons/icon_term_ba_fracture.webp',
+const actionIcons: Readonly<Record<PhysicalInflictionType, ImageRef>> = {
+  airborne: 'endaxis:icons/icon_term_ba_airborne',
+  knockDown: 'endaxis:icons/icon_term_ba_knockdown',
+  crush: 'endaxis:icons/icon_term_ba_crush',
+  fracture: 'endaxis:icons/icon_term_ba_fracture',
 };
 const physicalActions: Readonly<Record<string, PhysicalInflictionType>> = {
   buff_physical_airborne: 'airborne',
@@ -43,7 +46,7 @@ interface ConsumedGuard {
 
 export function physicalStatusIconPath(buffId: string): string | undefined {
   const action = physicalActions[buffId];
-  return action === undefined ? undefined : actionIcons[action];
+  return action === undefined ? undefined : resolveImage(actionIcons[action]);
 }
 
 /** 这一行仅包含四种物理异常和破防；不按颜色、图标或头顶栏位置判断。 */
@@ -106,6 +109,22 @@ export function projectPhysicalStatusDisplay(
   endFrame: number,
   options: PhysicalStatusDisplayOptions,
 ): readonly DisplayBuffTimelineSegment[] {
+  const origins = new CombatObjectOrigins(entries);
+  // 出生身份记录在 BuffCreated，物理异常输入类型记录在随后发布的 BuffApplied。
+  const appliedEntries = new Map(
+    entries
+      .filter(
+        entry =>
+          entry.event === 'BuffApplied' &&
+          entry.targetId !== undefined &&
+          typeof entry.data?.instanceId === 'number',
+      )
+      .map(entry => [instanceKey(entry.targetId!, Number(entry.data!.instanceId)), entry]),
+  );
+  const damageSegments = projectBuffIconTimelineMetadata(
+    entries.filter(entry => entry.data?.buffId === 'buff_physical_do_crushed'),
+    endFrame,
+  );
   const physicalEntries = [...entries]
     .filter(
       entry =>
@@ -116,8 +135,8 @@ export function projectPhysicalStatusDisplay(
 
   const segments = projectBuffIconTimelineMetadata(
     physicalEntries.map(entry => {
-      const iconPath = physicalStatusIconPath(String(entry.data?.buffId));
-      return iconPath === undefined || entry.event !== 'BuffApplied'
+      const action = physicalActions[String(entry.data?.buffId)];
+      return action === undefined || entry.event !== 'BuffApplied'
         ? entry
         : {
             ...entry,
@@ -125,7 +144,7 @@ export function projectPhysicalStatusDisplay(
               ...entry.data,
               visible: true,
               abnormalColorType: 'Physical',
-              icon: 'endaxis:' + iconPath.slice(1, -5),
+              icon: actionIcons[action],
             },
           };
     }),
@@ -174,7 +193,29 @@ export function projectPhysicalStatusDisplay(
       guardLayersAtFrameEnd.set(frameKey, currentGuardLayers(targetId));
     }
 
-    const inputType = receiptString(entry, 'physicalInflictionType') as
+    let inputEntry = entry;
+    if (buffId === 'buff_physical_do_fracture' && !receiptString(entry, 'physicalInflictionType')) {
+      origins.findAncestor(
+        origins.get({ kind: 'buff', ownerId: targetId, instanceId }),
+        node => {
+          const applied =
+            node.ref.kind === 'buff'
+              ? appliedEntries.get(instanceKey(node.ref.ownerId, node.ref.instanceId))
+              : undefined;
+          if (
+            node.ref.kind !== 'buff' ||
+            node.ref.ownerId !== targetId ||
+            applied?.data?.buffId !== 'buff_physical_fracture' ||
+            applied.data.physicalInflictionType !== 'fracture'
+          )
+            return false;
+          inputEntry = applied;
+          return true;
+        },
+        { relations: ['producedBy'], throughSequence: Infinity },
+      );
+    }
+    const inputType = receiptString(inputEntry, 'physicalInflictionType') as
       PhysicalInflictionType | undefined;
     if (entry.event !== 'BuffApplied' || inputType === undefined) continue;
 
@@ -183,7 +224,7 @@ export function projectPhysicalStatusDisplay(
     const actualAction = physicalActions[buffId];
     const isGuardOnly = buffId === NO_GUARD;
     const consumed = consumingActions.has(inputType)
-      ? pendingConsumedGuards.filter(candidate => belongsToPhysicalInput(candidate, entry))
+      ? pendingConsumedGuards.filter(candidate => belongsToPhysicalInput(candidate, inputEntry))
       : [];
     for (const candidate of consumed) {
       pendingConsumedGuards.splice(pendingConsumedGuards.indexOf(candidate), 1);
@@ -196,7 +237,22 @@ export function projectPhysicalStatusDisplay(
         : currentGuardLayers(targetId);
     const layers = Math.min(4, Math.max(1, rawLayers || primary.layers || 1));
     const related = isGuardOnly ? [] : relatedGuardSegments(primary, segments, entriesBySequence);
-    const windows = [primary, ...related];
+    const children =
+      buffId === 'buff_physical_crushed'
+        ? damageSegments.filter(
+            segment =>
+              segment.targetId === targetId &&
+              origins.findAncestor(
+                origins.get({ kind: 'buff', ownerId: targetId, instanceId: segment.instanceId }),
+                node =>
+                  node.ref.kind === 'buff' &&
+                  node.ref.ownerId === targetId &&
+                  node.ref.instanceId === instanceId,
+                { relations: ['producedBy'], throughSequence: Infinity },
+              ).status === 'found',
+          )
+        : [];
+    const windows = [primary, ...related, ...children];
     const keepsDuration =
       actualAction === 'fracture' ||
       (actualAction !== undefined &&

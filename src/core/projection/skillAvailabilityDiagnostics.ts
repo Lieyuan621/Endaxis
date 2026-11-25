@@ -12,9 +12,11 @@ export const SKILL_AVAILABILITY_DIAGNOSTIC_REASONS = [
   'skillInputUnknown',
   'skillInterruptUnavailable',
   'skillInterruptUnknown',
-  'ultimateInputDuringPresentation',
+  'skillInputDuringPresentation',
   'skillCommonTagUnavailable',
   'skillTypeTagUnavailable',
+  'controlSwitchOutUnavailable',
+  'controlSwitchInUnavailable',
   'attackDuringDashWindow',
   'skillLocked',
 ] as const;
@@ -46,9 +48,16 @@ export interface SkillAvailabilityDiagnostic {
   >;
 }
 
-function readReason(event: string): SkillAvailabilityDiagnosticReason | undefined {
+function readReason(
+  event: string,
+  entry: CombatReceiptEntry,
+): SkillAvailabilityDiagnosticReason | undefined {
+  if (event === 'ControlSwitchBlockedByTag' && typeof entry.data?.skillId === 'string') {
+    if (entry.data.blocker === 'CantMainCharSwitched') return 'controlSwitchOutUnavailable';
+    if (entry.data.blocker === 'CantSwitchToCenter') return 'controlSwitchInUnavailable';
+  }
   if (event === 'SkillInputBlockedByDashWindow') return 'attackDuringDashWindow';
-  if (event === 'UltimateInputBlockedByPresentation') return 'ultimateInputDuringPresentation';
+  if (event === 'SkillInputBlockedByPresentation') return 'skillInputDuringPresentation';
   if (event === 'SkillInputBlockedByCommonTag') return 'skillCommonTagUnavailable';
   if (event === 'SkillInputBlockedByTypeTag') return 'skillTypeTagUnavailable';
   if (event === 'SkillCostUnavailableAtStart') return 'resourceUnavailable';
@@ -103,7 +112,7 @@ export function projectSkillAvailabilityDiagnostics(
     const interruptionDetail = interruptionUnknown?.data?.reason;
     const tagBlockers: NonNullable<SkillAvailabilityDiagnostic['tagBlockers']> = {};
     for (const entry of related) {
-      const reason = readReason(entry.event);
+      const reason = readReason(entry.event, entry);
       if (reason !== 'skillCommonTagUnavailable' && reason !== 'skillTypeTagUnavailable') continue;
       const tags = entry.data?.blockingTags;
       if (typeof tags !== 'string' || tags.length === 0) continue;

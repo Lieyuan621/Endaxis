@@ -116,7 +116,8 @@ describe('治疗动作公共载荷', () => {
         {
           kind: 'heal',
           parameters: {
-            target: 'controlledOperator',
+            target: { kind: 'mainCharacter' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             attribute: 'will',
             multiplier: { kind: 'blackboard', key: 'will_additive' },
@@ -141,7 +142,12 @@ describe('治疗动作公共载荷', () => {
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
       }).steps,
-    ).toMatchObject([{ kind: 'heal', parameters: { target: 'actionInputTarget' } }]);
+    ).toMatchObject([
+      {
+        kind: 'heal',
+        parameters: { target: { kind: 'inputTarget' }, healer: { kind: 'source' } },
+      },
+    ]);
   });
   it('属性计算不限制原生 valueSource 和 healer 枚举', () => {
     const source = parseHealActionSource(

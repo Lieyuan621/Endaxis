@@ -96,9 +96,20 @@ describe('calculatePlayerActiveDamage', () => {
     expect(result.value).toBeCloseTo(270);
   });
 
-  it('rejects life-drain damage instead of using the ordinary branch', () => {
-    expect(() =>
-      calculatePlayerActiveDamage({ ...createInput(), damageType: 'lifeDrain' }),
-    ).toThrow('separate native calculation branch');
+  it.each(['lifeDrain', 'fixed'] as const)('%s原样返回原始值，跳过暴击、抗性、伤害倍率及扩展乘区', damageType => {
+    const result = calculatePlayerActiveDamage({ ...createInput(), damageType,
+      finalAttackValue: 123.456, criticalRate: 1, criticalDamageIncrease: 5,
+      defense: 9999, resistancePercent: 100, damageTakenMultiplier: 0,
+      weaknessDamageMultiplier: 7, shelterDamageMultiplier: 1,
+      runtimeExtensionMultiplier: 9, igniteDamageMultiplier: 10,
+      appliesIgniteDamageMultiplier: true, physicalInflictionDamageMultiplier: 11,
+      appliesPhysicalInflictionDamageMultiplier: true,
+    });
+    expect(result.value).toBe(123.456);
+    expect(result.isCritical).toBe(false);
+    expect(result.criticalMultiplier).toBe(1);
+    expect(result.defenseMultiplier).toBe(1);
+    expect(result.resistanceMultiplier).toBe(1);
+    expect(result.runtimeExtensionMultiplier).toBe(1);
   });
 });

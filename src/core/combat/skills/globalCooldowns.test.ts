@@ -1,9 +1,12 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
+import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
 import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it } from 'vitest';
 import { GlobalCooldowns } from './globalCooldowns';
 import { TimedMarkerContainer } from '../status/timedMarkers';
 import { TimedMarkerOperationExecutor } from '../status/timedMarkerOperationExecutor';
 import { ActionBlackboard } from '../actions/actionBlackboard';
+import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 
 describe('战斗级全局冷却', () => {
@@ -58,24 +61,28 @@ describe('战斗级全局冷却', () => {
     expect(() => cooldowns.set('a', 'x', NaN)).toThrow('finite');
   });
 
-  it.each(['buffOwner', 'buffSource', 'caster'] as const)(
+  it.each(['owner', 'source', 'inputTarget'] as const)(
     '%s 检查/写入共享身份；不混入普通标记，不随动作结束或角色膨胀改变',
     target => {
       const clock = { time: 0 },
         localClock = { time: 0 };
       const globalCooldowns = new GlobalCooldowns(clock);
       const ordinary = new TimedMarkerContainer('caster', localClock);
-      const ids = { caster: 'a', buffOwner: 'b', buffSource: 'c' };
+      const ids = { inputTarget: 'a', owner: 'b', source: 'c' };
+      const queryExecutor = new TargetContextOperationExecutor('a', {
+        execute: () => false,
+        evaluate: () => false,
+      });
       const context = {
         blackboard: new ActionBlackboard({ cd: 0.1 }),
-        buffOwnerId: 'b',
-        buffSourceId: 'c',
+        actionOwnerId: 'b',
+        actionSourceId: 'c',
+        actionInputTargets: singleTargetList({ kind: 'operator' as const, operatorId: 'a' }),
       };
       const executor = new TimedMarkerOperationExecutor({
         globalCooldowns,
-        resolveCooldownCharacter: value => ids[value],
         resolveEventTarget: () => ordinary,
-        queryTargets: () => [{ kind: 'operator', operatorId: ids[target] }],
+        queryTargets: queryExecutor.queryTargets.bind(queryExecutor),
         globalScaledClock: localClock,
         delegate: {
           execute: () => {
@@ -87,7 +94,7 @@ describe('战斗级全局冷却', () => {
       ordinary.add('x', 100);
       const condition = {
         kind: 'globalCooldownPresent',
-        target: { kind: 'owner' },
+        target: { kind: target },
         returnTrueIfNotExists: false,
         markerId: 'x',
       } as const;
@@ -97,7 +104,7 @@ describe('战斗级全局冷却', () => {
       const step: ResolvedCombatOperationStep = {
         kind: 'setGlobalCooldown',
         parameters: {
-          target,
+          target: { kind: target },
           markerId: 'x',
           durationSeconds: numberInput({ kind: 'blackboard', key: 'cd' }),
         },
@@ -119,6 +126,51 @@ describe('战斗级全局冷却', () => {
         queryTargets: () => [],
       });
       expect(noTarget.evaluate(absent, context)).toBe(false);
+      expect(noTarget.execute(step, { blackboard: new ActionBlackboard() })).toBe(true);
     },
   );
+  it('只消费首个实体：敌人可写入，仅空间点和空查询不读取时长', () => {
+    const globalCooldowns = new GlobalCooldowns({ time: 0 });
+    const delegate = { execute: () => false, evaluate: () => false };
+    const query = new TargetContextOperationExecutor('caster', delegate);
+    const executor = new TimedMarkerOperationExecutor({
+      globalCooldowns,
+      queryTargets: query.queryTargets.bind(query),
+      globalScaledClock: { time: 0 },
+      resolveEventTarget: () => {
+        throw new Error('global cooldown must not access ordinary markers');
+      },
+      delegate,
+    });
+    const targetContext = new RuntimeTargetContext();
+    const target = { kind: 'context' as const, key: 'selected' };
+    const step: ResolvedCombatOperationStep = {
+      kind: 'setGlobalCooldown',
+      parameters: {
+        target,
+        markerId: 'x',
+        durationSeconds: numberInput({ kind: 'blackboard', key: 'duration' }),
+      },
+    };
+    const context = { blackboard: new ActionBlackboard(), targetContext };
+    expect(executor.execute(step, context)).toBe(true);
+    targetContext.set('selected', [{ kind: 'spatialPoint', pointId: 1 }]);
+    expect(executor.execute(step, context)).toBe(true);
+    expect(globalCooldowns.has('enemy', 'x')).toBe(false);
+    targetContext.set('selected', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy:second' },
+    ]);
+    context.blackboard.assign({ duration: 1 });
+    expect(executor.execute(step, context)).toBe(true);
+    const condition = {
+      kind: 'globalCooldownPresent' as const,
+      target,
+      markerId: 'x',
+      returnTrueIfNotExists: false,
+    };
+    expect(executor.evaluate(condition, context)).toBe(true);
+    expect(globalCooldowns.has('enemy:second', 'x')).toBe(false);
+  });
 });

@@ -24,7 +24,7 @@ import {
 import {
   validateBattle,
   validateEditor,
-  validateEnemy,
+  validateEnemyInstances,
   validateGearInstance,
   validateGlobalConfig,
   validateMechanics,
@@ -356,19 +356,18 @@ function validateSkillCast(
           });
         }
       }
-      if (value.simulationInputs.criticalOverrides !== undefined) {
-        const overrides = value.simulationInputs.criticalOverrides;
+      if (value.simulationInputs.initialBlackboard !== undefined) {
+        const values = value.simulationInputs.initialBlackboard;
         if (
-          !isObject(overrides) ||
-          Object.entries(overrides).some(
-            ([key, result]) => key.length === 0 || typeof result !== 'boolean',
+          !isObject(values) ||
+          Object.entries(values).some(
+            ([key, value]) => !key || typeof value !== 'number' || !Number.isFinite(value),
           )
-        ) {
+        )
           issues.push({
-            path: `${inputPath}.criticalOverrides`,
-            message: 'expected non-empty step keys with boolean results',
+            path: `${inputPath}.initialBlackboard`,
+            message: 'expected named finite initial values',
           });
-        }
       }
     }
   }
@@ -666,8 +665,62 @@ export function validateProjectDocument(value: unknown): ValidationResult {
         });
       }
 
-      validateEnemy(scenario.enemy, `${path}.enemy`, issues);
+      const level = scenario.level;
+      let instances: unknown[] = [];
+      if (!isObject(level))
+        issues.push({ path: `${path}.level`, message: 'expected level object' });
+      else if (level.kind === 'singleEnemy') instances = [level.enemy];
+      else if (
+        level.kind === 'multiEnemies' &&
+        Array.isArray(level.enemies) &&
+        level.enemies.length > 0
+      )
+        instances = level.enemies;
+      else
+        issues.push({
+          path: `${path}.level`,
+          message: 'expected singleEnemy or nonempty multiEnemies level',
+        });
+      validateEnemyInstances(
+        instances,
+        index =>
+          isObject(level) && level.kind === 'singleEnemy'
+            ? `${path}.level.enemy`
+            : `${path}.level.enemies[${index}]`,
+        issues,
+      );
       validateBattle(scenario.battle, `${path}.battle`, issues);
+      const enemyIds = new Set(instances.filter(isObject).map(enemy => enemy.id));
+      if (isObject(scenario.battle) && scenario.battle.enemyTargetSwitches !== undefined) {
+        const markers = scenario.battle.enemyTargetSwitches;
+        if (!Array.isArray(markers))
+          issues.push({ path: `${path}.battle.enemyTargetSwitches`, message: 'expected array' });
+        else {
+          const ids = new Set<string>();
+          const frames = new Set<number>();
+          markers.forEach((marker, index) => {
+            const at = `${path}.battle.enemyTargetSwitches[${index}]`;
+            if (!isObject(marker)) {
+              issues.push({ path: at, message: 'expected object' });
+              return;
+            }
+            const id = requireString(marker, 'id', at, issues);
+            if (id !== null) {
+              if (ids.has(id)) issues.push({ path: at, message: 'duplicate marker id' });
+              ids.add(id);
+            }
+            if (typeof marker.targetId !== 'string' || !enemyIds.has(marker.targetId))
+              issues.push({ path: at, message: 'unknown enemy target' });
+            if (
+              typeof marker.frame !== 'number' ||
+              !Number.isSafeInteger(marker.frame) ||
+              frames.has(marker.frame)
+            )
+              issues.push({ path: at, message: 'expected unique safe integer frame' });
+            else frames.add(marker.frame);
+          });
+        }
+      }
       const prepFrames =
         isObject(scenario.battle) &&
         typeof scenario.battle.prepFrames === 'number' &&

@@ -1,5 +1,6 @@
 import type { CombatStepParameters } from '../../../../packages/game-data-contract/src/actions';
 import type { RuntimeTargetRef, RuntimeTargetGroup } from '../../game-data/logicalAbilityEntity';
+import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 import type { ChannelingActionState } from '../state/actionState';
 
 type Parameters = NonNullable<CombatStepParameters['repeatEachTick']['nativeChanneling']>;
@@ -18,6 +19,7 @@ export function tickChanneling(
   delta: number,
   query: () => RuntimeTargetGroup,
   execute: (target: RuntimeTargetRef) => void,
+  countTarget: (target: RuntimeTargetRef) => RuntimeTargetRef = target => target,
 ): void {
   state.timerSeconds = Math.fround(state.timerSeconds + Math.fround(delta));
   if (parameters.catchUpMissedTicks) {
@@ -30,7 +32,7 @@ export function tickChanneling(
         Math.fround(state.scanCount) * Math.fround(parameters.triggerIntervalSeconds),
       );
       while (state.timerSeconds >= logicalTime) {
-        scanChannelingTargets(state, parameters, logicalTime, query, execute);
+        scanChannelingTargets(state, parameters, logicalTime, query, execute, countTarget);
         logicalTime = Math.fround(
           Math.fround(state.scanCount) * Math.fround(parameters.triggerIntervalSeconds),
         );
@@ -48,7 +50,7 @@ export function tickChanneling(
       const logicalTime = Math.fround(
         state.timerSeconds - Math.fround(Math.fround(remaining) * interval),
       );
-      scanChannelingTargets(state, parameters, logicalTime, query, execute);
+      scanChannelingTargets(state, parameters, logicalTime, query, execute, countTarget);
     }
     return;
   }
@@ -60,7 +62,7 @@ export function tickChanneling(
       Math.fround(Math.fround(state.scanCount) * Math.fround(parameters.triggerIntervalSeconds))
   )
     return;
-  scanChannelingTargets(state, parameters, state.timerSeconds, query, execute);
+  scanChannelingTargets(state, parameters, state.timerSeconds, query, execute, countTarget);
 }
 
 function scanChannelingTargets(
@@ -69,17 +71,19 @@ function scanChannelingTargets(
   logicalTime: number,
   query: () => RuntimeTargetGroup,
   execute: (target: RuntimeTargetRef) => void,
+  countTarget: (target: RuntimeTargetRef) => RuntimeTargetRef = target => target,
 ): void {
   state.scanCount++;
   for (const target of query()) {
     // 空间点没有原生 AbilitySystem 或 IHittableObject 身份。
     if (target.kind === 'spatialPoint') continue;
+    const counted = countTarget(target);
     const key =
-      target.kind === 'operator'
-        ? `operator:${target.operatorId}`
-        : target.kind === 'abilityEntity'
-          ? `abilityEntity:${target.instanceId}`
-          : 'enemy';
+      counted.kind === 'operator'
+        ? `operator:${counted.operatorId}`
+        : counted.kind === 'abilityEntity'
+          ? `abilityEntity:${counted.instanceId}`
+          : runtimeTargetEntityId(counted)!;
     const record = state.targets.get(key) ?? { count: 0, lastTriggerTime: 0 };
     if (parameters.maxCountPerTarget >= 0 && record.count >= parameters.maxCountPerTarget) continue;
     if (

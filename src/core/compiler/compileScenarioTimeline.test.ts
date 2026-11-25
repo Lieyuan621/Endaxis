@@ -166,18 +166,13 @@ describe('compileResolvedScenarioTimeline', () => {
     const scenario = place(createScenario(), 'battleSkill', 0);
     scenario.tracks[0]!.skillCasts[0]!.simulationInputs = {
       randomSeed: 7,
-      criticalOverrides: { 'damage:1': true },
     };
 
     const compiled = compileTimeline(scenario, index());
 
     expect(compiled.inputs[0]?.simulationInputs).toEqual({
       randomSeed: 7,
-      criticalOverrides: { 'damage:1': true },
     });
-    expect(compiled.inputs[0]?.simulationInputs?.criticalOverrides).not.toBe(
-      scenario.tracks[0]!.skillCasts[0]!.simulationInputs?.criticalOverrides,
-    );
   });
 
   it('combines read-only common Buffs with operator-owned Buffs without a skill level', () => {
@@ -1038,8 +1033,16 @@ it('keeps a routed cast custom graph and blackboard instead of substituting the 
     undefined,
     programs,
   );
-  // 完整重算与切面输入必须绑定同一执行体，不能只比较施放包装器的 skillId。
-  expect(fixed.timelineActions).toEqual(placed!.program.timelineActions);
+  // 独立编译允许不同修订身份，但不能改变路由技能及其调度入口。
+  expect(placed!.program.executionSkillId).toBe(fixed.executionSkillId);
+  const schedule = (program: typeof fixed) =>
+    program.timelineActions.map(action => ({
+      startFrame: action.startFrame,
+      endFrame: action.endFrame,
+      entry: action.sequence.entry,
+      callSite: action.sequence.callSite,
+    }));
+  expect(schedule(fixed)).toEqual(schedule(placed!.program));
   expect(fixed.timelineActions[0]!.sequence.callSite).toContain(
     requireSingleSkill('comboSkill').key,
   );

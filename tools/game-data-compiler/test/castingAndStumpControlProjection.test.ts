@@ -1,8 +1,10 @@
 import { fixtureGameplayTagRegistry } from './gameplayTagFixtures.ts';
 import { parseTargetReferenceSource } from '../src/source/target.ts';
+import { gameplayTagIdFromPath } from '../src/source/nativeGameplayTags.ts';
 import { describe, expect, it } from 'vitest';
 
 import { compileBuffLeafNode } from '../src/compiler/actions/combatEntityAndTimeProjection.ts';
+import { compileActionNode } from '../src/compiler/actions/combatActionLeafProjection.ts';
 import { compileEventCondition } from '../src/compiler/conditions/combatConditionProjection.ts';
 import { canOmitUnusedNativeCondition } from '../src/compiler/optimization/nativeConditionUsage.ts';
 import {
@@ -53,76 +55,117 @@ function createActiveSkillContext(): CombatActionProjectionContextSource {
 /** 每次叶子编译使用独立图构建器；结果中的分支引用在该图内解析。 */
 const leafContext = createActiveSkillContext;
 
-it('能力实体命中盒写入可被后续改写的目标组，不要求全技能静态身份', () => {
-  const action = parseKnownNativeActionLeafSource(
+it('实体标签动作保留运行时目标查询，不能作为输入表现裁剪', () => {
+  const leaf = parseKnownNativeActionLeafSource(
     {
-      $type: 'Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond',
-      isEnable: true,
-      priorityLevel: 'Default',
-      priorityOffset: 0,
-      serverActionIndex: 1,
-      targetGroupKey: 'tar',
-      center: 'ActionOwner',
-      centerContextKey: '',
-      useCenterEntityMountPoint: false,
-      centerMountPoint: 'None',
-      centerToGround: false,
-      selectorOwner: 'ActionOwner',
-      selectorOwnerContextKey: '',
-      selectorData: {
-        finderData: {
-          $type: 'Beyond.Gameplay.Core.Selector+HitBoxFinder+Data, Gameplay.Beyond',
-          checkAlive: true,
-          autoSetTargetFaction: true,
-          containsUnMarkable: false,
-          factionTarget: 'Anti',
-          targetFactionType: 0,
-          targetObjectType: 'Normal',
-          checkIntUnSelectableTag: true,
-        },
-        validatorData: [],
-        postProcessorData: [],
-      },
-      selectorDirection: 'SourceForward',
-      target: 'ActionSource',
-      contextKey: '',
-      useAdvancedDirectionSetting: false,
-      advancedSelectorDirection: {
-        directionType: 'SourceForward',
-        sourceMountPoint: 'None',
-        targetMountPoint: 'None',
-        customSourceAndTarget: false,
-        clampToXZ: true,
-        invertDirection: false,
-      },
+      ...META,
+      $type: 'Beyond.Gameplay.Core.AddTagAction+Data, Gameplay.Beyond',
+      tagOwner: targetFixture('Owner'),
+      useBlackboard: false,
+      tags: [{ tagId: -496376350 }],
+      tag: { useBlackboardKey: false, value: '', blackboardKey: '' },
     },
-    'fixture.action',
+    'fixture.AddTagAction',
     {},
   );
-  const result = compileBuffLeafNode(
-    node(action),
-    new Set(),
-    new Map(),
-    withProjectionGraph({
-      actionOwnerTarget: 'currentAbilityEntity',
-      actionSourceTarget: 'caster',
-      actionTargetTarget: 'actionInputTarget',
-    }),
-  );
-  expect(result.steps).toEqual([
+  expect(compileActionNode(node(leaf), new Set(), new Map(), leafContext())).toEqual([
     {
-      kind: 'mergeContextTargets',
-      parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+      kind: 'addEntityTags',
+      parameters: { targets: { kind: 'owner' }, tags: ['Status/DisableCastComboSkill'] },
     },
   ]);
-  expect(result.state.get('tar')).toBe('enemy');
-  const exclusion = parseKnownNativeActionLeafSource(
+});
+
+it.each([
+  ['仅过滤', ['Status/DisableRootMotionRotate'], []],
+  [
+    '混合标签',
+    ['Status/DisableRootMotionRotate', 'Status/DisableDash'],
+    [
+      {
+        kind: 'addEntityTags',
+        parameters: { targets: { kind: 'owner' }, tags: ['Status/DisableDash'] },
+      },
+    ],
+  ],
+] as const)('实体标签审查后再投影：%s', (_name, tags, expected) => {
+  const leaf = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.AddTagAction+Data, Gameplay.Beyond',
+      tagOwner: targetFixture('Owner'),
+      useBlackboard: false,
+      tags: tags.map(tag => ({ tagId: gameplayTagIdFromPath(tag) })),
+      tag: { useBlackboardKey: false, value: '', blackboardKey: '' },
+    },
+    'fixture.AddTagAction',
+    {},
+  );
+  expect(compileActionNode(node(leaf), new Set(), new Map(), leafContext())).toEqual(expected);
+});
+
+it('来源目录中已知但未审查的实体标签仍阻止编译', () => {
+  const leaf = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.AddTagAction+Data, Gameplay.Beyond',
+      tagOwner: targetFixture('Owner'),
+      useBlackboard: false,
+      tags: [{ tagId: gameplayTagIdFromPath('Status/Immobilized') }],
+      tag: { useBlackboardKey: false, value: '', blackboardKey: '' },
+    },
+    'fixture.AddTagAction',
+    {},
+  );
+  expect(() => compileActionNode(node(leaf), new Set(), new Map(), leafContext())).toThrow(
+    'unreviewed entity tag "Status/Immobilized"',
+  );
+});
+
+it('专属 HUD 通知保留 Context 查询，不限制为 Owner/Source 或静态单干员', () => {
+  const action = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.NotifyCharPassiveUIAction+Data, Gameplay.Beyond',
+      target: { ...targetFixture('Context'), targetGroupKey: 'recipients' },
+      value: scalarFixture(3),
+    },
+    'fixture.passiveUi',
+    {},
+  );
+  expect(compileActionNode(node(action), new Set(), new Map(), leafContext())).toMatchObject([
+    {
+      kind: 'setCharacterPassiveUiValue',
+      parameters: {
+        target: { kind: 'context', key: 'recipients' },
+        value: { kind: 'constant', value: 3 },
+      },
+    },
+  ]);
+});
+
+it('能力实体目标写入保留实际查询，不因敌人别名或静态空组省略动作', () => {
+  const action = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.SetAbilityEntityTarget+Data, Gameplay.Beyond',
+      targetSettings: { ...targetFixture('Context'), targetGroupKey: 'body' },
+    },
+    'fixture.setEntityTarget',
+    {},
+  );
+  const context = withProjectionGraph({
+    actionOwnerTarget: 'currentAbilityEntity',
+    actionSourceTarget: 'caster',
+    actionTargetTarget: 'enemy',
+  });
+  const replace = parseKnownNativeActionLeafSource(
     {
       ...META,
       $type: 'Beyond.Gameplay.Core.TargetPostProcessorAction+Data, Gameplay.Beyond',
-      target: targetFixture('Context', undefined, 'tar'),
-      centerPos: targetFixture('Target'),
+      target: targetFixture('Target'),
       source: targetFixture('Source'),
+      centerPos: targetFixture('Target'),
       direction: {
         directionType: 'SourceForward',
         sourceMountPoint: 'None',
@@ -133,64 +176,234 @@ it('能力实体命中盒写入可被后续改写的目标组，不要求全技�
       },
       validatorData: [],
       postProcessorData: [
-        {
-          $type: 'Beyond.Gameplay.Core.Selector+ExcludeTarget+Data, Gameplay.Beyond',
-          excludedTargetSettings: targetFixture('Target'),
-          processTargetType: 'Targets',
-        },
+        { $type: 'Beyond.Gameplay.Core.Selector+ReplacePartWithMainBody+Data, Gameplay.Beyond' },
       ],
-      targetGroupKey: 'tar',
+      targetGroupKey: 'body',
     },
-    'fixture.exclusion',
+    'fixture.replacePart',
     {},
   );
-  const excluded = compileBuffLeafNode(
-    node(exclusion),
-    new Set(),
-    result.state,
-    withProjectionGraph({
-      actionOwnerTarget: 'currentAbilityEntity',
-      actionSourceTarget: 'caster',
-      actionTargetTarget: 'actionInputTarget',
-    }),
-  );
-  expect(excluded.steps).toEqual([
-    {
-      kind: 'copyContextTargets',
-      parameters: {
-        source: { kind: 'context', key: 'tar' },
-        excludeTargets: { kind: 'inputTarget' },
-        saveToContextKey: 'tar',
-      },
-    },
-  ]);
-  expect(excluded.state.get('tar')).toBe('runtimeTargets');
+  const replaced = compileBuffLeafNode(node(replace), new Set(), new Map(), {
+    ...context,
+    actionTargetTarget: 'enemy',
+  });
+  for (const state of [
+    replaced.state,
+    new Map([['body', 'dynamicEnemy'] as const]),
+    new Map([['body', 'empty'] as const]),
+  ]) {
+    expect(compileBuffLeafNode(node(action), new Set(), state, context).steps).toEqual([
+      { kind: 'setAbilityEntityTarget', parameters: { targets: { kind: 'context', key: 'body' } } },
+    ]);
+  }
 });
 
-it('PickTarget 读取已有敌人组，不先补写或覆盖输入组', () => {
-  const action = parseKnownNativeActionLeafSource(
+it('MoveGaitAction 保留干员闪避所需约束，敌人步态不进入木桩运行时', () => {
+  const sequence = parseKnownNativeActionSequenceSource(
     {
-      ...META,
-      $type: 'Beyond.Gameplay.Core.PickTargetAction+Data, Gameplay.Beyond',
-      target: targetFixture('Context', undefined, 'tar'),
-      index: scalarFixture(0),
-      contextKey: 'picked',
+      actionData: [
+        {
+          ...META,
+          $type: 'Beyond.Gameplay.Core.MoveGaitAction+Data, Gameplay.Beyond',
+          minGait: 'Walk',
+          maxGait: 'Run',
+        },
+      ],
+      onlyExecuteWhenSourceIsMainChar: false,
+      onlyExecuteWhenSourceIsGuard: false,
     },
-    'fixture.action',
+    'fixture.gait',
     {},
   );
-  const result = compileBuffLeafNode(node(action), new Set(), new Map(), leafContext());
-  expect(result.steps).toEqual([
-    {
-      kind: 'pickContextTarget',
-      parameters: {
-        sourceContextKey: 'tar',
-        saveToContextKey: 'picked',
-        index: { kind: 'constant', value: 0 },
-      },
-    },
+  const node = sequence.actions[0]!;
+  expect(compileBuffLeafNode(node, new Set(), new Map(), leafContext()).steps).toEqual([
+    { kind: 'limitMovementGait', parameters: { min: 'Walk', max: 'Run' } },
   ]);
+  expect(
+    compileBuffLeafNode(node, new Set(), new Map(), {
+      ...leafContext(),
+      actionOwnerTarget: 'buffOwner',
+      fixedBuffOwnerTarget: 'enemy',
+    }).steps,
+  ).toEqual([]);
 });
+
+it.each([
+  ...(['ActionOwner', 'ActionSource'] as const).flatMap(selectorOwner =>
+    (['ActionOwner', 'ContextTarget', 'InputTarget'] as const).map(center => ({
+      selectorOwner,
+      center,
+      explicitFaction: false,
+    })),
+  ),
+  { selectorOwner: 'ActionOwner' as const, center: 'InputTarget' as const, explicitFaction: true },
+  { selectorOwner: 'ActionSource' as const, center: 'ActionOwner' as const, explicitFaction: true },
+])(
+  '能力实体友方命中盒保留宿主查询与后续按身份排除：%s',
+  ({ selectorOwner, center, explicitFaction }) => {
+    const action = parseKnownNativeActionLeafSource(
+      {
+        $type: 'Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond',
+        isEnable: true,
+        priorityLevel: 'Default',
+        priorityOffset: 0,
+        serverActionIndex: 1,
+        targetGroupKey: 'tar',
+        center,
+        centerContextKey: 'inactive-center-key',
+        useCenterEntityMountPoint: false,
+        centerMountPoint: 'None',
+        centerToGround: false,
+        selectorOwner,
+        selectorOwnerContextKey: 'inactive-owner-key',
+        selectorData: {
+          finderData: {
+            $type: 'Beyond.Gameplay.Core.Selector+HitBoxFinder+Data, Gameplay.Beyond',
+            checkAlive: true,
+            autoSetTargetFaction: !explicitFaction,
+            containsUnMarkable: false,
+            factionTarget: 'Ally',
+            targetFactionType: explicitFaction ? 'Bad' : 0,
+            targetObjectType: 'Normal',
+            checkIntUnSelectableTag: true,
+          },
+          validatorData: [],
+          postProcessorData: [],
+        },
+        selectorDirection: 'SourceForward',
+        target: 'ActionSource',
+        contextKey: '',
+        useAdvancedDirectionSetting: false,
+        advancedSelectorDirection: {
+          directionType: 'SourceForward',
+          sourceMountPoint: 'None',
+          targetMountPoint: 'None',
+          customSourceAndTarget: false,
+          clampToXZ: true,
+          invertDirection: false,
+        },
+      },
+      'fixture.action',
+      {},
+    );
+    const result = compileBuffLeafNode(
+      node(action),
+      new Set(),
+      new Map(),
+      withProjectionGraph({
+        actionOwnerTarget: 'currentAbilityEntity',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'actionInputTarget',
+      }),
+    );
+    expect(result.steps).toEqual([
+      {
+        kind: 'findTargets',
+        parameters: {
+          owner: { kind: selectorOwner === 'ActionSource' ? 'source' : 'owner' },
+          ...(center === 'InputTarget' ? { center: { kind: 'inputTarget' } } : {}),
+          ...(center === 'ContextTarget'
+            ? { center: { kind: 'context', key: 'inactive-center-key' } }
+            : {}),
+          saveToContextKey: 'tar',
+          query: {
+            kind: 'factionHitBox',
+            ...(explicitFaction ? { targetFactions: ['bad'] } : {}),
+            factionTarget: 'ally',
+            owner: { kind: selectorOwner === 'ActionSource' ? 'source' : 'owner' },
+            checkAlive: true,
+            containsUnmarkable: false,
+            replacePartsWithMainBodies: false,
+          },
+        },
+      },
+    ]);
+    expect(result.state.get('tar')).toBe(explicitFaction ? 'dynamicEnemy' : 'runtimeTargets');
+    const exclusion = parseKnownNativeActionLeafSource(
+      {
+        ...META,
+        $type: 'Beyond.Gameplay.Core.TargetPostProcessorAction+Data, Gameplay.Beyond',
+        target: targetFixture('Context', undefined, 'tar'),
+        centerPos: targetFixture('Target'),
+        source: targetFixture('Source'),
+        direction: {
+          directionType: 'SourceForward',
+          sourceMountPoint: 'None',
+          targetMountPoint: 'None',
+          customSourceAndTarget: false,
+          clampToXZ: true,
+          invertDirection: false,
+        },
+        validatorData: [],
+        postProcessorData: [
+          {
+            $type: 'Beyond.Gameplay.Core.Selector+ExcludeTarget+Data, Gameplay.Beyond',
+            excludedTargetSettings: targetFixture('Target'),
+            processTargetType: 'Targets',
+          },
+        ],
+        targetGroupKey: 'tar',
+      },
+      'fixture.exclusion',
+      {},
+    );
+    const excluded = compileBuffLeafNode(
+      node(exclusion),
+      new Set(),
+      result.state,
+      withProjectionGraph({
+        actionOwnerTarget: 'currentAbilityEntity',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'actionInputTarget',
+      }),
+    );
+    expect(excluded.steps).toEqual([
+      {
+        kind: 'copyContextTargets',
+        parameters: {
+          source: { kind: 'context', key: 'tar' },
+          excludeTargets: { kind: 'inputTarget' },
+          saveToContextKey: 'tar',
+        },
+      },
+    ]);
+    expect(excluded.state.get('tar')).toBe('runtimeTargets');
+  },
+);
+
+it.each(['enemy', 'party', 'runtimeTargets', 'abilityEntity', 'spatialPoint'] as const)(
+  'PickTarget 按索引读取 %s 目标组，不先补写或覆盖输入组',
+  sourceKind => {
+    const action = parseKnownNativeActionLeafSource(
+      {
+        ...META,
+        $type: 'Beyond.Gameplay.Core.PickTargetAction+Data, Gameplay.Beyond',
+        target: targetFixture('Context', undefined, 'tar'),
+        index: scalarFixture(0),
+        contextKey: 'picked',
+      },
+      'fixture.action',
+      {},
+    );
+    const result = compileBuffLeafNode(
+      node(action),
+      new Set(),
+      new Map([['tar', sourceKind]]),
+      leafContext(),
+    );
+    expect(result.steps).toEqual([
+      {
+        kind: 'pickContextTarget',
+        parameters: {
+          sourceContextKey: 'tar',
+          saveToContextKey: 'picked',
+          index: { kind: 'constant', value: 0 },
+        },
+      },
+    ]);
+    expect(result.state.get('picked')).toBe('runtimeTargets');
+  },
+);
 
 function node(value: ReturnType<typeof parseKnownNativeActionLeafSource>) {
   return {
@@ -255,13 +468,23 @@ describe('施法输入限制与木桩物理控制投影', () => {
     stopTolerance: 0,
     unmovable: false,
     finishPullByAction: false,
-    pullTargetType: 'All',
+    pullTargetType: 'Enemy',
     fixedDistanceMode: false,
     attenuationBySuperArmor: false,
     attenuationValues: [],
   };
 
-  it('Pull 默认返回分支沿用既有固定敌人投影，不增加位移步骤', () => {
+  it.each(['Enemy', 'Character'])('Pull 来源保留原生目标类型 %s', pullTargetType => {
+    expect(
+      parseKnownNativeActionLeafSource({ ...pull, pullTargetType }, 'fixture.action', {}),
+    ).toMatchObject({ action: { kind: 'pull', targetType: pullTargetType } });
+  });
+  it('Pull 拒绝并不存在的 All 目标类型', () => {
+    expect(() =>
+      parseKnownNativeActionLeafSource({ ...pull, pullTargetType: 'All' }, 'fixture.action', {}),
+    ).toThrow('pullTargetType');
+  });
+  it('Pull 缺省继续策略保留为 false，不删除执行结果', () => {
     const old = parseKnownNativeActionLeafSource(pull, 'fixture.action', {});
     const current = parseKnownNativeActionLeafSource(
       { ...pull, alwaysNext: false },
@@ -270,7 +493,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(current).toEqual(old);
     expect(compileBuffLeafNode(node(current), new Set(), new Map(), leafContext())).toMatchObject({
-      steps: [],
+      steps: [{ kind: 'pull', parameters: { targetType: 'Enemy', alwaysNext: false } }],
     });
   });
 
@@ -280,15 +503,15 @@ describe('施法输入限制与木桩物理控制投影', () => {
     ).toThrow('alwaysNext');
   });
 
-  it.each([false, true])('Pull 仍不能把队伍目标误当作固定敌人消除，alwaysNext=%s', alwaysNext => {
+  it.each([false, true])('Pull 保留 Owner 查询和继续策略，alwaysNext=%s', alwaysNext => {
     const source = parseKnownNativeActionLeafSource(
       { ...pull, alwaysNext, targetSettings: targetFixture('Owner') },
       'fixture.action',
       {},
     );
-    expect(() => compileBuffLeafNode(node(source), new Set(), new Map(), leafContext())).toThrow(
-      'unsupported static-enemy control projection',
-    );
+    expect(compileBuffLeafNode(node(source), new Set(), new Map(), leafContext())).toMatchObject({
+      steps: [{ kind: 'pull', parameters: { targets: { kind: 'owner' }, alwaysNext } }],
+    });
   });
 
   it('Pull 来源保留继续策略，省略位移后保留前后有效动作的顺序', () => {
@@ -319,17 +542,23 @@ describe('施法输入限制与木桩物理控制投影', () => {
       family: 'stumpControl',
       action: { kind: 'pull', alwaysNext: true },
     });
-    expect(
-      projectSequence(
-        parse([write('before'), current, write('after')]),
-        createActiveSkillContext(),
-      ),
-    ).toEqual(
+    const result = projectSequence(
+      parse([write('before'), current, write('after')]),
+      createActiveSkillContext(),
+    );
+    expect(result.steps[1]).toMatchObject({
+      kind: 'pull',
+      parameters: {
+        destination: { kind: 'context', key: 'mainPos' },
+        alwaysNext: true,
+      },
+    });
+    expect({ steps: result.steps.filter(step => step.kind !== 'pull') }).toEqual(
       projectSequence(parse([write('before'), write('after')]), createActiveSkillContext()),
     );
   });
 
-  it('Pull 拒绝未知目标组，但允许出现在原生条件动作序列中', () => {
+  it('Pull 保留运行时目标组和原生条件动作序列', () => {
     const parse = (actionData: unknown[]) =>
       parseKnownNativeActionSequenceSource(
         {
@@ -340,7 +569,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         'sequence',
         {},
       );
-    expect(() =>
+    expect(
       projectSequence(
         parse([
           {
@@ -351,7 +580,16 @@ describe('施法输入限制与木桩物理控制投影', () => {
         ]),
         createActiveSkillContext(),
       ),
-    ).toThrow('unsupported static-enemy control projection');
+    ).toMatchObject({
+      steps: [
+        {
+          kind: 'pull',
+          parameters: {
+            targets: { kind: 'context', key: 'unknown' },
+          },
+        },
+      ],
+    });
     const source = parse([
       {
         ...META,
@@ -380,8 +618,11 @@ describe('施法输入限制与木桩物理控制投影', () => {
     const [branch] = readActionGraphChain(graph, entry);
     expect(branch?.kind).toBe('ifElse');
     if (branch?.kind !== 'ifElse') throw new Error('expected native IfElse');
-    // 当前固定木桩投影省略位移；IfElse 仍保留真实的条件序列入口。
-    expect(branch.condition).toEqual({ kind: 'checkActionResult', action: { $sequence: null } });
+    expect(branch.condition.kind).toBe('checkActionResult');
+    if (branch.condition.kind !== 'checkActionResult') throw new Error('expected action result');
+    expect(readActionGraphChain(graph, branch.condition.action)).toMatchObject([
+      { kind: 'pull', parameters: { alwaysNext: true } },
+    ]);
   });
 
   it('只把已证明的 Buff Owner 职业筛选投影为干员定位条件', () => {
@@ -464,22 +705,22 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), actionEnvironmentSkillCastInfoIsSourceCast: true },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        actionEnvironmentSkillCastInfoIsSourceCast: true,
+      }),
     ).toEqual({
       kind: 'buffIdStackCompare',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'inputTarget' },
       compareZeroWhenTargetMissing: true,
       buffIds: ['buff_test_same_cast'],
       operator: 'less',
       value: { kind: 'constant', value: 2 },
       sameSourceSkillCast: true,
     });
-    expect(() =>
-      compileEventCondition(node(action), createActiveSkillContext()),
-    ).toThrow('Buff count requires source skill cast identity');
+    expect(() => compileEventCondition(node(action), createActiveSkillContext())).toThrow(
+      'Buff count requires source skill cast identity',
+    );
   });
 
   it('主控到能力实体 Context 的零距离条件仍保留空组失败语义', () => {
@@ -497,12 +738,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
       'fixture.action',
       {},
     );
-    expect(
-      compileEventCondition(
-        node(action),
-        createActiveSkillContext(),
-      ),
-    ).toEqual({
+    expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'targetDistance',
       source: { kind: 'mainCharacter' },
       target: { kind: 'context', key: 'center_entity' },
@@ -556,10 +792,10 @@ describe('施法输入限制与木桩物理控制投影', () => {
       action: { kind: 'skillHasHit' as const, sourceType: 'CheckSkillHasHit' },
     } as unknown as ReturnType<typeof parseKnownNativeActionLeafSource>;
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), timelineRange: { startFrame: 12, endFrame: 13 } },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        timelineRange: { startFrame: 12, endFrame: 13 },
+      }),
     ).toEqual({ kind: 'skillHasHit' });
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'skillHasHit',
@@ -580,7 +816,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'enemySuperArmorCompare',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'context', key: 'tar' },
       operator: 'greater',
       value: { kind: 'constant', value: 10 },
     });
@@ -599,7 +835,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'enemyRankIn',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'inputTarget' },
       ranks: ['elite', 'boss'],
     });
     const contextAction = parseKnownNativeActionLeafSource(
@@ -613,26 +849,23 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(contextAction),
-        {
-          ...createActiveSkillContext(),
-          staticEnemyTargetGroupKeys: new Set(['smart_target']),
-        },
-      ),
+      compileEventCondition(node(contextAction), {
+        ...createActiveSkillContext(),
+        staticEnemyTargetGroupKeys: new Set(['smart_target']),
+      }),
     ).toEqual({
       kind: 'enemyRankIn',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'context', key: 'smart_target' },
       ranks: ['elite'],
     });
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), actionTargetTarget: 'caster' },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        actionTargetTarget: 'caster',
+      }),
     ).toEqual({
       kind: 'enemyRankIn',
-      target: { kind: 'fixed', target: 'caster' },
+      target: { kind: 'inputTarget' },
       ranks: ['elite', 'boss'],
     });
   });
@@ -671,7 +904,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'setGlobalCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             markerId: 'buff_chr_0031_mifu_shield',
             durationSeconds: { kind: 'constant', value: 1 },
           },
@@ -695,12 +928,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
       'fixture.action',
       {},
     );
-    expect(
-      compileEventCondition(
-        node(action),
-        createActiveSkillContext(),
-      ),
-    ).toEqual({
+    expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'timedMarkerPresent',
       returnTrueIfNotExists: true,
       target: { kind: 'context', key: 'water_group' },
@@ -738,7 +966,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         deadOption: 'AllValid',
         returnTrueWhen: 'Always',
       },
-    } as ReturnType<typeof parseKnownNativeActionLeafSource>;
+    } as Extract<ReturnType<typeof parseKnownNativeActionLeafSource>, { family: 'stumpControl' }>;
 
     expect(compileBuffLeafNode(node(source), new Set(), new Map(), leafContext())).toEqual({
       steps: [],
@@ -783,7 +1011,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     ).toBe(false);
   });
 
-  it('无 Buff 过滤且至少保留一个目标的 PriorityFilter 不会改变唯一木桩集合', () => {
+  it('PriorityFilter 不能再用于把多敌人查询证明为单元素常量', () => {
     const hitBox = {
       producerType: 'FindTargetAction',
       finderType: 'HitBoxFinder',
@@ -807,7 +1035,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         },
       ],
     };
-    expect(isStaticSingleEnemyTargetGroup(hitBox as never)).toBe(true);
+    expect(isStaticSingleEnemyTargetGroup(hitBox as never)).toBe(false);
     expect(
       isStaticSingleEnemyTargetGroup({
         ...hitBox,
@@ -816,7 +1044,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     ).toBe(false);
   });
 
-  it('AllEnemy 和已选 Typhoea 目标在唯一活体敌人模型下折叠为同一木桩', () => {
+  it('已选 Typhoea 列表不能套用普通敌人目录的静态证明', () => {
     const base = {
       producerType: 'FindTargetAction',
       validatorTypes: [],
@@ -831,7 +1059,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         ...base,
         finderType: 'TyphoeaArcherySelectedFinder',
       } as never),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('屏幕可见性与非负距离上限在固定零空间模型下不排除木桩', () => {
@@ -927,6 +1155,17 @@ describe('施法输入限制与木桩物理控制投影', () => {
     };
     expect(isStaticSingleEnemyTargetGroup(base as never)).toBe(false);
     expect(isDynamicSingleEnemyTagTargetGroup(base as never)).toBe(true);
+    const aimed = {
+      ...base,
+      finderType: 'TyphoeaArcherySelectedFinder',
+      validatorTagQueries: [['HasAny', [-980923073]]],
+    };
+    expect(isStaticSingleEnemyTargetGroup(aimed as never)).toBe(false);
+    expect(isDynamicSingleEnemyTagTargetGroup(aimed as never)).toBe(false);
+    // 同一选敌器上的其他战斗标签仍须动态检查。
+    const filtered = { ...aimed, validatorTagQueries: base.validatorTagQueries };
+    expect(isStaticSingleEnemyTargetGroup(filtered as never)).toBe(false);
+    expect(isDynamicSingleEnemyTagTargetGroup(filtered as never)).toBe(false);
     const action = { family: 'targetGroup' as const, action: base } as ReturnType<
       typeof parseKnownNativeActionLeafSource
     >;
@@ -939,6 +1178,20 @@ describe('施法输入限制与木桩物理控制投影', () => {
     expect(result.state).toEqual(new Map([['fire_inflicted', 'dynamicEnemy']]));
     // 全敌人目录与 Buff 宿主无关；实体上的 Buff 也应只得到经标签筛选的敌人。
     if (action.family !== 'targetGroup') throw new Error('expected target-group fixture');
+    const selected = compileBuffLeafNode(
+      node({ ...action, action: { ...action.action, finderType: 'TyphoeaArcherySelectedFinder' } }),
+      new Set(),
+      new Map(),
+      createActiveSkillContext(),
+    );
+    expect(selected.steps[0]).toMatchObject({
+      kind: 'findTargets',
+      parameters: {
+        query: { kind: 'tagFilter', targets: { kind: 'typhoeaArcherySelected' } },
+        saveToContextKey: 'fire_inflicted',
+      },
+    });
+
     const fromEntityBuff = compileBuffLeafNode(
       node({ ...action, action: { ...action.action, finderType: 'AllEnemyFinder' } }),
       new Set(),
@@ -950,9 +1203,49 @@ describe('施法输入限制与木桩物理控制投影', () => {
         fixedBuffOwnerTarget: 'currentAbilityEntity',
       },
     );
-    expect(fromEntityBuff.steps).toEqual(result.steps);
+    expect(fromEntityBuff.steps).toMatchObject(result.steps);
     expect(fromEntityBuff.state).toEqual(result.state);
     for (const finderType of ['AllEnemyFinder', 'InFightEnemyFinder']) {
+      const excluded = compileBuffLeafNode(
+        node({
+          ...action,
+          action: {
+            ...action.action,
+            finderType,
+            validatorTypes: [],
+            validatorTagQueries: [],
+            postProcessorTypes: ['ExcludeTarget'],
+            excludeTargets: [
+              parseTargetReferenceSource(
+                targetFixture('Context', undefined, 'excluded'),
+                'fixture.exclude',
+              ),
+            ],
+          },
+        }),
+        new Set(),
+        new Map(),
+        createActiveSkillContext(),
+      );
+      expect(excluded.steps).toMatchObject([
+        {
+          kind: 'findTargets',
+          parameters: {
+            query: {
+              kind: 'exclude',
+              targets: {
+                kind: 'enemyByTags',
+                scope: 'global',
+                reverse: true,
+                tagQueryType: 'hasAll',
+                tags: [],
+              },
+              excludeTargets: { kind: 'context', key: 'excluded' },
+            },
+          },
+        },
+      ]);
+
       const enemyQuery = {
         ...action.action,
         finderType,
@@ -969,7 +1262,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
           actionTargetTarget: 'buffOwner',
           fixedBuffOwnerTarget: 'currentAbilityEntity',
         }).steps,
-      ).toEqual(result.steps);
+      ).toMatchObject(result.steps);
       expect(
         isDynamicSingleEnemyTagTargetGroup({
           ...enemyQuery,
@@ -1062,7 +1355,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
       steps: [
         {
           kind: 'applyElementalInfliction',
-          parameters: { element: 'heat', isExtra: false },
+          parameters: { element: 'heat', isExtra: false, target: { kind: 'inputTarget' } },
         },
       ],
       state: new Map(),
@@ -1086,7 +1379,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'targetsEqual',
-      first: { kind: 'fixed', target: 'enemy' },
+      first: { kind: 'inputTarget' },
       second: { kind: 'mainTarget', owner: { kind: 'owner' } },
     });
   });
@@ -1104,7 +1397,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'targetsEqual',
-      first: { kind: 'fixed', target: 'enemy' },
+      first: { kind: 'inputTarget' },
       second: { kind: 'battleMainTarget' },
     });
   });
@@ -1121,14 +1414,11 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(action),
-        {
-          ...createActiveSkillContext(),
-          actionOwnerTarget: 'buffOwner',
-          fixedBuffOwnerTarget: 'caster',
-        },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        actionOwnerTarget: 'buffOwner',
+        fixedBuffOwnerTarget: 'caster',
+      }),
     ).toEqual({
       kind: 'targetsEqual',
       first: { kind: 'owner' },
@@ -1155,14 +1445,11 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(action),
-        {
-          ...createActiveSkillContext(),
-          actionTargetTarget: 'eventSource',
-          actionSourceTarget: 'buffSource',
-        },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        actionTargetTarget: 'eventSource',
+        actionSourceTarget: 'buffSource',
+      }),
     ).toEqual({
       kind: 'targetsEqual',
       first: { kind: 'abilitySystemSource', owner: { kind: 'source' } },
@@ -1182,14 +1469,14 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), staticEnemyTargetGroupKeys: new Set(['smart_target']) },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        staticEnemyTargetGroupKeys: new Set(['smart_target']),
+      }),
     ).toEqual({
       kind: 'targetsEqual',
-      first: { kind: 'fixed', target: 'enemy' },
-      second: { kind: 'fixed', target: 'enemy' },
+      first: { kind: 'inputTarget' },
+      second: { kind: 'context', key: 'smart_target' },
     });
   });
 
@@ -1271,8 +1558,8 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'targetContains',
-      parent: { kind: 'fixed', target: 'enemy' },
-      child: { kind: 'fixed', target: 'enemy' },
+      parent: { kind: 'context', key: 'tar' },
+      child: { kind: 'inputTarget' },
     });
   });
 
@@ -1288,14 +1575,14 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), staticEnemyTargetGroupKeys: new Set(['MainTar']) },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        staticEnemyTargetGroupKeys: new Set(['MainTar']),
+      }),
     ).toEqual({
       kind: 'targetContains',
-      parent: { kind: 'fixed', target: 'enemy' },
-      child: { kind: 'fixed', target: 'enemy' },
+      parent: { kind: 'inputTarget' },
+      child: { kind: 'context', key: 'MainTar' },
     });
   });
 
@@ -1316,7 +1603,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'entityCountCompare',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'inputTarget' },
       containsHittableTarget: false,
       excludeDeadEntity: true,
       operator: 'greaterOrEqual',
@@ -1325,13 +1612,20 @@ describe('施法输入限制与木桩物理控制投影', () => {
   });
 
   it.each([
-    ['输入目标的序列化残留组名', targetFixture('Target', undefined, 'stale_target'), new Map()],
+    ['当前主目标', targetFixture('MainTarget'), new Map(), { kind: 'battleMainTarget' }],
+    [
+      '输入目标的序列化残留组名',
+      targetFixture('Target', undefined, 'stale_target'),
+      new Map(),
+      { kind: 'inputTarget' },
+    ],
     [
       '已解析空间点',
       targetFixture('Context', undefined, 'target_position'),
       new Map([['target_position', 'spatialPoint' as const]]),
+      { kind: 'context', key: 'target_position' },
     ],
-  ])('零空间距离允许%s作为已证明端点', (_name, target, groups) => {
+  ])('保存距离保留%s的查询身份', (_name, target, groups, query) => {
     const action = parseKnownNativeActionLeafSource(
       {
         ...META,
@@ -1348,11 +1642,11 @@ describe('施法输入限制与木桩物理控制投影', () => {
     ).toEqual({
       steps: [
         {
-          kind: 'modifyActionValue',
+          kind: 'saveTargetDistance',
           parameters: {
-            key: 'effect_z_scale',
-            operation: 'assign',
-            value: { kind: 'constant', value: 0 },
+            source: { kind: 'owner' },
+            target: query,
+            outputKey: 'effect_z_scale',
           },
         },
       ],
@@ -1360,7 +1654,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     });
   });
 
-  it('零空间距离允许主动技能入口已经证明的 smart_target 作为端点', () => {
+  it('保存距离仍读取 smart_target 当前内容，不用静态敌人证明替代查询', () => {
     const action = parseKnownNativeActionLeafSource(
       {
         ...META,
@@ -1380,11 +1674,11 @@ describe('施法输入限制与木桩物理控制投影', () => {
     ).toEqual({
       steps: [
         {
-          kind: 'modifyActionValue',
+          kind: 'saveTargetDistance',
           parameters: {
-            key: 'distance',
-            operation: 'assign',
-            value: { kind: 'constant', value: 0 },
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'smart_target' },
+            outputKey: 'distance',
           },
         },
       ],
@@ -1451,7 +1745,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             skill: { kind: 'type', skillType: 'comboSkill' },
             operation: 'set',
             basis: 'absoluteSeconds',
@@ -1523,30 +1817,29 @@ describe('施法输入限制与木桩物理控制投影', () => {
     });
   });
 
-  it('实体标签条件识别已经证明为唯一敌人的上下文目标组', () => {
-    const action = parseKnownNativeActionLeafSource(
-      {
-        ...META,
-        $type: 'Beyond.Gameplay.Core.Conditions.CheckTagMatch+Data, Gameplay.Beyond',
-        checkTarget: targetFixture('Context', undefined, 'smart_target'),
-        query: { queryType: 'HasAny', tags: [{ tagId: -1369794537 }] },
-      },
-      'fixture.action',
-      {},
-    );
+  it.each(['CheckTagMatch', 'CheckPartTagMatch'])(
+    '%s 保留上下文目标和部位标签读取语义',
+    nativeType => {
+      const action = parseKnownNativeActionLeafSource(
+        {
+          ...META,
+          $type: `Beyond.Gameplay.Core.Conditions.${nativeType}+Data, Gameplay.Beyond`,
+          checkTarget: targetFixture('Context', undefined, 'smart_target'),
+          query: { queryType: 'HasAny', tags: [{ tagId: -1369794537 }] },
+        },
+        'fixture.action',
+        {},
+      );
 
-    expect(
-      compileEventCondition(
-        node(action),
-        createActiveSkillContext(),
-      ),
-    ).toEqual({
-      kind: 'entityTagMatch',
-      target: { kind: 'context', key: 'smart_target' },
-      tagQueryType: 'hasAny',
-      tags: ['Test/Tag123'],
-    });
-  });
+      expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
+        kind: 'entityTagMatch',
+        ...(nativeType === 'CheckPartTagMatch' ? { checkPartTags: true } : {}),
+        target: { kind: 'context', key: 'smart_target' },
+        tagQueryType: 'hasAny',
+        tags: ['Test/Tag123'],
+      });
+    },
+  );
 
   it('生命条件读取已保存的队伍目标，而不重新运行最低生命选择器', () => {
     const action = parseKnownNativeActionLeafSource(
@@ -1562,12 +1855,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
 
-    expect(
-      compileEventCondition(
-        node(action),
-        createActiveSkillContext(),
-      ),
-    ).toEqual({
+    expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'healthCompare',
       target: { kind: 'context', key: 'CureTarget' },
       valueType: 'ratio',
@@ -1576,7 +1864,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     });
   });
 
-  it('生命条件把已证明为唯一敌人的命名目标折叠到木桩账本', () => {
+  it('生命条件保留命名目标，静态证明不替换运行时查询', () => {
     const action = parseKnownNativeActionLeafSource(
       {
         ...META,
@@ -1591,13 +1879,13 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
 
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), staticEnemyTargetGroupKeys: new Set(['maintar']) },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        staticEnemyTargetGroupKeys: new Set(['maintar']),
+      }),
     ).toEqual({
       kind: 'healthCompare',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'context', key: 'maintar' },
       valueType: 'ratio',
       operator: 'greater',
       value: { kind: 'constant', value: 0 },
@@ -1627,19 +1915,28 @@ describe('施法输入限制与木桩物理控制投影', () => {
     },
   );
 
-  it('固定木桩拉拽不要求把纯空间目的点建模为战斗实体', () => {
-    const action = {
-      family: 'stumpControl' as const,
-      action: {
-        kind: 'pull' as const,
-        source: { targetSource: 'Context', targetGroupKey: 'spatial_destination' },
-        target: { targetSource: 'Context', targetGroupKey: 'tar' },
+  it('拉拽保留逻辑位置组，不把目的地替换为敌人', () => {
+    const action = parseKnownNativeActionLeafSource(
+      {
+        ...pull,
+        targetSettings: targetFixture('Context', undefined, 'tar'),
+        destination: targetFixture('Context', undefined, 'spatial_destination'),
       },
-    } as ReturnType<typeof parseKnownNativeActionLeafSource>;
-
-    expect(compileBuffLeafNode(node(action), new Set(), new Map(), leafContext())).toEqual({
-      steps: [],
-      state: new Map(),
+      'fixture.pull',
+      {},
+    );
+    expect(compileBuffLeafNode(node(action), new Set(), new Map(), leafContext())).toMatchObject({
+      steps: [
+        {
+          kind: 'pull',
+          parameters: {
+            targets: { kind: 'context', key: 'tar' },
+            destination: { kind: 'context', key: 'spatial_destination' },
+            targetType: 'Enemy',
+            alwaysNext: false,
+          },
+        },
+      ],
     });
   });
 
@@ -1671,8 +1968,10 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {
         kind: 'startTimeDilation',
         parameters: {
-          targets: [{ kind: 'context', key: 'tar' }, 'caster'],
-          finishByAction: false,
+          scope: 'hitStop',
+          attacker: { kind: 'source' },
+          targets: { kind: 'context', key: 'tar' },
+          affectType: 'Both',
         },
       },
     ]);
@@ -1775,7 +2074,8 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'heal',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: [],
             attribute: 'intellect',
@@ -1832,8 +2132,8 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'heal',
           parameters: {
-            target: 'enemy',
-            source: 'buffOwner',
+            target: { kind: 'owner' },
+            healer: { kind: 'owner' },
             alwaysNext: true,
             tags: [],
             attribute: 'maxHealth',
@@ -1885,7 +2185,8 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'heal',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: [],
             attribute: 'intellect',
@@ -1960,25 +2261,33 @@ describe('施法输入限制与木桩物理控制投影', () => {
     });
   });
 
-  it('InterruptAction 的 Target 来源不读取残留 targetGroupKey', () => {
-    const action = parseKnownNativeActionLeafSource(
-      {
-        ...META,
-        $type: 'Beyond.Gameplay.Core.InterruptAction+Data, Gameplay.Beyond',
-        attacker: targetFixture('Source'),
-        defender: targetFixture('Target', undefined, 'residual-enemy-key'),
-        overrideSuperArmorLimit: -1,
-        immobilizedTime: 1,
-      },
-      'fixture.action',
-      {},
-    );
+  it.each(['caster', 'buffSource'] as const)(
+    'InterruptAction 对敌人的省略不依赖来源 %s',
+    actionSourceTarget => {
+      const action = parseKnownNativeActionLeafSource(
+        {
+          ...META,
+          $type: 'Beyond.Gameplay.Core.InterruptAction+Data, Gameplay.Beyond',
+          attacker: targetFixture('Source'),
+          defender: targetFixture('Target', undefined, 'residual-enemy-key'),
+          overrideSuperArmorLimit: -1,
+          immobilizedTime: 1,
+        },
+        'fixture.action',
+        {},
+      );
 
-    expect(compileBuffLeafNode(node(action), new Set(), new Map(), leafContext())).toEqual({
-      steps: [],
-      state: new Map(),
-    });
-  });
+      expect(
+        compileBuffLeafNode(node(action), new Set(), new Map(), {
+          ...leafContext(),
+          actionSourceTarget,
+        }),
+      ).toEqual({
+        steps: [],
+        state: new Map(),
+      });
+    },
+  );
 
   it.each([undefined, false, true])(
     '能力实体出生于直接 Source，单目标下多输入配置 %s 不改变结果',
@@ -2053,8 +2362,10 @@ describe('施法输入限制与木桩物理控制投影', () => {
             kind: 'spawnAbilityEntity',
             parameters: {
               bornAt: { kind: 'source' },
+              source: { kind: 'owner' },
               abilityEntityId: 'abilityentity_fixture',
               childSkillId: 'fixture_skill',
+              ...(allowMultiInputTarget ? { allowMultiInputTarget: true } : {}),
               inheritActionBlackboard: true,
               dieWhenSourceDies: false,
             },
@@ -2063,6 +2374,16 @@ describe('施法输入限制与木桩物理控制投影', () => {
         state: new Map(),
       });
       if (action.family !== 'abilityEntity') throw new Error('expected AbilityEntity action');
+      expect(
+        compileBuffLeafNode(
+          node({ ...action, action: { ...action.action, dieWhenTargetDies: true } }),
+          new Set(),
+          new Map(),
+          leafContext(),
+        ),
+      ).toMatchObject({
+        steps: [{ kind: 'spawnAbilityEntity', parameters: { dieWhenTargetDies: true } }],
+      });
       const enemyTargetAction = {
         ...action,
         action: { ...action.action, setTarget: true },
@@ -2074,7 +2395,9 @@ describe('施法输入限制与木桩物理控制投影', () => {
           new Map(),
           createActiveSkillContext(),
         ),
-      ).toMatchObject({ steps: [{ kind: 'spawnAbilityEntity', parameters: { target: 'enemy' } }] });
+      ).toMatchObject({
+        steps: [{ kind: 'spawnAbilityEntity', parameters: { target: { kind: 'inputTarget' } } }],
+      });
       const spatialTargets = {
         ...enemyTargetAction,
         action: {
@@ -2082,15 +2405,25 @@ describe('施法输入限制与木桩物理控制投影', () => {
           target: { ...action.action.target, targetSource: 'Context', targetGroupKey: 'points' },
         },
       };
-      if (allowMultiInputTarget === true) {
-        expect(() =>
+      {
+        expect(
           compileBuffLeafNode(
             node(spatialTargets),
             new Set(),
             new Map([['points', 'spatialPoint']]),
             createActiveSkillContext(),
           ),
-        ).toThrow('allowMultiInputTarget: child skill input is not a proven singleton');
+        ).toMatchObject({
+          steps: [
+            {
+              kind: 'spawnAbilityEntity',
+              parameters: {
+                target: { kind: 'context', key: 'points' },
+                ...(allowMultiInputTarget ? { allowMultiInputTarget: true } : {}),
+              },
+            },
+          ],
+        });
       }
       const casterTargetAction = {
         ...action,
@@ -2108,7 +2441,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
           createActiveSkillContext(),
         ),
       ).toMatchObject({
-        steps: [{ kind: 'spawnAbilityEntity', parameters: { target: 'caster' } }],
+        steps: [{ kind: 'spawnAbilityEntity', parameters: { target: { kind: 'source' } } }],
       });
       const sourceBoundAction = {
         ...action,
@@ -2182,7 +2515,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         steps: [
           {
             kind: 'spawnAbilityEntity',
-            parameters: { source: 'currentAbilityEntity', dieWhenSourceDies: false },
+            parameters: { source: { kind: 'owner' }, dieWhenSourceDies: false },
           },
         ],
       });
@@ -2231,7 +2564,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             skill: { kind: 'id', skillId: 'chr_0022_bounda_combo_skill' },
             operation: 'reduce',
             basis: 'absoluteSeconds',
@@ -2301,6 +2634,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_fixture_owner',
             childSkillId: 'fixture_skill',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
@@ -2339,6 +2673,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_fixture_owner',
             childSkillId: 'fixture_skill',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
@@ -2360,6 +2695,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_fixture_owner',
             childSkillId: 'fixture_skill',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             finishByAction: true,
@@ -2390,6 +2726,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
             bornAt: { kind: 'context', key: 'enemy_anchor' },
             abilityEntityId: 'abilityentity_fixture_owner',
             childSkillId: 'fixture_skill',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
@@ -2451,9 +2788,10 @@ describe('施法输入限制与木桩物理控制投影', () => {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_fixture_owner',
             childSkillId: 'fixture_skill',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
           },
         },
       ],
@@ -2476,7 +2814,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     });
   });
 
-  it('OnlyDead 吹飞在死亡终止模型中省略，活目标吹飞仍阻断', () => {
+  it('OnlyDead 吹飞保留查询与返回，活目标吹飞仍阻断', () => {
     expect(
       compileBuffLeafNode(
         node(blowOff('OnlyDead')),
@@ -2484,7 +2822,19 @@ describe('施法输入限制与木桩物理控制投影', () => {
         new Map(),
         createActiveSkillContext(),
       ),
-    ).toEqual({ steps: [], state: new Map() });
+    ).toEqual({
+      steps: [
+        {
+          kind: 'blowOffEnemy',
+          parameters: {
+            source: { kind: 'owner' },
+            targets: { kind: 'context', key: 'tar' },
+            deadOption: 'OnlyDead',
+          },
+        },
+      ],
+      state: new Map(),
+    });
     expect(() =>
       compileBuffLeafNode(
         node(blowOff('OnlyAlive')),
@@ -2492,7 +2842,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         new Map(),
         createActiveSkillContext(),
       ),
-    ).toThrow('live-target BlowOffEnemy physical infliction');
+    ).toThrow('live-target BlowOffEnemy processing');
   });
 
   it('自身 ChannelingCasting 只限制同一施法区间，不产生战斗步骤', () => {
@@ -2518,5 +2868,303 @@ describe('施法输入限制与木桩物理控制投影', () => {
         actionSourceTarget: 'buffSource',
       }),
     ).toThrow('unsupported ChannelingCastingAction owner');
+  });
+});
+
+it('反弹原生排除与限数保留顺序，已有 tar 静态证明不能覆盖新查询', () => {
+  const action = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond',
+      targetGroupKey: 'tar',
+      center: 'ActionSource',
+      centerContextKey: '',
+      useCenterEntityMountPoint: false,
+      centerMountPoint: 'None',
+      centerToGround: false,
+      selectorOwner: 'ActionOwner',
+      selectorOwnerContextKey: '',
+      selectorData: {
+        finderData: {
+          $type: 'Beyond.Gameplay.Core.Selector+HitBoxFinder+Data, Gameplay.Beyond',
+          checkAlive: true,
+          autoSetTargetFaction: true,
+          containsUnMarkable: false,
+          factionTarget: 'Anti',
+          targetFactionType: 0,
+          targetObjectType: 'Normal',
+          checkIntUnSelectableTag: true,
+        },
+        validatorData: [],
+        postProcessorData: [
+          {
+            $type: 'Beyond.Gameplay.Core.Selector+ExcludeTarget+Data, Gameplay.Beyond',
+            excludedTargetSettings: targetFixture('Target'),
+            processTargetType: 'Targets',
+          },
+          {
+            $type: 'Beyond.Gameplay.Core.Selector+PriorityFilter+Data, Gameplay.Beyond',
+            filterType: 'DistanceFromCenterAsc',
+            onlyReserveMaxPriorityTargets: false,
+            limitMaxNum: true,
+            maxNum: 1,
+            buffFilterSettings: {
+              buffSettings: {
+                checkType: 'Id',
+                buffIdList: [],
+                tagQuery: { queryType: 'HasAny', tags: [] },
+              },
+              buffStackNumType: 'BuffCount',
+            },
+          },
+        ],
+      },
+      selectorDirection: 'SourceForward',
+      target: 'ActionSource',
+      contextKey: '',
+      useAdvancedDirectionSetting: false,
+      advancedSelectorDirection: {
+        directionType: 'SourceForward',
+        sourceMountPoint: 'None',
+        targetMountPoint: 'None',
+        customSourceAndTarget: false,
+        clampToXZ: true,
+        invertDirection: false,
+      },
+    },
+    'fixture.ricochet',
+    {},
+  );
+  const result = compileBuffLeafNode(
+    node(action),
+    new Set(),
+    new Map([['tar', 'enemy']]),
+    createActiveSkillContext(),
+  );
+  expect(result.state.get('tar')).toBe('dynamicEnemy');
+  expect(result.steps).toEqual([
+    {
+      kind: 'findTargets',
+      parameters: {
+        owner: { kind: 'owner' },
+        center: { kind: 'source' },
+        saveToContextKey: 'tar',
+        query: {
+          kind: 'limit',
+          count: 1,
+          targets: {
+            kind: 'exclude',
+            excludeTargets: { kind: 'inputTarget' },
+            targets: {
+              kind: 'factionHitBox',
+              owner: { kind: 'owner' },
+              factionTarget: 'anti',
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+          },
+        },
+      },
+    },
+  ]);
+  if (action.family !== 'targetGroup') throw new Error('expected target group');
+  for (const finderType of ['AllEnemyFinder', 'InFightEnemyFinder']) {
+    const limited = compileBuffLeafNode(
+      node({
+        ...action,
+        action: {
+          ...action.action,
+          finderType,
+          excludesCurrentTarget: false,
+          excludeTargets: [
+            parseTargetReferenceSource(
+              targetFixture('Context', undefined, 'excluded'),
+              'fixture.exclude',
+            ),
+          ],
+        },
+      }),
+      new Set(),
+      new Map(),
+      createActiveSkillContext(),
+    );
+    expect(limited.steps).toMatchObject([
+      {
+        kind: 'findTargets',
+        parameters: {
+          query: {
+            kind: 'limit',
+            count: 1,
+            targets: {
+              kind: 'exclude',
+              targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [] },
+              excludeTargets: { kind: 'context', key: 'excluded' },
+            },
+          },
+        },
+      },
+    ]);
+  }
+  for (const [limitMaxNum, maxNum, count] of [
+    [true, 0, 0],
+    [true, 1, 1],
+    [true, 2, 2],
+    [false, 0, 128],
+    [false, 999, 128],
+  ] as const) {
+    const limited = compileBuffLeafNode(
+      node({
+        ...action,
+        action: {
+          ...action.action,
+          excludesCurrentTarget: false,
+          excludeTargets: [],
+          postProcessorTypes: ['PriorityFilter'],
+          priorityFilters: [{ ...action.action.priorityFilters[0]!, limitMaxNum, maxNum }],
+        },
+      }),
+      new Set(),
+      new Map(),
+      createActiveSkillContext(),
+    );
+    expect(limited.steps).toMatchObject([
+      {
+        kind: 'findTargets',
+        parameters: {
+          query: {
+            kind: 'limit',
+            count,
+            targets: { kind: 'factionHitBox', replacePartsWithMainBodies: false },
+          },
+        },
+      },
+    ]);
+  }
+  const mainCharacterQuery = compileBuffLeafNode(
+    node({
+      ...action,
+      action: {
+        ...action.action,
+        finderType: 'InFightEnemyFinder',
+        selectorOwner: 'MainCharacter',
+        center: 'MainCharacter',
+        excludesCurrentTarget: false,
+        excludeTargets: [],
+        postProcessorTypes: ['PriorityFilter'],
+      },
+    }),
+    new Set(),
+    new Map(),
+    createActiveSkillContext(),
+  );
+  expect(mainCharacterQuery.steps).toMatchObject([
+    {
+      kind: 'findTargets',
+      parameters: {
+        owner: { kind: 'mainCharacter' },
+        center: { kind: 'mainCharacter' },
+        query: { kind: 'limit', count: 1, targets: { kind: 'enemyByTags' } },
+      },
+    },
+  ]);
+});
+
+it.each(['Always', 'BothSuccessAndInterrupted', 'OnlySuccess', 'OnlyInterrupted'])(
+  'TakeDown 只在返回策略为 Always 时允许省略控制表现：%s',
+  returnTrueWhen => {
+    const source = parseTargetReferenceSource(targetFixture('Source'), 'source');
+    const target = parseTargetReferenceSource(targetFixture('Context', undefined, 'tar'), 'target');
+    const compile = () =>
+      compileBuffLeafNode(
+        node({
+          family: 'stumpControl',
+          action: {
+            kind: 'takeDown',
+            source,
+            target,
+            deadOption: 'AllValid',
+            returnTrueWhen,
+          },
+        }),
+        new Set(),
+        new Map(),
+        leafContext(),
+      );
+    if (returnTrueWhen === 'Always') expect(compile()).toMatchObject({ steps: [] });
+    else expect(compile).toThrow('unsupported TakeDown stump projection');
+  },
+);
+
+it('PushBack 保留来源点查询及失败结果，不因已知空目标组而裁剪', () => {
+  const action = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.PushBackAction+Data, Gameplay.Beyond',
+      attackerTargetSettings: targetFixture('Source'),
+      sourcePointSettings: targetFixture('Context', undefined, 'origin'),
+      targetSettings: targetFixture('Context', undefined, 'emptyTargets'),
+      pushBackDirection: 'FromSourcePoint',
+      pushBackDistance: scalarFixture(1),
+      distanceCurveEnabled: false,
+      curveOriginUseSourcePoint: false,
+      distanceCurve: [],
+      distanceUseScale: false,
+      timeUseScale: false,
+      unmovableUseScale: false,
+      pushBackTime: scalarFixture(1),
+      unmovableTime: scalarFixture(0),
+      useCustomCurve: false,
+      customCurve: [],
+      curveTemplate: '',
+    },
+    'fixture.pushBack',
+    {},
+  );
+  expect(action).toMatchObject({
+    family: 'stumpControl',
+    action: {
+      kind: 'pushBack',
+      sourcePoint: { targetSource: 'Context', targetGroupKey: 'origin' },
+    },
+  });
+  if (!action) throw new Error('expected PushBack source');
+  const compiled = compileBuffLeafNode(
+    node(action),
+    new Set(),
+    new Map([['emptyTargets', 'empty']]),
+    leafContext(),
+  );
+  expect(compiled.steps).toMatchObject([
+    {
+      kind: 'pushBack',
+      parameters: {
+        targets: { kind: 'context', key: 'emptyTargets' },
+        sourcePoint: { kind: 'context', key: 'origin' },
+      },
+    },
+  ]);
+});
+
+it.each([
+  [16384, 'crush'],
+  [32768, 'airborne'],
+  [65536, 'knockDown'],
+  [1073741824, 'fracture'],
+] as const)('物理伤害位 %s 的条件只检查对应特征 %s', (mask, feature) => {
+  const action = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.Conditions.CheckDamageDecorateMask+Data, Gameplay.Beyond',
+      checkType: 'HasAny',
+      mask,
+    },
+    'fixture.damageMask',
+    {},
+  );
+  expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
+    kind: 'eventDamageTagsMatch',
+    match: 'hasAny',
+    tags: [feature],
   });
 });

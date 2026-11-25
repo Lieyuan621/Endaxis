@@ -99,7 +99,6 @@ function inspectCondition(
     case 'constant':
     case 'skillHasHit':
     case 'combatActive':
-    case 'singleEnemyPresent':
     case 'stringEquals':
     case 'actionValueCompare':
     case 'deckAttributeCompare':
@@ -114,6 +113,8 @@ function inspectCondition(
     case 'checkMainCharacter':
     case 'characterTypeIn':
     case 'operatorRoleIn':
+    case 'operatorWeaponTypeIn':
+    case 'globalBuffCountCompare':
     case 'enemyRankIn':
     case 'enemySuperArmorCompare':
     case 'targetDistance':
@@ -122,12 +123,12 @@ function inspectCondition(
     case 'eventDamageTagsMatch':
     case 'eventTransferredPartTagsMatch':
     case 'eventDamageGameplayTagsMatch':
-    case 'eventDamageFeaturesMatch':
     case 'eventDamageTypeIn':
     case 'eventHealTagsMatch':
     case 'eventInflictionElementIn':
     case 'eventPhysicalInflictionTypeIn':
     case 'eventCustomAbilityNameMatch':
+    case 'eventSkillTagsMatch':
     case 'skillDamageTypeIn':
     case 'eventSkillTypeIn':
     case 'originSkillTypeIn':
@@ -177,7 +178,27 @@ function inspectCondition(
   }
 }
 
+const activeSequenceInspections = new WeakMap<IssueCollector, Set<ResolvedActionSequence>>();
 function inspectSequence(
+  sequence: ResolvedActionSequence,
+  path: string,
+  collect: IssueCollector,
+  flags: CompatibilityFlags,
+  source: 'skill' | 'equipment' = 'skill',
+): void {
+  let active = activeSequenceInspections.get(collect);
+  if (active?.has(sequence)) return;
+  if (!active) activeSequenceInspections.set(collect, (active = new Set()));
+  active.add(sequence);
+  try {
+    inspectSequenceBody(sequence, path, collect, flags, source);
+  } finally {
+    active.delete(sequence);
+    if (active.size === 0) activeSequenceInspections.delete(collect);
+  }
+}
+
+function inspectSequenceBody(
   sequence: ResolvedActionSequence,
   path: string,
   collect: IssueCollector,
@@ -189,6 +210,15 @@ function inspectSequence(
   rootActionSteps(sequence).forEach((step, index) => {
     const stepPath = `${path}.steps[${index}]`;
     switch (step.kind) {
+      case 'exitControlledState':
+        if (!flags.knockDown)
+          report(
+            collect,
+            'unsupported-step',
+            stepPath,
+            'controlled-state exit requires control bindings',
+          );
+        return;
       case 'physicsCast':
         inspectSequence(step.whenHit, `${stepPath}.whenHit`, collect, flags, source);
         inspectSequence(step.whenMiss, `${stepPath}.whenMiss`, collect, flags, source);
@@ -197,9 +227,14 @@ function inspectSequence(
       case 'mergeContextTargets':
       case 'findCharacterTeamTargets':
       case 'findTargets':
+      case 'blowOffEnemy':
+      case 'pushBack':
+      case 'pull':
+      case 'saveTargetDistance':
       case 'createSpatialPointTargets':
       case 'findOwnerSpawnedAbilityEntities':
       case 'setAbilityEntityRemainingDuration':
+      case 'setAbilityEntityTarget':
       case 'finishOwner':
       case 'startCurrentAbilityEntityChildSkillById':
         return;
@@ -254,6 +289,7 @@ function inspectSequence(
           );
         }
         return;
+      case 'triggerBuffConsumeEvent':
       case 'triggerCustomAbilityEvent':
       case 'castSkillDuringAction':
         return;
@@ -351,6 +387,11 @@ function inspectSequence(
       case 'setGlobalCooldown':
       case 'gainSquadUltimateEnergyFromSkillCost':
       case 'gainFinisherSp':
+      case 'boneAttach':
+      case 'disableNormalSkill':
+      case 'limitMovementGait':
+      case 'addEntityTags':
+      case 'queueComboLock':
       case 'restrictUltimateEnergyRecovery':
       case 'openComboWindow':
       case 'changeSkillSlot':
@@ -400,6 +441,7 @@ function inspectSequence(
       case 'storeShieldValue':
         return;
       case 'setHealthFloor':
+      case 'overrideRawAttributes':
         return;
       case 'readSkillSettingData':
         // 数值表已在生成阶段内嵌；仅强化计算需要运行面板，不再次依赖原始配置文件。

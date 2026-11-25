@@ -18,6 +18,41 @@ function setup() {
 }
 
 describe('原生预定义标签的安装与退出', () => {
+  it('切入与切出查询分别读取实体标签，并支持冻结等共有阻断状态', () => {
+    const table = new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE);
+    const target = new CombatBuffContainer('operator', new CombatAttributeSet<string>());
+    target.addEntityTags(['Status/Ability/Skill/CantSwitchTocCenter']);
+    expect(table.getControlSwitchBlocker(target, true)).toBe('CantSwitchToCenter');
+    expect(table.getControlSwitchBlocker(target, false)).toBeUndefined();
+    target.removeEntityTags(['Status/Ability/Skill/CantSwitchTocCenter']);
+    target.addEntityTags(['Status/CantSwitchOutCenter']);
+    expect(table.getControlSwitchBlocker(target, true)).toBeUndefined();
+    expect(table.getControlSwitchBlocker(target, false)).toBe('CantMainCharSwitched');
+    target.removeEntityTags(['Status/CantSwitchOutCenter']);
+    target.addEntityTags(['Status/Immobilized/Frozen']);
+    expect(table.getControlSwitchBlocker(target, true)).toBe('CantSwitchToCenter');
+    expect(table.getControlSwitchBlocker(target, false)).toBe('CantMainCharSwitched');
+  });
+  it('沉寂标签阻止普通战技，允许追加战技；通用战技禁用仍可阻止追加段', () => {
+    const table = new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE);
+    const target = new CombatBuffContainer('operator', new CombatAttributeSet<string>());
+    target.addEntityTags(['Status/DisableNormalSkillExceptForAdditional/WithUI']);
+    expect(table.getSkillTypeCastBlocker(target, 'normalSkill', true, 'normal')).toBe(
+      'DisableNormalSkillExceptForAdditional',
+    );
+    expect(
+      table.getSkillTypeCastBlocker(target, 'normalSkill', true, 'additionalNormalSkill'),
+    ).toBeUndefined();
+    target.addEntityTags(['Status/DisableNormalSkill/WithUI']);
+    expect(
+      table.getSkillTypeCastBlocker(target, 'normalSkill', true, 'additionalNormalSkill'),
+    ).toBe('DisableNormalSkill');
+    target.removeEntityTags([
+      'Status/DisableNormalSkill/WithUI',
+      'Status/DisableNormalSkillExceptForAdditional/WithUI',
+    ]);
+    expect(table.getSkillTypeCastBlocker(target, 'normalSkill', true, 'normal')).toBeUndefined();
+  });
   it('施法受限保留实际控制状态，不把交互门禁误认为沉默', () => {
     const target = new CombatBuffContainer('operator', new CombatAttributeSet<string>());
     const table = new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE);

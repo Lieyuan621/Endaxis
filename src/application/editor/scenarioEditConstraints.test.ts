@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../core/project/level';
 import { expect, it, vi } from 'vitest';
 import { createEmptyProject } from '../../core/project/createProject';
 import type { ScenarioDocument } from '../../core/project/schema';
@@ -109,7 +110,7 @@ it('配置锁不锁名称、布局和未来输入，项目级提交也检查配�
       s.tracks[0]!.initialState.ultimateEnergy++;
     },
     (s: ScenarioDocument) => {
-      s.enemy.editable.hp++;
+      firstScenarioEnemy(s).enemy.editable.hp++;
     },
     (s: ScenarioDocument) => {
       s.battle.random = { mode: 'expected', globalSeed: 10 };

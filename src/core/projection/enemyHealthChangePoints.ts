@@ -4,9 +4,6 @@
  */
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
 
-/** 当前单敌人模型中的固定目标身份；多目标模型接入后应改为按目标筛选。 */
-export const SINGLE_ENEMY_TARGET_ID = 'enemy' as const;
-
 /** 一次落到敌人身上的生命变化事实。 */
 export interface EnemyHealthChangePoint {
   readonly frame: number;
@@ -50,7 +47,7 @@ function requireNumber(
 
 function readPoint(entry: CombatReceiptEntry): EnemyHealthChangePoint {
   const data = requireData(entry);
-  if (entry.event === 'MaxHealthChanged') {
+  if (entry.event === 'MaxHealthChanged' || entry.event === 'EnemyHealthCleared') {
     const remainingHealth = requireNumber(entry, data, 'currentHealth');
     return {
       frame: entry.frame,
@@ -61,7 +58,9 @@ function readPoint(entry: CombatReceiptEntry): EnemyHealthChangePoint {
       healthChange: remainingHealth - requireNumber(entry, data, 'previousHealth'),
       previousHealth: requireNumber(entry, data, 'previousHealth'),
       remainingHealth,
-      maxHealth: requireNumber(entry, data, 'maxHealth'),
+      ...(entry.event === 'MaxHealthChanged'
+        ? { maxHealth: requireNumber(entry, data, 'maxHealth') }
+        : {}),
     };
   }
   return {
@@ -85,22 +84,24 @@ function readPoint(entry: CombatReceiptEntry): EnemyHealthChangePoint {
 }
 
 /**
- * 按回执原始顺序输出全部落到当前单敌人身上的变化点。
+ * 按回执原始顺序输出落到指定敌人身上的变化点。
  * 其他目标的伤害事实不属于敌人曲线，但不会被本投影误删或合并。
  */
 export function projectEnemyHealthChangePoints(
   entries: readonly CombatReceiptEntry[],
+  targetId: string,
 ): readonly EnemyHealthChangePoint[] {
   const points: EnemyHealthChangePoint[] = [];
   for (const entry of entries) {
     if (
       entry.event !== 'DamageApplied' &&
       entry.event !== 'HealingApplied' &&
-      entry.event !== 'MaxHealthChanged'
+      entry.event !== 'MaxHealthChanged' &&
+      entry.event !== 'EnemyHealthCleared'
     )
       continue;
     const point = readPoint(entry);
-    if (point.targetId === SINGLE_ENEMY_TARGET_ID) points.push(point);
+    if (point.targetId === targetId) points.push(point);
   }
   return points;
 }

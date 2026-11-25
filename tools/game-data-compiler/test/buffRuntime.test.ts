@@ -66,7 +66,7 @@ describe('Buff 运行时公共来源', () => {
       expect(evaluate).toHaveBeenCalledWith(
         expect.objectContaining({
           kind: 'healthCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           valueType: 'current',
           operator: 'greater',
           value: { kind: 'constant', value: 0 },

@@ -1,3 +1,4 @@
+import { usesRawDamageValue } from './playerActiveDamage';
 // 纯数据契约由独立包唯一声明；此路径保留兼容导出。
 import type {
   DamageModifierSide,
@@ -18,12 +19,7 @@ export {
  * 单次玩家伤害包跨原生处理阶段传递的唯一上下文。
  * 每次命中都应新建实例；处理器只能在自己的阶段修改允许的字段。
  */
-import type {
-  DamageFeature,
-  DamageTag,
-  DamageType,
-  SkillType,
-} from '../../game-data/operatorDefinition';
+import type { DamageTag, DamageType, SkillType } from '../../game-data/operatorDefinition';
 import type {
   AttributeModifierTiming,
   AttributeModifierValues,
@@ -82,12 +78,12 @@ interface PlayerDamageContextInput {
   readonly targetHealthType: DamageTargetHealthType;
   readonly tags?: readonly DamageTag[];
   readonly gameplayTags?: readonly GameplayTag[];
-  readonly features?: readonly DamageFeature[];
   readonly skillCastId?: number;
   readonly skillCastInfo?: CombatSkillCastInfo | null;
   readonly skillId?: string;
   readonly skillType?: SkillType;
-  readonly ports: PlayerDamageContextPorts;
+  /** LifeDrain 不采样普通伤害乘区，也不运行 DamageProcessor。 */
+  readonly ports?: PlayerDamageContextPorts;
 }
 
 /** 遵循已还原原生伤害包生命周期的单次命中可变状态。 */
@@ -99,21 +95,20 @@ export class PlayerDamageContext {
   readonly targetHealthType: DamageTargetHealthType;
   readonly tags: readonly DamageTag[];
   readonly gameplayTags: readonly GameplayTag[];
-  readonly features: readonly DamageFeature[];
   readonly skillCastId: number | null;
   readonly skillCastInfo: CombatSkillCastInfo | null | undefined;
   readonly skillId?: string;
   readonly skillType?: SkillType;
   readonly damageScales = new DamageScaleAccumulator();
   readonly appliedDamageModifiers: AppliedDamageModifier[] = [];
-  readonly #ports: PlayerDamageContextPorts;
+  readonly #ports?: PlayerDamageContextPorts;
   #baseValue = 0;
   #value = 0;
   #pendingCalculationScale = 1;
   #hasCalculationResult = false;
   readonly #instantModifiedSides = new Set<DamageModifierSide>();
   #beforeCalculationInstantSnapshots: Partial<PlayerDamageAttributeSnapshots> = {};
-  #snapshots: PlayerDamageAttributeSnapshots;
+  #snapshots?: PlayerDamageAttributeSnapshots;
 
   constructor(input: PlayerDamageContextInput) {
     this.partTransferInfo = input.partTransferInfo;
@@ -123,13 +118,14 @@ export class PlayerDamageContext {
     this.targetHealthType = input.targetHealthType;
     this.tags = input.tags ?? [];
     this.gameplayTags = input.gameplayTags ?? [];
-    this.features = input.features ?? [];
     this.skillCastId = input.skillCastId ?? null;
     this.skillCastInfo = input.skillCastInfo;
     this.skillId = input.skillId;
     this.skillType = input.skillType;
     this.#ports = input.ports;
-    this.#snapshots = input.ports.captureAttributeSnapshots();
+    if (input.ports === undefined && input.damageType !== 'lifeDrain')
+      throw new Error('attribute-based damage requires snapshot ports');
+    this.#snapshots = input.ports?.captureAttributeSnapshots();
   }
 
   get baseValue(): number {
@@ -145,10 +141,14 @@ export class PlayerDamageContext {
   }
 
   get attackerAttributes(): PlayerDamageAttributeSnapshots['attacker'] {
+    if (this.#snapshots === undefined)
+      throw new Error('raw damage has no attacker attribute snapshot');
     return this.#snapshots.attacker;
   }
 
   get defenderAttributes(): PlayerDamageAttributeSnapshots['defender'] {
+    if (this.#snapshots === undefined)
+      throw new Error('raw damage has no defender attribute snapshot');
     return this.#snapshots.defender;
   }
 
@@ -160,15 +160,20 @@ export class PlayerDamageContext {
     side: DamageModifierSide,
     request: InstantAttributeModifierRequest,
   ): void {
+    if (this.#ports === undefined)
+      throw new Error('raw damage does not accept attribute processors');
     this.#ports.addInstantAttributeModifier(side, request);
     this.#instantModifiedSides.add(side);
   }
 
   applyModifiers(timing: DamageProcessTiming): void {
+    if (this.damageType === 'lifeDrain') return;
+    const ports = this.#ports;
+    if (ports === undefined) throw new Error('damage requires modifier ports');
     try {
-      this.#ports.applyModifiers(timing, 'attacker', this);
-      this.#ports.applyModifiers(timing, 'defender', this);
-      const captured = this.#ports.captureAttributeSnapshots();
+      ports.applyModifiers(timing, 'attacker', this);
+      ports.applyModifiers(timing, 'defender', this);
+      const captured = ports.captureAttributeSnapshots();
       if (timing === 'beforeCalculation') {
         this.#beforeCalculationInstantSnapshots = {
           ...(this.#instantModifiedSides.has('attacker') ? { attacker: captured.attacker } : {}),
@@ -190,15 +195,15 @@ export class PlayerDamageContext {
       this.#instantModifiedSides.clear();
       throw error;
     } finally {
-      this.#ports.clearInstantAttributeModifiers('attacker');
-      this.#ports.clearInstantAttributeModifiers('defender');
+      ports.clearInstantAttributeModifiers('attacker');
+      ports.clearInstantAttributeModifiers('defender');
     }
   }
 
   dispose(): void {
     if (this.#instantModifiedSides.size === 0) return;
-    this.#ports.clearInstantAttributeModifiers('attacker');
-    this.#ports.clearInstantAttributeModifiers('defender');
+    this.#ports?.clearInstantAttributeModifiers('attacker');
+    this.#ports?.clearInstantAttributeModifiers('defender');
     this.#beforeCalculationInstantSnapshots = {};
     this.#instantModifiedSides.clear();
   }
@@ -218,7 +223,7 @@ export class PlayerDamageContext {
   }
 
   resolveFinalAttackValue(): number {
-    if (this.damageType === 'lifeDrain' || this.damageType === 'fixed') return this.#value;
+    if (usesRawDamageValue(this.damageType)) return this.#value;
     this.applyModifiers('afterCalculation');
     return this.#value * this.damageScales.getFinalValue();
   }

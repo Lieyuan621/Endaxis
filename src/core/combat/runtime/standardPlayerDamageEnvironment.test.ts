@@ -1,3 +1,5 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
+import { createActionGraphBuilder } from '../../../../tools/game-data-compiler/src/compiler/actions/actionGraphBuilder';
 import type { ActionGraphDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
 import { extractResourceDataNodes } from '../../../../tools/game-data-compiler/src/compiler/extractGraphDataNodes';
 import bedazzlingNightDebut from '../../../data/equipment/generated-weapons/lance/wpn_lance_0014.generated';
@@ -29,6 +31,49 @@ function activeTimelineSegments(
     segment => segment.startFrame <= frame && frame < segment.endFrame,
   );
 }
+
+it.each(['enemy', 'operator'] as const)('%s 的等级属性按场景初始化并参与属性修正', entityId => {
+  const environment = createEnvironment();
+  const context = createContext();
+  if (context.panel === undefined) throw new Error('fixture panel');
+  bindBattleWithoutProjectiles(environment, context);
+  const target =
+    entityId === 'enemy'
+      ? environment.runtimeOptions.enemyBuffRuntime
+      : environment.runtimeOptions.createOperatorBuffRuntime!('operator', context.panel);
+  if (!(target instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
+  const base = entityId === 'enemy' ? context.enemy.source.level : context.panel.level;
+  const read = () =>
+    environment.runtimeOptions.readSourceAttributeValue!(entityId, {
+      attribute: { kind: 'specific', key: 'level' },
+      stage: 'finalNonConverted',
+      useFloor: false,
+      divisor: { kind: 'constant', value: 1 },
+      multiplier: { kind: 'constant', value: 1 },
+      base: { kind: 'constant', value: 0 },
+      targetKey: 'level',
+    });
+  expect(read()).toBe(base);
+  const buff = target.container.add(
+    {
+      id: 'level-modifier',
+      stackingType: 'unlimited',
+      attributeModifiers: [
+        {
+          attribute: 'Level',
+          timing: 'runtime',
+          values: attributeModifierValues('baseAddition', 2),
+        },
+      ],
+    },
+    entityId,
+  );
+  expect(read()).toBe(base + 2);
+  bindBattleWithoutProjectiles(environment, context);
+  expect(read()).toBe(base + 2);
+  buff!.finish('other');
+  expect(read()).toBe(base);
+});
 
 it('帧末吸收只合并同帧同实例同施法，并将同步重入留给下一批', () => {
   const environment = createEnvironment();
@@ -89,7 +134,7 @@ it('帧末队列恢复使用复制后的 Buff 黑板，清理宿主中止当前�
   const bound = bindBattleWithoutProjectiles(restored, createContext());
   const values: number[] = [];
   restored.eventsFor('enemy').registerCallback('buffConsumedFrameEnd', event => {
-    values.push(event.payload.buff.blackboard.getNumber('value')!);
+    values.push(event.payload.buff!.blackboard.getNumber('value')!);
     restored.runtimeOptions.clearPendingAbilityEvents!('enemy');
   });
   expect(values).toEqual([]);
@@ -132,42 +177,6 @@ it('环境数据端口引用实际生命账本，保存后原分支受伤不改�
   expect(environment.runtimeState.enemyVitals.health).toBe(before - 10);
   expect(saved.enemyVitals.health).toBe(before);
 });
-
-it.each(['spellBurst', 'physicalInfliction'] as const)(
-  '环境将%s的逐次覆盖接入公共伤害执行器',
-  kind => {
-    const simulate = (overrides?: Record<string, boolean>) => {
-      const context = createContext();
-      const environment = new StandardPlayerDamageEnvironment({
-        ...createEnvironment().options,
-        randomMode: 'expected',
-        reactionCriticalOverrides: overrides,
-      });
-      const executor = environment.runtimeOptions.createOperationExecutor!(context);
-      executor.execute({
-        kind: 'dealDamage',
-        key: 'reaction-hit',
-        parameters: {
-          damageType: 'electric',
-          attackScale: 1,
-          tags: kind === 'spellBurst' ? ['electricBurst'] : [],
-          features: kind === 'physicalInfliction' ? ['physicalInfliction'] : [],
-        },
-      });
-      const hit = (context.receipt as CombatReceiptCollector).entries.find(
-        entry => entry.event === 'DamageApplied',
-      )!;
-      return hit.data!;
-    };
-    const ordinary = simulate();
-    expect(typeof ordinary.reactionCriticalKey).toBe('string');
-    const forced = simulate({ [String(ordinary.reactionCriticalKey)]: true });
-    expect(forced.reactionCriticalKey).toBe(ordinary.reactionCriticalKey);
-    expect(forced.isCritical).toBe(true);
-    expect(forced.value).toBe(forced.criticalDamage);
-    expect(simulate().value).toBe(ordinary.value);
-  },
-);
 
 it('生命变化事件在写入生命后送给对应实体，零伤害不触发', () => {
   const environment = createEnvironment();
@@ -628,10 +637,18 @@ it.each([
       resolveTarget: () => target,
       resolveEventTarget: () => target,
       queryTargets: (query, context) =>
-        new TargetContextOperationExecutor('operator', {
-          execute: () => false,
-          evaluate: () => false,
-        }).queryTargets(query, context),
+        new TargetContextOperationExecutor(
+          'operator',
+          {
+            execute: () => false,
+            evaluate: () => false,
+          },
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+        ).queryTargets(query, context),
       delegate: { execute: () => false, evaluate: () => false },
     });
     const common = {
@@ -922,8 +939,31 @@ const testEnemy: CombatEnemyProgram = {
   },
 };
 
+function healQueries(
+  controlledId: string,
+  casterId = 'operator',
+): NonNullable<CombatOperationExecutorContext['queryTargets']> {
+  const queries = new TargetContextOperationExecutor(
+    casterId,
+    {
+      execute: () => false,
+      evaluate: () => false,
+    },
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+  );
+  return (query, context) =>
+    query.kind === 'mainCharacter'
+      ? [{ kind: 'operator', operatorId: controlledId }]
+      : queries.queryTargets(query, context);
+}
+
 function createContext(): CombatOperationExecutorContext {
   return {
+    queryTargets: healQueries('operator'),
     program: {
       operatorId: 'operator',
       skillGroupKey: 'battleSkill',
@@ -1001,6 +1041,7 @@ function createEnvironment(
   randomMode?: 'expected' | 'sampled',
 ): StandardPlayerDamageEnvironment {
   return new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     criticalSamples: { nextCriticalSample: () => criticalSample },
     ...(randomMode === undefined ? {} : { randomMode }),
     resolveNonRandomRuntimeSnapshot: () => ({
@@ -1011,6 +1052,175 @@ function createEnvironment(
     enemyVitals: createEnemyCombatVitals(enemy),
   });
 }
+
+it('敌人实例独立持有生命和同名 Buff，切面恢复保留各自账本', () => {
+  const base = createEnvironment();
+  const environment = new StandardPlayerDamageEnvironment({
+    ...base.options,
+    additionalEnemies: new Map([
+      ['enemy:a', { program: testEnemy, vitals: createEnemyCombatVitals(testEnemy) }],
+      ['enemy:b', { program: testEnemy, vitals: createEnemyCombatVitals(testEnemy) }],
+    ]),
+  });
+  const damageContext: CombatOperationExecutorContext = {
+    ...createContext(),
+    queryTargets: (_query, context) =>
+      context.actionInputTargets?.[0] === undefined ? [] : [context.actionInputTargets?.[0]],
+  };
+  bindBattleWithoutProjectiles(environment, damageContext);
+  const a = environment.enemyInstance('enemy:a')!;
+  const b = environment.enemyInstance('enemy:b')!;
+  const originalMaximum = a.vitals.maxHealth;
+  const executor = environment.runtimeOptions.createOperationExecutor(damageContext);
+  const primaryHealth = environment.enemyVitals.health;
+  const bHealth = b.vitals.health;
+  const aHealth = a.vitals.health;
+  executor.execute(
+    { ...damageStep, parameters: { ...damageStep.parameters, target: 'actionInputTarget' } },
+    {
+      blackboard: new ActionBlackboard(),
+      actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy:a' }),
+    },
+  );
+  expect(a.vitals.health).toBeLessThan(aHealth);
+  const primaryPoise = environment.enemyVitals.poise;
+  const otherPoise = b.vitals.poise;
+  const targetPoise = a.vitals.poise;
+  executor.execute(
+    { kind: 'dealStagger', parameters: { value: 10, target: 'actionInputTarget' } },
+    {
+      blackboard: new ActionBlackboard(),
+      actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy:a' }),
+    },
+  );
+  expect(a.vitals.poise).toBeLessThan(targetPoise);
+  expect(b.vitals.poise).toBe(otherPoise);
+  expect(environment.enemyVitals.poise).toBe(primaryPoise);
+  expect(b.vitals.health).toBe(bHealth);
+  expect(environment.enemyVitals.health).toBe(primaryHealth);
+  const buff = (amount: number) => ({
+    id: 'same-buff',
+    stackingType: 'unlimited' as const,
+    attributeModifiers: [
+      {
+        attribute: 'MaxHp',
+        timing: 'runtime' as const,
+        values: attributeModifierValues('baseAddition', amount),
+      },
+    ],
+  });
+  a.buffs.add(buff(100), 'enemy:a');
+  b.buffs.add(buff(200), 'enemy:b');
+  a.vitals.takeDamage(30);
+  expect(a.vitals.maxHealth).toBe(originalMaximum + 100);
+  expect(b.vitals.maxHealth).toBe(originalMaximum + 200);
+  expect(
+    environment.runtimeOptions.readSourceAttributeValue!('enemy:b', {
+      useFloor: false,
+      divisor: { kind: 'constant', value: 1 },
+      multiplier: { kind: 'constant', value: 1 },
+      base: { kind: 'constant', value: 0 },
+      targetKey: 'hp',
+      attribute: { kind: 'specific', key: 'maxHealth' },
+      stage: 'finalNonConverted',
+    }),
+  ).toBe(originalMaximum + 200);
+  expect(environment.enemyVitals.maxHealth).toBe(originalMaximum);
+  const saved = structuredClone(environment.runtimeState);
+  const restored = new StandardPlayerDamageEnvironment({
+    ...environment.options,
+    enemyVitals: CombatVitals.bindRuntimeState(saved.enemyVitals),
+    restoredState: saved,
+  });
+  bindBattleWithoutProjectiles(restored, createContext());
+  const restoredA = restored.enemyInstance('enemy:a')!;
+  expect(restoredA.vitals.health).toBe(a.vitals.health);
+  expect(restoredA.vitals.maxHealth).toBe(a.vitals.maxHealth);
+  restoredA.vitals.takeDamage(50);
+  expect(restoredA.vitals.health).toBe(a.vitals.health - 50);
+  expect(restored.enemyInstance('enemy:b')!.vitals.health).toBe(b.vitals.health);
+  expect(restored.enemyVitals.health).toBe(environment.enemyVitals.health);
+  expect(restored.runtimeState.enemyInstances!.get('enemy:a')!.buffs).toBe(
+    restoredA.buffs.runtimeState,
+  );
+});
+
+it('显式攻击者使用所选干员的面板和事件端口，保留原技能身份', () => {
+  const context = createContext();
+  const environment = createEnvironment();
+  const executor = environment.runtimeOptions.createOperationExecutor(context);
+  if (context.panel === undefined) throw new Error('fixture panel');
+  environment.runtimeOptions.createOperatorBuffRuntime!('other', {
+    ...context.panel,
+    operatorId: 'other',
+    attack: 1400,
+    attackBeforeAttributeScalar: 1400,
+    criticalRate: 0,
+    staggerDamagePercent: 1,
+    combatModifiers: [],
+  });
+  const originalPreparation = vi.fn();
+  const selectedPreparation = vi.fn();
+  environment.eventsFor('operator').registerAction('beforeDamageAction', 0, originalPreparation);
+  environment.eventsFor('other').registerAction('beforeDamageAction', 0, selectedPreparation);
+  const skillCastInfo = {
+    skillCastId: 42,
+    originSkillId: 'original-skill',
+    originSkillType: 'battleSkill' as const,
+    nonReturnedSpCost: 100,
+  };
+  const actionContext = {
+    blackboard: new ActionBlackboard(),
+    actionOwnerId: 'operator',
+    actionSourceId: 'other',
+    skillCastInfo,
+  };
+  const step = {
+    kind: 'dealDamage' as const,
+    parameters: {
+      attacker: 'actionSource' as const,
+      target: 'enemy' as const,
+      damageType: 'physical' as const,
+      attackScale: 1,
+      tags: [],
+    },
+  };
+  executor.execute(step, actionContext);
+  const entries = (context.receipt as CombatReceiptCollector).entries;
+  const hit = entries.find(entry => entry.event === 'DamageApplied');
+  expect(hit?.sourceId).toBe('other');
+  // 目标防御 200：1400 × 100 / (100 + 200)。
+  expect(hit?.data?.actualDamage).toBeCloseTo(1400 / 3);
+  expect(originalPreparation).not.toHaveBeenCalled();
+  expect(selectedPreparation).toHaveBeenCalledOnce();
+  expect(selectedPreparation.mock.calls[0]![0]).toMatchObject({
+    payload: { sourceId: 'other', skillCastInfo },
+  });
+  const beforePoise = environment.enemyVitals.poise;
+  const beforeHealth = environment.enemyVitals.health;
+  executor.execute(
+    {
+      kind: 'dealStagger',
+      parameters: { attacker: 'actionSource', target: { kind: 'owner' }, value: 10 },
+    },
+    { ...actionContext, actionOwnerId: 'enemy' },
+  );
+  expect(environment.enemyVitals.poise).toBe(beforePoise - 20);
+  expect(environment.enemyVitals.health).toBe(beforeHealth);
+  expect(
+    (context.receipt as CombatReceiptCollector).entries.find(
+      entry => entry.event === 'PoiseApplied',
+    )?.sourceId,
+  ).toBe('other');
+  expect(originalPreparation).not.toHaveBeenCalled();
+  expect(selectedPreparation).toHaveBeenCalledTimes(2);
+  expect(() => executor.execute(step, { ...actionContext, actionSourceId: undefined })).toThrow(
+    'damage attacker has no action identity',
+  );
+  expect(() => executor.execute(step, { ...actionContext, actionSourceId: 'missing' })).toThrow(
+    'has no resolved panel',
+  );
+});
 
 function createEquipmentContext(): EquipmentEventOperationExecutorContext {
   const { program: _program, equipmentContributions: _contributions, ...battle } = createContext();
@@ -1096,7 +1306,6 @@ it.each([
                       damageType: 'electric',
                       attackScale: 1,
                       tags: ['electricAbnormal'],
-                      features: [],
                       canCritical,
                     },
                   ],
@@ -1107,11 +1316,7 @@ it.each([
   });
   const context = createContext();
   const executor = environment.runtimeOptions.createOperationExecutor(context);
-  const source = environment.runtimeOptions.createOperatorBuffRuntime!(
-    'operator',
-    context.panel,
-    [],
-  );
+  const source = environment.runtimeOptions.createOperatorBuffRuntime!('operator', context.panel);
   if (!(source instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
   source.container.add(
     {
@@ -1185,7 +1390,7 @@ it.each([
     expect(hit.data?.canCritical).toBe(canCritical);
   } else expect(hit.data?.spellBurstType).toBe('Pulse');
   expect(preparation).toHaveBeenCalledOnce();
-  expect(preparation.mock.calls[0]![0].payload.skillCastId).toBe(42);
+  expect(preparation.mock.calls[0]![0].payload.skillCastInfo.skillCastId).toBe(42);
   expect(skillBlackboard.snapshot()).toEqual({});
   expect(samples).toHaveBeenCalledTimes(canCritical ? 1 : 0);
   expect(
@@ -1194,119 +1399,46 @@ it.each([
   ).toBe(hit.data?.actualDamage);
 });
 
-it.each([15, 0, -1])('腐蚀输出收集仅延长正时长%s，并只提高减抗上限', duration => {
+it('新Buff先接收侧收集再来源侧收集，寿命读取修改结果；刷新不重放', () => {
   const environment = createEnvironment();
   environment.runtimeOptions.createOperationExecutor(createContext());
-  environment.runtimeOptions.createOperatorBuffRuntime!('operator', createContext().panel, [
-    { reaction: 'corrosion', durationSecondsAddition: 10, effectivenessAddition: 0.2 },
-  ]);
   const target = environment.runtimeOptions.enemyBuffRuntime;
   if (!(target instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
-  const input = {
-    duration,
-    max_def_decrease: 0.2,
-    start_def_decrease: 0.05,
-    def_decrease_tick: 0.01,
-  };
-  target.apply({
-    buffId: 'collected-corrosion',
-    sourceId: 'operator',
-    blackboardValues: input,
-    definition: {
-      stackingType: 'stack',
-      durationSeconds: { blackboardKey: 'duration' },
-      applyTags: ['Skill/Character/Common/SpellStatus/Corrupt'],
-    },
+  const order: string[] = [];
+  environment.eventsFor('enemy').registerCallback('collectAddedBuffBlackboard', event => {
+    order.push(event.event);
+    expect(event.payload).toMatchObject({
+      sourceId: 'operator',
+      targetId: 'enemy',
+      buffId: 'collected',
+    });
+    event.payload.blackboard.assignDynamic(
+      'duration',
+      event.payload.blackboard.getNumber('duration')! + 5,
+    );
+    event.payload.modifiedKeys.add('duration');
   });
-  const buff = target.container.buffs[0]!;
-  expect(buff.blackboard.getNumber('duration')).toBe(duration > 0 ? duration + 10 : duration);
-  expect(buff.blackboard.getNumber('max_def_decrease')).toBeCloseTo(0.24);
-  expect(buff.blackboard.getNumber('start_def_decrease')).toBe(0.05);
-  expect(buff.blackboard.getNumber('def_decrease_tick')).toBe(0.01);
-  expect(input.duration).toBe(duration);
-});
-
-it('反应工厂创建的腐蚀也经过公共收集，时长与上限不会重复加成', () => {
-  // 使用明确的工厂输入隔离创建链，不依赖某个干员战技是否实际施加附着。
-  const values = {
-    duration: 15,
-    max_def_decrease: 0.2,
-    start_def_decrease: 0.05,
-    def_decrease_tick: 0.01,
-  };
-  const environment = new StandardPlayerDamageEnvironment({
-    criticalSamples: { nextCriticalSample: () => 1 },
-    resolveNonRandomRuntimeSnapshot: () => ({
-      runtimeExtensionMultiplier: 1,
-      appliesIgniteDamageMultiplier: false,
-      appliesPhysicalInflictionDamageMultiplier: false,
-    }),
-    enemyVitals: createEnemyCombatVitals(testEnemy),
-    spellInflictionSettings: skillSettings,
-    elementalInflictionDocument: {
-      schemaVersion: 1,
-      revision: 'test',
-      buffs: [
-        {
-          id: 'attachment.electric',
-          stackingType: 'enhanceAndRefresh',
-          durationSeconds: 10,
-          role: { kind: 'elementalAttachment', element: 'electric' },
-        },
-        {
-          id: 'status.corrosion',
-          stackingType: 'stack',
-          durationSeconds: { blackboardKey: 'duration' },
-          applyTags: ['Skill/Character/Common/SpellStatus/Corrupt'],
-          role: { kind: 'compoundStatus', consumedElement: 'electric', incomingElement: 'nature' },
-        },
-      ],
-    },
-    compoundStatusFactories: {
-      schemaVersion: 1,
-      revision: 'test',
-      factories: [
-        {
-          id: 'factory.corrosion',
-          consumedElement: 'electric',
-          incomingElement: 'nature',
-          durationSeconds: 0.1,
-          blackboard: values,
-          skillSettingLookups: [],
-          createdBuff: {
-            buffId: 'status.corrosion',
-            blackboardAssignments: Object.keys(values).map(key => ({
-              targetKey: key,
-              inputKey: key,
-            })),
-          },
-        },
-      ],
-    },
+  environment.eventsFor('operator').registerCallback('collectOutputBuffBlackboard', event => {
+    order.push(event.event);
+    event.payload.blackboard.assignDynamic(
+      'duration',
+      event.payload.blackboard.getNumber('duration')! * 2,
+    );
   });
-  const context = createContext();
-  const executor = environment.runtimeOptions.createOperationExecutor(context);
-  environment.runtimeOptions.createOperatorBuffRuntime!('operator', context.panel, [
-    { reaction: 'corrosion', durationSecondsAddition: 10, effectivenessAddition: 0.2 },
-  ]);
-  for (const element of ['electric', 'nature'] as const) {
-    expect(
-      executor.execute({
-        kind: 'applyElementalInfliction',
-        parameters: { element, isExtra: false },
-      }),
-    ).toBe(true);
-  }
-  const target = environment.runtimeOptions.enemyBuffRuntime;
-  if (!(target instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
-  const buff = target.container.buffs.find(
-    buff => buff.blackboard.getNumber('max_def_decrease') !== undefined,
-  )!;
-  expect(buff).toBeDefined();
-  expect(buff.blackboard.getNumber('duration')).toBe(25);
-  expect(buff.blackboard.getNumber('max_def_decrease')).toBeCloseTo(0.24);
-  expect(buff.blackboard.getNumber('start_def_decrease')).toBe(0.05);
-  expect(buff.blackboard.getNumber('def_decrease_tick')).toBe(0.01);
+  const definition = {
+    stackingType: 'refresh' as const,
+    blackboard: { duration: 3 },
+    durationSeconds: { blackboardKey: 'duration' },
+  };
+  const request = { buffId: 'collected', sourceId: 'operator', definition, blackboardValues: {} };
+  target.applyScoped(request);
+  const first = target.container.buffs[0]!;
+  expect(order).toEqual(['collectAddedBuffBlackboard', 'collectOutputBuffBlackboard']);
+  expect(first.remainingDuration).toBe(16);
+  const state = structuredClone(target.container.buffs[0]!.runtimeState);
+  expect(state.modifiedBlackboardKeys).toEqual(new Set(['duration']));
+  target.applyScoped(request);
+  expect(order).toHaveLength(2);
 });
 
 it.each(['criticalRate', 'criticalDamageIncrease'] as const)(
@@ -1397,9 +1529,21 @@ it.each(['criticalRate', 'criticalDamageIncrease'] as const)(
         {},
       ),
       'critical.damage',
+      {
+        graph: createActionGraphBuilder(),
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      },
     );
     const sequence = runtime.createSequence(
       chainEntry(`critical-projected-${attribute}`, [projected as ActionGraphStep]),
+      {
+        blackboard,
+        actionOwnerId: 'operator',
+        actionSourceId: 'operator',
+        actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' }),
+      },
     );
     sequence.executeInstant({});
     expect(samples).toHaveBeenCalledTimes(attribute === 'criticalRate' ? 0 : 1);
@@ -1429,6 +1573,7 @@ it.each(['burst', 'buff'] as const)(
         program: { ...base.program, statModifiers: { criticalRate: 0.8 } },
       };
       const environment = new StandardPlayerDamageEnvironment({
+        primaryEnemyId: 'enemy',
         criticalSamples: { nextCriticalSample },
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -1467,7 +1612,6 @@ it.each(['burst', 'buff'] as const)(
                           damageType: 'electric',
                           attackScale: 1,
                           tags: [],
-                          features: [],
                           canCritical,
                         },
                       ],
@@ -1683,7 +1827,18 @@ it('装备末端满血治疗仍按 output、receive 顺序发布事件，且不�
   }
   const executor = environment.runtimeOptions.createEquipmentEventOperationExecutor!(context);
   expect(
-    executor.execute({ kind: 'heal', parameters: { target: 'caster', amount: 100, tags: [] } }),
+    executor.execute(
+      {
+        kind: 'heal',
+        parameters: {
+          target: { kind: 'fixed', target: 'caster' },
+          healer: { kind: 'source' },
+          amount: 100,
+          tags: [],
+        },
+      },
+      { blackboard: new ActionBlackboard(), actionSourceId: 'operator', actionOwnerId: 'operator' },
+    ),
   ).toBe(true);
   expect(events).toEqual(['outputHeal', 'receiveHeal']);
 });
@@ -1785,6 +1940,7 @@ function createInflictionEnvironment(): StandardPlayerDamageEnvironment {
     ],
   };
   return new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     criticalSamples: { nextCriticalSample: () => 1 },
     resolveNonRandomRuntimeSnapshot: () => ({
       runtimeExtensionMultiplier: 1,
@@ -1813,6 +1969,7 @@ function createAttachmentOnlyEnvironment(): StandardPlayerDamageEnvironment {
     ],
   };
   return new StandardPlayerDamageEnvironment({
+    primaryEnemyId: 'enemy',
     criticalSamples: { nextCriticalSample: () => 1 },
     resolveNonRandomRuntimeSnapshot: () => ({
       runtimeExtensionMultiplier: 1,
@@ -1852,6 +2009,7 @@ describe('StandardPlayerDamageEnvironment', () => {
       ] as const) {
         const context = createContext();
         const environment = new StandardPlayerDamageEnvironment({
+          primaryEnemyId: 'enemy',
           criticalSamples: { nextCriticalSample: () => 1 },
           resolveNonRandomRuntimeSnapshot: () => ({
             runtimeExtensionMultiplier: 1,
@@ -1948,8 +2106,8 @@ describe('StandardPlayerDamageEnvironment', () => {
           onPendingComboCondition: (ownerId, program, value) => {
             expect(ownerId).toBe('owner');
             expect(value).toMatchObject({
-              inputTarget: { kind: 'operator', operatorId: 'operator' },
-              triggerTarget: { kind: 'enemy' },
+              inputTargets: [{ kind: 'operator', operatorId: 'operator' }],
+              triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
               assignPairs: { consumed_type: 0, consumed_layer: 0 },
             });
             pending.push(program.key);
@@ -1985,6 +2143,7 @@ describe('StandardPlayerDamageEnvironment', () => {
     const element = 'heat';
     const context = createContext();
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -2048,7 +2207,9 @@ describe('StandardPlayerDamageEnvironment', () => {
         isOwnerSilenced: () => false,
         currentComboCooldown: () => ({ oneReady: true, maxPassedTime: 0, startCdFrame: 0 }),
         resolveTarget: id =>
-          id === 'enemy' ? { kind: 'enemy' } : { kind: 'operator', operatorId: id },
+          id === 'enemy'
+            ? { kind: 'enemy', enemyId: 'enemy' }
+            : { kind: 'operator', operatorId: id },
         onPending: p => {
           order.push(`${type}:combo`);
           pending.push(p);
@@ -2077,8 +2238,8 @@ describe('StandardPlayerDamageEnvironment', () => {
     );
     expect(pending).toHaveLength(4);
     expect(pending[1]).toMatchObject({
-      inputTarget: { kind: 'operator', operatorId: 'operator' },
-      triggerTarget: { kind: 'enemy' },
+      inputTargets: [{ kind: 'operator', operatorId: 'operator' }],
+      triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
       assignPairs: {},
     });
   });
@@ -2254,8 +2415,18 @@ describe('StandardPlayerDamageEnvironment', () => {
           sourceId: 'operator',
           resolveTarget: target =>
             target === 'enemy' ? environment.runtimeOptions.enemyBuffRuntime! : operatorBuffs,
-          queryTargets: (query, context) => new TargetContextOperationExecutor('operator', executor).queryTargets(query, context),
-          resolveEventTarget: id => id === 'enemy' ? environment.runtimeOptions.enemyBuffRuntime! : operatorBuffs,
+          queryTargets: (query, context) =>
+            new TargetContextOperationExecutor(
+              'operator',
+              executor,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+            ).queryTargets(query, context),
+          resolveEventTarget: id =>
+            id === 'enemy' ? environment.runtimeOptions.enemyBuffRuntime! : operatorBuffs,
           delegate: executor,
         }),
     );
@@ -2504,8 +2675,21 @@ describe('StandardPlayerDamageEnvironment', () => {
       () =>
         new CombatVitalsConditionExecutor({
           resolveTarget: target => environment.runtimeOptions.resolveVitals!(target, 'operator'),
-          queryTargets: (query, context) => new TargetContextOperationExecutor('operator', executor).queryTargets(query, context),
-          resolveVitals: target => environment.runtimeOptions.resolveVitals!(target.kind === 'enemy' ? 'enemy' : 'caster', 'operator'),
+          queryTargets: (query, context) =>
+            new TargetContextOperationExecutor(
+              'operator',
+              executor,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+            ).queryTargets(query, context),
+          resolveVitals: target =>
+            environment.runtimeOptions.resolveVitals!(
+              target.kind === 'enemy' ? 'enemy' : 'caster',
+              'operator',
+            ),
           delegate: executor,
         }),
     );
@@ -2575,6 +2759,7 @@ describe('StandardPlayerDamageEnvironment', () => {
   it('shares the scene-injected vitals instance across damage writes and poise', () => {
     const vitals = createEnemyCombatVitals(testEnemy);
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -2597,6 +2782,7 @@ describe('StandardPlayerDamageEnvironment', () => {
 
   it('creates full-health operator ledgers and resolves the controlled heal target', () => {
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -2624,22 +2810,33 @@ describe('StandardPlayerDamageEnvironment', () => {
       program: { ...targetBase.program, operatorId: 'operator:b' },
       panel: { ...targetBase.panel!, operatorId: 'operator:b' },
     };
-    const sourceExecutor = environment.runtimeOptions.createOperationExecutor(source);
+    const sourceExecutor = environment.runtimeOptions.createOperationExecutor({
+      ...source,
+      queryTargets: healQueries('operator:b', 'operator:a'),
+    });
     environment.runtimeOptions.createOperationExecutor(target);
     const targetVitals = environment.runtimeOptions.resolveVitals!('caster', 'operator:b');
     targetVitals.takeDamage(250);
 
     expect(
-      sourceExecutor.execute({
-        kind: 'heal',
-        parameters: {
-          target: 'controlledOperator',
-          attribute: 'will',
-          multiplier: 2,
-          addition: 0,
-          tags: [],
+      sourceExecutor.execute(
+        {
+          kind: 'heal',
+          parameters: {
+            target: { kind: 'mainCharacter' },
+            healer: { kind: 'source' },
+            attribute: 'will',
+            multiplier: 2,
+            addition: 0,
+            tags: [],
+          },
         },
-      }),
+        {
+          blackboard: new ActionBlackboard(),
+          actionSourceId: 'operator:a',
+          actionOwnerId: 'operator:a',
+        },
+      ),
     ).toBe(true);
     expect(targetVitals.health).toBe(4950);
     expect(sourceReceipt.entries.at(-1)).toMatchObject({
@@ -2652,6 +2849,7 @@ describe('StandardPlayerDamageEnvironment', () => {
 
   it('completes healer subscriptions before receiver publication and shares each original event', () => {
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -2701,6 +2899,7 @@ describe('StandardPlayerDamageEnvironment', () => {
     });
     const executor = environment.runtimeOptions.createOperationExecutor({
       ...context,
+      queryTargets: healQueries('operator:receiver', 'operator:healer'),
       semanticEvents,
       program: { ...context.program, operatorId: 'operator:healer' },
       panel: {
@@ -2717,16 +2916,24 @@ describe('StandardPlayerDamageEnvironment', () => {
     });
 
     expect(
-      executor.execute({
-        kind: 'heal',
-        parameters: {
-          target: 'controlledOperator',
-          attribute: 'will',
-          multiplier: 1,
-          addition: 0,
-          tags: [],
+      executor.execute(
+        {
+          kind: 'heal',
+          parameters: {
+            target: { kind: 'mainCharacter' },
+            healer: { kind: 'source' },
+            attribute: 'will',
+            multiplier: 1,
+            addition: 0,
+            tags: [],
+          },
         },
-      }),
+        {
+          blackboard: new ActionBlackboard(),
+          actionSourceId: 'operator:healer',
+          actionOwnerId: 'operator:healer',
+        },
+      ),
     ).toBe(true);
     expect(order).toEqual(['output', 'healerSkill', 'receive', 'receiverSkill']);
   });
@@ -2739,8 +2946,21 @@ describe('StandardPlayerDamageEnvironment', () => {
 
     const conditions = new CombatVitalsConditionExecutor({
       resolveTarget: target => environment.runtimeOptions.resolveVitals!(target, 'operator'),
-      queryTargets: (query, context) => new TargetContextOperationExecutor('operator', executor).queryTargets(query, context),
-      resolveVitals: target => environment.runtimeOptions.resolveVitals!(target.kind === 'enemy' ? 'enemy' : 'caster', 'operator'),
+      queryTargets: (query, context) =>
+        new TargetContextOperationExecutor(
+          'operator',
+          executor,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+        ).queryTargets(query, context),
+      resolveVitals: target =>
+        environment.runtimeOptions.resolveVitals!(
+          target.kind === 'enemy' ? 'enemy' : 'caster',
+          'operator',
+        ),
       delegate: { execute: () => true, evaluate: () => true },
     });
     // 生命比例已低于 1，证明条件读取的是伤害写入后的同一账本。
@@ -2838,7 +3058,7 @@ describe('StandardPlayerDamageEnvironment', () => {
         expect(event).toBe(original);
         expect('event' in event && event.event).toBe('afterKillEntity');
         if ('event' in event && event.event === 'afterKillEntity') {
-          expect(event.payload.features).toEqual(['canBreakWeakness']);
+          expect(event.payload.tags).toEqual(['canBreakWeakness']);
         }
         events.push(`defeated:${environment.enemyVitals.health}`);
       },
@@ -2848,7 +3068,7 @@ describe('StandardPlayerDamageEnvironment', () => {
     expect(
       executor.execute({
         ...damageStep,
-        parameters: { ...damageStep.parameters, features: ['canBreakWeakness'] },
+        parameters: { ...damageStep.parameters, tags: ['canBreakWeakness'] },
       }),
     ).toBe(true);
 
@@ -3054,6 +3274,7 @@ describe('StandardPlayerDamageEnvironment', () => {
     const context = createContext();
     const receipt = context.receipt as CombatReceiptCollector;
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -3136,6 +3357,7 @@ describe('StandardPlayerDamageEnvironment', () => {
       receipt,
     };
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -3201,6 +3423,7 @@ describe('StandardPlayerDamageEnvironment', () => {
   it('fails explicitly when a burst triggers without SkillSetting data', () => {
     const context = createContext();
     const environment = new StandardPlayerDamageEnvironment({
+      primaryEnemyId: 'enemy',
       criticalSamples: { nextCriticalSample: () => 1 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -3818,7 +4041,7 @@ describe('StandardPlayerDamageEnvironment', () => {
       isOwnerSilenced: () => false,
       currentComboCooldown: () => ({ oneReady: true, maxPassedTime: 0, startCdFrame: 0 }),
       resolveTarget: id =>
-        id === 'enemy' ? { kind: 'enemy' } : { kind: 'operator', operatorId: id },
+        id === 'enemy' ? { kind: 'enemy', enemyId: 'enemy' } : { kind: 'operator', operatorId: id },
       onPending: pending,
     });
 
@@ -3830,8 +4053,8 @@ describe('StandardPlayerDamageEnvironment', () => {
     ).toBe(true);
     expect(pending).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({
-        inputTarget: { kind: 'operator', operatorId: 'operator' },
-        triggerTarget: { kind: 'enemy' },
+        inputTargets: [{ kind: 'operator', operatorId: 'operator' }],
+        triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
       }),
     );
   });
@@ -3870,7 +4093,8 @@ describe('StandardPlayerDamageEnvironment', () => {
           },
         },
       ),
-      operations: new TargetContextOperationExecutor('operator',
+      operations: new TargetContextOperationExecutor(
+        'operator',
         {
           execute: () => {
             throw new Error('unexpected combo condition operation');
@@ -3879,12 +4103,17 @@ describe('StandardPlayerDamageEnvironment', () => {
             throw new Error('unexpected delegated combo condition');
           },
         },
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
       ),
       isOwnerAlive: () => true,
       isOwnerSilenced: () => false,
       currentComboCooldown: () => ({ oneReady: true, maxPassedTime: 0, startCdFrame: 0 }),
       resolveTarget: id =>
-        id === 'enemy' ? { kind: 'enemy' } : { kind: 'operator', operatorId: id },
+        id === 'enemy' ? { kind: 'enemy', enemyId: 'enemy' } : { kind: 'operator', operatorId: id },
       onPending: pending,
     });
 
@@ -3902,8 +4131,8 @@ describe('StandardPlayerDamageEnvironment', () => {
 
     expect(pending).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({
-        inputTarget: { kind: 'operator', operatorId: 'operator' },
-        triggerTarget: { kind: 'enemy' },
+        inputTargets: [{ kind: 'operator', operatorId: 'operator' }],
+        triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
       }),
     );
   });
@@ -3957,7 +4186,7 @@ describe('StandardPlayerDamageEnvironment', () => {
       isOwnerSilenced: () => false,
       currentComboCooldown: () => ({ oneReady: true, maxPassedTime: 0, startCdFrame: 0 }),
       resolveTarget: id =>
-        id === 'enemy' ? { kind: 'enemy' } : { kind: 'operator', operatorId: id },
+        id === 'enemy' ? { kind: 'enemy', enemyId: 'enemy' } : { kind: 'operator', operatorId: id },
       onPending: pending,
     });
 
@@ -3978,8 +4207,8 @@ describe('StandardPlayerDamageEnvironment', () => {
     ).toBe(true);
     expect(pending).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({
-        inputTarget: { kind: 'operator', operatorId: 'operator' },
-        triggerTarget: { kind: 'enemy' },
+        inputTargets: [{ kind: 'operator', operatorId: 'operator' }],
+        triggerTargets: [{ kind: 'enemy', enemyId: 'enemy' }],
       }),
     );
   });
@@ -4001,7 +4230,7 @@ describe('StandardPlayerDamageEnvironment', () => {
 });
 
 it.each(['beforeDamageAction', 'beforeCalculateDamage'] as const)(
-  '%s 响应沿用真实可变伤害包，不转换成字段副本',
+  '%s 响应沿用发布的元数据对象',
   event => {
     const environment = createEnvironment();
     const operationContext = { blackboard: new ActionBlackboard() };
@@ -4016,6 +4245,95 @@ it.each(['beforeDamageAction', 'beforeCalculateDamage'] as const)(
     });
     environment.runtimeOptions.createOperationExecutor(createContext()).execute(damageStep);
     expect(calls).toBe(1);
+  },
+);
+
+it.each([
+  ['actionOwner', false],
+  ['actionSource', false],
+  ['actionOwner', true],
+  ['actionSource', true],
+] as const)(
+  'LifeDrain 攻击者=%s、读取目标属性=%s，正确扣实际 Owner 生命且不消费暴击随机数',
+  (attacker, readTarget) => {
+    const environment = createEnvironment();
+    const receipt = new CombatReceiptCollector();
+    const context = { ...createContext(), receipt };
+    const executor = environment.runtimeOptions.createOperationExecutor(context);
+    const otherContext = createContext();
+    environment.runtimeOptions.createOperationExecutor({
+      ...otherContext,
+      program: { ...otherContext.program, operatorId: 'other' },
+      panel: { ...otherContext.panel!, operatorId: 'other', health: 8000 },
+    });
+    const vitals = environment.runtimeOptions.resolveOperatorVitals!('other');
+    const operatorVitals = environment.runtimeOptions.resolveOperatorVitals!('operator');
+    const enemyHealth = environment.enemyVitals.health;
+    const random = vi.spyOn(environment.options.criticalSamples, 'nextCriticalSample');
+    const events: string[] = [];
+    const sourceId = attacker === 'actionOwner' ? 'other' : 'operator';
+    let packet: AbilityEventPayloadMap['beforeDamageAction'] | undefined;
+    environment.eventsFor(sourceId).registerAction('beforeDamageAction', 0, event => {
+      packet = event.payload;
+      expect(packet).not.toHaveProperty('multiplyCalculationValue');
+      events.push(event.event);
+    });
+    environment.eventsFor(sourceId).registerAction('beforeCalculateDamage', 0, event => {
+      expect(event.payload).not.toBe(packet);
+      expect(event.payload).not.toHaveProperty('skillCastInfo');
+      events.push(event.event);
+    });
+    environment.eventsFor('other').registerAction('takeDamage', 0, event => {
+      expect(event.payload.sourceId).toBe(sourceId);
+      expect(event.payload.targetId).toBe('other');
+      events.push(event.event);
+    });
+    const actionContext = {
+      blackboard: new ActionBlackboard({ drain: 0.1 }),
+      actionOwnerId: 'other',
+      actionSourceId: 'operator',
+    };
+    const step = {
+      kind: 'dealDamage' as const,
+      parameters: {
+        damageType: 'lifeDrain' as const,
+        attacker,
+        target: { kind: 'owner' as const },
+        calculation: 'attribute' as const,
+        calculationAttribute: 'MaxHp',
+        ...(readTarget ? { attributeSource: 'target' as const } : {}),
+        calculationAddition: 0,
+        attackScale: numberInput({ kind: 'blackboard', key: 'drain' }),
+        tags: ['dot' as const],
+      },
+    };
+    expect(executor.execute(step, actionContext)).toBe(true);
+    const expected = (readTarget || attacker === 'actionOwner' ? 8000 : 5000) * 0.1;
+    expect(vitals.health).toBeCloseTo(8000 - expected);
+    expect(operatorVitals.health).toBe(5000);
+    expect(environment.enemyVitals.health).toBe(enemyHealth);
+    expect(random).not.toHaveBeenCalled();
+    expect(events).toEqual(['beforeDamageAction', 'beforeCalculateDamage', 'takeDamage']);
+    expect(receipt.entries.find(entry => entry.event === 'DamageApplied')).toMatchObject({
+      sourceId,
+      targetId: 'other',
+      data: { damageType: 'lifeDrain', value: expected, actualDamage: expected },
+    });
+    actionContext.blackboard.assignDynamic('drain', 0.05);
+    executor.execute(step, actionContext);
+    expect(vitals.health).toBeCloseTo(8000 - expected * 1.5);
+    // 空间目标无法锁定为能力系统；即使没有倍率变量，也不应进入属性或伤害计算。
+    expect(() =>
+      executor.execute(
+        { ...step, parameters: { ...step.parameters, target: 'actionInputTarget' } },
+        {
+          ...actionContext,
+          blackboard: new ActionBlackboard(),
+          actionInputTargets: singleTargetList({ kind: 'spatialPoint', pointId: 1 }),
+        },
+      ),
+    ).not.toThrow();
+    expect(vitals.health).toBeCloseTo(8000 - expected * 1.5);
   },
 );
 
@@ -4040,4 +4358,39 @@ it('输出事件携带实际技能身份而不是展示组，承伤方不携带�
   expect(outputs[0]).toHaveProperty('executingSkillId', 'unrelated-id');
   expect(targets).toHaveLength(1);
   expect(targets[0]).not.toHaveProperty('executingSkillId');
+});
+
+it('公共附着定义在额外敌人身上发布附着开始事件，不串到主敌人', () => {
+  const environment = new StandardPlayerDamageEnvironment({
+    ...createEnvironment().options,
+    additionalEnemies: new Map([
+      ['enemy:other', { program: testEnemy, vitals: createEnemyCombatVitals(testEnemy) }],
+    ]),
+    elementalInflictionDocument: {
+      schemaVersion: 1,
+      revision: 'target-event',
+      buffs: [
+        {
+          id: 'attachment.electric',
+          stackingType: 'enhanceAndRefresh',
+          maxStackCount: 4,
+          actions: { afterEnhance: [{ kind: 'emitElementalInflictionStarted' }] },
+          role: { kind: 'elementalAttachment', element: 'electric' },
+        },
+      ],
+    },
+  });
+  bindBattleWithoutProjectiles(environment, createContext());
+  const recipients: string[] = [];
+  for (const id of ['enemy', 'enemy:other']) {
+    environment.eventsFor(id).registerAction('elementalInflictionStarted', 0, () => {
+      recipients.push(id);
+    });
+  }
+  environment.enemyInstance('enemy:other')!.buffRuntime.applyScoped({
+    buffId: 'attachment.electric',
+    sourceId: 'operator',
+    blackboardValues: {},
+  });
+  expect(recipients).toEqual(['enemy:other']);
 });

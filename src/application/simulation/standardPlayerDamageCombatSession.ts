@@ -96,10 +96,14 @@ function createRestoreAssembly(
       graph,
       resources: compiled.resources,
       enemy: compiled.enemy,
+      ...(compiled.enemyAutomaticDeath === undefined
+        ? {}
+        : { enemyAutomaticDeath: compiled.enemyAutomaticDeath }),
       operators: compiled.operators,
       ...(compiled.consumables === undefined ? {} : { consumables: compiled.consumables }),
       ...(compiled.consumableUses === undefined ? {} : { consumableUses: compiled.consumableUses }),
       ...(compiled.inputs === undefined ? {} : { inputs: compiled.inputs }),
+      enemyTargeting: compiled.enemyTargeting,
       operatorControl: compiled.operatorControl,
       ...(compiled.dodgeInputs === undefined ? {} : { dodgeInputs: compiled.dodgeInputs }),
       ...getCombatRuntimeInputRules(compiled),

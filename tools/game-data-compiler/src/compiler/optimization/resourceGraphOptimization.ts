@@ -38,6 +38,19 @@ function isReference(value: object): value is ActionGraphReference {
   );
 }
 
+/** 更新图与入口时保留原字段位置；删掉的字段不复活，新增字段才追加。 */
+function replaceResourceGraph(
+  original: Record<string, unknown>,
+  metadata: object,
+  actionGraph: ActionGraphResourceDefinition,
+): Record<string, unknown> {
+  const result = { ...original };
+  for (const key of Object.keys(result)) {
+    if (key !== 'actionGraph' && !Object.hasOwn(metadata, key)) delete result[key];
+  }
+  return Object.assign(result, metadata, { actionGraph });
+}
+
 /** 枚举或替换当前资源的入口；独立子资源有自己的图，不跨进去解析引用。未改动子树保留引用身份。 */
 function mapEntries(
   value: unknown,
@@ -116,7 +129,7 @@ export function optimizeResourceGraphs<T>(
   function visit(
     value: unknown,
     path: string,
-    phase: 'simplify' | 'extract',
+    phase: 'simplify' | 'initials' | 'extract',
     kind?: 'passive' | 'buffDefinitions',
     buffId?: string,
     entityKeys?: ReadonlySet<string>,
@@ -210,6 +223,21 @@ export function optimizeResourceGraphs<T>(
       entryResultsUsed.push(!scheduled && !buffEvent);
       return entry;
     });
+    if (phase === 'initials') {
+      const current = changed ? replaceResourceGraph(record, fields, resource) : value;
+      if (!('nativeSkillType' in record) || !('scheduledSequences' in record)) return current;
+      const pruned = pruneUnusedGraphSkillValues(
+        current as SkillDefinition | AbilityEntityChildSkillDefinition,
+        undefined,
+        resourceValues?.usageContext,
+        typeof record.key === 'string'
+          ? resourceValues?.skillInitialKeys?.get(record.key)
+          : undefined,
+        true,
+      );
+      recordValueReport(path, pruned.report);
+      return pruned.skill;
+    }
     if (phase === 'extract') {
       // 裁掉写入后，原来不同的后续可能变得相同；先重新共享这些分支。
       const shared = deduplicateActionGraph(resource.main, entries);
@@ -236,7 +264,7 @@ export function optimizeResourceGraphs<T>(
           ? resource
           : { main: extracted.graph, macros: extracted.macros };
       if (finalResource !== record.actionGraph) changed = true;
-      return changed ? { ...(metadata as object), actionGraph: finalResource } : value;
+      return changed ? replaceResourceGraph(record, metadata as object, finalResource) : value;
     }
     // 等价分支可能只是节点 ID 不同；先共享定义，控制流才能识别同一后继。
     // 共享不合并调用次数或状态，优化后的新等价尾段仍由下方再次收拢。
@@ -300,7 +328,9 @@ export function optimizeResourceGraphs<T>(
       deduplicated.graph === resource.main && !macrosChanged
         ? resource
         : { main: deduplicated.graph, macros };
-    const simplified = changed ? { ...(metadata as object), actionGraph: finalResource } : value;
+    const simplified = changed
+      ? replaceResourceGraph(record, metadata as object, finalResource)
+      : value;
     // 常驻资源的入口可能重复、交错执行，统一保留跨入口用途，不推断单次覆盖。
     // passiveSkills 目录声明资源身份，不根据 enableSequence 字段猜测装备或被动。
     if (
@@ -345,11 +375,11 @@ export function optimizeResourceGraphs<T>(
         );
         recordValueReport(path, pruned.report);
         let entryIndex = 0;
-        return {
+        const prunedMetadata = {
           ...(mapEntries(metadata, () => pruned.scope.entries[entryIndex++]!.sequence) as object),
-          actionGraph: pruned.scope.actionGraph,
           ...(pruned.scope.blackboard === undefined ? {} : { blackboard: pruned.scope.blackboard }),
         };
+        return replaceResourceGraph(record, prunedMetadata, pruned.scope.actionGraph);
       }
       if (owner.blackboard && Object.keys(owner.blackboard).length > 0) {
         recordValueReport(path, {
@@ -402,6 +432,8 @@ export function optimizeResourceGraphs<T>(
       simplified = next;
     }
   }
+  // 初值证明在死代码收敛后、宏提取前执行，避免提前删值阻碍条件裁剪。
+  if (mode !== 'off') simplified = visit(simplified, 'definition', 'initials') as T;
   const candidate = mode === 'off' ? simplified : (visit(simplified, 'definition', 'extract') as T);
   return {
     value: mode === 'apply' ? candidate : value,

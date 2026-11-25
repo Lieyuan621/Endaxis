@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { expect, it } from 'vitest';
 import { ExplicitCriticalSampleSource } from '../../../core/combat/random/criticalSampleSource';
 import { createEmptyScenario } from '../../../core/project/createProject';
@@ -10,7 +11,7 @@ import { createEditorSimulationService } from '../testSupport/editorSimulationSe
 it.each([false, true])('伊冯正式战技 SkillAffix 生命周期 interruption=%s', interrupted => {
   const scenario = createEmptyScenario('affix:yvonne', '伊冯 SkillAffix 生命周期');
   scenario.battle.durationFrames = 300;
-  scenario.enemy.editable.hp = 1e9;
+  firstScenarioEnemy(scenario).enemy.editable.hp = 1e9;
   scenario.tracks[0] = {
     id: 'track:yvonne',
     operator: {
@@ -47,6 +48,7 @@ it.each([false, true])('伊冯正式战技 SkillAffix 生命周期 interruption=
     }).scenario;
   const result = runStandardPlayerDamageScenarioSimulation({
     scenario: placed,
+    rangeSamples: { nextRangeSample: () => 0.5 },
     endFrame: 300,
     criticalSamples: new ExplicitCriticalSampleSource(Array(100).fill(1)),
     resolveNonRandomRuntimeSnapshot: () => ({
@@ -102,9 +104,9 @@ it.each([false, true])('伊冯正式战技 SkillAffix 生命周期 interruption=
   // 原生 projectileSource=Owner：该 Buff 来源是敌人，发射者仍是伊冯。
   expect(launches[0]!.sourceId).toBe('track:yvonne');
   expect(launches[0]!.frame).toBe(interrupted ? 10 : 18);
-  // Buff finish 在 Battle 阶段发射；下一帧 Default 阶段才推进投射物并命中。
+  // Buff finish 在 Battle 阶段发射；命中随5米飞行延后。
   // SkillAffix 同时持有施法和投射物 reset 引用，不能在施法结束时提前关闭。
-  expect(damage[0]!.frame).toBe(launches[0]!.frame + 1);
+  expect(damage[0]!.frame).toBeGreaterThan(launches[0]!.frame);
   expect(damage[0]!.sequence).toBeLessThan(finished!.sequence);
   expect(ends[0]!.sequence).toBeLessThan(finished!.sequence);
   if (interrupted) {

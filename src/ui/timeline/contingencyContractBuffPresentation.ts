@@ -1,7 +1,6 @@
 import type { MechanicSelectionDocument } from '../../core/project/schema';
 import { gameLocaleRegistry } from '../../i18n/gameLocaleRegistry';
 import { normalizeLocale } from '../../i18n/elementPlusLocale';
-import { i18n } from '../../i18n';
 import {
   contractDisplayBlackboard,
   resolveContractInitialVariables,
@@ -74,15 +73,6 @@ export function contingencyContractTagText(
   tag: ContingencyContractTagPresentation,
   locale: string,
 ) {
-  if (tag.season === 2)
-    return {
-      name: i18n.global.t(`contingencyContract.preview.tags.${tag.tagId}.name`, {}, { locale }),
-      description: i18n.global.t(
-        `contingencyContract.preview.tags.${tag.tagId}.description`,
-        tag.blackboard,
-        { locale },
-      ),
-    };
   const texts = gameLocaleRegistry.getFamily(normalizeLocale(locale), 'contingency-contracts');
   const text = texts[String(tag.tagId)];
   if (text === undefined) throw new Error(`Contingency Contract text ${tag.tagId} is missing`);

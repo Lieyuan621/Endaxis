@@ -1,4 +1,5 @@
-import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
+
 import type { ResolvedCombatStepParameters } from '../../compiler/combatProgram';
 import type {
   CompiledCondition,
@@ -63,12 +64,14 @@ import {
 import { CombatStep, type CombatExecutionContext } from './combatStep';
 import {
   executeRepeatedAction,
+  finishRepeatedAction,
   resetRepeatedAction,
   tickRepeatedAction,
 } from './repeatedActionExecution';
 import { executeTimelineJump, resetTimelineJump, tickTimelineJump } from './sequenceControl';
 
 export interface ActionGraphExecutionHost {
+  readonly channelingCountTarget?: (target: RuntimeTargetRef) => RuntimeTargetRef;
   observeOwnerTags?(changed: () => void): () => void;
   ownerTagsMatch?(parameters: CompiledGraphStepForKind<'listenForTagQuery'>['parameters']): boolean;
   /** 只观察已经取得的结果，不参与求值或执行策略。 */
@@ -80,7 +83,10 @@ export interface ActionGraphExecutionHost {
   };
   readonly frame?: () => number;
   readonly inputTarget?: RuntimeTargetRef;
-  selectTargets?(selection: ActionTargetQuery, input: RuntimeTargetRef | null): RuntimeTargetGroup;
+  selectTargets?(
+    selection: CompiledTargetQuery,
+    input: RuntimeTargetRef | null,
+  ): RuntimeTargetGroup;
   readonly requestTimelineJump: ((frame: number) => void) | undefined;
   readonly executionPolicy: SequenceExecutionState;
   readonly trace?: <T>(
@@ -177,6 +183,7 @@ function wrapMacroHost(
       return host.inputTarget;
     },
     selectTargets: host.selectTargets,
+    channelingCountTarget: host.channelingCountTarget,
     executionPolicy: host.executionPolicy,
     requestTimelineJump: host.requestTimelineJump,
     ...(host.trace === undefined ? {} : { trace: host.trace }),
@@ -800,7 +807,13 @@ export class ActionGraphExecution
       };
     } else if (action.kind === 'aura') {
       if (saved && saved.kind !== 'graphAura') throw new Error(`expected Aura state: ${id}`);
-      const data = saved ?? { kind: 'graphAura' as const, active: false, influences: [] };
+      const data = saved ?? {
+        kind: 'graphAura' as const,
+        active: false,
+        influences: [],
+        influenceCounts: [],
+      };
+      const influenceCounts = (data.influenceCounts ??= []);
       const influence = this.host.aura?.(action.parameters);
       if (!influence) throw new Error('Aura runtime is not configured');
       const callbacks = new Map<
@@ -868,6 +881,13 @@ export class ActionGraphExecution
           if (!data.active) break;
           if (data.influences.some(item => item.active && sameRuntimeTarget(item.target, target)))
             continue;
+          const maximum = action.parameters.maxInfluenceCountPerTarget;
+          if (maximum !== undefined) {
+            const previous = influenceCounts.find(item => sameRuntimeTarget(item.target, target));
+            if (previous !== undefined && previous.count >= maximum) continue;
+            if (previous === undefined) influenceCounts.push({ target: { ...target }, count: 1 });
+            else previous.count++;
+          }
           const index = data.influences.length;
           const item: AuraInfluenceState = {
             target: { ...target },
@@ -889,6 +909,7 @@ export class ActionGraphExecution
       binding = {
         data,
         execute: context => {
+          influenceCounts.length = 0;
           data.active = true;
           synchronize(context);
           return true;
@@ -992,6 +1013,7 @@ export class ActionGraphExecution
           delta,
           () => this.host.selectTargets!(parameters.target, state.inputTarget),
           target => body(this.host.withTarget(target, true)).executeInstant(context),
+          this.host.channelingCountTarget,
         );
       };
       binding = {
@@ -1014,11 +1036,23 @@ export class ActionGraphExecution
       if (action.kind === 'once') {
         if (saved && saved.kind !== 'graphOnce') throw new Error(`expected once state: ${id}`);
         const data = saved ?? { kind: 'graphOnce' as const, executed: false, body: null };
-        const body = this.#child(id, 0, action.body.$sequence, data.body ?? undefined);
+        const inputKey = action.parameters.delayedTriggerInputKey;
+        const childHost =
+          inputKey === undefined
+            ? this.host
+            : this.host.withSavedInput(
+                this.host.targets({ targets: { kind: 'context', key: inputKey } })[0] ?? null,
+              );
+        const body = this.#child(id, 0, action.body.$sequence, data.body ?? undefined, childHost);
         data.body = body.runtimeState;
         binding = {
           data,
           execute: context => {
+            if (inputKey !== undefined) {
+              if (data.executed) return false;
+              data.executed = true;
+              return body.executeInstant(context);
+            }
             if (!data.executed) {
               body.executeInstant(context);
               data.executed = true;
@@ -1037,12 +1071,28 @@ export class ActionGraphExecution
         const data = saved ?? { kind: 'repeat' as const, repetition: createRepeatedActionState() };
         // 周期之间复用子动作实例；恢复不重放已执行的动作。
         let persistentBody: ActionGraphExecution | null = null;
+        const bodyHost = () =>
+          action.parameters.nativeTickIntervalV2
+            ? this.host.withSavedInput(data.repetition.inputTarget)
+            : this.host;
         if (data.repetition.body !== null)
-          persistentBody = this.#child(id, 0, action.body.$sequence, data.repetition.body);
+          persistentBody = this.#child(
+            id,
+            0,
+            action.body.$sequence,
+            data.repetition.body,
+            bodyHost(),
+          );
         const run = (context: CombatExecutionContext) => {
           const existingBody = persistentBody;
           if (persistentBody === null) {
-            persistentBody = this.#child(id, 0, action.body.$sequence);
+            persistentBody = this.#child(
+              id,
+              0,
+              action.body.$sequence,
+              data.repetition.body ?? undefined,
+              bodyHost(),
+            );
             data.repetition.body = persistentBody.runtimeState;
           }
           if (action.parameters.nativeExecuteInterval !== undefined) {
@@ -1053,7 +1103,8 @@ export class ActionGraphExecution
           }
           if (
             !persistentBody.executeInstant(context) &&
-            action.parameters.nativeTickInterval === undefined
+            action.parameters.nativeTickInterval === undefined &&
+            action.parameters.nativeTickIntervalV2 === undefined
           )
             throw new Error(
               'repeatEachTick body returned false; repeated short-circuit is not modeled',
@@ -1062,16 +1113,31 @@ export class ActionGraphExecution
         binding = {
           data,
           execute: context => {
+            if (action.parameters.nativeTickIntervalV2) {
+              data.repetition.inputTarget =
+                this.host.inputTarget == null ? null : { ...this.host.inputTarget };
+              persistentBody = null;
+            }
             executeRepeatedAction(data.repetition, action.parameters, () => run(context));
             return true;
           },
           tick: (delta, context) =>
-            tickRepeatedAction(data.repetition, action.parameters, delta, () => run(context)),
+            tickRepeatedAction(
+              data.repetition,
+              action.parameters,
+              delta,
+              () => run(context),
+              this.host.frame?.(),
+            ),
           reset: context => {
             persistentBody?.reset(context);
-            resetRepeatedAction(data.repetition);
+            if (!action.parameters.nativeTickIntervalV2) resetRepeatedAction(data.repetition);
           },
-          end: context => persistentBody?.end(context),
+          end: context => {
+            finishRepeatedAction(data.repetition, action.parameters, () => run(context));
+            persistentBody?.end(context);
+            data.repetition.inputTarget = null;
+          },
         };
       }
     } else {

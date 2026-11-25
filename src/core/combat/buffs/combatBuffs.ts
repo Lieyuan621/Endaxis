@@ -19,6 +19,7 @@ import type { PoiseModifierConditionInput } from '../damage/poiseModifiers';
 import type { HealModifierConditionInput } from '../heal/healModifiers';
 import type { CombatObjectRef } from '../receipt/combatReceipt';
 import type { ActionSequenceState } from '../state/actionState';
+import type { RuntimeTargetContextState } from '../state/abilityState';
 import type {
   ActionValueCalculation,
   ArtsIntensityFactor,
@@ -124,7 +125,7 @@ import type {
   DamageModifierState,
   EnemyPartTransferInfo,
 } from '../state/foundationState';
-import { copyEnemyPartTransferInfo } from '../abilities/runtimeTargetContext';
+import { copyEnemyPartTransferInfo, RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import {
   ATTRIBUTE_MODIFIER_SOURCES,
   type AttributeModifierSource,
@@ -196,12 +197,19 @@ export interface BuffDuringEnableAction<Key extends string> {
   reset(buff: CombatBuff<Key>): void;
 }
 
+/** 本次结束操作的同步上下文；与 Buff 初始来源及对外广播事件分离。 */
+export interface BuffFinishContext {
+  readonly reason: BuffFinishReason;
+  readonly layerCount: number;
+  readonly skillCastInfo: CombatSkillCastInfo | null | undefined;
+}
+
 /** Buff 在启用、结束和移除边界执行的有序生命周期行为。 */
 export interface BuffLifecycleActions<Key extends string> {
   readonly start?: (buff: CombatBuff<Key>) => void;
   readonly enable?: (buff: CombatBuff<Key>) => void;
   readonly disable?: (buff: CombatBuff<Key>) => void;
-  readonly finish?: (buff: CombatBuff<Key>) => void;
+  readonly finish?: (buff: CombatBuff<Key>, context: BuffFinishContext) => void;
   readonly dispelled?: (buff: CombatBuff<Key>, sourceId: string) => void;
   /** 原生 OnBuffReleased：释放清理前执行，与执行器的 release 清理钩子分开。 */
   readonly beforeRelease?: (buff: CombatBuff<Key>) => void;
@@ -216,6 +224,7 @@ export interface BuffLifecycleActions<Key extends string> {
     igniteType: string,
     sourceId: string,
     skillCastInfo?: CombatSkillCastInfo,
+    partTransferInfo?: EnemyPartTransferInfo,
   ) => boolean;
   readonly duringEnable?: BuffDuringEnableAction<Key>;
 }
@@ -283,6 +292,7 @@ export interface CombatBuffDefinition<Key extends string> {
 
 /** 添加 Buff 实例时由具体行为提供的初始黑板和层数。 */
 export interface CombatBuffAddOptions {
+  readonly inheritedTargetGroups?: RuntimeTargetContextState;
   readonly partTransferInfo?: EnemyPartTransferInfo;
   readonly blackboardValueCalculations?: Readonly<Record<string, ActionValueCalculation>>;
   readonly producedBy?: CombatObjectRef;
@@ -390,9 +400,12 @@ export class CombatBuff<Key extends string> {
   get definitionOwnerId(): string {
     return this.#state.definitionOwnerId;
   }
-  /** 来源施法在创建瞬间的快照，不随后续技能扣费变化。 */
+  /** 创建时保存的来源快照；仅显式来源切换动作可替换，不随来源技能后续扣费变化。 */
   get skillCastInfo(): CombatSkillCastInfo | null {
     return this.#state.skillCastInfo;
+  }
+  overrideSkillCastInfo(info: CombatSkillCastInfo): void {
+    this.#state.skillCastInfo = { ...info };
   }
   /** 原生独立运行时状态：只有显式记录才写入，不从 Buff 普通来源编号继承。 */
   get affixSkillCastId(): number {
@@ -521,9 +534,19 @@ export class CombatBuff<Key extends string> {
       options?.blackboardArtsIntensityFactors,
       options?.blackboardValueCalculations,
     );
-    // 对应原生 Buff.Reset：本次赋值完成后收集来源修正，早于寿命/修正器求值。
+    // 对应原生 Buff.Reset：本次赋值完成后收集接收侧及来源侧修正，早于寿命/修正器求值。
     // 仅初始化新实例执行；刷新旧实例不会因此重播收集事件。
-    owner.collectOutputBlackboard?.(definition, sourceId, this.blackboard);
+    owner.collectBlackboard?.(
+      definition,
+      sourceId,
+      this.blackboard,
+      this.#state.modifiedBlackboardKeys,
+      options?.skillCastInfo ?? null,
+    );
+    if (options?.inheritedTargetGroups !== undefined)
+      this.#state.inheritedTargetGroups = new RuntimeTargetContext(
+        options.inheritedTargetGroups,
+      ).snapshot();
     this.getSourceAttributeValue = options?.getSourceAttributeValue ?? null;
     this.#state.sourceAttributeOwnerId =
       options?.sourceAttributeOwnerId ?? (this.getSourceAttributeValue === null ? null : sourceId);
@@ -880,9 +903,14 @@ export class CombatBuff<Key extends string> {
     reason: BuffFinishReason = 'other',
     finishSkillCastInfo?: CombatSkillCastInfo | null,
   ): boolean {
+    const context: BuffFinishContext = {
+      reason,
+      layerCount: -this.enhanceCount,
+      skillCastInfo: finishSkillCastInfo,
+    };
     const finished = finishBuffLifecycle(this.#state.lifecycle, reason, {
       addExtendTags: () => this.addExtendTags(),
-      finishAction: () => this.definition.actions?.finish?.(this),
+      finishAction: () => this.definition.actions?.finish?.(this, context),
       endDuringEnable: () => this.endDuringEnableAction(),
       finishChildren: () => {
         finishBuffChildren(this.#state.children, reference => {
@@ -1320,10 +1348,12 @@ export class CombatBuffContainer<Key extends string> {
     }) => readonly Key[],
     /** AbilitySystem.AddShield 完成后的同步事件；值分别为实际新增量与当前有限护盾总量。 */
     readonly onShieldsAdded?: (gainedValue: number, currentValue: number) => void,
-    readonly collectOutputBlackboard?: (
+    readonly collectBlackboard?: (
       definition: CombatBuffDefinition<Key>,
       sourceId: string,
       blackboard: ActionBlackboard,
+      modifiedKeys: Set<string>,
+      skillCastInfo: CombatSkillCastInfo | null,
     ) => void,
     readonly onBuffReleased?: (buff: CombatBuff<Key>) => void,
     restoredState?: BuffContainerState<Key>,
@@ -1400,7 +1430,10 @@ export class CombatBuffContainer<Key extends string> {
           );
         }
         definition.bindRestoredActions(buff);
-      } else if (definition.actions?.duringEnable !== undefined) {
+      } else if (
+        definition.actions?.duringEnable !== undefined &&
+        (buff.isStarted || buff.isEnabled)
+      ) {
         throw new Error(
           `restored Buff '${state.identity.definitionId}' has unbound during-enable actions`,
         );
@@ -1687,12 +1720,9 @@ export class CombatBuffContainer<Key extends string> {
     sourceId: string | undefined,
     finishSkillCastInfo?: CombatSkillCastInfo | null,
   ): boolean {
-    if (
-      buff.owner !== this ||
-      this.#memberBindings.get(buff.instanceId) !== buff ||
-      !this.#state.memberIds.includes(buff.instanceId)
-    )
+    if (buff.owner !== this || this.#state.instances.get(buff.instanceId) !== buff.runtimeState)
       throw new Error('Buff instance does not belong to this container');
+    // Start 中的 Environment 查询可直接结束自身，此时尚未加入公开成员列表。
     return this.#finishWithSource(buff, reason, sourceId, finishSkillCastInfo);
   }
 
@@ -1774,14 +1804,27 @@ export class CombatBuffContainer<Key extends string> {
   }
 
   /** 同步点燃所有在调用开始时仍活动的 Buff；响应可在处理过程中结束自身。 */
-  ignite(igniteType: string, sourceId: string, skillCastInfo?: CombatSkillCastInfo): number {
+  ignite(
+    igniteType: string,
+    sourceId: string,
+    skillCastInfo?: CombatSkillCastInfo,
+    partTransferInfo?: EnemyPartTransferInfo,
+  ): number {
     if (igniteType.length === 0) throw new Error('Buff ignite type must not be empty');
     if (sourceId.length === 0) throw new Error('Buff ignite source id must not be empty');
     const active = this.#snapshotBuffs().filter(buff => !buff.isFinished);
     let count = 0;
     for (const buff of active) {
       if (buff.isFinished) continue;
-      if (buff.definition.actions?.ignite?.(buff, igniteType, sourceId, skillCastInfo)) {
+      if (
+        buff.definition.actions?.ignite?.(
+          buff,
+          igniteType,
+          sourceId,
+          skillCastInfo,
+          partTransferInfo,
+        )
+      ) {
         count += 1;
       }
     }
@@ -2731,8 +2774,8 @@ function resolveIncomingMaxStackCount<Key extends string>(
 }
 
 function validateBuffMaxStackCount(value: number): void {
-  if (!Number.isSafeInteger(value) || value < 0) {
-    throw new RangeError('buff max stack count must resolve to a non-negative safe integer');
+  if (!Number.isSafeInteger(value)) {
+    throw new RangeError('buff max stack count must resolve to a safe integer');
   }
 }
 

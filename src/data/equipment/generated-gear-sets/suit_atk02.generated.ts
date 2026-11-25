@@ -121,7 +121,7 @@ const definition = {
               action: {
                 kind: 'readBuffStackCount',
                 parameters: {
-                  target: 'buffOwner',
+                  target: { kind: 'owner' },
                   outputKey: 'stack',
                   query: { kind: 'id', buffIds: ['buff_equipsuit_atk_02_addcombodamage'] },
                 },

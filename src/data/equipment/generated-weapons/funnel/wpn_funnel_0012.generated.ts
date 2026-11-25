@@ -54,7 +54,7 @@ const definition = {
               action: {
                 kind: 'setGlobalCooldown',
                 parameters: {
-                  target: 'caster',
+                  target: { kind: 'source' },
                   markerId: 'buff_wpn_funnel_0012',
                   durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                 },
@@ -65,7 +65,8 @@ const definition = {
               action: {
                 kind: 'heal',
                 parameters: {
-                  target: 'controlledOperator',
+                  target: { kind: 'mainCharacter' },
+                  healer: { kind: 'source' },
                   alwaysNext: true,
                   tags: ['Skill/Character/Common/Heal/WeaponHeal'],
                   attribute: 'will',

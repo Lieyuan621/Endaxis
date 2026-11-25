@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { optionValueKey } from '../action-graph/editorNodeText';
 import ImageReferenceField from '../field-editor/ImageReferenceField.vue';
 import { hasSemanticAlias } from '../../core/editor/fieldSemantics';
 import ConditionInputField from '../field-editor/ConditionInputField.vue';
@@ -331,10 +332,11 @@ const label = computed(() =>
 );
 function optionLabel(option: string | number | boolean): string {
   const key = `definitionEditor.options.${String(option)}`;
+  const actionKey = `actionGraphEditor.options.${optionValueKey(String(option))}`;
   return te(key)
     ? t(key)
-    : props.editingContext === 'value' && te(`actionGraphEditor.options.${String(option)}`)
-      ? t(`actionGraphEditor.options.${String(option)}`)
+    : props.editingContext === 'value' && te(actionKey)
+      ? t(actionKey)
       : String(option);
 }
 function choiceOptions(schema: DefinitionFieldSchema, stringValues = false): EaSelectOption[] {

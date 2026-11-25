@@ -27,29 +27,21 @@ export const typhoeusChr_0034_typhoea_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_01',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0034_typhoea_attack1_01_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_2' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -57,13 +49,14 @@ export const typhoeusChr_0034_typhoea_attack1ActionGraph = {
                         action: {
                           kind: 'spawnAbilityEntity',
                           parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
+                            bornAt: { kind: 'inputTarget' },
                             abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
                             childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                            source: { kind: 'source' },
                             inheritActionBlackboard: false,
                             inheritSourceSkillCastInfo: false,
                             dieWhenSourceDies: false,
-                            target: 'enemy',
+                            target: { kind: 'inputTarget' },
                             overrideDurationSeconds: { kind: 'constant', value: 3 },
                           },
                         },
@@ -73,6 +66,8 @@ export const typhoeusChr_0034_typhoea_attack1ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['normalAttack'],
@@ -90,13 +85,33 @@ export const typhoeusChr_0034_typhoea_attack1ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0034_typhoea_attack1_01_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_2' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_6: {
+      overrideBasicAttackMapping_6: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0034_typhoea_attack2'] },
@@ -110,6 +125,7 @@ export const typhoeusChr_0034_typhoea_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_attack1: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_attack1ActionGraph,
   key: 'chr_0034_typhoea_attack1',
   element: 'nature',
   blackboard: {
@@ -119,30 +135,18 @@ export const typhoeusChr_0034_typhoea_attack1: SkillDefinition = {
   naturalDurationFrames: 150,
   exclusiveFrame: 15,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 3,
-        endFrame: 43,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 9, endFrame: 43, skillIds: ['chr_0034_typhoea_attack2'] }],
-  },
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'calculateActionValue_1' } },
     { startFrame: 5, endFrame: 5, sequence: { $sequence: 'launchProjectile_2' } },
     { startFrame: 8, endFrame: 8, sequence: { $sequence: 'launchProjectile_2' } },
-    { startFrame: 9, endFrame: 43, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 3, endFrame: 43, sequence: { $sequence: 'overrideBasicAttackMapping_6' } },
+    { startFrame: 9, endFrame: 43, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0034_typhoea_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: typhoeusChr_0034_typhoea_attack1ActionGraph,
 };
 
 export const typhoeusChr_0034_typhoea_attack2ActionGraph = {
@@ -152,29 +156,21 @@ export const typhoeusChr_0034_typhoea_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_01',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0034_typhoea_attack1_01_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_2' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -182,13 +178,14 @@ export const typhoeusChr_0034_typhoea_attack2ActionGraph = {
                         action: {
                           kind: 'spawnAbilityEntity',
                           parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
+                            bornAt: { kind: 'inputTarget' },
                             abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
                             childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                            source: { kind: 'source' },
                             inheritActionBlackboard: false,
                             inheritSourceSkillCastInfo: false,
                             dieWhenSourceDies: false,
-                            target: 'enemy',
+                            target: { kind: 'inputTarget' },
                             overrideDurationSeconds: { kind: 'constant', value: 3 },
                           },
                         },
@@ -198,6 +195,8 @@ export const typhoeusChr_0034_typhoea_attack2ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['normalAttack'],
@@ -215,6 +214,19 @@ export const typhoeusChr_0034_typhoea_attack2ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0034_typhoea_attack1_01_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_2' } },
+                ],
               },
             },
           ],
@@ -234,7 +246,14 @@ export const typhoeusChr_0034_typhoea_attack2ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_3: {
+      overrideBasicAttackMapping_3: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_4: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0034_typhoea_attack3'] },
@@ -247,6 +266,7 @@ export const typhoeusChr_0034_typhoea_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_attack2: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_attack2ActionGraph,
   key: 'chr_0034_typhoea_attack2',
   element: 'nature',
   blackboard: { atk_scale: [0.25, 0.28, 0.3, 0.33, 0.35, 0.38, 0.4, 0.43, 0.45, 0.48, 0.52, 0.56] },
@@ -254,32 +274,73 @@ export const typhoeusChr_0034_typhoea_attack2: SkillDefinition = {
   naturalDurationFrames: 182,
   exclusiveFrame: 13,
   offsetRecordFrame: 8,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 3,
-        endFrame: 29,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 12, endFrame: 29, skillIds: ['chr_0034_typhoea_attack3'] }],
-  },
   costFrame: 11,
   scheduledSequences: [
     { startFrame: 9, endFrame: 9, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 0, endFrame: 41, sequence: { $sequence: 'applyBuff_2' } },
-    { startFrame: 12, endFrame: 29, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 3, endFrame: 29, sequence: { $sequence: 'overrideBasicAttackMapping_3' } },
+    { startFrame: 12, endFrame: 29, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0034_typhoea_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: typhoeusChr_0034_typhoea_attack2ActionGraph,
 };
 
 const typhoeusChr_0034_typhoea_attack3ActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [{ buffId: 'buff_chr_0034_typhoea_attack_3_1_damagetaken' }],
+              targets: { kind: 'inputTarget' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: null,
+        },
+        dealDamage_2: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+              tags: ['normalAttack'],
+            },
+          },
+          next: 'applyBuff_1',
+        },
+        checkCondition_3: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          },
+          next: 'dealDamage_2',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+        data_2: {
+          type: 'boolean',
+          expression: {
+            kind: 'buffIdStackCompare',
+            target: { kind: 'inputTarget' },
+            compareZeroWhenTargetMissing: true,
+            operator: 'equal',
+            value: { kind: 'constant', value: 0 },
+            buffIds: ['buff_chr_0034_typhoea_attack_3_1_damagetaken'],
+          },
+        },
+      },
+    },
+    macros: {},
+  },
   skillId: 'chr_0034_typhoea_attack3_01_projhit',
   nativeSkillType: 'normalSkill',
   naturalDurationFrames: 5,
@@ -291,6 +352,9 @@ const typhoeusChr_0034_typhoea_attack3ActionGraphCallback1 = {
   },
   blackboard: { atk_scale: 0 },
   scheduledSequences: [{ startFrame: 0, endFrame: 1, sequence: { $sequence: 'checkCondition_3' } }],
+} as const;
+
+const typhoeusChr_0034_typhoea_attack3ActionGraphCallback2 = {
   actionGraph: {
     main: {
       nodes: {
@@ -298,8 +362,8 @@ const typhoeusChr_0034_typhoea_attack3ActionGraphCallback1 = {
           action: {
             kind: 'applyBuff',
             parameters: {
-              buffs: [{ buffId: 'buff_chr_0034_typhoea_attack_3_1_damagetaken' }],
-              targets: { kind: 'fixed', target: 'enemy' },
+              buffs: [{ buffId: 'buff_chr_0034_typhoea_attack_3_2_damagetaken' }],
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -310,6 +374,8 @@ const typhoeusChr_0034_typhoea_attack3ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_1' },
               tags: ['normalAttack'],
@@ -331,20 +397,17 @@ const typhoeusChr_0034_typhoea_attack3ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffIdStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'equal',
             value: { kind: 'constant', value: 0 },
-            buffIds: ['buff_chr_0034_typhoea_attack_3_1_damagetaken'],
+            buffIds: ['buff_chr_0034_typhoea_attack_3_2_damagetaken'],
           },
         },
       },
     },
     macros: {},
   },
-} as const;
-
-const typhoeusChr_0034_typhoea_attack3ActionGraphCallback2 = {
   skillId: 'chr_0034_typhoea_attack3_02_projhit',
   nativeSkillType: 'normalSkill',
   naturalDurationFrames: 5,
@@ -356,57 +419,6 @@ const typhoeusChr_0034_typhoea_attack3ActionGraphCallback2 = {
   },
   blackboard: { atk_scale: 0 },
   scheduledSequences: [{ startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_3' } }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffs: [{ buffId: 'buff_chr_0034_typhoea_attack_3_2_damagetaken' }],
-              targets: { kind: 'fixed', target: 'enemy' },
-              source: { kind: 'source' },
-              inheritSourceSkillCastInfo: true,
-            },
-          },
-          next: null,
-        },
-        dealDamage_2: {
-          action: {
-            kind: 'dealDamage',
-            parameters: {
-              damageType: 'nature',
-              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-              tags: ['normalAttack'],
-            },
-          },
-          next: 'applyBuff_1',
-        },
-        checkCondition_3: {
-          action: {
-            kind: 'checkCondition',
-            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          },
-          next: 'dealDamage_2',
-        },
-      },
-      dataNodes: {
-        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-        data_2: {
-          type: 'boolean',
-          expression: {
-            kind: 'buffIdStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
-            compareZeroWhenTargetMissing: true,
-            operator: 'equal',
-            value: { kind: 'constant', value: 0 },
-            buffIds: ['buff_chr_0034_typhoea_attack_3_2_damagetaken'],
-          },
-        },
-      },
-    },
-    macros: {},
-  },
 } as const;
 
 export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
@@ -428,11 +440,17 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
+            faction: 'good',
             recycleDelaySeconds: 0.16666667163372,
-            hit: { finishOnHit: false },
+            targets: { kind: 'context', contextKey: 'pos6' },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_attack3ActionGraphCallback1 },
@@ -444,11 +462,17 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
+            faction: 'good',
             recycleDelaySeconds: 0.16666667163372,
-            hit: { finishOnHit: false },
+            targets: { kind: 'context', contextKey: 'pos1' },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_attack3ActionGraphCallback1 },
@@ -460,11 +484,17 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
+            faction: 'good',
             recycleDelaySeconds: 0.16666667163372,
-            hit: { finishOnHit: false },
+            targets: { kind: 'context', contextKey: 'pos0' },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_attack3ActionGraphCallback1 },
@@ -475,21 +505,33 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
       createSpatialPointTargets_5: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos6', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos6',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: 'launchProjectile_4',
       },
       createSpatialPointTargets_6: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos1', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos1',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: 'createSpatialPointTargets_5',
       },
       createSpatialPointTargets_7: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos0', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos0',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: 'createSpatialPointTargets_6',
       },
@@ -497,11 +539,17 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
+            faction: 'good',
             recycleDelaySeconds: 0.16666667163372,
-            hit: { finishOnHit: false },
+            targets: { kind: 'context', contextKey: 'pos6' },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_attack3ActionGraphCallback2 },
@@ -513,11 +561,17 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
+            faction: 'good',
             recycleDelaySeconds: 0.16666667163372,
-            hit: { finishOnHit: false },
+            targets: { kind: 'context', contextKey: 'pos1' },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_attack3ActionGraphCallback2 },
@@ -529,11 +583,17 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_03',
+            faction: 'good',
             recycleDelaySeconds: 0.16666667163372,
-            hit: { finishOnHit: false },
+            targets: { kind: 'context', contextKey: 'pos0' },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_attack3ActionGraphCallback2 },
@@ -544,21 +604,33 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
       createSpatialPointTargets_11: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos6', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos6',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: 'launchProjectile_10',
       },
       createSpatialPointTargets_12: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos1', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos1',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: 'createSpatialPointTargets_11',
       },
       createSpatialPointTargets_13: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos0', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos0',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: 'createSpatialPointTargets_12',
       },
@@ -575,7 +647,14 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_15: {
+      overrideBasicAttackMapping_15: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_16: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0034_typhoea_attack4'] },
@@ -589,6 +668,7 @@ export const typhoeusChr_0034_typhoea_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_attack3: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_attack3ActionGraph,
   key: 'chr_0034_typhoea_attack3',
   element: 'nature',
   blackboard: {
@@ -598,31 +678,19 @@ export const typhoeusChr_0034_typhoea_attack3: SkillDefinition = {
   naturalDurationFrames: 185,
   exclusiveFrame: 28,
   offsetRecordFrame: 10,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 8,
-        endFrame: 44,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 20, endFrame: 44, skillIds: ['chr_0034_typhoea_attack4'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'calculateActionValue_1' } },
     { startFrame: 5, endFrame: 8, sequence: { $sequence: 'createSpatialPointTargets_7' } },
     { startFrame: 14, endFrame: 17, sequence: { $sequence: 'createSpatialPointTargets_13' } },
     { startFrame: 0, endFrame: 41, sequence: { $sequence: 'applyBuff_14' } },
-    { startFrame: 20, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
+    { startFrame: 8, endFrame: 44, sequence: { $sequence: 'overrideBasicAttackMapping_15' } },
+    { startFrame: 20, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_16' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0034_typhoea_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: typhoeusChr_0034_typhoea_attack3ActionGraph,
 };
 
 export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
@@ -656,29 +724,21 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_04_02',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0034_typhoea_attack4_01_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale_1: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_2' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -686,13 +746,14 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
                         action: {
                           kind: 'spawnAbilityEntity',
                           parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
+                            bornAt: { kind: 'inputTarget' },
                             abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
                             childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                            source: { kind: 'source' },
                             inheritActionBlackboard: false,
                             inheritSourceSkillCastInfo: false,
                             dieWhenSourceDies: false,
-                            target: 'enemy',
+                            target: { kind: 'inputTarget' },
                             overrideDurationSeconds: { kind: 'constant', value: 3 },
                           },
                         },
@@ -702,6 +763,8 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['normalAttack'],
@@ -719,6 +782,19 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0034_typhoea_attack4_01_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale_1: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_2' } },
+                ],
               },
             },
           ],
@@ -729,29 +805,21 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 5,
+              callbacks: [{ event: 'hit', triggerFrames: [5], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_04_01',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0034_typhoea_attack4_02_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale_2: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_2' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -759,13 +827,14 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
                         action: {
                           kind: 'spawnAbilityEntity',
                           parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
+                            bornAt: { kind: 'inputTarget' },
                             abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
                             childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                            source: { kind: 'source' },
                             inheritActionBlackboard: false,
                             inheritSourceSkillCastInfo: false,
                             dieWhenSourceDies: false,
-                            target: 'enemy',
+                            target: { kind: 'inputTarget' },
                             overrideDurationSeconds: { kind: 'constant', value: 3 },
                           },
                         },
@@ -775,6 +844,8 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['normalAttack'],
@@ -792,6 +863,19 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0034_typhoea_attack4_02_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale_2: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_2' } },
+                ],
               },
             },
           ],
@@ -803,7 +887,7 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
           kind: 'applyBuff',
           parameters: {
             buffs: [{ buffId: 'buff_chr_0034_typhoea_attack_4_addtionalbattleshape_onenemy' }],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
@@ -824,7 +908,14 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_11: {
+      overrideBasicAttackMapping_11: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_attack5'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0034_typhoea_attack5'] },
@@ -838,6 +929,7 @@ export const typhoeusChr_0034_typhoea_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_attack4: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_attack4ActionGraph,
   key: 'chr_0034_typhoea_attack4',
   element: 'nature',
   blackboard: {
@@ -849,17 +941,6 @@ export const typhoeusChr_0034_typhoea_attack4: SkillDefinition = {
   naturalDurationFrames: 170,
   exclusiveFrame: 34,
   offsetRecordFrame: 21,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 15,
-        endFrame: 51,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_attack5',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 27, endFrame: 51, skillIds: ['chr_0034_typhoea_attack5'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'calculateActionValue_2' } },
@@ -871,14 +952,13 @@ export const typhoeusChr_0034_typhoea_attack4: SkillDefinition = {
     { startFrame: 27, endFrame: 27, sequence: { $sequence: 'launchProjectile_4' } },
     { startFrame: 14, endFrame: 28, sequence: { $sequence: 'applyBuff_9' } },
     { startFrame: 0, endFrame: 41, sequence: { $sequence: 'applyBuff_10' } },
-    { startFrame: 27, endFrame: 51, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 15, endFrame: 51, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
+    { startFrame: 27, endFrame: 51, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0034_typhoea_attack5',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: typhoeusChr_0034_typhoea_attack4ActionGraph,
 };
 
 export const typhoeusChr_0034_typhoea_attack5ActionGraph = {
@@ -899,29 +979,25 @@ export const typhoeusChr_0034_typhoea_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 7,
+              callbacks: [
+                { event: 'block', triggerFrames: [7] },
+                { event: 'hit', triggerFrames: [2], hitKind: 'collision' },
+              ],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 5,
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_05',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            targets: { kind: 'context', contextKey: 'pos' },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
-              event: 'hit',
+              event: 'block',
               skill: {
-                skillId: 'chr_0034_typhoea_attack5_01_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 12, atk_scale: 0.5, poise: 15 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_8' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -970,7 +1046,210 @@ export const typhoeusChr_0034_typhoea_attack5ActionGraph = {
                           kind: 'applyBuff',
                           parameters: {
                             buffs: [{ buffId: 'buff_chr_0034_typhoea_attack_5_damagetaken' }],
-                            targets: { kind: 'fixed', target: 'enemy' },
+                            targets: { kind: 'inputTarget' },
+                            source: { kind: 'source' },
+                            inheritSourceSkillCastInfo: true,
+                          },
+                        },
+                        next: null,
+                      },
+                      dealDamage_6: {
+                        action: {
+                          kind: 'dealDamage',
+                          parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
+                            damageType: 'nature',
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+                            tags: ['normalAttack', 'normalAttackLastCombo'],
+                            stagger: { kind: 'valueNode', nodeId: 'data_6' },
+                            staggerOnlyWhenCasterControlled: true,
+                          },
+                        },
+                        next: 'applyBuff_5',
+                      },
+                      ifElse_7: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+                          whenTrue: { $sequence: 'changeResource_4' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: 'dealDamage_6',
+                      },
+                      checkCondition_8: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+                        },
+                        next: 'ifElse_7',
+                      },
+                      forEachContextTarget_10: {
+                        action: {
+                          kind: 'forEachContextTarget',
+                          parameters: { targets: { kind: 'context', key: 'tar' } },
+                          body: { $sequence: 'checkCondition_8' },
+                        },
+                        next: null,
+                      },
+                      ifElse_11: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+                          whenTrue: { $sequence: 'forEachContextTarget_10' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      findTargets_12: {
+                        action: {
+                          kind: 'findTargets',
+                          parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
+                            saveToContextKey: 'tar',
+                          },
+                        },
+                        next: 'ifElse_11',
+                      },
+                    },
+                    dataNodes: {
+                      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+                      data_2: {
+                        type: 'number',
+                        expression: {
+                          kind: 'blackboard',
+                          key: 'EntityBB_heavyattack_atb_recover',
+                          fallback: 0,
+                        },
+                      },
+                      data_3: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_2' },
+                          operator: 'equal',
+                          right: { kind: 'constant', value: 0 },
+                        },
+                      },
+                      data_4: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
+                      data_5: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atk_scale' },
+                      },
+                      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+                      data_7: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_8: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: { kind: 'inputTarget' },
+                          compareZeroWhenTargetMissing: true,
+                          operator: 'equal',
+                          value: { kind: 'constant', value: 0 },
+                          buffIds: ['buff_chr_0034_typhoea_attack_5_damagetaken'],
+                        },
+                      },
+                      data_9: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'context', key: 'tar' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+                skillId: 'chr_0034_typhoea_attack5_02_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0, poise: 15 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_12' } },
+                ],
+              },
+            },
+            {
+              event: 'hit',
+              skill: {
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      modifyActionValue_3: {
+                        action: {
+                          kind: 'modifyActionValue',
+                          parameters: {
+                            key: 'EntityBB_heavyattack_atb_recover',
+                            operation: 'assign',
+                            value: { kind: 'constant', value: 1 },
+                          },
+                        },
+                        next: null,
+                      },
+                      changeResource_4: {
+                        action: {
+                          kind: 'changeResource',
+                          parameters: {
+                            resource: 'sp',
+                            amount: { kind: 'valueNode', nodeId: 'data_1' },
+                            coefficient: { kind: 'constant', value: 1 },
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                            spGainKind: 'gain',
+                            spGainSource: 'normalAttack',
+                          },
+                        },
+                        next: 'modifyActionValue_3',
+                      },
+                      checkCondition_1: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                        },
+                        next: null,
+                      },
+                      checkCondition_2: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                        },
+                        next: 'checkCondition_1',
+                      },
+                      applyBuff_5: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [{ buffId: 'buff_chr_0034_typhoea_attack_5_damagetaken' }],
+                            targets: { kind: 'inputTarget' },
                             source: { kind: 'source' },
                             count: { kind: 'constant', value: 0.3 },
                             inheritSourceSkillCastInfo: true,
@@ -982,6 +1261,8 @@ export const typhoeusChr_0034_typhoea_attack5ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -1048,7 +1329,7 @@ export const typhoeusChr_0034_typhoea_attack5ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'buffIdStackCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           compareZeroWhenTargetMissing: true,
                           operator: 'equal',
                           value: { kind: 'constant', value: 0 },
@@ -1059,6 +1340,19 @@ export const typhoeusChr_0034_typhoea_attack5ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0034_typhoea_attack5_01_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 12, atk_scale: 0.5, poise: 15 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_8' } },
+                ],
               },
             },
           ],
@@ -1068,11 +1362,22 @@ export const typhoeusChr_0034_typhoea_attack5ActionGraph = {
       createSpatialPointTargets_3: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: 'launchProjectile_2',
       },
-      reachSkillOperableBoundary_4: {
+      overrideBasicAttackMapping_4: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_5: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0034_typhoea_attack1'] },
@@ -1085,6 +1390,7 @@ export const typhoeusChr_0034_typhoea_attack5ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_attack5: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_attack5ActionGraph,
   key: 'chr_0034_typhoea_attack5',
   element: 'nature',
   blackboard: {
@@ -1096,55 +1402,20 @@ export const typhoeusChr_0034_typhoea_attack5: SkillDefinition = {
   naturalDurationFrames: 150,
   exclusiveFrame: 44,
   offsetRecordFrame: 22,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 19,
-        endFrame: 62,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 46, endFrame: 62, skillIds: ['chr_0034_typhoea_attack1'] }],
-  },
   costFrame: 23,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'modifyActionValue_1' } },
     { startFrame: 22, endFrame: 28, sequence: { $sequence: 'createSpatialPointTargets_3' } },
-    { startFrame: 46, endFrame: 62, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
+    { startFrame: 19, endFrame: 62, sequence: { $sequence: 'overrideBasicAttackMapping_4' } },
+    { startFrame: 46, endFrame: 62, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0034_typhoea_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: typhoeusChr_0034_typhoea_attack5ActionGraph,
 };
 
 const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
-  skillId: 'chr_0034_typhoea_floating_attack1_01_projhit',
-  nativeSkillType: 'normalSkill',
-  naturalDurationFrames: 1,
-  castResource: {
-    costFrame: 0,
-    cooldownSeconds: 0,
-    maxChargeTime: 1,
-    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-  },
-  blackboard: {
-    atk_scale_base: 0.5,
-    atk_scale_enhence: 1,
-    atk_scale_total: 0,
-    buff_stack: 0,
-    enchence_burst_damage_rate: 1.5,
-    enhence_arrow: 0,
-    potential_damage_rate: 1,
-    total_damage_rate: 1,
-    usp_recover: 5,
-  },
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_25' } },
-  ],
   actionGraph: {
     main: {
       nodes: {
@@ -1177,7 +1448,7 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
           action: {
             kind: 'finishBuffsByTag',
             parameters: {
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               finishSource: { kind: 'source' },
               tagQueryType: 'hasAny',
               buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
@@ -1207,7 +1478,7 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
                   copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
                 },
               ],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -1224,7 +1495,7 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
                   copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
                 },
               ],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -1260,7 +1531,7 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
           action: {
             kind: 'finishBuffsByTag',
             parameters: {
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               finishSource: { kind: 'source' },
               tagQueryType: 'hasAny',
               buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
@@ -1284,6 +1555,8 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_6' },
               tags: ['normalAttack'],
@@ -1296,6 +1569,8 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_7' },
               tags: ['normalAttack'],
@@ -1308,13 +1583,13 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
           action: {
             kind: 'spawnAbilityEntity',
             parameters: {
-              bornAt: { kind: 'fixed', target: 'enemy' },
+              bornAt: { kind: 'inputTarget' },
               abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
               childSkillId: 'chr_0034_typhoea_attack_deadarrow',
-              source: 'currentAbilityEntity',
+              source: { kind: 'owner' },
               inheritActionBlackboard: false,
               dieWhenSourceDies: false,
-              target: 'enemy',
+              target: { kind: 'inputTarget' },
               overrideDurationSeconds: { kind: 'constant', value: 3 },
             },
           },
@@ -1325,7 +1600,7 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
             kind: 'applyBuff',
             parameters: {
               buffs: [{ buffId: 'buff_chr_0034_typhoea_floatingattack_damagetaken' }],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -1380,7 +1655,7 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
           action: {
             kind: 'readBuffStackCount',
             parameters: {
-              target: 'enemy',
+              target: { kind: 'inputTarget' },
               outputKey: 'buff_stack',
               query: {
                 kind: 'tag',
@@ -1405,7 +1680,7 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'greaterOrEqual',
             value: { kind: 'constant', value: 1 },
@@ -1422,7 +1697,7 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'greaterOrEqual',
             value: { kind: 'constant', value: 1 },
@@ -1463,7 +1738,7 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffIdStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'equal',
             value: { kind: 'constant', value: 0 },
@@ -1474,6 +1749,29 @@ const typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 = {
     },
     macros: {},
   },
+  skillId: 'chr_0034_typhoea_floating_attack1_01_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {
+    atk_scale_base: 0.5,
+    atk_scale_enhence: 1,
+    atk_scale_total: 0,
+    buff_stack: 0,
+    enchence_burst_damage_rate: 1.5,
+    enhence_arrow: 0,
+    potential_damage_rate: 1,
+    total_damage_rate: 1,
+    usp_recover: 5,
+  },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_25' } },
+  ],
 } as const;
 
 export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
@@ -1581,8 +1879,9 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_floating_attack2',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -1590,12 +1889,48 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         },
         next: null,
       },
+      castSkillDuringAction_17: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack2',
+            target: { kind: 'context', key: 'mainTar' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_21: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'castSkillDuringAction_17' },
+          whenFalse: { $sequence: 'castSkillDuringAction_18' },
+        },
+        next: null,
+      },
+      findTargets_22: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'mainTar',
+          },
+        },
+        next: 'ifElse_21',
+      },
       castSkillDuringAction_15: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -1607,10 +1942,26 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
         next: null,
       },
-      mergeContextTargets_80: {
+      findTargets_80: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'inputTarget' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 2,
+            },
+            saveToContextKey: 'tar2',
+          },
         },
         next: null,
       },
@@ -1620,21 +1971,38 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
           parameters: {
             owner: { kind: 'owner' },
             query: {
-              kind: 'enemyByTags',
-              tagQueryType: 'hasAny',
-              tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+              kind: 'limit',
+              targets: {
+                kind: 'tagFilter',
+                targets: { kind: 'typhoeaArcherySelected' },
+                tagQueryType: 'hasAny',
+                tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+              },
+              count: 128,
             },
             saveToContextKey: 'tar1',
           },
         },
         next: null,
       },
-      mergeContextTargets_78: {
+      findTargets_78: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 2,
+            },
             saveToContextKey: 'tar_front',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
         next: null,
@@ -1642,7 +2010,7 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
       switch_79: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_7' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_8' }, alwaysNext: true },
           options: [
             { value: { kind: 'constant', value: 0 }, sequence: { $sequence: 'findTargets_76' } },
             { value: { kind: 'constant', value: 1 }, sequence: { $sequence: 'findTargets_76' } },
@@ -1651,15 +2019,15 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
             { value: { kind: 'constant', value: 4 }, sequence: { $sequence: 'findTargets_76' } },
           ],
         },
-        next: 'mergeContextTargets_78',
+        next: 'findTargets_78',
       },
       ifElse_81: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'switch_79' },
-          whenFalse: { $sequence: 'mergeContextTargets_80' },
+          whenFalse: { $sequence: 'findTargets_80' },
         },
         next: null,
       },
@@ -1667,11 +2035,16 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 },
@@ -1683,17 +2056,313 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 },
           ],
         },
         next: 'launchProjectile_216',
+      },
+      launchProjectile_214: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_215: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 },
+          ],
+        },
+        next: 'launchProjectile_214',
+      },
+      ifElse_220: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'launchProjectile_215' },
+          whenFalse: { $sequence: 'launchProjectile_217' },
+        },
+        next: null,
+      },
+      launchProjectile_211: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_210: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      ifElse_212: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          whenTrue: { $sequence: 'launchProjectile_210' },
+          whenFalse: { $sequence: 'launchProjectile_211' },
+        },
+        next: null,
+      },
+      forEachContextTarget_219: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar2' } },
+          body: { $sequence: 'ifElse_212' },
+        },
+        next: null,
+      },
+      ifElse_223: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
+          whenTrue: { $sequence: 'forEachContextTarget_219' },
+          whenFalse: { $sequence: 'ifElse_220' },
+        },
+        next: null,
+      },
+      forEachContextTarget_204: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar_front' } },
+          body: { $sequence: 'ifElse_212' },
+        },
+        next: null,
+      },
+      ifElse_208: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          whenTrue: { $sequence: 'forEachContextTarget_204' },
+          whenFalse: { $sequence: 'ifElse_220' },
+        },
+        next: null,
+      },
+      launchProjectile_192: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
+            onlyHitTargets: { kind: 'inputTarget' },
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_191: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+            onlyHitTargets: { kind: 'inputTarget' },
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack1ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      ifElse_193: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
+          whenTrue: { $sequence: 'launchProjectile_191' },
+          whenFalse: { $sequence: 'launchProjectile_192' },
+        },
+        next: null,
+      },
+      forEachContextTarget_207: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar1' } },
+          body: { $sequence: 'ifElse_193' },
+        },
+        next: null,
+      },
+      ifElse_222: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
+          whenTrue: { $sequence: 'forEachContextTarget_207' },
+          whenFalse: { $sequence: 'ifElse_208' },
+        },
+        next: null,
+      },
+      ifElse_228: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
+          whenTrue: { $sequence: 'ifElse_222' },
+          whenFalse: { $sequence: 'ifElse_223' },
+        },
+        next: null,
+      },
+      modifyActionValue_226: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'enhence_arrow',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_228',
+      },
+      finishBuffsById_227: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+            reason: 'other',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'modifyActionValue_226',
+      },
+      ifElse_233: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_18' },
+          whenTrue: { $sequence: 'finishBuffsById_227' },
+          whenFalse: { $sequence: 'ifElse_228' },
+        },
+        next: null,
+      },
+      finishBuffsById_232: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+            reason: 'other',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'modifyActionValue_226',
+      },
+      ifElse_234: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_19' },
+          whenTrue: { $sequence: 'finishBuffsById_232' },
+          whenFalse: { $sequence: 'ifElse_233' },
+        },
+        next: null,
+      },
+      calculateActionValue_235: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'EntityBB_floating_attack_times',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_20' },
+            right: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_234',
       },
       modifyActionValue_692: {
         action: {
@@ -1719,65 +2388,54 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_753: {
+      overrideBasicAttackMapping_721: {
         action: {
-          kind: 'reachSkillOperableBoundary',
-          parameters: { skillIds: ['chr_0034_typhoea_floating_attack2'] },
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack2'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_749: {
-        action: {
-          kind: 'reachSkillOperableBoundary',
-          parameters: { skillIds: ['chr_0034_typhoea_floating_attack1'] },
-        },
-        next: null,
-      },
-      switch_757: {
+      switch_725: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_9' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_21' }, alwaysNext: true },
           options: [
             {
-              value: { kind: 'constant', value: 4 },
-              sequence: { $sequence: 'reachSkillOperableBoundary_749' },
-            },
-            {
               value: { kind: 'constant', value: 0 },
-              sequence: { $sequence: 'reachSkillOperableBoundary_753' },
+              sequence: { $sequence: 'overrideBasicAttackMapping_721' },
             },
             {
               value: { kind: 'constant', value: 1 },
-              sequence: { $sequence: 'reachSkillOperableBoundary_753' },
+              sequence: { $sequence: 'overrideBasicAttackMapping_721' },
             },
             {
               value: { kind: 'constant', value: 2 },
-              sequence: { $sequence: 'reachSkillOperableBoundary_753' },
+              sequence: { $sequence: 'overrideBasicAttackMapping_721' },
             },
             {
               value: { kind: 'constant', value: 3 },
-              sequence: { $sequence: 'reachSkillOperableBoundary_753' },
+              sequence: { $sequence: 'overrideBasicAttackMapping_721' },
             },
           ],
         },
         next: null,
       },
-      readBuffStackCount_758: {
+      readBuffStackCount_726: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             outputKey: 'arrow_num',
             query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
           },
         },
-        next: 'switch_757',
+        next: 'switch_725',
       },
-      readBuffStackCount_756: {
+      readBuffStackCount_724: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             outputKey: 'arrow_num',
             query: {
               kind: 'id',
@@ -1785,19 +2443,97 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
             },
           },
         },
-        next: 'switch_757',
+        next: 'switch_725',
       },
-      ifElse_759: {
+      ifElse_727: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'readBuffStackCount_756' },
-          whenFalse: { $sequence: 'readBuffStackCount_758' },
+          condition: { kind: 'conditionNode', nodeId: 'data_22' },
+          whenTrue: { $sequence: 'readBuffStackCount_724' },
+          whenFalse: { $sequence: 'readBuffStackCount_726' },
         },
         next: null,
       },
-      finishBuffsById_824: {
+      reachSkillOperableBoundary_793: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack2'] },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_789: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack1'] },
+        },
+        next: null,
+      },
+      switch_797: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_21' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_789' },
+            },
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_793' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_793' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_793' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_793' },
+            },
+          ],
+        },
+        next: null,
+      },
+      readBuffStackCount_798: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          },
+        },
+        next: 'switch_797',
+      },
+      readBuffStackCount_796: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'arrow_num',
+            query: {
+              kind: 'id',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+            },
+          },
+        },
+        next: 'switch_797',
+      },
+      ifElse_799: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_23' },
+          whenTrue: { $sequence: 'readBuffStackCount_796' },
+          whenFalse: { $sequence: 'readBuffStackCount_798' },
+        },
+        next: null,
+      },
+      finishBuffsById_864: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -1809,7 +2545,7 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         },
         next: null,
       },
-      applyBuff_825: {
+      applyBuff_865: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1821,18 +2557,18 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_826: {
+      checkCondition_866: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_24' } },
         },
-        next: 'applyBuff_825',
+        next: 'applyBuff_865',
       },
       ifElse_opt1: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          condition: { kind: 'conditionNode', nodeId: 'data_25' },
           whenTrue: { $sequence: 'castSkillDuringAction_15' },
           whenFalse: { $sequence: 'castSkillDuringAction_15' },
         },
@@ -1842,200 +2578,9 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'castSkillDuringAction_18' },
-          whenFalse: { $sequence: 'castSkillDuringAction_18' },
-        },
-        next: null,
-      },
-      findTargets_opt3: {
-        action: {
-          kind: 'findTargets',
-          parameters: {
-            owner: { kind: 'owner' },
-            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
-            saveToContextKey: 'mainTar',
-          },
-        },
-        next: 'ifElse_opt2',
-      },
-      ifElse_opt4: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          condition: { kind: 'conditionNode', nodeId: 'data_26' },
           whenTrue: { $sequence: 'ifElse_opt1' },
-          whenFalse: { $sequence: 'findTargets_opt3' },
-        },
-        next: null,
-      },
-      ifElse_opt5: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'launchProjectile_216' },
-          whenFalse: { $sequence: 'launchProjectile_216' },
-        },
-        next: null,
-      },
-      forEachContextTarget_opt6: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'context', key: 'tar1' } },
-          body: { $sequence: 'ifElse_opt5' },
-        },
-        next: null,
-      },
-      forEachContextTarget_opt7: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'ifElse_opt5' },
-        },
-        next: null,
-      },
-      ifElse_opt8: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'launchProjectile_217' },
-          whenFalse: { $sequence: 'launchProjectile_217' },
-        },
-        next: null,
-      },
-      ifElse_opt9: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_17' },
-          whenTrue: { $sequence: 'forEachContextTarget_opt7' },
-          whenFalse: { $sequence: 'ifElse_opt8' },
-        },
-        next: null,
-      },
-      ifElse_opt10: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_18' },
-          whenTrue: { $sequence: 'forEachContextTarget_opt6' },
-          whenFalse: { $sequence: 'ifElse_opt9' },
-        },
-        next: null,
-      },
-      ifElse_opt11: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_19' },
-          whenTrue: { $sequence: 'ifElse_opt10' },
-          whenFalse: { $sequence: 'ifElse_opt9' },
-        },
-        next: null,
-      },
-      modifyActionValue_opt12: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'enhence_arrow',
-            operation: 'assign',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'ifElse_opt11',
-      },
-      finishBuffsById_opt13: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'owner' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
-            reason: 'other',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'modifyActionValue_opt12',
-      },
-      finishBuffsById_opt14: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'owner' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
-            reason: 'other',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'modifyActionValue_opt12',
-      },
-      ifElse_opt15: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_20' },
-          whenTrue: { $sequence: 'finishBuffsById_opt14' },
-          whenFalse: { $sequence: 'ifElse_opt11' },
-        },
-        next: null,
-      },
-      ifElse_opt16: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_21' },
-          whenTrue: { $sequence: 'finishBuffsById_opt13' },
-          whenFalse: { $sequence: 'ifElse_opt15' },
-        },
-        next: null,
-      },
-      calculateActionValue_opt17: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'EntityBB_floating_attack_times',
-            operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_22' },
-            right: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'ifElse_opt16',
-      },
-      readBuffStackCount_opt18: {
-        action: {
-          kind: 'readBuffStackCount',
-          parameters: {
-            target: 'caster',
-            outputKey: 'arrow_num',
-            query: {
-              kind: 'id',
-              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
-            },
-          },
-        },
-        next: null,
-      },
-      readBuffStackCount_opt19: {
-        action: {
-          kind: 'readBuffStackCount',
-          parameters: {
-            target: 'caster',
-            outputKey: 'arrow_num',
-            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
-          },
-        },
-        next: null,
-      },
-      ifElse_opt20: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_23' },
-          whenTrue: { $sequence: 'readBuffStackCount_opt18' },
-          whenFalse: { $sequence: 'readBuffStackCount_opt19' },
+          whenFalse: { $sequence: 'findTargets_22' },
         },
         next: null,
       },
@@ -2050,7 +2595,7 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           distance: 4,
           lessThan: true,
           includeTargetRadius: false,
@@ -2066,7 +2611,7 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           distance: 12,
           lessThan: false,
           includeTargetRadius: false,
@@ -2077,7 +2622,7 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -2088,66 +2633,76 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'have_move_input' } },
-      data_8: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
-      },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'arrow_num' } },
-      data_10: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'owner' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
-        },
-      },
-      data_11: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'owner' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'equal',
-          value: { kind: 'constant', value: 0 },
-          buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
-        },
-      },
-      data_12: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_13: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_14: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
-      },
-      data_15: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_16: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_17: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'mainTar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
         },
       },
-      data_18: {
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'have_move_input' } },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_10: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_10' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_12: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_10' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_13: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar2' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar_front' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_10' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_16: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -2158,11 +2713,11 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
           value: 1,
         },
       },
-      data_19: {
+      data_17: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
-      data_20: {
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -2173,7 +2728,7 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
         },
       },
-      data_21: {
+      data_19: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -2184,9 +2739,21 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
         },
       },
-      data_22: {
+      data_20: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_floating_attack_times' },
+      },
+      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'arrow_num' } },
+      data_22: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+        },
       },
       data_23: {
         type: 'boolean',
@@ -2199,12 +2766,32 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
         },
       },
+      data_24: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+        },
+      },
+      data_25: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_26: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_floating_attack1: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_floating_attack1ActionGraph,
   key: 'chr_0034_typhoea_floating_attack1',
   element: 'nature',
   blackboard: {
@@ -2221,39 +2808,29 @@ export const typhoeusChr_0034_typhoea_floating_attack1: SkillDefinition = {
   naturalDurationFrames: 160,
   exclusiveFrame: 999,
   offsetRecordFrame: 7,
-  inputWindows: {
-    hasConditionalActions: true,
-    allowedNextSkills: [
-      { startFrame: 18, endFrame: 25, skillIds: ['chr_0034_typhoea_floating_attack2'] },
-      { startFrame: 63, endFrame: 70, skillIds: ['chr_0034_typhoea_floating_attack2'] },
-      { startFrame: 93, endFrame: 100, skillIds: ['chr_0034_typhoea_floating_attack2'] },
-      { startFrame: 123, endFrame: 130, skillIds: ['chr_0034_typhoea_floating_attack2'] },
-      { startFrame: 153, endFrame: 160, skillIds: ['chr_0034_typhoea_floating_attack2'] },
-    ],
-  },
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 0, endFrame: 160, sequence: { $sequence: 'inheritBuffById_1' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_12' } },
-    { startFrame: 22, endFrame: 25, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 22, endFrame: 25, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 25, endFrame: 28, sequence: { $sequence: 'interruptCurrentSkill_24' } },
-    { startFrame: 67, endFrame: 70, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 67, endFrame: 70, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 70, endFrame: 73, sequence: { $sequence: 'interruptCurrentSkill_24' } },
-    { startFrame: 97, endFrame: 100, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 97, endFrame: 100, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 100, endFrame: 103, sequence: { $sequence: 'interruptCurrentSkill_24' } },
-    { startFrame: 127, endFrame: 130, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 127, endFrame: 130, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 130, endFrame: 133, sequence: { $sequence: 'interruptCurrentSkill_24' } },
-    { startFrame: 157, endFrame: 160, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 157, endFrame: 160, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_81' } },
     { startFrame: 45, endFrame: 46, sequence: { $sequence: 'ifElse_81' } },
     { startFrame: 75, endFrame: 76, sequence: { $sequence: 'ifElse_81' } },
     { startFrame: 105, endFrame: 106, sequence: { $sequence: 'ifElse_81' } },
     { startFrame: 135, endFrame: 136, sequence: { $sequence: 'ifElse_81' } },
-    { startFrame: 1, endFrame: 1, sequence: { $sequence: 'calculateActionValue_opt17' } },
-    { startFrame: 46, endFrame: 46, sequence: { $sequence: 'calculateActionValue_opt17' } },
-    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'calculateActionValue_opt17' } },
-    { startFrame: 106, endFrame: 106, sequence: { $sequence: 'calculateActionValue_opt17' } },
-    { startFrame: 136, endFrame: 136, sequence: { $sequence: 'calculateActionValue_opt17' } },
+    { startFrame: 1, endFrame: 1, sequence: { $sequence: 'calculateActionValue_235' } },
+    { startFrame: 46, endFrame: 46, sequence: { $sequence: 'calculateActionValue_235' } },
+    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'calculateActionValue_235' } },
+    { startFrame: 106, endFrame: 106, sequence: { $sequence: 'calculateActionValue_235' } },
+    { startFrame: 136, endFrame: 136, sequence: { $sequence: 'calculateActionValue_235' } },
     { startFrame: 0, endFrame: 6, sequence: { $sequence: 'modifyActionValue_692' } },
     { startFrame: 45, endFrame: 51, sequence: { $sequence: 'modifyActionValue_692' } },
     { startFrame: 75, endFrame: 81, sequence: { $sequence: 'modifyActionValue_692' } },
@@ -2264,59 +2841,34 @@ export const typhoeusChr_0034_typhoea_floating_attack1: SkillDefinition = {
     { startFrame: 75, endFrame: 100, sequence: { $sequence: 'applyBuff_709' } },
     { startFrame: 105, endFrame: 130, sequence: { $sequence: 'applyBuff_709' } },
     { startFrame: 135, endFrame: 160, sequence: { $sequence: 'applyBuff_709' } },
-    { startFrame: 4, endFrame: 25, sequence: { $sequence: 'ifElse_opt20' } },
-    { startFrame: 49, endFrame: 70, sequence: { $sequence: 'ifElse_opt20' } },
-    { startFrame: 79, endFrame: 100, sequence: { $sequence: 'ifElse_opt20' } },
-    { startFrame: 109, endFrame: 130, sequence: { $sequence: 'ifElse_opt20' } },
-    { startFrame: 139, endFrame: 160, sequence: { $sequence: 'ifElse_opt20' } },
-    { startFrame: 18, endFrame: 25, sequence: { $sequence: 'ifElse_759' } },
-    { startFrame: 63, endFrame: 70, sequence: { $sequence: 'ifElse_759' } },
-    { startFrame: 93, endFrame: 100, sequence: { $sequence: 'ifElse_759' } },
-    { startFrame: 123, endFrame: 130, sequence: { $sequence: 'ifElse_759' } },
-    { startFrame: 153, endFrame: 160, sequence: { $sequence: 'ifElse_759' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_824' } },
-    { startFrame: 14, endFrame: 17, sequence: { $sequence: 'checkCondition_826' } },
-    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'finishBuffsById_824' } },
-    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'checkCondition_826' } },
-    { startFrame: 75, endFrame: 78, sequence: { $sequence: 'finishBuffsById_824' } },
-    { startFrame: 89, endFrame: 92, sequence: { $sequence: 'checkCondition_826' } },
-    { startFrame: 105, endFrame: 108, sequence: { $sequence: 'finishBuffsById_824' } },
-    { startFrame: 119, endFrame: 122, sequence: { $sequence: 'checkCondition_826' } },
-    { startFrame: 135, endFrame: 138, sequence: { $sequence: 'finishBuffsById_824' } },
-    { startFrame: 149, endFrame: 152, sequence: { $sequence: 'checkCondition_826' } },
+    { startFrame: 4, endFrame: 25, sequence: { $sequence: 'ifElse_727' } },
+    { startFrame: 49, endFrame: 70, sequence: { $sequence: 'ifElse_727' } },
+    { startFrame: 79, endFrame: 100, sequence: { $sequence: 'ifElse_727' } },
+    { startFrame: 109, endFrame: 130, sequence: { $sequence: 'ifElse_727' } },
+    { startFrame: 139, endFrame: 160, sequence: { $sequence: 'ifElse_727' } },
+    { startFrame: 18, endFrame: 25, sequence: { $sequence: 'ifElse_799' } },
+    { startFrame: 63, endFrame: 70, sequence: { $sequence: 'ifElse_799' } },
+    { startFrame: 93, endFrame: 100, sequence: { $sequence: 'ifElse_799' } },
+    { startFrame: 123, endFrame: 130, sequence: { $sequence: 'ifElse_799' } },
+    { startFrame: 153, endFrame: 160, sequence: { $sequence: 'ifElse_799' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_864' } },
+    { startFrame: 14, endFrame: 17, sequence: { $sequence: 'checkCondition_866' } },
+    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'finishBuffsById_864' } },
+    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'checkCondition_866' } },
+    { startFrame: 75, endFrame: 78, sequence: { $sequence: 'finishBuffsById_864' } },
+    { startFrame: 89, endFrame: 92, sequence: { $sequence: 'checkCondition_866' } },
+    { startFrame: 105, endFrame: 108, sequence: { $sequence: 'finishBuffsById_864' } },
+    { startFrame: 119, endFrame: 122, sequence: { $sequence: 'checkCondition_866' } },
+    { startFrame: 135, endFrame: 138, sequence: { $sequence: 'finishBuffsById_864' } },
+    { startFrame: 149, endFrame: 152, sequence: { $sequence: 'checkCondition_866' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0034_typhoea_floating_attack2',
   skillType: 'basicAttack',
   levelSource: 'battleSkill',
   nativeSkillType: 'attack',
-  actionGraph: typhoeusChr_0034_typhoea_floating_attack1ActionGraph,
 };
 
 const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
-  skillId: 'chr_0034_typhoea_floating_attack1_01_projhit',
-  nativeSkillType: 'normalSkill',
-  naturalDurationFrames: 1,
-  castResource: {
-    costFrame: 0,
-    cooldownSeconds: 0,
-    maxChargeTime: 1,
-    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-  },
-  blackboard: {
-    atk_scale_base: 0.5,
-    atk_scale_enhence: 1,
-    atk_scale_total: 0,
-    buff_stack: 0,
-    enchence_burst_damage_rate: 1.5,
-    enhence_arrow: 0,
-    potential_damage_rate: 1,
-    total_damage_rate: 1,
-    usp_recover: 5,
-  },
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_25' } },
-  ],
   actionGraph: {
     main: {
       nodes: {
@@ -2349,7 +2901,7 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
           action: {
             kind: 'finishBuffsByTag',
             parameters: {
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               finishSource: { kind: 'source' },
               tagQueryType: 'hasAny',
               buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
@@ -2379,7 +2931,7 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
                   copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
                 },
               ],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -2396,7 +2948,7 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
                   copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
                 },
               ],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -2432,7 +2984,7 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
           action: {
             kind: 'finishBuffsByTag',
             parameters: {
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               finishSource: { kind: 'source' },
               tagQueryType: 'hasAny',
               buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
@@ -2456,6 +3008,8 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_6' },
               tags: ['normalAttack'],
@@ -2468,6 +3022,8 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_7' },
               tags: ['normalAttack'],
@@ -2480,13 +3036,13 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
           action: {
             kind: 'spawnAbilityEntity',
             parameters: {
-              bornAt: { kind: 'fixed', target: 'enemy' },
+              bornAt: { kind: 'inputTarget' },
               abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
               childSkillId: 'chr_0034_typhoea_attack_deadarrow',
-              source: 'currentAbilityEntity',
+              source: { kind: 'owner' },
               inheritActionBlackboard: false,
               dieWhenSourceDies: false,
-              target: 'enemy',
+              target: { kind: 'inputTarget' },
               overrideDurationSeconds: { kind: 'constant', value: 3 },
             },
           },
@@ -2497,7 +3053,7 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
             kind: 'applyBuff',
             parameters: {
               buffs: [{ buffId: 'buff_chr_0034_typhoea_floatingattack_damagetaken' }],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -2552,7 +3108,7 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
           action: {
             kind: 'readBuffStackCount',
             parameters: {
-              target: 'enemy',
+              target: { kind: 'inputTarget' },
               outputKey: 'buff_stack',
               query: {
                 kind: 'tag',
@@ -2577,7 +3133,7 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'greaterOrEqual',
             value: { kind: 'constant', value: 1 },
@@ -2594,7 +3150,7 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'greaterOrEqual',
             value: { kind: 'constant', value: 1 },
@@ -2635,7 +3191,7 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffIdStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'equal',
             value: { kind: 'constant', value: 0 },
@@ -2646,6 +3202,29 @@ const typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 = {
     },
     macros: {},
   },
+  skillId: 'chr_0034_typhoea_floating_attack1_01_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {
+    atk_scale_base: 0.5,
+    atk_scale_enhence: 1,
+    atk_scale_total: 0,
+    buff_stack: 0,
+    enchence_burst_damage_rate: 1.5,
+    enhence_arrow: 0,
+    potential_damage_rate: 1,
+    total_damage_rate: 1,
+    usp_recover: 5,
+  },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_25' } },
+  ],
 } as const;
 
 export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
@@ -2753,8 +3332,9 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_floating_attack3',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -2762,12 +3342,48 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         },
         next: null,
       },
+      castSkillDuringAction_18: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack3',
+            target: { kind: 'context', key: 'mainTar' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_22: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'castSkillDuringAction_18' },
+          whenFalse: { $sequence: 'castSkillDuringAction_19' },
+        },
+        next: null,
+      },
+      findTargets_23: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'mainTar',
+          },
+        },
+        next: 'ifElse_22',
+      },
       castSkillDuringAction_16: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -2779,10 +3395,26 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
         next: null,
       },
-      mergeContextTargets_81: {
+      findTargets_81: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'inputTarget' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 2,
+            },
+            saveToContextKey: 'tar2',
+          },
         },
         next: null,
       },
@@ -2792,21 +3424,38 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
           parameters: {
             owner: { kind: 'owner' },
             query: {
-              kind: 'enemyByTags',
-              tagQueryType: 'hasAny',
-              tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+              kind: 'limit',
+              targets: {
+                kind: 'tagFilter',
+                targets: { kind: 'typhoeaArcherySelected' },
+                tagQueryType: 'hasAny',
+                tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+              },
+              count: 128,
             },
             saveToContextKey: 'tar1',
           },
         },
         next: null,
       },
-      mergeContextTargets_79: {
+      findTargets_79: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 2,
+            },
             saveToContextKey: 'tar_front',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
         next: null,
@@ -2814,7 +3463,7 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
       switch_80: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_7' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_8' }, alwaysNext: true },
           options: [
             { value: { kind: 'constant', value: 1 }, sequence: { $sequence: 'findTargets_77' } },
             { value: { kind: 'constant', value: 0 }, sequence: { $sequence: 'findTargets_77' } },
@@ -2823,15 +3472,15 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
             { value: { kind: 'constant', value: 4 }, sequence: { $sequence: 'findTargets_77' } },
           ],
         },
-        next: 'mergeContextTargets_79',
+        next: 'findTargets_79',
       },
       ifElse_82: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'switch_80' },
-          whenFalse: { $sequence: 'mergeContextTargets_81' },
+          whenFalse: { $sequence: 'findTargets_81' },
         },
         next: null,
       },
@@ -2839,11 +3488,16 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 },
@@ -2855,17 +3509,313 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 },
           ],
         },
         next: 'launchProjectile_177',
+      },
+      launchProjectile_175: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_176: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 },
+          ],
+        },
+        next: 'launchProjectile_175',
+      },
+      ifElse_181: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'launchProjectile_176' },
+          whenFalse: { $sequence: 'launchProjectile_178' },
+        },
+        next: null,
+      },
+      launchProjectile_172: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_171: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      ifElse_173: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          whenTrue: { $sequence: 'launchProjectile_171' },
+          whenFalse: { $sequence: 'launchProjectile_172' },
+        },
+        next: null,
+      },
+      forEachContextTarget_180: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar2' } },
+          body: { $sequence: 'ifElse_173' },
+        },
+        next: null,
+      },
+      ifElse_184: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
+          whenTrue: { $sequence: 'forEachContextTarget_180' },
+          whenFalse: { $sequence: 'ifElse_181' },
+        },
+        next: null,
+      },
+      forEachContextTarget_165: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar_front' } },
+          body: { $sequence: 'ifElse_173' },
+        },
+        next: null,
+      },
+      ifElse_169: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          whenTrue: { $sequence: 'forEachContextTarget_165' },
+          whenFalse: { $sequence: 'ifElse_181' },
+        },
+        next: null,
+      },
+      launchProjectile_153: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
+            onlyHitTargets: { kind: 'inputTarget' },
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_152: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+            onlyHitTargets: { kind: 'inputTarget' },
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack2ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      ifElse_154: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
+          whenTrue: { $sequence: 'launchProjectile_152' },
+          whenFalse: { $sequence: 'launchProjectile_153' },
+        },
+        next: null,
+      },
+      forEachContextTarget_168: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar1' } },
+          body: { $sequence: 'ifElse_154' },
+        },
+        next: null,
+      },
+      ifElse_183: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
+          whenTrue: { $sequence: 'forEachContextTarget_168' },
+          whenFalse: { $sequence: 'ifElse_169' },
+        },
+        next: null,
+      },
+      ifElse_189: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
+          whenTrue: { $sequence: 'ifElse_183' },
+          whenFalse: { $sequence: 'ifElse_184' },
+        },
+        next: null,
+      },
+      modifyActionValue_187: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'enhence_arrow',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_189',
+      },
+      finishBuffsById_188: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+            reason: 'other',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'modifyActionValue_187',
+      },
+      ifElse_194: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_18' },
+          whenTrue: { $sequence: 'finishBuffsById_188' },
+          whenFalse: { $sequence: 'ifElse_189' },
+        },
+        next: null,
+      },
+      finishBuffsById_193: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+            reason: 'other',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'modifyActionValue_187',
+      },
+      ifElse_195: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_19' },
+          whenTrue: { $sequence: 'finishBuffsById_193' },
+          whenFalse: { $sequence: 'ifElse_194' },
+        },
+        next: null,
+      },
+      calculateActionValue_196: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'EntityBB_floating_attack_times',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_20' },
+            right: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_195',
       },
       modifyActionValue_693: {
         action: {
@@ -2891,72 +3841,72 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_754: {
+      overrideBasicAttackMapping_724: {
         action: {
-          kind: 'reachSkillOperableBoundary',
-          parameters: { skillIds: ['chr_0034_typhoea_floating_attack1'] },
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack3'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_753: {
+      overrideBasicAttackMapping_721: {
         action: {
-          kind: 'reachSkillOperableBoundary',
-          parameters: { skillIds: ['chr_0034_typhoea_floating_attack2'] },
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack2'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_752: {
+      overrideBasicAttackMapping_720: {
         action: {
-          kind: 'reachSkillOperableBoundary',
-          parameters: { skillIds: ['chr_0034_typhoea_floating_attack3'] },
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack1'], priority: 'skill' },
         },
         next: null,
       },
-      switch_758: {
+      switch_728: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_9' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_21' }, alwaysNext: true },
           options: [
             {
-              value: { kind: 'constant', value: 0 },
-              sequence: { $sequence: 'reachSkillOperableBoundary_752' },
-            },
-            {
-              value: { kind: 'constant', value: 1 },
-              sequence: { $sequence: 'reachSkillOperableBoundary_752' },
-            },
-            {
-              value: { kind: 'constant', value: 2 },
-              sequence: { $sequence: 'reachSkillOperableBoundary_752' },
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_720' },
             },
             {
               value: { kind: 'constant', value: 3 },
-              sequence: { $sequence: 'reachSkillOperableBoundary_753' },
+              sequence: { $sequence: 'overrideBasicAttackMapping_721' },
             },
             {
-              value: { kind: 'constant', value: 4 },
-              sequence: { $sequence: 'reachSkillOperableBoundary_754' },
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_724' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_724' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_724' },
             },
           ],
         },
         next: null,
       },
-      readBuffStackCount_759: {
+      readBuffStackCount_729: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             outputKey: 'arrow_num',
             query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
           },
         },
-        next: 'switch_758',
+        next: 'switch_728',
       },
-      readBuffStackCount_757: {
+      readBuffStackCount_727: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             outputKey: 'arrow_num',
             query: {
               kind: 'id',
@@ -2964,19 +3914,104 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
             },
           },
         },
-        next: 'switch_758',
+        next: 'switch_728',
       },
-      ifElse_760: {
+      ifElse_730: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'readBuffStackCount_757' },
-          whenFalse: { $sequence: 'readBuffStackCount_759' },
+          condition: { kind: 'conditionNode', nodeId: 'data_22' },
+          whenTrue: { $sequence: 'readBuffStackCount_727' },
+          whenFalse: { $sequence: 'readBuffStackCount_729' },
         },
         next: null,
       },
-      finishBuffsById_825: {
+      reachSkillOperableBoundary_804: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack1'] },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_803: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack2'] },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_802: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack3'] },
+        },
+        next: null,
+      },
+      switch_808: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_21' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_802' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_802' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_802' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_803' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_804' },
+            },
+          ],
+        },
+        next: null,
+      },
+      readBuffStackCount_809: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          },
+        },
+        next: 'switch_808',
+      },
+      readBuffStackCount_807: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'arrow_num',
+            query: {
+              kind: 'id',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+            },
+          },
+        },
+        next: 'switch_808',
+      },
+      ifElse_810: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_23' },
+          whenTrue: { $sequence: 'readBuffStackCount_807' },
+          whenFalse: { $sequence: 'readBuffStackCount_809' },
+        },
+        next: null,
+      },
+      finishBuffsById_875: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -2988,7 +4023,7 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         },
         next: null,
       },
-      applyBuff_826: {
+      applyBuff_876: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -3000,18 +4035,18 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_827: {
+      checkCondition_877: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_24' } },
         },
-        next: 'applyBuff_826',
+        next: 'applyBuff_876',
       },
       ifElse_opt1: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          condition: { kind: 'conditionNode', nodeId: 'data_25' },
           whenTrue: { $sequence: 'castSkillDuringAction_16' },
           whenFalse: { $sequence: 'castSkillDuringAction_16' },
         },
@@ -3021,200 +4056,9 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'castSkillDuringAction_19' },
-          whenFalse: { $sequence: 'castSkillDuringAction_19' },
-        },
-        next: null,
-      },
-      findTargets_opt3: {
-        action: {
-          kind: 'findTargets',
-          parameters: {
-            owner: { kind: 'owner' },
-            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
-            saveToContextKey: 'mainTar',
-          },
-        },
-        next: 'ifElse_opt2',
-      },
-      ifElse_opt4: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          condition: { kind: 'conditionNode', nodeId: 'data_26' },
           whenTrue: { $sequence: 'ifElse_opt1' },
-          whenFalse: { $sequence: 'findTargets_opt3' },
-        },
-        next: null,
-      },
-      ifElse_opt5: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'launchProjectile_177' },
-          whenFalse: { $sequence: 'launchProjectile_177' },
-        },
-        next: null,
-      },
-      forEachContextTarget_opt6: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'context', key: 'tar1' } },
-          body: { $sequence: 'ifElse_opt5' },
-        },
-        next: null,
-      },
-      forEachContextTarget_opt7: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'ifElse_opt5' },
-        },
-        next: null,
-      },
-      ifElse_opt8: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'launchProjectile_178' },
-          whenFalse: { $sequence: 'launchProjectile_178' },
-        },
-        next: null,
-      },
-      ifElse_opt9: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_17' },
-          whenTrue: { $sequence: 'forEachContextTarget_opt7' },
-          whenFalse: { $sequence: 'ifElse_opt8' },
-        },
-        next: null,
-      },
-      ifElse_opt10: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_18' },
-          whenTrue: { $sequence: 'forEachContextTarget_opt6' },
-          whenFalse: { $sequence: 'ifElse_opt9' },
-        },
-        next: null,
-      },
-      ifElse_opt11: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_19' },
-          whenTrue: { $sequence: 'ifElse_opt10' },
-          whenFalse: { $sequence: 'ifElse_opt9' },
-        },
-        next: null,
-      },
-      modifyActionValue_opt12: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'enhence_arrow',
-            operation: 'assign',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'ifElse_opt11',
-      },
-      finishBuffsById_opt13: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'owner' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
-            reason: 'other',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'modifyActionValue_opt12',
-      },
-      finishBuffsById_opt14: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'owner' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
-            reason: 'other',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'modifyActionValue_opt12',
-      },
-      ifElse_opt15: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_20' },
-          whenTrue: { $sequence: 'finishBuffsById_opt14' },
-          whenFalse: { $sequence: 'ifElse_opt11' },
-        },
-        next: null,
-      },
-      ifElse_opt16: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_21' },
-          whenTrue: { $sequence: 'finishBuffsById_opt13' },
-          whenFalse: { $sequence: 'ifElse_opt15' },
-        },
-        next: null,
-      },
-      calculateActionValue_opt17: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'EntityBB_floating_attack_times',
-            operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_22' },
-            right: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'ifElse_opt16',
-      },
-      readBuffStackCount_opt18: {
-        action: {
-          kind: 'readBuffStackCount',
-          parameters: {
-            target: 'caster',
-            outputKey: 'arrow_num',
-            query: {
-              kind: 'id',
-              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
-            },
-          },
-        },
-        next: null,
-      },
-      readBuffStackCount_opt19: {
-        action: {
-          kind: 'readBuffStackCount',
-          parameters: {
-            target: 'caster',
-            outputKey: 'arrow_num',
-            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
-          },
-        },
-        next: null,
-      },
-      ifElse_opt20: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_23' },
-          whenTrue: { $sequence: 'readBuffStackCount_opt18' },
-          whenFalse: { $sequence: 'readBuffStackCount_opt19' },
+          whenFalse: { $sequence: 'findTargets_23' },
         },
         next: null,
       },
@@ -3229,7 +4073,7 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           distance: 4,
           lessThan: true,
           includeTargetRadius: false,
@@ -3245,7 +4089,7 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           distance: 12,
           lessThan: false,
           includeTargetRadius: false,
@@ -3256,7 +4100,7 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -3267,66 +4111,76 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'have_move_input' } },
-      data_8: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
-      },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'arrow_num' } },
-      data_10: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'owner' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
-        },
-      },
-      data_11: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'owner' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'equal',
-          value: { kind: 'constant', value: 0 },
-          buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
-        },
-      },
-      data_12: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_13: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_14: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
-      },
-      data_15: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_16: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_17: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'mainTar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
         },
       },
-      data_18: {
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'have_move_input' } },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_10: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_10' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_12: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_10' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_13: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar2' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar_front' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_10' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_16: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -3337,11 +4191,11 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
           value: 1,
         },
       },
-      data_19: {
+      data_17: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
-      data_20: {
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -3352,7 +4206,7 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
         },
       },
-      data_21: {
+      data_19: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -3363,9 +4217,21 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
         },
       },
-      data_22: {
+      data_20: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_floating_attack_times' },
+      },
+      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'arrow_num' } },
+      data_22: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+        },
       },
       data_23: {
         type: 'boolean',
@@ -3378,12 +4244,32 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
         },
       },
+      data_24: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+        },
+      },
+      data_25: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_26: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_floating_attack2: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_floating_attack2ActionGraph,
   key: 'chr_0034_typhoea_floating_attack2',
   element: 'nature',
   blackboard: {
@@ -3400,39 +4286,29 @@ export const typhoeusChr_0034_typhoea_floating_attack2: SkillDefinition = {
   naturalDurationFrames: 160,
   exclusiveFrame: 999,
   offsetRecordFrame: 7,
-  inputWindows: {
-    hasConditionalActions: true,
-    allowedNextSkills: [
-      { startFrame: 18, endFrame: 25, skillIds: ['chr_0034_typhoea_floating_attack3'] },
-      { startFrame: 63, endFrame: 70, skillIds: ['chr_0034_typhoea_floating_attack3'] },
-      { startFrame: 93, endFrame: 100, skillIds: ['chr_0034_typhoea_floating_attack3'] },
-      { startFrame: 123, endFrame: 130, skillIds: ['chr_0034_typhoea_floating_attack3'] },
-      { startFrame: 153, endFrame: 160, skillIds: ['chr_0034_typhoea_floating_attack3'] },
-    ],
-  },
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 0, endFrame: 160, sequence: { $sequence: 'inheritBuffById_1' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_12' } },
-    { startFrame: 22, endFrame: 25, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 22, endFrame: 25, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 25, endFrame: 28, sequence: { $sequence: 'interruptCurrentSkill_25' } },
-    { startFrame: 67, endFrame: 70, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 67, endFrame: 70, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 70, endFrame: 73, sequence: { $sequence: 'interruptCurrentSkill_25' } },
-    { startFrame: 97, endFrame: 100, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 97, endFrame: 100, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 100, endFrame: 103, sequence: { $sequence: 'interruptCurrentSkill_25' } },
-    { startFrame: 127, endFrame: 130, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 127, endFrame: 130, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 130, endFrame: 133, sequence: { $sequence: 'interruptCurrentSkill_25' } },
-    { startFrame: 157, endFrame: 160, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 157, endFrame: 160, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_82' } },
-    { startFrame: 1, endFrame: 1, sequence: { $sequence: 'calculateActionValue_opt17' } },
+    { startFrame: 1, endFrame: 1, sequence: { $sequence: 'calculateActionValue_196' } },
     { startFrame: 45, endFrame: 46, sequence: { $sequence: 'ifElse_82' } },
-    { startFrame: 46, endFrame: 46, sequence: { $sequence: 'calculateActionValue_opt17' } },
+    { startFrame: 46, endFrame: 46, sequence: { $sequence: 'calculateActionValue_196' } },
     { startFrame: 75, endFrame: 76, sequence: { $sequence: 'ifElse_82' } },
-    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'calculateActionValue_opt17' } },
+    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'calculateActionValue_196' } },
     { startFrame: 105, endFrame: 106, sequence: { $sequence: 'ifElse_82' } },
-    { startFrame: 106, endFrame: 106, sequence: { $sequence: 'calculateActionValue_opt17' } },
+    { startFrame: 106, endFrame: 106, sequence: { $sequence: 'calculateActionValue_196' } },
     { startFrame: 135, endFrame: 136, sequence: { $sequence: 'ifElse_82' } },
-    { startFrame: 136, endFrame: 136, sequence: { $sequence: 'calculateActionValue_opt17' } },
+    { startFrame: 136, endFrame: 136, sequence: { $sequence: 'calculateActionValue_196' } },
     { startFrame: 0, endFrame: 6, sequence: { $sequence: 'modifyActionValue_693' } },
     { startFrame: 45, endFrame: 51, sequence: { $sequence: 'modifyActionValue_693' } },
     { startFrame: 75, endFrame: 81, sequence: { $sequence: 'modifyActionValue_693' } },
@@ -3443,59 +4319,34 @@ export const typhoeusChr_0034_typhoea_floating_attack2: SkillDefinition = {
     { startFrame: 75, endFrame: 100, sequence: { $sequence: 'applyBuff_710' } },
     { startFrame: 105, endFrame: 130, sequence: { $sequence: 'applyBuff_710' } },
     { startFrame: 135, endFrame: 160, sequence: { $sequence: 'applyBuff_710' } },
-    { startFrame: 4, endFrame: 25, sequence: { $sequence: 'ifElse_opt20' } },
-    { startFrame: 49, endFrame: 70, sequence: { $sequence: 'ifElse_opt20' } },
-    { startFrame: 79, endFrame: 100, sequence: { $sequence: 'ifElse_opt20' } },
-    { startFrame: 109, endFrame: 130, sequence: { $sequence: 'ifElse_opt20' } },
-    { startFrame: 139, endFrame: 160, sequence: { $sequence: 'ifElse_opt20' } },
-    { startFrame: 18, endFrame: 25, sequence: { $sequence: 'ifElse_760' } },
-    { startFrame: 63, endFrame: 70, sequence: { $sequence: 'ifElse_760' } },
-    { startFrame: 93, endFrame: 100, sequence: { $sequence: 'ifElse_760' } },
-    { startFrame: 123, endFrame: 130, sequence: { $sequence: 'ifElse_760' } },
-    { startFrame: 153, endFrame: 160, sequence: { $sequence: 'ifElse_760' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_825' } },
-    { startFrame: 14, endFrame: 17, sequence: { $sequence: 'checkCondition_827' } },
-    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'finishBuffsById_825' } },
-    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'checkCondition_827' } },
-    { startFrame: 75, endFrame: 78, sequence: { $sequence: 'finishBuffsById_825' } },
-    { startFrame: 89, endFrame: 92, sequence: { $sequence: 'checkCondition_827' } },
-    { startFrame: 105, endFrame: 108, sequence: { $sequence: 'finishBuffsById_825' } },
-    { startFrame: 119, endFrame: 122, sequence: { $sequence: 'checkCondition_827' } },
-    { startFrame: 135, endFrame: 138, sequence: { $sequence: 'finishBuffsById_825' } },
-    { startFrame: 149, endFrame: 152, sequence: { $sequence: 'checkCondition_827' } },
+    { startFrame: 4, endFrame: 25, sequence: { $sequence: 'ifElse_730' } },
+    { startFrame: 49, endFrame: 70, sequence: { $sequence: 'ifElse_730' } },
+    { startFrame: 79, endFrame: 100, sequence: { $sequence: 'ifElse_730' } },
+    { startFrame: 109, endFrame: 130, sequence: { $sequence: 'ifElse_730' } },
+    { startFrame: 139, endFrame: 160, sequence: { $sequence: 'ifElse_730' } },
+    { startFrame: 18, endFrame: 25, sequence: { $sequence: 'ifElse_810' } },
+    { startFrame: 63, endFrame: 70, sequence: { $sequence: 'ifElse_810' } },
+    { startFrame: 93, endFrame: 100, sequence: { $sequence: 'ifElse_810' } },
+    { startFrame: 123, endFrame: 130, sequence: { $sequence: 'ifElse_810' } },
+    { startFrame: 153, endFrame: 160, sequence: { $sequence: 'ifElse_810' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_875' } },
+    { startFrame: 14, endFrame: 17, sequence: { $sequence: 'checkCondition_877' } },
+    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'finishBuffsById_875' } },
+    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'checkCondition_877' } },
+    { startFrame: 75, endFrame: 78, sequence: { $sequence: 'finishBuffsById_875' } },
+    { startFrame: 89, endFrame: 92, sequence: { $sequence: 'checkCondition_877' } },
+    { startFrame: 105, endFrame: 108, sequence: { $sequence: 'finishBuffsById_875' } },
+    { startFrame: 119, endFrame: 122, sequence: { $sequence: 'checkCondition_877' } },
+    { startFrame: 135, endFrame: 138, sequence: { $sequence: 'finishBuffsById_875' } },
+    { startFrame: 149, endFrame: 152, sequence: { $sequence: 'checkCondition_877' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0034_typhoea_floating_attack3',
   skillType: 'basicAttack',
   levelSource: 'battleSkill',
   nativeSkillType: 'attack',
-  actionGraph: typhoeusChr_0034_typhoea_floating_attack2ActionGraph,
 };
 
 const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
-  skillId: 'chr_0034_typhoea_floating_attack1_01_projhit',
-  nativeSkillType: 'normalSkill',
-  naturalDurationFrames: 1,
-  castResource: {
-    costFrame: 0,
-    cooldownSeconds: 0,
-    maxChargeTime: 1,
-    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-  },
-  blackboard: {
-    atk_scale_base: 0.5,
-    atk_scale_enhence: 1,
-    atk_scale_total: 0,
-    buff_stack: 0,
-    enchence_burst_damage_rate: 1.5,
-    enhence_arrow: 0,
-    potential_damage_rate: 1,
-    total_damage_rate: 1,
-    usp_recover: 5,
-  },
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_25' } },
-  ],
   actionGraph: {
     main: {
       nodes: {
@@ -3528,7 +4379,7 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
           action: {
             kind: 'finishBuffsByTag',
             parameters: {
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               finishSource: { kind: 'source' },
               tagQueryType: 'hasAny',
               buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
@@ -3558,7 +4409,7 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
                   copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
                 },
               ],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -3575,7 +4426,7 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
                   copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
                 },
               ],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -3611,7 +4462,7 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
           action: {
             kind: 'finishBuffsByTag',
             parameters: {
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               finishSource: { kind: 'source' },
               tagQueryType: 'hasAny',
               buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
@@ -3635,6 +4486,8 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_6' },
               tags: ['normalAttack'],
@@ -3647,6 +4500,8 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_7' },
               tags: ['normalAttack'],
@@ -3659,13 +4514,13 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
           action: {
             kind: 'spawnAbilityEntity',
             parameters: {
-              bornAt: { kind: 'fixed', target: 'enemy' },
+              bornAt: { kind: 'inputTarget' },
               abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
               childSkillId: 'chr_0034_typhoea_attack_deadarrow',
-              source: 'currentAbilityEntity',
+              source: { kind: 'owner' },
               inheritActionBlackboard: false,
               dieWhenSourceDies: false,
-              target: 'enemy',
+              target: { kind: 'inputTarget' },
               overrideDurationSeconds: { kind: 'constant', value: 3 },
             },
           },
@@ -3676,7 +4531,7 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
             kind: 'applyBuff',
             parameters: {
               buffs: [{ buffId: 'buff_chr_0034_typhoea_floatingattack_damagetaken' }],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -3731,7 +4586,7 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
           action: {
             kind: 'readBuffStackCount',
             parameters: {
-              target: 'enemy',
+              target: { kind: 'inputTarget' },
               outputKey: 'buff_stack',
               query: {
                 kind: 'tag',
@@ -3756,7 +4611,7 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'greaterOrEqual',
             value: { kind: 'constant', value: 1 },
@@ -3773,7 +4628,7 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'greaterOrEqual',
             value: { kind: 'constant', value: 1 },
@@ -3814,7 +4669,7 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffIdStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'equal',
             value: { kind: 'constant', value: 0 },
@@ -3825,6 +4680,29 @@ const typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 = {
     },
     macros: {},
   },
+  skillId: 'chr_0034_typhoea_floating_attack1_01_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {
+    atk_scale_base: 0.5,
+    atk_scale_enhence: 1,
+    atk_scale_total: 0,
+    buff_stack: 0,
+    enchence_burst_damage_rate: 1.5,
+    enhence_arrow: 0,
+    potential_damage_rate: 1,
+    total_damage_rate: 1,
+    usp_recover: 5,
+  },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_25' } },
+  ],
 } as const;
 
 export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
@@ -3932,8 +4810,9 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_floating_attack4',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -3941,12 +4820,48 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         },
         next: null,
       },
+      castSkillDuringAction_18: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack4',
+            target: { kind: 'context', key: 'mainTar' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_22: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'castSkillDuringAction_18' },
+          whenFalse: { $sequence: 'castSkillDuringAction_19' },
+        },
+        next: null,
+      },
+      findTargets_23: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'mainTar',
+          },
+        },
+        next: 'ifElse_22',
+      },
       castSkillDuringAction_16: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -3958,10 +4873,26 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
         next: null,
       },
-      mergeContextTargets_81: {
+      findTargets_81: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'inputTarget' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 2,
+            },
+            saveToContextKey: 'tar2',
+          },
         },
         next: null,
       },
@@ -3971,21 +4902,38 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
           parameters: {
             owner: { kind: 'owner' },
             query: {
-              kind: 'enemyByTags',
-              tagQueryType: 'hasAny',
-              tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+              kind: 'limit',
+              targets: {
+                kind: 'tagFilter',
+                targets: { kind: 'typhoeaArcherySelected' },
+                tagQueryType: 'hasAny',
+                tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+              },
+              count: 128,
             },
             saveToContextKey: 'tar1',
           },
         },
         next: null,
       },
-      mergeContextTargets_79: {
+      findTargets_79: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 2,
+            },
             saveToContextKey: 'tar_front',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
         next: null,
@@ -3993,7 +4941,7 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
       switch_80: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_7' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_8' }, alwaysNext: true },
           options: [
             { value: { kind: 'constant', value: 1 }, sequence: { $sequence: 'findTargets_77' } },
             { value: { kind: 'constant', value: 0 }, sequence: { $sequence: 'findTargets_77' } },
@@ -4002,15 +4950,15 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
             { value: { kind: 'constant', value: 4 }, sequence: { $sequence: 'findTargets_77' } },
           ],
         },
-        next: 'mergeContextTargets_79',
+        next: 'findTargets_79',
       },
       ifElse_82: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'switch_80' },
-          whenFalse: { $sequence: 'mergeContextTargets_81' },
+          whenFalse: { $sequence: 'findTargets_81' },
         },
         next: null,
       },
@@ -4018,11 +4966,16 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 },
@@ -4034,17 +4987,313 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 },
           ],
         },
         next: 'launchProjectile_177',
+      },
+      launchProjectile_175: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_176: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 },
+          ],
+        },
+        next: 'launchProjectile_175',
+      },
+      ifElse_181: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'launchProjectile_176' },
+          whenFalse: { $sequence: 'launchProjectile_178' },
+        },
+        next: null,
+      },
+      launchProjectile_172: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_171: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      ifElse_173: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          whenTrue: { $sequence: 'launchProjectile_171' },
+          whenFalse: { $sequence: 'launchProjectile_172' },
+        },
+        next: null,
+      },
+      forEachContextTarget_180: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar2' } },
+          body: { $sequence: 'ifElse_173' },
+        },
+        next: null,
+      },
+      ifElse_184: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
+          whenTrue: { $sequence: 'forEachContextTarget_180' },
+          whenFalse: { $sequence: 'ifElse_181' },
+        },
+        next: null,
+      },
+      forEachContextTarget_165: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar_front' } },
+          body: { $sequence: 'ifElse_173' },
+        },
+        next: null,
+      },
+      ifElse_169: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          whenTrue: { $sequence: 'forEachContextTarget_165' },
+          whenFalse: { $sequence: 'ifElse_181' },
+        },
+        next: null,
+      },
+      launchProjectile_153: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
+            onlyHitTargets: { kind: 'inputTarget' },
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_152: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+            onlyHitTargets: { kind: 'inputTarget' },
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack3ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      ifElse_154: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
+          whenTrue: { $sequence: 'launchProjectile_152' },
+          whenFalse: { $sequence: 'launchProjectile_153' },
+        },
+        next: null,
+      },
+      forEachContextTarget_168: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar1' } },
+          body: { $sequence: 'ifElse_154' },
+        },
+        next: null,
+      },
+      ifElse_183: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
+          whenTrue: { $sequence: 'forEachContextTarget_168' },
+          whenFalse: { $sequence: 'ifElse_169' },
+        },
+        next: null,
+      },
+      ifElse_189: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
+          whenTrue: { $sequence: 'ifElse_183' },
+          whenFalse: { $sequence: 'ifElse_184' },
+        },
+        next: null,
+      },
+      modifyActionValue_187: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'enhence_arrow',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_189',
+      },
+      finishBuffsById_188: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+            reason: 'other',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'modifyActionValue_187',
+      },
+      ifElse_194: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_18' },
+          whenTrue: { $sequence: 'finishBuffsById_188' },
+          whenFalse: { $sequence: 'ifElse_189' },
+        },
+        next: null,
+      },
+      finishBuffsById_193: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+            reason: 'other',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'modifyActionValue_187',
+      },
+      ifElse_195: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_19' },
+          whenTrue: { $sequence: 'finishBuffsById_193' },
+          whenFalse: { $sequence: 'ifElse_194' },
+        },
+        next: null,
+      },
+      calculateActionValue_196: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'EntityBB_floating_attack_times',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_20' },
+            right: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_195',
       },
       modifyActionValue_693: {
         action: {
@@ -4070,14 +5319,82 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_727: {
+      overrideBasicAttackMapping_719: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      overrideBasicAttackMapping_717: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      overrideBasicAttackMapping_716: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      overrideBasicAttackMapping_715: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      switch_720: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_21' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_715' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_716' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_717' },
+            },
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_719' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_719' },
+            },
+          ],
+        },
+        next: null,
+      },
+      readBuffStackCount_721: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          },
+        },
+        next: 'switch_720',
+      },
+      reachSkillOperableBoundary_752: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0034_typhoea_floating_attack4'] },
         },
         next: null,
       },
-      finishBuffsById_745: {
+      finishBuffsById_770: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -4089,7 +5406,7 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         },
         next: null,
       },
-      applyBuff_746: {
+      applyBuff_771: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4101,18 +5418,18 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         },
         next: null,
       },
-      checkCondition_747: {
+      checkCondition_772: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_22' } },
         },
-        next: 'applyBuff_746',
+        next: 'applyBuff_771',
       },
       ifElse_opt1: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
+          condition: { kind: 'conditionNode', nodeId: 'data_23' },
           whenTrue: { $sequence: 'castSkillDuringAction_16' },
           whenFalse: { $sequence: 'castSkillDuringAction_16' },
         },
@@ -4122,186 +5439,19 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_11' },
-          whenTrue: { $sequence: 'castSkillDuringAction_19' },
-          whenFalse: { $sequence: 'castSkillDuringAction_19' },
-        },
-        next: null,
-      },
-      findTargets_opt3: {
-        action: {
-          kind: 'findTargets',
-          parameters: {
-            owner: { kind: 'owner' },
-            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
-            saveToContextKey: 'mainTar',
-          },
-        },
-        next: 'ifElse_opt2',
-      },
-      ifElse_opt4: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          condition: { kind: 'conditionNode', nodeId: 'data_24' },
           whenTrue: { $sequence: 'ifElse_opt1' },
-          whenFalse: { $sequence: 'findTargets_opt3' },
+          whenFalse: { $sequence: 'findTargets_23' },
         },
         next: null,
       },
-      ifElse_opt5: {
+      ifElse_opt3: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'launchProjectile_177' },
-          whenFalse: { $sequence: 'launchProjectile_177' },
-        },
-        next: null,
-      },
-      forEachContextTarget_opt6: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'context', key: 'tar1' } },
-          body: { $sequence: 'ifElse_opt5' },
-        },
-        next: null,
-      },
-      forEachContextTarget_opt7: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'ifElse_opt5' },
-        },
-        next: null,
-      },
-      ifElse_opt8: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_14' },
-          whenTrue: { $sequence: 'launchProjectile_178' },
-          whenFalse: { $sequence: 'launchProjectile_178' },
-        },
-        next: null,
-      },
-      ifElse_opt9: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'forEachContextTarget_opt7' },
-          whenFalse: { $sequence: 'ifElse_opt8' },
-        },
-        next: null,
-      },
-      ifElse_opt10: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'forEachContextTarget_opt6' },
-          whenFalse: { $sequence: 'ifElse_opt9' },
-        },
-        next: null,
-      },
-      ifElse_opt11: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_17' },
-          whenTrue: { $sequence: 'ifElse_opt10' },
-          whenFalse: { $sequence: 'ifElse_opt9' },
-        },
-        next: null,
-      },
-      modifyActionValue_opt12: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'enhence_arrow',
-            operation: 'assign',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'ifElse_opt11',
-      },
-      finishBuffsById_opt13: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'owner' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
-            reason: 'other',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'modifyActionValue_opt12',
-      },
-      finishBuffsById_opt14: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'owner' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
-            reason: 'other',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'modifyActionValue_opt12',
-      },
-      ifElse_opt15: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_18' },
-          whenTrue: { $sequence: 'finishBuffsById_opt14' },
-          whenFalse: { $sequence: 'ifElse_opt11' },
-        },
-        next: null,
-      },
-      ifElse_opt16: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_19' },
-          whenTrue: { $sequence: 'finishBuffsById_opt13' },
-          whenFalse: { $sequence: 'ifElse_opt15' },
-        },
-        next: null,
-      },
-      calculateActionValue_opt17: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'EntityBB_floating_attack_times',
-            operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_20' },
-            right: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'ifElse_opt16',
-      },
-      readBuffStackCount_opt18: {
-        action: {
-          kind: 'readBuffStackCount',
-          parameters: {
-            target: 'caster',
-            outputKey: 'arrow_num',
-            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
-          },
-        },
-        next: null,
-      },
-      ifElse_opt19: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_21' },
-          whenTrue: { $sequence: 'reachSkillOperableBoundary_727' },
-          whenFalse: { $sequence: 'reachSkillOperableBoundary_727' },
+          condition: { kind: 'conditionNode', nodeId: 'data_25' },
+          whenTrue: { $sequence: 'reachSkillOperableBoundary_752' },
+          whenFalse: { $sequence: 'reachSkillOperableBoundary_752' },
         },
         next: null,
       },
@@ -4316,7 +5466,7 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           distance: 4,
           lessThan: true,
           includeTargetRadius: false,
@@ -4332,7 +5482,7 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           distance: 12,
           lessThan: false,
           includeTargetRadius: false,
@@ -4343,7 +5493,7 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -4354,51 +5504,73 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'have_move_input' } },
-      data_8: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
-      },
-      data_9: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'owner' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'equal',
-          value: { kind: 'constant', value: 0 },
-          buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
-        },
-      },
-      data_10: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_11: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_12: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
-      },
-      data_13: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_14: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_15: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'mainTar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
+        },
+      },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'have_move_input' } },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_10: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_10' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_12: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_10' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_13: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar2' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar_front' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_10' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
         },
       },
       data_16: {
@@ -4442,7 +5614,27 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_floating_attack_times' },
       },
-      data_21: {
+      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'arrow_num' } },
+      data_22: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+        },
+      },
+      data_23: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_24: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_25: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
@@ -4452,6 +5644,7 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_floating_attack3: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_floating_attack3ActionGraph,
   key: 'chr_0034_typhoea_floating_attack3',
   element: 'nature',
   blackboard: {
@@ -4468,39 +5661,29 @@ export const typhoeusChr_0034_typhoea_floating_attack3: SkillDefinition = {
   naturalDurationFrames: 160,
   exclusiveFrame: 999,
   offsetRecordFrame: 7,
-  inputWindows: {
-    hasConditionalActions: true,
-    allowedNextSkills: [
-      { startFrame: 18, endFrame: 26, skillIds: ['chr_0034_typhoea_floating_attack4'] },
-      { startFrame: 63, endFrame: 70, skillIds: ['chr_0034_typhoea_floating_attack4'] },
-      { startFrame: 93, endFrame: 100, skillIds: ['chr_0034_typhoea_floating_attack4'] },
-      { startFrame: 123, endFrame: 130, skillIds: ['chr_0034_typhoea_floating_attack4'] },
-      { startFrame: 153, endFrame: 160, skillIds: ['chr_0034_typhoea_floating_attack4'] },
-    ],
-  },
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 0, endFrame: 160, sequence: { $sequence: 'inheritBuffById_1' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_12' } },
-    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 26, endFrame: 29, sequence: { $sequence: 'interruptCurrentSkill_25' } },
-    { startFrame: 67, endFrame: 70, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 67, endFrame: 70, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 70, endFrame: 73, sequence: { $sequence: 'interruptCurrentSkill_25' } },
-    { startFrame: 97, endFrame: 100, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 97, endFrame: 100, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 100, endFrame: 103, sequence: { $sequence: 'interruptCurrentSkill_25' } },
-    { startFrame: 127, endFrame: 130, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 127, endFrame: 130, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 130, endFrame: 133, sequence: { $sequence: 'interruptCurrentSkill_25' } },
-    { startFrame: 157, endFrame: 160, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 157, endFrame: 160, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_82' } },
-    { startFrame: 1, endFrame: 1, sequence: { $sequence: 'calculateActionValue_opt17' } },
+    { startFrame: 1, endFrame: 1, sequence: { $sequence: 'calculateActionValue_196' } },
     { startFrame: 45, endFrame: 46, sequence: { $sequence: 'ifElse_82' } },
-    { startFrame: 46, endFrame: 46, sequence: { $sequence: 'calculateActionValue_opt17' } },
+    { startFrame: 46, endFrame: 46, sequence: { $sequence: 'calculateActionValue_196' } },
     { startFrame: 75, endFrame: 76, sequence: { $sequence: 'ifElse_82' } },
-    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'calculateActionValue_opt17' } },
+    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'calculateActionValue_196' } },
     { startFrame: 105, endFrame: 106, sequence: { $sequence: 'ifElse_82' } },
-    { startFrame: 106, endFrame: 106, sequence: { $sequence: 'calculateActionValue_opt17' } },
+    { startFrame: 106, endFrame: 106, sequence: { $sequence: 'calculateActionValue_196' } },
     { startFrame: 135, endFrame: 136, sequence: { $sequence: 'ifElse_82' } },
-    { startFrame: 136, endFrame: 136, sequence: { $sequence: 'calculateActionValue_opt17' } },
+    { startFrame: 136, endFrame: 136, sequence: { $sequence: 'calculateActionValue_196' } },
     { startFrame: 0, endFrame: 6, sequence: { $sequence: 'modifyActionValue_693' } },
     { startFrame: 45, endFrame: 51, sequence: { $sequence: 'modifyActionValue_693' } },
     { startFrame: 75, endFrame: 81, sequence: { $sequence: 'modifyActionValue_693' } },
@@ -4511,59 +5694,34 @@ export const typhoeusChr_0034_typhoea_floating_attack3: SkillDefinition = {
     { startFrame: 75, endFrame: 100, sequence: { $sequence: 'applyBuff_710' } },
     { startFrame: 105, endFrame: 130, sequence: { $sequence: 'applyBuff_710' } },
     { startFrame: 135, endFrame: 160, sequence: { $sequence: 'applyBuff_710' } },
-    { startFrame: 4, endFrame: 26, sequence: { $sequence: 'readBuffStackCount_opt18' } },
-    { startFrame: 49, endFrame: 70, sequence: { $sequence: 'readBuffStackCount_opt18' } },
-    { startFrame: 79, endFrame: 100, sequence: { $sequence: 'readBuffStackCount_opt18' } },
-    { startFrame: 109, endFrame: 130, sequence: { $sequence: 'readBuffStackCount_opt18' } },
-    { startFrame: 139, endFrame: 160, sequence: { $sequence: 'readBuffStackCount_opt18' } },
-    { startFrame: 18, endFrame: 26, sequence: { $sequence: 'ifElse_opt19' } },
-    { startFrame: 63, endFrame: 70, sequence: { $sequence: 'ifElse_opt19' } },
-    { startFrame: 93, endFrame: 100, sequence: { $sequence: 'ifElse_opt19' } },
-    { startFrame: 123, endFrame: 130, sequence: { $sequence: 'ifElse_opt19' } },
-    { startFrame: 153, endFrame: 160, sequence: { $sequence: 'ifElse_opt19' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_745' } },
-    { startFrame: 15, endFrame: 18, sequence: { $sequence: 'checkCondition_747' } },
-    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'finishBuffsById_745' } },
-    { startFrame: 60, endFrame: 63, sequence: { $sequence: 'checkCondition_747' } },
-    { startFrame: 75, endFrame: 78, sequence: { $sequence: 'finishBuffsById_745' } },
-    { startFrame: 90, endFrame: 93, sequence: { $sequence: 'checkCondition_747' } },
-    { startFrame: 105, endFrame: 108, sequence: { $sequence: 'finishBuffsById_745' } },
-    { startFrame: 120, endFrame: 123, sequence: { $sequence: 'checkCondition_747' } },
-    { startFrame: 135, endFrame: 138, sequence: { $sequence: 'finishBuffsById_745' } },
-    { startFrame: 150, endFrame: 153, sequence: { $sequence: 'checkCondition_747' } },
+    { startFrame: 4, endFrame: 26, sequence: { $sequence: 'readBuffStackCount_721' } },
+    { startFrame: 49, endFrame: 70, sequence: { $sequence: 'readBuffStackCount_721' } },
+    { startFrame: 79, endFrame: 100, sequence: { $sequence: 'readBuffStackCount_721' } },
+    { startFrame: 109, endFrame: 130, sequence: { $sequence: 'readBuffStackCount_721' } },
+    { startFrame: 139, endFrame: 160, sequence: { $sequence: 'readBuffStackCount_721' } },
+    { startFrame: 18, endFrame: 26, sequence: { $sequence: 'ifElse_opt3' } },
+    { startFrame: 63, endFrame: 70, sequence: { $sequence: 'ifElse_opt3' } },
+    { startFrame: 93, endFrame: 100, sequence: { $sequence: 'ifElse_opt3' } },
+    { startFrame: 123, endFrame: 130, sequence: { $sequence: 'ifElse_opt3' } },
+    { startFrame: 153, endFrame: 160, sequence: { $sequence: 'ifElse_opt3' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_770' } },
+    { startFrame: 15, endFrame: 18, sequence: { $sequence: 'checkCondition_772' } },
+    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'finishBuffsById_770' } },
+    { startFrame: 60, endFrame: 63, sequence: { $sequence: 'checkCondition_772' } },
+    { startFrame: 75, endFrame: 78, sequence: { $sequence: 'finishBuffsById_770' } },
+    { startFrame: 90, endFrame: 93, sequence: { $sequence: 'checkCondition_772' } },
+    { startFrame: 105, endFrame: 108, sequence: { $sequence: 'finishBuffsById_770' } },
+    { startFrame: 120, endFrame: 123, sequence: { $sequence: 'checkCondition_772' } },
+    { startFrame: 135, endFrame: 138, sequence: { $sequence: 'finishBuffsById_770' } },
+    { startFrame: 150, endFrame: 153, sequence: { $sequence: 'checkCondition_772' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0034_typhoea_floating_attack4',
   skillType: 'basicAttack',
   levelSource: 'battleSkill',
   nativeSkillType: 'attack',
-  actionGraph: typhoeusChr_0034_typhoea_floating_attack3ActionGraph,
 };
 
 const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
-  skillId: 'chr_0034_typhoea_floating_attack1_01_projhit',
-  nativeSkillType: 'normalSkill',
-  naturalDurationFrames: 1,
-  castResource: {
-    costFrame: 0,
-    cooldownSeconds: 0,
-    maxChargeTime: 1,
-    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-  },
-  blackboard: {
-    atk_scale_base: 0.5,
-    atk_scale_enhence: 1,
-    atk_scale_total: 0,
-    buff_stack: 0,
-    enchence_burst_damage_rate: 1.5,
-    enhence_arrow: 0,
-    potential_damage_rate: 1,
-    total_damage_rate: 1,
-    usp_recover: 5,
-  },
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_25' } },
-  ],
   actionGraph: {
     main: {
       nodes: {
@@ -4596,7 +5754,7 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
           action: {
             kind: 'finishBuffsByTag',
             parameters: {
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               finishSource: { kind: 'source' },
               tagQueryType: 'hasAny',
               buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
@@ -4626,7 +5784,7 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
                   copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
                 },
               ],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -4643,7 +5801,7 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
                   copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
                 },
               ],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -4679,7 +5837,7 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
           action: {
             kind: 'finishBuffsByTag',
             parameters: {
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               finishSource: { kind: 'source' },
               tagQueryType: 'hasAny',
               buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
@@ -4703,6 +5861,8 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_6' },
               tags: ['normalAttack'],
@@ -4715,6 +5875,8 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_7' },
               tags: ['normalAttack'],
@@ -4727,13 +5889,13 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
           action: {
             kind: 'spawnAbilityEntity',
             parameters: {
-              bornAt: { kind: 'fixed', target: 'enemy' },
+              bornAt: { kind: 'inputTarget' },
               abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
               childSkillId: 'chr_0034_typhoea_attack_deadarrow',
-              source: 'currentAbilityEntity',
+              source: { kind: 'owner' },
               inheritActionBlackboard: false,
               dieWhenSourceDies: false,
-              target: 'enemy',
+              target: { kind: 'inputTarget' },
               overrideDurationSeconds: { kind: 'constant', value: 3 },
             },
           },
@@ -4744,7 +5906,7 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
             kind: 'applyBuff',
             parameters: {
               buffs: [{ buffId: 'buff_chr_0034_typhoea_floatingattack_damagetaken' }],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -4799,7 +5961,7 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
           action: {
             kind: 'readBuffStackCount',
             parameters: {
-              target: 'enemy',
+              target: { kind: 'inputTarget' },
               outputKey: 'buff_stack',
               query: {
                 kind: 'tag',
@@ -4824,7 +5986,7 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'greaterOrEqual',
             value: { kind: 'constant', value: 1 },
@@ -4841,7 +6003,7 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'greaterOrEqual',
             value: { kind: 'constant', value: 1 },
@@ -4882,7 +6044,7 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffIdStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'equal',
             value: { kind: 'constant', value: 0 },
@@ -4893,6 +6055,29 @@ const typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 = {
     },
     macros: {},
   },
+  skillId: 'chr_0034_typhoea_floating_attack1_01_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {
+    atk_scale_base: 0.5,
+    atk_scale_enhence: 1,
+    atk_scale_total: 0,
+    buff_stack: 0,
+    enchence_burst_damage_rate: 1.5,
+    enhence_arrow: 0,
+    potential_damage_rate: 1,
+    total_damage_rate: 1,
+    usp_recover: 5,
+  },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_25' } },
+  ],
 } as const;
 
 export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
@@ -5001,7 +6186,7 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
           kind: 'applyBuff',
           parameters: {
             buffs: [{ buffId: 'buff_chr_0034_typhoea_normal_skill_aimmedenemy_all' }],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -5011,25 +6196,49 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
       forEachContextTarget_14: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'all_tar' } },
           body: { $sequence: 'applyBuff_13' },
         },
         next: null,
       },
-      mergeContextTargets_15: {
+      findTargets_15: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'source' },
+            query: {
+              kind: 'enemyByTags',
+              scope: 'global',
+              reverse: true,
+              tagQueryType: 'hasAll',
+              tags: [],
+            },
             saveToContextKey: 'all_tar',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
         next: 'forEachContextTarget_14',
       },
-      mergeContextTargets_36: {
+      findTargets_36: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'inputTarget' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 2,
+            },
+            saveToContextKey: 'tar2',
+          },
         },
         next: null,
       },
@@ -5039,21 +6248,38 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
           parameters: {
             owner: { kind: 'owner' },
             query: {
-              kind: 'enemyByTags',
-              tagQueryType: 'hasAny',
-              tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+              kind: 'limit',
+              targets: {
+                kind: 'tagFilter',
+                targets: { kind: 'typhoeaArcherySelected' },
+                tagQueryType: 'hasAny',
+                tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+              },
+              count: 128,
             },
             saveToContextKey: 'tar1',
           },
         },
         next: null,
       },
-      mergeContextTargets_34: {
+      findTargets_34: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 2,
+            },
             saveToContextKey: 'tar_front',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
         next: null,
@@ -5070,7 +6296,7 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
             { value: { kind: 'constant', value: 4 }, sequence: { $sequence: 'findTargets_32' } },
           ],
         },
-        next: 'mergeContextTargets_34',
+        next: 'findTargets_34',
       },
       ifElse_37: {
         action: {
@@ -5078,7 +6304,7 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'switch_35' },
-          whenFalse: { $sequence: 'mergeContextTargets_36' },
+          whenFalse: { $sequence: 'findTargets_36' },
         },
         next: null,
       },
@@ -5086,11 +6312,16 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 },
@@ -5102,17 +6333,313 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 },
           ],
         },
         next: 'launchProjectile_132',
+      },
+      launchProjectile_130: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_131: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 },
+          ],
+        },
+        next: 'launchProjectile_130',
+      },
+      ifElse_136: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
+          whenTrue: { $sequence: 'launchProjectile_131' },
+          whenFalse: { $sequence: 'launchProjectile_133' },
+        },
+        next: null,
+      },
+      launchProjectile_127: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_126: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      ifElse_128: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'launchProjectile_126' },
+          whenFalse: { $sequence: 'launchProjectile_127' },
+        },
+        next: null,
+      },
+      forEachContextTarget_135: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar2' } },
+          body: { $sequence: 'ifElse_128' },
+        },
+        next: null,
+      },
+      ifElse_139: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          whenTrue: { $sequence: 'forEachContextTarget_135' },
+          whenFalse: { $sequence: 'ifElse_136' },
+        },
+        next: null,
+      },
+      forEachContextTarget_120: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar_front' } },
+          body: { $sequence: 'ifElse_128' },
+        },
+        next: null,
+      },
+      ifElse_124: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
+          whenTrue: { $sequence: 'forEachContextTarget_120' },
+          whenFalse: { $sequence: 'ifElse_136' },
+        },
+        next: null,
+      },
+      launchProjectile_108: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
+            onlyHitTargets: { kind: 'inputTarget' },
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_107: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+            onlyHitTargets: { kind: 'inputTarget' },
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack4ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      ifElse_109: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          whenTrue: { $sequence: 'launchProjectile_107' },
+          whenFalse: { $sequence: 'launchProjectile_108' },
+        },
+        next: null,
+      },
+      forEachContextTarget_123: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar1' } },
+          body: { $sequence: 'ifElse_109' },
+        },
+        next: null,
+      },
+      ifElse_138: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
+          whenTrue: { $sequence: 'forEachContextTarget_123' },
+          whenFalse: { $sequence: 'ifElse_124' },
+        },
+        next: null,
+      },
+      ifElse_144: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
+          whenTrue: { $sequence: 'ifElse_138' },
+          whenFalse: { $sequence: 'ifElse_139' },
+        },
+        next: null,
+      },
+      modifyActionValue_142: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'enhence_arrow',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_144',
+      },
+      finishBuffsById_143: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+            reason: 'other',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'modifyActionValue_142',
+      },
+      ifElse_149: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
+          whenTrue: { $sequence: 'finishBuffsById_143' },
+          whenFalse: { $sequence: 'ifElse_144' },
+        },
+        next: null,
+      },
+      finishBuffsById_148: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+            reason: 'other',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'modifyActionValue_142',
+      },
+      ifElse_150: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_18' },
+          whenTrue: { $sequence: 'finishBuffsById_148' },
+          whenFalse: { $sequence: 'ifElse_149' },
+        },
+        next: null,
+      },
+      calculateActionValue_151: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'EntityBB_floating_attack_times',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_19' },
+            right: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_150',
       },
       modifyActionValue_648: {
         action: {
@@ -5129,12 +6656,58 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_floating_attack5',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
           },
+        },
+        next: null,
+      },
+      castSkillDuringAction_655: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack5',
+            target: { kind: 'context', key: 'mainTar' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_658: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_20' },
+          whenTrue: { $sequence: 'castSkillDuringAction_655' },
+          whenFalse: { $sequence: 'castSkillDuringAction_656' },
+        },
+        next: null,
+      },
+      findTargets_659: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'mainTar',
+          },
+        },
+        next: 'ifElse_658',
+      },
+      ifElse_660: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_21' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'findTargets_659' },
         },
         next: null,
       },
@@ -5165,9 +6738,23 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_22' },
           whenTrue: { $sequence: 'finishBuffsById_663' },
           whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      castSkillDuringAction_666: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack5',
+            target: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
         },
         next: null,
       },
@@ -5175,9 +6762,9 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
+          condition: { kind: 'conditionNode', nodeId: 'data_23' },
           whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'castSkillDuringAction_656' },
+          whenFalse: { $sequence: 'castSkillDuringAction_666' },
         },
         next: null,
       },
@@ -5185,9 +6772,9 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          condition: { kind: 'conditionNode', nodeId: 'data_24' },
           whenTrue: { $sequence: 'finishBuffsById_663' },
-          whenFalse: { $sequence: 'castSkillDuringAction_656' },
+          whenFalse: { $sequence: 'castSkillDuringAction_666' },
         },
         next: null,
       },
@@ -5199,7 +6786,17 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
         next: null,
       },
-      applyBuff_719: {
+      addEntityTags_707: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: {
+            targets: { kind: 'owner' },
+            tags: ['Status/DisableCastComboSkill', 'Status/DisableNormalSkill'],
+          },
+        },
+        next: null,
+      },
+      applyBuff_724: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5212,36 +6809,43 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         },
         next: null,
       },
-      checkCondition_725: {
+      checkCondition_730: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_25' } },
         },
         next: null,
       },
-      forEachContextTarget_726: {
+      forEachContextTarget_731: {
         action: {
           kind: 'forEachContextTarget',
           parameters: { targets: { kind: 'context', key: 'tar1' } },
-          body: { $sequence: 'checkCondition_725' },
+          body: { $sequence: 'checkCondition_730' },
         },
         next: null,
       },
-      checkCondition_727: {
+      checkCondition_732: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_26' } },
         },
-        next: 'forEachContextTarget_726',
+        next: 'forEachContextTarget_731',
       },
-      reachSkillOperableBoundary_746: {
+      overrideBasicAttackMapping_749: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack5'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_756: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0034_typhoea_floating_attack5'] },
         },
         next: null,
       },
-      finishBuffsById_764: {
+      finishBuffsById_774: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -5253,7 +6857,7 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         },
         next: null,
       },
-      applyBuff_765: {
+      applyBuff_775: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5265,186 +6869,20 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         },
         next: null,
       },
-      checkCondition_766: {
+      checkCondition_776: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_27' } },
         },
-        next: 'applyBuff_765',
+        next: 'applyBuff_775',
       },
       ifElse_opt1: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'launchProjectile_132' },
-          whenFalse: { $sequence: 'launchProjectile_132' },
-        },
-        next: null,
-      },
-      forEachContextTarget_opt2: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'context', key: 'tar1' } },
-          body: { $sequence: 'ifElse_opt1' },
-        },
-        next: null,
-      },
-      forEachContextTarget_opt3: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'ifElse_opt1' },
-        },
-        next: null,
-      },
-      ifElse_opt4: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'launchProjectile_133' },
-          whenFalse: { $sequence: 'launchProjectile_133' },
-        },
-        next: null,
-      },
-      ifElse_opt5: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_17' },
-          whenTrue: { $sequence: 'forEachContextTarget_opt3' },
-          whenFalse: { $sequence: 'ifElse_opt4' },
-        },
-        next: null,
-      },
-      ifElse_opt6: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_18' },
-          whenTrue: { $sequence: 'forEachContextTarget_opt2' },
-          whenFalse: { $sequence: 'ifElse_opt5' },
-        },
-        next: null,
-      },
-      ifElse_opt7: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_19' },
-          whenTrue: { $sequence: 'ifElse_opt6' },
-          whenFalse: { $sequence: 'ifElse_opt5' },
-        },
-        next: null,
-      },
-      modifyActionValue_opt8: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'enhence_arrow',
-            operation: 'assign',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'ifElse_opt7',
-      },
-      finishBuffsById_opt9: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'owner' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
-            reason: 'other',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'modifyActionValue_opt8',
-      },
-      finishBuffsById_opt10: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'owner' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
-            reason: 'other',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'modifyActionValue_opt8',
-      },
-      ifElse_opt11: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_20' },
-          whenTrue: { $sequence: 'finishBuffsById_opt10' },
-          whenFalse: { $sequence: 'ifElse_opt7' },
-        },
-        next: null,
-      },
-      ifElse_opt12: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_21' },
-          whenTrue: { $sequence: 'finishBuffsById_opt9' },
-          whenFalse: { $sequence: 'ifElse_opt11' },
-        },
-        next: null,
-      },
-      calculateActionValue_opt13: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'EntityBB_floating_attack_times',
-            operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_22' },
-            right: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'ifElse_opt12',
-      },
-      ifElse_opt14: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_23' },
-          whenTrue: { $sequence: 'castSkillDuringAction_656' },
-          whenFalse: { $sequence: 'castSkillDuringAction_656' },
-        },
-        next: null,
-      },
-      findTargets_opt15: {
-        action: {
-          kind: 'findTargets',
-          parameters: {
-            owner: { kind: 'owner' },
-            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
-            saveToContextKey: 'mainTar',
-          },
-        },
-        next: 'ifElse_opt14',
-      },
-      ifElse_opt16: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_24' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'findTargets_opt15' },
-        },
-        next: null,
-      },
-      ifElse_opt17: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_25' },
-          whenTrue: { $sequence: 'reachSkillOperableBoundary_746' },
-          whenFalse: { $sequence: 'reachSkillOperableBoundary_746' },
+          condition: { kind: 'conditionNode', nodeId: 'data_28' },
+          whenTrue: { $sequence: 'reachSkillOperableBoundary_756' },
+          whenFalse: { $sequence: 'reachSkillOperableBoundary_756' },
         },
         next: null,
       },
@@ -5459,7 +6897,7 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           distance: 4,
           lessThan: true,
           includeTargetRadius: false,
@@ -5475,7 +6913,7 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           distance: 12,
           lessThan: false,
           includeTargetRadius: false,
@@ -5486,7 +6924,7 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -5503,60 +6941,59 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
       data_9: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
       },
       data_10: {
         type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_9' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
       },
       data_11: {
         type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_9' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
       },
       data_12: {
         type: 'boolean',
         expression: {
-          kind: 'enemyRankIn',
-          target: { kind: 'fixed', target: 'enemy' },
-          ranks: ['boss'],
-        },
-      },
-      data_13: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
-      },
-      data_14: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'owner' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'equal',
-          value: { kind: 'constant', value: 0 },
-          buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
-        },
-      },
-      data_15: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_16: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_17: {
-        type: 'boolean',
-        expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar2' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
         },
       },
-      data_18: {
+      data_13: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar_front' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_9' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_15: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -5567,11 +7004,11 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
           value: 1,
         },
       },
-      data_19: {
+      data_16: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
-      data_20: {
+      data_17: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -5582,7 +7019,7 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
         },
       },
-      data_21: {
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -5593,19 +7030,57 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
         },
       },
-      data_22: {
+      data_19: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_floating_attack_times' },
       },
+      data_20: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'mainTar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_21: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_22: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_23: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
       data_24: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
       data_25: {
+        type: 'boolean',
+        expression: { kind: 'enemyRankIn', target: { kind: 'inputTarget' }, ranks: ['boss'] },
+      },
+      data_26: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_27: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+        },
+      },
+      data_28: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
@@ -5615,6 +7090,7 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_floating_attack4: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_floating_attack4ActionGraph,
   key: 'chr_0034_typhoea_floating_attack4',
   element: 'nature',
   blackboard: {
@@ -5630,73 +7106,31 @@ export const typhoeusChr_0034_typhoea_floating_attack4: SkillDefinition = {
   naturalDurationFrames: 740,
   exclusiveFrame: 999,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 8,
-        endFrame: 42,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_floating_attack5',
-      },
-      {
-        startFrame: 150,
-        endFrame: 197,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_floating_attack5',
-      },
-      {
-        startFrame: 300,
-        endFrame: 347,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_floating_attack5',
-      },
-      {
-        startFrame: 450,
-        endFrame: 497,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_floating_attack5',
-      },
-      {
-        startFrame: 603,
-        endFrame: 650,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_floating_attack5',
-      },
-    ],
-    hasConditionalActions: true,
-    allowedNextSkills: [
-      { startFrame: 28, endFrame: 42, skillIds: ['chr_0034_typhoea_floating_attack5'] },
-      { startFrame: 178, endFrame: 193, skillIds: ['chr_0034_typhoea_floating_attack5'] },
-      { startFrame: 328, endFrame: 342, skillIds: ['chr_0034_typhoea_floating_attack5'] },
-      { startFrame: 478, endFrame: 492, skillIds: ['chr_0034_typhoea_floating_attack5'] },
-      { startFrame: 628, endFrame: 642, skillIds: ['chr_0034_typhoea_floating_attack5'] },
-    ],
-  },
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 0, endFrame: 739, sequence: { $sequence: 'inheritBuffById_1' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_12' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_15' } },
-    { startFrame: 150, endFrame: 153, sequence: { $sequence: 'mergeContextTargets_15' } },
-    { startFrame: 300, endFrame: 303, sequence: { $sequence: 'mergeContextTargets_15' } },
-    { startFrame: 450, endFrame: 453, sequence: { $sequence: 'mergeContextTargets_15' } },
-    { startFrame: 600, endFrame: 603, sequence: { $sequence: 'mergeContextTargets_15' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_15' } },
+    { startFrame: 150, endFrame: 153, sequence: { $sequence: 'findTargets_15' } },
+    { startFrame: 300, endFrame: 303, sequence: { $sequence: 'findTargets_15' } },
+    { startFrame: 450, endFrame: 453, sequence: { $sequence: 'findTargets_15' } },
+    { startFrame: 600, endFrame: 603, sequence: { $sequence: 'findTargets_15' } },
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_37' } },
-    { startFrame: 1, endFrame: 1, sequence: { $sequence: 'calculateActionValue_opt13' } },
+    { startFrame: 1, endFrame: 1, sequence: { $sequence: 'calculateActionValue_151' } },
     { startFrame: 150, endFrame: 151, sequence: { $sequence: 'ifElse_37' } },
-    { startFrame: 151, endFrame: 151, sequence: { $sequence: 'calculateActionValue_opt13' } },
+    { startFrame: 151, endFrame: 151, sequence: { $sequence: 'calculateActionValue_151' } },
     { startFrame: 300, endFrame: 301, sequence: { $sequence: 'ifElse_37' } },
-    { startFrame: 301, endFrame: 301, sequence: { $sequence: 'calculateActionValue_opt13' } },
+    { startFrame: 301, endFrame: 301, sequence: { $sequence: 'calculateActionValue_151' } },
     { startFrame: 450, endFrame: 451, sequence: { $sequence: 'ifElse_37' } },
-    { startFrame: 451, endFrame: 451, sequence: { $sequence: 'calculateActionValue_opt13' } },
+    { startFrame: 451, endFrame: 451, sequence: { $sequence: 'calculateActionValue_151' } },
     { startFrame: 600, endFrame: 601, sequence: { $sequence: 'ifElse_37' } },
-    { startFrame: 601, endFrame: 601, sequence: { $sequence: 'calculateActionValue_opt13' } },
+    { startFrame: 601, endFrame: 601, sequence: { $sequence: 'calculateActionValue_151' } },
     { startFrame: 0, endFrame: 6, sequence: { $sequence: 'modifyActionValue_648' } },
     { startFrame: 150, endFrame: 156, sequence: { $sequence: 'modifyActionValue_648' } },
     { startFrame: 300, endFrame: 306, sequence: { $sequence: 'modifyActionValue_648' } },
     { startFrame: 450, endFrame: 456, sequence: { $sequence: 'modifyActionValue_648' } },
     { startFrame: 600, endFrame: 606, sequence: { $sequence: 'modifyActionValue_648' } },
-    { startFrame: 35, endFrame: 38, sequence: { $sequence: 'ifElse_opt16' } },
+    { startFrame: 35, endFrame: 38, sequence: { $sequence: 'ifElse_660' } },
     { startFrame: 45, endFrame: 81, sequence: { $sequence: 'ifElse_664' } },
     { startFrame: 185, endFrame: 188, sequence: { $sequence: 'ifElse_667' } },
     { startFrame: 195, endFrame: 229, sequence: { $sequence: 'ifElse_672' } },
@@ -5716,69 +7150,54 @@ export const typhoeusChr_0034_typhoea_floating_attack4: SkillDefinition = {
     { startFrame: 589, endFrame: 590, sequence: { $sequence: 'interruptCurrentSkill_698' } },
     { startFrame: 659, endFrame: 739, sequence: { $sequence: 'markCurrentSkillCanInterrupt_697' } },
     { startFrame: 739, endFrame: 740, sequence: { $sequence: 'interruptCurrentSkill_698' } },
-    { startFrame: 0, endFrame: 45, sequence: { $sequence: 'applyBuff_719' } },
-    { startFrame: 150, endFrame: 197, sequence: { $sequence: 'applyBuff_719' } },
-    { startFrame: 300, endFrame: 347, sequence: { $sequence: 'applyBuff_719' } },
-    { startFrame: 450, endFrame: 497, sequence: { $sequence: 'applyBuff_719' } },
-    { startFrame: 600, endFrame: 647, sequence: { $sequence: 'applyBuff_719' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_727' } },
-    { startFrame: 150, endFrame: 153, sequence: { $sequence: 'checkCondition_727' } },
-    { startFrame: 300, endFrame: 303, sequence: { $sequence: 'checkCondition_727' } },
-    { startFrame: 450, endFrame: 453, sequence: { $sequence: 'checkCondition_727' } },
-    { startFrame: 600, endFrame: 603, sequence: { $sequence: 'checkCondition_727' } },
-    { startFrame: 28, endFrame: 42, sequence: { $sequence: 'ifElse_opt17' } },
-    { startFrame: 178, endFrame: 193, sequence: { $sequence: 'ifElse_opt17' } },
-    { startFrame: 328, endFrame: 342, sequence: { $sequence: 'ifElse_opt17' } },
-    { startFrame: 478, endFrame: 492, sequence: { $sequence: 'ifElse_opt17' } },
-    { startFrame: 628, endFrame: 642, sequence: { $sequence: 'ifElse_opt17' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_764' } },
-    { startFrame: 7, endFrame: 10, sequence: { $sequence: 'checkCondition_766' } },
-    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'finishBuffsById_764' } },
-    { startFrame: 151, endFrame: 154, sequence: { $sequence: 'finishBuffsById_764' } },
-    { startFrame: 158, endFrame: 161, sequence: { $sequence: 'checkCondition_766' } },
-    { startFrame: 195, endFrame: 198, sequence: { $sequence: 'finishBuffsById_764' } },
-    { startFrame: 300, endFrame: 303, sequence: { $sequence: 'finishBuffsById_764' } },
-    { startFrame: 307, endFrame: 310, sequence: { $sequence: 'checkCondition_766' } },
-    { startFrame: 346, endFrame: 349, sequence: { $sequence: 'finishBuffsById_764' } },
-    { startFrame: 450, endFrame: 453, sequence: { $sequence: 'finishBuffsById_764' } },
-    { startFrame: 457, endFrame: 460, sequence: { $sequence: 'checkCondition_766' } },
-    { startFrame: 495, endFrame: 498, sequence: { $sequence: 'finishBuffsById_764' } },
-    { startFrame: 600, endFrame: 603, sequence: { $sequence: 'finishBuffsById_764' } },
-    { startFrame: 607, endFrame: 610, sequence: { $sequence: 'checkCondition_766' } },
-    { startFrame: 645, endFrame: 648, sequence: { $sequence: 'finishBuffsById_764' } },
+    { startFrame: 45, endFrame: 57, sequence: { $sequence: 'addEntityTags_707' } },
+    { startFrame: 195, endFrame: 207, sequence: { $sequence: 'addEntityTags_707' } },
+    { startFrame: 345, endFrame: 357, sequence: { $sequence: 'addEntityTags_707' } },
+    { startFrame: 495, endFrame: 507, sequence: { $sequence: 'addEntityTags_707' } },
+    { startFrame: 645, endFrame: 657, sequence: { $sequence: 'addEntityTags_707' } },
+    { startFrame: 0, endFrame: 45, sequence: { $sequence: 'applyBuff_724' } },
+    { startFrame: 150, endFrame: 197, sequence: { $sequence: 'applyBuff_724' } },
+    { startFrame: 300, endFrame: 347, sequence: { $sequence: 'applyBuff_724' } },
+    { startFrame: 450, endFrame: 497, sequence: { $sequence: 'applyBuff_724' } },
+    { startFrame: 600, endFrame: 647, sequence: { $sequence: 'applyBuff_724' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_732' } },
+    { startFrame: 150, endFrame: 153, sequence: { $sequence: 'checkCondition_732' } },
+    { startFrame: 300, endFrame: 303, sequence: { $sequence: 'checkCondition_732' } },
+    { startFrame: 450, endFrame: 453, sequence: { $sequence: 'checkCondition_732' } },
+    { startFrame: 600, endFrame: 603, sequence: { $sequence: 'checkCondition_732' } },
+    { startFrame: 8, endFrame: 42, sequence: { $sequence: 'overrideBasicAttackMapping_749' } },
+    { startFrame: 150, endFrame: 197, sequence: { $sequence: 'overrideBasicAttackMapping_749' } },
+    { startFrame: 300, endFrame: 347, sequence: { $sequence: 'overrideBasicAttackMapping_749' } },
+    { startFrame: 450, endFrame: 497, sequence: { $sequence: 'overrideBasicAttackMapping_749' } },
+    { startFrame: 603, endFrame: 650, sequence: { $sequence: 'overrideBasicAttackMapping_749' } },
+    { startFrame: 28, endFrame: 42, sequence: { $sequence: 'ifElse_opt1' } },
+    { startFrame: 178, endFrame: 193, sequence: { $sequence: 'ifElse_opt1' } },
+    { startFrame: 328, endFrame: 342, sequence: { $sequence: 'ifElse_opt1' } },
+    { startFrame: 478, endFrame: 492, sequence: { $sequence: 'ifElse_opt1' } },
+    { startFrame: 628, endFrame: 642, sequence: { $sequence: 'ifElse_opt1' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_774' } },
+    { startFrame: 7, endFrame: 10, sequence: { $sequence: 'checkCondition_776' } },
+    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'finishBuffsById_774' } },
+    { startFrame: 151, endFrame: 154, sequence: { $sequence: 'finishBuffsById_774' } },
+    { startFrame: 158, endFrame: 161, sequence: { $sequence: 'checkCondition_776' } },
+    { startFrame: 195, endFrame: 198, sequence: { $sequence: 'finishBuffsById_774' } },
+    { startFrame: 300, endFrame: 303, sequence: { $sequence: 'finishBuffsById_774' } },
+    { startFrame: 307, endFrame: 310, sequence: { $sequence: 'checkCondition_776' } },
+    { startFrame: 346, endFrame: 349, sequence: { $sequence: 'finishBuffsById_774' } },
+    { startFrame: 450, endFrame: 453, sequence: { $sequence: 'finishBuffsById_774' } },
+    { startFrame: 457, endFrame: 460, sequence: { $sequence: 'checkCondition_776' } },
+    { startFrame: 495, endFrame: 498, sequence: { $sequence: 'finishBuffsById_774' } },
+    { startFrame: 600, endFrame: 603, sequence: { $sequence: 'finishBuffsById_774' } },
+    { startFrame: 607, endFrame: 610, sequence: { $sequence: 'checkCondition_776' } },
+    { startFrame: 645, endFrame: 648, sequence: { $sequence: 'finishBuffsById_774' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0034_typhoea_floating_attack5',
   skillType: 'basicAttack',
   levelSource: 'battleSkill',
   nativeSkillType: 'attack',
-  actionGraph: typhoeusChr_0034_typhoea_floating_attack4ActionGraph,
 };
 
 const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
-  skillId: 'chr_0034_typhoea_floating_attack1_01_projhit',
-  nativeSkillType: 'normalSkill',
-  naturalDurationFrames: 1,
-  castResource: {
-    costFrame: 0,
-    cooldownSeconds: 0,
-    maxChargeTime: 1,
-    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-  },
-  blackboard: {
-    atk_scale_base: 0.5,
-    atk_scale_enhence: 1,
-    atk_scale_total: 0,
-    buff_stack: 0,
-    enchence_burst_damage_rate: 1.5,
-    enhence_arrow: 0,
-    potential_damage_rate: 1,
-    total_damage_rate: 1,
-    usp_recover: 5,
-  },
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_25' } },
-  ],
   actionGraph: {
     main: {
       nodes: {
@@ -5811,7 +7230,7 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
           action: {
             kind: 'finishBuffsByTag',
             parameters: {
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               finishSource: { kind: 'source' },
               tagQueryType: 'hasAny',
               buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
@@ -5841,7 +7260,7 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
                   copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
                 },
               ],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -5858,7 +7277,7 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
                   copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
                 },
               ],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -5894,7 +7313,7 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
           action: {
             kind: 'finishBuffsByTag',
             parameters: {
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               finishSource: { kind: 'source' },
               tagQueryType: 'hasAny',
               buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
@@ -5918,6 +7337,8 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_6' },
               tags: ['normalAttack'],
@@ -5930,6 +7351,8 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_7' },
               tags: ['normalAttack'],
@@ -5942,13 +7365,13 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
           action: {
             kind: 'spawnAbilityEntity',
             parameters: {
-              bornAt: { kind: 'fixed', target: 'enemy' },
+              bornAt: { kind: 'inputTarget' },
               abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
               childSkillId: 'chr_0034_typhoea_attack_deadarrow',
-              source: 'currentAbilityEntity',
+              source: { kind: 'owner' },
               inheritActionBlackboard: false,
               dieWhenSourceDies: false,
-              target: 'enemy',
+              target: { kind: 'inputTarget' },
               overrideDurationSeconds: { kind: 'constant', value: 3 },
             },
           },
@@ -5959,7 +7382,7 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
             kind: 'applyBuff',
             parameters: {
               buffs: [{ buffId: 'buff_chr_0034_typhoea_floatingattack_damagetaken' }],
-              targets: { kind: 'fixed', target: 'enemy' },
+              targets: { kind: 'inputTarget' },
               source: { kind: 'source' },
               inheritSourceSkillCastInfo: true,
             },
@@ -6014,7 +7437,7 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
           action: {
             kind: 'readBuffStackCount',
             parameters: {
-              target: 'enemy',
+              target: { kind: 'inputTarget' },
               outputKey: 'buff_stack',
               query: {
                 kind: 'tag',
@@ -6039,7 +7462,7 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'greaterOrEqual',
             value: { kind: 'constant', value: 1 },
@@ -6056,7 +7479,7 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'greaterOrEqual',
             value: { kind: 'constant', value: 1 },
@@ -6097,7 +7520,7 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'buffIdStackCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             compareZeroWhenTargetMissing: true,
             operator: 'equal',
             value: { kind: 'constant', value: 0 },
@@ -6108,6 +7531,450 @@ const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 = {
     },
     macros: {},
   },
+  skillId: 'chr_0034_typhoea_floating_attack1_01_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {
+    atk_scale_base: 0.5,
+    atk_scale_enhence: 1,
+    atk_scale_total: 0,
+    buff_stack: 0,
+    enchence_burst_damage_rate: 1.5,
+    enhence_arrow: 0,
+    potential_damage_rate: 1,
+    total_damage_rate: 1,
+    usp_recover: 5,
+  },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_25' } },
+  ],
+} as const;
+
+const typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback2 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_9: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [{ buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_2' }],
+              targets: { kind: 'source' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: null,
+        },
+        changeResource_10: {
+          action: {
+            kind: 'changeResource',
+            parameters: {
+              resource: 'ultimateEnergy',
+              amount: { kind: 'valueNode', nodeId: 'data_1' },
+              coefficient: { kind: 'constant', value: 1 },
+              source: { kind: 'source' },
+              targets: { kind: 'source' },
+            },
+          },
+          next: 'applyBuff_9',
+        },
+        finishBuffsByTag_11: {
+          action: {
+            kind: 'finishBuffsByTag',
+            parameters: {
+              targets: { kind: 'inputTarget' },
+              finishSource: { kind: 'source' },
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+              reason: 'early',
+              count: { kind: 'constant', value: 1 },
+            },
+          },
+          next: 'changeResource_10',
+        },
+        ifElse_14: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_2' },
+            whenTrue: { $sequence: 'finishBuffsByTag_11' },
+            whenFalse: { $sequence: null },
+          },
+          next: null,
+        },
+        applyBuff_7: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_common_natural_natural_triggered_typhoea',
+                  copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
+                },
+              ],
+              targets: { kind: 'inputTarget' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: null,
+        },
+        applyBuff_3: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_common_natural_natural_triggered_typhoea',
+                  copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
+                },
+              ],
+              targets: { kind: 'inputTarget' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: 'applyBuff_9',
+        },
+        calculateActionValue_4: {
+          action: {
+            kind: 'calculateActionValue',
+            parameters: {
+              key: 'total_damage_rate',
+              operation: 'multiply',
+              left: { kind: 'valueNode', nodeId: 'data_3' },
+              right: { kind: 'valueNode', nodeId: 'data_4' },
+            },
+          },
+          next: 'applyBuff_3',
+        },
+        changeResource_5: {
+          action: {
+            kind: 'changeResource',
+            parameters: {
+              resource: 'ultimateEnergy',
+              amount: { kind: 'valueNode', nodeId: 'data_1' },
+              coefficient: { kind: 'constant', value: 1 },
+              source: { kind: 'source' },
+              targets: { kind: 'source' },
+            },
+          },
+          next: 'calculateActionValue_4',
+        },
+        finishBuffsByTag_6: {
+          action: {
+            kind: 'finishBuffsByTag',
+            parameters: {
+              targets: { kind: 'inputTarget' },
+              finishSource: { kind: 'source' },
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+              reason: 'early',
+              count: { kind: 'constant', value: 1 },
+            },
+          },
+          next: 'changeResource_5',
+        },
+        ifElse_13: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_5' },
+            whenTrue: { $sequence: 'finishBuffsByTag_6' },
+            whenFalse: { $sequence: 'applyBuff_7' },
+          },
+          next: null,
+        },
+        applyBuff_16: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_chr_0034_typhoea_normal_attack5_atb_recovered',
+                  copiedBlackboardAssignments: { atb: 'atb' },
+                },
+              ],
+              targets: { kind: 'source' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: null,
+        },
+        dealDamage_19: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+              tags: ['normalAttack', 'canBreakWeakness', 'normalAttackLastCombo'],
+              gameplayTags: ['Damage/TyphoeaSkill/FloatingHit_Weak'],
+              stagger: { kind: 'valueNode', nodeId: 'data_7' },
+              staggerOnlyWhenCasterControlled: true,
+            },
+          },
+          next: null,
+        },
+        dealDamage_18: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'data_8' },
+              tags: ['normalAttack', 'canBreakWeakness', 'normalAttackLastCombo'],
+              gameplayTags: ['Damage/TyphoeaSkill/FloatingHit_Heavy'],
+              stagger: { kind: 'valueNode', nodeId: 'data_7' },
+              staggerOnlyWhenCasterControlled: true,
+            },
+          },
+          next: null,
+        },
+        spawnAbilityEntity_20: {
+          action: {
+            kind: 'spawnAbilityEntity',
+            parameters: {
+              bornAt: { kind: 'inputTarget' },
+              abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+              childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+              source: { kind: 'owner' },
+              inheritActionBlackboard: false,
+              dieWhenSourceDies: false,
+              target: { kind: 'inputTarget' },
+              overrideDurationSeconds: { kind: 'constant', value: 3 },
+            },
+          },
+          next: null,
+        },
+        applyBuff_21: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [{ buffId: 'buff_chr_0034_typhoea_floatingattack_damagetaken' }],
+              targets: { kind: 'inputTarget' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: 'spawnAbilityEntity_20',
+        },
+        ifElse_22: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_10' },
+            whenTrue: { $sequence: 'dealDamage_18' },
+            whenFalse: { $sequence: 'dealDamage_19' },
+          },
+          next: 'applyBuff_21',
+        },
+        ifElse_23: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_11' },
+            whenTrue: { $sequence: 'applyBuff_16' },
+            whenFalse: { $sequence: null },
+          },
+          next: 'ifElse_22',
+        },
+        ifElse_24: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_12' },
+            whenTrue: { $sequence: 'ifElse_13' },
+            whenFalse: { $sequence: 'ifElse_14' },
+          },
+          next: 'ifElse_23',
+        },
+        calculateActionValue_25: {
+          action: {
+            kind: 'calculateActionValue',
+            parameters: {
+              key: 'total_damage_rate',
+              operation: 'multiply',
+              left: { kind: 'valueNode', nodeId: 'data_13' },
+              right: { kind: 'constant', value: 1 },
+            },
+          },
+          next: 'ifElse_24',
+        },
+        calculateActionValue_26: {
+          action: {
+            kind: 'calculateActionValue',
+            parameters: {
+              key: 'atk_scale_total',
+              operation: 'multiply',
+              left: { kind: 'valueNode', nodeId: 'data_6' },
+              right: { kind: 'valueNode', nodeId: 'data_14' },
+            },
+          },
+          next: 'calculateActionValue_25',
+        },
+        readBuffStackCount_27: {
+          action: {
+            kind: 'readBuffStackCount',
+            parameters: {
+              target: { kind: 'inputTarget' },
+              outputKey: 'buff_stack',
+              query: {
+                kind: 'tag',
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+              },
+            },
+          },
+          next: 'calculateActionValue_26',
+        },
+        checkCondition_28: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
+          },
+          next: 'readBuffStackCount_27',
+        },
+        applyBuff_29: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [{ buffId: 'buff_chr_0034_typhoea_normal_skill_hitstop' }],
+              targets: { kind: 'source' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: null,
+        },
+        checkCondition_30: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
+          },
+          next: 'applyBuff_29',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp_recover' } },
+        data_2: {
+          type: 'boolean',
+          expression: {
+            kind: 'buffStackCompare',
+            target: { kind: 'inputTarget' },
+            compareZeroWhenTargetMissing: true,
+            operator: 'greaterOrEqual',
+            value: { kind: 'constant', value: 1 },
+            tagQueryType: 'hasAny',
+            buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+          },
+        },
+        data_3: { type: 'number', expression: { kind: 'blackboard', key: 'total_damage_rate' } },
+        data_4: {
+          type: 'number',
+          expression: { kind: 'blackboard', key: 'enchence_burst_damage_rate' },
+        },
+        data_5: {
+          type: 'boolean',
+          expression: {
+            kind: 'buffStackCompare',
+            target: { kind: 'inputTarget' },
+            compareZeroWhenTargetMissing: true,
+            operator: 'greaterOrEqual',
+            value: { kind: 'constant', value: 1 },
+            tagQueryType: 'hasAny',
+            buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+          },
+        },
+        data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_base' } },
+        data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+        data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_total' } },
+        data_9: {
+          type: 'number',
+          expression: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+        },
+        data_10: {
+          type: 'boolean',
+          expression: {
+            kind: 'actionValueCompare',
+            left: { kind: 'valueNode', nodeId: 'data_9' },
+            operator: 'equal',
+            right: { kind: 'constant', value: 1 },
+          },
+        },
+        data_11: {
+          type: 'boolean',
+          expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+        },
+        data_12: {
+          type: 'boolean',
+          expression: {
+            kind: 'actionValueCompare',
+            left: { kind: 'valueNode', nodeId: 'data_9' },
+            operator: 'equal',
+            right: { kind: 'constant', value: 1 },
+          },
+        },
+        data_13: {
+          type: 'number',
+          expression: { kind: 'blackboard', key: 'potential_damage_rate' },
+        },
+        data_14: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_enhence' } },
+        data_15: {
+          type: 'boolean',
+          expression: {
+            kind: 'buffIdStackCompare',
+            target: { kind: 'inputTarget' },
+            compareZeroWhenTargetMissing: true,
+            operator: 'equal',
+            value: { kind: 'constant', value: 0 },
+            buffIds: ['buff_chr_0034_typhoea_floatingattack_damagetaken'],
+          },
+        },
+        data_16: {
+          type: 'boolean',
+          expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+        },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0034_typhoea_floating_attack5_01_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 6,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {
+    atb: 0,
+    atk_scale_base: 0.5,
+    atk_scale_enhence: 1,
+    atk_scale_total: 0,
+    buff_stack: 0,
+    enchence_burst_damage_rate: 1.5,
+    enhence_arrow: 0,
+    poise: 0,
+    potential_damage_rate: 1,
+    total_damage_rate: 1,
+    usp_recover: 5,
+  },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_28' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_30' } },
+  ],
 } as const;
 
 export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
@@ -6140,11 +8007,16 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 },
@@ -6156,17 +8028,178 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_notarget',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 },
           ],
         },
         next: 'launchProjectile_107',
+      },
+      launchProjectile_105: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_106: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_enhence_ontarget',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 },
+          ],
+        },
+        next: 'launchProjectile_105',
+      },
+      ifElse_111: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'launchProjectile_106' },
+          whenFalse: { $sequence: 'launchProjectile_108' },
+        },
+        next: null,
+      },
+      launchProjectile_102: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_101: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      ifElse_103: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'launchProjectile_101' },
+          whenFalse: { $sequence: 'launchProjectile_102' },
+        },
+        next: null,
+      },
+      forEachContextTarget_110: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar2' } },
+          body: { $sequence: 'ifElse_103' },
+        },
+        next: null,
+      },
+      ifElse_117: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          whenTrue: { $sequence: 'forEachContextTarget_110' },
+          whenFalse: { $sequence: 'ifElse_111' },
+        },
+        next: null,
+      },
+      findTargets_118: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            center: { kind: 'inputTarget' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 2,
+            },
+            saveToContextKey: 'tar2',
+          },
+        },
+        next: 'ifElse_117',
+      },
+      modifyActionValue_119: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'enhence_arrow',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          },
+        },
+        next: 'findTargets_118',
       },
       modifyActionValue_82: {
         action: {
@@ -6182,21 +8215,21 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
       checkCondition_79: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: null,
       },
       checkCondition_80: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: 'checkCondition_79',
       },
       checkCondition_81: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'checkCondition_80',
       },
@@ -6204,7 +8237,7 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'modifyActionValue_82' },
           whenFalse: { $sequence: null },
         },
@@ -6214,460 +8247,148 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_05',
+            faction: 'good',
             recycleDelaySeconds: 0.200000002980232,
-            hit: { finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                skillId: 'chr_0034_typhoea_floating_attack5_01_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 6,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  atb: 0,
-                  atk_scale_base: 0.5,
-                  atk_scale_enhence: 1,
-                  atk_scale_total: 0,
-                  buff_stack: 0,
-                  enchence_burst_damage_rate: 1.5,
-                  enhence_arrow: 0,
-                  poise: 0,
-                  potential_damage_rate: 1,
-                  total_damage_rate: 1,
-                  usp_recover: 5,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_28' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_30' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      applyBuff_9: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [
-                              {
-                                buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_2',
-                              },
-                            ],
-                            targets: { kind: 'source' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      changeResource_10: {
-                        action: {
-                          kind: 'changeResource',
-                          parameters: {
-                            resource: 'ultimateEnergy',
-                            amount: { kind: 'valueNode', nodeId: 'data_1' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            source: { kind: 'source' },
-                            targets: { kind: 'source' },
-                          },
-                        },
-                        next: 'applyBuff_9',
-                      },
-                      finishBuffsByTag_11: {
-                        action: {
-                          kind: 'finishBuffsByTag',
-                          parameters: {
-                            targets: { kind: 'fixed', target: 'enemy' },
-                            finishSource: { kind: 'source' },
-                            tagQueryType: 'hasAny',
-                            buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
-                            reason: 'early',
-                            count: { kind: 'constant', value: 1 },
-                          },
-                        },
-                        next: 'changeResource_10',
-                      },
-                      ifElse_14: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                          whenTrue: { $sequence: 'finishBuffsByTag_11' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      applyBuff_7: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [
-                              {
-                                buffId: 'buff_common_natural_natural_triggered_typhoea',
-                                copiedBlackboardAssignments: {
-                                  damage_enhence: 'total_damage_rate',
-                                },
-                              },
-                            ],
-                            targets: { kind: 'fixed', target: 'enemy' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      applyBuff_3: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [
-                              {
-                                buffId: 'buff_common_natural_natural_triggered_typhoea',
-                                copiedBlackboardAssignments: {
-                                  damage_enhence: 'total_damage_rate',
-                                },
-                              },
-                            ],
-                            targets: { kind: 'fixed', target: 'enemy' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: 'applyBuff_9',
-                      },
-                      calculateActionValue_4: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'total_damage_rate',
-                            operation: 'multiply',
-                            left: { kind: 'valueNode', nodeId: 'data_3' },
-                            right: { kind: 'valueNode', nodeId: 'data_4' },
-                          },
-                        },
-                        next: 'applyBuff_3',
-                      },
-                      changeResource_5: {
-                        action: {
-                          kind: 'changeResource',
-                          parameters: {
-                            resource: 'ultimateEnergy',
-                            amount: { kind: 'valueNode', nodeId: 'data_1' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            source: { kind: 'source' },
-                            targets: { kind: 'source' },
-                          },
-                        },
-                        next: 'calculateActionValue_4',
-                      },
-                      finishBuffsByTag_6: {
-                        action: {
-                          kind: 'finishBuffsByTag',
-                          parameters: {
-                            targets: { kind: 'fixed', target: 'enemy' },
-                            finishSource: { kind: 'source' },
-                            tagQueryType: 'hasAny',
-                            buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
-                            reason: 'early',
-                            count: { kind: 'constant', value: 1 },
-                          },
-                        },
-                        next: 'changeResource_5',
-                      },
-                      ifElse_13: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_5' },
-                          whenTrue: { $sequence: 'finishBuffsByTag_6' },
-                          whenFalse: { $sequence: 'applyBuff_7' },
-                        },
-                        next: null,
-                      },
-                      applyBuff_16: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [
-                              {
-                                buffId: 'buff_chr_0034_typhoea_normal_attack5_atb_recovered',
-                                copiedBlackboardAssignments: { atb: 'atb' },
-                              },
-                            ],
-                            targets: { kind: 'source' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      dealDamage_19: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            damageType: 'nature',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
-                            tags: ['normalAttack', 'normalAttackLastCombo'],
-                            gameplayTags: ['Damage/TyphoeaSkill/FloatingHit_Weak'],
-                            features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_7' },
-                            staggerOnlyWhenCasterControlled: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      dealDamage_18: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            damageType: 'nature',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
-                            tags: ['normalAttack', 'normalAttackLastCombo'],
-                            gameplayTags: ['Damage/TyphoeaSkill/FloatingHit_Heavy'],
-                            features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_7' },
-                            staggerOnlyWhenCasterControlled: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      spawnAbilityEntity_20: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
-                            abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
-                            childSkillId: 'chr_0034_typhoea_attack_deadarrow',
-                            source: 'currentAbilityEntity',
-                            inheritActionBlackboard: false,
-                            dieWhenSourceDies: false,
-                            target: 'enemy',
-                            overrideDurationSeconds: { kind: 'constant', value: 3 },
-                          },
-                        },
-                        next: null,
-                      },
-                      applyBuff_21: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [{ buffId: 'buff_chr_0034_typhoea_floatingattack_damagetaken' }],
-                            targets: { kind: 'fixed', target: 'enemy' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: 'spawnAbilityEntity_20',
-                      },
-                      ifElse_22: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_10' },
-                          whenTrue: { $sequence: 'dealDamage_18' },
-                          whenFalse: { $sequence: 'dealDamage_19' },
-                        },
-                        next: 'applyBuff_21',
-                      },
-                      ifElse_23: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_11' },
-                          whenTrue: { $sequence: 'applyBuff_16' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: 'ifElse_22',
-                      },
-                      ifElse_24: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_12' },
-                          whenTrue: { $sequence: 'ifElse_13' },
-                          whenFalse: { $sequence: 'ifElse_14' },
-                        },
-                        next: 'ifElse_23',
-                      },
-                      calculateActionValue_25: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'total_damage_rate',
-                            operation: 'multiply',
-                            left: { kind: 'valueNode', nodeId: 'data_13' },
-                            right: { kind: 'constant', value: 1 },
-                          },
-                        },
-                        next: 'ifElse_24',
-                      },
-                      calculateActionValue_26: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'atk_scale_total',
-                            operation: 'multiply',
-                            left: { kind: 'valueNode', nodeId: 'data_6' },
-                            right: { kind: 'valueNode', nodeId: 'data_14' },
-                          },
-                        },
-                        next: 'calculateActionValue_25',
-                      },
-                      readBuffStackCount_27: {
-                        action: {
-                          kind: 'readBuffStackCount',
-                          parameters: {
-                            target: 'enemy',
-                            outputKey: 'buff_stack',
-                            query: {
-                              kind: 'tag',
-                              tagQueryType: 'hasAny',
-                              buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
-                            },
-                          },
-                        },
-                        next: 'calculateActionValue_26',
-                      },
-                      checkCondition_28: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
-                        },
-                        next: 'readBuffStackCount_27',
-                      },
-                      applyBuff_29: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [{ buffId: 'buff_chr_0034_typhoea_normal_skill_hitstop' }],
-                            targets: { kind: 'source' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      checkCondition_30: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
-                        },
-                        next: 'applyBuff_29',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'usp_recover' },
-                      },
-                      data_2: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffStackCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
-                          compareZeroWhenTargetMissing: true,
-                          operator: 'greaterOrEqual',
-                          value: { kind: 'constant', value: 1 },
-                          tagQueryType: 'hasAny',
-                          buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
-                        },
-                      },
-                      data_3: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'total_damage_rate' },
-                      },
-                      data_4: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'enchence_burst_damage_rate' },
-                      },
-                      data_5: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffStackCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
-                          compareZeroWhenTargetMissing: true,
-                          operator: 'greaterOrEqual',
-                          value: { kind: 'constant', value: 1 },
-                          tagQueryType: 'hasAny',
-                          buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
-                        },
-                      },
-                      data_6: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_base' },
-                      },
-                      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                      data_8: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_total' },
-                      },
-                      data_9: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
-                      },
-                      data_10: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_9' },
-                          operator: 'equal',
-                          right: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_11: {
-                        type: 'boolean',
-                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-                      },
-                      data_12: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_9' },
-                          operator: 'equal',
-                          right: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_13: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'potential_damage_rate' },
-                      },
-                      data_14: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_enhence' },
-                      },
-                      data_15: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
-                          compareZeroWhenTargetMissing: true,
-                          operator: 'equal',
-                          value: { kind: 'constant', value: 0 },
-                          buffIds: ['buff_chr_0034_typhoea_floatingattack_damagetaken'],
-                        },
-                      },
-                      data_16: {
-                        type: 'boolean',
-                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback2 },
           ],
         },
         next: 'ifElse_86',
+      },
+      launchProjectile_85: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_05_enhence',
+            faction: 'good',
+            recycleDelaySeconds: 0.200000002980232,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_floating_attack5ActionGraphCallback2 },
+          ],
+        },
+        next: 'ifElse_86',
+      },
+      ifElse_88: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
+          whenTrue: { $sequence: 'launchProjectile_85' },
+          whenFalse: { $sequence: 'launchProjectile_87' },
+        },
+        next: null,
+      },
+      forEachContextTarget_95: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar_front' } },
+          body: { $sequence: 'ifElse_88' },
+        },
+        next: null,
+      },
+      ifElse_99: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'forEachContextTarget_95' },
+          whenFalse: { $sequence: 'ifElse_111' },
+        },
+        next: null,
+      },
+      forEachContextTarget_98: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'tar1' } },
+          body: { $sequence: 'ifElse_88' },
+        },
+        next: null,
+      },
+      ifElse_113: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          whenTrue: { $sequence: 'forEachContextTarget_98' },
+          whenFalse: { $sequence: 'ifElse_99' },
+        },
+        next: null,
+      },
+      findTargets_114: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'factionHitBox',
+                factionTarget: 'anti',
+                owner: { kind: 'owner' },
+                checkAlive: true,
+                containsUnmarkable: false,
+                replacePartsWithMainBodies: false,
+              },
+              count: 2,
+            },
+            saveToContextKey: 'tar_front',
+          },
+        },
+        next: 'ifElse_113',
+      },
+      findTargets_115: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'tagFilter',
+              targets: { kind: 'typhoeaArcherySelected' },
+              tagQueryType: 'hasAny',
+              tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+            },
+            saveToContextKey: 'tar1',
+          },
+        },
+        next: 'findTargets_114',
+      },
+      modifyActionValue_116: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'enhence_arrow',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'findTargets_115',
+      },
+      ifElse_122: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
+          whenTrue: { $sequence: 'modifyActionValue_116' },
+          whenFalse: { $sequence: 'modifyActionValue_119' },
+        },
+        next: null,
       },
       modifyActionValue_129: {
         action: {
@@ -6716,7 +8437,21 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         },
         next: null,
       },
-      modifyActionValue_136: {
+      addEntityTags_136: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: { targets: { kind: 'owner' }, tags: ['Status/DisableCastComboSkill'] },
+        },
+        next: null,
+      },
+      checkCondition_137: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
+        },
+        next: 'addEntityTags_136',
+      },
+      modifyActionValue_138: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -6727,7 +8462,7 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         },
         next: null,
       },
-      modifyActionValue_137: {
+      modifyActionValue_139: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -6738,7 +8473,7 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         },
         next: null,
       },
-      applyBuff_138: {
+      applyBuff_140: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -6750,14 +8485,14 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         },
         next: null,
       },
-      checkCondition_139: {
+      checkCondition_141: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
         },
-        next: 'applyBuff_138',
+        next: 'applyBuff_140',
       },
-      finishBuffsById_140: {
+      finishBuffsById_142: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -6773,161 +8508,13 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: 'launchProjectile_87' },
-          whenFalse: { $sequence: 'launchProjectile_87' },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
+          whenTrue: { $sequence: 'ifElse_122' },
+          whenFalse: { $sequence: 'ifElse_122' },
         },
         next: null,
       },
-      forEachContextTarget_opt2: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'context', key: 'tar1' } },
-          body: { $sequence: 'ifElse_opt1' },
-        },
-        next: null,
-      },
-      forEachContextTarget_opt3: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'ifElse_opt1' },
-        },
-        next: null,
-      },
-      ifElse_opt4: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_9' },
-          whenTrue: { $sequence: 'launchProjectile_108' },
-          whenFalse: { $sequence: 'launchProjectile_108' },
-        },
-        next: null,
-      },
-      ifElse_opt5: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'forEachContextTarget_opt3' },
-          whenFalse: { $sequence: 'ifElse_opt4' },
-        },
-        next: null,
-      },
-      ifElse_opt6: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_11' },
-          whenTrue: { $sequence: 'forEachContextTarget_opt2' },
-          whenFalse: { $sequence: 'ifElse_opt5' },
-        },
-        next: null,
-      },
-      mergeContextTargets_opt7: {
-        action: {
-          kind: 'mergeContextTargets',
-          parameters: {
-            saveToContextKey: 'tar_front',
-            sources: [{ kind: 'target', target: 'enemy' }],
-          },
-        },
-        next: 'ifElse_opt6',
-      },
-      findTargets_opt8: {
-        action: {
-          kind: 'findTargets',
-          parameters: {
-            owner: { kind: 'owner' },
-            query: {
-              kind: 'enemyByTags',
-              tagQueryType: 'hasAny',
-              tags: ['Skill/Character/chr_0034_typhoea/Locked'],
-            },
-            saveToContextKey: 'tar1',
-          },
-        },
-        next: 'mergeContextTargets_opt7',
-      },
-      modifyActionValue_opt9: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'enhence_arrow',
-            operation: 'assign',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'findTargets_opt8',
-      },
-      ifElse_opt10: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_12' },
-          whenTrue: { $sequence: 'launchProjectile_107' },
-          whenFalse: { $sequence: 'launchProjectile_107' },
-        },
-        next: null,
-      },
-      forEachContextTarget_opt11: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'ifElse_opt10' },
-        },
-        next: null,
-      },
-      ifElse_opt12: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'forEachContextTarget_opt11' },
-          whenFalse: { $sequence: 'ifElse_opt4' },
-        },
-        next: null,
-      },
-      mergeContextTargets_opt13: {
-        action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'target', target: 'enemy' }] },
-        },
-        next: 'ifElse_opt12',
-      },
-      modifyActionValue_opt14: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'enhence_arrow',
-            operation: 'assign',
-            value: { kind: 'constant', value: 0 },
-          },
-        },
-        next: 'mergeContextTargets_opt13',
-      },
-      ifElse_opt15: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_14' },
-          whenTrue: { $sequence: 'modifyActionValue_opt9' },
-          whenFalse: { $sequence: 'modifyActionValue_opt14' },
-        },
-        next: null,
-      },
-      ifElse_opt16: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'ifElse_opt15' },
-          whenFalse: { $sequence: 'ifElse_opt15' },
-        },
-        next: null,
-      },
-      modifyActionValue_opt17: {
+      modifyActionValue_opt2: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -6936,45 +8523,45 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
             value: { kind: 'constant', value: 0 },
           },
         },
-        next: 'ifElse_opt16',
+        next: 'ifElse_opt1',
       },
-      calculateActionValue_opt18: {
+      calculateActionValue_opt3: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'poise_end',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_16' },
-            right: { kind: 'valueNode', nodeId: 'data_17' },
+            left: { kind: 'valueNode', nodeId: 'data_17' },
+            right: { kind: 'valueNode', nodeId: 'data_18' },
           },
         },
-        next: 'modifyActionValue_opt17',
+        next: 'modifyActionValue_opt2',
       },
-      calculateActionValue_opt19: {
+      calculateActionValue_opt4: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atb_end',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_18' },
-            right: { kind: 'valueNode', nodeId: 'data_17' },
+            left: { kind: 'valueNode', nodeId: 'data_19' },
+            right: { kind: 'valueNode', nodeId: 'data_18' },
           },
         },
-        next: 'calculateActionValue_opt18',
+        next: 'calculateActionValue_opt3',
       },
-      calculateActionValue_opt20: {
+      calculateActionValue_opt5: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'EntityBB_floating_attack_times',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_17' },
+            left: { kind: 'valueNode', nodeId: 'data_18' },
             right: { kind: 'constant', value: 1 },
           },
         },
-        next: 'calculateActionValue_opt19',
+        next: 'calculateActionValue_opt4',
       },
-      modifyActionValue_opt21: {
+      modifyActionValue_opt6: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -6983,15 +8570,48 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
             value: { kind: 'constant', value: 0 },
           },
         },
-        next: 'calculateActionValue_opt20',
+        next: 'calculateActionValue_opt5',
       },
     },
     dataNodes: {
       data_1: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar2' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 4 },
@@ -6999,67 +8619,53 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
           buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
         },
       },
-      data_2: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
-      },
-      data_3: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_2' },
+          left: { kind: 'valueNode', nodeId: 'data_1' },
           operator: 'equal',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_4: {
+      data_7: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'trigger_arrow_recover', fallback: 0 },
       },
-      data_5: {
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
+          left: { kind: 'valueNode', nodeId: 'data_7' },
           operator: 'equal',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_6: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_81' } },
-      },
-      data_7: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'owner' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'equal',
-          value: { kind: 'constant', value: 0 },
-          buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
-        },
-      },
-      data_8: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
       data_9: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_81' } },
       },
       data_10: {
         type: 'boolean',
         expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar_front' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
         },
       },
-      data_11: {
+      data_12: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -7070,20 +8676,9 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
           value: 1,
         },
       },
-      data_12: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
       data_13: {
         type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
       data_14: {
         type: 'boolean',
@@ -7091,20 +8686,32 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
       },
       data_15: {
         type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+        },
+      },
+      data_16: {
+        type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_17: {
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_18: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_floating_attack_times' },
       },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_floating_attack5: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_floating_attack5ActionGraph,
   key: 'chr_0034_typhoea_floating_attack5',
   element: 'nature',
   blackboard: {
@@ -7127,56 +8734,51 @@ export const typhoeusChr_0034_typhoea_floating_attack5: SkillDefinition = {
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 0, endFrame: 250, sequence: { $sequence: 'inheritBuffById_1' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'modifyActionValue_opt21' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'modifyActionValue_opt6' } },
     { startFrame: 0, endFrame: 6, sequence: { $sequence: 'modifyActionValue_129' } },
     { startFrame: 15, endFrame: 18, sequence: { $sequence: 'finishBuffsById_131' } },
     { startFrame: 0, endFrame: 23, sequence: { $sequence: 'applyBuff_135' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'modifyActionValue_136' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'modifyActionValue_137' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_139' } },
-    { startFrame: 1, endFrame: 2, sequence: { $sequence: 'finishBuffsById_140' } },
+    { startFrame: 0, endFrame: 20, sequence: { $sequence: 'checkCondition_137' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'modifyActionValue_138' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'modifyActionValue_139' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_141' } },
+    { startFrame: 1, endFrame: 2, sequence: { $sequence: 'finishBuffsById_142' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
   levelSource: 'battleSkill',
   nativeSkillType: 'attack',
-  actionGraph: typhoeusChr_0034_typhoea_floating_attack5ActionGraph,
 };
 
 export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
   main: {
     nodes: {
       gainFinisherSp_1: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'context', key: 'mainTar' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       launchProjectile_2: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'reach', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_power',
+            faction: 'good',
             recycleDelaySeconds: 0.16666667163372,
+            entityInitialValues: {},
           },
           callbacks: [
             {
               event: 'reach',
               skill: {
-                skillId: 'chr_0034_typhoea_power_attack_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 5,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_5' } },
-                  { startFrame: 1, endFrame: 4, sequence: { $sequence: 'mergeContextTargets_11' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -7184,11 +8786,13 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             calculation: 'breakingAttack',
                             calculationMultiplier: 1,
-                            tags: ['normalAttack', 'powerAttack'],
+                            tags: ['powerAttack', 'normalAttack'],
                           },
                         },
                         next: null,
@@ -7206,17 +8810,25 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
                       forEachContextTarget_4: {
                         action: {
                           kind: 'forEachContextTarget',
-                          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                          parameters: { targets: { kind: 'context', key: 'tar' } },
                           body: { $sequence: 'ifElse_3' },
                         },
                         next: null,
                       },
-                      mergeContextTargets_5: {
+                      findTargets_5: {
                         action: {
-                          kind: 'mergeContextTargets',
+                          kind: 'findTargets',
                           parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'target', target: 'enemy' }],
                           },
                         },
                         next: 'forEachContextTarget_4',
@@ -7225,7 +8837,7 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
                         action: {
                           kind: 'finishBuffsById',
                           parameters: {
-                            targets: { kind: 'fixed', target: 'enemy' },
+                            targets: { kind: 'inputTarget' },
                             finishSource: { kind: 'source' },
                             buffIds: ['buff_chr_0034_typhoea_power_attack_maintarget'],
                             reason: 'other',
@@ -7237,9 +8849,11 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
                         action: {
                           kind: 'startTimeDilation',
                           parameters: {
-                            scope: 'entity',
+                            scope: 'hitStop',
+                            attacker: { kind: 'source' },
+                            targets: { kind: 'context', key: 'maintar' },
+                            affectType: 'Both',
                             durationSeconds: { kind: 'constant', value: 0.4 },
-                            slot: 'TimeDilation/Layer/Entity/HitStop',
                             priority: 10,
                             curve: {
                               kind: 'inline',
@@ -7282,8 +8896,6 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
                                 },
                               ],
                             },
-                            finishByAction: false,
-                            targets: [{ kind: 'context', key: 'maintar' }, 'caster'],
                           },
                         },
                         next: 'finishBuffsById_7',
@@ -7301,17 +8913,25 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
                       forEachContextTarget_10: {
                         action: {
                           kind: 'forEachContextTarget',
-                          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                          parameters: { targets: { kind: 'context', key: 'tar' } },
                           body: { $sequence: 'ifElse_9' },
                         },
                         next: null,
                       },
-                      mergeContextTargets_11: {
+                      findTargets_11: {
                         action: {
-                          kind: 'mergeContextTargets',
+                          kind: 'findTargets',
                           parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'target', target: 'enemy' }],
                           },
                         },
                         next: 'forEachContextTarget_10',
@@ -7326,7 +8946,7 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'buffIdStackCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           compareZeroWhenTargetMissing: true,
                           operator: 'greaterOrEqual',
                           value: { kind: 'constant', value: 1 },
@@ -7337,7 +8957,7 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'buffIdStackCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           compareZeroWhenTargetMissing: true,
                           operator: 'greaterOrEqual',
                           value: { kind: 'constant', value: 1 },
@@ -7348,6 +8968,20 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0034_typhoea_power_attack_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 5,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_5' } },
+                  { startFrame: 1, endFrame: 4, sequence: { $sequence: 'findTargets_11' } },
+                ],
               },
             },
           ],
@@ -7359,7 +8993,7 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
           kind: 'applyBuff',
           parameters: {
             buffs: [{ buffId: 'buff_chr_0034_typhoea_power_attack_maintarget' }],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -7377,7 +9011,19 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_5: {
+      reachSkillOperableBoundary_5: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_normal_skill_floating_start',
+              'chr_0034_typhoea_combo_skill',
+            ],
+          },
+        },
+        next: null,
+      },
+      applyBuff_6: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -7390,7 +9036,7 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_6: {
+      applyBuff_7: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -7409,6 +9055,7 @@ export const typhoeusChr_0034_typhoea_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_power_attack: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_power_attackActionGraph,
   key: 'chr_0034_typhoea_power_attack',
   element: 'nature',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -7417,27 +9064,18 @@ export const typhoeusChr_0034_typhoea_power_attack: SkillDefinition = {
   exclusiveFrame: 72,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 40,
-        endFrame: 99,
-        skillIds: ['chr_0034_typhoea_normal_skill_floating_start', 'chr_0034_typhoea_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 38, endFrame: 41, sequence: { $sequence: 'applyBuff_3' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_4' } },
-    { startFrame: 0, endFrame: 72, sequence: { $sequence: 'applyBuff_5' } },
-    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'applyBuff_6' } },
+    { startFrame: 40, endFrame: 99, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
+    { startFrame: 0, endFrame: 72, sequence: { $sequence: 'applyBuff_6' } },
+    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'applyBuff_7' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: typhoeusChr_0034_typhoea_power_attackActionGraph,
 };
 
 export const typhoeusChr_0034_typhoea_plunging_attack_endActionGraph = {
@@ -7459,6 +9097,8 @@ export const typhoeusChr_0034_typhoea_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -7470,10 +9110,21 @@ export const typhoeusChr_0034_typhoea_plunging_attack_endActionGraph = {
         action: { kind: 'finishOwner', parameters: { targets: { kind: 'context', key: 'rune' } } },
         next: 'dealDamage_2',
       },
-      mergeContextTargets_4: {
+      findTargets_4: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
         },
         next: 'finishOwner_3',
       },
@@ -7482,15 +9133,16 @@ export const typhoeusChr_0034_typhoea_plunging_attack_endActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'rune',
-            abilityEntityIds: [
-              'abilityentity_chr_0034_typhoea_arrow_onground',
-              'abilityentity_chr_0034_typhoea_combo_arrowfloating_1',
-              'abilityentity_chr_0034_typhoea_rune_1_onground',
+            tagFilters: [
+              {
+                queryType: 'hasAny',
+                tags: ['Skill/Character/chr_0034_typhoea/plunging_attack_rune'],
+              },
             ],
             owner: { kind: 'source' },
           },
         },
-        next: 'mergeContextTargets_4',
+        next: 'findTargets_4',
       },
     },
     dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
@@ -7519,6 +9171,87 @@ export const typhoeusChr_0034_typhoea_plunging_attack_end: SkillDefinition = {
 };
 
 const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        spawnAbilityEntity_1: {
+          action: {
+            kind: 'spawnAbilityEntity',
+            parameters: {
+              bornAt: { kind: 'inputTarget' },
+              abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+              childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+              source: { kind: 'owner' },
+              inheritActionBlackboard: false,
+              dieWhenSourceDies: false,
+              target: { kind: 'inputTarget' },
+              overrideDurationSeconds: { kind: 'constant', value: 3 },
+            },
+          },
+          next: null,
+        },
+        dealDamage_2: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+              tags: ['normalSkill'],
+            },
+          },
+          next: 'spawnAbilityEntity_1',
+        },
+        applyBuff_3: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [{ buffId: 'buff_chr_0034_typhoea_normal_start_hittimes' }],
+              targets: { kind: 'source' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: 'dealDamage_2',
+        },
+        calculateActionValue_4: {
+          action: {
+            kind: 'calculateActionValue',
+            parameters: {
+              key: 'atk_scale',
+              operation: 'multiply',
+              left: { kind: 'valueNode', nodeId: 'data_1' },
+              right: { kind: 'constant', value: 0.5 },
+            },
+          },
+          next: 'applyBuff_3',
+        },
+        checkCondition_5: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          },
+          next: 'calculateActionValue_4',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+        data_2: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityCountCompare',
+            target: { kind: 'inputTarget' },
+            containsHittableTarget: false,
+            excludeDeadEntity: false,
+            operator: 'greaterOrEqual',
+            value: 1,
+          },
+        },
+      },
+    },
+    macros: {},
+  },
   skillId: 'chr_0034_typhoea_normal_skill_attack1_projhit',
   nativeSkillType: 'normalSkill',
   naturalDurationFrames: 1,
@@ -7530,6 +9263,9 @@ const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraphCallback1 =
   },
   blackboard: { atk_scale: 0.2 },
   scheduledSequences: [{ startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_5' } }],
+} as const;
+
+const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraphCallback2 = {
   actionGraph: {
     main: {
       nodes: {
@@ -7537,13 +9273,13 @@ const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraphCallback1 =
           action: {
             kind: 'spawnAbilityEntity',
             parameters: {
-              bornAt: { kind: 'fixed', target: 'enemy' },
+              bornAt: { kind: 'inputTarget' },
               abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
               childSkillId: 'chr_0034_typhoea_attack_deadarrow',
-              source: 'currentAbilityEntity',
+              source: { kind: 'owner' },
               inheritActionBlackboard: false,
               dieWhenSourceDies: false,
-              target: 'enemy',
+              target: { kind: 'inputTarget' },
               overrideDurationSeconds: { kind: 'constant', value: 3 },
             },
           },
@@ -7553,6 +9289,8 @@ const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraphCallback1 =
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'data_1' },
               tags: ['normalSkill'],
@@ -7598,7 +9336,7 @@ const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraphCallback1 =
           type: 'boolean',
           expression: {
             kind: 'entityCountCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             containsHittableTarget: false,
             excludeDeadEntity: false,
             operator: 'greaterOrEqual',
@@ -7609,9 +9347,6 @@ const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraphCallback1 =
     },
     macros: {},
   },
-} as const;
-
-const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraphCallback2 = {
   skillId: 'chr_0034_typhoea_normal_skill_attack2_projhit',
   nativeSkillType: 'normalSkill',
   naturalDurationFrames: 1,
@@ -7623,85 +9358,6 @@ const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraphCallback2 =
   },
   blackboard: { atk_scale: 0 },
   scheduledSequences: [{ startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_5' } }],
-  actionGraph: {
-    main: {
-      nodes: {
-        spawnAbilityEntity_1: {
-          action: {
-            kind: 'spawnAbilityEntity',
-            parameters: {
-              bornAt: { kind: 'fixed', target: 'enemy' },
-              abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
-              childSkillId: 'chr_0034_typhoea_attack_deadarrow',
-              source: 'currentAbilityEntity',
-              inheritActionBlackboard: false,
-              dieWhenSourceDies: false,
-              target: 'enemy',
-              overrideDurationSeconds: { kind: 'constant', value: 3 },
-            },
-          },
-          next: null,
-        },
-        dealDamage_2: {
-          action: {
-            kind: 'dealDamage',
-            parameters: {
-              damageType: 'nature',
-              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-              tags: ['normalSkill'],
-            },
-          },
-          next: 'spawnAbilityEntity_1',
-        },
-        applyBuff_3: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffs: [{ buffId: 'buff_chr_0034_typhoea_normal_start_hittimes' }],
-              targets: { kind: 'source' },
-              source: { kind: 'source' },
-              inheritSourceSkillCastInfo: true,
-            },
-          },
-          next: 'dealDamage_2',
-        },
-        calculateActionValue_4: {
-          action: {
-            kind: 'calculateActionValue',
-            parameters: {
-              key: 'atk_scale',
-              operation: 'multiply',
-              left: { kind: 'valueNode', nodeId: 'data_1' },
-              right: { kind: 'constant', value: 0.5 },
-            },
-          },
-          next: 'applyBuff_3',
-        },
-        checkCondition_5: {
-          action: {
-            kind: 'checkCondition',
-            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          },
-          next: 'calculateActionValue_4',
-        },
-      },
-      dataNodes: {
-        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-        data_2: {
-          type: 'boolean',
-          expression: {
-            kind: 'entityCountCompare',
-            target: { kind: 'fixed', target: 'enemy' },
-            containsHittableTarget: false,
-            excludeDeadEntity: false,
-            operator: 'greaterOrEqual',
-            value: 1,
-          },
-        },
-      },
-    },
-    macros: {},
-  },
 } as const;
 
 export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
@@ -7798,14 +9454,33 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
       createSpatialPointTargets_9: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'tar2', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'tar2',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+          },
         },
         next: null,
       },
-      mergeContextTargets_8: {
+      findTargets_8: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'source' },
+            center: { kind: 'inputTarget' },
+            query: {
+              kind: 'limit',
+              targets: {
+                kind: 'enemyByTags',
+                scope: 'global',
+                reverse: true,
+                tagQueryType: 'hasAll',
+                tags: [],
+              },
+              count: 2,
+            },
+            saveToContextKey: 'tar2',
+          },
         },
         next: null,
       },
@@ -7814,15 +9489,19 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'mergeContextTargets_8' },
+          whenTrue: { $sequence: 'findTargets_8' },
           whenFalse: { $sequence: 'createSpatialPointTargets_9' },
         },
         next: null,
       },
-      mergeContextTargets_11: {
+      findTargets_11: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar1', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'source' },
+            query: { kind: 'limit', targets: { kind: 'typhoeaArcherySelected' }, count: 2 },
+            saveToContextKey: 'tar1',
+          },
         },
         next: null,
       },
@@ -7831,7 +9510,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'mergeContextTargets_11' },
+          whenTrue: { $sequence: 'findTargets_11' },
           whenFalse: { $sequence: 'ifElse_12' },
         },
         next: null,
@@ -7840,11 +9519,16 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -7859,11 +9543,16 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -7878,12 +9567,17 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
             onlyHitTargets: { kind: 'inputTarget' },
-            finish: 'firstTickReach',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -7915,8 +9609,8 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
       forEachContextTarget_16: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'launchProjectile_22' },
+          parameters: { targets: { kind: 'context', key: 'tar1' } },
+          body: { $sequence: 'launchProjectile_19' },
         },
         next: null,
       },
@@ -7944,11 +9638,16 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -7963,11 +9662,16 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -7982,12 +9686,17 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
+            projectileId: 'projectile_chr_0034_typhoea_archery_floating_attack_00',
             onlyHitTargets: { kind: 'inputTarget' },
-            finish: 'firstTickReach',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
@@ -8019,8 +9728,8 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
       forEachContextTarget_30: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'launchProjectile_36' },
+          parameters: { targets: { kind: 'context', key: 'tar1' } },
+          body: { $sequence: 'launchProjectile_33' },
         },
         next: null,
       },
@@ -8062,12 +9771,58 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_floating_attack1',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
           },
+        },
+        next: null,
+      },
+      castSkillDuringAction_48: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack1',
+            target: { kind: 'context', key: 'mainTar' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_51: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
+          whenTrue: { $sequence: 'castSkillDuringAction_48' },
+          whenFalse: { $sequence: 'castSkillDuringAction_49' },
+        },
+        next: null,
+      },
+      findTargets_52: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'mainTar',
+          },
+        },
+        next: 'ifElse_51',
+      },
+      ifElse_53: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'findTargets_52' },
         },
         next: null,
       },
@@ -8075,8 +9830,9 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -8084,7 +9840,33 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         },
         next: null,
       },
-      modifyActionValue_55: {
+      overrideBasicAttackMapping_55: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_56: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack1',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      addEntityTags_57: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: { targets: { kind: 'owner' }, tags: ['Status/DisableCastComboSkill'] },
+        },
+        next: null,
+      },
+      modifyActionValue_58: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -8095,7 +9877,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         },
         next: null,
       },
-      applyBuff_56: {
+      applyBuff_59: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -8104,37 +9886,6 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
-        },
-        next: null,
-      },
-      ifElse_opt1: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'castSkillDuringAction_49' },
-          whenFalse: { $sequence: 'castSkillDuringAction_49' },
-        },
-        next: null,
-      },
-      findTargets_opt2: {
-        action: {
-          kind: 'findTargets',
-          parameters: {
-            owner: { kind: 'owner' },
-            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
-            saveToContextKey: 'mainTar',
-          },
-        },
-        next: 'ifElse_opt1',
-      },
-      ifElse_opt3: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_14' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'findTargets_opt2' },
         },
         next: null,
       },
@@ -8158,7 +9909,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -8184,7 +9935,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar1' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -8210,7 +9961,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar1' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -8234,7 +9985,14 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
       },
       data_13: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'mainTar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_14: {
         type: 'boolean',
@@ -8246,6 +10004,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_normal_skill_floating_start: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph,
   key: 'chr_0034_typhoea_normal_skill_floating_start',
   element: 'nature',
   blackboard: {
@@ -8258,26 +10017,6 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_start: SkillDefiniti
   naturalDurationFrames: 40,
   exclusiveFrame: 99,
   offsetRecordFrame: 0,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 21,
-        endFrame: 40,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_floating_attack1',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 26,
-        endFrame: 40,
-        skillIds: [
-          'chr_0034_typhoea_floating_attack1',
-          'chr_0034_typhoea_normal_skill_floating_end',
-        ],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_2' } },
@@ -8287,17 +10026,19 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_start: SkillDefiniti
     { startFrame: 2, endFrame: 5, sequence: { $sequence: 'ifElse_27' } },
     { startFrame: 7, endFrame: 10, sequence: { $sequence: 'ifElse_41' } },
     { startFrame: 12, endFrame: 18, sequence: { $sequence: 'ifElse_46' } },
-    { startFrame: 32, endFrame: 35, sequence: { $sequence: 'ifElse_opt3' } },
+    { startFrame: 32, endFrame: 35, sequence: { $sequence: 'ifElse_53' } },
     { startFrame: 37, endFrame: 40, sequence: { $sequence: 'castSkillDuringAction_54' } },
-    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'modifyActionValue_55' } },
-    { startFrame: 13, endFrame: 16, sequence: { $sequence: 'applyBuff_56' } },
+    { startFrame: 21, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_55' } },
+    { startFrame: 26, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_56' } },
+    { startFrame: 0, endFrame: 21, sequence: { $sequence: 'addEntityTags_57' } },
+    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'modifyActionValue_58' } },
+    { startFrame: 13, endFrame: 16, sequence: { $sequence: 'applyBuff_59' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph,
 };
 
 export const typhoeusChr_0034_typhoea_normal_skill_floating_loopActionGraph = {
@@ -8330,8 +10071,9 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_loopActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_normal_skill_floating_end',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -8339,7 +10081,372 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_loopActionGraph = {
         },
         next: null,
       },
-      applyBuff_15: {
+      overrideBasicAttackMapping_26: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      overrideBasicAttackMapping_25: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      overrideBasicAttackMapping_24: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      overrideBasicAttackMapping_23: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      overrideBasicAttackMapping_22: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack5'], priority: 'skill' },
+        },
+        next: null,
+      },
+      switch_27: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_1' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_22' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_23' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_24' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_25' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_26' },
+            },
+          ],
+        },
+        next: null,
+      },
+      switch_21: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_1' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_23' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_23' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_24' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_25' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_26' },
+            },
+          ],
+        },
+        next: null,
+      },
+      switch_15: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_1' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_25' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_25' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_25' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_25' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_26' },
+            },
+          ],
+        },
+        next: null,
+      },
+      switch_9: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_1' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_24' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_24' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_24' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_25' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_26' },
+            },
+          ],
+        },
+        next: null,
+      },
+      switch_29: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_2' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'overrideBasicAttackMapping_26' },
+            },
+            { value: { kind: 'constant', value: 2 }, sequence: { $sequence: 'switch_9' } },
+            { value: { kind: 'constant', value: 1 }, sequence: { $sequence: 'switch_15' } },
+            { value: { kind: 'constant', value: 3 }, sequence: { $sequence: 'switch_21' } },
+            { value: { kind: 'constant', value: 4 }, sequence: { $sequence: 'switch_27' } },
+            {
+              value: { kind: 'constant', value: 5 },
+              sequence: { $sequence: 'castSkillDuringAction_2' },
+            },
+          ],
+        },
+        next: null,
+      },
+      readBuffStackCount_30: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          },
+        },
+        next: 'switch_29',
+      },
+      reachSkillOperableBoundary_50: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack4',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_48: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack3',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_47: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack2',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_46: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack1',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      switch_51: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_1' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_46' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_47' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_48' },
+            },
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_50' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_50' },
+            },
+          ],
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_44: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack5',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      switch_42: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_1' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_47' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_47' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_47' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_47' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_46' },
+            },
+          ],
+        },
+        next: null,
+      },
+      switch_36: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_1' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_48' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_48' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_48' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_47' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_46' },
+            },
+          ],
+        },
+        next: null,
+      },
+      switch_52: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_2' }, alwaysNext: true },
+          options: [
+            { value: { kind: 'constant', value: 2 }, sequence: { $sequence: 'switch_36' } },
+            { value: { kind: 'constant', value: 1 }, sequence: { $sequence: 'switch_42' } },
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_46' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_44' },
+            },
+            {
+              value: { kind: 'constant', value: 5 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_46' },
+            },
+            { value: { kind: 'constant', value: 3 }, sequence: { $sequence: 'switch_51' } },
+          ],
+        },
+        next: null,
+      },
+      readBuffStackCount_53: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: { kind: 'owner' },
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          },
+        },
+        next: 'switch_52',
+      },
+      applyBuff_54: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -8352,7 +10459,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_loopActionGraph = {
         },
         next: null,
       },
-      applyBuff_16: {
+      applyBuff_55: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -8364,56 +10471,21 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_loopActionGraph = {
         },
         next: null,
       },
-      checkCondition_17: {
+      checkCondition_56: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
-        next: 'applyBuff_16',
-      },
-      switch_opt1: {
-        action: {
-          kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_2' }, alwaysNext: true },
-          options: [
-            { value: { kind: 'constant', value: 0 }, sequence: { $sequence: null } },
-            { value: { kind: 'constant', value: 2 }, sequence: { $sequence: null } },
-            { value: { kind: 'constant', value: 1 }, sequence: { $sequence: null } },
-            { value: { kind: 'constant', value: 3 }, sequence: { $sequence: null } },
-            { value: { kind: 'constant', value: 4 }, sequence: { $sequence: null } },
-            {
-              value: { kind: 'constant', value: 5 },
-              sequence: { $sequence: 'castSkillDuringAction_2' },
-            },
-          ],
-        },
-        next: null,
-      },
-      readBuffStackCount_opt2: {
-        action: {
-          kind: 'readBuffStackCount',
-          parameters: {
-            target: 'caster',
-            outputKey: 'arrow_num',
-            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
-          },
-        },
-        next: 'switch_opt1',
-      },
-      readBuffStackCount_opt3: {
-        action: {
-          kind: 'readBuffStackCount',
-          parameters: {
-            target: 'caster',
-            outputKey: 'arrow_num',
-            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
-          },
-        },
-        next: null,
+        next: 'applyBuff_55',
       },
     },
     dataNodes: {
-      data_1: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'arrow_num' } },
+      data_2: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_floating_attack_index' },
+      },
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -8424,16 +10496,13 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_loopActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
         },
       },
-      data_2: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_floating_attack_index' },
-      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_normal_skill_floating_loop: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_normal_skill_floating_loopActionGraph,
   key: 'chr_0034_typhoea_normal_skill_floating_loop',
   element: 'nature',
   blackboard: { arrow_num: 0 },
@@ -8442,21 +10511,19 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_loop: SkillDefinitio
   exclusiveFrame: 30,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: { hasConditionalActions: true },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 30, sequence: { $sequence: 'inheritBuffById_1' } },
     { startFrame: 27, endFrame: 30, sequence: { $sequence: 'castSkillDuringAction_2' } },
-    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'readBuffStackCount_opt2' } },
-    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'readBuffStackCount_opt3' } },
-    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'applyBuff_15' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_17' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'readBuffStackCount_30' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'readBuffStackCount_53' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'applyBuff_54' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_56' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'extraActiveSkill',
-  actionGraph: typhoeusChr_0034_typhoea_normal_skill_floating_loopActionGraph,
 };
 
 export const typhoeusChr_0034_typhoea_normal_skill_floating_endActionGraph = {
@@ -8508,7 +10575,14 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_endActionGraph = {
         },
         next: null,
       },
-      modifyActionValue_4: {
+      addEntityTags_4: {
+        action: {
+          kind: 'addEntityTags',
+          parameters: { targets: { kind: 'owner' }, tags: ['Status/DisableCastComboSkill'] },
+        },
+        next: null,
+      },
+      modifyActionValue_5: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -8519,7 +10593,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_endActionGraph = {
         },
         next: null,
       },
-      finishBuffsById_5: {
+      finishBuffsById_6: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -8550,8 +10624,9 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_end: SkillDefinition
     { startFrame: 0, endFrame: 8, sequence: { $sequence: 'inheritBuffById_1' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'modifyActionValue_2' } },
     { startFrame: 8, endFrame: 14, sequence: { $sequence: 'finishBuffsById_3' } },
-    { startFrame: 6, endFrame: 9, sequence: { $sequence: 'modifyActionValue_4' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_5' } },
+    { startFrame: 8, endFrame: 18, sequence: { $sequence: 'addEntityTags_4' } },
+    { startFrame: 6, endFrame: 9, sequence: { $sequence: 'modifyActionValue_5' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_6' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'battleSkill',
@@ -8559,13 +10634,172 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_end: SkillDefinition
   nativeSkillType: 'extraActiveSkill',
 };
 
+const typhoeusChr_0034_typhoea_combo_skillActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        dealDamage_1: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+              tags: ['comboSkill'],
+            },
+          },
+          next: null,
+        },
+        calculateActionValue_2: {
+          action: {
+            kind: 'calculateActionValue',
+            parameters: {
+              key: 'atk_scale',
+              operation: 'divide',
+              left: { kind: 'valueNode', nodeId: 'data_1' },
+              right: { kind: 'constant', value: 7 },
+            },
+          },
+          next: 'dealDamage_1',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0034_typhoea_combo_02_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { atk_scale: 0 },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'calculateActionValue_2' } },
+  ],
+} as const;
+
+const typhoeusChr_0034_typhoea_combo_skillActionGraphCallback2 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        dealDamage_1: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+              tags: ['canBreakWeakness', 'comboSkill'],
+              stagger: { kind: 'valueNode', nodeId: 'data_2' },
+            },
+          },
+          next: null,
+        },
+        calculateActionValue_2: {
+          action: {
+            kind: 'calculateActionValue',
+            parameters: {
+              key: 'atk_scale',
+              operation: 'divide',
+              left: { kind: 'valueNode', nodeId: 'data_1' },
+              right: { kind: 'constant', value: 7 },
+            },
+          },
+          next: 'dealDamage_1',
+        },
+        applyBuff_3: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [{ buffId: 'buff_chr_0034_typhoea_combo_skill_arrow_hittimes' }],
+              targets: { kind: 'inputTarget' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: 'calculateActionValue_2',
+        },
+        checkCondition_4: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          },
+          next: 'applyBuff_3',
+        },
+        spawnAbilityEntity_5: {
+          action: {
+            kind: 'spawnAbilityEntity',
+            parameters: {
+              bornAt: { kind: 'inputTarget' },
+              abilityEntityId: 'abilityentity_chr_0034_typhoea_combo_presistdamage',
+              childSkillId: 'chr_0034_typhoea_combo_persistentdamage',
+              source: { kind: 'source' },
+              inheritActionBlackboard: true,
+              dieWhenSourceDies: false,
+            },
+          },
+          next: null,
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+        data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+        data_3: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityCountCompare',
+            target: { kind: 'inputTarget' },
+            containsHittableTarget: false,
+            excludeDeadEntity: false,
+            operator: 'greaterOrEqual',
+            value: 1,
+          },
+        },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0034_typhoea_combo_01_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 13,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {
+    atk_scale: 0,
+    atk_scale_persistent: 0,
+    persistent_naturalburst_increase: 0,
+    persistent_slow: 0,
+    poise: 10,
+  },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_4' } },
+    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'spawnAbilityEntity_5' } },
+  ],
+} as const;
+
 export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_3: {
+      createSpatialPointTargets_3: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'tar',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'mainCharacter' },
+          },
         },
         next: null,
       },
@@ -8586,7 +10820,7 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'findTargets_2' },
-          whenFalse: { $sequence: 'mergeContextTargets_3' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_3' },
         },
         next: null,
       },
@@ -8605,7 +10839,7 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             skill: { kind: 'id', skillId: 'chr_0034_typhoea_combo_skillfloating' },
             operation: 'set',
             basis: 'baseDurationRatio',
@@ -8624,8 +10858,15 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -8634,78 +10875,63 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 7,
+              callbacks: [{ event: 'hit', triggerFrames: [7], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_combo_2',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                skillId: 'chr_0034_typhoea_combo_02_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'calculateActionValue_2' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      dealDamage_1: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            damageType: 'nature',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['comboSkill'],
-                          },
-                        },
-                        next: null,
-                      },
-                      calculateActionValue_2: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'atk_scale',
-                            operation: 'divide',
-                            left: { kind: 'valueNode', nodeId: 'data_1' },
-                            right: { kind: 'constant', value: 7 },
-                          },
-                        },
-                        next: 'dealDamage_1',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_combo_skillActionGraphCallback1 },
           ],
         },
         next: null,
       },
-      ifElse_opt1: {
+      launchProjectile_9: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_combo_2',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            targets: { kind: 'context', contextKey: 'tar' },
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_combo_skillActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      ifElse_11: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'launchProjectile_10' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'launchProjectile_9' },
           whenFalse: { $sequence: 'launchProjectile_10' },
+        },
+        next: null,
+      },
+      modifyActionValue_35: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'is_have_target',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          },
         },
         next: null,
       },
@@ -8713,121 +10939,63 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 9,
+              callbacks: [{ event: 'hit', triggerFrames: [9], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_combo_1',
+            faction: 'good',
             recycleDelaySeconds: 0.433333337306976,
-            hit: { onReach: true, finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                skillId: 'chr_0034_typhoea_combo_01_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 13,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  atk_scale: 0,
-                  atk_scale_persistent: 0,
-                  persistent_naturalburst_increase: 0,
-                  persistent_slow: 0,
-                  poise: 10,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_4' } },
-                  { startFrame: 0, endFrame: 2, sequence: { $sequence: 'spawnAbilityEntity_5' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      dealDamage_1: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            damageType: 'nature',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['comboSkill'],
-                            features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                          },
-                        },
-                        next: null,
-                      },
-                      calculateActionValue_2: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'atk_scale',
-                            operation: 'divide',
-                            left: { kind: 'valueNode', nodeId: 'data_1' },
-                            right: { kind: 'constant', value: 7 },
-                          },
-                        },
-                        next: 'dealDamage_1',
-                      },
-                      applyBuff_3: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [{ buffId: 'buff_chr_0034_typhoea_combo_skill_arrow_hittimes' }],
-                            targets: { kind: 'fixed', target: 'enemy' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: 'calculateActionValue_2',
-                      },
-                      checkCondition_4: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        },
-                        next: 'applyBuff_3',
-                      },
-                      spawnAbilityEntity_5: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
-                            abilityEntityId: 'abilityentity_chr_0034_typhoea_combo_presistdamage',
-                            childSkillId: 'chr_0034_typhoea_combo_persistentdamage',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                          },
-                        },
-                        next: null,
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                      data_3: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
-                          containsHittableTarget: false,
-                          excludeDeadEntity: false,
-                          operator: 'greaterOrEqual',
-                          value: 1,
-                        },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_combo_skillActionGraphCallback2 },
           ],
+        },
+        next: 'modifyActionValue_35',
+      },
+      modifyActionValue_33: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'is_have_target',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: null,
+      },
+      launchProjectile_34: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'arrival' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_combo_1',
+            faction: 'good',
+            recycleDelaySeconds: 0.433333337306976,
+            targets: { kind: 'context', contextKey: 'tar' },
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            { event: 'hit', skill: typhoeusChr_0034_typhoea_combo_skillActionGraphCallback2 },
+          ],
+        },
+        next: 'modifyActionValue_33',
+      },
+      ifElse_37: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          whenTrue: { $sequence: 'launchProjectile_34' },
+          whenFalse: { $sequence: 'launchProjectile_36' },
         },
         next: null,
       },
@@ -8836,7 +11004,7 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_3' },
+            amount: { kind: 'valueNode', nodeId: 'data_5' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -8863,18 +11031,15 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
         },
         next: null,
       },
-      markCurrentSkillCanInterrupt_44: {
-        action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
+      reachSkillOperableBoundary_44: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0034_typhoea_normal_skill_floating_start'] },
+        },
         next: null,
       },
-      ifElse_opt2: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'launchProjectile_36' },
-          whenFalse: { $sequence: 'launchProjectile_36' },
-        },
+      markCurrentSkillCanInterrupt_45: {
+        action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
         next: null,
       },
     },
@@ -8884,7 +11049,7 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'mainCharacter' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'maintar' },
           distance: 15,
           lessThan: true,
           includeTargetRadius: false,
@@ -8892,26 +11057,44 @@ export const typhoeusChr_0034_typhoea_combo_skillActionGraph = {
         },
       },
       data_2: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'is_have_target', fallback: 0 },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_2' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
       data_4: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_combo_skill: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_combo_skillActionGraph,
   key: 'chr_0034_typhoea_combo_skill',
   element: 'nature',
   blackboard: {
     atk_scale: [0.89, 0.98, 1.07, 1.16, 1.25, 1.34, 1.42, 1.51, 1.6, 1.71, 1.85, 2],
     atk_scale_persistent: [0.45, 0.49, 0.54, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.93, 1],
     duration: 5,
+    is_have_target: 0,
     persistent_naturalburst_increase: [
       0.06, 0.06, 0.06, 0.07, 0.07, 0.07, 0.08, 0.08, 0.08, 0.09, 0.09, 0.1,
     ],
@@ -8924,34 +11107,184 @@ export const typhoeusChr_0034_typhoea_combo_skill: SkillDefinition = {
   exclusiveFrame: 60,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 48, endFrame: 99, skillIds: ['chr_0034_typhoea_normal_skill_floating_start'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_5' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'adjustSkillCooldown_6' } },
     { startFrame: 0, endFrame: 22, sequence: { $sequence: 'startTimeDilation_7' } },
-    { startFrame: 40, endFrame: 43, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 43, endFrame: 46, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 44, endFrame: 47, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 47, endFrame: 50, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 49, endFrame: 52, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 35, endFrame: 54, sequence: { $sequence: 'ifElse_opt2' } },
+    { startFrame: 40, endFrame: 43, sequence: { $sequence: 'ifElse_11' } },
+    { startFrame: 43, endFrame: 46, sequence: { $sequence: 'ifElse_11' } },
+    { startFrame: 44, endFrame: 47, sequence: { $sequence: 'ifElse_11' } },
+    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'ifElse_11' } },
+    { startFrame: 47, endFrame: 50, sequence: { $sequence: 'ifElse_11' } },
+    { startFrame: 49, endFrame: 52, sequence: { $sequence: 'ifElse_11' } },
+    { startFrame: 35, endFrame: 54, sequence: { $sequence: 'ifElse_37' } },
     { startFrame: 35, endFrame: 50, sequence: { $sequence: 'checkCondition_42' } },
     { startFrame: 35, endFrame: 38, sequence: { $sequence: 'applyBuff_43' } },
-    { startFrame: 60, endFrame: 241, sequence: { $sequence: 'markCurrentSkillCanInterrupt_44' } },
+    { startFrame: 48, endFrame: 99, sequence: { $sequence: 'reachSkillOperableBoundary_44' } },
+    { startFrame: 60, endFrame: 241, sequence: { $sequence: 'markCurrentSkillCanInterrupt_45' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: [630, 630, 630, 630, 630, 630, 630, 630, 630, 600, 600, 570],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: typhoeusChr_0034_typhoea_combo_skillActionGraph,
 };
+
+const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        dealDamage_1: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+              tags: ['comboSkill'],
+            },
+          },
+          next: null,
+        },
+        calculateActionValue_2: {
+          action: {
+            kind: 'calculateActionValue',
+            parameters: {
+              key: 'atk_scale',
+              operation: 'divide',
+              left: { kind: 'valueNode', nodeId: 'data_1' },
+              right: { kind: 'constant', value: 7 },
+            },
+          },
+          next: 'dealDamage_1',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0034_typhoea_combo_02_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { atk_scale: 0 },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'calculateActionValue_2' } },
+  ],
+} as const;
+
+const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraphCallback2 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        dealDamage_1: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+              tags: ['canBreakWeakness', 'comboSkill'],
+              stagger: { kind: 'valueNode', nodeId: 'data_2' },
+            },
+          },
+          next: null,
+        },
+        calculateActionValue_2: {
+          action: {
+            kind: 'calculateActionValue',
+            parameters: {
+              key: 'atk_scale',
+              operation: 'divide',
+              left: { kind: 'valueNode', nodeId: 'data_1' },
+              right: { kind: 'constant', value: 7 },
+            },
+          },
+          next: 'dealDamage_1',
+        },
+        applyBuff_3: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [{ buffId: 'buff_chr_0034_typhoea_combo_skill_arrow_hittimes' }],
+              targets: { kind: 'inputTarget' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: 'calculateActionValue_2',
+        },
+        checkCondition_4: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          },
+          next: 'applyBuff_3',
+        },
+        spawnAbilityEntity_5: {
+          action: {
+            kind: 'spawnAbilityEntity',
+            parameters: {
+              bornAt: { kind: 'inputTarget' },
+              abilityEntityId: 'abilityentity_chr_0034_typhoea_combo_presistdamage',
+              childSkillId: 'chr_0034_typhoea_combo_persistentdamage',
+              source: { kind: 'source' },
+              inheritActionBlackboard: true,
+              dieWhenSourceDies: false,
+            },
+          },
+          next: null,
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+        data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+        data_3: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityCountCompare',
+            target: { kind: 'inputTarget' },
+            containsHittableTarget: false,
+            excludeDeadEntity: false,
+            operator: 'greaterOrEqual',
+            value: 1,
+          },
+        },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0034_typhoea_combo_01_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 13,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {
+    atk_scale: 0,
+    atk_scale_persistent: 0,
+    persistent_naturalburst_increase: 0,
+    persistent_slow: 0,
+    poise: 10,
+  },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_4' } },
+    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'spawnAbilityEntity_5' } },
+  ],
+} as const;
 
 export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
   main: {
@@ -8963,7 +11296,11 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
       createSpatialPointTargets_7: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'tar',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'mainCharacter' },
+          },
         },
         next: null,
       },
@@ -9026,9 +11363,14 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
           parameters: {
             owner: { kind: 'owner' },
             query: {
-              kind: 'enemyByTags',
-              tagQueryType: 'hasAny',
-              tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+              kind: 'limit',
+              targets: {
+                kind: 'tagFilter',
+                targets: { kind: 'typhoeaArcherySelected' },
+                tagQueryType: 'hasAny',
+                tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+              },
+              count: 128,
             },
             saveToContextKey: 'tar1',
           },
@@ -9072,7 +11414,7 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             skill: { kind: 'id', skillId: 'chr_0034_typhoea_combo_skill' },
             operation: 'set',
             basis: 'baseDurationRatio',
@@ -9085,8 +11427,9 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_normal_skill_floating_end',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: false,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -9098,8 +11441,9 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: false,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -9150,8 +11494,15 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
         },
         next: null,
@@ -9160,78 +11511,105 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 7,
+              callbacks: [{ event: 'hit', triggerFrames: [7], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_combo_2',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
-              skill: {
-                skillId: 'chr_0034_typhoea_combo_02_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'calculateActionValue_2' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      dealDamage_1: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            damageType: 'nature',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['comboSkill'],
-                          },
-                        },
-                        next: null,
-                      },
-                      calculateActionValue_2: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'atk_scale',
-                            operation: 'divide',
-                            left: { kind: 'valueNode', nodeId: 'data_1' },
-                            right: { kind: 'constant', value: 7 },
-                          },
-                        },
-                        next: 'dealDamage_1',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
+              skill: typhoeusChr_0034_typhoea_combo_skillfloatingActionGraphCallback1,
             },
           ],
         },
         next: null,
       },
-      ifElse_opt1: {
+      launchProjectile_25: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_combo_2',
+            onlyHitTargets: { kind: 'context', key: 'tar' },
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            targets: { kind: 'context', contextKey: 'tar' },
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: typhoeusChr_0034_typhoea_combo_skillfloatingActionGraphCallback1,
+            },
+          ],
+        },
+        next: null,
+      },
+      ifElse_27: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'launchProjectile_26' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'launchProjectile_25' },
           whenFalse: { $sequence: 'launchProjectile_26' },
+        },
+        next: null,
+      },
+      launchProjectile_33: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_combo_2',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            targets: { kind: 'context', contextKey: 'tar' },
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: typhoeusChr_0034_typhoea_combo_skillfloatingActionGraphCallback1,
+            },
+          ],
+        },
+        next: null,
+      },
+      ifElse_35: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'launchProjectile_33' },
+          whenFalse: { $sequence: 'launchProjectile_26' },
+        },
+        next: null,
+      },
+      modifyActionValue_51: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'is_have_target',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          },
         },
         next: null,
       },
@@ -9239,121 +11617,70 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 11,
+              callbacks: [{ event: 'hit', triggerFrames: [11], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_combo_1',
+            faction: 'good',
             recycleDelaySeconds: 0.433333337306976,
-            hit: { onReach: true, finishOnHit: false },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
-              skill: {
-                skillId: 'chr_0034_typhoea_combo_01_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 13,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  atk_scale: 0,
-                  atk_scale_persistent: 0,
-                  persistent_naturalburst_increase: 0,
-                  persistent_slow: 0,
-                  poise: 10,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_4' } },
-                  { startFrame: 0, endFrame: 2, sequence: { $sequence: 'spawnAbilityEntity_5' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      dealDamage_1: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            damageType: 'nature',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['comboSkill'],
-                            features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                          },
-                        },
-                        next: null,
-                      },
-                      calculateActionValue_2: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'atk_scale',
-                            operation: 'divide',
-                            left: { kind: 'valueNode', nodeId: 'data_1' },
-                            right: { kind: 'constant', value: 7 },
-                          },
-                        },
-                        next: 'dealDamage_1',
-                      },
-                      applyBuff_3: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [{ buffId: 'buff_chr_0034_typhoea_combo_skill_arrow_hittimes' }],
-                            targets: { kind: 'fixed', target: 'enemy' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: 'calculateActionValue_2',
-                      },
-                      checkCondition_4: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        },
-                        next: 'applyBuff_3',
-                      },
-                      spawnAbilityEntity_5: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
-                            abilityEntityId: 'abilityentity_chr_0034_typhoea_combo_presistdamage',
-                            childSkillId: 'chr_0034_typhoea_combo_persistentdamage',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                          },
-                        },
-                        next: null,
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                      data_3: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
-                          containsHittableTarget: false,
-                          excludeDeadEntity: false,
-                          operator: 'greaterOrEqual',
-                          value: 1,
-                        },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
+              skill: typhoeusChr_0034_typhoea_combo_skillfloatingActionGraphCallback2,
             },
           ],
+        },
+        next: 'modifyActionValue_51',
+      },
+      modifyActionValue_49: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'is_have_target',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: null,
+      },
+      launchProjectile_50: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_combo_1',
+            onlyHitTargets: { kind: 'context', key: 'tar' },
+            faction: 'good',
+            recycleDelaySeconds: 0.433333337306976,
+            targets: { kind: 'context', contextKey: 'tar' },
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: typhoeusChr_0034_typhoea_combo_skillfloatingActionGraphCallback2,
+            },
+          ],
+        },
+        next: 'modifyActionValue_49',
+      },
+      ifElse_53: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          whenTrue: { $sequence: 'launchProjectile_50' },
+          whenFalse: { $sequence: 'launchProjectile_52' },
         },
         next: null,
       },
@@ -9362,7 +11689,7 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_6' },
+            amount: { kind: 'valueNode', nodeId: 'data_9' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -9400,23 +11727,36 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         },
         next: null,
       },
-      readBuffStackCount_58: {
+      overrideBasicAttackMapping_58: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      readBuffStackCount_59: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             outputKey: 'arrow_num',
             query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
           },
         },
-        next: null,
+        next: 'overrideBasicAttackMapping_58',
       },
-      castSkillDuringAction_59: {
+      castSkillDuringAction_62: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'owner' },
             skillId: 'chr_0034_typhoea_floating_attack1',
-            target: 'enemy',
+            target: {
+              kind: 'fixedPoint',
+              owner: { kind: 'owner' },
+              directionTarget: { kind: 'source' },
+              center: { kind: 'source' },
+            },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: false,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -9424,38 +11764,64 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         },
         next: null,
       },
-      ifElse_61: {
+      castSkillDuringAction_61: {
         action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'castSkillDuringAction_59' },
-          whenFalse: { $sequence: null },
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack1',
+            target: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: false,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
         },
         next: null,
       },
-      ifElse_62: {
+      ifElse_65: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'ifElse_61' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
+          whenTrue: { $sequence: 'castSkillDuringAction_61' },
+          whenFalse: { $sequence: 'castSkillDuringAction_62' },
         },
         next: null,
       },
-      readBuffStackCount_63: {
+      reachSkillOperableBoundary_64: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack1',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      ifElse_66: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'reachSkillOperableBoundary_64' },
+          whenFalse: { $sequence: 'ifElse_65' },
+        },
+        next: null,
+      },
+      readBuffStackCount_67: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             outputKey: 'arrow_num',
             query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
           },
         },
-        next: 'ifElse_62',
+        next: 'ifElse_66',
       },
-      finishBuffsById_64: {
+      finishBuffsById_68: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -9467,7 +11833,7 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         },
         next: null,
       },
-      applyBuff_65: {
+      applyBuff_69: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -9479,22 +11845,12 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         },
         next: null,
       },
-      checkCondition_66: {
+      checkCondition_70: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
         },
-        next: 'applyBuff_65',
-      },
-      ifElse_opt2: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'launchProjectile_52' },
-          whenFalse: { $sequence: 'launchProjectile_52' },
-        },
-        next: null,
+        next: 'applyBuff_69',
       },
     },
     dataNodes: {
@@ -9503,7 +11859,7 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'mainCharacter' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'maintar' },
           distance: 15,
           lessThan: true,
           includeTargetRadius: false,
@@ -9530,19 +11886,55 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         expression: { kind: 'blackboard', key: 'EntityBB_floating_attack_index' },
       },
       data_5: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'is_have_target', fallback: 0 },
       },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_5' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
       data_7: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_5' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
       },
       data_8: {
         type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_10: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'mainTarget', owner: { kind: 'owner' } },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_11: {
+        type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
-      data_9: {
+      data_12: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -9553,46 +11945,50 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
         },
       },
-      data_10: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_combo_skillfloating: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph,
   key: 'chr_0034_typhoea_combo_skillfloating',
   element: 'nature',
   blackboard: {
     arrow_num: 0,
+    arrow_rotate_1: 0,
+    arrow_rotate_2: 0,
+    arrow_speed_basic: 15,
+    atb: 0,
     atk_scale: [0.89, 0.98, 1.07, 1.16, 1.25, 1.34, 1.42, 1.51, 1.6, 1.71, 1.85, 2],
     atk_scale_persistent: [0.45, 0.49, 0.54, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.93, 1],
+    bullet_energy: 0,
+    cam_angle: 0,
+    cam_duration: 0,
+    count: 3,
     duration: 5,
+    energy_to_bullet_ratio: 2,
+    input_angle: 0,
+    is_have_target: 0,
+    level: 1,
+    owner_mainchar_alpha: 0,
+    owner_mainchar_distance: 0,
     persistent_naturalburst_increase: [
       0.06, 0.06, 0.06, 0.07, 0.07, 0.07, 0.08, 0.08, 0.08, 0.09, 0.09, 0.1,
     ],
     persistent_slow: 0.6,
+    persistent_time: 6,
     poise: 10,
+    select_radius: 4,
+    talent2: 0,
     usp: 10,
+    persistent_slow_show: 0.4,
   },
   timelineBlockFrames: 57,
   naturalDurationFrames: 70,
   exclusiveFrame: 999,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 40,
-        endFrame: 70,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0034_typhoea_floating_attack1',
-      },
-    ],
-    hasConditionalActions: true,
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 180, endFrame: 181, sequence: { $sequence: 'interruptCurrentSkill_1' } },
@@ -9601,27 +11997,27 @@ export const typhoeusChr_0034_typhoea_combo_skillfloating: SkillDefinition = {
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'adjustSkillCooldown_15' } },
     { startFrame: 67, endFrame: 70, sequence: { $sequence: 'switch_22' } },
     { startFrame: 0, endFrame: 22, sequence: { $sequence: 'startTimeDilation_23' } },
-    { startFrame: 39, endFrame: 42, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 43, endFrame: 46, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 44, endFrame: 47, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 47, endFrame: 50, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 49, endFrame: 52, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 35, endFrame: 54, sequence: { $sequence: 'ifElse_opt2' } },
+    { startFrame: 39, endFrame: 42, sequence: { $sequence: 'ifElse_27' } },
+    { startFrame: 43, endFrame: 46, sequence: { $sequence: 'ifElse_27' } },
+    { startFrame: 44, endFrame: 47, sequence: { $sequence: 'ifElse_35' } },
+    { startFrame: 45, endFrame: 48, sequence: { $sequence: 'ifElse_27' } },
+    { startFrame: 47, endFrame: 50, sequence: { $sequence: 'ifElse_27' } },
+    { startFrame: 49, endFrame: 52, sequence: { $sequence: 'ifElse_27' } },
+    { startFrame: 35, endFrame: 54, sequence: { $sequence: 'ifElse_53' } },
     { startFrame: 35, endFrame: 38, sequence: { $sequence: 'checkCondition_55' } },
     { startFrame: 35, endFrame: 38, sequence: { $sequence: 'applyBuff_56' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'modifyActionValue_57' } },
-    { startFrame: 40, endFrame: 70, sequence: { $sequence: 'readBuffStackCount_58' } },
-    { startFrame: 57, endFrame: 74, sequence: { $sequence: 'readBuffStackCount_63' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_64' } },
-    { startFrame: 57, endFrame: 60, sequence: { $sequence: 'checkCondition_66' } },
+    { startFrame: 40, endFrame: 70, sequence: { $sequence: 'readBuffStackCount_59' } },
+    { startFrame: 57, endFrame: 74, sequence: { $sequence: 'readBuffStackCount_67' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_68' } },
+    { startFrame: 57, endFrame: 60, sequence: { $sequence: 'checkCondition_70' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [630, 630, 630, 630, 630, 630, 630, 630, 630, 600, 600, 570],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph,
 };
 
 export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
@@ -9778,7 +12174,7 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover'] },
             desiredKey: 'truly_exit_fight',
             outputKey: 'truly_exit_fight',
@@ -9825,6 +12221,7 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
             bornAt: { kind: 'context', key: 'pos' },
             abilityEntityId: 'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain',
             childSkillId: 'chr_0034_typhoea_ultimate_skill_arrowrain',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
@@ -9834,185 +12231,415 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
       createSpatialPointTargets_22: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: 'spawnAbilityEntity_21',
       },
-      castSkillDuringAction_41: {
+      createSpatialPointTargets_20: {
         action: {
-          kind: 'castSkillDuringAction',
+          kind: 'createSpatialPointTargets',
           parameters: {
-            skillId: 'chr_0034_typhoea_normal_skill_floating_end',
-            target: 'enemy',
-            skipApplyCost: true,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
+            saveToContextKey: 'pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'inputTarget' },
+          },
+        },
+        next: 'spawnAbilityEntity_21',
+      },
+      ifElse_23: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_20' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_22' },
+        },
+        next: null,
+      },
+      overrideBasicAttackMapping_29: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: {
+            skillIds: ['chr_0034_typhoea_normal_skill_floating_end'],
+            priority: 'skill',
           },
         },
         next: null,
       },
-      castSkillDuringAction_40: {
+      overrideBasicAttackMapping_28: {
         action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0034_typhoea_floating_attack5',
-            target: 'enemy',
-            skipApplyCost: true,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack5'], priority: 'skill' },
         },
         next: null,
       },
-      castSkillDuringAction_39: {
+      overrideBasicAttackMapping_27: {
         action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0034_typhoea_floating_attack4',
-            target: 'enemy',
-            skipApplyCost: true,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack4'], priority: 'skill' },
         },
         next: null,
       },
-      castSkillDuringAction_38: {
+      overrideBasicAttackMapping_26: {
         action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0034_typhoea_floating_attack3',
-            target: 'enemy',
-            skipApplyCost: true,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack3'], priority: 'skill' },
         },
         next: null,
       },
-      castSkillDuringAction_37: {
+      overrideBasicAttackMapping_25: {
         action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0034_typhoea_floating_attack2',
-            target: 'enemy',
-            skipApplyCost: true,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack2'], priority: 'skill' },
         },
         next: null,
       },
-      castSkillDuringAction_36: {
+      overrideBasicAttackMapping_24: {
         action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0034_typhoea_floating_attack1',
-            target: 'enemy',
-            skipApplyCost: true,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0034_typhoea_floating_attack1'], priority: 'skill' },
         },
         next: null,
       },
-      switch_45: {
+      switch_31: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_6' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_7' }, alwaysNext: true },
           options: [
             {
               value: { kind: 'constant', value: 0 },
-              sequence: { $sequence: 'castSkillDuringAction_36' },
+              sequence: { $sequence: 'overrideBasicAttackMapping_24' },
             },
             {
               value: { kind: 'constant', value: 1 },
-              sequence: { $sequence: 'castSkillDuringAction_37' },
+              sequence: { $sequence: 'overrideBasicAttackMapping_25' },
             },
             {
               value: { kind: 'constant', value: 2 },
-              sequence: { $sequence: 'castSkillDuringAction_38' },
+              sequence: { $sequence: 'overrideBasicAttackMapping_26' },
             },
             {
               value: { kind: 'constant', value: 3 },
-              sequence: { $sequence: 'castSkillDuringAction_39' },
+              sequence: { $sequence: 'overrideBasicAttackMapping_27' },
             },
             {
               value: { kind: 'constant', value: 4 },
-              sequence: { $sequence: 'castSkillDuringAction_40' },
+              sequence: { $sequence: 'overrideBasicAttackMapping_28' },
             },
             {
               value: { kind: 'constant', value: 5 },
-              sequence: { $sequence: 'castSkillDuringAction_41' },
+              sequence: { $sequence: 'overrideBasicAttackMapping_29' },
             },
           ],
         },
         next: null,
       },
-      castSkillDuringAction_34: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
-            target: 'enemy',
-            skipApplyCost: true,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
-        },
-        next: null,
-      },
-      switch_43: {
-        action: {
-          kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_6' }, alwaysNext: true },
-          options: [
-            {
-              value: { kind: 'constant', value: 0 },
-              sequence: { $sequence: 'castSkillDuringAction_34' },
-            },
-            {
-              value: { kind: 'constant', value: 1 },
-              sequence: { $sequence: 'castSkillDuringAction_34' },
-            },
-            {
-              value: { kind: 'constant', value: 2 },
-              sequence: { $sequence: 'castSkillDuringAction_34' },
-            },
-            {
-              value: { kind: 'constant', value: 3 },
-              sequence: { $sequence: 'castSkillDuringAction_34' },
-            },
-            {
-              value: { kind: 'constant', value: 4 },
-              sequence: { $sequence: 'castSkillDuringAction_34' },
-            },
-            {
-              value: { kind: 'constant', value: 5 },
-              sequence: { $sequence: 'castSkillDuringAction_41' },
-            },
-          ],
-        },
-        next: null,
-      },
-      checkCondition_44: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: 'switch_43',
-      },
-      ifElse_46: {
+      ifElse_32: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: 'checkCondition_44' },
-          whenFalse: { $sequence: 'switch_45' },
+          whenTrue: { $sequence: 'switch_31' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      applyBuff_47: {
+      reachSkillOperableBoundary_38: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0034_typhoea_normal_skill_floating_end'] },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_37: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack5',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_36: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack1',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_35: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack4',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_34: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack2',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_33: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0034_typhoea_floating_attack3',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      switch_40: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_7' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_33' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_34' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_35' },
+            },
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_36' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_37' },
+            },
+            {
+              value: { kind: 'constant', value: 5 },
+              sequence: { $sequence: 'reachSkillOperableBoundary_38' },
+            },
+          ],
+        },
+        next: null,
+      },
+      ifElse_41: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+          whenTrue: { $sequence: 'switch_40' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      castSkillDuringAction_53: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_normal_skill_floating_end',
+            target: { kind: 'inputTarget' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: false,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      castSkillDuringAction_52: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack5',
+            target: { kind: 'inputTarget' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: false,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      castSkillDuringAction_51: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack4',
+            target: { kind: 'inputTarget' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: false,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      castSkillDuringAction_50: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack3',
+            target: { kind: 'inputTarget' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: false,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      castSkillDuringAction_49: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack2',
+            target: { kind: 'inputTarget' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: false,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      castSkillDuringAction_48: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_floating_attack1',
+            target: { kind: 'inputTarget' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: false,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      switch_57: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_7' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'castSkillDuringAction_48' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'castSkillDuringAction_49' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'castSkillDuringAction_50' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'castSkillDuringAction_51' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'castSkillDuringAction_52' },
+            },
+            {
+              value: { kind: 'constant', value: 5 },
+              sequence: { $sequence: 'castSkillDuringAction_53' },
+            },
+          ],
+        },
+        next: null,
+      },
+      castSkillDuringAction_46: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            caster: { kind: 'owner' },
+            skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+            target: { kind: 'inputTarget' },
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: false,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      switch_55: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_7' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'castSkillDuringAction_46' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'castSkillDuringAction_46' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'castSkillDuringAction_46' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'castSkillDuringAction_46' },
+            },
+            {
+              value: { kind: 'constant', value: 4 },
+              sequence: { $sequence: 'castSkillDuringAction_46' },
+            },
+            {
+              value: { kind: 'constant', value: 5 },
+              sequence: { $sequence: 'castSkillDuringAction_53' },
+            },
+          ],
+        },
+        next: null,
+      },
+      checkCondition_56: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+        },
+        next: 'switch_55',
+      },
+      ifElse_58: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'checkCondition_56' },
+          whenFalse: { $sequence: 'switch_57' },
+        },
+        next: null,
+      },
+      applyBuff_59: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -10025,7 +12652,14 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
         },
         next: null,
       },
-      finishBuffsById_48: {
+      reachSkillOperableBoundary_60: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0004_pelica_normal_skill', 'chr_0004_pelica_combo_skill'] },
+        },
+        next: null,
+      },
+      finishBuffsById_61: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -10037,7 +12671,7 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
         },
         next: null,
       },
-      applyBuff_49: {
+      applyBuff_62: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -10049,22 +12683,12 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
         },
         next: null,
       },
-      checkCondition_50: {
+      checkCondition_63: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
         },
-        next: 'applyBuff_49',
-      },
-      ifElse_opt1: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'createSpatialPointTargets_22' },
-          whenFalse: { $sequence: 'createSpatialPointTargets_22' },
-        },
-        next: null,
+        next: 'applyBuff_62',
       },
     },
     dataNodes: {
@@ -10098,10 +12722,32 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
         expression: { kind: 'checkActionResult', action: { $sequence: 'readBuffBlackboard_10' } },
       },
       data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'inputTarget' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_7: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_floating_attack_index' },
       },
-      data_7: {
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+        },
+      },
+      data_9: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -10112,11 +12758,22 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_floatingmode'],
         },
       },
-      data_8: {
+      data_10: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+        },
+      },
+      data_11: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
-      data_9: {
+      data_12: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -10127,16 +12784,13 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
           buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
         },
       },
-      data_10: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_ultimate_skillfloating: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph,
   key: 'chr_0034_typhoea_ultimate_skillfloating',
   element: 'nature',
   blackboard: {
@@ -10157,16 +12811,6 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloating: SkillDefinition = 
   naturalDurationFrames: 92,
   exclusiveFrame: 105,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 100,
-        endFrame: 158,
-        skillIds: ['chr_0004_pelica_normal_skill', 'chr_0004_pelica_combo_skill'],
-      },
-    ],
-    hasConditionalActions: true,
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 92, sequence: { $sequence: 'ifElse_4' } },
@@ -10176,11 +12820,14 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloating: SkillDefinition = 
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'modifyActionValue_8' } },
     { startFrame: 61, endFrame: 62, sequence: { $sequence: 'modifyActionValue_16' } },
     { startFrame: 62, endFrame: 63, sequence: { $sequence: 'modifyActionValue_17' } },
-    { startFrame: 61, endFrame: 62, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 89, endFrame: 92, sequence: { $sequence: 'ifElse_46' } },
-    { startFrame: 0, endFrame: 105, sequence: { $sequence: 'applyBuff_47' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_48' } },
-    { startFrame: 87, endFrame: 90, sequence: { $sequence: 'checkCondition_50' } },
+    { startFrame: 61, endFrame: 62, sequence: { $sequence: 'ifElse_23' } },
+    { startFrame: 47, endFrame: 92, sequence: { $sequence: 'ifElse_32' } },
+    { startFrame: 83, endFrame: 92, sequence: { $sequence: 'ifElse_41' } },
+    { startFrame: 89, endFrame: 92, sequence: { $sequence: 'ifElse_58' } },
+    { startFrame: 0, endFrame: 105, sequence: { $sequence: 'applyBuff_59' } },
+    { startFrame: 100, endFrame: 158, sequence: { $sequence: 'reachSkillOperableBoundary_60' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_61' } },
+    { startFrame: 87, endFrame: 90, sequence: { $sequence: 'checkCondition_63' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -10188,7 +12835,6 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloating: SkillDefinition = 
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph,
 };
 
 export const typhoeusCommon_character_perfect_dodgeActionGraph = {
@@ -10211,34 +12857,166 @@ export const typhoeusCommon_character_perfect_dodge: SkillDefinition = {
   nativeSkillType: 'dodge',
 };
 
+const typhoeusChr_0034_typhoea_plunging_attack_startActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_2: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [{ buffId: 'buff_chr_0034_typhoea_attack_plunging_onground' }],
+              targets: { kind: 'source' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: null,
+        },
+        ifElse_3: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_1' },
+            whenTrue: { $sequence: 'applyBuff_2' },
+            whenFalse: { $sequence: null },
+          },
+          next: null,
+        },
+        spawnAbilityEntity_4: {
+          action: {
+            kind: 'spawnAbilityEntity',
+            parameters: {
+              bornAt: { kind: 'inputTarget' },
+              abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow_onground',
+              source: { kind: 'source' },
+              inheritActionBlackboard: false,
+              inheritSourceSkillCastInfo: false,
+              dieWhenSourceDies: false,
+            },
+          },
+          next: 'ifElse_3',
+        },
+      },
+      dataNodes: {
+        data_1: {
+          type: 'boolean',
+          expression: {
+            kind: 'buffIdStackCompare',
+            target: { kind: 'source' },
+            compareZeroWhenTargetMissing: true,
+            operator: 'equal',
+            value: { kind: 'constant', value: 0 },
+            buffIds: ['buff_chr_0034_typhoea_attack_plunging_onground'],
+          },
+        },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0034_typhoea_plunging_attack_start_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 5,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {},
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'spawnAbilityEntity_4' } },
+  ],
+} as const;
+
 export const typhoeusChr_0034_typhoea_plunging_attack_startActionGraph = {
   main: {
     nodes: {
+      createSpatialPointTargets_1: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'pos4',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'hitPos' },
+          },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_2: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'pos3',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'hitPos' },
+          },
+        },
+        next: 'createSpatialPointTargets_1',
+      },
+      createSpatialPointTargets_3: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'pos2',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'hitPos' },
+          },
+        },
+        next: 'createSpatialPointTargets_2',
+      },
+      createSpatialPointTargets_4: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'pos1',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'hitPos' },
+          },
+        },
+        next: 'createSpatialPointTargets_3',
+      },
       createSpatialPointTargets_5: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos4', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos4',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+          },
         },
         next: null,
       },
       createSpatialPointTargets_6: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos3', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos3',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+          },
         },
         next: 'createSpatialPointTargets_5',
       },
       createSpatialPointTargets_7: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos2', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos2',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+          },
         },
         next: 'createSpatialPointTargets_6',
       },
       createSpatialPointTargets_8: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos1', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos1',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+          },
         },
         next: 'createSpatialPointTargets_7',
       },
@@ -10251,7 +13029,7 @@ export const typhoeusChr_0034_typhoea_plunging_attack_startActionGraph = {
             maxDistance: 150,
             saveToContextKey: 'hitPos',
           },
-          whenHit: { $sequence: 'createSpatialPointTargets_8' },
+          whenHit: { $sequence: 'createSpatialPointTargets_4' },
           whenMiss: { $sequence: 'createSpatialPointTargets_8' },
         },
         next: null,
@@ -10272,84 +13050,81 @@ export const typhoeusChr_0034_typhoea_plunging_attack_startActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'reach', triggerFrames: [2] }] },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_pluging_01',
+            faction: 'good',
             recycleDelaySeconds: 0.16666667163372,
+            targets: { kind: 'context', contextKey: 'pos1' },
+            entityInitialValues: {},
           },
           callbacks: [
             {
               event: 'reach',
-              skill: {
-                skillId: 'chr_0034_typhoea_plunging_attack_start_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 5,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {},
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'spawnAbilityEntity_4' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      applyBuff_2: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [{ buffId: 'buff_chr_0034_typhoea_attack_plunging_onground' }],
-                            targets: { kind: 'source' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      ifElse_3: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-                          whenTrue: { $sequence: 'applyBuff_2' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      spawnAbilityEntity_4: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
-                            abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow_onground',
-                            inheritActionBlackboard: false,
-                            inheritSourceSkillCastInfo: false,
-                            dieWhenSourceDies: false,
-                          },
-                        },
-                        next: 'ifElse_3',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: { kind: 'source' },
-                          compareZeroWhenTargetMissing: true,
-                          operator: 'equal',
-                          value: { kind: 'constant', value: 0 },
-                          buffIds: ['buff_chr_0034_typhoea_attack_plunging_onground'],
-                        },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
+              skill: typhoeusChr_0034_typhoea_plunging_attack_startActionGraphCallback1,
+            },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_12: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: { endFrame: 1, callbacks: [{ event: 'reach', triggerFrames: [1] }] },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_pluging_01',
+            faction: 'good',
+            recycleDelaySeconds: 0.16666667163372,
+            targets: { kind: 'context', contextKey: 'pos3' },
+            entityInitialValues: {},
+          },
+          callbacks: [
+            {
+              event: 'reach',
+              skill: typhoeusChr_0034_typhoea_plunging_attack_startActionGraphCallback1,
+            },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_13: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: { endFrame: 2, callbacks: [{ event: 'reach', triggerFrames: [2] }] },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_pluging_01',
+            faction: 'good',
+            recycleDelaySeconds: 0.16666667163372,
+            targets: { kind: 'context', contextKey: 'pos4' },
+            entityInitialValues: {},
+          },
+          callbacks: [
+            {
+              event: 'reach',
+              skill: typhoeusChr_0034_typhoea_plunging_attack_startActionGraphCallback1,
+            },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_14: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: { endFrame: 1, callbacks: [{ event: 'reach', triggerFrames: [1] }] },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0034_typhoea_archery_attack_pluging_01',
+            faction: 'good',
+            recycleDelaySeconds: 0.16666667163372,
+            targets: { kind: 'context', contextKey: 'pos2' },
+            entityInitialValues: {},
+          },
+          callbacks: [
+            {
+              event: 'reach',
+              skill: typhoeusChr_0034_typhoea_plunging_attack_startActionGraphCallback1,
             },
           ],
         },
@@ -10361,6 +13136,7 @@ export const typhoeusChr_0034_typhoea_plunging_attack_startActionGraph = {
           parameters: {
             bornAt: { kind: 'context', key: 'pos' },
             abilityEntityId: 'abilityentity_chr_0034_typhoea_rune_1_onground',
+            source: { kind: 'source' },
             inheritActionBlackboard: false,
             inheritSourceSkillCastInfo: false,
             dieWhenSourceDies: false,
@@ -10371,7 +13147,11 @@ export const typhoeusChr_0034_typhoea_plunging_attack_startActionGraph = {
       createSpatialPointTargets_16: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'hitPos' },
+          },
         },
         next: 'spawnAbilityEntity_15',
       },
@@ -10427,6 +13207,7 @@ export const typhoeusChr_0034_typhoea_plunging_attack_startActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const typhoeusChr_0034_typhoea_plunging_attack_start: SkillDefinition = {
+  actionGraph: typhoeusChr_0034_typhoea_plunging_attack_startActionGraph,
   key: 'chr_0034_typhoea_plunging_attack_start',
   element: 'physical',
   blackboard: { atk_scale: 0.25, side_length: 3, target_find: 0 },
@@ -10438,9 +13219,9 @@ export const typhoeusChr_0034_typhoea_plunging_attack_start: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'finishBuffsById_10' } },
     { startFrame: 1, endFrame: 2, sequence: { $sequence: 'launchProjectile_11' } },
-    { startFrame: 3, endFrame: 4, sequence: { $sequence: 'launchProjectile_11' } },
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'launchProjectile_11' } },
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'launchProjectile_11' } },
+    { startFrame: 3, endFrame: 4, sequence: { $sequence: 'launchProjectile_12' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'launchProjectile_13' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'launchProjectile_14' } },
     { startFrame: 1, endFrame: 1500, sequence: { $sequence: 'listenForCombatEvents_18' } },
     { startFrame: 1, endFrame: 1500, sequence: { $sequence: 'applyBuff_19' } },
   ],
@@ -10448,7 +13229,6 @@ export const typhoeusChr_0034_typhoea_plunging_attack_start: SkillDefinition = {
   skillType: 'plungingAttack',
   nativeSkillType: 'attack',
   levelSource: 'basicAttack',
-  actionGraph: typhoeusChr_0034_typhoea_plunging_attack_startActionGraph,
 };
 
 const typhoeusPassive1ActionGraph = {
@@ -10741,9 +13521,11 @@ const typhoeusBuff5ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'rune',
-            abilityEntityIds: [
-              'abilityentity_chr_0034_typhoea_arrow_onground',
-              'abilityentity_chr_0034_typhoea_rune_1_onground',
+            tagFilters: [
+              {
+                queryType: 'hasAny',
+                tags: ['Skill/Character/chr_0034_typhoea/plunging_attack_rune'],
+              },
             ],
             owner: { kind: 'source' },
           },
@@ -10830,7 +13612,7 @@ const typhoeusBuff7ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 const typhoeusBuff7: SkillBuffDefinition = {
-  stackingType: 'unique',
+  stackingType: 'highPriority',
   priority: 0,
   maxStackCount: 1,
   applyTags: [],
@@ -11000,7 +13782,7 @@ const typhoeusBuff11ActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'bullet_energy',
             query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_energy'] },
           },
@@ -11207,7 +13989,9 @@ const typhoeusBuff13ActionGraph = {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'tar',
-            abilityEntityIds: ['abilityentity_chr_0034_typhoea_ultimateskill_arrowrain'],
+            tagFilters: [
+              { queryType: 'hasAny', tags: ['Skill/Character/chr_0034_typhoea/ArrowRain_Main'] },
+            ],
             owner: { kind: 'source' },
           },
         },
@@ -11290,7 +14074,7 @@ const typhoeusBuff13ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'eventDamageFeaturesMatch', match: 'hasAll', features: ['remainArea'] },
+        expression: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['remainArea'] },
       },
       data_2: {
         type: 'boolean',
@@ -11394,6 +14178,7 @@ const typhoeusBuff13: SkillBuffDefinition = {
     { event: 'skillInterrupted', priority: 0, sequence: { $sequence: 'invertNextResult_22' } },
     { event: 'takeDamage', priority: 0, sequence: { $sequence: 'checkCondition_26' } },
   ],
+  actionGraph: typhoeusBuff13ActionGraph,
   skillSlotReplacements: [
     {
       skillSlotKey: 'comboSkill',
@@ -11402,34 +14187,9 @@ const typhoeusBuff13: SkillBuffDefinition = {
       inheritOriginSkillCooldownProgress: false,
     },
   ],
-  actionGraph: typhoeusBuff13ActionGraph,
 };
 
 const typhoeusBuff14ActionGraph = {
-  main: { nodes: {} },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const typhoeusBuff14: SkillBuffDefinition = {
-  stackingType: 'unique',
-  priority: 0,
-  maxStackCount: 1,
-  durationSeconds: 1,
-  applyTags: [
-    'Status/Unjumpable',
-    'Status/DisableDash',
-    'Status/DisableBreakingAttack',
-    'Status/CantSwitchOutCenter',
-    'Status/Ability/Skill/CantSwitchTocCenter',
-    'Status/DisableNormalSkill',
-  ],
-  extendTags: [],
-  blackboard: {},
-  attributeModifiers: [],
-  actionGraph: typhoeusBuff14ActionGraph,
-};
-
-const typhoeusBuff15ActionGraph = {
   main: {
     nodes: {
       changeResource_1: {
@@ -11453,7 +14213,7 @@ const typhoeusBuff15ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff15: SkillBuffDefinition = {
+const typhoeusBuff14: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 999,
@@ -11463,6 +14223,22 @@ const typhoeusBuff15: SkillBuffDefinition = {
   blackboard: { atb: 0, count: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'changeResource_1' }] },
+  actionGraph: typhoeusBuff14ActionGraph,
+};
+
+const typhoeusBuff15ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const typhoeusBuff15: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  applyTags: ['Skill/Character/chr_0034_typhoea/Locked'],
+  extendTags: [],
+  blackboard: {},
+  attributeModifiers: [],
   actionGraph: typhoeusBuff15ActionGraph,
 };
 
@@ -11719,7 +14495,35 @@ const typhoeusBuff22: SkillBuffDefinition = {
 };
 
 const typhoeusBuff23ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      startTyphoeaArchery_1: {
+        action: {
+          kind: 'startTyphoeaArchery',
+          parameters: {
+            targetCount: { kind: 'constant', value: 2 },
+            markBuffId: 'buff_chr_0034_typhoea_normal_skill_aimmedenemy',
+            priorityTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+            priorityTagQueryType: 'hasAny',
+          },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'startTyphoeaArchery_1',
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'inputTarget' } },
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -11731,6 +14535,7 @@ const typhoeusBuff23: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
+  lifecycleSequences: { enable: [{ $sequence: 'checkCondition_2' }] },
   actionGraph: typhoeusBuff23ActionGraph,
 };
 
@@ -11972,7 +14777,7 @@ const typhoeusBuff27ActionGraph = {
         action: {
           kind: 'aura',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [], scope: 'global' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: false,
             buffs: [{ buffId: 'buff_chr_0034_typhoea_passitive_enemy_listennaturalspellbrust' }],
@@ -12011,7 +14816,7 @@ const typhoeusBuff27ActionGraph = {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             outputKey: 'arrow_num',
             query: {
               kind: 'id',
@@ -12296,7 +15101,7 @@ const typhoeusBuff33ActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_potential_decrease_sheildcd'] },
             desiredKey: 'decrease_cd',
             outputKey: 'param3',
@@ -12546,9 +15351,10 @@ const typhoeusBuff37ActionGraph = {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
-            bornAt: { kind: 'fixed', target: 'enemy' },
+            bornAt: { kind: 'inputTarget' },
             abilityEntityId: 'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub',
             childSkillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub2',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
@@ -12559,9 +15365,10 @@ const typhoeusBuff37ActionGraph = {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
-            bornAt: { kind: 'fixed', target: 'enemy' },
+            bornAt: { kind: 'inputTarget' },
             abilityEntityId: 'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub',
             childSkillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub1',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
@@ -13200,8 +16007,8 @@ export const typhoeus: OperatorDefinition = {
     buff_chr_0034_typhoea_common_func_arrowreload: typhoeusBuff11,
     buff_chr_0034_typhoea_floatingattack_damagetaken: typhoeusBuff12,
     buff_chr_0034_typhoea_floatingmode: typhoeusBuff13,
-    buff_chr_0034_typhoea_floatingmode_blowoff_ccs: typhoeusBuff14,
-    buff_chr_0034_typhoea_normal_attack5_atb_recovered: typhoeusBuff15,
+    buff_chr_0034_typhoea_normal_attack5_atb_recovered: typhoeusBuff14,
+    buff_chr_0034_typhoea_normal_skill_aimmedenemy: typhoeusBuff15,
     buff_chr_0034_typhoea_normal_skill_aimmedenemy_all: typhoeusBuff16,
     buff_chr_0034_typhoea_normal_skill_arrow_energy: typhoeusBuff17,
     buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_1: typhoeusBuff18,
@@ -13253,25 +16060,6 @@ export const typhoeus: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 10 },
       maxStackingCount: 1,
       childSkill: {
-        skillId: 'chr_0034_typhoea_combo_persistentdamage',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 180,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: {
-          atk_scale_persistent: 0,
-          persistent_naturalburst_increase: 0,
-          persistent_slow: 0,
-        },
-        scheduledSequences: [
-          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'calculateActionValue_1' } },
-          { startFrame: 0, endFrame: 180, sequence: { $sequence: 'repeatEachTick_4' } },
-          { startFrame: 0, endFrame: 180, sequence: { $sequence: 'aura_5' } },
-        ],
         actionGraph: {
           main: {
             nodes: {
@@ -13287,10 +16075,31 @@ export const typhoeus: OperatorDefinition = {
                 },
                 next: null,
               },
+              findTargets_2: {
+                action: {
+                  kind: 'findTargets',
+                  parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
+                    saveToContextKey: 'tar',
+                    continuousIntervalSeconds: 0.0333333351,
+                  },
+                },
+                next: null,
+              },
               dealDamage_3: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'inputTarget' },
                     damageType: 'nature',
                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                     tags: ['comboSkill'],
@@ -13305,7 +16114,7 @@ export const typhoeus: OperatorDefinition = {
                   parameters: {
                     nativeChanneling: {
                       catchUpMissedTicks: false,
-                      target: { kind: 'fixed', target: 'enemy' },
+                      target: { kind: 'context', key: 'tar' },
                       executeEachFrame: true,
                       triggerIntervalSeconds: 0.3333333,
                       maxCountPerTarget: 18,
@@ -13320,7 +16129,7 @@ export const typhoeus: OperatorDefinition = {
                 action: {
                   kind: 'aura',
                   parameters: {
-                    targets: { kind: 'fixed', target: 'enemy' },
+                    targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [] },
                     source: { kind: 'source' },
                     inheritSourceSkillCastInfo: true,
                     buffs: [
@@ -13357,6 +16166,26 @@ export const typhoeus: OperatorDefinition = {
           },
           macros: {},
         },
+        skillId: 'chr_0034_typhoea_combo_persistentdamage',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 180,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {
+          atk_scale_persistent: 0,
+          persistent_naturalburst_increase: 0,
+          persistent_slow: 0,
+        },
+        scheduledSequences: [
+          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'calculateActionValue_1' } },
+          { startFrame: 0, endFrame: 180, sequence: { $sequence: 'findTargets_2' } },
+          { startFrame: 0, endFrame: 180, sequence: { $sequence: 'repeatEachTick_4' } },
+          { startFrame: 0, endFrame: 180, sequence: { $sequence: 'aura_5' } },
+        ],
       },
       presentation: {
         icon: 'endaxis:operators/typhoeus/combo_01',
@@ -13374,27 +16203,6 @@ export const typhoeus: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 10 },
       maxStackingCount: 1,
       childSkill: {
-        skillId: 'chr_0034_typhoea_ultimate_skill_arrowrain',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 600,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: {
-          atk_scale_center: 0.5,
-          atk_scale_main: 1,
-          atk_scale_outer: 0.1,
-          poise: 0,
-          potential_damge_up: 1,
-        },
-        scheduledSequences: [
-          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'calculateActionValue_5' } },
-          { startFrame: 1, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_8' } },
-          { startFrame: 0, endFrame: 600, sequence: { $sequence: 'applyBuff_9' } },
-        ],
         actionGraph: {
           main: {
             nodes: {
@@ -13438,10 +16246,11 @@ export const typhoeus: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'inputTarget' },
                     damageType: 'nature',
                     attackScale: { kind: 'valueNode', nodeId: 'data_4' },
-                    tags: ['ultimateSkill'],
-                    features: ['canBreakWeakness'],
+                    tags: ['ultimateSkill', 'canBreakWeakness'],
                     stagger: { kind: 'valueNode', nodeId: 'data_5' },
                   },
                   key: 'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain:chr_0034_typhoea_ultimate_skill_arrowrain:/childSkill/actionGraph/main/nodes/dealDamage_6/action',
@@ -13451,17 +16260,25 @@ export const typhoeus: OperatorDefinition = {
               forEachContextTarget_7: {
                 action: {
                   kind: 'forEachContextTarget',
-                  parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                  parameters: { targets: { kind: 'context', key: 'tar' } },
                   body: { $sequence: 'dealDamage_6' },
                 },
                 next: null,
               },
-              mergeContextTargets_8: {
+              findTargets_8: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'target', target: 'enemy' }],
                   },
                 },
                 next: 'forEachContextTarget_7',
@@ -13507,6 +16324,27 @@ export const typhoeus: OperatorDefinition = {
           },
           macros: {},
         },
+        skillId: 'chr_0034_typhoea_ultimate_skill_arrowrain',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 600,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {
+          atk_scale_center: 0.5,
+          atk_scale_main: 1,
+          atk_scale_outer: 0.1,
+          poise: 0,
+          potential_damge_up: 1,
+        },
+        scheduledSequences: [
+          { startFrame: 0, endFrame: 3, sequence: { $sequence: 'calculateActionValue_5' } },
+          { startFrame: 1, endFrame: 3, sequence: { $sequence: 'findTargets_8' } },
+          { startFrame: 0, endFrame: 600, sequence: { $sequence: 'applyBuff_9' } },
+        ],
       },
     },
     abilityentity_chr_0034_typhoea_arrow_onground: {
@@ -13536,24 +16374,28 @@ export const typhoeus: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0034_typhoea_ultimate_skill_arrowrain_sub1: {
-          skillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub1',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 15,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: { atk_scale_outer: 0.1, trigger_times: 0 },
-          scheduledSequences: [
-            { startFrame: 0, endFrame: 2, sequence: { $sequence: 'calculateActionValue_2' } },
-            { startFrame: 6, endFrame: 15, sequence: { $sequence: 'repeatEachTick_5' } },
-            { startFrame: 14, endFrame: 15, sequence: { $sequence: 'checkCondition_8' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
+                findTargets_1: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar1',
+                      continuousIntervalSeconds: 0.0333333351,
+                    },
+                  },
+                  next: null,
+                },
                 calculateActionValue_2: {
                   action: {
                     kind: 'calculateActionValue',
@@ -13570,6 +16412,8 @@ export const typhoeus: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'nature',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       tags: ['ultimateSkill'],
@@ -13584,7 +16428,7 @@ export const typhoeus: OperatorDefinition = {
                     parameters: {
                       nativeChanneling: {
                         catchUpMissedTicks: true,
-                        target: { kind: 'fixed', target: 'enemy' },
+                        target: { kind: 'context', key: 'tar1' },
                         executeEachFrame: true,
                         triggerIntervalSeconds: 0.033,
                         maxCountPerTarget: 3,
@@ -13607,7 +16451,12 @@ export const typhoeus: OperatorDefinition = {
                     kind: 'findOwnerSpawnedAbilityEntities',
                     parameters: {
                       saveToContextKey: 'tar',
-                      abilityEntityIds: ['abilityentity_chr_0034_typhoea_ultimateskill_arrowrain'],
+                      tagFilters: [
+                        {
+                          queryType: 'hasAny',
+                          tags: ['Skill/Character/chr_0034_typhoea/ArrowRain_Main'],
+                        },
+                      ],
                       owner: { kind: 'source' },
                     },
                   },
@@ -13643,34 +16492,60 @@ export const typhoeus: OperatorDefinition = {
             },
             macros: {},
           },
-        },
-        chr_0034_typhoea_ultimate_skill_arrowrain_sub2: {
-          skillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub2',
+          skillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub1',
           nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 50,
+          naturalDurationFrames: 15,
           castResource: {
             costFrame: 0,
             cooldownSeconds: 0,
             maxChargeTime: 1,
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
-          blackboard: { atk_scale_1: 0, atk_scale_2: 0, atk_scale_center: 0.5, trigger_times: 0 },
+          blackboard: { atk_scale_outer: 0.1, trigger_times: 0 },
           scheduledSequences: [
-            { startFrame: 30, endFrame: 33, sequence: { $sequence: 'mergeContextTargets_2' } },
-            { startFrame: 0, endFrame: 2, sequence: { $sequence: 'calculateActionValue_6' } },
-            { startFrame: 6, endFrame: 21, sequence: { $sequence: 'repeatEachTick_8' } },
-            { startFrame: 30, endFrame: 33, sequence: { $sequence: 'repeatEachTick_10' } },
-            { startFrame: 49, endFrame: 50, sequence: { $sequence: 'checkCondition_13' } },
+            { startFrame: 6, endFrame: 15, sequence: { $sequence: 'findTargets_1' } },
+            { startFrame: 0, endFrame: 2, sequence: { $sequence: 'calculateActionValue_2' } },
+            { startFrame: 6, endFrame: 15, sequence: { $sequence: 'repeatEachTick_5' } },
+            { startFrame: 14, endFrame: 15, sequence: { $sequence: 'checkCondition_8' } },
           ],
+        },
+        chr_0034_typhoea_ultimate_skill_arrowrain_sub2: {
           actionGraph: {
             main: {
               nodes: {
-                mergeContextTargets_2: {
+                findTargets_1: {
                   action: {
-                    kind: 'mergeContextTargets',
+                    kind: 'findTargets',
                     parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
+                      saveToContextKey: 'tar1',
+                      continuousIntervalSeconds: 0.0333333351,
+                    },
+                  },
+                  next: null,
+                },
+                findTargets_2: {
+                  action: {
+                    kind: 'findTargets',
+                    parameters: {
+                      owner: { kind: 'owner' },
+                      query: {
+                        kind: 'factionHitBox',
+                        factionTarget: 'anti',
+                        owner: { kind: 'owner' },
+                        checkAlive: true,
+                        containsUnmarkable: false,
+                        replacePartsWithMainBodies: false,
+                      },
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
                     },
                   },
                   next: null,
@@ -13703,10 +16578,11 @@ export const typhoeus: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'nature',
                       attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['ultimateSkill', 'canBreakWeakness'],
                     },
                     key: 'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub:chr_0034_typhoea_ultimate_skill_arrowrain_sub1|chr_0034_typhoea_ultimate_skill_arrowrain_sub2:/childSkills/chr_0034_typhoea_ultimate_skill_arrowrain_sub2/actionGraph/main/nodes/dealDamage_7/action',
                   },
@@ -13718,7 +16594,7 @@ export const typhoeus: OperatorDefinition = {
                     parameters: {
                       nativeChanneling: {
                         catchUpMissedTicks: true,
-                        target: { kind: 'fixed', target: 'enemy' },
+                        target: { kind: 'context', key: 'tar1' },
                         executeEachFrame: true,
                         triggerIntervalSeconds: 0.033,
                         maxCountPerTarget: 5,
@@ -13733,10 +16609,11 @@ export const typhoeus: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'nature',
                       attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
+                      tags: ['ultimateSkill', 'canBreakWeakness'],
                     },
                     key: 'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub:chr_0034_typhoea_ultimate_skill_arrowrain_sub1|chr_0034_typhoea_ultimate_skill_arrowrain_sub2:/childSkills/chr_0034_typhoea_ultimate_skill_arrowrain_sub2/actionGraph/main/nodes/dealDamage_9/action',
                   },
@@ -13748,7 +16625,7 @@ export const typhoeus: OperatorDefinition = {
                     parameters: {
                       nativeChanneling: {
                         catchUpMissedTicks: true,
-                        target: { kind: 'fixed', target: 'enemy' },
+                        target: { kind: 'context', key: 'tar' },
                         executeEachFrame: true,
                         triggerIntervalSeconds: 0.033,
                         maxCountPerTarget: 1,
@@ -13771,7 +16648,12 @@ export const typhoeus: OperatorDefinition = {
                     kind: 'findOwnerSpawnedAbilityEntities',
                     parameters: {
                       saveToContextKey: 'tar',
-                      abilityEntityIds: ['abilityentity_chr_0034_typhoea_ultimateskill_arrowrain'],
+                      tagFilters: [
+                        {
+                          queryType: 'hasAny',
+                          tags: ['Skill/Character/chr_0034_typhoea/ArrowRain_Main'],
+                        },
+                      ],
                       owner: { kind: 'source' },
                     },
                   },
@@ -13809,6 +16691,24 @@ export const typhoeus: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub2',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 50,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: { atk_scale_1: 0, atk_scale_2: 0, atk_scale_center: 0.5, trigger_times: 0 },
+          scheduledSequences: [
+            { startFrame: 6, endFrame: 21, sequence: { $sequence: 'findTargets_1' } },
+            { startFrame: 30, endFrame: 33, sequence: { $sequence: 'findTargets_2' } },
+            { startFrame: 0, endFrame: 2, sequence: { $sequence: 'calculateActionValue_6' } },
+            { startFrame: 6, endFrame: 21, sequence: { $sequence: 'repeatEachTick_8' } },
+            { startFrame: 30, endFrame: 33, sequence: { $sequence: 'repeatEachTick_10' } },
+            { startFrame: 49, endFrame: 50, sequence: { $sequence: 'checkCondition_13' } },
+          ],
         },
       },
     },

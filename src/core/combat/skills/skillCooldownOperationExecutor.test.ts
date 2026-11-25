@@ -34,6 +34,7 @@ it('按原生别名匹配共享账本，去重且不修改其他干员', () => {
       'absoluteFrames',
       20,
       record,
+      () => 'comboSkill',
     ),
   ).toBe(1);
   expect(cooldown.snapshot.remainingFrames).toBe(60);
@@ -50,6 +51,7 @@ it('按原生别名匹配共享账本，去重且不修改其他干员', () => {
       'baseDurationRatio',
       0.6,
       record,
+      () => 'comboSkill',
     ),
   ).toBe(1);
   // 原实现把有效 set 视为一次修改，即使剩余值相同也发布回执。
@@ -65,6 +67,7 @@ it('按原生别名匹配共享账本，去重且不修改其他干员', () => {
       'absoluteFrames',
       20,
       record,
+      () => 'comboSkill',
     ),
   ).toBe(0);
   expect(record).not.toHaveBeenCalled();
@@ -74,6 +77,44 @@ const delegate = {
   execute: vi.fn(() => true),
   evaluate: vi.fn(() => true),
 };
+
+it('按当前原生类型筛选，不把终结技分组中的收招技能当作终结技', () => {
+  const cooldown = new SkillCooldown(0);
+  const ledgers = new Map([
+    [
+      'a\u0000end',
+      {
+        program: { operatorId: 'a', skillId: 'end', skillType: 'ultimate' as const },
+        skillIds: new Set(['native-end']),
+        cooldown,
+      },
+    ],
+  ]);
+  const type = vi.fn((): 'normalSkill' | 'ultimateSkill' | 'attachSkill' => 'normalSkill');
+  const record = vi.fn();
+  const apply = () =>
+    adjustMatchingSkillCooldowns(
+      ledgers,
+      'a',
+      { kind: 'type', skillType: 'ultimate' },
+      'set',
+      'absoluteFrames',
+      450,
+      record,
+      type,
+    );
+  expect(apply()).toBe(0);
+  expect(cooldown.ready).toBe(true);
+  type.mockReturnValue('ultimateSkill');
+  expect(apply()).toBe(1);
+  expect(cooldown.snapshot.remainingFrames).toBe(450);
+  cooldown.setRemainingFrames(0);
+  type.mockReturnValue('attachSkill');
+  expect(apply()).toBe(0);
+  expect(cooldown.ready).toBe(true);
+  expect(record).toHaveBeenCalledTimes(1);
+  expect(type).toHaveBeenCalledWith('native-end');
+});
 
 function cooldownStep(
   operation: 'reduce' | 'set',
@@ -101,9 +142,9 @@ describe('SkillCooldownOperationExecutor', () => {
     const queryTargets = vi.fn(() => [{ kind: 'operator' as const, operatorId: 'ally' }]);
     const executor = new SkillCooldownOperationExecutor({
       queryTargets,
-      reduceByBaseDurationRatio: reduce,
+      reduceByPeriodRatio: reduce,
       reduceByAbsoluteFrames: reduceFrames,
-      setByBaseDurationRatio: setRatio,
+      setByPeriodRatio: setRatio,
       setByAbsoluteFrames: setFrames,
       delegate,
     });

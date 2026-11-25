@@ -41,7 +41,7 @@ export function hasUnmodeledIncomingAttackTrigger(
           if (condition.target.kind !== 'context' || condition.target.key !== 'trigger')
             return false;
           break;
-        case 'eventDamageFeaturesMatch':
+        case 'eventDamageTagsMatch':
           break;
         case 'targetObjectTypeMatch':
           if (

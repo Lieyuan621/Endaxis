@@ -1,3 +1,4 @@
+import type { GameplayTagQueryDefinition } from './gameplayTags.ts';
 /**
  * 定义技能、技能组、玩家操作路由和技能创建的能力实体。
  *
@@ -20,7 +21,7 @@ import type {
   SkillType,
 } from './primitives.ts';
 
-/** 生成期已从原生 born-tag 证据解析出的可执行能力实体查询。 */
+/** 能力实体查询；标签条件按运行时实例求值。 */
 export type AbilityEntityTargetQuery =
   /** 使用当前动作所属的能力实体。 */
   | {
@@ -30,8 +31,8 @@ export type AbilityEntityTargetQuery =
   | {
       /** 查找当前所有者此前生成且仍可访问的能力实体。 */
       readonly kind: 'ownerSpawned';
-      /** 只接受这些能力实体 ID；省略时不按 ID 筛选。 */
-      readonly abilityEntityIds?: readonly string[];
+      /** 按实例执行标签筛选，按声明顺序取交集。 */
+      tagFilters?: readonly GameplayTagQueryDefinition[];
     }
   /** 从动作环境中的指定键读取能力实体。 */
   | {
@@ -43,6 +44,8 @@ export type AbilityEntityTargetQuery =
 
 /** 各技能宿主共用的动作数据；不包含玩家操作、费用或宿主生命周期。 */
 export interface SkillActionProgramDefinition {
+  /** 技能定义自身的标签，用于当前事件关联技能的精确标签判断。 */
+  skillTags?: readonly GameplayTag[];
   /** 创建时按技能等级解析的动作黑板默认值。 */
   blackboard?: Readonly<Record<string, LevelValues>>;
   /** 按技能局部帧安排的动作序列。 */
@@ -91,7 +94,7 @@ export interface AbilityEntityPassiveSkillDefinition {
   /** 能力实体启用时执行一次的动作序列。 */
   readonly enableSequence: ActionGraphReference;
   /** 实体存活期间监听的 Buff 加入事件响应。 */
-  readonly abilityEventResponses?: readonly AbilityEventResponse<'addedBuff'>[];
+  readonly abilityEventResponses?: readonly AbilityEventResponse<'addedBuff' | 'abilityEntitySelfFinished'>[];
 }
 
 /** 能力实体模板数值；原生可在生成时用实体黑板覆盖模板默认值。 */
@@ -111,6 +114,8 @@ export interface AbilityEntityDefinition {
     readonly useMainBodyHp: boolean;
     readonly useMainBodyPoise: boolean;
     readonly canBeHitIndividually: boolean;
+    /** 部位阻挡半角（度），缺省为 0；木桩投影的方向夹角为 0。 */
+    readonly halfBlockAngle?: number;
     readonly onlyHitByNormalAttack: boolean;
     readonly canBeDirectlyBuffed: boolean;
     /** 排除目标时保留部位自身身份；缺省为原生 false。 */
@@ -274,32 +279,6 @@ export type OperatorPlayerActionRoutes = Readonly<
   Partial<Record<PlayerSkillInput, PlayerActionRouteDefinition>>
 >;
 
-/**
- * 原生 ComboCacheAction 在一段技能局部时间内对攻击操作的映射覆盖。
- * Skill 命令中的战技/连携会把映射中的 skillId 覆盖为当前槽位技能，
- * 终结技不读该映射，因此它们不能作为“选择哪个技能”的证据。
- */
-export interface SkillInputCommandMappingWindow {
-  /** 窗口起始帧，包含该帧。 */
-  readonly startFrame: number;
-  /** 窗口结束帧。 */
-  readonly endFrame: number;
-  /** 此窗口覆盖的玩家操作。 */
-  readonly input: 'basicAttack';
-  /** 空值是原生的“该窗口没有直接技能路由”，不得回退为基础技能。 */
-  readonly targetSkillId: string | null;
-}
-
-/** 原生 AllowNextSkillAction 只授予提前接续许可，不负责选择技能。 */
-export interface SkillAllowedNextWindow {
-  /** 可以提前接续的起始帧。 */
-  readonly startFrame: number;
-  /** 可以提前接续的结束帧。 */
-  readonly endFrame: number;
-  /** 此窗口允许请求的原生技能 ID。 */
-  readonly skillIds: readonly string[];
-}
-
 /** 事件触发器筛选干员自身或全队来源的范围。 */
 export const SKILL_TRIGGER_SCOPES = ['operator', 'team'] as const;
 /** 技能事件触发器检查当前干员还是全队来源。 */
@@ -335,12 +314,6 @@ export interface SkillDefinitionProperties extends SkillActionProgramDefinition 
   smartTarget?: 'enemy' | 'input' | 'trigger';
   /** 时间轴技能块的显示宽度；由可操作边界推导，不对应原生 `durationFrame`。 */
   timelineBlockFrames: number;
-  /**
-   * 基础攻击有序连段中建议的下一技能原生 Skill ID，供技能库递归放置、预览选择，并标记
-   * 已保留实际 AllowNext 动作的定义。正式块宽读取实际动作候选或 canInterrupt，不按该 ID
-   * 预选未来输入。
-   */
-  timelineContinuationSkillId?: string;
   /** 块宽的接续参照技能；覆盖默认接续目标，仅影响显示，不执行该技能。 */
   timelineBlockFollowUpSkillId?: string;
   /**
@@ -354,18 +327,8 @@ export interface SkillDefinitionProperties extends SkillActionProgramDefinition 
   offsetRecordFrame: number;
   /** 原生 SkillData.dontInterruptCombo；主控插入此技能时保留普攻连段。缺省为 false。 */
   dontInterruptCombo?: boolean;
-  /**
-   * 从原生顶层直连输入 Action 保留的操作解析证据。两类窗口职责不同：
-   * commandMappings 选择该操作当前指向的技能，allowedNextSkills 只决定能否提前中断。
-   */
-  inputWindows?: {
-    /** 在指定帧段内覆盖普通攻击操作的技能路由。 */
-    readonly commandMappings?: readonly SkillInputCommandMappingWindow[];
-    /** 在指定帧段内允许提前接续的技能。 */
-    readonly allowedNextSkills?: readonly SkillAllowedNextWindow[];
-    /** 存在条件或嵌套输入 Action；当前输入状态不足时必须返回未知而不是猜测。 */
-    readonly hasConditionalActions?: boolean;
-  };
+  /** 原生施放前切为主控；不受编辑器自动切人偏好控制。 */
+  switchToCenterBeforeCast?: boolean;
   /**
    * 技能释放条件只生成合法性诊断；不成立也不会阻止技能进入模拟。
    * 模拟层将用户排入时间轴的动作视为已经成功释放，不得改写或跳过。
@@ -426,8 +389,8 @@ export interface SkillGroupPlacementPolicy {
   terminalSkillKey: string;
   /** 最多放置的技能段数。 */
   maxSegments: number;
-  /** 推测失败时按技能组声明顺序放置。 */
-  fallback: 'sequence';
+  /** 推测失败时放置的独立技能序列，允许重复，不影响技能库展示。 */
+  fallback: readonly string[];
 }
 
 /**

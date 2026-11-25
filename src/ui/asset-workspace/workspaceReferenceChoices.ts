@@ -48,7 +48,14 @@ export function workspaceReferenceChoices(
         })
       : undefined;
   const result: Record<string, ReferenceCatalog> = {};
-  for (const family of ['skill', 'skillGroup', 'skillSlot', 'buff', 'abilityEntity']) {
+  for (const family of [
+    'skill',
+    'skillGroup',
+    'skillSlot',
+    'buff',
+    'abilityEntity',
+    'projectile',
+  ]) {
     const candidates: ReferenceCandidate[] = [...(own?.[family]?.candidates ?? [])];
     if (!own) {
       // Standalone resources have no fixed runtime operator. Expose known source metadata,

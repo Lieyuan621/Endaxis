@@ -1,9 +1,19 @@
+import { collectRandomPointTargetGroupKeys } from '../optimization/targetGroupCardinalityAnalysis.ts';
+import type { ProjectileHitParameters } from '../../../../../packages/game-data-contract/src/actions.ts';
+import type { ProjectileLaunchSchedule } from '../../../../../packages/game-data-contract/src/projectileSchedule.ts';
+
+import {
+  isSupportedSingleEnemyOrGoodCharacterTargetFilter,
+  isFixedGoodCharacterTargetFilter,
+  isEmptyProjectileCollisionPopulation,
+} from './projectileCollisionProjection.ts';
 import type { ActionTargetQuery } from '../../../../../packages/game-data-contract/src/conditions.ts';
 import type { SkillCastResourceDefinition } from '../../../../../packages/game-data-contract/src/index.ts';
 import type { KnownNativeActionLeafSource } from '../../source/actionLeaf.ts';
 import type { DeclaredBlackboardValueSource } from '../../source/blackboard.ts';
 import { collectNativeActionNodes } from '../../source/controlFlow.ts';
 import type { ProjectileRuntimeSource } from '../../source/projectileRuntime.ts';
+
 import type { ProjectileLaunchActionSource } from '../../source/referenceActions.ts';
 import type { SkillActionGraphSource } from '../../source/skillActionGraph.ts';
 import {
@@ -21,12 +31,9 @@ import type {
 } from '../combatProjectionCommon.ts';
 import { isStaticSingleEnemyTargetGroup, projectGameplayTags } from '../combatProjectionCommon.ts';
 import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
-import type { CombatStepParameters } from '../intermediateDefinitions.ts';
 import {
   collectMaterializedTargetGroups,
-  collectPresentationOnlyBlackboardKeys,
   collectPresentationOnlyTargetGroups,
-  isPresentationOnlyActionSequence,
 } from '../skills/skillPresentationTargets.ts';
 import {
   compileProjectileBlackboardSource,
@@ -34,7 +41,7 @@ import {
   omitDeadSingleEnemyBounceBookkeeping,
 } from './projectileBlackboard.ts';
 
-/** A callback skill before any zero-distance/immediate execution optimization. */
+/** 回调技能的动作图、变量和自身时间线；发射时间表独立决定回调触发时刻。 */
 export interface ProjectileCallbackSkillSource {
   readonly program: ActionGraphBuilder<CompiledBuffStepSource>;
   readonly skillId: string;
@@ -71,7 +78,7 @@ export function resolveProjectileRecycleDelaySource(
   return delay;
 }
 
-export interface ZeroDistanceProjectileProjectionCatalogSource {
+export interface ProjectileProjectionCatalogSource {
   readonly runtimes: ReadonlyMap<string, ProjectileRuntimeSource>;
   readonly templates: ReadonlyMap<
     string,
@@ -84,19 +91,29 @@ export interface ZeroDistanceProjectileProjectionCatalogSource {
   readonly callbackCastResources?: ReadonlyMap<string, SkillCastResourceDefinition>;
 }
 
-type ProjectileLaunchHitParameters = NonNullable<CombatStepParameters['launchProjectile']['hit']>;
+type ProjectileLaunchHitParameters = Omit<ProjectileHitParameters, 'target'> & {
+  target?: 'controlledOperator' | 'allOperators' | 'currentTarget';
+};
 
 /**
  * 把版本化 ProjectileData、实体模板与回调 SkillData 目录接成公共动作扩展。
- * 按结束条件和固定零空间模型选择已支持的生命周期；未知形状在来源路径上报错。
+ * 回调时间表与子技能共用同一发射定义；命中目标仍保留原生筛选条件。
  */
-export function createZeroDistanceProjectileProjectionExtensionSource(input: {
-  readonly catalog: ZeroDistanceProjectileProjectionCatalogSource;
+export function createProjectileProjectionExtensionSource(input: {
+  readonly shouldOmitLaunch?: (launch: ProjectileLaunchActionSource) => boolean;
+  readonly resolveSchedule?: (
+    launch: ProjectileLaunchActionSource,
+    sourcePath: string,
+    events: readonly ProjectileLaunchSchedule['callbacks'][number]['event'][],
+  ) => ProjectileLaunchSchedule | undefined;
+  readonly catalog: ProjectileProjectionCatalogSource;
   readonly callbackContext: Omit<CombatActionProjectionContextSource, 'graph'>;
   readonly visualOnlyIds?: ReadonlySet<string>;
   readonly callbackExtensions?: CombatActionProjectionExtensionsSource;
 }): NonNullable<CombatActionProjectionExtensionsSource['compileProjectileLaunch']> {
+  const compilingCallbacks: { skillId: string; launchEvent: boolean }[] = [];
   return (launch, sourcePath, projectionContext) => {
+    if (input.shouldOmitLaunch?.(launch)) return [];
     let callbackContext: CombatActionProjectionContextSource = {
       ...input.callbackContext,
       graph: projectionContext.graph,
@@ -112,19 +129,6 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
     };
     const runtime = input.catalog.runtimes.get(launch.projectileId);
     if (!runtime) throw new Error(`${sourcePath}: missing ProjectileData ${launch.projectileId}`);
-    const reachesCurrentOperator =
-      runtime.hitOnReach &&
-      launch.target.targetSource === 'Target' &&
-      projectionContext.actionTargetTarget === 'currentOperator';
-    if (
-      (runtime.hitOnReach && launch.target.targetSource === 'MainCharacter') ||
-      reachesCurrentOperator
-    )
-      callbackContext = {
-        ...callbackContext,
-        actionTargetTarget: 'actionInputTarget',
-        actionInputIsOperator: true,
-      };
     const template = input.catalog.templates.get(launch.projectileId) ?? null;
     const enabled = launch.callbacks.filter(callback => callback.enabled);
     // 只开放回调输入不依赖飞行目标的 launch-only 路线。目标集合可能为空或有多个，
@@ -139,97 +143,6 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
       ) === true &&
       projectionContext.staticAbilityEntityTargetGroupKeys?.has(launch.target.targetGroupKey) ===
         true;
-    // 关闭槽位中的 skillId 不参与调用，但发射/reset 仍能被 SkillAffix 观察。
-    // 未投影对象寿命前必须报告缺口，不能把“没有回调程序”当作“没有发射”。
-    if (enabled.length === 0) {
-      assertSupportedLaunchTargetControls(launch, sourcePath, projectionContext);
-      if (
-        launch.projectileSource.targetSource === 'Source' &&
-        launch.projectileSource.targetGroupKey === '' &&
-        isPlainZeroSpaceFixedPoint(launch.target, projectionContext, sourcePath) &&
-        launch.presetPoints.length === 0 &&
-        runtime.useSegmentMove &&
-        runtime.moveSegments.length > 1 &&
-        runtime.presetPointKeys.length === 2 &&
-        runtime.presetPointKeys.includes('LaunchPoint') &&
-        runtime.presetPointKeys.includes('TargetPoint') &&
-        runtime.moveSegments.every(
-          segment =>
-            runtime.presetPointKeys.includes(segment.startPointKey) &&
-            runtime.presetPointKeys.includes(segment.endPointKey) &&
-            runtime.moveModeTypes.get(segment.moveModeId) === 0,
-        ) &&
-        runtime.finishOnReach &&
-        !runtime.keepMoveOnReach &&
-        !runtime.canTraceTargetAfterReach &&
-        hasNoModeledBlockingSurfaces(runtime) &&
-        runtime.maxHitCount <= 0 &&
-        runtime.finishDistance.blackboardKey === null &&
-        runtime.finishDistance.value >= 0 &&
-        Number.isFinite(runtime.finishDuration) &&
-        runtime.finishDuration > 0
-      ) {
-        // 原生每个移动Tick只推进一段；earlyNextByDuration在已reach分支读取，
-        // 不构成每段的最短停留时间。零空间不累计行进距离，也不因无回调命中结束。
-        return [
-          {
-            kind: 'launchProjectile',
-            parameters: {
-              inheritActionBlackboard: launch.assignBlackboard,
-              ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
-              finish: {
-                reachAfterTicks: runtime.moveSegments.length,
-                maxDurationSeconds: runtime.finishDuration,
-              },
-            },
-            callbacks: [],
-          },
-        ];
-      }
-      if (
-        runtime.finishOnBlock &&
-        !runtime.finishOnReach &&
-        launch.projectileSource.targetSource === 'Source' &&
-        launch.projectileSource.targetGroupKey === '' &&
-        isPlainZeroSpaceFixedPoint(launch.target, projectionContext, sourcePath)
-      ) {
-        assertSupportedFirstTickBlockShape(runtime, sourcePath);
-        // 是否注册阻挡回调不改变弹体自身的结束条件。
-        return [
-          {
-            kind: 'launchProjectile',
-            parameters: {
-              inheritActionBlackboard: launch.assignBlackboard,
-              finish: 'firstTickBlock',
-              ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
-            },
-            callbacks: [],
-          },
-        ];
-      }
-      if (
-        launch.projectileSource.targetSource !== 'Source' ||
-        launch.projectileSource.targetGroupKey !== '' ||
-        runtime.moveModeTypes.get('Default') !== 0 ||
-        !runtime.finishOnReach ||
-        !isPlainZeroSpaceFixedPoint(launch.target, projectionContext, sourcePath)
-      )
-        throw new Error(
-          `${sourcePath}: projectile ${launch.projectileId} has no enabled callbacks, but launch/reset lifetime is not projected`,
-        );
-      assertSupportedFirstTickReachShape(runtime, sourcePath, true);
-      return [
-        {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: launch.assignBlackboard,
-            finish: 'firstTickReach',
-            ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
-          },
-          callbacks: [],
-        },
-      ];
-    }
     const callback = (event: 'launch' | 'block' | 'finish' | 'hit' | 'reach') => {
       const routes = enabled.filter(item => item.event === event);
       if (routes.length !== 1 || !routes[0]!.skillId)
@@ -241,61 +154,6 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
         );
       return graph;
     };
-    if (
-      enabled.length === 1 &&
-      enabled[0]!.event === 'hit' &&
-      isPresentationOnlyProjectileCallback(callback('hit'))
-    ) {
-      assertSupportedLaunchTargetControls(launch, sourcePath, projectionContext);
-      // hitOnReach直接命中发射目标，不经碰撞过滤；已知唯一敌人且maxHitCount=1
-      // 时，在首Tick到达后即因命中次数结束，即使finishOnReach本身关闭。
-      const finishByReachHit =
-        runtime.hitOnReach &&
-        runtime.maxHitCount === 1 &&
-        targetReferenceSelectsUniqueEnemy(launch.target, projectionContext);
-      if (
-        launch.projectileSource.targetSource !== 'Source' ||
-        launch.projectileSource.targetGroupKey !== '' ||
-        runtime.moveModeTypes.get('Default') !== 0 ||
-        (!runtime.finishOnReach && !finishByReachHit) ||
-        !isPlainZeroSpaceFixedPoint(launch.target, projectionContext, sourcePath)
-      )
-        throw new Error(
-          `${sourcePath}: projectile ${launch.projectileId} has a presentation-only callback, but launch/reset lifetime is not projected ` +
-            JSON.stringify({
-              syncTimeScale: launch.syncTimeScale,
-              source: launch.projectileSource.targetSource,
-              sourceGroup: launch.projectileSource.targetGroupKey,
-              moveType: runtime.moveModeTypes.get('Default'),
-              finishOnReach: runtime.finishOnReach,
-              finishByReachHit,
-              zeroSpaceTarget: isPlainZeroSpaceFixedPoint(
-                launch.target,
-                projectionContext,
-                sourcePath,
-              ),
-            }),
-        );
-      // 固定零空间中首个移动Tick到达。即使先碰撞并结束，也发生在同一Tick；
-      // 不执行表现回调，但保留发射通知及所有启用路由参与求值的回收延迟。
-      assertSupportedFirstTickReachShape(runtime, sourcePath, true);
-      return [
-        {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: launch.assignBlackboard,
-            finish: 'firstTickReach',
-            ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
-            recycleDelaySeconds: resolveProjectileRecycleDelaySource(
-              launch,
-              input.catalog.callbackGraphs,
-              sourcePath,
-            ),
-          },
-          callbacks: [],
-        },
-      ];
-    }
     const onlyHitTargets = assertSupportedLaunchTargetControls(
       launch,
       sourcePath,
@@ -304,112 +162,116 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
     );
     if (!['Source', 'Owner'].includes(launch.projectileSource.targetSource))
       throw new Error(`${sourcePath}: projectile source must resolve to Source or Owner`);
-    if (!hasNoModeledBlockingSurfaces(runtime))
-      throw new Error(`${sourcePath}: projectile environment blocking is not modeled`);
-    // 零空间模型将独立落地路线近似为首个 Tick 阻挡；Finish 是超时兜底，
-    // 不应使落地退化为等待寿命耗尽。同时有 hit/reach 的路线不套用此近似。
-    const landsOnFirstTick =
-      enabled.some(route => route.event === 'block') &&
-      enabled.every(
-        route => route.event === 'launch' || route.event === 'block' || route.event === 'finish',
-      );
-    if (landsOnFirstTick) assertSupportedFirstTickBlockShape(runtime, sourcePath);
-    const routes = enabled.flatMap(route =>
-      route.event === 'block' && !landsOnFirstTick
-        ? []
-        : [{ event: route.event, skillId: route.skillId }],
+    const routes = enabled.filter(
+      route =>
+        !(
+          route.event === 'hit' &&
+          !runtime.hitOnReach &&
+          isEmptyProjectileCollisionPopulation(runtime.targetFilter)
+        ),
     );
-    const hasHit = routes.some(route => route.event === 'hit');
-    const hasReach = routes.some(route => route.event === 'reach');
+    const configuredSchedule = input.resolveSchedule?.(
+      launch,
+      sourcePath,
+      routes.map(route => route.event),
+    );
+    if (!configuredSchedule)
+      throw new Error(
+        `${sourcePath}: missing projectile callback schedule for ${launch.projectileId} (serverActionIndex=${launch.serverActionIndex})`,
+      );
+    const schedule = {
+      ...configuredSchedule,
+      callbacks: configuredSchedule.callbacks.map(entry => {
+        if (entry.event !== 'hit') return entry;
+        // 现有到达命中资源均无碰撞形状；两种路径并存时必须由时点配置明确选择。
+        if (entry.hitKind === undefined && runtime.hitOnReach && runtime.hasCollisionShape)
+          throw new Error(`${sourcePath}: mixed collision/arrival hit requires explicit hitKind`);
+        return {
+          ...entry,
+          hitKind:
+            entry.hitKind ?? (runtime.hitOnReach ? ('arrival' as const) : ('collision' as const)),
+        };
+      }),
+    };
+    const arrivalHit = schedule.callbacks.some(
+      entry => entry.event === 'hit' && entry.hitKind === 'arrival',
+    );
+    const reachesCurrentOperator =
+      arrivalHit &&
+      launch.target.targetSource === 'Target' &&
+      projectionContext.actionTargetTarget === 'currentOperator';
+    if ((arrivalHit && launch.target.targetSource === 'MainCharacter') || reachesCurrentOperator)
+      callbackContext = {
+        ...callbackContext,
+        actionTargetTarget: 'actionInputTarget',
+        actionInputIsOperator: true,
+      };
+    const tracksHits = routes.some(route => route.event === 'hit');
     const hitsParty =
-      hasHit && !runtime.hitOnReach && isFixedGoodCharacterTargetFilter(runtime.targetFilter);
+      tracksHits && !arrivalHit && isFixedGoodCharacterTargetFilter(runtime.targetFilter);
     if (hitsParty)
       callbackContext = {
         ...callbackContext,
         actionTargetTarget: 'actionInputTarget',
         actionInputIsOperator: true,
       };
-    if (hasHit) {
-      // 发射目标只决定飞向哪里；碰撞回调的目标集合由 ProjectileData.targetFilter 决定。
-      // 飞向主控干员不等于对全队逐人施放命中技能。
-      if (hitsParty && runtime.maxHitCount > 0 && runtime.maxHitCount <= 4)
-        throw new Error(`${sourcePath}: party projectile hit limit requires per-target counting`);
-      assertSupportedFirstTickShape(runtime, sourcePath, {
-        maxHitCounts: new Set([-1, 0, 1]),
-        requireCollider: !runtime.hitOnReach,
-        allowHitOnReach: true,
-        allowFinishByFirstHitCount: true,
-        allowAnyPositiveMaxHitCount: true,
-        allowGameplayTagFilter: true,
-        allowPersistentSingleTargetHit: true,
-        allowTwoSegmentReachBeforeRepeatHit: true,
-      });
-    }
-    if (hasReach || runtime.finishOnReach || runtime.hitOnReach) {
-      if (
-        !enumeratedEntityPoints &&
-        !isPlainZeroSpaceFixedPoint(launch.target, projectionContext, sourcePath)
-      )
-        throw new Error(
-          `${sourcePath}: projectile reach target is not a proven zero-space point ` +
-            JSON.stringify({
-              source: launch.target.targetSource,
-              group: launch.target.targetGroupKey,
-              finder: launch.target.finderType,
-              owner: projectionContext.actionOwnerTarget,
-              input: projectionContext.actionTargetTarget,
-            }),
-        );
-      if (!runtime.useSegmentMove) assertSupportedFirstTickReachShape(runtime, sourcePath, true);
-    }
-    if (!Number.isFinite(runtime.finishDuration) || runtime.finishDuration <= 0)
-      throw new Error(`${sourcePath}: projectile duration must be positive and finite`);
-    const finish: CombatStepParameters['launchProjectile']['finish'] = landsOnFirstTick
-      ? ('firstTickBlock' as const)
-      : runtime.finishOnReach
-        ? runtime.useSegmentMove && runtime.moveSegments.length > 1
-          ? {
-              reachAfterTicks: runtime.moveSegments.length,
-              maxDurationSeconds: runtime.finishDuration,
-            }
-          : ('firstTickReach' as const)
-        : hasReach || runtime.hitOnReach
-          ? {
-              reachAfterTicks: runtime.useSegmentMove ? runtime.moveSegments.length : 1,
-              maxDurationSeconds: runtime.finishDuration,
-              finishOnReach: false,
-            }
-          : runtime.finishDuration;
-    const hitTagFilter =
-      hasHit && !runtime.hitOnReach
-        ? projectProjectileHitTagFilter(runtime, callbackContext, sourcePath)
-        : undefined;
+    if (
+      tracksHits &&
+      !arrivalHit &&
+      !isSupportedSingleEnemyOrGoodCharacterTargetFilter(runtime.targetFilter)
+    )
+      throw new Error(`${sourcePath}: unsupported projectile collision population`);
+    const hitTagFilter = !arrivalHit
+      ? projectProjectileHitTagFilter(runtime, callbackContext, sourcePath)
+      : undefined;
     const callbacks = routes.map(route => {
       const graph = callback(route.event);
-      const compiled = compileProjectileCallbackSkillSource({
-        graph,
-        context:
-          route.event === 'launch'
-            ? {
-                ...callbackContext,
-                actionTargetTarget: 'currentAbilityEntity',
-                actionInputIsOperator: false,
-              }
-            : callbackContext,
-        visualOnlyIds: input.visualOnlyIds,
-        extensions: input.callbackExtensions,
-        castResource: input.catalog.callbackCastResources?.get(graph.skillId),
-      });
+      const outer = compilingCallbacks.findLast(item => item.skillId === graph.skillId);
+      if (outer) {
+        if (outer.launchEvent !== (route.event === 'launch'))
+          throw new Error(`${sourcePath}: recursive callback changes its native input-target role`);
+        return { kind: 'reference' as const, route, reference: { $skill: graph.skillId }, graph };
+      }
+      let compiled: ProjectileCallbackSkillSource;
+      compilingCallbacks.push({ skillId: graph.skillId, launchEvent: route.event === 'launch' });
+      try {
+        compiled = compileProjectileCallbackSkillSource({
+          graph,
+          context:
+            route.event === 'launch'
+              ? {
+                  ...callbackContext,
+                  actionTargetTarget: 'currentAbilityEntity',
+                  actionInputIsOperator: false,
+                }
+              : callbackContext,
+          visualOnlyIds: input.visualOnlyIds,
+          extensions: input.callbackExtensions,
+          castResource: input.catalog.callbackCastResources?.get(graph.skillId),
+        });
+      } finally {
+        compilingCallbacks.pop();
+      }
       const nativeSkillType = runtime.activeSkills?.initialNativeSkillTypeById[graph.skillId];
       if (compiled.castResource === undefined || nativeSkillType === undefined)
         throw new Error(
           `${sourcePath}: missing projectile callback skill registration or resource metadata for ${graph.skillId}`,
         );
       return {
+        kind: 'definition' as const,
         route,
         compiled,
         skill: {
           skillId: compiled.skillId,
+          ...((graph.skillTagIds?.length ?? 0) === 0
+            ? {}
+            : {
+                skillTags: projectGameplayTags(
+                  graph.skillTagIds ?? [],
+                  callbackContext,
+                  sourcePath + '.skillTags',
+                ),
+              }),
           nativeSkillType,
           ...(graph.normalSkillSubType === 'AdditionalNormalSkill'
             ? { normalSkillSubType: 'additionalNormalSkill' as const }
@@ -422,9 +284,10 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
       };
     });
     // 裁剪必须作用于真正发射的程序，依赖收集随后读取同一份程序。
-    callbacks.forEach((callback, callbackIndex) => {
+    const inlineCallbacks = callbacks.filter(callback => callback.kind === 'definition');
+    inlineCallbacks.forEach((callback, callbackIndex) => {
       const timelines = callback.skill.scheduledSequences;
-      const otherCallbacks = callbacks.flatMap((other, index) =>
+      const otherCallbacks = inlineCallbacks.flatMap((other, index) =>
         index === callbackIndex
           ? []
           : other.skill.scheduledSequences.flatMap(timeline =>
@@ -445,25 +308,26 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
         ),
       }));
     });
-    const hit: ProjectileLaunchHitParameters | undefined = hasHit
+    const hit: ProjectileLaunchHitParameters | undefined = tracksHits
       ? {
-          ...(hitsParty ? { target: 'allOperators' as const } : {}),
-          ...(runtime.hitOnReach ? { onReach: true } : {}),
-          ...(runtime.hitOnReach && launch.target.targetSource === 'MainCharacter'
+          ...(!arrivalHit && isFixedGoodCharacterTargetFilter(runtime.targetFilter)
+            ? { target: 'allOperators' as const }
+            : {}),
+          ...(hitTagFilter === undefined ? {} : { hitTagFilter }),
+          ...(arrivalHit && launch.target.targetSource === 'MainCharacter'
             ? { target: 'controlledOperator' as const }
             : {}),
           ...(reachesCurrentOperator ? { target: 'currentTarget' as const } : {}),
-          finishOnHit: runtime.maxHitCount === 1,
-          ...(hitTagFilter === undefined
-            ? {}
-            : { hitTagFilter, retryRejectedHit: typeof finish === 'number' }),
         }
       : undefined;
     const blackboard = compileProjectileBlackboardSource({
       sourcePath,
       launch,
       template,
-      invocations: callbacks.map(({ route, compiled, skill }) => ({
+      referencedEntityKeys: callbacks.flatMap(callback =>
+        callback.kind === 'reference' ? collectNativeEntityKeys(callback.graph) : [],
+      ),
+      invocations: inlineCallbacks.map(({ route, compiled, skill }) => ({
         program: compiled.program,
         event: route.event,
         skillId: compiled.skillId,
@@ -473,13 +337,21 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
         ),
       })),
       allowMissingEntityBlackboardEvidence: true,
-      blockEndsFlight: landsOnFirstTick,
     });
+    const callbackEvents = new Set(callbacks.map(callback => callback.route.event));
+    if (
+      schedule.callbacks.length !== callbacks.length ||
+      schedule.callbacks.some(callback => !callbackEvents.has(callback.event))
+    )
+      throw new Error(`${sourcePath}: projectile schedule does not match compiled callbacks`);
     return [
       {
         kind: 'launchProjectile',
         parameters: {
+          schedule,
           ...blackboard,
+          projectileId: launch.projectileId,
+
           ...(enumeratedEntityPoints
             ? {
                 emitters: {
@@ -490,11 +362,11 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
               }
             : {}),
           ...(onlyHitTargets === undefined ? {} : { onlyHitTargets }),
-          finish,
           ...(launch.projectileSource.targetSource === 'Owner'
             ? { source: 'actionOwner' as const }
             : {}),
           ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
+          ...(runtime.faction === undefined ? {} : { faction: runtime.faction }),
           recycleDelaySeconds: resolveProjectileRecycleDelaySource(
             launch,
             input.catalog.callbackGraphs,
@@ -502,26 +374,21 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
           ),
           ...(hit === undefined ? {} : { hit }),
         },
-        callbacks: callbacks.map(({ route, skill, compiled }) => ({
-          event: route.event,
-          skill: {
-            actionGraph: { main: compiled.program.finish(), macros: {} },
-            ...skill,
-          },
-        })),
+        callbacks: schedule.callbacks
+          .map(entry => callbacks.find(callback => callback.route.event === entry.event)!)
+          .map(callback => ({
+            event: callback.route.event,
+            skill:
+              callback.kind === 'reference'
+                ? callback.reference
+                : {
+                    actionGraph: { main: callback.compiled.program.finish(), macros: {} },
+                    ...callback.skill,
+                  },
+          })),
       },
     ];
   };
-}
-
-function isPresentationOnlyProjectileCallback(
-  graph: SkillActionGraphSource<KnownNativeActionLeafSource>,
-): boolean {
-  if (graph.actionGroup.passiveEvents.length > 0) return false;
-  const presentationOnlyBlackboardKeys = collectPresentationOnlyBlackboardKeys(graph);
-  return graph.actionGroup.timelineActions.every(timeline =>
-    isPresentationOnlyActionSequence(timeline.sequence, presentationOnlyBlackboardKeys),
-  );
 }
 
 function projectProjectileHitTagFilter(
@@ -569,24 +436,23 @@ export function compileProjectileCallbackSkillSource(input: {
   const program = createActionGraphBuilder<CompiledBuffStepSource>();
   if (graph.actionGroup.passiveEvents.length > 0)
     throw new Error(`${graph.skillId}: projectile callback passive events are unsupported`);
-  const discoveredEnemyGroups = graph.actionGroup.timelineActions.flatMap(timeline =>
-    collectNativeActionNodes(timeline.sequence)
-      .filter(
-        node =>
-          node.body.kind === 'leaf' &&
-          node.body.value.family === 'targetGroup' &&
-          isStaticSingleEnemyTargetGroup(node.body.value.action),
-      )
-      .map(node =>
-        node.body.kind === 'leaf' && node.body.value.family === 'targetGroup'
-          ? node.body.value.action.targetGroupKey
-          : '',
-      ),
+  const writes = graph.actionGroup.timelineActions.flatMap(timeline =>
+    collectNativeActionNodes(timeline.sequence).flatMap(node =>
+      node.body.kind === 'leaf' && node.body.value.family === 'targetGroup'
+        ? [node.body.value.action]
+        : [],
+    ),
   );
+  const discoveredEnemyGroups = writes
+    .filter(isStaticSingleEnemyTargetGroup)
+    .map(write => write.targetGroupKey);
   const presentationOnlyTargetGroupKeys = collectPresentationOnlyTargetGroups(graph);
   const callbackContext: CombatActionProjectionContextSource = {
     ...context,
     graph: program,
+    randomPointTargetGroupKeys: collectRandomPointTargetGroupKeys(
+      Map.groupBy(writes, write => write.targetGroupKey),
+    ),
     presentationOnlyTargetGroupKeys,
     materializedTargetGroupKeys: collectMaterializedTargetGroups(
       graph,
@@ -602,7 +468,10 @@ export function compileProjectileCallbackSkillSource(input: {
   const timelineActions = graph.actionGroup.timelineActions.map(timeline => {
     const sequence = compileCombatActionSequenceSource(
       timeline.sequence,
-      callbackContext,
+      {
+        ...callbackContext,
+        timelineRange: { startFrame: timeline.startFrame, endFrame: timeline.endFrame },
+      },
       visualOnlyIds,
       extensions,
     );
@@ -619,7 +488,7 @@ export function compileProjectileCallbackSkillSource(input: {
 }
 
 /**
- * 新增目标控制会改变命中资格或发射数量，不能由“零距离”自动推出无影响。
+ * 目标控制会改变命中资格或发射数量，不能因使用回调时间表而省略。
  * OnlyHit 是白名单：仅当过滤集合静态包含唯一敌人时可消去。
  * 即使没有战斗回调，发射仍须通过此守卫并保留对象寿命。
  */
@@ -629,7 +498,7 @@ function assertSupportedLaunchTargetControls(
   context?: CombatActionProjectionContextSource,
   retainDynamicFilter = false,
 ): ActionTargetQuery | undefined {
-  if (launch.alsoLaunchToHittableTarget !== false) {
+  if (launch.alsoLaunchToHittableTarget && context?.fixedHittableTargetCount !== 0) {
     throw new Error(
       `${path}.alsoLaunchToHittableTarget: additional projectile launches are not modeled`,
     );
@@ -673,343 +542,9 @@ function targetReferenceSelectsUniqueEnemy(
   );
 }
 
-function assertSupportedFirstTickShape(
-  runtime: ProjectileRuntimeSource,
-  path: string,
-  options: {
-    readonly maxHitCounts?: ReadonlySet<number>;
-    readonly requireCollider?: boolean;
-    readonly allowHitOnReach?: boolean;
-    readonly allowFinishByFirstHitCount?: boolean;
-    readonly allowAnyPositiveMaxHitCount?: boolean;
-    readonly allowGameplayTagFilter?: boolean;
-    readonly allowPersistentSingleTargetHit?: boolean;
-    readonly allowTwoSegmentReachBeforeRepeatHit?: boolean;
-  } = {},
-): void {
-  const segment = runtime.moveSegments[0];
-  const maxHitCounts = options.maxHitCounts ?? new Set([-1]);
-  // ProjectileComponent.HitTarget increments m_hitCount, resolves maxHitCount, and calls
-  // FinishProjectile(HitCount) as soon as the positive limit is reached. For a hit-only
-  // route with maxHitCount=1, finishOnReach/keepMoveOnReach therefore cannot affect any
-  // later combat-visible callback in the zero-distance single-target model. maxHitCount=-1
-  // is only admitted by callers that also retain allowHitSameTarget=false below.
-  const finishesOnFirstHit =
-    options.allowFinishByFirstHitCount === true && runtime.maxHitCount === 1;
-  const remainsInertAfterSingleTargetHit =
-    options.allowPersistentSingleTargetHit === true && !runtime.allowHitSameTarget;
-  const firstSegment = runtime.moveSegments[0];
-  const secondSegment = runtime.moveSegments[1];
-  const reachesBeforeSecondCollision =
-    options.allowTwoSegmentReachBeforeRepeatHit === true &&
-    !runtime.useHitBlockReachOrder &&
-    runtime.finishOnReach &&
-    !runtime.keepMoveOnReach &&
-    runtime.useSegmentMove &&
-    runtime.presetPointKeys.length === 2 &&
-    runtime.presetPointKeys[0] === 'LaunchPoint' &&
-    runtime.presetPointKeys[1] === 'TargetPoint' &&
-    runtime.moveSegments.length === 2 &&
-    firstSegment !== undefined &&
-    firstSegment.startPointKey === 'LaunchPoint' &&
-    firstSegment.moveModeId !== '' &&
-    firstSegment.endPointKey === 'TargetPoint' &&
-    firstSegment.earlyNextByDuration &&
-    firstSegment.segmentDuration > 0 &&
-    !firstSegment.skipHitAndBlockDetection &&
-    runtime.moveModeTypes.get(firstSegment.moveModeId) === 0 &&
-    secondSegment !== undefined &&
-    secondSegment.startPointKey === 'TargetPoint' &&
-    secondSegment.moveModeId !== '' &&
-    secondSegment.endPointKey === 'TargetPoint' &&
-    !secondSegment.earlyNextByDuration &&
-    secondSegment.segmentDuration === 0 &&
-    !secondSegment.skipHitAndBlockDetection &&
-    runtime.moveModeTypes.get(secondSegment.moveModeId) === 0;
-  const hasDefaultPointToPointRoute =
-    runtime.presetPointKeys.length === 2 &&
-    runtime.presetPointKeys[0] === 'LaunchPoint' &&
-    runtime.presetPointKeys[1] === 'TargetPoint' &&
-    !runtime.useSegmentMove &&
-    (runtime.moveSegments.length === 0 ||
-      (runtime.moveSegments.length === 1 &&
-        segment !== undefined &&
-        segment.startPointKey === 'LaunchPoint' &&
-        segment.moveModeId === 'Default' &&
-        segment.endPointKey === 'TargetPoint' &&
-        !segment.earlyNextByDuration &&
-        segment.segmentDuration === 0 &&
-        !segment.skipHitAndBlockDetection));
-  const hasSingleSegmentPointToPointRoute =
-    runtime.presetPointKeys.length === 2 &&
-    runtime.presetPointKeys[0] === 'LaunchPoint' &&
-    runtime.presetPointKeys[1] === 'TargetPoint' &&
-    runtime.useSegmentMove &&
-    runtime.moveSegments.length === 1 &&
-    segment !== undefined &&
-    segment.startPointKey === 'LaunchPoint' &&
-    segment.moveModeId === 'Default' &&
-    segment.endPointKey === 'TargetPoint' &&
-    !segment.earlyNextByDuration &&
-    segment.segmentDuration === 0 &&
-    !segment.skipHitAndBlockDetection;
-  // ProjectileComponent.Reach 先把 m_isReached 置位，再以发射时保存的 targetWrapper
-  // 直接调用一次 HitTarget。该分支不经过 collider、targetFilter 或
-  // allowHitSameTarget；零距离点到点路线只需证明首次 Reach 可达。
-  const hitsExactlyOnceOnReach =
-    options.allowHitOnReach === true && runtime.hitOnReach && hasDefaultPointToPointRoute;
-  const hasSupportedMovementShape =
-    finishesOnFirstHit ||
-    hitsExactlyOnceOnReach ||
-    reachesBeforeSecondCollision ||
-    hasDefaultPointToPointRoute ||
-    // ProjectileMovementSubComponent 首 Tick 在移动前检查碰撞。固定零距离模型中，
-    // 单段起终点路线的唯一木桩此时已在正体积碰撞体内；命中后
-    // allowHitSameTarget=false 使剩余移动对 hit-only 战斗结果不可见。
-    (remainsInertAfterSingleTargetHit && hasSingleSegmentPointToPointRoute);
-  if (
-    (!runtime.finishOnReach &&
-      !finishesOnFirstHit &&
-      !remainsInertAfterSingleTargetHit &&
-      !hitsExactlyOnceOnReach) ||
-    (runtime.hitOnReach && options.allowHitOnReach !== true) ||
-    (runtime.allowHitSameTarget && !reachesBeforeSecondCollision && !hitsExactlyOnceOnReach) ||
-    (!maxHitCounts.has(runtime.maxHitCount) &&
-      !(options.allowAnyPositiveMaxHitCount === true && runtime.maxHitCount > 0)) ||
-    runtime.collisionDetectTiming !== 0 ||
-    runtime.hitAndBlockDetectDelayTime !== 0 ||
-    runtime.hitAndBlockDetectDelayDistance !== 0 ||
-    (runtime.keepMoveOnReach &&
-      !finishesOnFirstHit &&
-      !remainsInertAfterSingleTargetHit &&
-      !hitsExactlyOnceOnReach) ||
-    runtime.canTraceTargetAfterReach ||
-    (!hitsExactlyOnceOnReach && !runtime.targetFilter.checkAlive) ||
-    (!hitsExactlyOnceOnReach &&
-      !isSupportedSingleEnemyOrGoodCharacterTargetFilter(runtime.targetFilter)) ||
-    (!hitsExactlyOnceOnReach && runtime.targetFilter.filterSlot) ||
-    (!hitsExactlyOnceOnReach &&
-      runtime.targetFilter.filterGameplayTag &&
-      (options.allowGameplayTagFilter !== true ||
-        runtime.targetFilter.gameplayTagQuery === null)) ||
-    (options.requireCollider === true &&
-      (runtime.colliderShape === null || !hasPositiveCollisionVolume(runtime.colliderShape))) ||
-    !hasSupportedMovementShape
-  ) {
-    throw new Error(`${path}: ProjectileData is outside the proven zero-distance first-tick shape`);
-  }
-}
-
-function isSupportedSingleEnemyOrGoodCharacterTargetFilter(
-  filter: ProjectileRuntimeSource['targetFilter'],
-): boolean {
-  if (filter.factionTarget !== 1) return false;
-  if (filter.autoSetTargetFaction) return !filter.filterObjectType;
-  return isFixedGoodCharacterTargetFilter(filter);
-}
-
-function isFixedGoodCharacterTargetFilter(
-  filter: ProjectileRuntimeSource['targetFilter'],
-): boolean {
-  // FactionType.Good(4) + ObjectType.Character(8): Liino's expanding sound wave
-  // invokes its hit callback once for every party operator in the all-range model.
-  // Keep the masks exact so a different manual population cannot enter this fold.
-  return (
-    !filter.autoSetTargetFaction &&
-    filter.targetFactionType === 4 &&
-    filter.filterObjectType &&
-    filter.objectType === 8
-  );
-}
-
-function hasPositiveCollisionVolume(
-  shape: NonNullable<ProjectileRuntimeSource['colliderShape']>,
-): boolean {
-  if (shape.shapeType === 1) return shape.radius > 0;
-  if (shape.shapeType === 2) return shape.extent.every(value => value > 0);
-  if (shape.shapeType === 3) {
-    const ring = shape.ring ?? null;
-    // ProjectileMovementSubComponent.OnLaunch 先从 ShapeData 求值并保存初始
-    // inner/outer radius；_FilterRingShape 随后单独做环形距离、高度与扇区过滤。
-    // 在 Endaxis 的零距离、全实例范围查找模型下，只有从中心开始的
-    // 正体积整圆环可以无歧义折叠为首 Tick 命中；空心环或不完整扇区仍拒绝。
-    return (
-      ring !== null &&
-      shape.radius > 0 &&
-      ring.initialInnerRadius === 0 &&
-      ring.initialOuterRadius > 0 &&
-      ring.initialOuterRadius > ring.initialInnerRadius &&
-      ring.height > 0 &&
-      (!ring.isSector || ring.sectorAngle >= 360)
-    );
-  }
-  return false;
-}
-
-function assertSupportedFirstTickReachShape(
-  runtime: ProjectileRuntimeSource,
-  path: string,
-  allowHitOnReachWithoutRoute = false,
-): void {
-  const hasDefaultPointToPointRoute =
-    runtime.presetPointKeys.includes('LaunchPoint') &&
-    runtime.presetPointKeys.includes('TargetPoint') &&
-    !runtime.useSegmentMove &&
-    // 原生关闭分段时只取默认模式和发射目标；额外预设点及残留分段不参与路线。
-    runtime.moveModeTypes.get('Default') === 0;
-  if (
-    (runtime.hitOnReach && !allowHitOnReachWithoutRoute) ||
-    (runtime.keepMoveOnReach && !runtime.hitOnReach) ||
-    runtime.canTraceTargetAfterReach ||
-    !hasNoModeledBlockingSurfaces(runtime) ||
-    !hasDefaultPointToPointRoute
-  ) {
-    throw new Error(`${path}: ProjectileData is outside the proven zero-distance reach shape`);
-  }
-}
-
-/** 首 Tick 落地是零空间投影约定；只接受无碰撞延迟、非分段的简单落地弹体。 */
-function assertSupportedFirstTickBlockShape(runtime: ProjectileRuntimeSource, path: string): void {
-  const segment = runtime.moveSegments[0];
-  if (
-    !runtime.finishOnBlock ||
-    runtime.hitOnReach ||
-    runtime.collisionDetectTiming !== 0 ||
-    runtime.hitAndBlockDetectDelayTime !== 0 ||
-    runtime.hitAndBlockDetectDelayDistance !== 0 ||
-    runtime.colliderShape?.shapeType !== 1 ||
-    !(runtime.colliderShape.radius > 0) ||
-    runtime.blockLayerDef?.value !== 1 ||
-    runtime.blockLayerDef.name !== 'WallAndGround' ||
-    runtime.presetPointKeys.length !== 2 ||
-    runtime.presetPointKeys[0] !== 'LaunchPoint' ||
-    runtime.presetPointKeys[1] !== 'TargetPoint' ||
-    runtime.useSegmentMove ||
-    (runtime.moveSegments.length !== 0 &&
-      (runtime.moveSegments.length !== 1 ||
-        segment === undefined ||
-        segment.startPointKey !== 'LaunchPoint' ||
-        segment.moveModeId !== 'Default' ||
-        segment.endPointKey !== 'TargetPoint' ||
-        segment.earlyNextByDuration ||
-        segment.segmentDuration !== 0 ||
-        segment.skipHitAndBlockDetection))
-  )
-    throw new Error(`${path}: ProjectileData is outside the proven zero-distance block shape`);
-}
-
-function hasNoModeledBlockingSurfaces(runtime: ProjectileRuntimeSource): boolean {
-  if (runtime.blockLayerDef?.value === 0 || runtime.blockLayerDef?.value === 1) return true;
-  // 当前游戏 TagManager：Default=0、Walkable=6、Climbable=7、Terrain=20。
-  // 角色、敌人等其他层不属于场景表面，不能一并忽略。
-  const sceneSurfaceMask = (1 << 0) | (1 << 6) | (1 << 7) | (1 << 20);
-  return (
-    runtime.blockLayerDef?.value === -1 &&
-    runtime.blockLayerMask !== undefined &&
-    (runtime.blockLayerMask & ~sceneSurfaceMask) === 0
-  );
-}
-
-function isPlainZeroSpaceFixedPoint(
-  target: ProjectileLaunchActionSource['target'],
-  context: CombatActionProjectionContextSource,
-  sourcePath?: string,
-): boolean {
-  const ownerIsCaster =
-    (target.targetSource === 'Owner' && context.actionOwnerTarget === 'caster') ||
-    (target.targetSource === 'Source' && context.actionSourceTarget === 'caster');
-  // MainCharacter 分支直接取得角色句柄；残留组名和 Selector 配置不参与该分支。
-  if (target.targetSource === 'MainCharacter') return true;
-  const directTargetIsProvenZeroSpace =
-    target.targetSource === 'Target' &&
-    (context.actionTargetTarget === 'enemy' ||
-      context.actionTargetTarget === 'caster' ||
-      context.actionTargetTarget === 'currentOperator' ||
-      context.actionTargetTarget === 'currentAbilityEntity' ||
-      (context.actionTargetTarget === 'actionInputTarget' &&
-        context.actionInputIsZeroSpace === true));
-  const contextTargetIsProvenZeroSpace =
-    target.targetSource === 'Context' &&
-    target.targetGroupKey !== '' &&
-    (context.staticZeroSpaceTargetGroupKeys?.has(target.targetGroupKey) === true ||
-      context.randomPointTargetGroupKeys?.has(target.targetGroupKey) === true ||
-      (sourcePath !== undefined &&
-        context.provenZeroSpaceProjectilePaths?.has(sourcePath) === true));
-  const instantPointAnchoredToCaster =
-    target.targetSource === 'InstantSearch' &&
-    context.actionSourceTarget === 'caster' &&
-    (target.selectorOwner === 'ActionSource' ||
-      (target.selectorOwner === 'ActionOwner' && context.actionOwnerTarget === 'caster')) &&
-    target.ownerContextKey === '' &&
-    target.centerType === 'ActionSource' &&
-    target.centerContextKey === '' &&
-    // 贴地只改变坐标；固定木桩模型不区分位置高度，不改变固定点的存在性。
-    target.target === 'ActionSource' &&
-    target.targetContextKey === '' &&
-    !target.enableAdvancedDirection;
-  const fixedPoint = target.finderFixedPoint;
-  const controlledOperatorSlotPoint =
-    target.targetSource === 'InstantSearch' &&
-    context.actionOwnerTarget === 'caster' &&
-    target.selectorOwner === 'ActionOwner' &&
-    target.ownerContextKey === '' &&
-    target.centerType === 'ActionSource' &&
-    target.centerContextKey === '' &&
-    !target.centerToGround &&
-    target.target === 'ActionSource' &&
-    target.targetContextKey === '' &&
-    !target.enableAdvancedDirection &&
-    target.finderType === 'CharacterTeamFinder' &&
-    target.validatorTypes.length === 1 &&
-    target.validatorTypes[0] === 'MainCharacterValidator' &&
-    target.postProcessorTypes.length === 1 &&
-    target.postProcessorTypes[0] === 'ConvertToSlot' &&
-    target.priorityFilters.length === 0 &&
-    target.shuffleTargets.length === 0 &&
-    target.distanceValidators.length === 0 &&
-    target.validatorTagQueries.length === 0;
-  const hasNoSelectorFilters =
-    target.validatorTypes.length === 0 &&
-    target.postProcessorTypes.length === 0 &&
-    target.priorityFilters.length === 0 &&
-    target.shuffleTargets.length === 0 &&
-    target.distanceValidators.length === 0 &&
-    target.validatorTagQueries.length === 0;
-  if (ownerIsCaster) {
-    // TargetResolution 的 Owner 分支直接取得动作 owner；TargetSettings 中随结构
-    // 序列化的 finder/validator 不参与该分支。Endaxis 把 Owner 锚点及其偏移
-    // 归入统一零空间，不能要求它伪装成 InstantSearch.FixedPointFinder。
-    return true;
-  }
-  if (directTargetIsProvenZeroSpace) {
-    // Target 直接沿用技能输入目标；只有 Context 才读取 targetGroupKey。
-    // 其身份已经由外层施法上下文证明，未读取的组名和 selector 不参与解析。
-    return true;
-  }
-  if (contextTargetIsProvenZeroSpace) {
-    // TargetSource.Context 只按 targetGroupKey 读取已保存句柄，
-    // TargetSettings 内同时序列化的 finder/validator/post-processor 字段不进入该分支。
-    // 零空间证明来自目标组生产者，不能让这些未读取的残留字段反向否定它。
-    return true;
-  }
-  if (controlledOperatorSlotPoint) {
-    // CharacterTeamFinder + MainCharacterValidator 唯一选出当前主控干员，ConvertToSlot
-    // 只把该角色转换为其编队槽位空间点。Endaxis 明确规定所有实例/空间点距离为 0，
-    // 因而从施法者发射的点到点投射物在首个移动 Tick 到达；这里不把 reach 伪造成 hit。
-    return true;
-  }
-  return (
-    (ownerIsCaster ||
-      instantPointAnchoredToCaster ||
-      directTargetIsProvenZeroSpace ||
-      contextTargetIsProvenZeroSpace) &&
-    (contextTargetIsProvenZeroSpace ||
-      instantPointAnchoredToCaster ||
-      target.targetGroupKey === '') &&
-    target.finderType === 'FixedPointFinder' &&
-    fixedPoint !== undefined &&
-    !fixedPoint.snapToNavmesh &&
-    fixedPoint.sampleRadius.blackboardKey === null &&
-    hasNoSelectorFilters
-  );
+/** 尚未完成编译的递归回调保守保留其实体板键，不能误删发射时的终止标记赋值。 */
+function collectNativeEntityKeys(value: unknown): string[] {
+  if (typeof value === 'string') return value.startsWith('EntityBB_') ? [value] : [];
+  if (value === null || typeof value !== 'object') return [];
+  return Object.values(value).flatMap(collectNativeEntityKeys);
 }

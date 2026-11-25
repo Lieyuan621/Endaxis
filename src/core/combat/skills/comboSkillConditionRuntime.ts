@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 /**
  * 已审计 Ability 事件的连携条件阶段。每条注册保留自己的 direct 板，共享 owner 的实体板。
  * 只产出 Pending 数据，不选择候选、不施法，也不把它降格为附着后的语义事件。
@@ -12,7 +13,7 @@ import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { AbilityEventRegistration } from '../events/abilityEventDispatcher';
 import { ActionBlackboard, type ActionBlackboardValue } from '../actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
-import { COMBAT_FRAMES_PER_SECOND } from '../time/combatClock';
+import { isComboTriggerReady, type ComboSkillCooldownReadiness } from './skillCooldownExecution';
 import {
   hasAbilityEventActionContextBinding,
   resolveAbilityEventActionContextBinding,
@@ -45,14 +46,7 @@ export interface ComboConditionRegistration {
   /** InSilence 查询或显式无沉默场景投影，不在此猜 Tag ID。 */
   readonly isOwnerSilenced: () => boolean;
   /** 每次读取当前 ComboSkill 槽位及其计时器，不能缓存替换前的技能。缺失返回 null。 */
-  readonly currentComboCooldown: () =>
-    | { readonly oneReady: true }
-    | {
-        readonly oneReady: boolean;
-        readonly maxPassedTime: number;
-        readonly startCdFrame: number;
-      }
-    | null;
+  readonly currentComboCooldown: () => ComboSkillCooldownReadiness | null;
   /** ID 到实体身份的显式解析；不能把未知 ID 默认当成角色或敌人。 */
   readonly resolveTarget: (entityId: string) => RuntimeTargetRef;
   readonly onPending: (pending: PendingComboCondition) => void;
@@ -109,19 +103,7 @@ export class ComboSkillConditionRuntime {
       const cooldown = options.currentComboCooldown();
       if (cooldown === null)
         throw new Error('combo condition requires current ComboSkill cooldown');
-      // 就绪分支直接放行，包括已装配的零冷却形态；只在冷却中读取计时阈值。
-      if (!cooldown.oneReady) {
-        if (!Number.isFinite(cooldown.maxPassedTime) || !Number.isFinite(cooldown.startCdFrame)) {
-          throw new Error('combo condition cooldown values must be finite');
-        }
-        if (
-          !(
-            Math.fround(cooldown.maxPassedTime) <
-            Math.fround(Math.fround(cooldown.startCdFrame) / COMBAT_FRAMES_PER_SECOND)
-          )
-        )
-          continue;
-      }
+      if (!isComboTriggerReady(cooldown)) continue;
 
       const binding = resolveAbilityEventActionContextBinding(event);
       if (binding === undefined) throw new Error(`unaudited action context for '${event.event}'`);
@@ -141,7 +123,7 @@ export class ComboSkillConditionRuntime {
       const runtime = new CombatActionSequenceRuntime(options.operations, {
         blackboard,
         targetContext: targets,
-        actionInputTarget: inputTarget,
+        actionInputTargets: singleTargetList(inputTarget),
         actionOwnerId: options.ownerId,
         actionSourceId: options.sourceId,
         event,
@@ -157,8 +139,8 @@ export class ComboSkillConditionRuntime {
         if (passed) {
           options.onPending({
             event,
-            inputTarget,
-            triggerTarget,
+            inputTargets: [inputTarget],
+            triggerTargets: triggerTarget === null ? null : [triggerTarget],
             assignPairs: captureBlackboard ? Object.freeze(blackboard.snapshot()) : null,
           });
         }

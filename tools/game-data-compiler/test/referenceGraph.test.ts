@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   collectSkillActionReferences,
   collectSkillRootBuffReferences,
-  parseKnownNativeActionSequenceSource,
+  parseNativeSequenceSource,
   parseReferenceAwareActionLeafSource,
   type ReferenceAwareActionLeafSource,
   type SkillActionGraphSource,
@@ -90,7 +90,7 @@ describe('公共定义引用图', () => {
   });
 
   it('区分活动、关闭、动态与空子技能引用，并保留动作路径', () => {
-    const sequence = parseKnownNativeActionSequenceSource(
+    const sequence = parseNativeSequenceSource(
       {
         actionData: [
           castSkill({ value: 'direct_skill', useBlackboardKey: false, blackboardKey: '' }),
@@ -106,6 +106,7 @@ describe('公共定义引用图', () => {
       },
       'fixture.actionGroupData.timelineActions[0]._sequenceActionData',
       {},
+      (leaf, path) => parseReferenceAwareActionLeafSource(leaf, path, {}),
     );
     const graph: SkillActionGraphSource<ReferenceAwareActionLeafSource> = {
       skillId: 'fixture_skill',

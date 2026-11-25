@@ -1,3 +1,4 @@
+import { generatedEnemyStages } from './enemies/generated/stages.generated';
 /**
  * 将新版已经审核的数据定义装配成核心可读取的只读定义。
  * 数据仓库只按稳定身份查找，不读取旧版 store，也不为尚未迁移的数据伪造默认定义。
@@ -30,6 +31,7 @@ export const gameDataRepository = createGameDataRepository({
   gears: gearDefinitions,
   gearSets: gearSetDefinitions,
   enemies: generatedEnemyDefinitions,
+  enemyStages: generatedEnemyStages,
   mechanics: contingencyContractMechanicDefinitions,
   consumables: consumableDefinitions,
   globalEffects: GLOBAL_EFFECT_PRESETS,

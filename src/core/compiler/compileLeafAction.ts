@@ -6,15 +6,22 @@ import type { ResolvedCombatStepForKind } from './combatProgram';
 import { resolveLevelValue, resolveLevelValueOrActionOperand } from './compileActionValues';
 
 const LEAF_ACTION_KINDS = [
+  'overrideRawAttributes',
   'copyContextTargets',
   'findTargets',
   'mergeContextTargets',
   'findCharacterTeamTargets',
+  'blowOffEnemy',
+  'exitControlledState',
+  'pushBack',
+  'pull',
+  'saveTargetDistance',
   'createSpatialPointTargets',
   'findOwnerSpawnedAbilityEntities',
   'pickContextTarget',
   'saveTransferredSource',
   'setAbilityEntityRemainingDuration',
+  'setAbilityEntityTarget',
   'finishOwner',
   'interruptCurrentSkill',
   'startCurrentAbilityEntityChildSkillById',
@@ -24,13 +31,22 @@ const LEAF_ACTION_KINDS = [
   'dealDamage',
   'dealStagger',
   'heal',
+  'recoverPoise',
   'changeResource',
+  'disableNormalSkill',
+  'boneAttach',
+  'limitMovementGait',
+  'addEntityTags',
+  'queueComboLock',
   'restrictUltimateEnergyRecovery',
   'readBuffBlackboard',
   'readEventBuffBlackboard',
+  'storeCollectedBuffValue',
+  'modifyCollectedBuffValue',
   'readBuffRemainingDuration',
   'setBuffRemainingDuration',
   'setCurrentBuffRemainingDuration',
+  'saveDamageSkillCastId',
   'refreshCurrentBuffAttributeModifiers',
   'skillAffix',
   'readBuffStackCount',
@@ -46,9 +62,15 @@ const LEAF_ACTION_KINDS = [
   'setGlobalCooldown',
   'startTimeDilation',
   'startUltimateTimeDilation',
+  'changeOriginSkillToEventContextSkill',
+  'terminateAddingBuff',
   'hideUi',
   'setIgnoreGlobalTimeScale',
+  'storeSquadSlot',
+  'storeProfession',
+  'storeCharacterTypeCode',
   'storeCharacterTypeId',
+  'findNextAliveCharacterBySquadSlot',
   'findCharacterBySquadSlot',
   'storeCharacterTypeBySquadSlot',
   'storeCurrentTimelineFrame',
@@ -61,7 +83,6 @@ const LEAF_ACTION_KINDS = [
   'calculateActionValue',
   'storeSourceAttributeValue',
   'storeEntityPropertyValue',
-  'setHealthFloor',
   'recoverDashEnergy',
   'recordPerfectDodge',
   'gainSquadUltimateEnergyFromSkillCost',
@@ -75,6 +96,7 @@ const LEAF_ACTION_KINDS = [
   'forceSpellStatus',
   'applyPhysicalInfliction',
   'triggerSpellBurst',
+  'triggerBuffConsumeEvent',
   'triggerCustomAbilityEvent',
   'castSkillDuringAction',
   'gainFinisherSp',
@@ -84,8 +106,10 @@ const LEAF_ACTION_KINDS = [
   'overrideMultiDashLimit',
   'changePlayerActionMode',
   'changeNativeSkillType',
+  'setCountShieldUi',
   'setCharacterPassiveUiValue',
   'inheritSkillCastInfoForBasicAttack',
+  'startTyphoeaArchery',
   'adjustSkillCooldown',
 ] as const;
 type LeafAction = CompiledStepForKind<(typeof LEAF_ACTION_KINDS)[number]>;
@@ -101,6 +125,8 @@ export function compileLeafAction(
 ): ResolvedLeafAction {
   const keyed = step.key === undefined ? {} : { key: step.key };
   switch (step.kind) {
+    case 'overrideRawAttributes':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'copyContextTargets':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'findTargets':
@@ -108,6 +134,16 @@ export function compileLeafAction(
     case 'mergeContextTargets':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'findCharacterTeamTargets':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'blowOffEnemy':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'exitControlledState':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'pushBack':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'pull':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'saveTargetDistance':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'createSpatialPointTargets':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
@@ -118,6 +154,8 @@ export function compileLeafAction(
     case 'saveTransferredSource':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'setAbilityEntityRemainingDuration':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'setAbilityEntityTarget':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'interruptCurrentSkill':
     case 'finishOwner':
@@ -135,6 +173,10 @@ export function compileLeafAction(
         kind: step.kind,
         parameters: {
           damageType: step.parameters.damageType,
+          ...(step.parameters.alwaysNext === undefined
+            ? {}
+            : { alwaysNext: step.parameters.alwaysNext }),
+          ...(step.parameters.attacker === undefined ? {} : { attacker: step.parameters.attacker }),
           ...(step.parameters.target === undefined ? {} : { target: step.parameters.target }),
           ...(step.parameters.calculation === undefined
             ? {}
@@ -157,6 +199,9 @@ export function compileLeafAction(
           ...(step.parameters.calculationAttribute === undefined
             ? {}
             : { calculationAttribute: step.parameters.calculationAttribute }),
+          ...(step.parameters.attributeSource === undefined
+            ? {}
+            : { attributeSource: step.parameters.attributeSource }),
           ...(step.parameters.calculationAddition === undefined
             ? {}
             : {
@@ -188,7 +233,6 @@ export function compileLeafAction(
           ...(step.parameters.gameplayTags === undefined
             ? {}
             : { gameplayTags: step.parameters.gameplayTags }),
-          ...(step.parameters.features === undefined ? {} : { features: step.parameters.features }),
           ...(step.parameters.instantAttributeModifiers === undefined
             ? {}
             : { instantAttributeModifiers: step.parameters.instantAttributeModifiers }),
@@ -223,6 +267,10 @@ export function compileLeafAction(
         ...keyed,
         kind: step.kind,
         parameters: {
+          ...(step.parameters.attacker === undefined ? {} : { attacker: step.parameters.attacker }),
+          ...(step.parameters.alwaysNext === undefined
+            ? {}
+            : { alwaysNext: step.parameters.alwaysNext }),
           ...(step.parameters.target === undefined ? {} : { target: step.parameters.target }),
           value: resolveLevelValueOrActionOperand(
             step.parameters.value,
@@ -238,28 +286,21 @@ export function compileLeafAction(
                   `${path}.parameters.valueMultiplier`,
                 ),
               }),
-          ...(step.parameters.features === undefined ? {} : { features: step.parameters.features }),
+          ...(step.parameters.tags === undefined ? {} : { tags: step.parameters.tags }),
         },
       };
     case 'heal': {
-      const targetParameters =
-        step.parameters.target === 'contextTarget'
-          ? {
-              target: step.parameters.target,
-              contextKey: step.parameters.contextKey,
-            }
-          : { target: step.parameters.target };
       return {
         ...keyed,
         kind: step.kind,
         parameters:
           step.parameters.amount === undefined
             ? {
-                ...targetParameters,
+                target: step.parameters.target,
+                healer: step.parameters.healer,
                 ...(step.parameters.alwaysNext === undefined
                   ? {}
                   : { alwaysNext: step.parameters.alwaysNext }),
-                ...(step.parameters.source === undefined ? {} : { source: step.parameters.source }),
                 attribute: step.parameters.attribute,
                 ...(step.parameters.attributeSource === undefined
                   ? {}
@@ -277,17 +318,58 @@ export function compileLeafAction(
                 tags: step.parameters.tags,
               }
             : {
-                ...targetParameters,
+                target: step.parameters.target,
+                healer: step.parameters.healer,
                 ...(step.parameters.alwaysNext === undefined
                   ? {}
                   : { alwaysNext: step.parameters.alwaysNext }),
-                ...(step.parameters.source === undefined ? {} : { source: step.parameters.source }),
                 amount: resolveLevelValueOrActionOperand(
                   step.parameters.amount,
                   skillLevel,
                   `${path}.parameters.amount`,
                 ),
                 tags: step.parameters.tags,
+              },
+      };
+    }
+    case 'recoverPoise': {
+      return {
+        ...keyed,
+        kind: step.kind,
+        parameters:
+          step.parameters.amount === undefined
+            ? {
+                target: step.parameters.target,
+                healer: step.parameters.healer,
+                ...(step.parameters.alwaysNext === undefined
+                  ? {}
+                  : { alwaysNext: step.parameters.alwaysNext }),
+                attribute: step.parameters.attribute,
+                ...(step.parameters.attributeSource === undefined
+                  ? {}
+                  : { attributeSource: step.parameters.attributeSource }),
+                multiplier: resolveLevelValueOrActionOperand(
+                  step.parameters.multiplier,
+                  skillLevel,
+                  `${path}.parameters.multiplier`,
+                ),
+                addition: resolveLevelValueOrActionOperand(
+                  step.parameters.addition,
+                  skillLevel,
+                  `${path}.parameters.addition`,
+                ),
+              }
+            : {
+                target: step.parameters.target,
+                healer: step.parameters.healer,
+                ...(step.parameters.alwaysNext === undefined
+                  ? {}
+                  : { alwaysNext: step.parameters.alwaysNext }),
+                amount: resolveLevelValueOrActionOperand(
+                  step.parameters.amount,
+                  skillLevel,
+                  `${path}.parameters.amount`,
+                ),
               },
       };
     }
@@ -311,6 +393,16 @@ export function compileLeafAction(
         },
       };
     }
+    case 'boneAttach':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'disableNormalSkill':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'limitMovementGait':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'addEntityTags':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'queueComboLock':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'restrictUltimateEnergyRecovery':
       return {
         ...keyed,
@@ -343,6 +435,7 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'setCurrentBuffRemainingDuration':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'saveDamageSkillCastId':
     case 'refreshCurrentBuffAttributeModifiers':
     case 'skillAffix':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
@@ -392,11 +485,22 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'startUltimateTimeDilation':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'changeOriginSkillToEventContextSkill':
+    case 'terminateAddingBuff':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'hideUi':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'setIgnoreGlobalTimeScale':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'storeSquadSlot':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'storeProfession':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'storeCharacterTypeCode':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'storeCharacterTypeId':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'findNextAliveCharacterBySquadSlot':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'findCharacterBySquadSlot':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
@@ -412,6 +516,10 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'storeShieldValue':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'storeCollectedBuffValue':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'modifyCollectedBuffValue':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'modifyActionValue':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'storeRandomInteger':
@@ -421,8 +529,6 @@ export function compileLeafAction(
     case 'storeSourceAttributeValue':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'storeEntityPropertyValue':
-      return { ...keyed, kind: step.kind, parameters: step.parameters };
-    case 'setHealthFloor':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'recoverDashEnergy':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
@@ -455,6 +561,7 @@ export function compileLeafAction(
     case 'applyElementalInfliction':
     case 'applyPhysicalInfliction':
     case 'triggerSpellBurst':
+    case 'triggerBuffConsumeEvent':
     case 'triggerCustomAbilityEvent':
     case 'castSkillDuringAction':
     case 'gainFinisherSp':
@@ -464,7 +571,9 @@ export function compileLeafAction(
     case 'overrideMultiDashLimit':
     case 'changePlayerActionMode':
     case 'changeNativeSkillType':
+    case 'setCountShieldUi':
     case 'setCharacterPassiveUiValue':
+    case 'startTyphoeaArchery':
     case 'inheritSkillCastInfoForBasicAttack':
     case 'adjustSkillCooldown':
       return { ...keyed, kind: step.kind, parameters: step.parameters } as ResolvedLeafAction;

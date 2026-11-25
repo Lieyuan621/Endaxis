@@ -163,7 +163,9 @@ it('独立公共 Buff 通过实体目录引用另一来源的能力实体', () =
   ];
   const compiled = compileCommonDefinitionSources(sources, new ActionGraphDefinitionRepository());
   const start = compiled.buffDefinitions.active!.lifecycleSequences!.start![0]!;
-  expect(start.graph.abilityEntityDefinitions.child).toBe(compiled.importsForLevel(0).child);
+  expect(start.graph.abilityEntityDefinitions.child).toBe(
+    compiled.importsForLevel(0).abilityEntities.child,
+  );
 });
 
 it('公共 Buff 和能力实体分别绑定所属图的同名节点', () => {
@@ -238,7 +240,8 @@ it('公共 Buff 和能力实体分别绑定所属图的同名节点', () => {
   ];
   const compiled = compileCommonDefinitionSources(sources, new ActionGraphDefinitionRepository());
   const buffEntry = compiled.buffDefinitions.first!.lifecycleSequences!.start![0]!;
-  const entityEntry = compiled.importsForLevel(0).second!.childSkill!.timelineActions[0]!.sequence;
+  const entityEntry =
+    compiled.importsForLevel(0).abilityEntities.second!.childSkill!.timelineActions[0]!.sequence;
   expect(buffEntry.graph).not.toBe(entityEntry.graph);
   expect(buffEntry.graph.nodes.get(buffEntry.entry!)!.action).toMatchObject({
     parameters: { value: 1 },
@@ -247,7 +250,9 @@ it('公共 Buff 和能力实体分别绑定所属图的同名节点', () => {
     parameters: { value: 2 },
   });
   const spawnEntry = compiled.buffDefinitions.secondBuff!.lifecycleSequences!.start![0]!;
-  expect(spawnEntry.graph.abilityEntityDefinitions.second).toBe(compiled.importsForLevel(0).second);
+  expect(spawnEntry.graph.abilityEntityDefinitions.second).toBe(
+    compiled.importsForLevel(0).abilityEntities.second,
+  );
   expect(compiled.importsForLevel(0)).toBe(compiled.importsForLevel(0));
 });
 
@@ -322,9 +327,9 @@ it('能力实体模板按实际可达节点导入其他来源的实体', () => {
   ];
   const compiled = compileCommonDefinitionSources(sources, new ActionGraphDefinitionRepository());
   const imports = compiled.importsForLevel(0);
-  const firstEntry = imports.first!.childSkill!.timelineActions[0]!.sequence;
-  const secondEntry = imports.second!.childSkill!.timelineActions[0]!.sequence;
-  expect(firstEntry.graph.abilityEntityDefinitions.second).toBe(imports.second);
+  const firstEntry = imports.abilityEntities.first!.childSkill!.timelineActions[0]!.sequence;
+  const secondEntry = imports.abilityEntities.second!.childSkill!.timelineActions[0]!.sequence;
+  expect(firstEntry.graph.abilityEntityDefinitions.second).toBe(imports.abilityEntities.second);
   expect(firstEntry.graph).not.toBe(secondEntry.graph);
   expect(secondEntry.graph.nodes.get(secondEntry.entry!)!.action).toMatchObject({
     parameters: { value: 2 },
@@ -372,11 +377,17 @@ it('跨来源能力实体循环引用仍保留各自图和对象身份', () => {
     [source('first', 'second'), source('second', 'first')],
     new ActionGraphDefinitionRepository(),
   );
-  const first = compiled.importsForLevel(0).first!.childSkill!.timelineActions[0]!.sequence;
-  const second = compiled.importsForLevel(0).second!.childSkill!.timelineActions[0]!.sequence;
+  const first =
+    compiled.importsForLevel(0).abilityEntities.first!.childSkill!.timelineActions[0]!.sequence;
+  const second =
+    compiled.importsForLevel(0).abilityEntities.second!.childSkill!.timelineActions[0]!.sequence;
   expect(first.graph).not.toBe(second.graph);
-  expect(first.graph.abilityEntityDefinitions.second).toBe(compiled.importsForLevel(0).second);
-  expect(second.graph.abilityEntityDefinitions.first).toBe(compiled.importsForLevel(0).first);
+  expect(first.graph.abilityEntityDefinitions.second).toBe(
+    compiled.importsForLevel(0).abilityEntities.second,
+  );
+  expect(second.graph.abilityEntityDefinitions.first).toBe(
+    compiled.importsForLevel(0).abilityEntities.first,
+  );
 });
 
 it('无来源总图时，独立实体跨来源互相引用并保持局部节点身份', () => {
@@ -420,9 +431,15 @@ it('无来源总图时，独立实体跨来源互相引用并保持局部节点�
     [source('first', 'second'), source('second', 'first')],
     new ActionGraphDefinitionRepository(),
   );
-  const first = compiled.importsForLevel(0).first!.childSkill!.timelineActions[0]!.sequence;
-  const second = compiled.importsForLevel(0).second!.childSkill!.timelineActions[0]!.sequence;
+  const first =
+    compiled.importsForLevel(0).abilityEntities.first!.childSkill!.timelineActions[0]!.sequence;
+  const second =
+    compiled.importsForLevel(0).abilityEntities.second!.childSkill!.timelineActions[0]!.sequence;
   expect(first.graph).not.toBe(second.graph);
-  expect(first.graph.abilityEntityDefinitions.second).toBe(compiled.importsForLevel(0).second);
-  expect(second.graph.abilityEntityDefinitions.first).toBe(compiled.importsForLevel(0).first);
+  expect(first.graph.abilityEntityDefinitions.second).toBe(
+    compiled.importsForLevel(0).abilityEntities.second,
+  );
+  expect(second.graph.abilityEntityDefinitions.first).toBe(
+    compiled.importsForLevel(0).abilityEntities.first,
+  );
 });

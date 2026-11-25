@@ -6,11 +6,17 @@ export function operationProducer(
   context:
     | Pick<
         CombatOperationContext,
-        'executingBuff' | 'actionOwnerAbilityEntity' | 'actionOwnerId' | 'executionActionId'
+        | 'executingGlobalBuff'
+        | 'executingBuff'
+        | 'actionOwnerAbilityEntity'
+        | 'actionOwnerId'
+        | 'executionActionId'
       >
     | undefined,
   action?: { readonly ownerId: string; readonly actionId?: string },
 ): CombatObjectRef | undefined {
+  if (context?.executingGlobalBuff !== undefined)
+    return { kind: 'globalBuff', instanceId: context.executingGlobalBuff.instanceId };
   if (context?.executingBuff !== undefined)
     return {
       kind: 'buff',
@@ -31,8 +37,9 @@ export function combatObjectKey(ref: CombatObjectRef): string {
     case 'operator':
       return JSON.stringify([ref.kind, ref.operatorId]);
     case 'godEntity':
-    case 'enemy':
       return JSON.stringify([ref.kind]);
+    case 'enemy':
+      return JSON.stringify([ref.kind, ref.enemyId]);
     case 'spatialPoint':
       return JSON.stringify([ref.kind, ref.pointId]);
     case 'abilityEntity':

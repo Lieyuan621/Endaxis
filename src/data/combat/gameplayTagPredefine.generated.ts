@@ -3,8 +3,6 @@ import type { GameplayTagPredefineDocument } from '../../../packages/game-data-c
 
 export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
   schemaVersion: 1,
-  revision: '1.5.3@10506507-7',
-  sourceSha256: '979436a99801d3daa8db847843eb6c5f7e9055656544593e3dd5cd9a7d725bf3',
   tags: {
     Stun: 'Status/Immobilized/Stunned',
     DamageImmuneByLevel: 'Immune/Damage',
@@ -185,6 +183,10 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
     InTyphoeaArcheryLevel: 'GameplayState/InTyphoeaArcheryLevel',
     IgnoreEnemyCollision: 'Status/IgnoreEnemyCollision',
     CanAIForceDontTeleport: 'AI/Status/CanAIForceDontTeleport',
+    Ranch: 'Zone/Ranch',
+    SweetPieAiming: 'GameplayState/Interacting/SweetPie/Aiming',
+    ControlledState: 'Status/InControlled/ControlledState',
+    ControlledTimeDilation: 'Status/InControlled/TimeDilation',
   },
   queries: {
     InPull: {
@@ -212,6 +214,8 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'Status/InCommonInteractionCanMove',
         'Status/InCommonInteractionCanCastSkill',
         'GameplayState/MainCharFixing',
+        'GameplayState/Interacting/SweetPie/Aiming',
+        'GameplayState/PaintingScroll',
       ],
     },
     CantCastAnySkill: {
@@ -235,6 +239,8 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GameplayState/Interacting/PlayMontage/Block',
         'GameplayState/MainCharFixing',
         'GameplayState/RemoteComm',
+        'GameplayState/Interacting/SweetPie/Aiming',
+        'GameplayState/PaintingScroll',
       ],
     },
     InDisarmed: {
@@ -252,6 +258,8 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GameplayState/Interacting/WaterDrone',
         'Status/InCommonInteractionCanMove',
         'Status/Unmovable/CharFullbodyHurtTeammate',
+        'GameplayState/Interacting/SweetPie/Aiming',
+        'GameplayState/PaintingScroll',
       ],
     },
     InImmobilized: {
@@ -272,6 +280,7 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'Status/Immobilized',
         'Status/InCommonInteractionCanCastSkill',
         'Status/UnmovableCanNotDash',
+        'GameplayState/PaintingScroll',
       ],
     },
     CantJump: {
@@ -290,6 +299,8 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GameplayState/Interacting/BambooRaft/OnBoat',
         'Status/InCommonInteractionCanMove',
         'Status/InCommonInteractionCanCastSkill',
+        'GameplayState/Interacting/SweetPie/Aiming',
+        'GameplayState/PaintingScroll',
       ],
     },
     IsUnMarkable: {
@@ -324,6 +335,8 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'Status/InCommonInteractionCanCastSkill',
         'Status/UnmovableCanNotDash',
         'Status/Unmovable/CharFullbodyHurtTeammate',
+        'GameplayState/Interacting/SweetPie/Aiming',
+        'GameplayState/PaintingScroll',
       ],
     },
     CanInterruptInteraction: {
@@ -376,6 +389,8 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GlobalState/Performance/LevelAllowUnstuck',
         'GameplayState/Interacting/TyphoeaArchery',
         'Skill/Character/chr_0034_typhoea/FloatingMode',
+        'GameplayState/Interacting/SweetPie/Aiming',
+        'GameplayState/PaintingScroll',
       ],
     },
     DisablePickUp: {
@@ -394,7 +409,9 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'Status/Dead',
         'GameplayState/Interacting/WaterDrone',
         'GameplayState/Interacting/TyphoeaArchery',
+        'GameplayState/Interacting/SweetPie/Aiming',
         'Skill/Character/chr_0034_typhoea/FloatingMode',
+        'GameplayState/PaintingScroll',
       ],
     },
     DisableCollide: {
@@ -409,6 +426,7 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'Status/Immobilized/Stunned',
         'Status/Immobilized/Blown',
         'GameplayState/RemoteComm',
+        'GameplayState/PaintingScroll',
       ],
     },
     ForceIdle: {
@@ -421,6 +439,7 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GameplayState/Interacting/Bomb/Holding',
         'Status/IsFixing',
         'Status/InCommonInteraction',
+        'GameplayState/Interacting/SweetPie/Aiming',
       ],
     },
     IsHoldingBomb: {
@@ -454,6 +473,8 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GlobalState/Performance/Level',
         'GlobalState/Performance/LevelAllowUnstuck',
         'GameplayState/Interacting/TyphoeaArchery',
+        'GameplayState/Interacting/SweetPie/Aiming',
+        'GameplayState/PaintingScroll',
       ],
     },
     DisableAIBark: {
@@ -499,7 +520,9 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GameplayState/Interacting/WaterDrone',
         'GlobalState/Performance/LevelAllowUnstuck',
         'GameplayState/Interacting/TyphoeaArchery',
+        'GameplayState/Interacting/SweetPie/Aiming',
         'Skill/Character/chr_0034_typhoea/FloatingMode',
+        'GameplayState/PaintingScroll',
       ],
     },
     DisableBomb: {
@@ -520,6 +543,7 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'Status/InMud',
         'GameplayState/Interacting/Bomb/PickUp',
         'GameplayState/Interacting/Bomb/Create',
+        'GameplayState/PaintingScroll',
       ],
     },
     DisableFluidInteract: {
@@ -563,8 +587,10 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GameplayState/Interacting/Bomb/Create',
         'GameplayState/Interacting/WaterDroneExiting',
         'GlobalState/Performance/LevelAllowUnstuck',
+        'GameplayState/Interacting/SweetPie/Aiming',
         'Skill/Character/chr_0034_typhoea/FloatingMode',
         'GameplayState/Interacting/TyphoeaArchery',
+        'GameplayState/PaintingScroll',
       ],
     },
     DisableCastComboSkill: {
@@ -603,6 +629,7 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GameplayState/Interacting/Bomb/Holding',
         'GameplayState/Interacting/TyphoeaArchery',
         'GameplayState/Interacting/WaterDroneExiting',
+        'GameplayState/Interacting/SweetPie/Aiming',
       ],
     },
     DisableInteractiveHintPerform: {
@@ -617,6 +644,7 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GlobalState/Performance/ForceSNS',
         'GlobalState/Performance/RemoteComm',
         'GlobalState/Squad/Teleporting',
+        'GlobalState/Gameplay/DisableXiraniteNexus',
       ],
     },
     DisableChairInteract: {
@@ -644,6 +672,7 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         '3C/PostmodelChanged',
         'GameplayState/Interacting/TyphoeaArchery',
         'Skill/Character/chr_0034_typhoea/FloatingMode',
+        'GameplayState/PaintingScroll',
       ],
     },
     DisableXiraniteNexusVisibleWithAnim: {
@@ -653,6 +682,7 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GameplayState/Interacting/WaterDrone',
         'GlobalState/SquadInFight',
         'GameplayState/Interacting/TyphoeaArchery',
+        'GameplayState/Interacting/SweetPie/Aiming',
       ],
     },
     DisableBlightMiasma: {
@@ -685,6 +715,7 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         'GlobalState/Performance/Level',
         'Skill/Character/chr_0034_typhoea/FloatingMode',
         'GameplayState/Interacting/TyphoeaArchery',
+        'GameplayState/PaintingScroll',
       ],
     },
     BlockRepatriating: {
@@ -728,6 +759,7 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         '3C/Henshin/Interrupt',
         'GameplayState/Interacting/OnVerticalRope',
         'GameplayState/Interacting/TyphoeaArchery',
+        'GameplayState/PaintingScroll',
       ],
     },
     DisableTeammateAIInteraction: {
@@ -791,6 +823,68 @@ export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
         '3C/NotInLevelCamera',
         'GameplayState/Interacting/Bomb/Holding',
       ],
+    },
+    CanAddToSoul: {
+      queryType: 'hasAny',
+      tags: ['Skill/Character/chr_0036_jsspsi/soul/SoulBuff'],
+    },
+    DisableFireSkill: {
+      queryType: 'hasAny',
+      tags: ['Status/DisableFireSkill'],
+    },
+    DisablePulseSkill: {
+      queryType: 'hasAny',
+      tags: ['Status/DisablePulseSkill'],
+    },
+    DisableCrystSkill: {
+      queryType: 'hasAny',
+      tags: ['Status/DisableCrystSkill'],
+    },
+    DisableNaturalSkill: {
+      queryType: 'hasAny',
+      tags: ['Status/DisableNaturalSkill'],
+    },
+    DisablePhysicalSkill: {
+      queryType: 'hasAny',
+      tags: ['Status/DisablePhysicalSkill'],
+    },
+    DisableNormalSkillExceptForAdditional: {
+      queryType: 'hasAny',
+      tags: ['Status/DisableNormalSkillExceptForAdditional'],
+    },
+    InControlled: {
+      queryType: 'hasAny',
+      tags: ['Status/InControlled'],
+    },
+    ForceExitSweetPieMode: {
+      queryType: 'hasAny',
+      tags: [
+        'GlobalState/SquadInFight',
+        'GameplayState/SnapshotMode/InSnapshotMode',
+        '3C/NotInLevelCamera',
+        'GlobalState/Gameplay/InStoryMode',
+        'Status/Dead',
+        'GameplayState/Interacting/WaterDrone',
+        'Status/Immobilized/Airborne',
+        'GameplayState/Interacting/TyphoeaArchery',
+        'GameplayState/Interacting/Bomb/Holding',
+        'GameplayState/Interacting/Bomb/Create',
+        'GameplayState/Interacting/Bomb/Throw',
+        'GameplayState/Interacting/Bomb/PickUp',
+        'GameplayState/TravelPole',
+      ],
+    },
+    InvalidateJumpMachine: {
+      queryType: 'hasAny',
+      tags: ['3C/SpecialSkillMove'],
+    },
+    IsBoneAttachImmune: {
+      queryType: 'hasAny',
+      tags: ['Immune/BoneAttach'],
+    },
+    DisableTriggerComboSkill: {
+      queryType: 'hasAny',
+      tags: ['Status/DisableTriggerComboSkill'],
     },
   },
   immunityQueries: [

@@ -248,7 +248,7 @@ function processChainInner(
         context.unobservedTargetGroups.has(action.parameters.saveToContextKey) &&
         (action.kind === 'mergeContextTargets'
           ? action.parameters.sources.every(
-              source => source.kind === 'target' && source.target === 'enemy',
+              source => source.kind === 'fixed' && source.target === 'enemy',
             )
           : action.kind === 'findCharacterTeamTargets'
             ? action.parameters.selection.kind === 'controlledOperator' ||
@@ -482,6 +482,15 @@ function processAction(
       const body = processChain(action.body, `${path}.body`, context);
       return [body === action.body ? action : { ...action, body }];
     }
+    case 'setHealthFloor':
+      return [
+        action.afterSet === undefined
+          ? action
+          : {
+              ...action,
+              afterSet: processChain(action.afterSet, `${path}.afterSet`, context),
+            },
+      ];
     case 'playAnimation': {
       const onEnd = processChain(action.onEnd, `${path}.onEnd`, context);
       return onEnd.$sequence === null ? [] : [{ ...action, onEnd }];
@@ -1067,11 +1076,13 @@ function graphStepUsage(
       // 自身初值，回调体的读取必须上传为父板读取；回调黑板默认值不是父板读取。
       return {
         ...mergeDefinitionValueUsage([
-          ...Object.values(action.parameters.entityAssignments ?? {}).map(actionValueUsage),
-          ...action.callbacks.flatMap(callback =>
-            callback.skill.scheduledSequences.map(item =>
-              analyzeGraphSequenceUsage(callback.skill.actionGraph.main, item.sequence, context),
-            ),
+          analyzeStepUsage(action, context),
+          ...action.callbacks.flatMap(({ skill }) =>
+            '$skill' in skill
+              ? [{ ...EMPTY_USAGE, unknownAccess: true, mayThrow: true, observable: true }]
+              : skill.scheduledSequences.map(item =>
+                  analyzeGraphSequenceUsage(skill.actionGraph.main, item.sequence, context),
+                ),
           ),
         ]),
         mayThrow: true,

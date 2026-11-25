@@ -75,7 +75,7 @@ describe('技能库展示分组与原生技能覆盖', () => {
       firstSkillKey: 'basicAttack1',
       terminalSkillKey: 'basicAttack2',
       maxSegments: 8,
-      fallback: 'sequence',
+      fallback: ['basicAttack1', 'basicAttack1', 'basicAttack2'],
     };
     const source = {
       ...group('basicAttack', 'basicAttack', ['basicAttack1', 'basicAttack2']),
@@ -91,6 +91,7 @@ describe('技能库展示分组与原生技能覆盖', () => {
     };
     const parsed = parseOperatorSkillGroupSources([source], 'groups')[0]!;
     expect(parsed.placementPolicy).toEqual(placementPolicy);
+    expect(parsed.skillKeys).toEqual(['basicAttack1', 'basicAttack2']);
     expect(parsed.variants[0]!.placementPolicy).toEqual(placementPolicy);
     expect(() =>
       parseOperatorSkillGroupSources(
@@ -100,7 +101,7 @@ describe('技能库展示分组与原生技能覆盖', () => {
     ).toThrow('endpoints');
     expect(() =>
       parseOperatorSkillGroupSources(
-        [{ ...source, placementPolicy: { ...placementPolicy, maxSegments: 1 } }],
+        [{ ...source, placementPolicy: { ...placementPolicy, maxSegments: 2 } }],
         'groups',
       ),
     ).toThrow('fallback sequence');

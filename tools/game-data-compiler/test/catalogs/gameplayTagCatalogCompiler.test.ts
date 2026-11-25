@@ -40,12 +40,11 @@ vector _keyData
     ).toEqual({ paths: ['A', 'A'] });
   });
 
-  it('确定性渲染版本化模块并保留来源哈希', () => {
+  it('确定性渲染模块而不携带来源哈希', () => {
     const rendered = renderGameplayTagCatalogModule(
       compileGameplayTagCatalogSource({ paths: ["Entity/Owner's"] }),
-      '0'.repeat(64),
     );
     expect(rendered).toContain("'Entity/Owner\\'s'");
-    expect(rendered).toContain(`Source SHA-256: ${'0'.repeat(64)}`);
+    expect(rendered).not.toContain('SHA-256');
   });
 });

@@ -255,7 +255,7 @@ describe('projectCastGraphHitMarkers', () => {
             damageStep(undefined, 'hit:true'),
             {
               kind: 'once',
-              parameters: { scopeKey: 'nested' },
+              parameters: {},
               body: chainNodes(nodes, 'once', [damageStep(undefined, 'hit:once')]),
             },
           ]),

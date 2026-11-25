@@ -25,6 +25,14 @@ export interface TimelineItemRef {
 }
 export const timelineItemKey = (ref: TimelineItemRef): string => JSON.stringify([ref.kind, ref.id]);
 
+/** 折叠准备区只保留展开入口，不允许输入被拖进隐藏的负帧区域。 */
+export function minimumEditableTimelineInputFrame(scenario: ScenarioDocument): number {
+  return Math.max(
+    scenario.inheritance?.frame ?? -Infinity,
+    scenario.editor.prepExpanded ? -scenario.battle.prepFrames : 0,
+  );
+}
+
 /** 编辑对象只描述作者输入。自动切人、hit 等模拟投影不注册为可编辑对象。 */
 export interface TimelineItem {
   readonly ref: TimelineItemRef;
@@ -44,10 +52,16 @@ export interface TimelineItem {
 
 /** 剪贴板保留独立的数据副本；恢复函数只捕获该副本，不捕获源方案。 */
 export interface TimelinePointCopy {
+  readonly trackIndex?: TrackIndex;
   readonly kind: TimelinePointKind;
   readonly frame: number;
   readonly minimumFrame: number;
-  readonly paste: (scenario: ScenarioDocument, id: string, frame: number) => ScenarioDocument;
+  readonly paste: (
+    scenario: ScenarioDocument,
+    id: string,
+    frame: number,
+    destination?: TrackIndex,
+  ) => ScenarioDocument;
 }
 
 interface Timed {
@@ -85,7 +99,7 @@ function pointItems<T extends Timed>(
     const key = timelineItemKey(ref);
     const minimumFrame = Math.max(
       adapter.preparation ? -scenario.battle.prepFrames : 0,
-      adapter.input ? (scenario.inheritance?.frame ?? -Infinity) : -Infinity,
+      adapter.input ? minimumEditableTimelineInputFrame(scenario) : -Infinity,
     );
     return {
       ref,
@@ -103,16 +117,17 @@ function pointItems<T extends Timed>(
         const snapshot = structuredClone(value);
         return {
           kind: adapter.kind,
+          trackIndex,
           frame: value.frame,
           minimumFrame: adapter.preparation ? -Infinity : 0,
-          paste: (current, id, frame) => {
-            if (trackIndex !== undefined && current.tracks[trackIndex] === null)
+          paste: (current, id, frame, destination = trackIndex) => {
+            if (destination !== undefined && current.tracks[destination] === null)
               throw new Error('Cannot paste input onto an empty track');
             return adapter.write(
               current,
               id,
               { ...structuredClone(snapshot), id, frame },
-              trackIndex,
+              destination,
             );
           },
         };
@@ -130,11 +145,15 @@ const pointSources = [
         preparation: true,
         input: true,
         list: s => s.battle.controlSwitches.map(value => ({ value, trackIndex: value.trackIndex })),
-        write: (s, id, value) => ({
+        write: (s, id, value, trackIndex) => ({
           ...s,
           battle: {
             ...s.battle,
-            controlSwitches: replaceEntry(s.battle.controlSwitches, id, value),
+            controlSwitches: replaceEntry(
+              s.battle.controlSwitches,
+              id,
+              value ? { ...value, trackIndex: trackIndex! } : null,
+            ),
           },
         }),
       },
@@ -148,11 +167,15 @@ const pointSources = [
         input: true,
         list: s =>
           (s.battle.dodgeMarkers ?? []).map(value => ({ value, trackIndex: value.trackIndex })),
-        write: (s, id, value) => ({
+        write: (s, id, value, trackIndex) => ({
           ...s,
           battle: {
             ...s.battle,
-            dodgeMarkers: replaceEntry(s.battle.dodgeMarkers ?? [], id, value),
+            dodgeMarkers: replaceEntry(
+              s.battle.dodgeMarkers ?? [],
+              id,
+              value ? { ...value, trackIndex: trackIndex! } : null,
+            ),
           },
         }),
       },
@@ -168,11 +191,17 @@ const pointSources = [
             value,
             trackIndex: value.target.scope === 'operator' ? value.target.trackIndex : undefined,
           })),
-        write: (s, id, value) => ({
+        write: (s, id, value, trackIndex) => ({
           ...s,
           battle: {
             ...s.battle,
-            externalEventMarkers: replaceEntry(s.battle.externalEventMarkers ?? [], id, value),
+            externalEventMarkers: replaceEntry(
+              s.battle.externalEventMarkers ?? [],
+              id,
+              value?.target.scope === 'operator'
+                ? { ...value, target: { ...value.target, trackIndex: trackIndex! } }
+                : value,
+            ),
           },
         }),
       },
@@ -240,7 +269,7 @@ export function collectTimelineItems(
           trackIndex: index as TrackIndex,
           frame: cast.placement.startFrame ?? starts.get(cast.id),
           multiple: true,
-          minimumFrame: scenario.inheritance?.frame ?? -scenario.battle.prepFrames,
+          minimumFrame: minimumEditableTimelineInputFrame(scenario),
           maximumFrame: scenario.battle.durationFrames,
           blocked:
             !!cast.presentation?.locked || anchorFrame < (scenario.inheritance?.frame ?? -Infinity),

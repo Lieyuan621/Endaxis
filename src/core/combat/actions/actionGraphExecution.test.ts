@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { describe, expect, it, vi } from 'vitest';
 import { CombatActionTagQueryListener } from './combatActionEventListener';
 import type { TagQueryListenerState } from '../state/actionState';
@@ -225,14 +226,14 @@ describe('直接图执行', () => {
       const calls: unknown[] = [];
       const context = {
         blackboard: new ActionBlackboard(),
-        actionInputTarget: { kind: 'operator' as const, operatorId: 'saved' },
+        actionInputTargets: singleTargetList({ kind: 'operator' as const, operatorId: 'saved' }),
       };
       const makeRuntime = () =>
         new CombatActionSequenceRuntime(
           {
             evaluate: () => true,
             execute: (_step, input) => {
-              calls.push(input?.actionInputTarget);
+              calls.push(input?.actionInputTargets?.[0]);
               return true;
             },
           },
@@ -242,7 +243,7 @@ describe('直接图执行', () => {
       action.tryExecute({});
       action.tick(0.5, {});
       expect(calls).toEqual([]);
-      context.actionInputTarget = { kind: 'operator', operatorId: 'later' };
+      context.actionInputTargets = [{ kind: 'operator', operatorId: 'later' }];
       if (mode === 'restored')
         action = makeRuntime().createGraphSequence(
           program,
@@ -296,7 +297,7 @@ describe('直接图执行', () => {
     const context = {
       blackboard: new ActionBlackboard(),
       actionSourceId: 'rossi',
-      actionInputTarget: { kind: 'operator' as const, operatorId: 'saved' },
+      actionInputTargets: singleTargetList({ kind: 'operator' as const, operatorId: 'saved' }),
     };
     const makeRuntime = () =>
       new CombatActionSequenceRuntime(
@@ -304,7 +305,7 @@ describe('直接图执行', () => {
           comboWindows: windows,
           evaluate: () => true,
           execute: (_step, callback) => {
-            calls.push(callback?.actionInputTarget);
+            calls.push(callback?.actionInputTargets?.[0]);
             return true;
           },
         },
@@ -312,7 +313,7 @@ describe('直接图执行', () => {
       );
     let action = makeRuntime().createGraphSequence(program, 'qte', 'root');
     action.tryExecute({});
-    context.actionInputTarget = { kind: 'operator', operatorId: 'later' };
+    context.actionInputTargets = [{ kind: 'operator', operatorId: 'later' }];
     if (restore) {
       windows = new ComboWindowRuntime(
         clock,
@@ -333,6 +334,60 @@ describe('直接图执行', () => {
     expect(calls).toEqual([{ kind: 'operator', operatorId: 'saved' }]);
     action.end({});
     expect(windows.runtimeState.ringQtes.size).toBe(0);
+  });
+  it.each([undefined, 0, 1, 2])('Aura 限次 %s 在退出与切面恢复后保留，新执行清零', maximum => {
+    const program = createActionGraphCompilation(
+      {
+        nodes: {
+          aura: {
+            action: {
+              kind: 'aura',
+              parameters: {
+                targets: { kind: 'characterTeam', excludeOwner: false },
+                buffs: [],
+                ...(maximum === undefined ? {} : { maxInfluenceCountPerTarget: maximum }),
+              },
+              onEnter: { $sequence: null },
+              onExit: { $sequence: null },
+            },
+            next: null,
+          },
+        },
+      },
+      1,
+    ).compileAll();
+    const first = { kind: 'operator' as const, operatorId: 'first' };
+    const second = { kind: 'operator' as const, operatorId: 'second' };
+    let targets = [first];
+    const apply = vi.fn(() => []);
+    const runtime = new CombatActionSequenceRuntime(
+      {
+        execute: () => true,
+        evaluate: () => true,
+        aura: { targets: () => targets, apply, finish: () => {} },
+      },
+      { blackboard: new ActionBlackboard() },
+    );
+    const action = runtime.createGraphSequence(program, 'aura', 'root');
+    action.tryExecute({});
+    targets = [];
+    action.tick(1 / 30, {});
+    const restored = runtime.createGraphSequence(
+      program,
+      'aura',
+      'root',
+      undefined,
+      structuredClone(action.runtimeState),
+    );
+    expect(apply).toHaveBeenCalledTimes(1);
+    targets = [first, second];
+    restored.tick(1 / 30, {});
+    expect(apply).toHaveBeenCalledTimes(maximum === 0 || maximum === 1 ? 2 : 3);
+    restored.end({});
+    restored.reset({});
+    apply.mockClear();
+    restored.tryExecute({});
+    expect(apply).toHaveBeenCalledTimes(2);
   });
   it.each(['restore', 'apply', 'enter', 'exit', 'empty'] as const)('Aura 生命周期：%s', mode => {
     const program = createActionGraphCompilation(
@@ -375,7 +430,7 @@ describe('直接图执行', () => {
       evaluate: () => true,
       execute: (step, context) => {
         if (step.kind === 'triggerCustomAbilityEvent') {
-          const target = context!.actionInputTarget!;
+          const target = context!.actionInputTargets?.[0]!;
           events.push(
             `${step.parameters.eventName}:${target.kind === 'operator' ? target.operatorId : target.kind}`,
           );

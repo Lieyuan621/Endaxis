@@ -5,6 +5,7 @@
  * 编译后的技能程序、事件处理函数和运行时端口仍由对应运行时模块持有。
  */
 import type { ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives';
+import type { CombatStepParameters } from '../../../../packages/game-data-contract/src/actions';
 import type { RuntimeTargetGroup, RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { NativeSkillType, PlayerSkillInput } from '../../game-data/operatorDefinition';
 import {
@@ -194,11 +195,16 @@ export interface AbilitySystemState {
   readonly nativeSkillTypeBySkillId: Map<string, NativeSkillType>;
   readonly skillSlotGroups: Map<string, AbilitySkillSlotState>;
   readonly activePlayerActionModeByLayer: Map<string, string>;
+  /** 原生 enabledModes 保留空层；重建映射时仍按层首次登记顺序遍历。 */
+  readonly playerActionModeLayerOrder: string[];
   readonly registeredOperableBoundaryCastIds: Set<string>;
   readonly buffBasicAttackMappings: Map<number, string>;
   nextBasicAttackMappingId: number;
   /** 当前动作寿命内的连续 Dash 次数覆盖；null 使用原生默认值 2。 */
   overrideMultiDashLimit: number | null;
+  /** 原生 MoveGaitAction 共用 Skill 槽；最后一次写入保留到宿主计数归零。 */
+  movementGaitActionCount: number;
+  skillMovementGaitLimit: Readonly<CombatStepParameters['limitMovementGait']> | null;
   /** 最近一次技能开始或普攻 offsetRecordFrame 提交的后继身份。 */
   comboOffsetTargetSkillKey: string | null;
   comboOffsetModifier: ComboOffsetModifierState | null;
@@ -221,10 +227,13 @@ export function createAbilitySystemState(): AbilitySystemState {
     nativeSkillTypeBySkillId: new Map(),
     skillSlotGroups: new Map(),
     activePlayerActionModeByLayer: new Map(),
+    playerActionModeLayerOrder: [],
     registeredOperableBoundaryCastIds: new Set(),
     buffBasicAttackMappings: new Map(),
     nextBasicAttackMappingId: 0,
     overrideMultiDashLimit: null,
+    movementGaitActionCount: 0,
+    skillMovementGaitLimit: null,
     comboOffsetTargetSkillKey: null,
     comboOffsetModifier: null,
     comboOffsetRecordedSkillKey: null,
@@ -250,6 +259,7 @@ export interface SkillCooldownSnapshot {
 
 /** 冷却固定配置；动态倍率在实际预占时读取。 */
 export interface SkillCooldownProgram {
+  readonly configured: boolean;
   readonly periodFrames: number;
   readonly commitFrame?: number;
 }
@@ -258,6 +268,9 @@ export type RuntimeSkillState = 'ready' | 'casting' | 'ended';
 
 /** 一次技能宿主的施放进度、输入准备和扣费事实。 */
 export interface SkillExecutionState {
+  nextInputRegistrationId: number;
+  readonly allowedNextSkillPacks: Map<number, readonly string[]>;
+  readonly basicAttackMappings: Map<number, string>;
   hasOutputDamageBattle: boolean;
   readonly targetContext: RuntimeTargetContextState;
   preparedCastStart: SkillCastStartPreparation | undefined;
@@ -275,9 +288,9 @@ export interface SkillExecutionState {
   preparedProducer: CombatObjectRef | undefined;
   inheritedSkillCastInfo: CombatSkillCastInfo | undefined;
   preparedSkipApplyCost: boolean;
-  /** 下一次施放的目标与本次施放的目标分开保存，避免准备输入改变当前技能。 */
-  preparedInputTarget: RuntimeTargetRef | null | undefined;
-  inputTarget: RuntimeTargetRef | null | undefined;
+  /** 原生 SaveTarget 目标集合；准备输入不改变当前技能，开始施放后清空准备状态。 */
+  preparedInputTargets: readonly RuntimeTargetRef[] | undefined;
+  inputTargets: readonly RuntimeTargetRef[] | undefined;
   preparedForceTimelinePayment: boolean;
   forceTimelinePayment: boolean;
   preparationCast: boolean;
@@ -291,6 +304,9 @@ export interface SkillExecutionState {
 
 export function createSkillExecutionState(): SkillExecutionState {
   return {
+    nextInputRegistrationId: 1,
+    allowedNextSkillPacks: new Map(),
+    basicAttackMappings: new Map(),
     hasOutputDamageBattle: false,
     targetContext: createRuntimeTargetContextState(),
     preparedCastStart: undefined,
@@ -307,8 +323,8 @@ export function createSkillExecutionState(): SkillExecutionState {
     preparedProducer: undefined,
     inheritedSkillCastInfo: undefined,
     preparedSkipApplyCost: false,
-    preparedInputTarget: undefined,
-    inputTarget: undefined,
+    preparedInputTargets: undefined,
+    inputTargets: undefined,
     preparedForceTimelinePayment: false,
     forceTimelinePayment: false,
     preparationCast: false,
@@ -347,6 +363,8 @@ export interface CallbackSkillHostState {
 
 /** 能力实体的一次子技能执行数据。 */
 export interface AbilityEntityChildSkillState {
+  /** 创建子技能时实际继承的来源；独立子技能不使用实体的父技能来源。 */
+  readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
   readonly programId: number;
   readonly skillId: string;
   readonly host: CallbackSkillHostState;

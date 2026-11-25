@@ -89,60 +89,100 @@ function expectedDamageForCast(
     .reduce((total, entry) => total + Number(entry.data?.expectedDamage ?? 0), 0);
 }
 
-it('莱万汀已有一层熔火时部分吸收四层灼热仍触发卡缪连携', async () => {
-  const scenario = createScenario(0);
-  const template = structuredClone(scenario.tracks[0]!);
-  scenario.tracks[0]!.skillCasts = [];
-  scenario.tracks[1] = {
-    ...structuredClone(template),
-    id: 'wulfgard',
-    operator: { ...template.operator!, operatorSlug: 'wulfgard' },
-    skillCasts: [0, 240, 330, 420, 510].map(frame => ({
-      id: `fire:${frame}`,
-      source: {
-        kind: 'operatorSkill',
-        skillGroupKey: 'battleSkill',
-        skillKey: 'chr_0006_wolfgd_normal_skill',
-      },
-      placement: { startFrame: frame },
-    })),
-  };
-  scenario.tracks[2] = {
-    ...structuredClone(template),
-    id: 'laevatain',
-    operator: { ...template.operator!, operatorSlug: 'laevatain', talentStates: { '0': 3 } },
-    skillCasts: [120, 660].map(frame => ({
-      id: `heavy:${frame}`,
-      source: {
-        kind: 'operatorSkill',
-        skillGroupKey: 'basicAttack',
-        skillKey: 'chr_0016_laevat_attack5',
-      },
-      placement: { startFrame: frame },
-    })),
-  };
-  scenario.battle.durationFrames = 800;
-  scenario.battle.automaticControlSwitches = false;
-  scenario.battle.controlSwitches = [{ id: 'control', frame: 0, trackIndex: 2 }];
-  const run = await createEditorSimulationService().simulate(scenario, 800);
-  const absorbed = run.receiptEntries.filter(e => e.event === 'BuffAbsorbed' && e.frame >= 660);
-  // 原生循环逐层吸收三次，剩余一层不结束附着 Buff。
-  expect(absorbed.map(e => e.data?.layers)).toEqual([1, 1, 1]);
-  const frame = absorbed[0]!.frame;
-  expect(
-    run.receiptEntries.some(
-      e =>
-        e.event === 'BuffFinished' &&
-        e.frame === frame &&
-        e.data?.buffId === 'buff_common_energy_shard_attached_fire',
-    ),
-  ).toBe(false);
-  expect(
-    run.receiptEntries.some(
-      e => e.event === 'ComboWindowOpened' && e.sourceId === 'camille' && e.frame === frame,
-    ),
-  ).toBe(true);
-});
+it.each([false, true])(
+  '莱万汀已有一层熔火时部分吸收四层灼热仍触发卡缪连携（墨魂=%s）',
+  async withSoul => {
+    const scenario = createScenario(0);
+    const template = structuredClone(scenario.tracks[0]!);
+    scenario.tracks[0]!.skillCasts = [];
+    scenario.tracks[1] = {
+      ...structuredClone(template),
+      id: 'wulfgard',
+      operator: { ...template.operator!, operatorSlug: 'wulfgard' },
+      skillCasts: [0, 240, 330, 420, 510].map(frame => ({
+        id: `fire:${frame}`,
+        source: {
+          kind: 'operatorSkill',
+          skillGroupKey: 'battleSkill',
+          skillKey: 'chr_0006_wolfgd_normal_skill',
+        },
+        placement: { startFrame: frame },
+      })),
+    };
+    scenario.tracks[2] = {
+      ...structuredClone(template),
+      id: 'laevatain',
+      operator: { ...template.operator!, operatorSlug: 'laevatain', talentStates: { '0': 3 } },
+      skillCasts: [120, 660].map(frame => ({
+        id: `heavy:${frame}`,
+        source: {
+          kind: 'operatorSkill',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0016_laevat_attack5',
+        },
+        placement: { startFrame: frame },
+      })),
+    };
+    if (withSoul) {
+      scenario.tracks[3] = {
+        ...structuredClone(template),
+        id: 'si',
+        operator: { ...template.operator!, operatorSlug: 'si' },
+        skillCasts: [
+          {
+            id: 'si:soul',
+            source: {
+              kind: 'operatorSkill',
+              skillGroupKey: 'battleSkill',
+              skillKey: 'chr_0036_jsspsi_normal_skill',
+            },
+            placement: { startFrame: 570 },
+          },
+          {
+            id: 'si:soul:pull',
+            source: {
+              kind: 'operatorSkill',
+              skillGroupKey: 'battleSkill',
+              skillKey: 'chr_0036_jsspsi_normal_skill_1',
+            },
+            placement: { startFrame: 600 },
+          },
+        ],
+      };
+    }
+    scenario.battle.durationFrames = 800;
+    scenario.battle.automaticControlSwitches = false;
+    scenario.battle.controlSwitches = [{ id: 'control', frame: 0, trackIndex: 2 }];
+    const run = await createEditorSimulationService().simulate(scenario, 800);
+    if (withSoul) {
+      expect(
+        run.receiptEntries.some(
+          entry =>
+            entry.event === 'AbilityEntitySpawned' &&
+            entry.data?.abilityEntityId === 'abilityentity_chr_0036_jsspsi_combo_skill_inkphantom',
+        ),
+      ).toBe(true);
+    }
+    const absorbed = run.receiptEntries.filter(e => e.event === 'BuffAbsorbed' && e.frame >= 660);
+    // 原生循环逐层吸收三次，剩余一层不结束附着 Buff。
+    expect(absorbed.map(e => e.data?.layers)).toEqual([1, 1, 1]);
+    expect(absorbed.map(e => e.targetId)).toEqual(['enemy', 'enemy', 'enemy']);
+    const frame = absorbed[0]!.frame;
+    expect(
+      run.receiptEntries.some(
+        e =>
+          e.event === 'BuffFinished' &&
+          e.frame === frame &&
+          e.data?.buffId === 'buff_common_energy_shard_attached_fire',
+      ),
+    ).toBe(false);
+    expect(
+      run.receiptEntries.some(
+        e => e.event === 'ComboWindowOpened' && e.sourceId === 'camille' && e.frame === frame,
+      ),
+    ).toBe(true);
+  },
+);
 
 it('卡缪终结技后的追猎造成伤害但不消耗技力', async () => {
   const scenario = createScenario(0);

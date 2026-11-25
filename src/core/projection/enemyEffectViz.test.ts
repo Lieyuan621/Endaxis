@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CombatReceiptEntry } from '../combat/receipt/combatReceipt';
-import { projectEnemyEffectViz } from './enemyEffectViz';
+import { projectEnemyEffectViz, projectEnemyEffectVizesForTargets } from './enemyEffectViz';
 
 function receipt(
   sequence: number,
@@ -13,9 +13,18 @@ function receipt(
 
 describe('projectEnemyEffectViz', () => {
   it('retains exact burst receipts including zero damage and never guesses by frame', () => {
-    const ordinary = receipt(0, 20, 'DamageApplied', { value: 123 });
+    const ordinary = receipt(0, 20, 'DamageApplied', {
+      value: 123,
+      castId: 'cast',
+      hitId: 'hit',
+      stepKey: 'step',
+    });
     const first = receipt(1, 20, 'DamageApplied', { spellBurstType: 'Pulse', value: 400 });
-    const second = receipt(2, 20, 'DamageApplied', { spellBurstType: 'Pulse', value: 0 });
+    const second = receipt(2, 20, 'DamageApplied', {
+      spellBurstType: 'Pulse',
+      value: 0,
+      hitCriticalOverride: false,
+    });
     const result = projectEnemyEffectViz(
       [
         ordinary,
@@ -29,6 +38,8 @@ describe('projectEnemyEffectViz', () => {
     expect(result.damageHits).toEqual([first, second]);
     expect(result.damageHits?.[0]).toBe(first);
     expect(result.markers).toHaveLength(2);
+    expect(result.markers.map(marker => marker.damageSequence)).toEqual([1, 2]);
+    expect(result.markers.map(marker => marker.hasOverride)).toEqual([false, true]);
     expect(result.markers.every(marker => marker.frame === 20)).toBe(true);
   });
   it('只显示复合附着的触发标记，不伪造持续时间', () => {
@@ -55,5 +66,27 @@ describe('projectEnemyEffectViz', () => {
     expect(result).toEqual({
       markers: [{ frame: 20, kind: 'attachmentTrigger', element: 'electric' }],
     });
+  });
+
+  it('多目标共用投影与分别投影的输出一致', () => {
+    const entries = [
+      receipt(0, 5, 'ElementalInflictionApplied', {
+        requestedElement: 'electric',
+        outcomeKind: 'compoundStatus',
+      }),
+      {
+        ...receipt(1, 10, 'DamageApplied', { spellBurstType: 'Fire', value: 20 }),
+        targetId: 'other',
+      },
+      receipt(2, 12, 'DamageApplied', { spellBurstType: 'Pulse', value: 0 }),
+    ];
+    const shared = projectEnemyEffectVizesForTargets(entries, 90, new Map(), [
+      'enemy',
+      'other',
+      'unused',
+    ]);
+    for (const id of ['enemy', 'other', 'unused']) {
+      expect(shared.get(id)).toEqual(projectEnemyEffectViz(entries, 90, new Map(), id));
+    }
   });
 });

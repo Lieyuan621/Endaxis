@@ -39,27 +39,6 @@ const definition = {
       modifiers: [
         { kind: 'panelStat', stat: 'artsIntensity', value: [30, 36, 42, 48, 54, 60, 66, 72, 84] },
       ],
-      skillId: 'sk_wpn_sword_0021',
-      eventHandlers: [
-        {
-          key: 'skill3:event:0:sequence:0',
-          abilityEvent: 'beforeOutputBuff',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_2' },
-        },
-        {
-          key: 'skill3:event:0:sequence:1',
-          abilityEvent: 'beforeOutputBuff',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_4' },
-        },
-        {
-          key: 'skill3:event:1:sequence:0',
-          abilityEvent: 'beforeCastSkill',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_7' },
-        },
-      ],
       actionGraph: {
         main: {
           nodes: {
@@ -160,6 +139,27 @@ const definition = {
         },
         macros: {},
       },
+      skillId: 'sk_wpn_sword_0021',
+      eventHandlers: [
+        {
+          key: 'skill3:event:0:sequence:0',
+          abilityEvent: 'beforeOutputBuff',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_2' },
+        },
+        {
+          key: 'skill3:event:0:sequence:1',
+          abilityEvent: 'beforeOutputBuff',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_4' },
+        },
+        {
+          key: 'skill3:event:1:sequence:0',
+          abilityEvent: 'beforeCastSkill',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_7' },
+        },
+      ],
       blackboard: {
         duration: [20, 20, 20, 20, 20, 20, 20, 20, 20],
         phy_dmg_up: [0.36, 0.432, 0.504, 0.576, 0.648, 0.72, 0.792, 0.864, 1.008],

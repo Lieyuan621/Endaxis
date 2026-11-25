@@ -7,9 +7,16 @@ import {
 import { parseIntegerScalarSource, type IntegerScalarSource } from './scalar.ts';
 import { parseTargetReferenceSource, type TargetReferenceSource } from './target.ts';
 
-/** 角色表身份读取动作；值必须在运行装配时来自 CharacterTable，不能由展示属性反推。 */
-export interface CharacterTypeIdReadActionSource {
-  readonly kind: 'characterTypeIdRead';
+export const CHARACTER_IDENTITY_READ_KINDS = {
+  SaveCharTypeId: 'characterTypeIdRead',
+  SaveCharTypeIdToInt: 'characterTypeCodeRead',
+  SaveProfession: 'professionRead',
+  SaveSquadSlot: 'squadSlotRead',
+} as const;
+
+/** 角色身份读取动作；属性、职业来自原生角色配置，槽位来自当前队伍，不能由展示顺序反推。 */
+export interface CharacterIdentityReadActionSource {
+  readonly kind: (typeof CHARACTER_IDENTITY_READ_KINDS)[keyof typeof CHARACTER_IDENTITY_READ_KINDS];
   readonly target: TargetReferenceSource;
   readonly outputKey: string;
 }
@@ -17,6 +24,11 @@ export interface CharacterTypeIdReadActionSource {
 export type SquadSlotActionSource =
   | {
       readonly kind: 'findCharacterBySquadSlot';
+      readonly slotIndex: IntegerScalarSource;
+      readonly saveToContextKey: string;
+    }
+  | {
+      readonly kind: 'findNextAliveCharacterBySquadSlot';
       readonly slotIndex: IntegerScalarSource;
       readonly saveToContextKey: string;
     }
@@ -30,9 +42,10 @@ export type SquadSlotActionSource =
 export function parseSquadSlotActionSource(
   value: unknown,
   path: string,
-  store: boolean,
+  kind: SquadSlotActionSource['kind'],
 ): SquadSlotActionSource {
   const action = requireRecord(value, path);
+  const store = kind === 'storeCharacterTypeBySquadSlot';
   requireExactFields(
     action,
     new Set([
@@ -55,16 +68,17 @@ export function parseSquadSlotActionSource(
         defaultValue: requireInteger(action.defaultValue, `${path}.defaultValue`),
       }
     : {
-        kind: 'findCharacterBySquadSlot',
+        kind,
         slotIndex,
         saveToContextKey: requireNonEmptyString(action.targetGroupKey, `${path}.targetGroupKey`),
       };
 }
 
-export function parseCharacterTypeIdReadActionSource(
+export function parseCharacterIdentityReadActionSource(
   value: unknown,
   path: string,
-): CharacterTypeIdReadActionSource {
+  kind: CharacterIdentityReadActionSource['kind'] = 'characterTypeIdRead',
+): CharacterIdentityReadActionSource {
   const action = requireRecord(value, path);
   requireExactFields(
     action,
@@ -80,7 +94,7 @@ export function parseCharacterTypeIdReadActionSource(
     path,
   );
   return {
-    kind: 'characterTypeIdRead',
+    kind,
     target: parseTargetReferenceSource(action.target, `${path}.target`),
     outputKey: requireNonEmptyString(action.storeKey, `${path}.storeKey`),
   };

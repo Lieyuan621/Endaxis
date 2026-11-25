@@ -55,6 +55,8 @@ html[data-theme='dark'] {
   /* Chrome accent gold (buttons, selection, focus). Not combat bar hues. */
   --ea-gold: #ffd700;
   --ea-gold-hover: #ffec3d;
+  --ea-primary-border: rgba(255, 215, 0, 0.58);
+  --ea-primary-fg: #f2dc87;
   --ea-select-hover-bg: color-mix(in srgb, var(--ea-gold) 8%, transparent);
   --ea-dialog-bg: #2b2b2b;
   --ea-dialog-border: #444;
@@ -90,6 +92,7 @@ html[data-theme='dark'] {
   --ea-floating-border: var(--ea-border);
   --ea-floating-fg: var(--ea-fg-secondary);
   --ea-floating-shadow: 0 10px 28px var(--ea-shadow-strong);
+  --ea-tooltip-surface-bg: #242428;
   --ea-tab-idle-bg: rgba(255, 255, 255, 0.08);
   --ea-tab-idle-fg: #aaaaaa;
   --ea-tab-active-bg: #e0e0e0;
@@ -154,6 +157,8 @@ html[data-theme='light'] {
    */
   --ea-gold: #e0bc00;
   --ea-gold-hover: #c4a400;
+  --ea-primary-border: #a38a2f;
+  --ea-primary-fg: #5b4c13;
   --ea-select-hover-bg: color-mix(in srgb, var(--ea-gold) 12%, transparent);
   --ea-dialog-bg: #ffffff;
   --ea-dialog-border: #d8d8d8;
@@ -188,6 +193,7 @@ html[data-theme='light'] {
   --ea-floating-border: var(--ea-border);
   --ea-floating-fg: var(--ea-fg-secondary);
   --ea-floating-shadow: 0 10px 28px var(--ea-shadow-strong);
+  --ea-tooltip-surface-bg: #f8f9fb;
   --ea-tab-idle-bg: rgba(26, 27, 30, 0.08);
   --ea-tab-idle-fg: #5a616c;
   --ea-tab-active-bg: #1a1b1e;

@@ -68,26 +68,20 @@ const warningKeys: Record<
   skillInputUnknown: 'inputUnknown',
   skillInterruptUnavailable: 'interruptUnavailable',
   skillInterruptUnknown: 'interruptUnknown',
-  ultimateInputDuringPresentation: 'duringUltimate',
+  skillInputDuringPresentation: 'duringUltimate',
   skillCommonTagUnavailable: 'cannotUseSkills',
   skillTypeTagUnavailable: 'cannotUseSkillType',
+  controlSwitchOutUnavailable: 'controlSwitchOutUnavailable',
+  controlSwitchInUnavailable: 'controlSwitchInUnavailable',
   attackDuringDashWindow: 'afterDodge',
   costPaymentRejected: 'costRejected',
   windowMissing: 'comboUnavailable',
   releaseOrderMismatch: 'comboOrder',
+  comboLocked: 'skillLocked',
   skillStageMismatch: 'comboStage',
   skillGroupInputRejected: 'groupNotStarted',
   skillGroupInterrupted: 'groupInterrupted',
 };
-
-function inputUnknownKey(detail: string): string {
-  if (detail === 'multiple active command mappings have unresolved priority')
-    return 'conflictingSkillChanges';
-  if (detail === 'current skill has conditional input actions') return 'conditionalSkillChange';
-  if (detail === 'special basic-attack selection state is not modelled')
-    return 'specialAttackUnknown';
-  return 'inputUnknown';
-}
 
 export function formatSkillBlockWarnings(options: {
   reasons: readonly TimelineSkillDiagnosticReason[];
@@ -155,8 +149,7 @@ export function formatSkillBlockWarnings(options: {
         ? text('interruptUnavailable')
         : text('interruptUnavailableNamed', { current });
     }
-    if (reason.startsWith('skillInputUnknown:'))
-      return text(inputUnknownKey(reason.slice('skillInputUnknown: '.length)));
+    if (reason.startsWith('skillInputUnknown:')) return text('inputUnknown');
     if (reason.startsWith('skillInterruptUnknown:')) return text('interruptUnknown');
     // 未识别的诊断只能给出通用提示，不能把内部英文标识符当作玩家文案。
     const key = Object.prototype.hasOwnProperty.call(warningKeys, reason)

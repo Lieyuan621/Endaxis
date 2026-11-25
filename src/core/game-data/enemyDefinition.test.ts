@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../project/level';
 import { describe, expect, it, vi } from 'vitest';
 import { createEmptyProject } from '../project/createProject';
 import { validateProjectEnemyDefinitionReferences } from './enemyDefinitionValidation';
@@ -7,7 +8,7 @@ const enemy: EnemyDefinition = {
   id: 'enemy-1',
   tier: 'normal',
   rank: 'mob',
-  levelHp: [100, 200, 400, 600, 800, 1000],
+  levelHp: { 1: 100, 20: 200, 35: 350, 40: 400, 60: 600, 80: 800, 90: 1000 },
   defense: 20,
   resistances: { physical: 0, heat: 0, cryo: 0, electric: 0, nature: 0 },
   superArmor: 0,
@@ -25,6 +26,7 @@ describe('enemyDefinition', () => {
   it('only resolves HP nodes explicitly present in the index', () => {
     expect(getEnemyHpAtLevel(enemy, 90)).toBe(1000);
     expect(getEnemyHpAtLevel(enemy, 20)).toBe(200);
+    expect(getEnemyHpAtLevel(enemy, 35)).toBe(350);
     expect(getEnemyHpAtLevel(enemy, 45)).toBeNull();
   });
 
@@ -38,10 +40,14 @@ describe('enemyDefinition', () => {
 
   it('reports missing and mismatched index identities', () => {
     const project = createEmptyProject({ createdWith: 'test' });
-    project.scenarios[0]!.enemy.source = { kind: 'prefab', enemyId: 'enemy-1', level: 90 };
+    firstScenarioEnemy(project.scenarios[0]!).enemy.source = {
+      kind: 'prefab',
+      enemyId: 'enemy-1',
+      level: 90,
+    };
 
     expect(validateProjectEnemyDefinitionReferences(project, { getEnemy: () => null })).toEqual([
-      { path: '$.scenarios[0].enemy.source.enemyId', message: 'unknown enemy' },
+      { path: '$.scenarios[0].level.enemy.enemy.source.enemyId', message: 'unknown enemy' },
     ]);
     expect(
       validateProjectEnemyDefinitionReferences(project, {
@@ -49,7 +55,7 @@ describe('enemyDefinition', () => {
       }),
     ).toEqual([
       {
-        path: '$.scenarios[0].enemy.source.enemyId',
+        path: '$.scenarios[0].level.enemy.enemy.source.enemyId',
         message: 'enemy definition identity mismatch',
       },
     ]);

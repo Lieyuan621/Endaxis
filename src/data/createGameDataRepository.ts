@@ -1,3 +1,4 @@
+import type { EnemyStageDefinition } from '../../packages/game-data-contract/src/enemies';
 import { ActionGraphDefinitionRepository } from '../core/compiler/actionGraphDefinitionRepository';
 import { validateActionGraphOwner } from '../core/action-graph/actionGraphValidation';
 import { validateGlobalEffectDefinition } from '../core/game-data/validateGlobalEffectDefinition';
@@ -45,6 +46,7 @@ export interface GameDataRepositoryInput {
   readonly gearSets?: readonly GearSetDefinition[];
   /** 原生套装 ID 与旧项目 slug 并存期间的身份兼容映射。 */
   readonly gearSetAliases?: Readonly<Record<string, string>>;
+  readonly enemyStages?: readonly EnemyStageDefinition[];
   readonly enemies?: readonly EnemyDefinition[];
   readonly mechanics?: readonly MechanicDefinitionRef[];
   readonly consumables?: readonly ConsumableDefinition[];
@@ -171,6 +173,7 @@ export function createGameDataRepository(
       }
     }
   }
+  const enemyStages = indexDefinitions(input.enemyStages ?? [], value => value.id, 'enemy stage');
   const enemyList = Object.freeze([...(input.enemies ?? [])]);
   const operators = indexDefinitions(operatorList, value => value.slug, 'operator');
   const weapons = indexDefinitions(weaponList, value => value.slug, 'weapon');
@@ -209,6 +212,7 @@ export function createGameDataRepository(
     getWeapon: (slug: string) => weapons.get(slug) ?? weaponAliases.get(slug) ?? null,
     getGear: (slug: string) => gears.get(slug) ?? gearAliases.get(slug) ?? null,
     getGearSet: (slug: string) => gearSets.get(slug) ?? gearSetAliases.get(slug) ?? null,
+    getEnemyStage: (id: string) => enemyStages.get(id) ?? null,
     getEnemy: (id: string) => enemies.get(id) ?? null,
     getMechanic: (id: string) => mechanics.get(id) ?? null,
     getConsumable: (id: string) => consumables.get(id) ?? null,

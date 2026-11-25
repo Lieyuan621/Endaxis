@@ -2,6 +2,7 @@ import { valueInputExpression, valueInputBlackboardKey } from '../../compiler/co
 import type { CompiledValueInput } from '../../compiler/compiledGraphData.ts';
 /** 黑板的读取、赋值与子作用域创建。只操作传入数据，不持有运行实例或隐藏缓存。 */
 import type { ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives.ts';
+import type { ActionValueExpression } from '../../../../packages/game-data-contract/src/conditions';
 
 import { createActionBlackboardState, type ActionBlackboardState } from '../state/foundationState';
 
@@ -68,6 +69,14 @@ export function resolveActionOperand(
   read: (key: string) => ActionBlackboardValue | undefined,
 ): number {
   const expression = valueInputExpression(operand);
+  return resolveBlackboardExpression(expression, read);
+}
+
+/** 已绑定的变量读取只保存键与缺省值，切面无需保存编译节点。 */
+export function resolveBlackboardExpression(
+  expression: Exclude<ActionValueExpression, { kind: 'valueNode' }>,
+  read: (key: string) => ActionBlackboardValue | undefined,
+): number {
   if (expression.kind === 'constant') return expression.value;
   // 参数操作数由宏调用宿主在消费前代入；到达这里说明定义越过了校验。
   if (expression.kind === 'parameter')

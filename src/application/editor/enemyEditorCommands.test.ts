@@ -1,3 +1,4 @@
+import { firstScenarioEnemy, levelEnemies } from '../../core/project/level';
 import { describe, expect, it } from 'vitest';
 import { createEmptyScenario } from '../../core/project/createProject';
 import { gameDataRepository } from '../../data/gameDataRepository';
@@ -27,7 +28,7 @@ describe('enemyEditorCommands', () => {
         brokenDurationFrames: Math.round(definition.stagger.brokenDurationSeconds * 30),
       },
     });
-    expect(enemy.edited).toEqual([]);
+    expect(enemy).not.toHaveProperty('edited');
   });
 
   it('拒绝定义未提供的敌人等级，而不自行插值', () => {
@@ -38,11 +39,10 @@ describe('enemyEditorCommands', () => {
     );
   });
 
-  it('整值确认保留已有接管字段，按实际差异记录新覆盖并隔离草稿', () => {
+  it('整值确认保持幂等并隔离草稿', () => {
     const scenario = createEmptyScenario('scenario:enemy', '敌人场景');
-    scenario.enemy.edited = ['defense', 'hp'];
     const before = structuredClone(scenario);
-    const values = structuredClone(scenario.enemy.editable);
+    const values = structuredClone(firstScenarioEnemy(scenario).enemy.editable);
     values.hp = 1000;
     values.resistances.heat = 0.2;
     values.stagger.maximum = 500;
@@ -50,28 +50,43 @@ describe('enemyEditorCommands', () => {
 
     const updated = replaceEnemyEditableValues(scenario, values);
 
-    expect(updated.enemy.edited).toEqual([
-      'defense',
-      'hp',
-      'resistances',
-      'stagger.maximum',
-      'stagger.knotThresholds',
-    ]);
-    expect(updated.enemy.editable).toEqual(values);
+    expect(firstScenarioEnemy(updated).enemy).not.toHaveProperty('edited');
+    expect(firstScenarioEnemy(updated).enemy.editable).toEqual(values);
     expect(scenario).toEqual(before);
     expect(replaceEnemyEditableValues(updated, structuredClone(values))).toBe(updated);
 
     values.resistances.heat = 0.9;
     values.stagger.knotThresholds.push(1);
-    expect(updated.enemy.editable.resistances.heat).toBe(0.2);
-    expect(updated.enemy.editable.stagger.knotThresholds).toEqual([0.25, 0.75]);
+    expect(firstScenarioEnemy(updated).enemy.editable.resistances.heat).toBe(0.2);
+    expect(firstScenarioEnemy(updated).enemy.editable.stagger.knotThresholds).toEqual([0.25, 0.75]);
   });
 
   it('创建自定义敌人时不伪装成预制体覆盖', () => {
     expect(createCustomEnemyDocument(80)).toMatchObject({
       source: { kind: 'custom', level: 80 },
       rank: 'mob',
-      edited: [],
     });
   });
+});
+
+it('只修改所选敌人的属性，保留其他实例和生命周期', () => {
+  const scenario = createEmptyScenario('enemies', 'Enemies');
+  const enemy = createCustomEnemyDocument();
+  enemy.lifecycle = { spawnFrame: 30, presenceChanges: [] };
+  scenario.level = {
+    kind: 'multiEnemies',
+    enemies: [
+      firstScenarioEnemy(scenario),
+      ...[
+        { id: 'a', name: 'A', enemy },
+        { id: 'b', name: 'B', enemy: createCustomEnemyDocument() },
+      ].map(item => ({ ...item, id: 'enemy:' + item.id })),
+    ],
+  };
+  const changed = replaceEnemyEditableValues(scenario, { ...enemy.editable, hp: 500 }, 'enemy:a');
+  expect(firstScenarioEnemy(changed).enemy).toBe(firstScenarioEnemy(scenario).enemy);
+  expect(levelEnemies(changed.level).slice(1)![1]).toBe(levelEnemies(scenario.level).slice(1)[1]);
+  expect(levelEnemies(changed.level).slice(1)![0]!.enemy.editable.hp).toBe(500);
+  expect(levelEnemies(changed.level).slice(1)![0]!.enemy.lifecycle).toEqual(enemy.lifecycle);
+  expect(enemy.editable.hp).toBe(100000);
 });

@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type * as GeneratedSourceFormatter from '../scripts/formatGeneratedSource.ts';
+import type * as GeneratedSourceFormatter from '../src/compiler/publication/formatGeneratedSource.ts';
 
 const mocks = vi.hoisted(() => ({
   combat: vi.fn(),
@@ -23,11 +23,16 @@ const mocks = vi.hoisted(() => ({
   locales: vi.fn(),
 }));
 
+vi.mock('../scripts/contractSources.ts', () => ({
+  prepareContractSources: async () => undefined,
+  verifyContractSources: async () => ({ verified: 0 }),
+}));
+
 vi.mock('../scripts/generateCombatDefinitionCandidates.ts', () => ({
   generateCombatDefinitionCandidates: mocks.combat,
 }));
 // 本测试只验证重建阶段编排；格式化器对正式输出清单的遍历另行验证。
-vi.mock('../scripts/formatGeneratedSource.ts', async importOriginal => ({
+vi.mock('../src/compiler/publication/formatGeneratedSource.ts', async importOriginal => ({
   ...(await importOriginal<typeof GeneratedSourceFormatter>()),
   formatGeneratedCandidate: async () => ({ fileCount: 0 }),
 }));
@@ -141,6 +146,7 @@ const localeFiles = [
   'gearpieces',
   'gearsets',
   'operators',
+  'stages',
   'terms',
   'weapons',
 ];
@@ -216,16 +222,17 @@ beforeEach(() => {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: URL) => {
-      const name = new URL(input).searchParams.get('name');
+      const name = new URL(input).pathname
+        .split('/')
+        .at(-1)!
+        .replace(/\.json$/, '.asset');
       return new Response(
         JSON.stringify({
-          candidates: [
-            {
-              path: `assets/beyond/dynamicassets/gamedata/gameplayconfig/${name === 'movementsetting_default.asset' ? 'movementsetting/' : ''}${name}`,
-              previewUrl: `/fixture/${name}`,
-            },
-          ],
+          asset: {
+            Container: `assets/beyond/dynamicassets/gamedata/gameplayconfig/${name === 'movementsetting_default.asset' ? 'movementsetting/' : ''}${name}`,
+          },
         }),
+        { headers: { 'X-Endaxis-Source': 'endaxis-data-tool', 'X-Endaxis-Version': 'fixture@1' } },
       );
     }),
   );
@@ -260,19 +267,53 @@ async function setup() {
     'ItemTable',
   ])
     await json(path.join(sourceRoot, 'TableCfg-current', `${table}.json`), {});
+  await json(path.join(sourceRoot, 'TableCfg-current/ContingencyContractTable.json'), {
+    fixture: {
+      activityId: 'activity',
+      contractColMap: { 1: { contractRowMap: { 1: { column: 1, row: 1, tagId: 101 } } } },
+    },
+  });
+  await json(path.join(sourceRoot, 'TableCfg-current/ActivityContingencyContractTable.json'), {
+    activity: { tagMaxColumn: 2 },
+  });
   for (const directory of ['CharacterData', 'SkillData'])
     await fs.mkdir(path.join(sourceRoot, directory), { recursive: true });
-  const args = parseRebuildArguments([
-    '--source-root',
-    sourceRoot,
-    '--unity-worker',
-    'fixture-worker.exe',
-    '--publish',
-  ]);
+  const args = parseRebuildArguments(['--source-root', sourceRoot, '--publish']);
   return { root, sourceRoot, args };
 }
 
 describe('完整重建的统一战斗定义阶段', () => {
+  it('显式保留合约时仍验收其他领域，发布清单不覆盖合约', async () => {
+    const { root, args } = await setup();
+    const preserved = [
+      'src/data/contingencyContract/generated/fixture.json',
+      'src/data/contingencyContract/shareLayouts.generated.ts',
+      'public/contingency_contract/fixture.json',
+      'src/i18n/game-locales/zh/contingency-contracts.json',
+      'src/i18n/game-locales/en/contingency-contracts.json',
+    ];
+    for (const file of preserved) await json(path.join(root, file), { previous: 'contract' });
+    const { report, exitCode } = await rebuildGameData(
+      { ...args, skipContingencyContract: true },
+      root,
+    );
+    expect(exitCode).toBe(0);
+    expect(report).toMatchObject({ published: true, fullRebuild: false });
+    expect(mocks.combat.mock.calls[0]![0].skipContingencyContract).toBe(true);
+    expect(mocks.operatorSimulation).toHaveBeenCalledTimes(1);
+    expect(mocks.equipmentSimulation).toHaveBeenCalledTimes(1);
+    const publication = mocks.publish.mock.calls[0]![0];
+    expect(new Set(publication.fileOutputs).size).toBe(publication.fileOutputs.length);
+    for (const output of report.preservedOutputs) {
+      expect(publication.directoryOutputs).not.toContain(output);
+      expect(publication.fileOutputs).not.toContain(output);
+    }
+    for (const file of preserved)
+      expect(JSON.parse(await fs.readFile(path.join(root, file), 'utf8'))).toEqual({
+        previous: 'contract',
+      });
+  });
+
   it('仅调用两轮联合入口，第二轮通过后才开启候选验证和发布', async () => {
     const { root, sourceRoot, args } = await setup();
     const helper = path.join(root, 'src/data/operators/helper.ts');
@@ -308,6 +349,7 @@ describe('完整重建的统一战斗定义阶段', () => {
     expect(mocks.publish).toHaveBeenCalledTimes(1);
     expect(mocks.publish.mock.calls[0]![0].fileOutputs).toEqual(
       expect.arrayContaining([
+        'src/data/contingencyContract/shareLayouts.generated.ts',
         'src/i18n/game-locales/zh/contingency-contracts.json',
         'src/i18n/game-locales/en/contingency-contracts.json',
       ]),

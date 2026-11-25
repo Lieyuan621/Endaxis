@@ -1,3 +1,4 @@
+import { ActionBlackboard } from '../actions/actionBlackboard';
 import { describe, expect, it } from 'vitest';
 import {
   hasAbilityEventActionContextBinding,
@@ -37,6 +38,8 @@ describe('AbilityEvent action context binding', () => {
       { event: 'beforeOutputBuff', payload: buffPayload },
       { event: 'outputBuff', payload: { ...buffPayload, buff: createEventBuff() } },
       { event: 'outputCriticalDamage', payload: createDamagePayload(pair) },
+      { event: 'beforeOutputKnockDown', payload: { ...pair, fromAirborne: true } },
+      { event: 'afterOutputKnockDown', payload: { ...pair, fromAirborne: true } },
       { event: 'beforeOutputPhysicalInfliction', payload: { ...pair, type: 'fracture' } },
       { event: 'afterOutputPhysicalInfliction', payload: { ...pair, type: 'fracture' } },
       {
@@ -80,6 +83,30 @@ describe('AbilityEvent action context binding', () => {
       ).toEqual({ inputTargetId: 'enemy', triggerTargetId: 'camille' });
     }
   });
+  it('Buff收集事件输入是各自发布者，不把另一侧当成Trigger', () => {
+    const payload = {
+      sourceId: 'creator',
+      targetId: 'recipient',
+      buffId: 'new',
+      buffTags: [],
+      blackboard: new ActionBlackboard(),
+      modifiedKeys: new Set<string>(),
+    };
+    expect(
+      resolveAbilityEventActionContextBinding({ event: 'collectAddedBuffBlackboard', payload }),
+    ).toEqual({ inputTargetId: 'recipient', triggerTargetId: null });
+    expect(
+      resolveAbilityEventActionContextBinding({ event: 'collectOutputBuffBlackboard', payload }),
+    ).toEqual({ inputTargetId: 'creator', triggerTargetId: null });
+  });
+  it('敌人入战由敌人自身发布，不伪造触发目标或干员事件', () => {
+    expect(
+      resolveAbilityEventActionContextBinding({
+        event: 'enemyEnterFight',
+        payload: { sourceId: 'enemy' },
+      }),
+    ).toEqual({ inputTargetId: 'enemy', triggerTargetId: null });
+  });
   it('无目标弱点设置不补Trigger，未审计事件不补绑定', () => {
     expect(
       resolveAbilityEventActionContextBinding({
@@ -110,7 +137,6 @@ function createDamagePayload(pair: { readonly sourceId: string; readonly targetI
     ...pair,
     damageType: 'physical' as const,
     tags: [],
-    features: [],
     result: {
       value: 1,
       isCritical: true,

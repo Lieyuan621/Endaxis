@@ -87,8 +87,8 @@ export {
   type KnownNativeActionLeafSource,
 } from './source/actionLeaf.ts';
 export {
-  parseCharacterTypeIdReadActionSource,
-  type CharacterTypeIdReadActionSource,
+  parseCharacterIdentityReadActionSource,
+  type CharacterIdentityReadActionSource,
 } from './source/characterIdentityActions.ts';
 export {
   parseAdvancedBuffFinishActionSource,
@@ -468,7 +468,6 @@ export {
   compileBuffRuntimeDefinitionSource,
   compileCombatActionSequenceSource,
   compileCombatConditionSequenceSource,
-  isAfterEnemyDefeatedOnlyBuffRuntime,
   isPresentationOnlyBuffStackEffect,
 } from './compiler/buffs/buffRuntimeProjection.ts';
 export { collectBuffRuntimeClosure } from './compiler/buffs/buffReferenceClosure.ts';
@@ -693,8 +692,8 @@ export {
   type ProjectileCallbackInvocationSource,
 } from './compiler/abilities/projectileBlackboard.ts';
 export {
-  createZeroDistanceProjectileProjectionExtensionSource,
-  type ZeroDistanceProjectileProjectionCatalogSource,
+  createProjectileProjectionExtensionSource,
+  type ProjectileProjectionCatalogSource,
 } from './compiler/abilities/projectileRuntimeProjection.ts';
 export {
   parseProjectileRuntimeSource,

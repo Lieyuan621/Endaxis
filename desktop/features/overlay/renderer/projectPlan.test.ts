@@ -1,8 +1,12 @@
+import { firstScenarioEnemy } from '@/core/project/level';
+import { createEmptyScenario } from '@/core/project/createProject';
 import { describe, expect, it } from 'vitest';
 import { applySimulationResult, type OverlaySimulationRun } from './projectPlan';
 import type { OverlayPlan } from './plan';
 import { CombatReceiptHistory } from '@/core/combat/receipt/combatReceiptHistory';
 import { activeWindow } from './layout';
+
+const enemy = firstScenarioEnemy(createEmptyScenario('test', 'test'));
 
 function basePlan(): OverlayPlan {
   return {
@@ -58,7 +62,7 @@ function fakeRun(): OverlaySimulationRun {
 
 describe('applySimulationResult', () => {
   it('把技力曲线按项目帧率换算成秒，并保留上限与初始值', () => {
-    const result = applySimulationResult(basePlan(), fakeRun(), 30);
+    const result = applySimulationResult(basePlan(), fakeRun(), 30, enemy);
 
     expect(result.spPoints).toEqual([
       { time: 0, value: 80 },
@@ -70,7 +74,7 @@ describe('applySimulationResult', () => {
   });
 
   it('按 operatorId 归组终结技能量，空曲线不生成条目', () => {
-    const result = applySimulationResult(basePlan(), fakeRun(), 30);
+    const result = applySimulationResult(basePlan(), fakeRun(), 30, enemy);
 
     expect(result.gaugePoints['operator-instance-1']).toEqual([
       { time: 0, value: 10 },
@@ -80,14 +84,14 @@ describe('applySimulationResult', () => {
   });
 
   it('空施放计划也能安全套用曲线，不产生连携窗口', () => {
-    const result = applySimulationResult(basePlan(), fakeRun(), 30);
+    const result = applySimulationResult(basePlan(), fakeRun(), 30, enemy);
 
     expect(result.comboWindows).toEqual({});
     expect(result.casts).toEqual([]);
   });
 
   it('帧率不同则换算结果不同', () => {
-    const result = applySimulationResult(basePlan(), fakeRun(), 60);
+    const result = applySimulationResult(basePlan(), fakeRun(), 60, enemy);
     expect(result.spPoints[1]).toEqual({ time: 1.5, value: 180 });
   });
 
@@ -125,6 +129,7 @@ describe('applySimulationResult', () => {
       basePlan(),
       { ...fakeRun(), receiptHistory: history.snapshot() },
       30,
+      enemy,
     );
     expect(result.comboWindows[sourceId]).toEqual([
       { start: 1, end: 6 },

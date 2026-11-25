@@ -1,3 +1,4 @@
+import { inheritCombatOperationContext } from './inheritCombatOperationContext';
 import type { CompiledInputs } from '../../compiler/compiledGraphData';
 /** 图执行的事件订阅生命周期。保存的数据仅含响应进度和订阅引用。 */
 import type { CombatEventResponseDefinition } from '../../../../packages/game-data-contract/src/actions';
@@ -101,7 +102,7 @@ export class CombatActionEventListener<State> {
       throw new Error('combat event listener requires a semantic event runtime and owner');
     try {
       for (const [index, response] of this.responses.entries()) {
-        const context = { ...this.context, event: this.context.event };
+        const context = inheritCombatOperationContext(this.context, { event: this.context.event });
         const saved = restoring ? this.runtimeState.responses[index]! : undefined;
         // 每项响应复用一个执行实例；嵌套同步通知必须能看到它正在执行的进度。
         const execution = this.create(response.sequence, context, index, saved?.sequence);

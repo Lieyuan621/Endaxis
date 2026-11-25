@@ -72,9 +72,9 @@ describe('工作区资产草稿', () => {
     expect(() => readonly.change(conditionPath, { kind: 'constant', value: true })).toThrow();
     expect(readonly.current.edit.definition).toEqual(perlica);
   });
-  it('输入窗口条目按字段编辑，保留同一条目的其他值并支持撤销', () => {
+  it('定时序列条目按字段编辑，保留同一条目的其他值并支持撤销', () => {
     const session = new WorkspaceAssetSession(source, 'project:operator:windows');
-    const path = ['skills', 0, 'inputWindows', 'commandMappings', 0] as const;
+    const path = ['skills', 0, 'scheduledSequences', 0] as const;
     const before = fieldValueAt(session.current.edit.definition, path) as Record<string, unknown>;
     session.change([...path, 'startFrame'], 6);
     expect(fieldValueAt(session.current.edit.definition, path)).toEqual({
@@ -98,9 +98,9 @@ describe('工作区资产草稿', () => {
     ]) {
       expect(() => session.change([...path, field], undefined)).toThrow();
     }
-    session.change([...path, 'timelineContinuationSkillId'], undefined);
+    session.change([...path, 'timelineBlockFollowUpSkillId'], undefined);
     expect(
-      fieldValueAt(session.current.edit.definition, [...path, 'timelineContinuationSkillId']),
+      fieldValueAt(session.current.edit.definition, [...path, 'timelineBlockFollowUpSkillId']),
     ).toBeUndefined();
     session.change([...path, 'timelineBlockFrames'], 45);
     expect(fieldValueAt(session.current.edit.definition, [...path, 'timelineBlockFrames'])).toBe(

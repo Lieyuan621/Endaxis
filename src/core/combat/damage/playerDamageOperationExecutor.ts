@@ -1,3 +1,13 @@
+import { isPhysicalInflictionDamage, isIgniteDamage } from './damageDecorationGroups';
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
+import type { CombatAttributeSet } from '../attributes/combatAttributes';
+
+import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
+import {
+  singleTargetList,
+  runtimeTargetEntityId,
+  runtimeTargetFromEntityId,
+} from '../../game-data/logicalAbilityEntity';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import { valueInputBlackboardKey } from '../../compiler/compiledGraphData';
 import type { CompiledCondition, CompiledValueInput } from '../../compiler/compiledGraphData.ts';
@@ -27,11 +37,12 @@ import { attributeModifierValues } from '../attributes/combatAttributes';
 import type { CriticalSampleSource } from '../random/criticalSampleSource';
 import type { SimulationRandomMode } from '../random/simulationRandom';
 import { operationProducer } from '../receipt/combatObjectIdentity';
-import type { CombatReceiptSink } from '../receipt/combatReceipt';
+import type { CombatReceiptSink, CombatObjectRef } from '../receipt/combatReceipt';
 import type { CombatVitals } from '../resources/combatVitals';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { CombatClock } from '../time/combatClock';
+import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
 import { deriveHitId } from '../timeline/deriveHitId';
 import {
   attackReceiptAttributes,
@@ -48,6 +59,7 @@ import { classifyDamageTags, injectDamageScaleAttributes } from './damageScaleAt
 import { applyHealthDamageWithKillEvents, executeHealthDamage } from './healthDamage';
 import { calculatePlayerActiveDamage } from './playerActiveDamage';
 import {
+  rawDamageFormulaInput,
   resolvePlayerActiveDamageInput,
   type PlayerDamageNonRandomRuntimeSnapshot,
 } from './playerActiveDamageInput';
@@ -60,7 +72,7 @@ import {
 } from './playerDamageContext';
 import { executePoiseDamage, type PoiseDamageEvent, type PoiseDamageModifier } from './poiseDamage';
 import { PoiseCalculationContext } from './poiseModifiers';
-import { reactionDamageKind, type ReactionDamageIdentity } from './reactionDamageCritical';
+import { reactionDamageKind } from './reactionDamageCritical';
 
 type RuntimeOperation = ResolvedCombatOperationStep;
 type DamageStep = ResolvedCombatStepForKind<'dealDamage'>;
@@ -82,27 +94,23 @@ function appendAttributeDetails(
   }
 }
 
-// 原生 IgniteDamageSet：四种爆发、法术异常初次伤害、燃烧和碎冰。
-const IGNITE_DAMAGE_TAGS = new Set<string>([
-  'fireBurst',
-  'electricBurst',
-  'cryoBurst',
-  'natureBurst',
-  'fireAbnormal',
-  'electricAbnormal',
-  'cryoAbnormal',
-  'natureAbnormal',
-]);
-
 export const PLAYER_DAMAGE_PREPARATION_EVENTS = [
   'beforeDamageAction',
   'beforeCalculateDamage',
 ] as const;
 /** 完整伤害公式前用于冻结属性和完成即时修正的准备事件。 */
 export type PlayerDamagePreparationEvent = (typeof PLAYER_DAMAGE_PREPARATION_EVENTS)[number];
+type EmitDamagePreparationEvent = <Event extends PlayerDamagePreparationEvent>(
+  event: Event,
+  payload: AbilityEventPayloadMap[Event],
+) => void;
 
 /** 同一次命中的来源方与目标方失衡倍率。 */
 export interface PoiseDamageMultipliers {
+  readonly attributes?: {
+    readonly output: CombatAttributeSet<string>;
+    readonly taken: CombatAttributeSet<string>;
+  };
   readonly output: number;
   readonly taken: number;
   readonly ignorePoiseImmune?: boolean;
@@ -119,6 +127,28 @@ export interface SharedDamageTransfer {
 }
 
 export interface PlayerDamageOperationDependencies {
+  /** 对应原生目标句柄锁定；死亡但尚未回收的实体仍可能存在。 */
+  readonly targetExists?: (target: RuntimeTargetRef) => boolean;
+  /** 为实际受击实体绑定属性、修正器和账本，保持当前技能/来源身份。 */
+  readonly resolveTargetDependencies?: (
+    targetId: string,
+    current: PlayerDamageOperationDependencies,
+    step: PoiseStep,
+  ) => PlayerDamageOperationDependencies;
+  /** 按真实攻击者绑定整套属性、修正器和事件端口，不改变当前动作的执行身份。 */
+  readonly resolveAttackerDependencies?: (sourceId: string) => PlayerDamageOperationDependencies;
+  readonly queryTargets?: CombatOperationExecutor['queryTargets'];
+  /** LifeDrain 读取真实动作来源与目标，不采样普通玩家对敌人伤害的乘区。 */
+  readonly lifeDrain?: {
+    readonly resolveVitals: (entityId: string) => CombatVitals;
+    readonly readAttribute: (entityId: string, attribute: string) => number;
+    readonly emitPreparationEvent: EmitDamagePreparationEvent;
+    readonly emitSourceEvent: Parameters<typeof executeHealthDamage>[0]['emitSourceEvent'];
+    readonly emitTargetEvent: Parameters<typeof executeHealthDamage>[0]['emitTargetEvent'];
+    readonly absorbDamage: (entityId: string, value: number) => number;
+  };
+  /** 主动技能的默认命中选择；Buff 和显式目标不使用此策略。 */
+  readonly resolveDefaultDamageTarget?: () => RuntimeTargetRef | undefined;
   readonly resolveSharedDamageTransfer?: (
     target: RuntimeTargetRef,
   ) => SharedDamageTransfer | undefined;
@@ -136,21 +166,36 @@ export interface PlayerDamageOperationDependencies {
   readonly skillType?: SkillType;
   readonly targetId: string;
   readonly targetVitals: CombatVitals;
+  readonly isTargetAlive?: (targetId: string) => boolean;
+  readonly canTargetDie?: (targetId: string) => boolean;
   readonly clock: CombatClock;
   readonly receipt: CombatReceiptSink;
-  readonly captureAttributeSnapshots: (step: DamageStep) => PlayerDamageAttributeSnapshots;
+  readonly captureAttributeSnapshots: (
+    step: DamageStep,
+    defender?: PlayerDamageAttributeSnapshots['defender'],
+  ) => PlayerDamageAttributeSnapshots;
   readonly criticalSamples: CriticalSampleSource;
   /** false 表示原生动作明确禁止暴击；暴击率为零不能代替这项许可。 */
   readonly canCritical?: boolean;
   /** 期望模式把伤害写成数学期望，并确定触发允许暴击的后续效果，不推进随机流。 */
   readonly randomMode?: SimulationRandomMode;
   readonly attackDetail?: AttackReceiptSnapshot;
-  /** 场景显式指定的命中覆盖；返回 undefined 才取样，且不污染公式中的原始暴击率。 */
-  readonly resolveCriticalOverride?: (step: DamageStep) => boolean | undefined;
-  readonly resolveReactionCriticalOverride?: (identity: ReactionDamageIdentity) => {
-    readonly key: string;
-    readonly value: boolean | undefined;
-  };
+  /** 分配本次命中身份并读取覆盖；不改变原始暴击率及原本的随机取样次数。 */
+  readonly resolveHitMarks?: (
+    producer: CombatObjectRef | undefined,
+    ownerId: string,
+    targetId: string,
+    supportsWeakness: boolean,
+  ) =>
+    | {
+        hitIdentity: string;
+        hitCriticalOverride?: boolean;
+        canBreakWeakness?: boolean;
+        breaksWeakness?: boolean;
+        weaknessBreakStagger?: number;
+      }
+    | undefined;
+  readonly emitWeaknessBreak?: Parameters<typeof executeHealthDamage>[0]['onWeaknessBreak'];
   readonly resolveNonRandomRuntimeSnapshot: (
     step: DamageStep,
   ) => PlayerDamageNonRandomRuntimeSnapshot;
@@ -164,10 +209,7 @@ export interface PlayerDamageOperationDependencies {
     side: DamageModifierSide,
     request: InstantAttributeModifierRequest,
   ) => void;
-  readonly emitPreparationEvent: (
-    event: PlayerDamagePreparationEvent,
-    context: PlayerDamageContext,
-  ) => void;
+  readonly emitPreparationEvent: EmitDamagePreparationEvent;
   readonly resolvePoiseMultipliers: (step: PoiseStep) => PoiseDamageMultipliers;
   readonly applyPoiseModifiers?: (
     timing: PoiseProcessTiming,
@@ -191,6 +233,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
 
   prepare(step: RuntimeOperation, operationContext: CombatOperationContext): void {
     if (step.kind !== 'dealDamage' || step.parameters.takeAttackSnapshot !== true) return;
+    const attacker = this.#attackerExecutor(step, operationContext);
+    if (attacker !== this) return attacker.prepare(step, operationContext);
     const snapshots = operationContext.damageCalculationSnapshots;
     if (snapshots === undefined) throw new Error('attack snapshot requires a stateful action host');
     if (snapshots.has(step)) return;
@@ -233,22 +277,135 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
   }
 
   execute(step: RuntimeOperation, operationContext?: CombatOperationContext): boolean {
+    if (step.kind === 'dealDamage' && step.parameters.damageType === 'lifeDrain')
+      return this.#executeLifeDrain(step, operationContext);
+    if (step.kind === 'dealDamage' || step.kind === 'dealStagger') {
+      const attacker = this.#attackerExecutor(step, operationContext);
+      if (attacker !== this) return attacker.execute(step, operationContext);
+    }
     if (
       (step.kind === 'dealDamage' || step.kind === 'dealStagger') &&
-      typeof step.parameters.target === 'object'
+      (typeof step.parameters.target === 'object' || step.parameters.target === 'actionInputTarget')
     ) {
-      if (!operationContext?.targetContext)
-        throw new Error('context damage requires a target context');
-      const targets = operationContext.targetContext.getOptional(step.parameters.target.key) ?? [];
-      for (const target of targets)
-        this.#executeTarget(step, { ...operationContext, actionInputTarget: target });
-      return true;
+      if (operationContext === undefined)
+        throw new Error('damage query requires an action context');
+      const query =
+        step.parameters.target === 'actionInputTarget'
+          ? { kind: 'inputTarget' as const }
+          : step.parameters.target;
+      const targets = this.#queryTargets(query, operationContext);
+      this.#emitBeforeDamageAction(step, operationContext);
+      let succeeded = false;
+      for (const target of targets) {
+        // 原生只为可锁定的能力系统创建伤害包；空间命中不消费伤害操作数。
+        if (runtimeTargetEntityId(target) === undefined) continue;
+        succeeded =
+          this.#executeTarget(step, {
+            ...operationContext,
+            actionInputTargets: singleTargetList(target),
+          }) || succeeded;
+      }
+      return step.parameters.alwaysNext !== false || succeeded;
     }
+    if (step.kind === 'dealDamage' || step.kind === 'dealStagger')
+      this.#emitBeforeDamageAction(step, operationContext);
     return this.#executeTarget(step, operationContext);
   }
 
+  #attackerExecutor(
+    step: PoiseStep,
+    context: CombatOperationContext | undefined,
+  ): PlayerDamageOperationExecutor {
+    if (step.parameters.attacker === undefined) return this;
+    const sourceId =
+      step.parameters.attacker === 'actionOwner' ? context?.actionOwnerId : context?.actionSourceId;
+    if (sourceId === undefined) throw new Error('damage attacker has no action identity');
+    if (sourceId === this.dependencies.sourceOperatorId) return this;
+    const bound = this.dependencies.resolveAttackerDependencies?.(sourceId);
+    if (bound === undefined || bound.sourceOperatorId !== sourceId)
+      throw new Error(`damage attacker '${sourceId}' has no matching damage ports`);
+    return new PlayerDamageOperationExecutor({
+      ...bound,
+      queryTargets: this.dependencies.queryTargets,
+      targetExists: this.dependencies.targetExists,
+      resolveDefaultDamageTarget: this.dependencies.resolveDefaultDamageTarget,
+      castId: this.dependencies.castId,
+      skillId: this.dependencies.skillId,
+      executingSkillId: this.dependencies.executingSkillId,
+      skillType: this.dependencies.skillType,
+      skillCastInfo: this.dependencies.skillCastInfo,
+      sourceActionId: this.dependencies.sourceActionId,
+      resolveHitMarks: this.dependencies.resolveHitMarks,
+      delegate: this.dependencies.delegate,
+    });
+  }
+
+  #emitBeforeDamageAction(
+    step: DamageStep | StaggerStep,
+    operationContext: CombatOperationContext | undefined,
+    emit: EmitDamagePreparationEvent = this.dependencies.emitPreparationEvent,
+    sourceId: string = this.dependencies.sourceOperatorId,
+  ): void {
+    emit('beforeDamageAction', {
+      sourceId,
+      partTransferInfo: resolveOperationPartTransferInfo(operationContext),
+      tags: step.parameters.tags ?? [],
+      gameplayTags: step.kind === 'dealDamage' ? (step.parameters.gameplayTags ?? []) : [],
+      skillCastInfo: operationContext?.skillCastInfo ?? this.dependencies.skillCastInfo ?? null,
+    });
+  }
+
   #executeTarget(step: RuntimeOperation, operationContext?: CombatOperationContext): boolean {
+    if (step.kind === 'dealDamage' || step.kind === 'dealStagger') {
+      const receiver = this.#resolveDamageTarget(step, operationContext);
+      if (receiver === undefined) return false;
+      if (
+        runtimeTargetEntityId(receiver) === undefined ||
+        this.dependencies.targetExists?.(receiver) === false
+      )
+        return step.parameters.alwaysNext !== false;
+    }
+    const target =
+      step.kind === 'dealDamage' || step.kind === 'dealStagger'
+        ? this.#resolveDamageTarget(step, operationContext)
+        : undefined;
+    if ((step.kind === 'dealDamage' || step.kind === 'dealStagger') && target === undefined)
+      return false;
+    const targetId = target === undefined ? undefined : runtimeTargetEntityId(target);
+    // 部位沿用其主体的伤害端口，而不是执行器最初绑定的敌人。
+    // 保留输入中的部位身份，让后续 SharedDamage 仍负责一次主体结算及转伤。
+    const damageReceiverId =
+      target?.kind === 'abilityEntity'
+        ? (this.dependencies.resolveSharedDamageTransfer?.(target)?.mainBodyId ?? targetId)
+        : targetId;
+    if (
+      (step.kind === 'dealDamage' || step.kind === 'dealStagger') &&
+      this.dependencies.isTargetAlive?.(targetId ?? this.dependencies.targetId) === false
+    )
+      return false;
+    if (
+      (step.kind === 'dealDamage' || step.kind === 'dealStagger') &&
+      (target?.kind === 'operator' ||
+        target?.kind === 'enemy' ||
+        (target?.kind === 'abilityEntity' && damageReceiverId !== targetId)) &&
+      damageReceiverId !== undefined &&
+      damageReceiverId !== this.dependencies.targetId
+    ) {
+      const bound = this.dependencies.resolveTargetDependencies?.(
+        damageReceiverId,
+        this.dependencies,
+        step,
+      );
+      if (bound === undefined || bound.targetId !== damageReceiverId)
+        throw new Error(`damage target '${damageReceiverId}' has no matching damage ports`);
+      return new PlayerDamageOperationExecutor(bound).#executeTarget(step, operationContext);
+    }
     const skillCastInfo = operationContext?.skillCastInfo ?? this.dependencies.skillCastInfo;
+    // 子技能宿主可被后续 CastSkill 再次调用，归属必须读取本次执行环境。
+    const castId =
+      skillCastInfo === undefined ? this.dependencies.castId : skillCastInfo.originCastId;
+    const skillType =
+      skillCastInfo === undefined ? this.dependencies.skillType : skillCastInfo.originSkillType;
     const transfer =
       step.kind === 'dealDamage' || step.kind === 'dealStagger'
         ? this.#resolveTransfer(step, operationContext)
@@ -277,32 +434,33 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         ? this.dependencies.delegate.execute(step)
         : this.dependencies.delegate.execute(step, operationContext);
     }
-    if (step.parameters.damageType === 'lifeDrain') {
-      throw new Error('life-drain damage uses a separate native calculation branch');
-    }
     const inheritedTransfer = resolveOperationPartTransferInfo(operationContext);
     const partTransferInfo =
       transfer === undefined
         ? inheritedTransfer
         : copyEnemyPartTransferInfo(inheritedTransfer, transfer.mainBodyId, transfer.partId);
-    // 目标已由宿主解析；原生在伤害前事件及各伤害单元计算前记录技能命中。
+    // 动作前通知已经发布；实际命中在逐目标结算时记录。
     if (operationContext?.skillExecution !== undefined)
       operationContext.skillExecution.hasOutputDamageBattle = true;
+    this.dependencies.emitPreparationEvent('beforeCalculateDamage', {
+      sourceId: this.dependencies.sourceOperatorId,
+      partTransferInfo,
+      damageType: step.parameters.damageType,
+      tags: step.parameters.tags ?? [],
+      gameplayTags: step.kind === 'dealDamage' ? (step.parameters.gameplayTags ?? []) : [],
+    });
     const context = new PlayerDamageContext({
       partTransferInfo,
       sourceId: this.dependencies.sourceOperatorId,
       targetId: this.dependencies.targetId,
       damageType: step.parameters.damageType,
       targetHealthType: 'normal',
-      tags: step.parameters.tags,
+      tags: step.parameters.tags ?? [],
       gameplayTags: step.parameters.gameplayTags ?? [],
-      features: step.parameters.features ?? [],
       ...(skillCastInfo === undefined ? {} : { skillCastId: skillCastInfo.skillCastId }),
       skillCastInfo: skillCastInfo ?? null,
       ...(this.dependencies.skillId === undefined ? {} : { skillId: this.dependencies.skillId }),
-      ...(this.dependencies.skillType === undefined
-        ? {}
-        : { skillType: this.dependencies.skillType }),
+      ...(skillType === undefined ? {} : { skillType }),
       ports: {
         captureAttributeSnapshots: () => this.dependencies.captureAttributeSnapshots(step),
         applyModifiers: (timing, side, damageContext) =>
@@ -312,8 +470,6 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       },
     });
     try {
-      this.dependencies.emitPreparationEvent('beforeDamageAction', context);
-      this.dependencies.emitPreparationEvent('beforeCalculateDamage', context);
       const executingBuff = operationContext?.executingBuff;
       const directModifierSource = {
         sourceId: operationContext?.actionOwnerId ?? this.dependencies.sourceOperatorId,
@@ -374,7 +530,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         context.damageScales,
         {
           damageType: step.parameters.damageType,
-          classifications: classifyDamageTags(step.parameters.tags, step.parameters.features),
+          classifications: classifyDamageTags(step.parameters.tags),
           attacker: context.attackerAttributes,
           defender: context.defenderAttributes,
           defenderStaggered: this.dependencies.targetVitals.hasPoiseBrokenTag,
@@ -416,29 +572,19 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       }
       const finalAttackValue = context.resolveFinalAttackValue();
       const runtimeSnapshot = this.dependencies.resolveNonRandomRuntimeSnapshot(step);
-      const reactionKind = reactionDamageKind(step.parameters.tags, step.parameters.features);
-      const reactionOverride =
-        reactionKind === undefined
-          ? undefined
-          : this.dependencies.resolveReactionCriticalOverride?.({
-              sourceId: this.dependencies.sourceOperatorId,
-              targetId: this.dependencies.targetId,
-              castId: skillCastInfo?.originCastId ?? this.dependencies.castId,
-              actionId:
-                operationContext?.executingBuff?.buffId ??
-                this.dependencies.executingSkillId ??
-                this.dependencies.sourceActionId ??
-                operationContext?.executionActionId,
-              stepKey: step.key,
-              kind: reactionKind,
-            });
+      const reactionKind = reactionDamageKind(step.parameters.tags);
       const fixedDamage = step.parameters.damageType === 'fixed';
+      const marks = this.dependencies.resolveHitMarks?.(
+        operationProducer(operationContext, {
+          ownerId: this.dependencies.sourceOperatorId,
+          actionId: this.dependencies.sourceActionId,
+        }),
+        this.dependencies.sourceOperatorId,
+        this.dependencies.targetId,
+        step.parameters.tags?.includes('canBreakWeakness') === true,
+      );
       const canCritical = !fixedDamage && this.dependencies.canCritical !== false;
-      const criticalOverride = !canCritical
-        ? undefined
-        : reactionKind === undefined
-          ? this.dependencies.resolveCriticalOverride?.(step)
-          : reactionOverride?.value;
+      const criticalOverride = canCritical ? marks?.hitCriticalOverride : undefined;
       const resolvedFormulaInput = resolvePlayerActiveDamageInput(
         {
           step,
@@ -449,15 +595,12 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
             ...runtimeSnapshot,
             // DamageEnums：Shatter 属于 IgniteDamageSet，不属于 PhysicalInfliction。
             appliesIgniteDamageMultiplier:
-              runtimeSnapshot.appliesIgniteDamageMultiplier ||
-              step.parameters.tags.some(tag => IGNITE_DAMAGE_TAGS.has(tag)) ||
-              (step.parameters.features ?? []).includes('shatter'),
+              runtimeSnapshot.appliesIgniteDamageMultiplier || isIgniteDamage(step.parameters.tags),
             appliesPhysicalInflictionDamageMultiplier:
               runtimeSnapshot.appliesPhysicalInflictionDamageMultiplier ||
-              (step.parameters.features ?? []).includes('physicalInfliction'),
+              isPhysicalInflictionDamage(step.parameters.tags),
             criticalSample:
               this.dependencies.randomMode !== 'expected' &&
-              criticalOverride === undefined &&
               canCritical &&
               context.attackerAttributes.criticalRate > 0.00001
                 ? this.dependencies.criticalSamples.nextCriticalSample({
@@ -567,11 +710,12 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           : (attackSnapshot.attackDetail ?? this.dependencies.attackDetail);
       const hitId =
         step.hitId ??
-        (this.dependencies.castId === undefined || step.key === undefined
+        (castId === undefined || step.key === undefined
           ? undefined
-          : deriveHitId(this.dependencies.castId, step.key));
+          : deriveHitId(castId, step.key));
       executeHealthDamage({
         partTransferInfo,
+        targetCanDie: this.dependencies.canTargetDie?.(this.dependencies.targetId),
         consumeFinisherEligibility: this.dependencies.consumeFinisherEligibility,
         ...(multiplierCalculation === undefined
           ? {}
@@ -599,9 +743,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         sourceId: this.dependencies.sourceOperatorId,
         targetId: this.dependencies.targetId,
         damageType: step.parameters.damageType,
-        tags: step.parameters.tags,
+        tags: step.parameters.tags ?? [],
         gameplayTags: step.parameters.gameplayTags ?? [],
-        features: step.parameters.features ?? [],
         result: appliedDamageResult,
         triggersCriticalEffects,
         detail: {
@@ -610,9 +753,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ...(this.dependencies.sourceActionId === undefined
             ? {}
             : { sourceActionId: this.dependencies.sourceActionId }),
-          ...(this.dependencies.skillType === undefined
-            ? {}
-            : { skillType: this.dependencies.skillType }),
+          ...(skillType === undefined ? {} : { skillType }),
           ...(step.parameters.calculation === 'definite'
             ? {}
             : {
@@ -641,12 +782,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
             : {}),
           ...(finisherMultiplier === 1 ? {} : { finisherMultiplier }),
           ...(reactionKind === undefined ? {} : { reactionDamageKind: reactionKind }),
-          ...(reactionOverride === undefined
-            ? {}
-            : {
-                reactionCriticalKey: reactionOverride.key,
-                forcedCritical: reactionOverride.value === true,
-              }),
+          ...marks,
+          ...(marks ? { hitCriticalOverride: criticalOverride ?? null } : {}),
           ...(calculationAttackAttributes.level === undefined
             ? {}
             : { sourceLevel: calculationAttackAttributes.level }),
@@ -674,6 +811,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
               ]),
             ),
           ),
+          canCritical,
           criticalRate: canCritical ? context.attackerAttributes.criticalRate : 0,
           criticalDamageIncrease: context.attackerAttributes.criticalDamageIncrease,
           criticalExpectationMultiplier,
@@ -701,9 +839,11 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         target: this.dependencies.targetVitals,
         clock: this.dependencies.clock,
         receipt: this.dependencies.receipt,
-        ...(this.dependencies.castId === undefined ? {} : { castId: this.dependencies.castId }),
+        ...(castId === undefined ? {} : { castId }),
         ...(step.key === undefined ? {} : { stepKey: step.key }),
         ...(hitId === undefined ? {} : { hitId }),
+        weaknessBreakStagger: marks?.weaknessBreakStagger,
+        onWeaknessBreak: this.dependencies.emitWeaknessBreak,
         emitSourceEvent: this.dependencies.emitHealthSourceEvent,
         emitTargetEvent: this.dependencies.emitHealthTargetEvent,
         ...(this.dependencies.absorbHealthDamage === undefined
@@ -720,9 +860,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
             sourceId: this.dependencies.sourceOperatorId,
             targetId: transfer.partId,
             damageType: step.parameters.damageType,
-            tags: step.parameters.tags,
+            tags: step.parameters.tags ?? [],
             gameplayTags: step.parameters.gameplayTags ?? [],
-            features: step.parameters.features ?? [],
             result: appliedDamageResult,
             skillCastInfo: skillCastInfo ?? null,
             executingSkillId: this.dependencies.executingSkillId,
@@ -759,12 +898,150 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     }
   }
 
+  #executeLifeDrain(
+    step: DamageStep,
+    operationContext: CombatOperationContext | undefined,
+  ): boolean {
+    const ports = this.dependencies.lifeDrain;
+    if (ports === undefined || operationContext === undefined)
+      throw new Error('life-drain damage requires entity and action context ports');
+    if (
+      step.parameters.takeAttackSnapshot ||
+      step.parameters.calculation === 'breakingAttack' ||
+      step.parameters.stagger !== undefined ||
+      (step.parameters.instantAttributeModifiers?.length ?? 0) > 0 ||
+      (step.parameters.instantDamageScaleModifiers?.length ?? 0) > 0
+    )
+      throw new Error('unsupported life-drain calculation or processors');
+    const sourceId =
+      step.parameters.attacker === 'actionOwner'
+        ? operationContext.actionOwnerId
+        : step.parameters.attacker === 'actionSource'
+          ? operationContext.actionSourceId
+          : this.dependencies.sourceOperatorId;
+    if (sourceId === undefined) throw new Error('life-drain attacker has no action identity');
+    const query =
+      typeof step.parameters.target === 'object'
+        ? step.parameters.target
+        : step.parameters.target === 'actionInputTarget'
+          ? { kind: 'inputTarget' as const }
+          : { kind: 'fixed' as const, target: 'enemy' as const };
+    const targets = this.#queryTargets(query, operationContext);
+    const skillCastInfo = operationContext.skillCastInfo ?? this.dependencies.skillCastInfo;
+    const castId =
+      skillCastInfo === undefined ? this.dependencies.castId : skillCastInfo.originCastId;
+    const skillType =
+      skillCastInfo === undefined ? this.dependencies.skillType : skillCastInfo.originSkillType;
+    this.#emitBeforeDamageAction(step, operationContext, ports.emitPreparationEvent, sourceId);
+    let succeeded = false;
+    for (const target of targets) {
+      const targetId = runtimeTargetEntityId(target);
+      if (targetId !== undefined && this.dependencies.isTargetAlive?.(targetId) === false) continue;
+      // 与普通伤害共用原生实体锁定边界：空间目标不进入计算，也不读取操作数。
+      if (targetId === undefined || this.dependencies.targetExists?.(target) === false) continue;
+      const vitals = ports.resolveVitals(targetId);
+      ports.emitPreparationEvent('beforeCalculateDamage', {
+        sourceId,
+        partTransferInfo: resolveOperationPartTransferInfo(operationContext),
+        damageType: 'lifeDrain',
+        tags: step.parameters.tags ?? [],
+        gameplayTags: step.parameters.gameplayTags ?? [],
+      });
+      const context = new PlayerDamageContext({
+        sourceId,
+        targetId,
+        damageType: 'lifeDrain',
+        targetHealthType: 'normal',
+        tags: step.parameters.tags ?? [],
+        gameplayTags: step.parameters.gameplayTags,
+        skillCastId: skillCastInfo?.skillCastId,
+        skillCastInfo: skillCastInfo ?? null,
+        skillId: this.dependencies.skillId,
+        skillType,
+      });
+      const calculation = this.#resolveCalculationResult(
+        step,
+        context,
+        operationContext,
+        () => {},
+        attribute =>
+          ports.readAttribute(
+            step.parameters.calculation === 'attribute' &&
+              step.parameters.attributeSource === 'target'
+              ? targetId
+              : sourceId,
+            attribute,
+          ),
+      );
+      context.setCalculationResult(calculation.value);
+      const result = calculatePlayerActiveDamage(
+        rawDamageFormulaInput('lifeDrain', context.resolveFinalAttackValue()),
+      );
+      if (operationContext.skillExecution !== undefined)
+        operationContext.skillExecution.hasOutputDamageBattle = true;
+      const marks = this.dependencies.resolveHitMarks?.(
+        operationProducer(operationContext, {
+          ownerId: sourceId,
+          actionId: this.dependencies.sourceActionId,
+        }),
+        sourceId,
+        targetId,
+        step.parameters.tags?.includes('canBreakWeakness') === true,
+      );
+      executeHealthDamage({
+        targetCanDie: this.dependencies.canTargetDie?.(targetId),
+        producedBy: operationProducer(operationContext, {
+          ownerId: sourceId,
+          actionId: this.dependencies.sourceActionId,
+        }),
+        sourceId,
+        targetId,
+        damageType: 'lifeDrain',
+        tags: context.tags ?? [],
+        gameplayTags: context.gameplayTags,
+        skillCastInfo: skillCastInfo ?? null,
+        executingSkillId: this.dependencies.executingSkillId,
+        result,
+        target: vitals,
+        clock: this.dependencies.clock,
+        receipt: this.dependencies.receipt,
+        stepKey: step.key,
+        castId,
+        hitId:
+          step.hitId ??
+          (castId === undefined || step.key === undefined
+            ? undefined
+            : deriveHitId(castId, step.key)),
+        detail: {
+          ...operationContext.executingBuff,
+          sourceActionId: this.dependencies.sourceActionId,
+          baseDamage: calculation.value,
+          finalAttackValue: context.value,
+          nonCriticalDamage: result.value,
+          criticalDamage: result.value,
+          expectedDamage: result.value,
+          canCritical: false,
+          ...marks,
+          ...(marks ? { hitCriticalOverride: null } : {}),
+        },
+        weaknessBreakStagger: marks?.weaknessBreakStagger,
+        onWeaknessBreak: this.dependencies.emitWeaknessBreak,
+        emitSourceEvent: ports.emitSourceEvent,
+        emitTargetEvent: ports.emitTargetEvent,
+        absorbDamage: (_type, value) => ports.absorbDamage(targetId, value),
+      });
+      succeeded = true;
+    }
+    return step.parameters.alwaysNext !== false || succeeded;
+  }
+
   /** 只选择原生基础值计算分支；所有分支完成后仍共享同一伤害修正和最终公式。 */
   #resolveCalculationResult(
     step: DamageStep,
     context: PlayerDamageContext,
     operationContext: CombatOperationContext | undefined,
     recordAttribute: (side: DamageModifierSide, attribute: string) => void,
+    readRawAttribute?: (attribute: string) => number,
   ): {
     readonly value: number;
     readonly attackScale?: number;
@@ -818,7 +1095,13 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         ? undefined
         : operationContext?.blackboard.getValueCalculation(attackScaleSourceKey);
     if (step.parameters.calculation === 'attribute') {
-      const attributeValue = context.attackerAttributes.calculationAttributeValue;
+      const attributeValue =
+        readRawAttribute === undefined
+          ? (step.parameters.attributeSource === 'target'
+              ? context.defenderAttributes
+              : context.attackerAttributes
+            ).calculationAttributeValue
+          : readRawAttribute(step.parameters.calculationAttribute ?? '');
       if (attributeValue === undefined) {
         throw new Error(
           `damage calculation attribute '${step.parameters.calculationAttribute ?? ''}' is missing`,
@@ -830,9 +1113,14 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         'dynamic damage calculation addition',
       );
       if (step.parameters.calculationAttribute !== undefined)
-        recordAttribute('attacker', step.parameters.calculationAttribute);
+        recordAttribute(
+          step.parameters.attributeSource === 'target' ? 'defender' : 'attacker',
+          step.parameters.calculationAttribute,
+        );
       return { value: attributeValue * attackScale + addition, attackScale };
     }
+    if (readRawAttribute !== undefined)
+      return { value: readRawAttribute('Atk') * attackScale, attackScale };
     for (const attribute of attackReceiptAttributes(context.attackerAttributes.attackDetail))
       recordAttribute('attacker', attribute);
     if (step.parameters.calculation !== 'breakingAttack') {
@@ -855,14 +1143,24 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     };
   }
 
+  #queryTargets(
+    query: CompiledTargetQuery,
+    context: CombatOperationContext,
+  ): readonly RuntimeTargetRef[] {
+    const targets =
+      resolveDirectActionTargets(query, context, this.dependencies.sourceOperatorId) ??
+      this.dependencies.queryTargets?.(query, context);
+    if (targets === undefined) throw new Error('damage requires a target query port');
+    return targets;
+  }
+
   #resolveTransfer(
     step: PoiseStep,
     context: CombatOperationContext | undefined,
   ): SharedDamageTransfer | undefined {
-    if (step.parameters.target === undefined || step.parameters.target === 'enemy')
-      return undefined;
-    const target = context?.actionInputTarget;
-    if (target === undefined) throw new Error('damage requires a current target');
+    const target = this.#resolveDamageTarget(step, context);
+    if (target === undefined) return undefined;
+    if (runtimeTargetEntityId(target) === this.dependencies.targetId) return undefined;
     if (target.kind === 'enemy') return undefined;
     const transfer = this.dependencies.resolveSharedDamageTransfer?.(target);
     if (transfer === undefined || transfer.mainBodyId !== this.dependencies.targetId)
@@ -870,15 +1168,37 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     return transfer;
   }
 
+  #resolveDamageTarget(
+    step: PoiseStep,
+    context: CombatOperationContext | undefined,
+  ): RuntimeTargetRef | undefined {
+    if (step.parameters.target === 'enemy') {
+      if (context && this.dependencies.queryTargets)
+        return this.#queryTargets({ kind: 'fixed', target: 'enemy' }, context)[0];
+      return this.dependencies.resolveDefaultDamageTarget
+        ? this.dependencies.resolveDefaultDamageTarget()
+        : runtimeTargetFromEntityId(this.dependencies.targetId);
+    }
+    const target =
+      step.parameters.target === undefined
+        ? this.dependencies.resolveDefaultDamageTarget === undefined
+          ? runtimeTargetFromEntityId(this.dependencies.targetId)
+          : this.dependencies.resolveDefaultDamageTarget()
+        : context?.actionInputTargets?.[0];
+    if (target === undefined && step.parameters.target !== undefined)
+      throw new Error('damage requires a current target');
+    return target;
+  }
+
   #executePoise(step: PoiseStep, calculationValue: number, transferRatio?: number): void {
     const multipliers = this.dependencies.resolvePoiseMultipliers(step);
     const poiseContext = new PoiseCalculationContext(
       this.dependencies.sourceOperatorId,
       this.dependencies.targetId,
-      step.kind === 'dealStagger' ? [] : step.parameters.tags,
-      step.kind === 'dealStagger' ? [] : (step.parameters.features ?? []),
+      step.parameters.tags ?? [],
       multipliers.output,
       multipliers.taken,
+      multipliers.attributes,
     );
     for (const timing of ['beforeCalculation', 'afterCalculation'] as const) {
       this.dependencies.applyPoiseModifiers?.(timing, 'attacker', poiseContext);

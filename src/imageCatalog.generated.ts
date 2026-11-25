@@ -186,8 +186,8 @@ export const imageCatalog: readonly {
     category: 'consumables',
   },
   {
-    ref: 'endaxis:contingency_contract/1/deco_contingency_select_tag_3',
-    path: '/contingency_contract/1/deco_contingency_select_tag_3.webp',
+    ref: 'endaxis:contingency_contract/1/deco_contingency',
+    path: '/contingency_contract/1/deco_contingency.webp',
     category: 'contingency_contract',
   },
   {
@@ -421,33 +421,213 @@ export const imageCatalog: readonly {
     category: 'contingency_contract',
   },
   {
-    ref: 'endaxis:contingency_contract/2/dissipation',
-    path: '/contingency_contract/2/dissipation.webp',
+    ref: 'endaxis:contingency_contract/2/deco_contingency',
+    path: '/contingency_contract/2/deco_contingency.webp',
     category: 'contingency_contract',
   },
   {
-    ref: 'endaxis:contingency_contract/2/engorgement',
-    path: '/contingency_contract/2/engorgement.webp',
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1002',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1002.webp',
     category: 'contingency_contract',
   },
   {
-    ref: 'endaxis:contingency_contract/2/lockdown',
-    path: '/contingency_contract/2/lockdown.webp',
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1003',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1003.webp',
     category: 'contingency_contract',
   },
   {
-    ref: 'endaxis:contingency_contract/2/silence',
-    path: '/contingency_contract/2/silence.webp',
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_101',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_101.webp',
     category: 'contingency_contract',
   },
   {
-    ref: 'endaxis:contingency_contract/deco_contract_027',
-    path: '/contingency_contract/deco_contract_027.webp',
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_102',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_102.webp',
     category: 'contingency_contract',
   },
   {
-    ref: 'endaxis:contingency_contract/deco_contract_028',
-    path: '/contingency_contract/deco_contract_028.webp',
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1101',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1101.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1103',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1103.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1202',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1202.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1203',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1203.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1302',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1302.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1402',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1402.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1403',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1403.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1602',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1602.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1603',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1603.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1702',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1702.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1703',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1703.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1901',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1901.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1902',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1902.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_1903',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_1903.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_201',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_201.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_2201',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_2201.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_2901',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_2901.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_2902',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_2902.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_3001',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_3001.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_301',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_301.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_302',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_302.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_401',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_401.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_403',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_403.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_501',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_501.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_502',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_502.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_601',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_601.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_602',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_602.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_603',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_603.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_701',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_701.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_703',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_703.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_801',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_801.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_803',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_803.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key1',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_key1.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key2',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_key2.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/icon_activity_contract_1_tag_key3',
+    path: '/contingency_contract/2/icon_activity_contract_1_tag_key3.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/deco_contract_0',
+    path: '/contingency_contract/deco_contract_0.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/deco_contract_1',
+    path: '/contingency_contract/deco_contract_1.webp',
     category: 'contingency_contract',
   },
   {
@@ -906,6 +1086,26 @@ export const imageCatalog: readonly {
     category: 'enemies',
   },
   {
+    ref: 'endaxis:enemies/eny_0158_mushbug',
+    path: '/enemies/eny_0158_mushbug.webp',
+    category: 'enemies',
+  },
+  {
+    ref: 'endaxis:enemies/eny_0159_mushman',
+    path: '/enemies/eny_0159_mushman.webp',
+    category: 'enemies',
+  },
+  {
+    ref: 'endaxis:enemies/eny_0160_mushro',
+    path: '/enemies/eny_0160_mushro.webp',
+    category: 'enemies',
+  },
+  {
+    ref: 'endaxis:enemies/eny_0161_mushshd',
+    path: '/enemies/eny_0161_mushshd.webp',
+    category: 'enemies',
+  },
+  {
     ref: 'endaxis:equipment/agi01/item_equip_t2_suit_agi01_body_01',
     path: '/equipment/agi01/item_equip_t2_suit_agi01_body_01.webp',
     category: 'equipment',
@@ -976,6 +1176,16 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_body_06',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_body_06.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_body_07',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_body_07.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_edc_01',
     path: '/equipment/atb01/item_equip_t4_suit_atb01_edc_01.webp',
     category: 'equipment',
@@ -1006,6 +1216,16 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_edc_07',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_edc_07.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_edc_08',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_edc_08.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_hand_01',
     path: '/equipment/atb01/item_equip_t4_suit_atb01_hand_01.webp',
     category: 'equipment',
@@ -1018,6 +1238,16 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_hand_03',
     path: '/equipment/atb01/item_equip_t4_suit_atb01_hand_03.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_hand_04',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_hand_04.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_hand_05',
+    path: '/equipment/atb01/item_equip_t4_suit_atb01_hand_05.webp',
     category: 'equipment',
   },
   {
@@ -1971,6 +2201,11 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/usp02/item_equip_t4_suit_usp02_hand_06',
+    path: '/equipment/usp02/item_equip_t4_suit_usp02_hand_06.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/will01/item_equip_t2_suit_will01_body_01',
     path: '/equipment/will01/item_equip_t2_suit_will01_body_01.webp',
     category: 'equipment',
@@ -2111,6 +2346,11 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_body_07',
+    path: '/equipment/wuling00/item_equip_t4_parts_wuling00_body_07.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_edc_01',
     path: '/equipment/wuling00/item_equip_t4_parts_wuling00_edc_01.webp',
     category: 'equipment',
@@ -2141,6 +2381,11 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_edc_07',
+    path: '/equipment/wuling00/item_equip_t4_parts_wuling00_edc_07.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_hand_01',
     path: '/equipment/wuling00/item_equip_t4_parts_wuling00_hand_01.webp',
     category: 'equipment',
@@ -2168,6 +2413,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_hand_06',
     path: '/equipment/wuling00/item_equip_t4_parts_wuling00_hand_06.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_hand_07',
+    path: '/equipment/wuling00/item_equip_t4_parts_wuling00_hand_07.webp',
     category: 'equipment',
   },
   {
@@ -2231,6 +2481,16 @@ export const imageCatalog: readonly {
     category: 'equipment',
   },
   {
+    ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_body_05',
+    path: '/equipment/wuling02/item_equip_t4_parts_wuling02_body_05.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_body_06',
+    path: '/equipment/wuling02/item_equip_t4_parts_wuling02_body_06.webp',
+    category: 'equipment',
+  },
+  {
     ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_edc_01',
     path: '/equipment/wuling02/item_equip_t4_parts_wuling02_edc_01.webp',
     category: 'equipment',
@@ -2238,6 +2498,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_edc_02',
     path: '/equipment/wuling02/item_equip_t4_parts_wuling02_edc_02.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_edc_03',
+    path: '/equipment/wuling02/item_equip_t4_parts_wuling02_edc_03.webp',
     category: 'equipment',
   },
   {
@@ -2258,6 +2523,16 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_hand_04',
     path: '/equipment/wuling02/item_equip_t4_parts_wuling02_hand_04.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_hand_05',
+    path: '/equipment/wuling02/item_equip_t4_parts_wuling02_hand_05.webp',
+    category: 'equipment',
+  },
+  {
+    ref: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_hand_06',
+    path: '/equipment/wuling02/item_equip_t4_parts_wuling02_hand_06.webp',
     category: 'equipment',
   },
   {
@@ -2328,6 +2603,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:icons/icon_attribute_agi',
     path: '/icons/icon_attribute_agi.webp',
+    category: 'icons',
+  },
+  {
+    ref: 'endaxis:icons/icon_attribute_big_agi',
+    path: '/icons/icon_attribute_big_agi.webp',
     category: 'icons',
   },
   {
@@ -2456,6 +2736,11 @@ export const imageCatalog: readonly {
     category: 'icons',
   },
   {
+    ref: 'endaxis:icons/icon_battle_buff_atk_down',
+    path: '/icons/icon_battle_buff_atk_down.webp',
+    category: 'icons',
+  },
+  {
     ref: 'endaxis:icons/icon_battle_buff_atk_up',
     path: '/icons/icon_battle_buff_atk_up.webp',
     category: 'icons',
@@ -2508,6 +2793,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:icons/icon_battle_buff_lizhiyan_combo_vulnerable',
     path: '/icons/icon_battle_buff_lizhiyan_combo_vulnerable.webp',
+    category: 'icons',
+  },
+  {
+    ref: 'endaxis:icons/icon_battle_buff_minghe_thundertrigger',
+    path: '/icons/icon_battle_buff_minghe_thundertrigger.webp',
     category: 'icons',
   },
   {
@@ -2581,6 +2871,11 @@ export const imageCatalog: readonly {
     category: 'icons',
   },
   {
+    ref: 'endaxis:icons/icon_battle_chr_no_lastcombo_weak',
+    path: '/icons/icon_battle_chr_no_lastcombo_weak.webp',
+    category: 'icons',
+  },
+  {
     ref: 'endaxis:icons/icon_battle_combo_skill_dmg_up',
     path: '/icons/icon_battle_combo_skill_dmg_up.webp',
     category: 'icons',
@@ -2588,6 +2883,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:icons/icon_battle_conduct',
     path: '/icons/icon_battle_conduct.webp',
+    category: 'icons',
+  },
+  {
+    ref: 'endaxis:icons/icon_battle_continuous_healing',
+    path: '/icons/icon_battle_continuous_healing.webp',
     category: 'icons',
   },
   {
@@ -2678,6 +2978,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:icons/icon_battle_frozen',
     path: '/icons/icon_battle_frozen.webp',
+    category: 'icons',
+  },
+  {
+    ref: 'endaxis:icons/icon_battle_heal_no_infliction_or_noguard',
+    path: '/icons/icon_battle_heal_no_infliction_or_noguard.webp',
     category: 'icons',
   },
   {
@@ -2836,6 +3141,11 @@ export const imageCatalog: readonly {
     category: 'icons',
   },
   {
+    ref: 'endaxis:icons/icon_combo_skill_cooldown',
+    path: '/icons/icon_combo_skill_cooldown.webp',
+    category: 'icons',
+  },
+  {
     ref: 'endaxis:icons/icon_comboskill_cooldown_scalar',
     path: '/icons/icon_comboskill_cooldown_scalar.webp',
     category: 'icons',
@@ -2866,6 +3176,11 @@ export const imageCatalog: readonly {
     category: 'icons',
   },
   {
+    ref: 'endaxis:icons/icon_energy_fusion_conduct',
+    path: '/icons/icon_energy_fusion_conduct.webp',
+    category: 'icons',
+  },
+  {
     ref: 'endaxis:icons/icon_energy_fusion_cryst',
     path: '/icons/icon_energy_fusion_cryst.webp',
     category: 'icons',
@@ -2883,6 +3198,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:icons/icon_energy_fusion_pulse',
     path: '/icons/icon_energy_fusion_pulse.webp',
+    category: 'icons',
+  },
+  {
+    ref: 'endaxis:icons/icon_equipmake',
+    path: '/icons/icon_equipmake.webp',
     category: 'icons',
   },
   {
@@ -3126,11 +3446,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/akekuri/portrait',
-    path: '/operators/akekuri/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/akekuri/talent_1',
     path: '/operators/akekuri/talent 1.webp',
     category: 'operators',
@@ -3161,11 +3476,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/alesh/portrait',
-    path: '/operators/alesh/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/alesh/talent_1',
     path: '/operators/alesh/talent 1.webp',
     category: 'operators',
@@ -3193,11 +3503,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/antal/combo_01',
     path: '/operators/antal/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/antal/portrait',
-    path: '/operators/antal/portrait.webp',
     category: 'operators',
   },
   {
@@ -3241,11 +3546,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/arcane/portrait',
-    path: '/operators/arcane/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/arcane/talent_1',
     path: '/operators/arcane/talent 1.webp',
     category: 'operators',
@@ -3286,11 +3586,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/arclight/portrait',
-    path: '/operators/arclight/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/arclight/talent_1',
     path: '/operators/arclight/talent 1.webp',
     category: 'operators',
@@ -3318,11 +3613,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/ardelia/combo_01',
     path: '/operators/ardelia/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/ardelia/portrait',
-    path: '/operators/ardelia/portrait.webp',
     category: 'operators',
   },
   {
@@ -3356,11 +3646,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/avywenna/portrait',
-    path: '/operators/avywenna/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/avywenna/talent_1',
     path: '/operators/avywenna/talent 1.webp',
     category: 'operators',
@@ -3388,11 +3673,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/camille/combo_01',
     path: '/operators/camille/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/camille/portrait',
-    path: '/operators/camille/portrait.webp',
     category: 'operators',
   },
   {
@@ -3426,11 +3706,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/catcher/portrait',
-    path: '/operators/catcher/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/catcher/talent_1',
     path: '/operators/catcher/talent 1.webp',
     category: 'operators',
@@ -3461,11 +3736,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/chen-qianyu/portrait',
-    path: '/operators/chen-qianyu/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/chen-qianyu/talent_1',
     path: '/operators/chen-qianyu/talent 1.webp',
     category: 'operators',
@@ -3493,11 +3763,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/da-pan/combo_01',
     path: '/operators/da-pan/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/da-pan/portrait',
-    path: '/operators/da-pan/portrait.webp',
     category: 'operators',
   },
   {
@@ -3536,11 +3801,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/ember/portrait',
-    path: '/operators/ember/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/ember/talent_1',
     path: '/operators/ember/talent 1.webp',
     category: 'operators',
@@ -3568,11 +3828,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/endministrator/combo_01',
     path: '/operators/endministrator/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/endministrator/portrait',
-    path: '/operators/endministrator/portrait.webp',
     category: 'operators',
   },
   {
@@ -3606,11 +3861,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/estella/portrait',
-    path: '/operators/estella/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/estella/talent_1',
     path: '/operators/estella/talent 1.webp',
     category: 'operators',
@@ -3638,11 +3888,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/fluorite/combo_01',
     path: '/operators/fluorite/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/fluorite/portrait',
-    path: '/operators/fluorite/portrait.webp',
     category: 'operators',
   },
   {
@@ -3676,11 +3921,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/gilberta/portrait',
-    path: '/operators/gilberta/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/gilberta/talent_1',
     path: '/operators/gilberta/talent 1.webp',
     category: 'operators',
@@ -3693,6 +3933,36 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/gilberta/ultimate_01',
     path: '/operators/gilberta/ultimate 01.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/avatar',
+    path: '/operators/kay/avatar.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/battle_01',
+    path: '/operators/kay/battle 01.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/combo_01',
+    path: '/operators/kay/combo 01.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/talent_1',
+    path: '/operators/kay/talent 1.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/talent_2',
+    path: '/operators/kay/talent 2.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/kay/ultimate_01',
+    path: '/operators/kay/ultimate 01.webp',
     category: 'operators',
   },
   {
@@ -3736,11 +4006,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/laevatain/portrait',
-    path: '/operators/laevatain/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/laevatain/talent_1',
     path: '/operators/laevatain/talent 1.webp',
     category: 'operators',
@@ -3776,11 +4041,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/last-rite/portrait',
-    path: '/operators/last-rite/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/last-rite/talent_1',
     path: '/operators/last-rite/talent 1.webp',
     category: 'operators',
@@ -3808,11 +4068,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/lifeng/combo_01',
     path: '/operators/lifeng/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/lifeng/portrait',
-    path: '/operators/lifeng/portrait.webp',
     category: 'operators',
   },
   {
@@ -3848,11 +4103,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/liino/combo_01',
     path: '/operators/liino/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/liino/portrait',
-    path: '/operators/liino/portrait.webp',
     category: 'operators',
   },
   {
@@ -3896,11 +4146,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/mifu/portrait',
-    path: '/operators/mifu/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/mifu/talent_1',
     path: '/operators/mifu/talent 1.webp',
     category: 'operators',
@@ -3916,6 +4161,41 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
+    ref: 'endaxis:operators/minghe/avatar',
+    path: '/operators/minghe/avatar.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/battle_01',
+    path: '/operators/minghe/battle 01.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/battle_02',
+    path: '/operators/minghe/battle 02.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/combo_01',
+    path: '/operators/minghe/combo 01.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/talent_1',
+    path: '/operators/minghe/talent 1.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/talent_2',
+    path: '/operators/minghe/talent 2.webp',
+    category: 'operators',
+  },
+  {
+    ref: 'endaxis:operators/minghe/ultimate_01',
+    path: '/operators/minghe/ultimate 01.webp',
+    category: 'operators',
+  },
+  {
     ref: 'endaxis:operators/perlica/avatar',
     path: '/operators/perlica/avatar.webp',
     category: 'operators',
@@ -3928,11 +4208,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/perlica/combo_01',
     path: '/operators/perlica/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/perlica/portrait',
-    path: '/operators/perlica/portrait.webp',
     category: 'operators',
   },
   {
@@ -3963,11 +4238,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/pogranichnik/combo_01',
     path: '/operators/pogranichnik/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/pogranichnik/portrait',
-    path: '/operators/pogranichnik/portrait.webp',
     category: 'operators',
   },
   {
@@ -4006,11 +4276,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/purrchena/portrait',
-    path: '/operators/purrchena/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/purrchena/talent_1',
     path: '/operators/purrchena/talent 1.webp',
     category: 'operators',
@@ -4038,11 +4303,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/rossi/combo_01',
     path: '/operators/rossi/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/rossi/portrait',
-    path: '/operators/rossi/portrait.webp',
     category: 'operators',
   },
   {
@@ -4086,11 +4346,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/si/portrait',
-    path: '/operators/si/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/si/talent_1',
     path: '/operators/si/talent 1.webp',
     category: 'operators',
@@ -4118,11 +4373,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/snowshine/combo_01',
     path: '/operators/snowshine/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/snowshine/portrait',
-    path: '/operators/snowshine/portrait.webp',
     category: 'operators',
   },
   {
@@ -4161,11 +4411,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/tangtang/portrait',
-    path: '/operators/tangtang/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/tangtang/talent_1',
     path: '/operators/tangtang/talent 1.webp',
     category: 'operators',
@@ -4193,11 +4438,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/typhoeus/combo_01',
     path: '/operators/typhoeus/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/typhoeus/portrait',
-    path: '/operators/typhoeus/portrait.webp',
     category: 'operators',
   },
   {
@@ -4231,11 +4471,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/wulfgard/portrait',
-    path: '/operators/wulfgard/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/wulfgard/talent_1',
     path: '/operators/wulfgard/talent 1.webp',
     category: 'operators',
@@ -4263,11 +4498,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/xaihi/combo_01',
     path: '/operators/xaihi/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/xaihi/portrait',
-    path: '/operators/xaihi/portrait.webp',
     category: 'operators',
   },
   {
@@ -4301,11 +4531,6 @@ export const imageCatalog: readonly {
     category: 'operators',
   },
   {
-    ref: 'endaxis:operators/yvonne/portrait',
-    path: '/operators/yvonne/portrait.webp',
-    category: 'operators',
-  },
-  {
     ref: 'endaxis:operators/yvonne/talent_1',
     path: '/operators/yvonne/talent 1.webp',
     category: 'operators',
@@ -4333,11 +4558,6 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:operators/zhuang-fangyi/combo_01',
     path: '/operators/zhuang-fangyi/combo 01.webp',
-    category: 'operators',
-  },
-  {
-    ref: 'endaxis:operators/zhuang-fangyi/portrait',
-    path: '/operators/zhuang-fangyi/portrait.webp',
     category: 'operators',
   },
   {
@@ -4606,6 +4826,16 @@ export const imageCatalog: readonly {
     category: 'weapons',
   },
   {
+    ref: 'endaxis:weapons/lance/wpn_lance_0017',
+    path: '/weapons/lance/wpn_lance_0017.webp',
+    category: 'weapons',
+  },
+  {
+    ref: 'endaxis:weapons/lance/wpn_lance_0018',
+    path: '/weapons/lance/wpn_lance_0018.webp',
+    category: 'weapons',
+  },
+  {
     ref: 'endaxis:weapons/pistol/wpn_pistol_0001',
     path: '/weapons/pistol/wpn_pistol_0001.webp',
     category: 'weapons',
@@ -4768,6 +4998,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:weapons/sword/wpn_sword_0024',
     path: '/weapons/sword/wpn_sword_0024.webp',
+    category: 'weapons',
+  },
+  {
+    ref: 'endaxis:weapons/sword/wpn_sword_0025',
+    path: '/weapons/sword/wpn_sword_0025.webp',
     category: 'weapons',
   },
   {

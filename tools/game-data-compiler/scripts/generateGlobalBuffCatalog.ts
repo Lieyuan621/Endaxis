@@ -4,9 +4,15 @@ import { fileURLToPath } from 'node:url';
 import { parseGlobalBuffDumpSource } from '../src/source/globalBuffDumpSource.ts';
 import { parseGlobalBuffTemplateCatalogSource } from '../src/source/globalBuffTemplate.ts';
 import { writeAtomicBytes } from './downloadGameDataSources.ts';
+import {
+  localResource,
+  parseJson,
+  ResourceHttpError,
+  type ResourceBytes,
+} from './gameDataProviders.ts';
 
 export async function generateGlobalBuffCatalog(args: {
-  readonly vfsBase: string;
+  readonly localBase: string;
   readonly revision: string;
   readonly identities: string;
   readonly output: string;
@@ -35,14 +41,37 @@ export async function generateGlobalBuffCatalog(args: {
   const unsupportedAssets: { id: string; path: string; sourceUrl: string; reason: string }[] = [];
   for (const id of ids) {
     const expectedPath = `assets/beyond/dynamicassets/gameplay/globalbuff/${id}.asset`;
-    const sourceUrl = await resolveNamedManifestAssetPreview(
-      args.vfsBase,
-      `${id}.asset`,
-      expectedPath,
-    );
-    const response = await fetch(sourceUrl);
-    if (!response.ok) throw new Error(`${sourceUrl}: HTTP ${response.status}`);
-    const preview = (await response.json()) as {
+    const sourceUrl = new URL('GlobalBuffData/' + id + '.json', args.localBase.replace(/\/?$/, '/'))
+      .href;
+    let resource: ResourceBytes;
+    try {
+      resource = await localResource(
+        args.localBase,
+        'GlobalBuffData/' + id + '.json',
+        args.revision,
+      );
+    } catch (error) {
+      // 扫描全部 Buff 会包含未进入生产闭包的模板；来源不可用时记录缺口。
+      // 明确要求的模板仍须成功，后续编译若真正引用缺失模板也会失败。
+      if (
+        !(
+          error instanceof TypeError ||
+          (error instanceof ResourceHttpError && error.status === 404)
+        ) ||
+        !args.tolerateUnsupportedAdditionalIdentities ||
+        configuredIdSet.has(id) ||
+        args.additionalIdentities?.includes(id)
+      )
+        throw error;
+      unsupportedAssets.push({
+        id,
+        path: expectedPath,
+        sourceUrl,
+        reason: `Local export unavailable: ${error instanceof Error ? error.message : String(error)}`,
+      });
+      continue;
+    }
+    const preview = parseJson(resource.content) as {
       asset?: { Name?: unknown; Container?: unknown };
       text?: unknown;
     };
@@ -69,7 +98,7 @@ export async function generateGlobalBuffCatalog(args: {
   }
   const catalog = {
     version: args.revision,
-    evidence: { source: 'vfs-index-browser', assets, unsupportedAssets },
+    evidence: { source: 'endaxis-data-tool', assets, unsupportedAssets },
     templates,
   };
   // 写入前通过实际消费者解析，避免导出结构与整名转换输入漂移。
@@ -103,6 +132,8 @@ export function collectReferencedGlobalBuffIds(value: unknown): string[] {
     }
     if (current === null || typeof current !== 'object') return;
     const record = current as Record<string, unknown>;
+    // 禁用动作及其嵌套序列不会执行，不能要求其中遗留的模板引用仍然存在。
+    if (typeof record.$type === 'string' && record.isEnable === false) return;
     const addWrappedId = (candidate: unknown): void => {
       if (typeof candidate === 'string' && candidate.startsWith('global_buff_')) {
         result.add(candidate);
@@ -131,24 +162,6 @@ async function collectReferencedGlobalBuffIdsFromDirectory(root: string): Promis
     for (const id of collectReferencedGlobalBuffIds(value)) result.add(id);
   }
   return [...result].sort();
-}
-
-async function resolveNamedManifestAssetPreview(
-  vfsBase: string,
-  name: string,
-  expectedPath: string,
-) {
-  const endpoint = new URL('/api/manifest-assets/by-name', vfsBase);
-  endpoint.searchParams.set('name', name);
-  const response = await fetch(endpoint);
-  if (!response.ok) throw new Error(`${endpoint}: HTTP ${response.status}`);
-  const document = (await response.json()) as {
-    candidates?: readonly { path?: unknown; previewUrl?: unknown }[];
-  };
-  const matches = (document.candidates ?? []).filter(item => item.path === expectedPath);
-  if (matches.length !== 1 || typeof matches[0]!.previewUrl !== 'string')
-    throw new Error(`${endpoint}: expected exactly one ${expectedPath}`);
-  return new URL(matches[0]!.previewUrl, vfsBase).href;
 }
 
 async function parseArguments(values: readonly string[]) {
@@ -188,7 +201,7 @@ async function parseArguments(values: readonly string[]) {
     additionalIdentities = Object.keys(templates as Record<string, unknown>);
   }
   return {
-    vfsBase: positional[0]!,
+    localBase: positional[0]!,
     revision: positional[1]!,
     identities: path.resolve(positional[2]!),
     output,

@@ -34,7 +34,7 @@ export function operatorReferenceChoices(
     kind: options.sourceKind ?? ('builtin' as const),
   };
   const catalogs: Record<string, ReferenceCatalog & { candidates: ReferenceCandidate[] }> = {};
-  for (const family of ['skillGroup', 'skillSlot', 'skill', 'buff', 'abilityEntity'])
+  for (const family of ['skillGroup', 'skillSlot', 'skill', 'buff', 'abilityEntity', 'projectile'])
     catalogs[family] = { family, owner, complete: true, candidates: [] };
   const add = (
     family: string,

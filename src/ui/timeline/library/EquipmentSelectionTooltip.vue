@@ -56,6 +56,7 @@ const setPreview = computed(() =>
 <style scoped>
 :global(.equipment-selection-preview-popper) {
   max-width: min(440px, calc(100vw - 32px));
+  pointer-events: none;
 }
 
 :global(html[data-theme='light'] .equipment-selection-preview__name) {

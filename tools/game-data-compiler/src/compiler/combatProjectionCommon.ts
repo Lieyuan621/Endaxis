@@ -1,3 +1,4 @@
+import type { ActionTargetQuery } from './intermediateDefinitions.ts';
 import type { ComparisonOperator } from '../../../../packages/game-data-contract/src/primitives.ts';
 import type { BuffApplicationActionSource } from '../source/buffActions.ts';
 import type { GlobalBuffActionSource } from '../source/globalBuffActions.ts';
@@ -96,8 +97,8 @@ export interface CombatActionProjectionContextSource {
   readonly graph: ActionGraphBuilder<CompiledBuffStepSource>;
   /** 完整 Buff 施加链已证明只会解析到纯表现 Buff 的动态 ID 黑板键。 */
   readonly combatInvisibleDynamicBuffBlackboardKeys?: ReadonlySet<string>;
-  /** 仅基础攻击组装配保留 AllowNextSkillAction，用于按实际条件分支发布技能块边界。 */
-  readonly preserveSkillOperableBoundary?: boolean;
+  /** 技能宿主保留输入动作，按实际分支维护命令映射、接续窗口及技能块边界。 */
+  readonly preserveSkillInputActions?: boolean;
   /** 当前 Buff AbilityEvent；仅用于投影原生事件负载条件，不替代公开事件身份。 */
   readonly nativeAbilityEvent?: string | number;
   /** 同步修正宿主提供相应计算包上下文；不代表发生 AbilitySystem 广播。 */
@@ -150,6 +151,10 @@ export interface CombatActionProjectionContextSource {
   readonly staticEmptyTargetGroupKeys?: ReadonlySet<string>;
   /** 运行时可为空、但任一成员都已证明只能是唯一木桩的命名目标组。 */
   readonly singleEnemyTargetGroupKeys?: ReadonlySet<string>;
+  /** 仅证明成员是敌人；集合可为空或包含多个目标，不能用于数量或恒真折叠。 */
+  readonly enemyTargetGroupKeys?: ReadonlySet<string>;
+  /** 只含敌人或空间点；仅用于需实体宿主的 Buff 闭包，不能替代真实目标查询或数量判断。 */
+  readonly enemyOrSpatialTargetGroupKeys?: ReadonlySet<string>;
   /** 当前时间线之前的写入仅产生干员；数量和具体成员仍从运行时 Context 读取。 */
   readonly operatorTargetGroupKeys?: ReadonlySet<string>;
   /** 跨时间段可证明只含固定敌人或固定空间点的 Context；仅用于零空间锚点，不代表实体身份。 */
@@ -212,7 +217,7 @@ export interface CombatActionProjectionExtensionsSource {
     action: ProjectileLaunchActionSource,
     sourcePath: string,
     context: CombatActionProjectionContextSource,
-  ) => readonly [Extract<CompiledBuffStepSource, { kind: 'launchProjectile' }>];
+  ) => readonly [] | readonly [Extract<CompiledBuffStepSource, { kind: 'launchProjectile' }>];
   readonly resolveTimeDilationPriority?: (tagId: number, sourcePath: string) => number;
   readonly compileGlobalBuffAction?: (
     action: GlobalBuffActionSource,
@@ -426,7 +431,6 @@ function isSingleEnemyFinder(write: TargetGroupActionSource): boolean {
       write.producerType === 'ConvertToTargetContext') &&
     (write.finderType === 'AllEnemyFinder' ||
       write.finderType === 'InFightEnemyFinder' ||
-      write.finderType === 'TyphoeaArcherySelectedFinder' ||
       write.finderType === 'MainTargetFinder' ||
       (write.finderType === 'HitBoxFinder' &&
         write.finderFactionTarget === 'Anti' &&
@@ -437,30 +441,19 @@ function isSingleEnemyFinder(write: TargetGroupActionSource): boolean {
 }
 
 function postProcessingKeepsSingleEnemy(write: TargetGroupActionSource): boolean {
-  const priority = write.priorityFilters?.[0];
-  return (
-    write.postProcessorTypes.length === 0 ||
-    (write.postProcessorTypes.length === 1 &&
-      write.postProcessorTypes[0] === 'PriorityFilter' &&
-      write.priorityFilters.length === 1 &&
-      priority?.buffFilter.checkType === 'Id' &&
-      priority.buffFilter.buffIds.length === 0 &&
-      priority.buffFilter.tagQuery.queryType === 'hasAny' &&
-      priority.buffFilter.tagQuery.tagIds.length === 0 &&
-      (!priority.limitMaxNum || priority.maxNum >= 1))
-  );
+  // 距离评分并列也不意味着限数无效；后处理必须由查询投影显式保留。
+  return write.postProcessorTypes.length === 0;
 }
 
-/**
- * 唯一敌人已作为当前 Target 进入动作时，命中盒“搜索敌人 → 排除当前 Target”必定为空。
- * 只接受萤石反弹分支观测到的完整后处理形状；未知排序或 Buff 过滤不在这里被吞掉。
- */
-export function isEmptyStaticEnemyExclusionTargetGroup(write: TargetGroupActionSource): boolean {
+/** 原生反弹选敌：排除当前输入目标，再按中心距离取一个；同位置模型保留候选顺序。 */
+export function isSingleRemainingEnemyTargetGroup(write: TargetGroupActionSource): boolean {
   const priority = write.priorityFilters[0];
   return (
     write.producerType === 'FindTargetAction' &&
     write.finderType === 'HitBoxFinder' &&
     write.finderFactionTarget === 'Anti' &&
+    (write.finderAutoSetTargetFaction === true ||
+      (write.finderAutoSetTargetFaction === false && write.finderTargetFactionType === 'Bad')) &&
     write.finderTargetObjectType === 'Normal' &&
     write.finderCheckAlive === true &&
     write.finderOwnerPartsQuery === null &&
@@ -694,4 +687,33 @@ export function projectGameplayTags(
       throw new Error(sourcePath + '[' + index + ']: 转换 GameplayTag 缺少来源标签目录');
     return registry.resolve(id, sourcePath + '[' + index + ']');
   });
+}
+
+export function inferBuffTargetKind(
+  query: ActionTargetQuery,
+  context: CombatActionProjectionContextSource,
+  targetGroups: ReadonlyMap<string, ProjectedTargetGroup> = new Map(),
+): string {
+  if (query.kind === 'fixed') return query.target;
+  if (
+    query.kind === 'context' &&
+    (targetGroups.get(query.key) === 'enemy' ||
+      targetGroups.get(query.key) === 'dynamicEnemy' ||
+      (!targetGroups.has(query.key) && context.staticEnemyTargetGroupKeys?.has(query.key)))
+  )
+    return 'enemy';
+  if (query.kind === 'owner') return context.fixedBuffOwnerTarget ?? context.actionOwnerTarget;
+  if (query.kind === 'source') return context.fixedBuffSourceTarget ?? context.actionSourceTarget;
+  if (query.kind === 'inputTarget') return context.actionTargetTarget ?? 'unknown';
+  if (query.kind === 'characterTeam' || query.kind === 'mainCharacter') return 'caster';
+  if (query.kind === 'battleMainTarget' || query.kind === 'enemyByTags') return 'enemy';
+  if (
+    query.kind === 'buffFilter' ||
+    query.kind === 'tagFilter' ||
+    query.kind === 'exclude' ||
+    query.kind === 'intersection' ||
+    query.kind === 'limit'
+  )
+    return inferBuffTargetKind(query.targets, context, targetGroups);
+  return 'unknown';
 }

@@ -1,7 +1,9 @@
+import { projectAnimationCurveKeys } from '../animationCurveProjection.ts';
 import type {
   BuffApplicationSource,
   BuffApplicationTarget,
 } from '../../../../../packages/game-data-contract/src/primitives.ts';
+import { nativeAbilityEventHasNoBuffContext } from '../abilities/abilityEventProjection.ts';
 import type { KnownNativeActionLeafSource } from '../../source/actionLeaf.ts';
 import type { BlackboardAssignmentSource } from '../../source/assignments.ts';
 import type { BuffApplicationActionSource } from '../../source/buffActions.ts';
@@ -17,9 +19,11 @@ import { projectKeywordBuffAction } from '../buffs/keywordBuffProjection.ts';
 import { projectCombatRuntimeAttributeKey } from '../build/attributeModifier.ts';
 import {
   actionValueOperand,
+  inferBuffTargetKind,
   type CombatActionProjectionContextSource,
   type CombatActionProjectionExtensionsSource,
   isControlledOperatorInstantSearch,
+  isPlainOwnerTarget,
   isPartyExceptOwnerInstantSearch,
   isPartyInstantSearch,
   isUniqueEnemyHitBoxInstantSearch,
@@ -30,13 +34,13 @@ import {
 } from '../combatProjectionCommon.ts';
 import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
 import { standardStumpBuffAbilityEventOmissionReason } from '../scenario/standardStumpScenarioPolicy.ts';
+import { retainReviewedEntityTags } from '../scenario/entityTagPolicy.ts';
 import { isPresentationOnlyActionSequence } from '../skills/skillPresentationTargets.ts';
 import type {
   CompiledActionValueOperandSource,
   CompiledBuffStepSource,
 } from './combatActionProjectionTypes.ts';
 import { projectElementalInflictionAction } from './elementalInflictionProjection.ts';
-import { projectGlobalCooldownTarget } from './globalCooldownProjection.ts';
 import { projectKnockDownAction } from './knockDownProjection.ts';
 import { projectPhysicalInflictionAction } from './physicalInflictionProjection.ts';
 import {
@@ -111,15 +115,41 @@ export function compileActionNode(
   context: CombatActionProjectionContextSource,
   extensions: CombatActionProjectionExtensionsSource = {},
 ): CompiledBuffStepSource[] {
+  if (node.body.kind === 'leaf' && node.body.value.family === 'actionEnvironmentSkill')
+    return [{ kind: 'changeOriginSkillToEventContextSkill', parameters: {} }];
+  if (node.body.kind === 'leaf' && node.body.value.family === 'buffApplicationTermination')
+    return [{ kind: 'terminateAddingBuff', parameters: {} }];
   if (node.body.kind !== 'leaf') {
     throw new Error(`${node.sourcePath}: unsupported Buff runtime action`);
   }
   if (node.body.value.family === 'skillAffix') {
     return [{ kind: 'skillAffix', parameters: {} }];
   }
+  if (node.body.value.family === 'rawAttributeOverride') {
+    const action = node.body.value.action;
+    return [
+      {
+        kind: 'overrideRawAttributes',
+        parameters: {
+          targets: projectActionTargetQuery(
+            action.target,
+            context,
+            `${node.sourcePath}.targetSettings`,
+          ),
+          attributes: action.attributes.map(entry => ({
+            attribute: projectCombatRuntimeAttributeKey(entry.attribute),
+            value: actionValueOperand(entry.value),
+          })),
+        },
+      },
+    ];
+  }
   if (node.body.value.family === 'characterIdentity') {
     const action = node.body.value.action;
-    if (action.kind === 'findCharacterBySquadSlot')
+    if (
+      action.kind === 'findCharacterBySquadSlot' ||
+      action.kind === 'findNextAliveCharacterBySquadSlot'
+    )
       return [
         {
           kind: action.kind,
@@ -136,6 +166,25 @@ export function compileActionNode(
           parameters: {
             slotIndex: actionValueOperand({ ...action.slotIndex, levelValues: null }),
             defaultValue: action.defaultValue,
+            outputKey: action.outputKey,
+          },
+        },
+      ];
+    if (
+      action.kind === 'characterTypeCodeRead' ||
+      action.kind === 'professionRead' ||
+      action.kind === 'squadSlotRead'
+    )
+      return [
+        {
+          kind:
+            action.kind === 'characterTypeCodeRead'
+              ? 'storeCharacterTypeCode'
+              : action.kind === 'professionRead'
+                ? 'storeProfession'
+                : 'storeSquadSlot',
+          parameters: {
+            target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
             outputKey: action.outputKey,
           },
         },
@@ -176,8 +225,18 @@ export function compileActionNode(
   if (node.body.value.family === 'physicalInfliction') {
     return [
       node.body.value.action.kind === 'knockDown'
-        ? projectKnockDownAction(node.body.value.action, node.sourcePath, context)
-        : projectPhysicalInflictionAction(node.body.value.action, node.sourcePath, context),
+        ? projectKnockDownAction(
+            node.body.value.action,
+            node.sourcePath,
+            context,
+            partyTargetGroups,
+          )
+        : projectPhysicalInflictionAction(
+            node.body.value.action,
+            node.sourcePath,
+            context,
+            partyTargetGroups,
+          ),
     ];
   }
   if (
@@ -185,6 +244,7 @@ export function compileActionNode(
     ![
       // Context 伤害可以命中另一个目标；伤害投影器单独验证施术者和实际目标组。
       'damage',
+      'damageSkillCastRecord',
       'buffApplication',
       'blackboardMutation',
       'blackboardCalculation',
@@ -201,10 +261,12 @@ export function compileActionNode(
     ![
       'damage',
       'heal',
+      'damageSkillCastRecord',
       'buffApplication',
       'buffInheritance',
       'buffBlackboardRead',
       'buffLifeTimeRead',
+      'buffDurationMutation',
       'buffQuery',
       'buffFinish',
       'buffHold',
@@ -222,10 +284,12 @@ export function compileActionNode(
       'finisherSpGain',
       'presentation',
       'presentationCalculation',
+      'curveCalculation',
       'directionAngle',
       'spatial',
       'spatialMeasurement',
       'selfDefense',
+      'movementGait',
       'projectileControl',
       'animationTiming',
       'animationEventListener',
@@ -235,6 +299,7 @@ export function compileActionNode(
       'timedMarker',
       // 动作自身仍严格要求 Owner/Source 解析为 caster；敌人 Target 只是技能命中上下文。
       'globalCooldown',
+      'collectedBuffBlackboard',
       'modeAndResourcePolicy',
       'skillCooldownMutation',
       'skillSlotReplacement',
@@ -246,6 +311,7 @@ export function compileActionNode(
       'buffIgnite',
       'forcedElementalStatus',
       'spellBurstEvent',
+      'buffConsumeEvent',
       'customAbilityEvent',
       'skillCast',
       // Pending 自身仍在下方严格校验固定候选角色、敌人目标、trigger 与空赋值。
@@ -261,6 +327,7 @@ export function compileActionNode(
   if (
     context.restrictEventSourceTargetProjection === true &&
     ![
+      'damageSkillCastRecord',
       'buffApplication',
       'buffFinish',
       'buffBlackboardRead',
@@ -290,6 +357,8 @@ export function compileActionNode(
       // 后者只记录一次已成功的极限闪避。动作分支仍严格校验原生字段。
       'dashEnergyRecovery',
       'battleDetailRecord',
+      // 关卡信号没有当前战斗模型的消费者，与受击来源无关。
+      'levelEvent',
       // 标记的身份由 Owner/Source 解析，与受击事件的对端对象无关。
       'globalCooldown',
     ].includes(node.body.value.family)
@@ -297,6 +366,26 @@ export function compileActionNode(
     throw new Error(
       `${node.sourcePath}: unaudited receiving Buff event action ${node.body.value.family}`,
     );
+  if (node.body.value.family === 'collectedBuffBlackboard') {
+    const action = node.body.value.action;
+    return action.kind === 'storeCollectedBuffValue'
+      ? [{ kind: action.kind, parameters: { key: action.key, outputKey: action.outputKey } }]
+      : [
+          {
+            kind: action.kind,
+            parameters: {
+              key: action.key,
+              useDirectValue: action.useDirectValue,
+              multiplier: actionValueOperand(action.multiplier),
+              addition: actionValueOperand(action.addition),
+              directValue: actionValueOperand(action.directValue),
+            },
+          },
+        ];
+  }
+  if (node.body.value.family === 'damageSkillCastRecord') {
+    return [{ kind: 'saveDamageSkillCastId', parameters: {} }];
+  }
   if (node.body.value.family === 'buffApplication') {
     return compileBuffApplication(
       node.body.value.action,
@@ -365,27 +454,18 @@ export function compileActionNode(
       ];
     }
     if (action.kind === 'saveShieldValue') {
-      const target = action.target;
-      if (
-        action.outputKey.length === 0 ||
-        target.targetSource !== 'Owner' ||
-        target.targetGroupKey !== '' ||
-        target.finderType !== null ||
-        target.validatorTypes.length !== 0 ||
-        target.postProcessorTypes.length !== 0 ||
-        target.priorityFilters.length !== 0 ||
-        target.shuffleTargets.length !== 0 ||
-        target.distanceValidators.length !== 0 ||
-        target.finderSpawnedObjectType !== null ||
-        target.validatorTagQueries.length !== 0
-      ) {
-        throw new Error(`${node.sourcePath}: unsupported SaveShieldValueToBB target or output key`);
+      if (action.outputKey.length === 0) {
+        throw new Error(`${node.sourcePath}: SaveShieldValueToBB requires an output key`);
       }
       return [
         {
           kind: 'storeShieldValue',
           parameters: {
-            target: 'actionOwner',
+            target: projectActionTargetQuery(
+              action.target,
+              context,
+              `${node.sourcePath}.shieldValue`,
+            ),
             value: action.valueType === 'GainedValue' ? 'gained' : 'current',
             outputKey: action.outputKey,
           },
@@ -427,6 +507,24 @@ export function compileActionNode(
       },
     ];
   }
+  if (node.body.value.family === 'buffConsumeEvent') {
+    const action = node.body.value;
+    return [
+      {
+        kind: 'triggerBuffConsumeEvent',
+        parameters: {
+          source: projectActionTargetQuery(
+            action.source,
+            context,
+            node.sourcePath + '.eventSource',
+          ),
+          owner: projectActionTargetQuery(action.owner, context, node.sourcePath + '.buffOwner'),
+          buffId: action.buffId,
+          layers: actionValueOperand(action.layers),
+        },
+      },
+    ];
+  }
   if (node.body.value.family === 'customAbilityEvent') {
     const action = node.body.value.action;
     const sourceIsCaster =
@@ -451,11 +549,7 @@ export function compileActionNode(
         action.targets.targetGroupKey === '' &&
         context.actionOwnerTarget === 'buffOwner' &&
         context.fixedBuffOwnerTarget === 'caster');
-    if (
-      action.eventName.blackboardKey !== null ||
-      action.eventName.value.length === 0 ||
-      action.eventParam.blackboardKey !== null
-    ) {
+    if (action.eventName.blackboardKey !== null || action.eventName.value.length === 0) {
       throw new Error(`${node.sourcePath}: unsupported custom ability event source/target/value`);
     }
     return [
@@ -463,7 +557,10 @@ export function compileActionNode(
         kind: 'triggerCustomAbilityEvent',
         parameters: {
           eventName: action.eventName.value,
-          eventParam: action.eventParam.value,
+          eventParam:
+            action.eventParam.blackboardKey === null
+              ? action.eventParam.value
+              : actionValueOperand(action.eventParam),
           target: targetIsCaster
             ? 'caster'
             : projectActionTargetQuery(action.targets, context, `${node.sourcePath}.targets`),
@@ -486,11 +583,6 @@ export function compileActionNode(
       action.caster.targetSource === 'Target' &&
       action.caster.targetGroupKey === '' &&
       context.actionTargetTarget === 'currentAbilityEntity';
-    const abilityEntityTargetIsFixedEnemy =
-      action.target.targetSource === 'Owner' &&
-      action.target.targetGroupKey === '' &&
-      context.actionOwnerTarget === 'buffOwner' &&
-      context.fixedBuffOwnerTarget === 'enemy';
     const casterIsContext =
       action.caster.targetSource === 'Context' && action.caster.targetGroupKey.length > 0;
     const casterIsFixedCaster =
@@ -499,34 +591,6 @@ export function compileActionNode(
       (action.caster.targetSource === 'Owner'
         ? context.fixedBuffOwnerTarget === 'caster' || context.actionOwnerTarget === 'caster'
         : context.actionSourceTarget === 'caster' || context.fixedBuffSourceTarget === 'caster');
-    const targetIsStaticEnemy =
-      abilityEntityTargetIsFixedEnemy ||
-      (action.target.targetSource === 'Context' &&
-        action.target.targetGroupKey !== '' &&
-        context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true) ||
-      // TargetSource.Target reads the action input target handle; targetGroupKey and embedded
-      // selector fields are not consulted by this branch. Active skill projection binds that
-      // input handle to the unique enemy.
-      (action.target.targetSource === 'Target' && context.actionTargetTarget === 'enemy') ||
-      // AbilityActionUtils.GetTargetsView 的 MainTarget 分支直接读取 BattleManager 主目标，
-      // 不消费 TargetSettings 中残留的命名组或 selector。固定唯一木桩模型下其身份就是 enemy。
-      action.target.targetSource === 'MainTarget' ||
-      isUniqueEnemyMainTargetInstantSearch(action.target);
-    const targetIsFixedCaster =
-      (action.target.targetSource === 'Owner' &&
-        (context.fixedBuffOwnerTarget === 'caster' || context.actionOwnerTarget === 'caster')) ||
-      (action.target.targetSource === 'Source' &&
-        (context.actionSourceTarget === 'caster' || context.fixedBuffSourceTarget === 'caster'));
-    const targetIsActionInput =
-      action.target.targetSource === 'Target' &&
-      (context.actionTargetTarget === 'eventSource' ||
-        context.actionTargetTarget === 'eventTarget' ||
-        context.actionTargetTarget === 'actionInputTarget');
-    const targetIsContext =
-      action.target.targetSource === 'Context' &&
-      action.target.targetGroupKey.length > 0 &&
-      action.target.validatorTypes.length === 0 &&
-      action.target.postProcessorTypes.length === 0;
     if (
       (!casterIsFixedCaster && !casterIsContext && !abilityEntityCaster) ||
       (action.skillId.blackboardKey === null && action.skillId.value.length === 0) ||
@@ -538,28 +602,12 @@ export function compileActionNode(
       {
         kind: 'castSkillDuringAction',
         parameters: {
-          ...(casterIsContext
-            ? { caster: { kind: 'context' as const, key: action.caster.targetGroupKey } }
-            : abilityEntityCaster
-              ? { caster: { kind: 'inputTarget' as const } }
-              : {}),
+          caster: projectActionTargetQuery(action.caster, context, node.sourcePath + '.caster'),
           skillId:
             action.skillId.blackboardKey === null
               ? action.skillId.value
               : { blackboardKey: action.skillId.blackboardKey },
-          ...(targetIsContext && !targetIsStaticEnemy
-            ? { targetContextKey: action.target.targetGroupKey }
-            : {}),
-          target:
-            targetIsContext && !targetIsStaticEnemy
-              ? 'context'
-              : targetIsActionInput
-                ? 'actionInputTarget'
-                : targetIsFixedCaster
-                  ? 'caster'
-                  : targetIsStaticEnemy
-                    ? 'enemy'
-                    : projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+          target: projectActionTargetQuery(action.target, context, node.sourcePath + '.target'),
           skipApplyCost: action.skipApplyCost,
           inheritSourceSkillCastInfo: action.inheritSourceSkillCastId,
           ...(action.interruptCurrentSkillOnlyWhenTargetCastable
@@ -605,6 +653,19 @@ export function compileActionNode(
       },
     ];
   }
+  if (node.body.value.family === 'comboLock') {
+    return [
+      {
+        kind: 'queueComboLock',
+        parameters: {
+          durationSeconds: actionValueOperand(node.body.value.action.duration),
+        },
+      },
+    ];
+  }
+  if (node.body.value.family === 'disableNormalSkill') {
+    return [{ kind: 'disableNormalSkill', parameters: node.body.value.action }];
+  }
   if (node.body.value.family === 'modeAndResourcePolicy') {
     const action = node.body.value.action;
     if (action.kind === 'switchMode') {
@@ -622,20 +683,11 @@ export function compileActionNode(
         },
       ];
     }
-    if (
-      (action.target.targetSource !== 'Source' && action.target.targetSource !== 'Owner') ||
-      action.target.targetGroupKey !== '' ||
-      (action.target.targetSource === 'Source'
-        ? context.actionSourceTarget !== 'caster' && context.fixedBuffSourceTarget !== 'caster'
-        : context.actionOwnerTarget !== 'caster' && context.fixedBuffOwnerTarget !== 'caster')
-    ) {
-      throw new Error(`${node.sourcePath}: unsupported ultimate-energy restriction target`);
-    }
     return [
       {
         kind: 'restrictUltimateEnergyRecovery',
         parameters: {
-          target: 'caster',
+          target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
           allowedRecoveryTags: projectGameplayTags(
             action.allowedRecoveryTagIds,
             context,
@@ -648,22 +700,11 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'skillCooldownMutation') {
     const action = node.body.value.action;
-    const targetsCaster =
-      (action.target.targetSource === 'Owner' &&
-        (context.actionOwnerTarget === 'caster' ||
-          (context.actionOwnerTarget === 'buffOwner' &&
-            context.fixedBuffOwnerTarget === 'caster'))) ||
-      (action.target.targetSource === 'Source' &&
-        (context.actionSourceTarget === 'caster' || context.fixedBuffSourceTarget === 'caster'));
-    const contextKey = action.target.targetSource === 'Context' ? action.target.targetGroupKey : '';
-    if (!targetsCaster && contextKey === '') {
-      throw new Error(`${node.sourcePath}: unsupported skill cooldown target`);
-    }
     return [
       {
         kind: 'adjustSkillCooldown',
         parameters: {
-          target: contextKey === '' ? 'caster' : { kind: 'context', key: contextKey },
+          target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
           skill: action.skill,
           operation: action.operation,
           basis: action.basis,
@@ -692,18 +733,6 @@ export function compileActionNode(
       // 明确不合成旧的 OnBeforeOutputAirborne/OnAfterOutputAirborne 事件。
       return [];
     }
-    if (
-      context.actionOwnerTarget === 'caster' &&
-      node.body.value.action.events.every(event => event.abilityEvent === 'OnBeforeTakeDamage')
-    ) {
-      // EventListenerAction 在 ActionOwner 注册；木桩不攻击，干员不会收到伤害包。
-      // 只省略干员受伤前监听，不能删除敌人受伤或干员输出伤害的监听。
-      return [];
-    }
-    if (node.body.value.action.events.every(event => event.abilityEvent === 'OnAfterKillEntity')) {
-      // 固定木桩死亡后不再继续累计有效伤害；击杀后的延迟资源返还不进入模拟可见结果。
-      return [];
-    }
     throw new Error(`${node.sourcePath}: unsupported combat-visible EventListenerAction`);
   }
   if (node.body.value.family === 'buffFinish') {
@@ -713,9 +742,32 @@ export function compileActionNode(
         throw new Error(`${node.sourcePath}: FinishCurBuff requires a Buff environment`);
       return [{ kind: 'finishCurrentBuff', parameters: { reason: 'other', finishSource: 'none' } }];
     }
+    if (
+      action.kind === 'buffFinishByQuery' &&
+      action.settings.checkType === 'Context' &&
+      nativeAbilityEventHasNoBuffContext(context.nativeAbilityEvent) &&
+      context.actionOwnerTarget === 'buffOwner' &&
+      isPlainOwnerTarget(action.owner) &&
+      action.finishAll &&
+      !action.limitSource &&
+      !action.isFinishedEarly &&
+      !action.isAbsorbed
+    ) {
+      // 1.6.3 FinishBuffAdvanced 的 BuffContext 转换失败只跳过本目标，动作仍成功。
+      // 此处仅省略已证明无副作用的 Owner 查询；绝不将 Context 改为结束监听 Buff。
+      projectActionTargetQuery(action.owner, context, `${node.sourcePath}.buffOwner`);
+      return [];
+    }
     if (action.limitSource) {
       throw new Error(`${node.sourcePath}: limited-source Buff finish is not supported`);
     }
+    if (
+      action.kind === 'buffFinishByQuery' &&
+      action.settings.checkType === 'Tag' &&
+      action.settings.tagQuery.queryType === 'hasAny' &&
+      action.settings.tagQuery.tagIds.length === 0
+    )
+      return [];
     const targets = projectActionTargetQuery(action.owner, context, `${node.sourcePath}.buffOwner`);
     const finishSource = projectActionTargetQuery(
       action.finishSource,
@@ -778,9 +830,7 @@ export function compileActionNode(
     const buffIds =
       action.kind === 'buffFinishById'
         ? action.buffIds
-        : action.settings.checkType === 'Id' &&
-            action.settings.buffIds.length > 0 &&
-            action.settings.tagQuery.tagIds.length === 0
+        : action.settings.checkType === 'Id' && action.settings.buffIds.length > 0
           ? action.settings.buffIds
           : null;
     if (buffIds === null || buffIds.length === 0 || buffIds.some(id => id.length === 0)) {
@@ -887,64 +937,20 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'damage') {
     const damageAction = node.body.value.action;
-    if (
-      damageAction.target.targetSource === 'Context' &&
-      partyTargetGroups.get(damageAction.target.targetGroupKey) === 'empty'
-    ) {
-      // No target receives damage; only an explicitly always-next action can be elided.
-      if (!damageAction.alwaysNext)
-        throw new Error(`${node.sourcePath}: empty-target damage short-circuit is unsupported`);
-      return [];
-    }
     if (damageAction.units.length === 0 && damageAction.hitEnvironment && damageAction.alwaysNext) {
       // 来源层已确认 hitEnvData 只描述环境命中特效。没有 DamageUnit 且始终继续的动作
       // 不会修改唯一木桩的数值或控制后续流程，Next 无场景交互后端时可安全省略。
       return [];
     }
-    const targetsProjectedEnemyContext =
-      damageAction.target.targetSource === 'Context' &&
-      damageAction.target.targetGroupKey !== '' &&
-      (partyTargetGroups.get(damageAction.target.targetGroupKey) === 'enemy' ||
-        context.staticEnemyTargetGroupKeys?.has(damageAction.target.targetGroupKey) === true);
-    const targetsRuntimeContext =
-      damageAction.target.targetSource === 'Context' &&
-      partyTargetGroups.get(damageAction.target.targetGroupKey) === 'runtimeTargets';
-    const targetsUniqueEnemyFromCasterBuff =
-      context.actionOwnerTarget === 'buffOwner' &&
-      context.fixedBuffOwnerTarget === 'caster' &&
-      context.fixedBuffSourceTarget === 'caster' &&
-      damageAction.target.targetSource === 'Target' &&
-      damageAction.target.finderType === 'MainTargetFinder' &&
-      damageAction.target.validatorTypes.length === 0 &&
-      damageAction.target.postProcessorTypes.length === 0;
+    // 攻击者使用独立 ActionTarget；接收者交由通用查询投影，不再靠宿主名称推断。
     if (
       (context.actionSourceTarget !== 'caster' && context.fixedBuffSourceTarget !== 'caster') ||
       (context.actionOwnerTarget === 'currentAbilityEntity' &&
-        damageAction.attacker === 'ActionOwner') ||
-      (!['enemy', 'eventTarget'].includes(context.actionTargetTarget) &&
-        !(
-          context.actionTargetTarget === 'actionInputTarget' &&
-          damageAction.target.targetSource === 'Target'
-        ) &&
-        !(context.actionTargetTarget === 'buffOwner' && context.fixedBuffOwnerTarget === 'enemy') &&
-        !(
-          damageAction.target.targetSource === 'Owner' &&
-          damageAction.target.targetGroupKey === '' &&
-          context.actionOwnerTarget === 'buffOwner' &&
-          context.fixedBuffOwnerTarget === 'enemy'
-        ) &&
-        !targetsProjectedEnemyContext &&
-        !targetsRuntimeContext &&
-        !targetsUniqueEnemyFromCasterBuff)
+        damageAction.attacker === 'ActionOwner')
     )
-      throw new Error(`${node.sourcePath}: unsupported damage source or target binding`);
+      throw new Error(`${node.sourcePath}: unsupported damage attacker binding`);
     const damageContext = {
       ...context,
-      runtimeTargetGroupKeys: new Set(
-        [...partyTargetGroups]
-          .filter(([, target]) => target === 'runtimeTargets')
-          .map(([key]) => key),
-      ),
       // AbilityEntity child skills can attribute damage to their proven caster through
       // ActionSource. Their entity Owner remains unavailable as an attacker; effectSource
       // is presentation-only and is validated independently by the simple damage compiler.
@@ -993,48 +999,8 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'characterSpellInfliction') {
     const action = node.body.value.action;
-    const sourceIsGod =
-      action.source.targetSource === 'InstantSearch' &&
-      action.source.finderType === 'GodEntityFinder';
-    for (const [label, target] of [
-      ['source', action.source],
-      ['target', action.target],
-    ] as const) {
-      if (
-        target.targetGroupKey !== '' ||
-        target.validatorTypes.length !== 0 ||
-        target.postProcessorTypes.length !== 0 ||
-        (target.finderType !== null && !(label === 'source' && sourceIsGod))
-      )
-        throw new Error(
-          `${node.sourcePath}.${label}: unsupported character infliction target modifiers`,
-        );
-    }
-    const source: BuffApplicationSource | 'battle' =
-      action.source.targetSource === 'Owner'
-        ? requireActionOwnerProjection(context, node.sourcePath)
-        : action.source.targetSource === 'Source'
-          ? context.actionSourceTarget
-          : sourceIsGod
-            ? 'battle'
-            : (() => {
-                throw new Error(`${node.sourcePath}: unsupported character infliction source`);
-              })();
-    const target: BuffApplicationTarget =
-      action.target.targetSource === 'MainCharacter'
-        ? 'controlledOperator'
-        : action.target.targetSource === 'Owner'
-          ? requireActionOwnerProjection(context, node.sourcePath)
-          : action.target.targetSource === 'Source'
-            ? context.actionSourceTarget
-            : action.target.targetSource === 'Target' &&
-                context.actionTargetTarget !== 'currentOperator'
-              ? context.actionTargetTarget
-              : (() => {
-                  throw new Error(`${node.sourcePath}: unsupported character infliction target`);
-                })();
-    if (action.source.targetGroupKey !== '' || action.target.targetGroupKey !== '')
-      throw new Error(`${node.sourcePath}: character infliction Context target is not supported`);
+    const source = projectActionTargetQuery(action.source, context, `${node.sourcePath}.source`);
+    const target = projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`);
     return [
       {
         kind: 'applyCharacterInfliction',
@@ -1056,27 +1022,8 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'forcedElementalStatus') {
     const action = node.body.value.action;
-    const targetsEnemy =
-      (action.target.targetSource === 'Target' && context.actionTargetTarget === 'enemy') ||
-      (action.target.targetSource === 'Context' &&
-        action.target.targetGroupKey !== '' &&
-        (partyTargetGroups.get(action.target.targetGroupKey) === 'enemy' ||
-          context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true));
-    if (
-      action.source.targetSource !== 'Source' ||
-      action.source.targetGroupKey !== '' ||
-      context.actionSourceTarget !== 'caster' ||
-      !targetsEnemy
-    ) {
-      throw new Error(`${node.sourcePath}: unsupported forced elemental status targets`);
-    }
-    if (
-      action.consumedElement.blackboardKey !== null ||
-      action.consumedElement.levelValues !== null ||
-      !Number.isInteger(action.consumedElement.value)
-    ) {
-      throw new Error(`${node.sourcePath}.consumedType: dynamic element is unsupported`);
-    }
+    const source = projectActionTargetQuery(action.source, context, node.sourcePath);
+    const target = projectActionTargetQuery(action.target, context, node.sourcePath);
     const elements = ['Fire', 'Pulse', 'Cryst', 'Natural'] as const;
     const consumedElement = elements[action.consumedElement.value];
     if (consumedElement === undefined) {
@@ -1091,14 +1038,23 @@ export function compileActionNode(
     return [
       {
         kind: 'forceSpellStatus',
-        parameters: {
-          target: 'enemy',
-          element: elementsByNative[action.statusElement],
-          consumedElement: elementsByNative[consumedElement],
-          consumedLayers: actionValueOperand(action.consumedLayers),
-          count: actionValueOperand(action.statusCount),
-          isExtra: action.isExtra,
-        },
+        parameters: Object.assign(
+          {
+            source,
+            target,
+            element: elementsByNative[action.statusElement],
+            consumedElement: elementsByNative[consumedElement],
+            consumedLayers: actionValueOperand(action.consumedLayers),
+            count: actionValueOperand(action.statusCount),
+            isExtra: action.isExtra,
+          },
+          {
+            [COMPILED_BUFF_TARGET_KINDS]: {
+              target: inferBuffTargetKind(target, context, partyTargetGroups),
+              source: inferBuffTargetKind(source, context, partyTargetGroups),
+            },
+          },
+        ),
       },
     ];
   }
@@ -1107,51 +1063,39 @@ export function compileActionNode(
       projectKeywordBuffAction(node.body.value.action, node.sourcePath, context, partyTargetGroups),
     ];
   }
-  if (node.body.value.family === 'heal') {
+  if (node.body.value.family === 'heal' || node.body.value.family === 'recoverPoise') {
     const action = node.body.value.action;
-    const target =
-      action.target.targetSource === 'Owner' &&
-      action.target.targetGroupKey === '' &&
-      isInFightEnemyInstantSearch(action.target)
-        ? ('enemy' as const)
-        : action.target.targetSource === 'Source' &&
-            action.target.targetGroupKey === '' &&
-            context.actionSourceTarget === 'caster'
-          ? ('caster' as const)
-          : isControlledOperatorInstantSearch(action.target)
-            ? ('controlledOperator' as const)
-            : action.target.targetSource === 'Owner' &&
-                (context.actionOwnerTarget === 'caster' ||
-                  context.actionOwnerTarget === 'buffOwner')
-              ? context.actionOwnerTarget
-              : action.target.targetSource === 'Target'
-                ? ('actionInputTarget' as const)
-                : action.target.targetSource === 'MainCharacter' &&
-                    action.target.finderType === null &&
-                    action.target.validatorTypes.length === 0 &&
-                    action.target.postProcessorTypes.length === 0
-                  ? ('controlledOperator' as const)
-                  : action.target.targetSource === 'Context' &&
-                      action.target.targetGroupKey !== '' &&
-                      partyTargetGroups.get(action.target.targetGroupKey) === 'contextOperator'
-                    ? ('contextTarget' as const)
-                    : null;
+    const healer =
+      action.healer === 'ActionSource'
+        ? { kind: 'source' as const }
+        : action.healer === 'ActionOwner'
+          ? { kind: 'owner' as const }
+          : action.healer === 'InputTarget'
+            ? { kind: 'inputTarget' as const }
+            : action.healer === 'CurrentTarget'
+              ? { kind: 'currentTarget' as const }
+              : action.healer === 'MainCharacter'
+                ? { kind: 'mainCharacter' as const }
+                : action.kind === 'heal' &&
+                    action.healer === 'ContextTarget' &&
+                    action.contextKey !== ''
+                  ? { kind: 'context' as const, key: action.contextKey }
+                  : null;
     const attributeNames = {
       Str: 'strength',
       Agi: 'agility',
       Wisd: 'intellect',
       Will: 'will',
       MaxHp: 'maxHealth',
+      MaxUltimateSp: 'MaxUltimateSp',
     } as const;
     const attribute =
       action.calculation.kind === 'attribute'
         ? attributeNames[action.calculation.attributeType as keyof typeof attributeNames]
         : undefined;
     if (
-      action.healType !== 'Normal' ||
-      (action.healer !== 'ActionSource' && action.healer !== 'ActionOwner') ||
-      (action.healer === 'ActionOwner' && context.actionOwnerTarget !== 'buffOwner') ||
-      target === null ||
+      (action.kind === 'heal' && action.healType !== 'Normal') ||
+      healer === null ||
       (action.calculation.kind === 'definite' && action.calculation.applyScale) ||
       (action.calculation.kind !== 'definite' &&
         (action.calculation.kind !== 'attribute' ||
@@ -1169,64 +1113,40 @@ export function compileActionNode(
             multiplier: actionValueOperand(action.calculation.multiplier),
             addition: actionValueOperand(action.calculation.addition),
           };
-    const targetParameters =
-      target === 'contextTarget'
-        ? { target, contextKey: action.target.targetGroupKey! }
-        : { target };
+    const commonParameters = {
+      target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+      healer,
+      ...(action.alwaysNext ? { alwaysNext: true } : {}),
+    };
+    const parameters = {
+      ...calculation,
+      ...(action.calculation.kind === 'attribute' && action.calculation.valueSource === 'Target'
+        ? { attributeSource: 'target' as const }
+        : {}),
+    };
+    if (action.kind === 'recoverPoise')
+      return [{ kind: 'recoverPoise', parameters: { ...commonParameters, ...parameters } }];
+    const tags = projectGameplayTags(
+      action.useHealTags ? action.healTagIds : [],
+      context,
+      node.sourcePath,
+    );
+    if (parameters.amount !== undefined)
+      return [{ kind: 'heal', parameters: { ...commonParameters, tags, ...parameters } }];
+    const healingAttribute = parameters.attribute;
+    if (healingAttribute === 'MaxUltimateSp')
+      throw new Error(`${node.sourcePath}: unsupported healing calculation attribute`);
     return [
       {
         kind: 'heal',
-        parameters: {
-          ...targetParameters,
-          ...(action.healer === 'ActionOwner' ? { source: 'buffOwner' as const } : {}),
-          ...(action.alwaysNext ? { alwaysNext: true } : {}),
-          tags: projectGameplayTags(
-            action.useHealTags ? action.healTagIds : [],
-            context,
-            node.sourcePath,
-          ),
-          ...calculation,
-          ...(action.calculation.kind === 'attribute' && action.calculation.valueSource === 'Target'
-            ? { attributeSource: 'target' as const }
-            : {}),
-        },
+        parameters: { ...commonParameters, tags, ...parameters, attribute: healingAttribute },
       },
     ];
   }
   if (node.body.value.family === 'buffQuery') {
     const action = node.body.value.action;
-    const targetsStaticEnemy =
-      (action.target.targetSource === 'Target' || action.target.targetSource === 'Context') &&
-      action.target.targetGroupKey !== '' &&
-      context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true;
-    const directTarget =
-      action.target.targetSource === 'Target' &&
-      (context.actionTargetTarget === 'enemy' ||
-        context.actionTargetTarget === 'currentAbilityEntity' ||
-        context.actionTargetTarget === 'eventTarget' ||
-        context.actionTargetTarget === 'buffOwner')
-        ? context.actionTargetTarget
-        : null;
-    const namedContextTarget =
-      action.target.targetSource === 'Context' && action.target.targetGroupKey !== ''
-        ? (context.contextTargetGroupTargets?.get(action.target.targetGroupKey) ?? null)
-        : null;
-    if (
-      (!targetsStaticEnemy &&
-        directTarget === null &&
-        namedContextTarget === null &&
-        action.target.targetSource !== 'Target' &&
-        action.target.targetSource !== 'Owner' &&
-        action.target.targetSource !== 'Source') ||
-      (!targetsStaticEnemy &&
-        directTarget === null &&
-        namedContextTarget === null &&
-        action.target.targetGroupKey !== '') ||
-      action.countType !== 'BuffCount' ||
-      action.limitSkillCastId
-    ) {
+    if (action.countType !== 'BuffCount' || action.limitSkillCastId)
       throw new Error(`${node.sourcePath}: unsupported Buff stack read`);
-    }
     const query =
       action.checkType === 'Environment' &&
       action.buffIds.length === 0 &&
@@ -1248,18 +1168,8 @@ export function compileActionNode(
         parameters: {
           target:
             query.kind === 'environment'
-              ? 'caster'
-              : targetsStaticEnemy
-                ? 'enemy'
-                : namedContextTarget !== null
-                  ? namedContextTarget
-                  : directTarget !== null
-                    ? directTarget
-                    : action.target.targetSource === 'Owner'
-                      ? requireActionOwnerProjection(context, node.sourcePath)
-                      : action.target.targetSource === 'Source'
-                        ? context.actionSourceTarget
-                        : 'eventTarget',
+              ? { kind: 'owner' }
+              : projectActionTargetQuery(action.target, context, node.sourcePath),
           outputKey: action.outputKey,
           query,
         },
@@ -1287,58 +1197,12 @@ export function compileActionNode(
               ),
             }
           : null;
-    if (
-      (action.target.targetSource === 'Owner' || action.target.targetSource === 'Source') &&
-      action.target.targetGroupKey === '' &&
-      query !== null
-    ) {
+    if (query !== null) {
       return [
         {
           kind: 'readBuffBlackboard',
           parameters: {
-            target:
-              action.target.targetSource === 'Owner'
-                ? requireActionOwnerProjection(context, node.sourcePath)
-                : context.actionSourceTarget,
-            query,
-            desiredKey: action.desiredKey,
-            outputKey: action.outputKey,
-          },
-        },
-      ];
-    }
-    if (
-      action.target.targetSource === 'Target' &&
-      action.target.targetGroupKey === '' &&
-      query !== null &&
-      context.actionTargetTarget !== 'partyExceptCaster' &&
-      context.actionTargetTarget !== 'partyExceptCasterAndSameCharacterType' &&
-      context.actionTargetTarget !== 'currentOperator'
-    ) {
-      return [
-        {
-          kind: 'readBuffBlackboard',
-          parameters: {
-            target: context.actionTargetTarget,
-            query,
-            desiredKey: action.desiredKey,
-            outputKey: action.outputKey,
-          },
-        },
-      ];
-    }
-    if (
-      action.target.targetSource === 'Context' &&
-      action.target.targetGroupKey !== '' &&
-      (partyTargetGroups.get(action.target.targetGroupKey) === 'enemy' ||
-        context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true) &&
-      query !== null
-    ) {
-      return [
-        {
-          kind: 'readBuffBlackboard',
-          parameters: {
-            target: 'enemy',
+            target: projectActionTargetQuery(action.target, context, node.sourcePath),
             query,
             desiredKey: action.desiredKey,
             outputKey: action.outputKey,
@@ -1350,8 +1214,7 @@ export function compileActionNode(
       action.target.targetSource !== 'Target' ||
       action.target.targetGroupKey !== '' ||
       action.settings.checkType !== 'Context' ||
-      action.settings.buffIds.length !== 1 ||
-      action.settings.buffIds[0] !== '' ||
+      action.settings.buffIds.some(id => id !== '') ||
       action.settings.tagQuery.tagIds.length !== 0
     ) {
       throw new Error(`${node.sourcePath}: unsupported event Buff blackboard read`);
@@ -1401,23 +1264,7 @@ export function compileActionNode(
         ? context.actionTargetTarget
         : undefined;
     if (action.settings.checkType === 'Id' || action.settings.checkType === 'Tag') {
-      const queriedTarget =
-        action.target.targetSource === 'Owner'
-          ? requireActionOwnerProjection(context, node.sourcePath)
-          : action.target.targetSource === 'Source'
-            ? context.actionSourceTarget
-            : action.target.targetSource === 'Target' &&
-                context.actionTargetTarget !== 'currentOperator'
-              ? context.actionTargetTarget
-              : null;
       if (
-        queriedTarget === null ||
-        queriedTarget === 'partyExceptCaster' ||
-        queriedTarget === 'partyExceptCasterAndSameCharacterType' ||
-        action.target.targetGroupKey !== '' ||
-        action.target.finderType !== null ||
-        action.target.validatorTypes.length > 0 ||
-        action.target.postProcessorTypes.length > 0 ||
         action.isFinishedEarly ||
         (operation !== 'assign' && operation !== 'add' && operation !== 'multiply')
       )
@@ -1426,7 +1273,7 @@ export function compileActionNode(
         {
           kind: 'setBuffRemainingDuration',
           parameters: {
-            target: queriedTarget,
+            target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
             query:
               action.settings.checkType === 'Id'
                 ? { kind: 'id', buffIds: action.settings.buffIds.filter(Boolean) }
@@ -1500,19 +1347,13 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'spatialMeasurement') {
     const action = node.body.value.action;
-    if (
-      !isProvenSpatialMeasurementEndpoint(action.source, partyTargetGroups, context) ||
-      !isProvenSpatialMeasurementEndpoint(action.target, partyTargetGroups, context)
-    ) {
-      throw new Error(`${node.sourcePath}: unresolved target-distance endpoint`);
-    }
     return [
       {
-        kind: 'modifyActionValue',
+        kind: 'saveTargetDistance',
         parameters: {
-          key: action.outputKey,
-          operation: 'assign',
-          value: { kind: 'constant', value: 0 },
+          source: projectActionTargetQuery(action.source, context, `${node.sourcePath}.source`),
+          target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+          outputKey: action.outputKey,
         },
       },
     ];
@@ -1526,53 +1367,19 @@ export function compileActionNode(
       'Will',
       'MaxHp',
       'MaxUltimateSp',
+      'HealTakenIncrease',
+      'PhysicalAndSpellInflictionEnhance',
       'FireAbnormalDamageIncrease',
       'PulseAbnormalDamageIncrease',
       'CrystAbnormalDamageIncrease',
       'NaturalAbnormalDamageIncrease',
     ]);
-    const target =
-      action.target.targetSource === 'Owner'
-        ? requireActionOwnerProjection(context, node.sourcePath)
-        : action.target.targetSource === 'Source'
-          ? (context.fixedBuffSourceTarget ?? context.actionSourceTarget)
-          : null;
-    const contextGroup =
-      action.target.targetSource === 'Context'
-        ? partyTargetGroups.get(action.target.targetGroupKey)
-        : undefined;
+    if (action.target.targetSource === 'Owner')
+      requireActionOwnerProjection(context, node.sourcePath);
     if (
-      (target === 'enemy' ||
-        (target === 'buffOwner' && context.fixedBuffOwnerTarget === 'enemy') ||
-        contextGroup === 'enemy' ||
-        contextGroup === 'dynamicEnemy') &&
-      action.primaryAttributeType === 'Specific' &&
-      action.attributeType === 'MaxHp'
-    ) {
-      return [
-        {
-          kind: 'storeEntityPropertyValue',
-          parameters: {
-            target:
-              contextGroup === undefined
-                ? 'actionOwner'
-                : { kind: 'context', key: action.target.targetGroupKey },
-            property: 'maxHealth',
-            useFloor: action.useFloor,
-            divisor: actionValueOperand(action.divisor),
-            multiplier: actionValueOperand(action.multiplier),
-            base: actionValueOperand(action.baseValue),
-            targetKey: action.outputKey,
-          },
-        },
-      ];
-    }
-    const fixedTarget = target === 'buffOwner' ? context.fixedBuffOwnerTarget : target;
-    if (
-      fixedTarget !== 'caster' ||
-      (action.primaryAttributeType !== 'Sub' &&
-        (action.primaryAttributeType !== 'Specific' ||
-          !supportedSpecificAttributes.has(action.attributeType)))
+      action.primaryAttributeType !== 'Sub' &&
+      (action.primaryAttributeType !== 'Specific' ||
+        !supportedSpecificAttributes.has(action.attributeType))
     ) {
       throw new Error(`${node.sourcePath}: unsupported attribute snapshot target or selector`);
     }
@@ -1580,6 +1387,11 @@ export function compileActionNode(
       {
         kind: 'storeSourceAttributeValue',
         parameters: {
+          target: projectActionTargetQuery(
+            action.target,
+            context,
+            `${node.sourcePath}.targetSettings`,
+          ),
           // StoreAttributeValue：Sub 由目标副属性决定，attributeType 此时不参与选择。
           // 保留动态属性读取，不能把生成时面板或 SkillPatch 等级值固化为快照。
           attribute:
@@ -1624,27 +1436,6 @@ export function compileActionNode(
           multiplier: actionValueOperand(action.multiplier),
           base: actionValueOperand(action.baseValue),
           targetKey: action.outputKey,
-        },
-      },
-    ];
-  }
-  if (node.body.value.family === 'healthFloor') {
-    const action = node.body.value.action;
-    if (
-      action.actionAfterSet.actions.length !== 0 ||
-      action.actionAfterSet.onlyExecuteWhenSourceIsMainCharacter ||
-      action.actionAfterSet.onlyExecuteWhenSourceIsGuard
-    ) {
-      throw new Error(`${node.sourcePath}: non-empty SetHpFloor actionAfterSet is unsupported`);
-    }
-    requireActionOwnerProjection(context, node.sourcePath);
-    return [
-      {
-        kind: 'setHealthFloor',
-        parameters: {
-          target: 'actionOwner',
-          mode: action.useRatio ? 'maxHealthRatio' : 'absolute',
-          value: actionValueOperand(action.useRatio ? action.floorRatio : action.floorValue),
         },
       },
     ];
@@ -1720,36 +1511,22 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'finisherSpGain') {
     const action = node.body.value.action;
-    const targetIsProvenEnemy =
-      (action.target.targetSource === 'Target' && context.actionTargetTarget === 'enemy') ||
-      (action.target.targetSource === 'Context' &&
-        action.target.targetGroupKey.length > 0 &&
-        context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true);
-    if (
-      action.source.targetSource !== 'Source' ||
-      action.source.targetGroupKey !== '' ||
-      context.actionSourceTarget !== 'caster' ||
-      !targetIsProvenEnemy
-    ) {
-      throw new Error(`${node.sourcePath}: unsupported breaking-attack ATB source/target`);
-    }
-    if (action.factor.blackboardKey !== null || action.factor.levelValues !== null) {
-      throw new Error(
-        `${node.sourcePath}.factor: dynamic breaking-attack ATB factor is unsupported`,
-      );
-    }
     return [
       {
         kind: 'gainFinisherSp',
-        parameters: { factor: action.factor.value, recipient: 'team' },
+        parameters: {
+          source: projectActionTargetQuery(action.source, context, `${node.sourcePath}.source`),
+          target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+          factor: actionValueOperand(action.factor),
+        },
       },
     ];
   }
   if (node.body.value.family === 'globalCooldown') {
     const action = node.body.value.action;
-    const target = projectGlobalCooldownTarget(action.target, context, node.sourcePath);
+    const target = projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`);
     if (action.buffId.length === 0) {
-      throw new Error(`${node.sourcePath}: unsupported global cooldown application target`);
+      throw new Error(`${node.sourcePath}: global cooldown application requires a marker ID`);
     }
     return [
       {
@@ -1789,37 +1566,47 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'presentation') {
     const action = node.body.value.action;
+    if (action.kind === 'rewardComboState') {
+      const ownerIsPresent =
+        isPlainTargetReference(action.target, 'Owner', '') &&
+        (context.actionOwnerTarget === 'caster' ||
+          (context.actionOwnerTarget === 'buffOwner' &&
+            (context.fixedBuffOwnerTarget === 'caster' ||
+              context.fixedBuffOwnerTarget === 'enemy')));
+      const sourceIsPresent =
+        isPlainTargetReference(action.target, 'Source', '') &&
+        context.fixedBuffSourceTarget === 'caster';
+      if (!ownerIsPresent && !sourceIsPresent)
+        throw new Error(
+          `${node.sourcePath}: reward combo UI state requires a proven present AbilitySystem target`,
+        );
+      // 原生只有连携面板/队伍图标读取该标志；实际冷却由相邻独立动作修改。
+      // 已证明 GetFirstTarget 成功，才可省略表现写入及其动作结束清理。
+      return [];
+    }
+    if (action.kind === 'countShieldUi') {
+      return [
+        {
+          kind: 'setCountShieldUi',
+          parameters: {
+            target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+            remove: action.remove,
+            maximum: actionValueOperand(action.maximum),
+            current: actionValueOperand(action.current),
+          },
+        },
+      ];
+    }
     if (action.kind === 'passiveUiValue') {
-      if (
-        action.target === undefined ||
-        action.value === undefined ||
-        !(
-          (action.target.targetSource === 'Owner' || action.target.targetSource === 'Source') &&
-          action.target.targetGroupKey === '' &&
-          action.target.finderType === null &&
-          action.target.validatorTypes.length === 0 &&
-          action.target.postProcessorTypes.length === 0
-        )
-      ) {
-        throw new Error(`${node.sourcePath}: unsupported character passive UI target`);
-      }
-      // 原生 Source 与 Owner 是两个独立身份；实体子技能可通知来源干员的 HUD。
-      const targetBinding =
-        action.target.targetSource === 'Source'
-          ? context.actionSourceTarget
-          : requireActionOwnerProjection(context, node.sourcePath);
-      const target =
-        targetBinding === 'caster' ||
-        (targetBinding === 'buffOwner' && context.fixedBuffOwnerTarget === 'caster')
-          ? ('caster' as const)
-          : null;
-      if (target === null) {
-        throw new Error(`${node.sourcePath}: character passive UI target is not a proven operator`);
-      }
+      if (action.target === undefined || action.value === undefined)
+        throw new Error(`${node.sourcePath}: character passive UI requires target and value`);
       return [
         {
           kind: 'setCharacterPassiveUiValue',
-          parameters: { target, value: actionValueOperand(action.value) },
+          parameters: {
+            target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+            value: actionValueOperand(action.value),
+          },
         },
       ];
     }
@@ -1831,6 +1618,20 @@ export function compileActionNode(
     return [];
   }
   if (node.body.value.family === 'presentationCalculation') return [];
+  if (node.body.value.family === 'curveCalculation') {
+    const action = node.body.value.action;
+    if (context.combatInvisiblePresentationBlackboardKeys?.has(action.outputKey)) return [];
+    return [
+      {
+        kind: 'evaluateCurve',
+        parameters: {
+          key: action.outputKey,
+          input: actionValueOperand(action.input),
+          curve: projectAnimationCurveKeys(action.curve, node.sourcePath),
+        },
+      },
+    ];
+  }
   if (node.body.value.family === 'directionAngle') {
     const action = node.body.value.action;
     return [
@@ -1880,6 +1681,17 @@ export function compileActionNode(
           },
         },
       ];
+    if (action.randomType === 'Float')
+      return [
+        {
+          kind: 'storeRandomFloat',
+          parameters: {
+            key: action.targetKey,
+            minimum: actionValueOperand(action.minimum),
+            maximum: actionValueOperand(action.maximum),
+          },
+        },
+      ];
     throw new Error(`${node.sourcePath}: unsupported combat-visible RandomAction`);
   }
   if (node.body.value.family === 'environment') return [];
@@ -1911,6 +1723,21 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'spatial' && node.body.value.action.kind === 'boneAttach') {
     const action = node.body.value.action;
+    if (action.enhancedAnchor) {
+      return [
+        {
+          kind: 'boneAttach',
+          parameters: {
+            target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+            anchor: projectActionTargetQuery(
+              action.enhancedAnchor,
+              context,
+              `${node.sourcePath}.anchor`,
+            ),
+          },
+        },
+      ];
+    }
     const targetIsProvenEnemy =
       isPlainTargetReference(action.target, 'Target', action.target.targetGroupKey) &&
       ((action.target.targetGroupKey === '' && context.actionTargetTarget === 'enemy') ||
@@ -1925,8 +1752,14 @@ export function compileActionNode(
   }
   // Endaxis 的固定木桩空间模型中朝向不改变目标集合或数值；来源层仍完整保留动作载荷。
   if (node.body.value.family === 'spatial') return [];
-  // 木桩不会主动攻击玩家；霸体只影响受击控制，暂不进入可见伤害/资源账本。
+  // 木桩模型不投影受击保护动作。
   if (node.body.value.family === 'selfDefense') return [];
+  if (node.body.value.family === 'movementGait') {
+    requireActionOwnerProjection(context, node.sourcePath);
+    // 敌人的步态不改变固定木桩的目标或输出；干员的上限仍参与闪避准入。
+    if (context.fixedBuffOwnerTarget === 'enemy') return [];
+    return [{ kind: 'limitMovementGait', parameters: node.body.value.action }];
+  }
   if (node.body.value.family === 'projectileControl') {
     const action = node.body.value.action;
     if (
@@ -1970,6 +1803,24 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'inputControl') {
     const action = node.body.value.action;
+    if (action.kind === 'addEntityControlTags') {
+      if (action.useBlackboard)
+        throw new Error(`${node.sourcePath}: dynamic entity tag requires a runtime string binding`);
+      const tags = retainReviewedEntityTags(
+        projectGameplayTags(action.tagIds, context, `${node.sourcePath}.tags`),
+        `${node.sourcePath}.tags`,
+      );
+      if (tags.length === 0) return [];
+      return [
+        {
+          kind: 'addEntityTags',
+          parameters: {
+            targets: projectActionTargetQuery(action.owner, context, `${node.sourcePath}.owner`),
+            tags,
+          },
+        },
+      ];
+    }
     if (action.kind === 'markCanDash') {
       return [{ kind: 'markCurrentSkillCanDash', parameters: {} }];
     }
@@ -1991,8 +1842,8 @@ export function compileActionNode(
       ];
     }
     // AllowNextSkillAction 的条件分支必须进入运行时，才能让实际走到的有序下一段
-    // 窗口决定技能块边界。没有有序下一段身份的技能会忽略这条轻量事实。
-    if (action.kind === 'allowNextSkill' && context.preserveSkillOperableBoundary === true) {
+    // 窗口决定技能块边界，同时按动作寿命登记允许接续的技能列表。
+    if (action.kind === 'allowNextSkill' && context.preserveSkillInputActions === true) {
       return [
         {
           kind: 'reachSkillOperableBoundary',
@@ -2001,44 +1852,31 @@ export function compileActionNode(
       ];
     }
     // Buff 映射必须随动作注册，不能静默丢弃。
-    if (action.kind !== 'comboCache' || context.actionOwnerTarget !== 'buffOwner') return [];
+    if (action.kind !== 'comboCache') return [];
+    const skillMapping = context.preserveSkillInputActions === true;
+    if (!skillMapping && context.actionOwnerTarget !== 'buffOwner') return [];
     const mappings = action.mappings.filter(mapping => mapping.commandType === 'Attack');
     if (mappings.length === 0) return [];
-    if (context.fixedBuffOwnerTarget !== 'caster') {
+    if (!skillMapping && context.fixedBuffOwnerTarget !== 'caster') {
       throw new Error(`${node.sourcePath}: Buff command mapping requires an operator owner`);
     }
-    if (mappings.some(mapping => !mapping.cacheEndByAction || mapping.skillId.length === 0)) {
-      throw new Error(
-        `${node.sourcePath}: unsupported Buff command mapping lifetime or empty target`,
-      );
+    if (mappings.some(mapping => mapping.skillId.length === 0)) {
+      throw new Error(`${node.sourcePath}: unsupported empty command mapping target`);
     }
     return [
       {
         kind: 'overrideBasicAttackMapping',
-        parameters: { skillIds: mappings.map(mapping => mapping.skillId) },
+        parameters: {
+          skillIds: mappings.map(mapping => mapping.skillId),
+          ...(skillMapping ? { priority: 'skill' as const } : {}),
+        },
       },
     ];
   }
   if (node.body.value.family === 'comboPending') {
     const action = node.body.value.action;
-    const ownerIsFixedCaster =
-      (isPlainTargetReference(action.owner, 'Owner', '') &&
-        (context.actionOwnerTarget === 'caster' || context.fixedBuffOwnerTarget === 'caster')) ||
-      (isPlainTargetReference(action.owner, 'Source', '') &&
-        context.fixedBuffSourceTarget === 'caster');
-    const targetIsFixedEnemy =
-      isMainEnemySearch(action.target) ||
-      (isPlainTargetReference(action.target, 'Owner', '') &&
-        context.fixedBuffOwnerTarget === 'enemy') ||
-      (action.target.targetSource === 'Context' &&
-        action.target.targetGroupKey !== '' &&
-        context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true);
-    if (
-      action.needTrigger ||
-      action.assignmentCount !== 0 ||
-      (!isPlainTargetReference(action.owner, 'Context', 'seraph') && !ownerIsFixedCaster) ||
-      !targetIsFixedEnemy
-    ) {
+    // Pending 保存完整的输入/触发目标组，只有 owner 在运行时取首个角色。
+    if (action.assignmentCount !== 0) {
       throw new Error(`${node.sourcePath}: unsupported combo Pending projection`);
     }
     // needTrigger=false 时原生传空触发句柄，不读取序列化 trigger。
@@ -2048,8 +1886,16 @@ export function compileActionNode(
         kind: 'openComboWindow',
         parameters: {
           nextSkillKeyFromSlot: 'comboSkill',
-          ...(action.owner.targetSource === 'Context'
-            ? { ownerContextKey: action.owner.targetGroupKey }
+          owner: projectActionTargetQuery(action.owner, context, `${node.sourcePath}.owner`),
+          target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+          ...(action.needTrigger
+            ? {
+                trigger: projectActionTargetQuery(
+                  action.trigger,
+                  context,
+                  `${node.sourcePath}.trigger`,
+                ),
+              }
             : {}),
         },
       },
@@ -2072,10 +1918,21 @@ export function compileActionNode(
     ) {
       throw new Error(`${node.sourcePath}: unsupported Typhoea target selection count or mark`);
     }
-    // 原生动作把屏幕区域、距离和优先级选择注册到 BattleManager，并用 markBuff 维护
-    // 被选中的敌人列表。这个标记只是目标选择的实现细节；固定单敌人模型中没有第二个
-    // 候选目标，也没有空间筛选，因此它既不改变战斗结果，也不应伪装成可见战斗 Buff。
-    return [];
+    const priority = action.smartPrioritySelection;
+    if (priority.strategy !== 'SelectByTag')
+      throw new Error(`${node.sourcePath}: unsupported archery priority ${priority.strategy}`);
+    // 屏幕和距离筛选按重合木桩处理；保留持续选择、数量上限、标签优先级及标记生命周期。
+    return [
+      {
+        kind: 'startTyphoeaArchery',
+        parameters: {
+          targetCount: { kind: 'constant', value: action.targetCount.value },
+          markBuffId: action.markBuffId,
+          priorityTags: projectGameplayTags(priority.tagQuery.tagIds, context, node.sourcePath),
+          priorityTagQueryType: priority.tagQuery.queryType,
+        },
+      },
+    ];
   }
   if (node.body.value.family === 'incomingDamageDefense') {
     const action = node.body.value.action;
@@ -2095,19 +1952,6 @@ export function compileActionNode(
     return [];
   }
   throw new Error(`${node.sourcePath}: unsupported Buff runtime action`);
-}
-
-function isInFightEnemyInstantSearch(target: TargetReferenceSource): boolean {
-  return (
-    target.finderType === 'InFightEnemyFinder' &&
-    target.validatorTypes.length === 0 &&
-    target.postProcessorTypes.length === 0 &&
-    target.priorityFilters.length === 0 &&
-    target.shuffleTargets.length === 0 &&
-    target.distanceValidators.length === 0 &&
-    target.finderSpawnedObjectType === null &&
-    target.validatorTagQueries.length === 0
-  );
 }
 
 function isPlainTargetReference(
@@ -2138,40 +1982,6 @@ function isPlainTargetReference(
     target.finderSpawnedObjectType === null &&
     target.validatorTagQueries.length === 0
   );
-}
-
-function isMainEnemySearch(target: TargetReferenceSource): boolean {
-  return isUniqueEnemyMainTargetInstantSearch(target);
-}
-
-function isProvenSpatialMeasurementEndpoint(
-  target: TargetReferenceSource,
-  targetGroups: ReadonlyMap<string, ProjectedTargetGroup>,
-  context: CombatActionProjectionContextSource,
-): boolean {
-  if (target.targetSource === 'Owner' && target.targetGroupKey === '')
-    return context.actionOwnerTarget !== 'unavailable';
-  if (target.targetSource === 'Source' && target.targetGroupKey === '') return true;
-  // 主控始终取当前队伍的主控实体；固定模型中它与其余实体共处零空间。
-  // 直接身份分支不读取残留的 Context 键。
-  if (target.targetSource === 'MainCharacter') return true;
-  // GetTargetsView 的 Target 分支直接读取输入目标；序列化残留 group key 不参与寻址。
-  if (target.targetSource === 'Target') return true;
-  if (target.targetSource === 'InstantSearch' && target.finderType !== null) {
-    // 项目模型把所有已解析范围查找视为能找到其场景实例，并把任意两端距离统一为 0。
-    // 这里只承认载荷内联携带的真实 finder；命名 Context 仍必须由前序写入证明。
-    return true;
-  }
-  if (target.targetSource === 'Context' && target.targetGroupKey !== '')
-    // 零空间模型把实体间、实体到点及点到点距离统一投影为 0；但 Context 身份仍须
-    // 由先前目标组写入证明，不能凭非空字符串臆造端点。
-    return (
-      targetGroups.has(target.targetGroupKey) ||
-      context.guaranteedSingletonZeroSpaceTargetGroupKeys?.has(target.targetGroupKey) === true ||
-      context.staticEnemyTargetGroupKeys?.has(target.targetGroupKey) === true ||
-      context.staticZeroSpaceTargetGroupKeys?.has(target.targetGroupKey) === true
-    );
-  return false;
 }
 
 /** 命名组到施加目标的显式归属；新增组必须决定是否可直接作为 Buff 接收者。 */
@@ -2252,9 +2062,11 @@ function compileBuffApplication(
   // AbilityEntity 来源只覆盖 Buff 图标的倒计时显示，不改变 Buff 自身时钟或数值生命周期，
   // 因而战斗 DSL 仍保留真实 Buff。时间轴目前按实例寿命绘制，尚不能单独显示这层图标倒计时；
   // 其余来源继续拒绝，避免把 TimedMarker 或独立宿主的显示时长误当成无效果字段。
+  // 原生 OnEnd 先检查 autoFinishByAction；未启用时不读取技能继承配置。
   if (
+    action.autoFinishByAction &&
     action.inheritSkillIds.length > 0 &&
-    (!action.autoFinishByAction || !action.finishWithNextSkillIfNotInherited)
+    !action.finishWithNextSkillIfNotInherited
   ) {
     throw new Error(`${sourcePath}: unsupported CreateBuff inheritance policy`);
   }
@@ -2279,8 +2091,11 @@ function compileBuffApplication(
             : action.target.targetSource === 'Context' && projectedContextTarget !== null
               ? projectedContextTarget
               : action.target.targetSource === 'Context' &&
-                  context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey ?? '') ===
-                    true
+                  (context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey ?? '') ===
+                    true ||
+                    context.enemyOrSpatialTargetGroupKeys?.has(
+                      action.target.targetGroupKey ?? '',
+                    ) === true)
                 ? ('enemy' as const)
                 : action.target.targetSource === 'Context' &&
                     contextTargetGroupKey !== '' &&
@@ -2299,7 +2114,17 @@ function compileBuffApplication(
                           ? ('partyExceptCaster' as const)
                           : isPartyInstantSearch(action.target)
                             ? ('party' as const)
-                            : null;
+                            : inferBuffTargetKind(
+                                  projectActionTargetQuery(
+                                    action.target,
+                                    context,
+                                    `${sourcePath}.target`,
+                                  ),
+                                  context,
+                                  partyTargetGroups,
+                                ) === 'enemy'
+                              ? 'enemy'
+                              : null;
   // 此值只供 Buff 闭包推断宿主种类；unknown 不能变成默认干员来源。
   // 实际来源始终由下面的 ActionTargetQuery 在执行时解析。
   const source: BuffApplicationSource | 'unknown' | undefined | null =
@@ -2320,7 +2145,8 @@ function compileBuffApplication(
             ? 'buffSource'
             : undefined
         : action.buffSource === 'ContextTarget' &&
-            context.staticEnemyTargetGroupKeys?.has(action.contextKey) === true
+            (context.staticEnemyTargetGroupKeys?.has(action.contextKey) === true ||
+              context.enemyOrSpatialTargetGroupKeys?.has(action.contextKey) === true)
           ? 'enemy'
           : action.buffSource === 'ContextTarget' &&
               partyTargetGroups.get(action.contextKey) === 'abilityEntity'
@@ -2387,30 +2213,33 @@ function compileBuffApplication(
             : action.buffSource === 'ActionSource'
               ? { kind: 'source' }
               : action.buffSource === 'ContextTarget'
-                ? context.staticEnemyTargetGroupKeys?.has(action.contextKey)
-                  ? { kind: 'fixed', target: 'enemy' }
-                  : { kind: 'context', key: action.contextKey }
-                : context.actionTargetTarget === 'enemy' || context.actionTargetTarget === 'caster'
-                  ? { kind: 'fixed', target: context.actionTargetTarget }
-                  : { kind: 'inputTarget' },
+                ? { kind: 'context', key: action.contextKey }
+                : { kind: 'inputTarget' },
         [COMPILED_BUFF_TARGET_KINDS]: { target, source },
         ...(action.count.blackboardKey === null && action.count.value === 1
           ? {}
           : { count: actionValueOperand(action.count) }),
         ...(action.inheritSourceSkillCastInfo ? { inheritSourceSkillCastInfo: true } : {}),
+        ...(action.delayedTriggerInputKey === undefined
+          ? {}
+          : { delayedTriggerInputKey: action.delayedTriggerInputKey }),
         ...(action.isExtra ? { isExtra: true } : {}),
         ...(action.overrideBuffIconDuration
           ? { iconDurationSource: { kind: 'actionOwnerAbilityEntity' as const } }
           : {}),
         ...(action.autoFinishByAction ? { finishByAction: true } : {}),
-        ...(action.inheritSkillIds.length === 0
+        ...(!action.autoFinishByAction || action.inheritSkillIds.length === 0
           ? {}
           : { inheritToNextSkillIds: action.inheritSkillIds }),
         ...(action.asChildBuff ? { asChildBuff: true } : {}),
         ...(action.passTargetGroupsToBuff
           ? {
+              passTargetGroupsToBuff: true,
               [COMPILED_BUFF_CAPTURED_TARGET_GROUPS]: {
                 enemyKeys: [...(context.staticEnemyTargetGroupKeys ?? [])].sort(),
+                ...(context.enemyOrSpatialTargetGroupKeys?.size
+                  ? { enemyOrSpatialKeys: [...context.enemyOrSpatialTargetGroupKeys].sort() }
+                  : {}),
                 zeroSpaceKeys: [...(context.staticZeroSpaceTargetGroupKeys ?? [])]
                   .filter(key => context.staticEnemyTargetGroupKeys?.has(key) !== true)
                   .sort(),
@@ -2438,6 +2267,23 @@ const ACTION_VALUE_OPERATIONS: Readonly<
   RoundToInt: 'roundToInt',
 };
 /** 光环参数与原生回调分开投影；回调由序列编译器保留为入口。 */
+/** 空间简化仅影响范围候选；全局光环按已出生、存活的敌人集合查询。 */
+export function projectAuraTargets(aura: {
+  target: 'enemy' | 'party' | 'partyExceptOwner';
+  global?: boolean;
+  excludeOwner?: boolean;
+}): Extract<CompiledBuffStepSource, { kind: 'aura' }>['parameters']['targets'] {
+  const excludeOwner = aura.excludeOwner === true || aura.target === 'partyExceptOwner';
+  if (aura.target !== 'enemy') return { kind: 'characterTeam', excludeOwner };
+  const targets = {
+    kind: 'enemyByTags' as const,
+    tagQueryType: 'hasAll' as const,
+    tags: [],
+    ...(aura.global === true ? { scope: 'global' as const } : {}),
+  };
+  return excludeOwner ? { kind: 'exclude', targets, excludeTargets: { kind: 'owner' } } : targets;
+}
+
 export function projectAuraParameters(
   node: NativeActionNodeSource<KnownNativeActionLeafSource>,
   visualOnlyIds: ReadonlySet<string>,
@@ -2473,10 +2319,10 @@ export function projectAuraParameters(
             } as const);
 
   return {
-    targets:
-      aura.target === 'enemy'
-        ? { kind: 'fixed', target: 'enemy' }
-        : { kind: 'characterTeam', excludeOwner: aura.target === 'partyExceptOwner' },
+    ...(aura.maxInfluenceCountPerTarget === undefined
+      ? {}
+      : { maxInfluenceCountPerTarget: aura.maxInfluenceCountPerTarget }),
+    targets: projectAuraTargets(aura),
     source: { kind: sourceKind },
     [COMPILED_BUFF_TARGET_KINDS]: {
       target: aura.target === 'enemy' ? 'enemy' : 'caster',

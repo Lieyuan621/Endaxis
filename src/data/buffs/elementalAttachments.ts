@@ -230,8 +230,7 @@ function compoundDamage(
     kind: 'dealAttackScaledDamage',
     damageType,
     attackScale: { blackboardKey: attackScaleKey },
-    tags: [tag],
-    features: attackScaleKey === 'burning_atk_scale' ? ['dot'] : [],
+    tags: attackScaleKey === 'burning_atk_scale' ? [tag, 'dot'] : [tag],
     canCritical,
   };
 }
@@ -357,7 +356,6 @@ function corrosionGraph(): ActionGraphResourceDefinition {
               damageType: 'nature',
               attackScale: { kind: 'valueNode', nodeId: 'atk_scale' },
               tags: ['natureAbnormal'],
-              features: [],
             },
           },
           next: null,

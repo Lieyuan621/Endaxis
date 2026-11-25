@@ -4,6 +4,8 @@ import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 /** 把技能调度中的开启连携窗口步骤接到场景级连携账本。 */
 import type { CombatOperationContext, CombatOperationExecutor } from './skillRuntime';
 import type { ComboWindowRuntime } from './comboWindowRuntime';
+import { resolveActionValueOperand } from '../actions/actionBlackboard';
+import { firstRuntimeEntityTarget } from '../../game-data/logicalAbilityEntity';
 export class ComboWindowOperationExecutor implements CombatOperationExecutor {
   constructor(
     readonly operatorId: string,
@@ -18,15 +20,55 @@ export class ComboWindowOperationExecutor implements CombatOperationExecutor {
     readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']> = () => {
       throw new Error('combo condition target query is unavailable');
     },
+    readonly canTriggerComboSkill: (ownerId: string, skillKey: string) => boolean = () => {
+      throw new Error('native combo pending eligibility is unavailable');
+    },
   ) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'queueComboLock') {
+      if (!context) throw new Error('combo lock requires action context');
+      this.windows.queueLock(
+        resolveActionValueOperand(step.parameters.durationSeconds, context.blackboard),
+      );
+      return true;
+    }
     if (step.kind === 'openComboWindow') {
+      if ('owner' in step.parameters && step.parameters.owner !== undefined) {
+        if (!context) throw new Error('native combo pending requires an action context');
+        const parameters = step.parameters;
+        const owner = firstRuntimeEntityTarget(this.queryTargets(step.parameters.owner, context));
+        if (owner?.kind !== 'operator') return false;
+        const skillKey = this.resolveCurrentSkillKey(
+          parameters.nextSkillKeyFromSlot,
+          owner.operatorId,
+        );
+        if (!this.canTriggerComboSkill(owner.operatorId, skillKey)) return false;
+        if (parameters.target === undefined)
+          throw new Error('native combo pending requires a target query');
+        const targets = this.queryTargets(parameters.target, context);
+        const triggers =
+          parameters.trigger === undefined ? null : this.queryTargets(parameters.trigger, context);
+        this.windows.open(
+          owner.operatorId,
+          skillKey,
+          {},
+          {
+            skillSlotKey: parameters.nextSkillKeyFromSlot,
+            inputTargets: targets,
+            triggerTargets: triggers,
+            assignPairs: null,
+          },
+        );
+        return true;
+      }
       let ownerId = this.operatorId;
       if ('ownerContextKey' in step.parameters && step.parameters.ownerContextKey !== undefined) {
         if (context?.targetContext === undefined)
           throw new Error('combo window owner requires target context');
-        const owner = context.targetContext.get(step.parameters.ownerContextKey)[0];
+        const owner = firstRuntimeEntityTarget(
+          context.targetContext.get(step.parameters.ownerContextKey),
+        );
         // 原生只取首个 owner，并要求角色；不能回退到触发者或改找组内其他角色。
         if (owner?.kind !== 'operator') return true;
         ownerId = owner.operatorId;
@@ -45,15 +87,16 @@ export class ComboWindowOperationExecutor implements CombatOperationExecutor {
   }
 
   end(step: ResolvedCombatOperationStep, context?: CombatOperationContext): void {
-    if (step.kind === 'openComboWindow') return;
+    if (step.kind === 'openComboWindow' || step.kind === 'queueComboLock') return;
     if (context === undefined) this.delegate.end?.(step);
     else this.delegate.end?.(step, context);
   }
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'comboSkillPending') {
-      if (context === undefined) throw new Error('comboSkillPending requires a combat operation context');
-      const target = this.queryTargets(condition.target, context)[0];
+      if (context === undefined)
+        throw new Error('comboSkillPending requires a combat operation context');
+      const target = firstRuntimeEntityTarget(this.queryTargets(condition.target, context));
       return target?.kind === 'operator' && this.windows.hasPending(target.operatorId);
     }
     return context === undefined

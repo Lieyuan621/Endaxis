@@ -53,6 +53,30 @@ const entries = [
 ];
 
 describe('time-dilation drag preview', () => {
+  it('uses the same ultimate fallback for rejected global instances in drag previews', () => {
+    const rejected = entry(10, 5, 'TimeDilationRejected', {
+      instanceId: 10,
+      kind: 'global',
+      slot: 'global',
+      sourceCastId: 'fallback-ultimate',
+      curveKey: 'Other',
+      priority: 1,
+      durationSeconds: 1,
+    });
+    expect(prepareTimeDilationDragPreview([rejected], [], 100)).toEqual([]);
+    const ids = new Set(['fallback-ultimate']);
+    const facts = prepareTimeDilationDragPreview([rejected], [], 100, ids);
+    expect(facts.map(fact => fact.band.instanceId)).toEqual([10]);
+    const dedicated = entry(11, 6, 'TimeDilationStarted', {
+      instanceId: 11,
+      kind: 'global',
+      slot: 'ultimate',
+      sourceCastId: 'fallback-ultimate',
+      priority: 100,
+      durationSeconds: 1,
+    });
+    expect(prepareTimeDilationDragPreview([rejected, dedicated], [], 100, ids)).toEqual([]);
+  });
   const facts = prepareTimeDilationDragPreview(entries, bands, 100);
 
   it('restores an interrupted band immediately when its replacement moves later', () => {

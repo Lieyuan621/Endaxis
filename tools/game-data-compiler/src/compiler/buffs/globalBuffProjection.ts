@@ -119,7 +119,7 @@ export function compileGlobalBuffTemplate(
     template.negatePriority ||
     template.priority !== 0 ||
     template.globalModifierCount !== template.globalModifiers.length ||
-    template.globalEventCount !== 0 ||
+    template.globalEventCount !== (template.presentationOnlyGlobalEventCount ?? 0) ||
     template.triggerInterval.blackboardKey !== null ||
     template.triggerInterval.value !== 0 ||
     !template.waitFirstTriggerInterval ||

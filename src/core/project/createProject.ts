@@ -25,24 +25,29 @@ export function createEmptyScenario(id: string, name: string): ScenarioDocument 
     name,
     tracks: [null, null, null, null],
     connections: [],
-    enemy: {
-      source: { kind: 'custom', level: 90 },
-      rank: 'mob',
-      editable: {
-        hp: 100000,
-        defense: 100,
-        superArmor: 0,
-        finisherMultiplier: 1,
-        resistances: {},
-        stagger: {
-          maximum: 300,
-          knotThresholds: [0.5],
-          knotBreakDurationFrames: 60,
-          brokenDurationFrames: 300,
-          finisherSpRecovery: 100,
+    level: {
+      kind: 'singleEnemy',
+      enemy: {
+        id: 'enemy',
+        enemy: {
+          source: { kind: 'custom', level: 90 },
+          rank: 'mob',
+          editable: {
+            hp: 100000,
+            defense: 100,
+            superArmor: 0,
+            finisherMultiplier: 1,
+            resistances: {},
+            stagger: {
+              maximum: 300,
+              knotThresholds: [0.5],
+              knotBreakDurationFrames: 60,
+              brokenDurationFrames: 300,
+              finisherSpRecovery: 100,
+            },
+          },
         },
       },
-      edited: [],
     },
     battle: {
       prepFrames: 150,

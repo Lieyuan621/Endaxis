@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { expect, it } from 'vitest';
 
 import { createEmptyScenario } from '../../../core/project/createProject';
@@ -18,7 +19,7 @@ it('同一饰品放入任一槽位产生相同属性和伤害', async () => {
   const simulate = async (slot: 'accessory1' | 'accessory2') => {
     const scenario = createEmptyScenario(`audit:equipment:${slot}`, '饰品槽位回归');
     scenario.battle.durationFrames = 300;
-    scenario.enemy.editable.hp = 1_000_000_000;
+    firstScenarioEnemy(scenario).enemy.editable.hp = 1_000_000_000;
     scenario.battle.resourceRules = {
       maxSp: 1000,
       initialSp: 1000,

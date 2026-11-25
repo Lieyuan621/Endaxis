@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../../core/project/level';
 import { describe, expect, it } from 'vitest';
 import { ActionGraphDefinitionRepository } from '../../../core/compiler/actionGraphDefinitionRepository';
 import { avywenna } from '../../../data/operators/avywenna.generated';
@@ -42,7 +43,7 @@ async function simulate(casts: readonly (readonly [string, number])[]) {
   const operator = avywenna;
   let scenario = createEmptyScenario('full-operator', '艾维文娜技能链');
   scenario.battle.durationFrames = 600;
-  scenario.enemy.editable.hp = 1e9;
+  firstScenarioEnemy(scenario).enemy.editable.hp = 1e9;
   scenario.tracks[0] = {
     id: 'track:full',
     operator: {

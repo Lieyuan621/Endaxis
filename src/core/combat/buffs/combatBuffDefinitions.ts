@@ -37,11 +37,9 @@ import type {
   PoiseModifierDefinition,
 } from '../../../../packages/game-data-contract/src/modifiers';
 import {
-  DAMAGE_FEATURES,
   DAMAGE_TAGS,
   DAMAGE_TYPES,
   INFLICTION_ELEMENTS,
-  type DamageFeature,
   type DamageTag,
   type DamageType,
   type InflictionElement,
@@ -96,6 +94,7 @@ export interface CombatBuffDefinitionCompilerPorts<Key extends string> {
   ) => number;
   /** 法术爆发触发端口；爆发 Buff 存在该动作时必须提供。 */
   readonly onSpellBurstTriggered?: (payload: {
+    readonly targetId: string;
     readonly burstType: string;
     readonly sourceId: string;
     readonly skillCastInfo?: CombatSkillCastInfo;
@@ -105,7 +104,6 @@ export interface CombatBuffDefinitionCompilerPorts<Key extends string> {
     readonly damageType: DamageType;
     readonly attackScale: number;
     readonly tags: readonly DamageTag[];
-    readonly features: readonly DamageFeature[];
     readonly canCritical: boolean;
     readonly sourceId: string;
     readonly skillCastInfo?: CombatSkillCastInfo;
@@ -859,10 +857,12 @@ function parseOptionalPoiseModifiers(
         processors: modifier.processors.map((inputProcessor, processorIndex) => {
           const processorPath = `${modifierPath}.processors[${processorIndex}]`;
           const processor = requireObject(inputProcessor, processorPath);
-          requireOnlyKeys(processor, processorPath, ['kind', 'timing', 'side', 'addition']);
+          requireOnlyKeys(processor, processorPath, ['kind', 'timing', 'side', 'values']);
           if (processor.kind !== 'modifyPoiseScalar') {
             throw new Error(`${processorPath}.kind: unsupported poise processor`);
           }
+          const values = requireObject(processor.values, `${processorPath}.values`);
+          requireOnlyKeys(values, `${processorPath}.values`, ['slot', 'value']);
           return {
             kind: 'modifyPoiseScalar' as const,
             timing: requireEnum(
@@ -875,7 +875,14 @@ function parseOptionalPoiseModifiers(
               ['attacker', 'defender'] as const,
               `${processorPath}.side`,
             ),
-            addition: parseDefinitionNumberOperand(processor.addition, `${processorPath}.addition`),
+            values: {
+              slot: requireEnum(
+                values.slot,
+                ATTRIBUTE_MODIFIER_SLOTS,
+                `${processorPath}.values.slot`,
+              ),
+              value: parseDefinitionNumberOperand(values.value, `${processorPath}.values.value`),
+            },
           };
         }),
       };
@@ -1213,16 +1220,13 @@ function parseOptionalDefinitionActionList(
           'damageType',
           'attackScale',
           'tags',
-          'features',
+          'tags',
           'canCritical',
         ]);
         if (action.canCritical !== true && action.canCritical !== false) {
           throw new Error(`${actionPath}.canCritical: expected boolean`);
         }
         if (!Array.isArray(action.tags)) throw new Error(`${actionPath}.tags: expected array`);
-        if (!Array.isArray(action.features)) {
-          throw new Error(`${actionPath}.features: expected array`);
-        }
         return {
           kind: action.kind,
           damageType: requireEnum(action.damageType, DAMAGE_TYPES, `${actionPath}.damageType`),
@@ -1230,11 +1234,8 @@ function parseOptionalDefinitionActionList(
             action.attackScale,
             `${actionPath}.attackScale`,
           ),
-          tags: action.tags.map((tag, tagIndex) =>
-            requireEnum(tag, DAMAGE_TAGS, `${actionPath}.tags[${tagIndex}]`),
-          ),
-          features: action.features.map((feature, featureIndex) =>
-            requireEnum(feature, DAMAGE_FEATURES, `${actionPath}.features[${featureIndex}]`),
+          tags: action.tags.map((tag, index) =>
+            requireEnum(tag, DAMAGE_TAGS, `${actionPath}.tags[${index}]`),
           ),
           canCritical: action.canCritical,
         };
@@ -1542,6 +1543,7 @@ function compileDefinitionActionList<Key extends string>(
         }
         return buff => {
           onSpellBurstTriggered({
+            targetId: buff.owner.ownerId,
             burstType: action.burstType,
             sourceId: buff.sourceId,
             ...(buff.skillCastInfo === null ? {} : { skillCastInfo: buff.skillCastInfo }),
@@ -1559,8 +1561,7 @@ function compileDefinitionActionList<Key extends string>(
           onTriggered({
             damageType: action.damageType,
             attackScale: resolveBuffBlackboardOperand(buff, action.attackScale),
-            tags: action.tags,
-            features: action.features,
+            tags: action.tags ?? [],
             canCritical: action.canCritical,
             sourceId: buff.sourceId,
             buffId: buff.definition.id,

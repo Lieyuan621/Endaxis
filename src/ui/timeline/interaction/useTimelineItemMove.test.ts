@@ -5,11 +5,18 @@ import { createEmptyScenario } from '../../../core/project/createProject';
 import { createInteractionSession } from '../../interaction/interactionSession';
 import { createEmptyTimelineActionSelection } from './timelineActionSelection';
 import { useTimelineItemMove } from './useTimelineItemMove';
-import { collectTimelineItems, timelineItemKey } from './timelineItems';
+import { collectTimelineItems, timelineItemKey, type TimelineMovePlan } from './timelineItems';
+import { snapSkillPlacementDelta } from './hideUiPlacement';
 
 afterEach(() => vi.unstubAllGlobals());
 
-function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
+function fixture(
+  readOnly = false,
+  minimumInputFrame = 0,
+  blocked = false,
+  preparation: 'collapsed' | 'expanded' | null = null,
+  resolveDelta?: (plan: TimelineMovePlan, delta: number) => number | null,
+) {
   const events = new EventTarget();
   class Lane {
     readonly dataset = { trackIndex: '0' };
@@ -29,7 +36,8 @@ function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
   );
   vi.stubGlobal('cancelAnimationFrame', vi.fn());
   const original = createEmptyScenario('drag', 'drag');
-  original.battle.prepFrames = 0;
+  original.battle.prepFrames = preparation === null ? 0 : 30;
+  original.editor.prepExpanded = preparation === 'expanded';
   original.tracks[0] = {
     id: 'track',
     operator: null,
@@ -83,6 +91,7 @@ function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
       commit: commitScenario,
       simulate: simulateNow,
       blocked: vi.fn(),
+      resolveDelta,
     }),
   )!;
   const begin = () =>
@@ -126,11 +135,11 @@ function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
     commitScenario,
     scope,
     move,
-    finish: () =>
+    finish: (clientX = 30) =>
       events.dispatchEvent(
         Object.assign(new Event('pointerup'), {
           pointerId: 1,
-          clientX: 30,
+          clientX,
           clientY: 100,
           stopPropagation() {},
         }),
@@ -139,6 +148,29 @@ function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
 }
 
 describe('timeline item move lifecycle', () => {
+  it('snaps the preview and committed input before simulation, with one undo step', async () => {
+    const f = fixture(false, 0, false, null, (plan, delta) =>
+      snapSkillPlacementDelta(
+        plan.anchors.map(item => item.frame!),
+        delta,
+        [{ startFrame: 50, endFrame: 61 }],
+        plan.maximumDelta,
+      ),
+    );
+    try {
+      f.move(55);
+      expect(f.scenario.value.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(61);
+      expect(f.simulateNow).not.toHaveBeenCalled();
+      f.finish(55);
+      await vi.waitFor(() => expect(f.movement.gesture.value).toBeNull());
+      expect(f.session.snapshot.scenario.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(61);
+      expect(f.commitScenario).toHaveBeenCalledTimes(1);
+      expect(f.session.undo()).toBe(true);
+      expect(f.scenario.value).toBe(f.original);
+    } finally {
+      f.scope.stop();
+    }
+  });
   it('直接提交最终预览，不广播原位置，且正式编辑历史支持单次撤销重做', async () => {
     const f = fixture();
     const preview = f.scenario.value;
@@ -283,6 +315,17 @@ describe('timeline item move lifecycle', () => {
     f.move(40);
     expect(f.scenario.value.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(40);
     f.scope.stop();
+  });
+  it('准备区折叠时技能拖动停在 0 帧，展开后可拖进准备区', () => {
+    const collapsed = fixture(false, 0, false, 'collapsed');
+    collapsed.move(-100);
+    expect(collapsed.scenario.value.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(0);
+    collapsed.scope.stop();
+
+    const expanded = fixture(false, 0, false, 'expanded');
+    expanded.move(-100);
+    expect(expanded.scenario.value.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(-30);
+    expanded.scope.stop();
   });
   it('提交被拒绝时撤销预览，不能留下被判为历史输入的非法位置', async () => {
     const f = fixture();

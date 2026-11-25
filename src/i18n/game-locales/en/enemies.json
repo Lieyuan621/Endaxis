@@ -274,5 +274,44 @@
   },
   "eny_0134_jsspsi": {
     "name": "Si"
+  },
+  "eny_0158_mushbug": {
+    "name": "Shroomkrusher Nidwyrm"
+  },
+  "eny_0159_mushman": {
+    "name": "Bolete Prince"
+  },
+  "eny_0160_mushro": {
+    "name": "Shroomkrusher Sporeknuckles"
+  },
+  "eny_0161_mushshd": {
+    "name": "Shroomkrusher Sporeguard"
+  },
+  "wiki_group_monster_angel": {
+    "name": "Aggeloi"
+  },
+  "wiki_group_monster_landbreaker": {
+    "name": "Landbreakers"
+  },
+  "wiki_group_monster_hongshan": {
+    "name": "Cangzei Pirates"
+  },
+  "wiki_group_monster_animal": {
+    "name": "Wildlife"
+  },
+  "wiki_group_monster_kl": {
+    "name": "Blightshades"
+  },
+  "wiki_group_monster_js": {
+    "name": "Foundite"
+  },
+  "wiki_group_monster_witchcraft": {
+    "name": "Witchcraft Creation"
+  },
+  "wiki_group_monster_ml": {
+    "name": "Apparition"
+  },
+  "wiki_group_monster_else": {
+    "name": "Others"
   }
 }

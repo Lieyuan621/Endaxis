@@ -54,6 +54,9 @@ const props = defineProps<{
   warningFallbackText?: string;
   /** 技能块上的独立命中点标记，点击后打开命中详情。 */
   hits?: readonly TimelineHitMarkerView[];
+  /** 轨道世界坐标的缓冲视窗；导出时留空以显示全部命中。 */
+  visibleLeftPx?: number;
+  visibleRightPx?: number;
   /** 由该技能产生的时间膨胀流光，沿用旧版从技能块左侧开始并裁剪到块内。 */
   timeDilationSegments?: readonly { readonly left: number; readonly width: number }[];
   /** 由运行时冷却回执投影出的现实时间持续条；不预测模拟终点外的结束帧。 */
@@ -85,6 +88,16 @@ const hovered = ref(false);
 const { appearance } = useAppearance();
 const isLightAppearance = computed(() => appearance.value === 'light');
 const decorationsVisible = computed(() => props.showDecorations !== false);
+const visibleHits = computed(() => {
+  const hits = props.hits ?? [];
+  const left = props.visibleLeftPx;
+  const right = props.visibleRightPx;
+  if (left === undefined || right === undefined) return hits;
+  return hits.filter(hit => {
+    const x = props.left + projectTimelineHitMarkerLeftPx(hit.leftPx);
+    return x >= left && x <= right;
+  });
+});
 
 const TYPE_SHORTHAND: Readonly<Partial<Record<OperationType, string>>> = {
   basicAttack: 'A',
@@ -287,13 +300,13 @@ function formatDurationFrames(frames: number): string {
     </template>
     <span v-if="durationPending" class="duration-pending-mark" aria-hidden="true"></span>
     <span
-      v-for="hit in hits ?? []"
+      v-for="hit in visibleHits"
       :key="`${hit.hitId}:${hit.executionFrame ?? 'preview'}`"
       class="hit-marker"
       :class="{
         'is-link-buffed': hit.linkBuffed,
         'is-triggered': hit.triggered,
-        'is-forced-crit': hit.forcedCritical,
+        'timeline-hit--marked': hit.hasOverride,
       }"
       :style="markerStyle(hit)"
       :title="hit.title ?? ''"
@@ -407,7 +420,7 @@ function formatDurationFrames(frames: number): string {
     </span>
     <span
       v-for="port in connectionPorts"
-      v-show="showConnectionPorts"
+      v-if="showConnectionPorts"
       :key="port"
       class="connection-port"
       :class="[
@@ -446,7 +459,6 @@ function formatDurationFrames(frames: number): string {
   background-image: linear-gradient(var(--action-fill), var(--action-fill));
   color: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
   box-shadow: var(--action-edge-ring, none);
-  backdrop-filter: var(--action-backdrop-filter, blur(4px));
   font-family: inherit;
   font-size: inherit;
   font-weight: 700;
@@ -598,6 +610,7 @@ function formatDurationFrames(frames: number): string {
   );
   color: #777;
   opacity: 0.6;
+  backdrop-filter: var(--action-backdrop-filter, blur(4px));
 }
 
 .timeline-action-block.is-locked {
@@ -611,17 +624,26 @@ function formatDurationFrames(frames: number): string {
 .connection-port {
   position: absolute;
   z-index: 3;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--action-accent);
-  box-shadow: 0 0 0 1px var(--ea-workbench-main);
+  width: 16px;
+  height: 16px;
   cursor: crosshair;
 }
 
-.connection-port:hover {
+.connection-port::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  box-sizing: border-box;
+  border: 1px solid var(--action-accent);
+  background: var(--action-surface);
+  box-shadow: 0 0 0 1px var(--action-surface);
+  content: '';
+  transform: translate(-50%, -50%);
+}
+
+.connection-port:hover::before {
   background: var(--ea-gold);
-  transform: scale(1.2);
+  border-color: var(--ea-gold);
 }
 
 .connection-port.is-invalid-target {
@@ -631,27 +653,39 @@ function formatDurationFrames(frames: number): string {
 }
 
 .connection-port--top {
-  top: -5px;
+  top: -9px;
   left: 50%;
   translate: -50% 0;
 }
 
 .connection-port--right {
   top: 50%;
-  right: -5px;
+  right: -9px;
   translate: 0 -50%;
 }
 
 .connection-port--bottom {
-  bottom: -5px;
+  bottom: -9px;
   left: 50%;
   translate: -50% 0;
 }
 
 .connection-port--left {
   top: 50%;
-  left: -5px;
+  left: -9px;
   translate: 0 -50%;
+}
+
+.connection-port--top::before,
+.connection-port--bottom::before {
+  width: 10px;
+  height: 5px;
+}
+
+.connection-port--left::before,
+.connection-port--right::before {
+  width: 5px;
+  height: 10px;
 }
 
 .timeline-action-block:not(.is-disabled)[data-operation-type='ultimate'] {
@@ -921,12 +955,6 @@ function formatDurationFrames(frames: number): string {
   .hit-marker.is-triggered:hover {
     transform: translate(-50%, var(--hit-offset, 0px)) rotate(45deg) scale(1.35);
   }
-}
-
-.hit-marker.is-forced-crit {
-  background-color: #ff6b6b;
-  border-color: #ffd166;
-  box-shadow: 0 0 8px rgba(255, 209, 102, 0.9);
 }
 
 :global(html[data-theme='light'] .timeline-action-block) {

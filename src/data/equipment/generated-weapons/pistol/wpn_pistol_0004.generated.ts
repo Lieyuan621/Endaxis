@@ -48,21 +48,6 @@ const definition = {
           value: [0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.28],
         },
       ],
-      skillId: 'sk_wpn_pistol_0004',
-      eventHandlers: [
-        {
-          key: 'skill3:event:0:sequence:0',
-          abilityEvent: 'beforeOutputSpellBurst',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_2' },
-        },
-        {
-          key: 'skill3:event:1:sequence:0',
-          abilityEvent: 'beforeOutputBuff',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_5' },
-        },
-      ],
       actionGraph: {
         main: {
           nodes: {
@@ -127,6 +112,21 @@ const definition = {
         },
         macros: {},
       },
+      skillId: 'sk_wpn_pistol_0004',
+      eventHandlers: [
+        {
+          key: 'skill3:event:0:sequence:0',
+          abilityEvent: 'beforeOutputSpellBurst',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_2' },
+        },
+        {
+          key: 'skill3:event:1:sequence:0',
+          abilityEvent: 'beforeOutputBuff',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_5' },
+        },
+      ],
       blackboard: {
         atk_up: [0.16, 0.192, 0.224, 0.256, 0.288, 0.32, 0.352, 0.384, 0.448],
         duration: [15, 15, 15, 15, 15, 15, 15, 15, 15],

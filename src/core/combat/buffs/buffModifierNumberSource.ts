@@ -6,6 +6,7 @@ export function resolveBuffModifierNumber(
   source: BuffModifierNumberSource | undefined,
   value: number | { readonly blackboardKey: string },
   kind: 'damage' | 'heal' | 'poise',
+  missingValue?: number,
 ): number {
   if (typeof value === 'number') return value;
   if (source === undefined)
@@ -13,6 +14,7 @@ export function resolveBuffModifierNumber(
       `${kind} modifier blackboard value '${value.blackboardKey}' cannot be resolved`,
     );
   const resolved = readActionBlackboard(source.blackboard, value.blackboardKey);
+  if (resolved === undefined && missingValue !== undefined) return missingValue;
   if (typeof resolved !== 'number')
     throw new Error(
       `buff '${source.buffId}' ${kind} modifier blackboard value '${value.blackboardKey}' is missing`,

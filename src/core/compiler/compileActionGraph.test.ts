@@ -8,7 +8,10 @@ import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
 } from '../../../packages/game-data-contract/src/actionGraph';
-import type { AbilityEntityDefinition } from '../game-data/operatorDefinition';
+import type {
+  AbilityEntityChildSkillDefinition,
+  AbilityEntityDefinition,
+} from '../game-data/operatorDefinition';
 import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
 import { compileSkill, compileIndependentAbilityEntityResource } from './compileSkill';
 import { createActionGraphCompilation, type CompiledActionGraph } from './compileActionGraph';
@@ -475,4 +478,79 @@ it('独立资源的嵌套入口只绑定一次所属图身份', () => {
   if (macroBranch?.action.kind !== 'conditional') throw new Error('missing branch');
   expect(macroBranch.action.whenTrue.$sequence).toBe(JSON.stringify(['shared', 'hit']));
   expect(compilation.program.nodes.has(JSON.stringify(['shared', 'hit']))).toBe(true);
+});
+
+it('递归投射物回调引用本次外层技能，序列化不产生对象环且不同技能实例不串作用域', () => {
+  const callbackGraph: ActionGraphResourceDefinition = {
+    macros: {},
+    main: {
+      nodes: {
+        bounce: {
+          action: {
+            kind: 'launchProjectile',
+            parameters: {
+              projectileId: 'test_projectile',
+              inheritActionBlackboard: false,
+              schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            },
+            callbacks: [{ event: 'hit', skill: { $skill: 'bounce' } }],
+          },
+          next: null,
+        },
+      },
+    },
+  };
+  const skill = (scale: number): AbilityEntityChildSkillDefinition => ({
+    skillId: 'bounce',
+    nativeSkillType: 'normalSkill',
+    naturalDurationFrames: 1,
+    castResource: {
+      costFrame: 0,
+      cooldownSeconds: 0,
+      maxChargeTime: 1,
+      cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
+    },
+    blackboard: { scale },
+    scheduledSequences: [{ startFrame: 0, endFrame: 1, sequence: { $sequence: 'bounce' } }],
+    actionGraph: callbackGraph,
+  });
+  const root: ActionGraphResourceDefinition = {
+    macros: {},
+    main: {
+      nodes: {
+        launch: {
+          action: {
+            kind: 'launchProjectile',
+            parameters: {
+              projectileId: 'test_projectile',
+              inheritActionBlackboard: false,
+              schedule: { endFrame: 1, callbacks: [{ event: 'hit', triggerFrames: [1] }] },
+            },
+            callbacks: [
+              { event: 'hit', skill: skill(1) },
+              { event: 'finish', skill: skill(2) },
+            ],
+          },
+          next: null,
+        },
+      },
+    },
+  };
+  expect(JSON.parse(JSON.stringify(root))).toEqual(root);
+  const compiler = createActionGraphCompilation(root, 1);
+  const entry = compiler.compileEntry({ $sequence: 'launch' }, 'test');
+  const launch = entry.graph.nodes.get(entry.entry!)!.action;
+  if (launch.kind !== 'launchProjectile') throw new Error('expected launch');
+  const programs = launch.callbacks.map(callback => callback.skill);
+  expect(programs.map(program => program.initialBlackboard.scale)).toEqual([1, 2]);
+  expect(programs[0]).not.toBe(programs[1]);
+  for (const program of programs) {
+    const timeline = program.timelineActions[0]!.sequence;
+    const repeated = timeline.graph.nodes.get(timeline.entry!)!.action;
+    if (repeated.kind !== 'launchProjectile') throw new Error('expected repeated launch');
+    expect(repeated.callbacks[0]!.skill).toBe(program);
+  }
+  expect(() =>
+    createActionGraphCompilation(callbackGraph, 1).compileEntry({ $sequence: 'bounce' }, 'orphan'),
+  ).toThrow('unknown enclosing callback skill bounce');
 });

@@ -13,6 +13,10 @@ import { compileScenarioDodgeInputs } from '../../../core/compiler/compileScenar
 import { createInheritedScenario } from '../../editor/scenarioInheritance';
 import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 import { projectDodgeMarkerEffects } from '../../../core/projection/dodgeMarkerEffects';
+import { projectDodgeMarkerDiagnostics } from '../../../core/projection/dodgeMarkerDiagnostics';
+import { createScenarioSimulationService } from '../createScenarioSimulationService';
+import { gameDataRepository } from '../../../data/gameDataRepository';
+import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from '../../../data/contingencyContract/contingencyContractAdapter';
 
 function scenario(): ScenarioDocument {
   const result = createEmptyScenario('review', '闪避审查');
@@ -83,6 +87,40 @@ function prepare(value = scenario(), live = false) {
 }
 
 describe('闪避输入、恢复与连续组集成', () => {
+  it.each([false, true])(
+    '禁锢词条启用=%s：闪避仍执行，只有启用时通过角标诊断提示禁止闪避',
+    enabled => {
+      const value = scenario();
+      value.battle.dodgeMarkers = [marker('contract-dash', 1)];
+      value.mechanics.selections = [
+        {
+          id: 'mute-evade',
+          mechanicId: `${CONTINGENCY_CONTRACT_MECHANIC_PREFIX}101303`,
+          enabled,
+          parameters: {},
+        },
+      ];
+      const session =
+        createScenarioSimulationService(gameDataRepository).createCombatSession(value);
+      session.advanceToFrame(0);
+      const restored = session.fork(session.runtime.save());
+      session.advanceToFrame(10);
+      restored.advanceToFrame(10);
+      const result = session.collectResult();
+      expect(restored.collectResult()).toEqual(result);
+      expect(result.receiptEntries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            event: 'DashInputExecuted',
+            data: expect.objectContaining({ dodgeId: 'contract-dash' }),
+          }),
+        ]),
+      );
+      const diagnostic = projectDodgeMarkerDiagnostics(result.receiptEntries).get('contract-dash');
+      expect(diagnostic?.messages.some(message => message.code === 'inDisableDash')).toBe(enabled);
+      if (enabled) expect(diagnostic?.status).toBe('warning');
+    },
+  );
   it('全局时间膨胀减缓中心状态的攻击接续窗口', () => {
     const runtime = new CombatRuntimeAssembly(prepare(scenario(), true).compiled);
     runtime.applyInitialInput({});

@@ -1,3 +1,5 @@
+import type { CompiledAbilityEntityChildSkillProgram } from './combatProgram';
+import { EMPTY_GRAPH_IMPORTS, type ActionGraphImports } from './actionGraphImports';
 import type { ResolvedCombatStepParameters } from './combatProgram';
 import { resolveLevelValue } from './compileActionValues';
 import type { CompiledGraphStepForKind, CompiledValueInput } from './compiledGraphData.ts';
@@ -186,7 +188,7 @@ function bindResourceGraphs(resource: ActionGraphResourceDefinition) {
   };
 }
 
-function graphSpawnsAbilityEntity(
+function graphRequiresResourceImports(
   definition: ActionGraphDefinition | ActionGraphResourceDefinition,
 ): boolean {
   const pending: object[] = [definition];
@@ -195,7 +197,11 @@ function graphSpawnsAbilityEntity(
     const value = pending.pop()!;
     if (visited.has(value)) continue;
     visited.add(value);
-    if ('kind' in value && value.kind === 'spawnAbilityEntity') return true;
+    if (
+      'kind' in value &&
+      (value.kind === 'spawnAbilityEntity' || value.kind === 'launchProjectile')
+    )
+      return true;
     // 外部回调、实体子技能和 Buff 自有图也可能生成实体。
     for (const child of Object.values(value))
       if (child !== null && typeof child === 'object') pending.push(child);
@@ -212,7 +218,7 @@ export function prepareActionGraphDefinition(
   const dependencies = validateActionGraph(graph);
   const compiled = compileGraphData(graph);
   return {
-    spawnsAbilityEntity: graphSpawnsAbilityEntity(definition),
+    requiresResourceImports: graphRequiresResourceImports(definition),
     resource,
     graph: compiled,
     dependencies,
@@ -227,9 +233,10 @@ export function createActionGraphCompilation(
   skillLevel: number,
   revision: string = `compiled-program:${nextCompiledProgramIdentity++}`,
   abilityEntityDefinitions: Readonly<Record<string, AbilityEntityDefinition>> = {},
-  importedAbilityEntityDefinitions: Readonly<Record<string, ResolvedAbilityEntityDefinition>> = {},
+  resourceImports: ActionGraphImports = EMPTY_GRAPH_IMPORTS,
   childResources = new WeakMap<ActionGraphResourceDefinition, ActionGraphCompilation>(),
   prepare: typeof prepareActionGraphDefinition = prepareActionGraphDefinition,
+  callbackSkills: ReadonlyMap<string, CompiledAbilityEntityChildSkillProgram> = new Map(),
 ): ActionGraphCompilation {
   if (!revision) throw new Error('action graph requires a revision');
   if (!Number.isInteger(skillLevel) || skillLevel < 0)
@@ -257,33 +264,50 @@ export function createActionGraphCompilation(
     bindNode(resource ? resource.entry(entry.$sequence) : entry.$sequence, path);
   const bindInternalEntry = (entry: ActionGraphReference, path: string): CompiledGraphEntry =>
     bindNode(entry.$sequence, path);
-  const bindResource = (graph: ActionGraphResourceDefinition, _path: string) => {
-    let child = childResources.get(graph);
+  const bindResource = (
+    graph: ActionGraphResourceDefinition,
+    _path: string,
+    scope: ReadonlyMap<string, CompiledAbilityEntityChildSkillProgram> = callbackSkills,
+  ) => {
+    // 引用外层回调的资源依赖词法作用域；普通独立资源继续使用原有缓存。
+    const scoped = containsCallbackSkillReference(graph);
+    let child = scoped ? undefined : childResources.get(graph);
     if (!child) {
       child = createActionGraphCompilation(
         graph,
         skillLevel,
         undefined,
         abilityEntityDefinitions,
-        importedAbilityEntityDefinitions,
+        resourceImports,
         childResources,
         prepare,
+        scope,
       );
-      childResources.set(graph, child);
+      if (!scoped) childResources.set(graph, child);
     }
     return child.compileEntry;
   };
-  const definitions = createProgramDefinitionCompiler(skillLevel, bindInternalEntry, bindResource);
-  const rootDefinitions = createProgramDefinitionCompiler(skillLevel, bindEntry, bindResource);
+  const definitions = createProgramDefinitionCompiler(
+    skillLevel,
+    bindInternalEntry,
+    bindResource,
+    callbackSkills,
+  );
+  const rootDefinitions = createProgramDefinitionCompiler(
+    skillLevel,
+    bindEntry,
+    bindResource,
+    callbackSkills,
+  );
   const resolveEntity = (id: string, path: string) => {
     if (Object.hasOwn(entities, id)) return;
     const source = Object.hasOwn(abilityEntityDefinitions, id)
       ? abilityEntityDefinitions[id]
       : undefined;
-    if (Object.hasOwn(importedAbilityEntityDefinitions, id)) {
+    if (Object.hasOwn(resourceImports.abilityEntities, id)) {
       if (source) throw new Error(`${path}: duplicate imported AbilityEntity definition '${id}'`);
       // Imported templates retain entries bound to their owning compiled program.
-      entities[id] = importedAbilityEntityDefinitions[id]!;
+      entities[id] = resourceImports.abilityEntities[id]!;
       return;
     }
     if (!source) throw new Error(`${path}: AbilityEntity definition '${id}' does not exist`);
@@ -382,6 +406,7 @@ export function createActionGraphCompilation(
           bindInternalEntry,
           resolveEntity,
           bindResource,
+          callbackSkills,
         );
       } else if (isLeafCombatStep(node.action)) {
         const compiled = compileLeafAction(node.action, skillLevel, `graph.${id}`);
@@ -448,4 +473,17 @@ export function createActionGraphCompilation(
       return program;
     },
   };
+}
+
+const callbackReferencePresence = new WeakMap<object, boolean>();
+function containsCallbackSkillReference(value: object): boolean {
+  const cached = callbackReferencePresence.get(value);
+  if (cached !== undefined) return cached;
+  const result =
+    '$skill' in value ||
+    Object.values(value).some(
+      child => child !== null && typeof child === 'object' && containsCallbackSkillReference(child),
+    );
+  callbackReferencePresence.set(value, result);
+  return result;
 }

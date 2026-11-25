@@ -45,5 +45,9 @@ export function compileCommonDefinitionSources(
       });
     }
   }
-  return { buffDefinitions, abilityEntityDefinitions: importsForLevel(0), importsForLevel };
+  return {
+    buffDefinitions,
+    abilityEntityDefinitions: importsForLevel(0).abilityEntities,
+    importsForLevel,
+  };
 }

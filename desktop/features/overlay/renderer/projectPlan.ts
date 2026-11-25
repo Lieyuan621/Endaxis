@@ -1,3 +1,5 @@
+import type { EnemyInstanceDocument } from '@/core/project/schema';
+import { firstScenarioEnemy } from '@/core/project/level';
 /**
  * 导出适配层：读取原编辑器的项目与模拟结果，生成 HUD 可独立播放的计划。
  *
@@ -264,7 +266,7 @@ export function buildOverlayPlanFromProject(
   }
 
   return {
-    plan: applySimulationResult(basePlan, run, fps, scenario.enemy.editable.superArmor),
+    plan: applySimulationResult(basePlan, run, fps, firstScenarioEnemy(scenario)),
     scenarioName: scenario.name,
     scenario,
     fps,
@@ -290,22 +292,22 @@ export function applySimulationResult(
   plan: OverlayPlan,
   run: OverlaySimulationRun,
   fps: number,
-  enemySuperArmor = 0,
+  enemy: EnemyInstanceDocument,
 ): OverlayPlan {
   const frameToTime = (frame: number) => frame / fps;
   const entries = run.receiptHistory.toArray();
-  const effects = projectOverlayStatusEffects(entries);
+  const effects = projectOverlayStatusEffects(entries, enemy.id);
   const regularBuffs = projectBuffTimelineViz(entries, run.frame).filter(
     buff =>
-      buff.targetId === 'enemy' &&
+      buff.targetId === enemy.id &&
       !isPhysicalStatusRowBuff(buff) &&
       isEnemyTimelineBuffVisible(buff),
   );
   const enemyBuffs = [
     ...mergeOverlappingBuffTimelineSegments(regularBuffs),
-    ...projectPhysicalStatusDisplay(entries, run.frame, { enemySuperArmor }).filter(
-      buff => buff.targetId === 'enemy',
-    ),
+    ...projectPhysicalStatusDisplay(entries, run.frame, {
+      enemySuperArmor: enemy.enemy.editable.superArmor,
+    }).filter(buff => buff.targetId === enemy.id),
   ].map(buff => ({
     id: `${buff.instanceId}:${buff.startSequence ?? buff.startFrame}`,
     buffId: buff.buffId,

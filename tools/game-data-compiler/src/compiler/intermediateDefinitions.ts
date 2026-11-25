@@ -12,6 +12,20 @@ export const COMBO_CAMERA_ALPHA_SETTINGS = ['Default', 'Strong', 'Weak'] as cons
 
 /** 仅供用途分析；必须在正式化前消除，不能发布为运行节点。 */
 interface AnalysisStepParameters {
+  /** 按输入值读取曲线，结果显著变化时写入动作变量。 */
+  evaluateCurve: {
+    /** 保存曲线结果的动作变量。 */
+    key: string;
+    input: ActionValueOperand;
+    curve: readonly Contract.TimeScaleCurveKeyDefinition[];
+  };
+  /** 在浮点范围内取样并写入变量；允许反向范围。 */
+  storeRandomFloat: {
+    key: string;
+    minimum: ActionValueOperand;
+    maximum: ActionValueOperand;
+  };
+
   saveTwoDirectionAngle: {
     clampToXZ?: boolean;
     direction1Source: Contract.ActionTargetQuery;
@@ -24,25 +38,39 @@ interface AnalysisStepParameters {
   };
 }
 type AnalysisStep = {
-  kind: 'saveTwoDirectionAngle';
-  parameters: AnalysisStepParameters['saveTwoDirectionAngle'];
-  key?: string;
-};
+  [K in keyof AnalysisStepParameters]: {
+    kind: K;
+    parameters: AnalysisStepParameters[K];
+    key?: string;
+  };
+}[keyof AnalysisStepParameters];
 
 /** 中间图允许内联输入及尚待证明无用途的原生计算。 */
-export type IntermediateDefinition<T> = T extends Contract.ActionGraphNode
-  ? { [K in keyof T]: K extends 'action' ? ActionGraphStep : IntermediateDefinition<T[K]> }
-  : T extends { readonly kind: 'valueNode' }
-    ? ActionValueOperand
-    : T extends { readonly kind: 'conditionNode' }
-      ? CombatCondition
-      : T extends { readonly kind: 'stringNode' }
-        ? ActionStringOperand
-        : T extends readonly unknown[]
-          ? { [K in keyof T]: IntermediateDefinition<T[K]> }
-          : T extends object
+export type IntermediateDefinition<T> = T extends {
+  projectileId: string;
+}
+  ? | T
+    | (IntermediateDefinition<Omit<T, 'projectileId'>> & {
+        projectileId: string;
+
+        entityInitialValues?: Readonly<Record<string, number>>;
+        hit?: Omit<Contract.ProjectileHitParameters, 'target'> & {
+          target?: 'controlledOperator' | 'allOperators' | 'currentTarget';
+        };
+      })
+  : T extends Contract.ActionGraphNode
+    ? { [K in keyof T]: K extends 'action' ? ActionGraphStep : IntermediateDefinition<T[K]> }
+    : T extends { readonly kind: 'valueNode' }
+      ? ActionValueOperand
+      : T extends { readonly kind: 'conditionNode' }
+        ? CombatCondition
+        : T extends { readonly kind: 'stringNode' }
+          ? ActionStringOperand
+          : T extends readonly unknown[]
             ? { [K in keyof T]: IntermediateDefinition<T[K]> }
-            : T;
+            : T extends object
+              ? { [K in keyof T]: IntermediateDefinition<T[K]> }
+              : T;
 
 export type ActionValueOperand = Contract.ActionValueOperand | Contract.ActionValueExpression;
 export type ActionStringOperand = Contract.ActionStringOperand | Contract.ActionStringExpression;
@@ -128,3 +156,5 @@ export type SkillGroupVariantDefinition =
   IntermediateDefinition<Contract.SkillGroupVariantDefinition>;
 export type EquipmentEventHandlerDefinition =
   IntermediateDefinition<Contract.EquipmentEventHandlerDefinition>;
+
+export type ActionTargetQuery = IntermediateDefinition<Contract.ActionTargetQuery>;

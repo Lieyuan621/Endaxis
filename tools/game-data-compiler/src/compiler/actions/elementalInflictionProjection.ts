@@ -16,10 +16,6 @@ export function projectElementalInflictionAction(
   const sourceIsCaster =
     (action.source.targetSource === 'Source' && context.actionSourceTarget === 'caster') ||
     (action.source.targetSource === 'Owner' && context.actionOwnerTarget === 'caster');
-  const targetsFixedEnemy =
-    (action.target.targetSource === 'Target' && context.actionTargetTarget === 'enemy') ||
-    (action.target.targetSource === 'Context' &&
-      context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true);
   const targetsBuffOwner =
     action.target.targetSource === 'Owner' &&
     action.target.targetGroupKey === '' &&
@@ -36,7 +32,7 @@ export function projectElementalInflictionAction(
       ...(!sourceIsCaster || action.source.targetGroupKey !== ''
         ? { source: projectActionTargetQuery(action.source, context, `${path}.source`) }
         : {}),
-      ...(!targetsFixedEnemy && !targetsBuffOwner
+      ...(!targetsBuffOwner
         ? { target: projectActionTargetQuery(action.target, context, `${path}.target`) }
         : {}),
     },

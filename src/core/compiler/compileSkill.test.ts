@@ -83,14 +83,14 @@ it('keeps step kind, parameters and sequence fields correlated through the publi
   };
   const once: ResolvedCombatStepForKind<'once'> = {
     kind: 'once',
-    parameters: { scopeKey: 'test' },
+    parameters: {},
     body: emptyBody,
   };
   expect(rootActionSteps(once.body)).toEqual([]);
   // @ts-expect-error once requires its child sequence.
   const missingBody: ResolvedCombatStepForKind<'once'> = {
     kind: 'once',
-    parameters: { scopeKey: 'test' },
+    parameters: {},
   };
   void missingBody;
   // @ts-expect-error unknown kinds cannot silently resolve to never.
@@ -189,7 +189,7 @@ describe('compileSkill', () => {
       { self: entity },
       new ActionGraphDefinitionRepository(),
     );
-    const compiled = resolve(1).self!;
+    const compiled = resolve(1).abilityEntities.self!;
     const entry = compiled.childSkill!.timelineActions[0]!.sequence;
     expect(entry.graph.abilityEntityDefinitions.self).toBe(compiled);
   });
@@ -233,11 +233,13 @@ describe('compileSkill', () => {
       new ActionGraphDefinitionRepository(),
     );
     const definitions = resolve(1);
-    const firstGraph = definitions.first!.childSkill!.timelineActions[0]!.sequence.graph;
-    const secondGraph = definitions.second!.childSkill!.timelineActions[0]!.sequence.graph;
+    const firstGraph =
+      definitions.abilityEntities.first!.childSkill!.timelineActions[0]!.sequence.graph;
+    const secondGraph =
+      definitions.abilityEntities.second!.childSkill!.timelineActions[0]!.sequence.graph;
     expect(firstGraph).not.toBe(secondGraph);
-    expect(firstGraph.abilityEntityDefinitions.second).toBe(definitions.second);
-    expect(secondGraph.abilityEntityDefinitions.first).toBe(definitions.first);
+    expect(firstGraph.abilityEntityDefinitions.second).toBe(definitions.abilityEntities.second);
+    expect(secondGraph.abilityEntityDefinitions.first).toBe(definitions.abilityEntities.first);
     expect(resolve(1)).toBe(definitions);
   });
 
@@ -326,7 +328,7 @@ describe('compileSkill', () => {
       skillType: 'battleSkill',
       skillLevel: 2,
       skill: linearSkill({
-        key: 'features',
+        key: 'tags',
         dataNodes: {
           critical: { type: 'number', expression: { kind: 'blackboard', key: 'crit_delta' } },
         },
@@ -337,8 +339,7 @@ describe('compileSkill', () => {
             parameters: {
               damageType: 'physical',
               attackScale: [1, 2],
-              tags: [],
-              features: ['shatter', 'dot'],
+              tags: ['shatter', 'dot'],
               target: 'actionInputTarget',
               instantAttributeModifiers,
             },
@@ -348,8 +349,7 @@ describe('compileSkill', () => {
             parameters: {
               damageType: 'physical',
               attackScale: [50, 100],
-              tags: [],
-              features: ['knockDown', 'physicalInfliction'],
+              tags: ['knockDown'],
             },
           },
         ],
@@ -362,8 +362,7 @@ describe('compileSkill', () => {
       {
         damageType: 'physical',
         attackScale: 2,
-        tags: [],
-        features: ['shatter', 'dot'],
+        tags: ['shatter', 'dot'],
         target: 'actionInputTarget',
         instantAttributeModifiers: [
           expect.objectContaining({
@@ -378,15 +377,15 @@ describe('compileSkill', () => {
       {
         damageType: 'physical',
         attackScale: 100,
-        tags: [],
-        features: ['knockDown', 'physicalInfliction'],
+        tags: ['knockDown'],
       },
     ]);
   });
   it('keeps physical infliction Buff references without embedding definitions', () => {
     const parameters = {
       type: 'fracture' as const,
-      target: 'enemy' as const,
+      target: { kind: 'fixed' as const, target: 'enemy' as const },
+      source: { kind: 'fixed' as const, target: 'caster' as const },
       isExtra: false,
     };
     const skill = linearSkill({
@@ -491,7 +490,8 @@ describe('compileSkill', () => {
         {
           kind: 'heal',
           parameters: {
-            target: 'controlledOperator',
+            target: { kind: 'mainCharacter' },
+            healer: { kind: 'source' },
             alwaysNext: false,
             attribute: 'will',
             multiplier: [1, 2],
@@ -501,7 +501,12 @@ describe('compileSkill', () => {
         },
         {
           kind: 'heal',
-          parameters: { target: 'controlledOperator', amount: [100, 240], tags: [] },
+          parameters: {
+            target: { kind: 'mainCharacter' },
+            healer: { kind: 'source' },
+            amount: [100, 240],
+            tags: [],
+          },
         },
       ],
     });
@@ -663,7 +668,7 @@ describe('compileSkill', () => {
       skillLevel: 2,
       skill,
       programs: new ActionGraphDefinitionRepository(),
-      importedAbilityEntityDefinitions: imports,
+      resourceImports: imports,
     });
 
     expect(rootActionSteps(program.timelineActions[0]?.sequence!)[0]).toEqual({

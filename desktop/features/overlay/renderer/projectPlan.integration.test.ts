@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '@/core/project/level';
 import { describe, expect, it } from 'vitest';
 import { createEditorSimulationService } from '@/application/simulation/editorSimulationService';
 import { createEmptyProject } from '@/core/project/createProject';
@@ -158,8 +159,12 @@ describe('project overlay export', () => {
       for (const entry of run.receiptHistory.entries(0, payment.sequence)) prefix.append(entry);
       const preview = buildOverlayPlanFromProject(project, gameDataRepository).plan;
       expect(
-        applySimulationResult(preview, { ...run, receiptHistory: prefix.snapshot() }, project.fps)
-          .casts[0]!.spCost,
+        applySimulationResult(
+          preview,
+          { ...run, receiptHistory: prefix.snapshot() },
+          project.fps,
+          firstScenarioEnemy(scenario),
+        ).casts[0]!.spCost,
       ).toBe(100);
     } finally {
       service.clearCache();

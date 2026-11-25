@@ -1,8 +1,12 @@
+import { isPresentationOnlyActionSequence } from '../src/compiler/skills/skillPresentationTargets.ts';
 import { collectCombatInvisibleRandomKeys } from '../src/compiler/optimization/nativePresentationUsage.ts';
 import { simplifyNativeSequences } from '../src/compiler/optimization/nativeSequenceOptimization.ts';
 import { describe, expect, it } from 'vitest';
 
 import {
+  collectSkillActionReferences,
+  parseNativeSequenceSource,
+  parseReferenceAwareActionLeafSource,
   parseKnownNativeActionLeafSource,
   parseKnownNativeActionSequenceSource,
 } from '../src/index.ts';
@@ -81,6 +85,41 @@ function rayCastEffectFixture(overrides: Record<string, unknown> = {}) {
 }
 
 describe('公共 Action 叶子分派', () => {
+  it('原生属性覆盖保持单一行为节点、目标查询及重复属性条目的原始顺序', () => {
+    const action = {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.OverrideRawAttributeAction+Data, Gameplay.Beyond',
+      targetSettings: targetFixture('Context', undefined, 'targets'),
+      attributeOverrides: [
+        { attributeType: 'PhysicalResistance', overrideValue: scalarFixture(20) },
+        {
+          attributeType: 'PhysicalResistance',
+          overrideValue: { useBlackboardKey: true, value: 0, blackboardKey: 'resist' },
+        },
+      ],
+    };
+    const parsed = parseKnownNativeActionSequenceSource(sequence([action]), 'override', {});
+    expect(
+      projectSequence(parsed, {
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      }),
+    ).toMatchObject({
+      steps: [
+        {
+          kind: 'overrideRawAttributes',
+          parameters: {
+            targets: { kind: 'context', key: 'targets' },
+            attributes: [
+              { attribute: 'PhysicalResistance', value: { kind: 'constant', value: 20 } },
+              { attribute: 'PhysicalResistance', value: { kind: 'blackboard', key: 'resist' } },
+            ],
+          },
+        },
+      ],
+    });
+  });
   it('完整保留 StoreEntityProperty 的目标、属性和写回公式', () => {
     expect(
       parseKnownNativeActionLeafSource(
@@ -628,7 +667,7 @@ describe('公共 Action 叶子分派', () => {
       steps: [
         {
           kind: 'storeShieldValue',
-          parameters: { target: 'actionOwner', value: 'gained', outputKey: 'heal' },
+          parameters: { target: { kind: 'owner' }, value: 'gained', outputKey: 'heal' },
         },
       ],
     });
@@ -1497,7 +1536,7 @@ describe('公共 Action 叶子分派', () => {
     });
   });
 
-  it('只把固定施法者、静态木桩目标和可解析技能 ID 投影为原生延迟施法槽', () => {
+  it('延迟施法保留来源、输入目标、主目标和命名集合的不同查询语义', () => {
     const makeCast = (overrides: Record<string, unknown> = {}) => ({
       ...META,
       $type: 'Example.CastSkill+Data, Example',
@@ -1524,8 +1563,9 @@ describe('公共 Action 叶子分派', () => {
         {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'source' },
             skillId: 'fixture_child',
-            target: 'enemy',
+            target: { kind: 'context', key: 'tar' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
           },
@@ -1537,8 +1577,9 @@ describe('公共 Action 叶子分派', () => {
         {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'source' },
             skillId: 'fixture_child',
-            target: 'enemy',
+            target: { kind: 'context', key: 'tar' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
@@ -1557,8 +1598,9 @@ describe('公共 Action 叶子分派', () => {
         {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'source' },
             skillId: { blackboardKey: 'child_skill' },
-            target: 'enemy',
+            target: { kind: 'context', key: 'tar' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
           },
@@ -1570,8 +1612,9 @@ describe('公共 Action 叶子分派', () => {
         {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'source' },
             skillId: 'fixture_child',
-            target: 'enemy',
+            target: { kind: 'inputTarget' },
             skipApplyCost: true,
             inheritSourceSkillCastInfo: true,
           },
@@ -1592,8 +1635,9 @@ describe('公共 Action 叶子分派', () => {
         {
           kind: 'castSkillDuringAction',
           parameters: {
+            caster: { kind: 'source' },
             skillId: 'fixture_child',
-            target: 'enemy',
+            target: { kind: 'battleMainTarget' },
             skipApplyCost: false,
             inheritSourceSkillCastInfo: false,
           },
@@ -1656,7 +1700,8 @@ describe('公共 Action 叶子分派', () => {
           kind: 'openComboWindow',
           parameters: {
             nextSkillKeyFromSlot: 'comboSkill',
-            ownerContextKey: 'seraph',
+            owner: { kind: 'context', key: 'seraph' },
+            target: { kind: 'mainTarget', owner: { kind: 'owner' } },
           },
         },
       ],
@@ -1679,14 +1724,50 @@ describe('公共 Action 叶子分派', () => {
           actionOwnerTarget: 'caster',
           actionSourceTarget: 'caster',
           actionTargetTarget: 'enemy',
-          staticEnemyTargetGroupKeys: new Set(['smart_target']),
         },
       ),
     ).toEqual({
       steps: [
         {
           kind: 'openComboWindow',
-          parameters: { nextSkillKeyFromSlot: 'comboSkill' },
+          parameters: {
+            nextSkillKeyFromSlot: 'comboSkill',
+            owner: { kind: 'owner' },
+            target: { kind: 'context', key: 'smart_target' },
+          },
+        },
+      ],
+    });
+    expect(
+      projectSequence(
+        parseKnownNativeActionSequenceSource(
+          sequence([
+            {
+              ...action,
+              owner: targetFixture('Owner'),
+              target: targetFixture('MainTarget'),
+              needTrigger: true,
+              trigger: targetFixture('MainTarget'),
+            },
+          ]),
+          'fixture.trigger',
+          {},
+        ),
+        {
+          actionOwnerTarget: 'buffOwner',
+          actionSourceTarget: 'caster',
+          actionTargetTarget: 'actionInputTarget',
+        },
+      ),
+    ).toMatchObject({
+      steps: [
+        {
+          kind: 'openComboWindow',
+          parameters: {
+            owner: { kind: 'owner' },
+            target: { kind: 'battleMainTarget' },
+            trigger: { kind: 'battleMainTarget' },
+          },
         },
       ],
     });
@@ -1763,14 +1844,14 @@ describe('公共 Action 叶子分派', () => {
     ).toThrow('unsupported clear projectile projection');
   });
 
-  it('AnimEventReceiver 保留事件参数和完整回调，但禁用节点不进入运行时', () => {
+  it('已知禁用动作不解析不会执行的回调，启用后仍严格校验', () => {
     const action = {
       ...META,
       $type: 'Beyond.Gameplay.Core.AnimEventReceiver+Data, Gameplay.Beyond',
       isEnable: false,
       eventId: 'attack',
       blackboardKey: 'AnimEventReciver',
-      actionOnEvent: sequence([]),
+      actionOnEvent: { unsupportedDisabledPayload: true },
     };
     const parsed = parseKnownNativeActionSequenceSource(
       sequence([action]),
@@ -1782,11 +1863,10 @@ describe('公共 Action 叶子分派', () => {
       body: {
         kind: 'leaf',
         value: {
-          family: 'animationEventListener',
+          family: 'disabled',
           action: {
-            kind: 'animationEventListener',
-            eventId: 'attack',
-            eventParameterBlackboardKey: 'AnimEventReciver',
+            kind: 'disabled',
+            nativeActionType: 'AnimEventReceiver',
           },
         },
       },
@@ -1798,6 +1878,13 @@ describe('公共 Action 叶子分派', () => {
         actionTargetTarget: 'enemy',
       }),
     ).toEqual({ steps: [] });
+    expect(() =>
+      parseKnownNativeActionSequenceSource(
+        sequence([{ ...action, isEnable: true }]),
+        'enabled',
+        {},
+      ),
+    ).toThrow();
   });
 
   it('启用的 AnimEventReceiver 只允许省略纯表现回调', () => {
@@ -2168,6 +2255,32 @@ describe('公共 Action 叶子分派', () => {
         actionTargetTarget: 'enemy',
       }),
     ).toThrow('unsupported BoneAttach target projection');
+    expect(isPresentationOnlyActionSequence(parsed)).toBe(true);
+    const enhanced = {
+      ...parsed,
+      actions: parsed.actions.map(node => {
+        if (
+          node.body.kind !== 'leaf' ||
+          node.body.value.family !== 'spatial' ||
+          node.body.value.action.kind !== 'boneAttach'
+        )
+          throw new Error('expected BoneAttach');
+        return {
+          ...node,
+          body: {
+            ...node.body,
+            value: {
+              ...node.body.value,
+              action: {
+                ...node.body.value.action,
+                enhancedAnchor: node.body.value.action.target,
+              },
+            },
+          },
+        };
+      }),
+    };
+    expect(isPresentationOnlyActionSequence(enhanced)).toBe(false);
   });
 
   it('DisableRootMotionAction 只接受无额外载荷的原生形状', () => {
@@ -2733,6 +2846,212 @@ describe('公共 Action 叶子分派', () => {
     });
   });
 
+  it('下一存活槽位查询保留单个原生动作及动态起点', () => {
+    const action = {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.GetNextAliveBySquadSlot+Data, Gameplay.Beyond',
+      slotIndex: { useBlackboardKey: true, blackboardKey: 'slot', value: 0 },
+      targetGroupKey: 'next',
+    };
+    const source = parseKnownNativeActionSequenceSource(
+      {
+        actionData: [action],
+        onlyExecuteWhenSourceIsMainChar: false,
+        onlyExecuteWhenSourceIsGuard: false,
+      },
+      'fixture',
+      {},
+    );
+    expect(
+      projectSequence(source, {
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      }).steps,
+    ).toEqual([
+      {
+        kind: 'findNextAliveCharacterBySquadSlot',
+        parameters: { slotIndex: { kind: 'blackboard', key: 'slot' }, saveToContextKey: 'next' },
+      },
+    ]);
+  });
+
+  it.each([
+    ['SaveCharTypeIdToInt', 'storeCharacterTypeCode'],
+    ['SaveProfession', 'storeProfession'],
+    ['SaveSquadSlot', 'storeSquadSlot'],
+  ])('%s保持单个动作并接入通用目标查询', (native, kind) => {
+    const action = {
+      ...META,
+      $type: `Beyond.Gameplay.Core.${native}+Data, Gameplay.Beyond`,
+      target: targetFixture('Context', undefined, 'members'),
+      storeKey: 'element_code',
+    };
+    const source = parseKnownNativeActionSequenceSource(
+      {
+        actionData: [action],
+        onlyExecuteWhenSourceIsMainChar: false,
+        onlyExecuteWhenSourceIsGuard: false,
+      },
+      'fixture',
+      {},
+    );
+    expect(
+      projectSequence(source, {
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      }).steps,
+    ).toEqual([
+      {
+        kind,
+        parameters: { target: { kind: 'context', key: 'members' }, outputKey: 'element_code' },
+      },
+    ]);
+    expect(() =>
+      parseKnownNativeActionLeafSource({ ...action, defaultValue: 0 }, 'fixture', {}),
+    ).toThrow();
+  });
+
+  it('队伍提示仅保留文本身份并作为表现裁剪，未知战斗字段仍拒绝', () => {
+    const action = {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.ShowSquadTipsAction+Data, Gameplay.Beyond',
+      textId: 'ui_bat_cc_mute_switch_player_info',
+    };
+    expect(parseKnownNativeActionLeafSource(action, 'fixture.squadTips', {})).toEqual({
+      family: 'presentation',
+      action: { kind: 'showSquadTips', textId: action.textId },
+    });
+    expect(() =>
+      parseKnownNativeActionLeafSource({ ...action, disableSwitch: true }, 'fixture.squadTips', {}),
+    ).toThrow();
+  });
+
+  it('奖励连携标志只在确认目标存在后裁剪，不能掩盖原生查询失败或附加战斗字段', () => {
+    const action = {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.SetRewardComboStateAction+Data, Gameplay.Beyond',
+      target: targetFixture('Owner'),
+      isInRewardComboState: true,
+      finishByAction: true,
+    };
+    expect(parseKnownNativeActionLeafSource(action, 'reward', {})).toMatchObject({
+      family: 'presentation',
+      action: {
+        kind: 'rewardComboState',
+        target: { targetSource: 'Owner' },
+        enabled: true,
+        finishByAction: true,
+      },
+    });
+    const native = simplifyNativeSequences(
+      parseKnownNativeActionSequenceSource(sequence([action]), 'reward', {}),
+    );
+    expect(
+      projectSequence(native, {
+        actionOwnerTarget: 'buffOwner',
+        actionSourceTarget: 'caster',
+        fixedBuffOwnerTarget: 'caster',
+        actionTargetTarget: 'actionInputTarget',
+      }),
+    ).toEqual({ steps: [] });
+    expect(() =>
+      projectSequence(native, {
+        actionOwnerTarget: 'unavailable',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'actionInputTarget',
+      }),
+    ).toThrow('requires a proven present AbilitySystem target');
+    expect(() =>
+      projectSequence(native, {
+        actionOwnerTarget: 'currentAbilityEntity',
+        actionTargetTarget: 'actionInputTarget',
+        fixedBuffOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+      }),
+    ).toThrow('requires a proven present AbilitySystem target');
+    expect(() =>
+      parseKnownNativeActionLeafSource({ ...action, resetCooldown: true }, 'reward', {}),
+    ).toThrow();
+    expect(() =>
+      parseKnownNativeActionLeafSource({ ...action, finishByAction: 1 }, 'reward', {}),
+    ).toThrow();
+    expect(() =>
+      projectSequence(
+        simplifyNativeSequences(
+          parseKnownNativeActionSequenceSource(
+            sequence([{ ...action, target: targetFixture('Context', undefined, 'maybe-empty') }]),
+            'reward.context',
+            {},
+          ),
+        ),
+        {
+          actionOwnerTarget: 'caster',
+          actionSourceTarget: 'caster',
+          actionTargetTarget: 'actionInputTarget',
+        },
+      ),
+    ).toThrow('requires a proven present AbilitySystem target');
+  });
+
+  it('头顶血条刷新仅接受原生元数据并归入表现', () => {
+    const action = {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.RefreshHeadBarShowHideAction+Data, Gameplay.Beyond',
+    };
+    expect(parseKnownNativeActionLeafSource(action, 'fixture.refreshHeadBar', {})).toEqual({
+      family: 'presentation',
+      action: { kind: 'refreshHeadBarShowHide' },
+    });
+    expect(() =>
+      parseKnownNativeActionLeafSource({ ...action, health: 1 }, 'fixture.refreshHeadBar', {}),
+    ).toThrow();
+  });
+
+  it('计数盾抖动仅投影表现，拒绝未知字段', () => {
+    const action = {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.ShakeCountShieldUIAction+Data, Gameplay.Beyond',
+      targetSetting: targetFixture('Owner'),
+    };
+    expect(parseKnownNativeActionLeafSource(action, 'fixture.shakeCountShield', {})).toMatchObject({
+      family: 'presentation',
+      action: { kind: 'shakeCountShieldUi', target: { targetSource: 'Owner' } },
+    });
+    expect(() =>
+      parseKnownNativeActionLeafSource({ ...action, damage: 1 }, 'fixture.shakeCountShield', {}),
+    ).toThrow();
+  });
+
+  it('计数盾 UI 动作保留目标与显示计数，不作为实际护盾动作', () => {
+    const action = {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.CountShieldUIAction+Data, Gameplay.Beyond',
+      targetSetting: targetFixture('Owner'),
+      removeCountShieldUI: false,
+      maxCountShield: scalarFixture(3),
+      curCountShield: scalarFixture(1, 'shield_num'),
+    };
+    expect(parseKnownNativeActionLeafSource(action, 'fixture.countShield', {})).toMatchObject({
+      family: 'presentation',
+      action: {
+        kind: 'countShieldUi',
+        target: { targetSource: 'Owner' },
+        remove: false,
+        maximum: { value: 3 },
+        current: { blackboardKey: 'shield_num' },
+      },
+    });
+    expect(() =>
+      parseKnownNativeActionLeafSource(
+        { ...action, unknownGameplayField: true },
+        'fixture.countShield',
+        {},
+      ),
+    ).toThrow();
+  });
+
   it('严格保留 PlaySoundAction 的表现身份和音频时序字段', () => {
     expect(
       parseKnownNativeActionLeafSource(
@@ -3009,6 +3328,34 @@ describe('新版施法身份与移动轴动作', () => {
     expect(parsed.family).toBe('typhoeaArcherySelection');
     if (parsed.family !== 'typhoeaArcherySelection') throw new Error('unexpected family');
     expect(parsed.action.markBuffId).toBe('buff_chr_0034_typhoea_normal_skill_aimmedenemy');
+    expect(
+      collectSkillActionReferences({
+        skillId: 'archery',
+        level: 1,
+        durationFrame: 1,
+        declaredBlackboard: [],
+        actionGroup: {
+          timelineActions: [],
+          passiveEvents: [
+            {
+              abilityEvent: 'fixture',
+              actions: [
+                parseNativeSequenceSource(sequence([source]), 'archery', {}, (leaf, path) =>
+                  parseReferenceAwareActionLeafSource(leaf, path, {}),
+                ),
+              ],
+            },
+          ],
+        },
+      }),
+    ).toEqual([
+      expect.objectContaining({
+        kind: 'buff',
+        usage: 'apply',
+        state: 'active',
+        id: parsed.action.markBuffId,
+      }),
+    ]);
     expect(parsed.action.targetCount.value).toBe(2);
     expect(parsed.action.smartPrioritySelection.tagQuery.tagIds).toEqual([-1411846745]);
     expect(() =>
@@ -3081,5 +3428,33 @@ describe('新版施法身份与移动轴动作', () => {
     expect(() =>
       parseKnownNativeActionLeafSource({ ...source, guessed: false }, 'fixture.inheritCast', {}),
     ).toThrow('unexpected fields');
+  });
+});
+
+it('自定义霸体下拉框仍读取静态整数值', () => {
+  const result = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.SetSuperArmorAction+Data, Gameplay.Beyond',
+      targetSettings: targetFixture('Owner'),
+      superArmorValue: {
+        useBlackboardKey: false,
+        value: 20,
+        blackboardKey: '',
+        useCustomValue: true,
+      },
+      impactResistance: {
+        useBlackboardKey: false,
+        value: 100,
+        blackboardKey: '',
+        useCustomValue: false,
+      },
+    },
+    'fixture.customSuperArmor',
+    {},
+  );
+  expect(result).toMatchObject({
+    family: 'selfDefense',
+    action: { superArmorValue: 20, impactResistance: 100 },
   });
 });

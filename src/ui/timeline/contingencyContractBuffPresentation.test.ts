@@ -1,3 +1,7 @@
+import {
+  contingencyContractBuffDefinitions,
+  contingencyContractTagDefinitions,
+} from '../../data/contingencyContract/generated/contingencyContract.indie_contract002.generated';
 import { describe, expect, it } from 'vitest';
 import {
   localizedContingencyContractTagName,
@@ -49,5 +53,17 @@ describe('contingency contract Buff presentation', () => {
         selections,
       ),
     ).toBeUndefined();
+  });
+  it.each([
+    ['buff_cc_chr_combo_lock_instance', 113502],
+    ['buff_cc_chr_disable_normal_skill', 110302],
+  ] as const)('锁定 Buff %s 使用对应正式指标图标', (buffId, tagId) => {
+    const tag = contingencyContractTagDefinitions.find(tag => tag.tagId === tagId);
+    expect(tag).toBeDefined();
+    expect(contingencyContractBuffDefinitions[buffId]?.presentation).toMatchObject({
+      visible: true,
+      showInSquadIcon: true,
+      icon: tag!.icon,
+    });
   });
 });

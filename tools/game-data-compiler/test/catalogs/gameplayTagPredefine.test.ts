@@ -42,7 +42,7 @@ describe('GameplayTagPredefine 公共转换', () => {
     );
     await fs.writeFile(output, 'keep previous output');
     await expect(
-      generateGameplayTagPredefine(input, output, 'fixture', fixtureGameplayTagCatalog),
+      generateGameplayTagPredefine(input, output, fixtureGameplayTagCatalog),
     ).rejects.toThrow('无法解析 GameplayTag ID 123');
     expect(await fs.readFile(output, 'utf8')).toBe('keep previous output');
   });
@@ -155,19 +155,14 @@ describe('GameplayTagPredefine 公共转换', () => {
     expect(new GameplayTagPredefine(definition).canAddTag(target, statusPath)).toBe(false);
   });
 
-  it('文件生成只替换目标，--check 不写入且保留来源 SHA', async () => {
+  it('文件生成只替换目标，来源 SHA 仅保留在报告中', async () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'endaxis-tag-predefine-'));
     directories.push(directory);
     const input = path.join(directory, 'source.json');
     const output = path.join(directory, 'generated.ts');
     await fs.writeFile(input, JSON.stringify(sourceTable()));
     await fs.writeFile(path.join(directory, 'other.json'), 'keep');
-    const result = await generateGameplayTagPredefine(
-      input,
-      output,
-      'fixture',
-      fixtureGameplayTagCatalog,
-    );
+    const result = await generateGameplayTagPredefine(input, output, fixtureGameplayTagCatalog);
     expect(result).toMatchObject({
       tags: 1,
       queries: 1,
@@ -175,13 +170,18 @@ describe('GameplayTagPredefine 公共转换', () => {
       sourceSha256: expect.stringMatching(/^[0-9a-f]{64}$/),
     });
     await expect(
-      generateGameplayTagPredefine(input, output, 'fixture', fixtureGameplayTagCatalog, true),
+      generateGameplayTagPredefine(input, output, fixtureGameplayTagCatalog, true),
     ).resolves.toEqual(result);
     const original = await fs.readFile(output, 'utf8');
+    expect(original).not.toMatch(/sourceSha256|revision/);
     await expect(
-      generateGameplayTagPredefine(input, output, 'changed', fixtureGameplayTagCatalog, true),
-    ).rejects.toThrow('stale');
+      generateGameplayTagPredefine(input, output, fixtureGameplayTagCatalog, true),
+    ).resolves.toEqual(result);
     expect(await fs.readFile(output, 'utf8')).toBe(original);
+    await fs.writeFile(output, original + '// stale\n');
+    await expect(
+      generateGameplayTagPredefine(input, output, fixtureGameplayTagCatalog, true),
+    ).rejects.toThrow('stale');
     expect(await fs.readFile(path.join(directory, 'other.json'), 'utf8')).toBe('keep');
   });
 
@@ -193,8 +193,8 @@ describe('GameplayTagPredefine 公共转换', () => {
     const deep = path.join(directory, 'a/b/c/deep.ts');
     await fs.mkdir(path.dirname(deep), { recursive: true });
     await fs.writeFile(input, JSON.stringify(sourceTable()));
-    await generateGameplayTagPredefine(input, shallow, 'fixture', fixtureGameplayTagCatalog);
-    await generateGameplayTagPredefine(input, deep, 'fixture', fixtureGameplayTagCatalog);
+    await generateGameplayTagPredefine(input, shallow, fixtureGameplayTagCatalog);
+    await generateGameplayTagPredefine(input, deep, fixtureGameplayTagCatalog);
     expect(await fs.readFile(deep, 'utf8')).toBe(await fs.readFile(shallow, 'utf8'));
   });
 });

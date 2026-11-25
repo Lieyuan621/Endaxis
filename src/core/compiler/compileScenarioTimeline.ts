@@ -5,7 +5,7 @@ import type {
 } from '../game-data/operatorDefinition';
 import type {
   ActionGraphDefinitionRepository,
-  ImportedAbilityEntityDefinitions,
+  ActionGraphImports,
 } from './actionGraphDefinitionRepository';
 import type { CompileUpgradeEntry } from './compileOperatorUpgrades';
 /**
@@ -42,7 +42,6 @@ import {
   applyOperatorUpgradeSkillPatches,
   compileOperatorInitializationPrograms,
   compileOperatorPassivePrograms,
-  compileOperatorReactionModifiers,
   compileOperatorUpgradeEventPrograms,
   resolveActiveOperatorUpgrades,
 } from './compileOperatorUpgrades';
@@ -56,23 +55,20 @@ import {
 } from './resolveSkillDefinition';
 
 function createOperatorSkillCompiler(
-  abilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
+  definitions: Pick<OperatorDefinition, 'abilityEntityDefinitions'>,
   programs: ActionGraphDefinitionRepository,
-  importsForLevel?: (level: number) => ImportedAbilityEntityDefinitions,
-  localEntitiesForLevelOverride?: (level: number) => ImportedAbilityEntityDefinitions,
+  importsForLevel?: (level: number) => ActionGraphImports,
+  localEntitiesForLevelOverride?: (level: number) => ActionGraphImports,
 ) {
   const localEntitiesForLevel =
     localEntitiesForLevelOverride ??
     createIndependentAbilityEntityImportResolver(
-      abilityEntityDefinitions,
+      definitions.abilityEntityDefinitions,
       programs,
       importsForLevel,
     );
-  const resolveSkillImports = (level: number): ImportedAbilityEntityDefinitions => {
-    return programs.mergeAbilityEntityImports(
-      importsForLevel?.(level),
-      localEntitiesForLevel(level),
-    );
+  const resolveSkillImports = (level: number): ActionGraphImports => {
+    return programs.mergeResourceImports(importsForLevel?.(level), localEntitiesForLevel(level));
   };
   return (input: {
     operatorId: string;
@@ -84,9 +80,7 @@ function createOperatorSkillCompiler(
     compileSkill({
       ...input,
       programs,
-      importedAbilityEntityDefinitions: programs.requiresAbilityEntityImports(
-        input.skill.actionGraph,
-      )
+      resourceImports: programs.requiresResourceImports(input.skill.actionGraph)
         ? resolveSkillImports(input.skillLevel)
         : importsForLevel?.(input.skillLevel),
     });
@@ -213,11 +207,11 @@ function compileCastBindings(
   abilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
   buildAttributes: Readonly<Record<OperatorAttribute, number>> | undefined,
   programs: ActionGraphDefinitionRepository,
-  importsForLevel?: (level: number) => ImportedAbilityEntityDefinitions,
-  localEntitiesForLevel?: (level: number) => ImportedAbilityEntityDefinitions,
+  importsForLevel?: (level: number) => ActionGraphImports,
+  localEntitiesForLevel?: (level: number) => ActionGraphImports,
 ): readonly CombatSkillCastProgram[] {
   const compileDefinition = createOperatorSkillCompiler(
-    abilityEntityDefinitions,
+    { abilityEntityDefinitions },
     programs,
     importsForLevel,
     localEntitiesForLevel,
@@ -256,8 +250,7 @@ export function compileOperatorSkillCastPrograms(
   commonAbilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
   buildAttributes: Readonly<Record<OperatorAttribute, number>> | undefined,
   programs: ActionGraphDefinitionRepository,
-  imports?:
-    ImportedAbilityEntityDefinitions | ((level: number) => ImportedAbilityEntityDefinitions),
+  imports?: ActionGraphImports | ((level: number) => ActionGraphImports),
 ): readonly CombatSkillCastProgram[] {
   rejectDuplicateEntities(operator, commonAbilityEntityDefinitions);
   return compileCastBindings(
@@ -324,12 +317,11 @@ export function compileOperatorDefinitionSkills(
   commonAbilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
   buildAttributes: Readonly<Record<OperatorAttribute, number>> | undefined,
   programs: ActionGraphDefinitionRepository,
-  imports?:
-    ImportedAbilityEntityDefinitions | ((level: number) => ImportedAbilityEntityDefinitions),
+  imports?: ActionGraphImports | ((level: number) => ActionGraphImports),
 ): readonly CompiledSkillProgram[] {
   rejectDuplicateEntities(operator, commonAbilityEntityDefinitions);
   const compile = createOperatorSkillCompiler(
-    operator.abilityEntityDefinitions,
+    operator,
     programs,
     typeof imports === 'function' ? imports : imports === undefined ? undefined : () => imports,
   );
@@ -360,7 +352,7 @@ export interface GraphScenarioContext {
   readonly programs: ActionGraphDefinitionRepository;
   readonly commonDefinitionSources: readonly CommonDefinitionSource[];
   readonly compiledCommonDefinitions?: ReturnType<typeof compileCommonDefinitionSources>;
-  readonly importsForLevel?: (level: number) => ImportedAbilityEntityDefinitions;
+  readonly importsForLevel?: (level: number) => ActionGraphImports;
 }
 
 function compileResolvedTimelineTracks(
@@ -384,7 +376,7 @@ function compileResolvedTimelineTracks(
       importsForLevel,
     );
     const imports = (level: number) =>
-      context.programs.mergeAbilityEntityImports(importsForLevel(level), localEntities(level));
+      context.programs.mergeResourceImports(importsForLevel(level), localEntities(level));
     const skillCasts = compileCastBindings(
       track.id,
       track.skillCasts,
@@ -442,7 +434,10 @@ function compileResolvedTimelineTracks(
       operatorId: track.id,
       operatorRole: operator.role,
       buffDefinitions: { ...common.buffDefinitions, ...ownedBuffs },
-      abilityEntityDefinitions: { ...common.abilityEntityDefinitions, ...localEntities(0) },
+      abilityEntityDefinitions: {
+        ...common.abilityEntityDefinitions,
+        ...localEntities(0).abilityEntities,
+      },
       ...(operator.comboSkillConditions === undefined
         ? {}
         : {
@@ -481,7 +476,6 @@ function compileResolvedTimelineTracks(
         compileUpgrade,
       ),
       upgradeEventPrograms: compileOperatorUpgradeEventPrograms(active, compileUpgrade),
-      reactionModifiers: compileOperatorReactionModifiers(active),
       skills: [],
       ...(skillCasts.length ? { skillCasts } : {}),
     });

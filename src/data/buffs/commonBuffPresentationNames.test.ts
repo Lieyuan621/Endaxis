@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import zhCN from '../../i18n/locales/zh-CN.json';
-import en from '../../i18n/locales/en.json';
+import zhCN from '../../i18n/locales/zh-CN/common.json';
+import en from '../../i18n/locales/en/common.json';
 import { commonBuffDefinitions } from './commonDefinitions';
 import { elementalAttachments } from './elementalAttachments';
 

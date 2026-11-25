@@ -23,7 +23,163 @@ function runtime() {
 }
 
 describe('TimeDilationOperationExecutor', () => {
-  it('Context 顿帧读取实际干员或实体，不替换成定义宿主', () => {
+  it.each([true, false])('忽略位按执行时目标设置，结束写反值而非恢复历史值：ignore=%s', ignore => {
+    const timeDilation = runtime();
+    timeDilation.startGlobal({
+      durationSeconds: 10,
+      slot: 'Test/Global',
+      priority: PRIORITY,
+      constantScale: 0.5,
+    });
+    const targetContext = new RuntimeTargetContext();
+    targetContext.set('selected', [
+      { kind: 'enemy', enemyId: 'enemy:second' },
+      { kind: 'operator', operatorId: 'other' },
+      { kind: 'spatialPoint', pointId: 5 },
+    ]);
+    for (const id of ['enemy:second', 'other']) timeDilation.setIgnoreGlobalTimeScale(id, ignore);
+    const executor = new TimeDilationOperationExecutor({
+      runtime: timeDilation,
+      delegate,
+      sourceId: 'owner',
+      sourceActionId: 'skill',
+      resolveTargetIds: () => {
+        throw new Error('must retain query identities');
+      },
+      queryTargets: (query, context) => resolveDirectActionTargets(query, context)!,
+    });
+    const step: ResolvedCombatStepForKind<'setIgnoreGlobalTimeScale'> = {
+      kind: 'setIgnoreGlobalTimeScale',
+      parameters: { targets: { kind: 'context', key: 'selected' }, ignore, revertOnEnd: true },
+    };
+    const context = { blackboard: new ActionBlackboard(), targetContext };
+    executor.execute(step, context);
+    for (const id of ['enemy:second', 'other'])
+      expect(timeDilation.getOperatorScale(id)).toBe(ignore ? 1 : 0.5);
+    targetContext.set('selected', [{ kind: 'enemy', enemyId: 'enemy' }]);
+    executor.end(step, context);
+    for (const id of ['enemy:second', 'other'])
+      expect(timeDilation.getOperatorScale(id)).toBe(ignore ? 0.5 : 1);
+    expect(timeDilation.getOperatorScale('enemy')).toBe(0.5);
+    expect(timeDilation.currentGlobalScale).toBe(0.5);
+  });
+  it.each([false, true])(
+    '全局忽略查询保留实际实体，跳过位置并随动作结束清理：ultimate=%s',
+    ultimate => {
+      const timeDilation = runtime();
+      const targetContext = new RuntimeTargetContext();
+      targetContext.set('ignored', [
+        { kind: 'enemy', enemyId: 'enemy:second' },
+        { kind: 'abilityEntity', instanceId: 9 },
+        { kind: 'spatialPoint', pointId: 5 },
+      ]);
+      const executor = new TimeDilationOperationExecutor({
+        runtime: timeDilation,
+        delegate,
+        sourceId: 'operator',
+        sourceActionId: 'skill',
+        resolveTargetIds: () => ['operator'],
+        queryTargets: (query, context) => resolveDirectActionTargets(query, context)!,
+      });
+      const ignoredTargets = [{ kind: 'context' as const, key: 'ignored' }];
+      const step:
+        | ResolvedCombatStepForKind<'startTimeDilation'>
+        | ResolvedCombatStepForKind<'startUltimateTimeDilation'> = ultimate
+        ? {
+            kind: 'startUltimateTimeDilation',
+            parameters: {
+              priority: PRIORITY,
+              targetScale: { kind: 'constant', value: 0.5 },
+              ignoredTargets,
+            },
+          }
+        : {
+            kind: 'startTimeDilation',
+            parameters: {
+              scope: 'global',
+              durationSeconds: { kind: 'constant', value: 1 },
+              slot: 'Test/TimeSlot1',
+              priority: PRIORITY,
+              curve: { kind: 'named', key: 'constant-half' },
+              finishByAction: true,
+              ignoredTargets,
+            },
+          };
+      const context = {
+        blackboard: new ActionBlackboard(),
+        targetContext,
+        actionSourceId: 'actual-source',
+      };
+      executor.execute(step, context);
+      targetContext.set('ignored', []);
+      expect(timeDilation.getOperatorScale('enemy:second')).toBe(1);
+      expect(timeDilation.getOperatorScale('ability-entity:9')).toBe(1);
+      expect(timeDilation.getOperatorScale('enemy')).toBe(0.5);
+      expect(timeDilation.getOperatorScale('operator')).toBe(0.5);
+      expect(timeDilation.getOperatorScale('actual-source')).toBe(ultimate ? 1 : 0.5);
+      executor.end(step, context);
+      expect(timeDilation.currentGlobalScale).toBe(1);
+    },
+  );
+  it.each(['OnlyAttacker', 'OnlyTarget', 'Both'] as const)(
+    '命中停顿 %s 保留首攻击者与全部受击目标',
+    affectType => {
+      const timeDilation = runtime();
+      let targetQueries = 0;
+      let attackerPresent = false;
+      const executor = new TimeDilationOperationExecutor({
+        runtime: timeDilation,
+        delegate,
+        sourceId: 'owner',
+        sourceActionId: 'skill',
+        resolveTargetIds: () => {
+          throw new Error('must use actual targets');
+        },
+        queryTargets: query => {
+          if (query.kind === 'source')
+            return attackerPresent
+              ? [
+                  { kind: 'spatialPoint', pointId: 1 },
+                  { kind: 'operator', operatorId: 'first' },
+                  { kind: 'operator', operatorId: 'second' },
+                ]
+              : [];
+          expect(query).toEqual({ kind: 'partBuffSource', targets: { kind: 'inputTarget' } });
+          targetQueries++;
+          return [
+            { kind: 'enemy', enemyId: 'enemy:second' },
+            { kind: 'enemy', enemyId: 'enemy:third' },
+            { kind: 'spatialPoint', pointId: 5 },
+          ];
+        },
+      });
+      const step: ResolvedCombatStepForKind<'startTimeDilation'> = {
+        kind: 'startTimeDilation',
+        parameters: {
+          scope: 'hitStop',
+          attacker: { kind: 'source' },
+          targets: { kind: 'inputTarget' },
+          affectType,
+          durationSeconds: { kind: 'constant', value: 1 },
+          priority: PRIORITY,
+          curve: { kind: 'named', key: 'constant-half' },
+        },
+      };
+      const context = { blackboard: new ActionBlackboard() };
+      expect(executor.execute(step, context)).toBe(true);
+      expect(targetQueries).toBe(0);
+      attackerPresent = true;
+      expect(executor.execute(step, context)).toBe(true);
+      expect(targetQueries).toBe(1);
+      executor.end(step, context);
+      expect(timeDilation.getOperatorScale('first')).toBe(affectType === 'OnlyTarget' ? 1 : 0.5);
+      expect(timeDilation.getOperatorScale('second')).toBe(1);
+      expect(timeDilation.getOperatorScale('enemy')).toBe(1);
+      for (const id of ['enemy:second', 'enemy:third'])
+        expect(timeDilation.getOperatorScale(id)).toBe(affectType === 'OnlyAttacker' ? 1 : 0.5);
+    },
+  );
+  it('Context 顿帧遍历所有实体并跳过空间点，不替换成定义宿主', () => {
     const timeDilation = runtime();
     const executor = new TimeDilationOperationExecutor({
       runtime: timeDilation,
@@ -35,8 +191,10 @@ describe('TimeDilationOperationExecutor', () => {
     });
     const targetContext = new RuntimeTargetContext();
     targetContext.set('attacker', [
+      { kind: 'spatialPoint', pointId: 4 },
       { kind: 'operator', operatorId: 'actual-attacker' },
       { kind: 'abilityEntity', instanceId: 9 },
+      { kind: 'enemy', enemyId: 'enemy:second' },
     ]);
     executor.execute(
       {
@@ -54,7 +212,9 @@ describe('TimeDilationOperationExecutor', () => {
       { blackboard: new ActionBlackboard(), targetContext },
     );
     expect(timeDilation.getOperatorScale('actual-attacker')).toBe(0.5);
-    expect(timeDilation.getOperatorScale('ability-entity:9')).toBe(1);
+    expect(timeDilation.getOperatorScale('ability-entity:9')).toBe(0.5);
+    expect(timeDilation.getOperatorScale('enemy:second')).toBe(0.5);
+    expect(timeDilation.getOperatorScale('enemy')).toBe(1);
     expect(timeDilation.getOperatorScale('definition-owner')).toBe(1);
   });
   it('实体自身顿帧作用于动作宿主，不依赖当前循环目标或技能输入目标', () => {

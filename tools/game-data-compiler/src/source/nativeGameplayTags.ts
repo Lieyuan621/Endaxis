@@ -31,6 +31,13 @@ export function gameplayTagIdFromPath(path: string): GameplayTagId {
   return gameplayTagId((crc ^ 0xffffffff) | 0);
 }
 
+// 1.6.4 的标签表记录了这两个路径。1.7.2 的提弗洛斯浮空攻击和终结技 Buff
+// 仍按原 CRC 写入和查询伤害标签，但新版 GameplayTagConfigSet 已移除这两项。
+const REFERENCED_DAMAGE_TAG_PATHS = [
+  'Damage/TyphoeaSkill/FloatingHit_Weak',
+  'Damage/TyphoeaSkill/FloatingHit_Heavy',
+] as const;
+
 /** 标签路径层级。非精确查询依赖它展开父路径；只持有裸 ID 时只能精确匹配。 */
 export class GameplayTagRegistry {
   readonly #paths = new Map<GameplayTagId, string>();
@@ -52,6 +59,7 @@ export class GameplayTagRegistry {
 
   constructor(paths: readonly string[]) {
     for (const path of paths) this.register(path);
+    for (const path of REFERENCED_DAMAGE_TAG_PATHS) this.register(path);
   }
 
   matches(owned: GameplayTagId, required: GameplayTagId, exact = false): boolean {

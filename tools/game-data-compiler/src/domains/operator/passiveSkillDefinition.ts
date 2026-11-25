@@ -3,7 +3,6 @@ import type {
   OperatorPassiveSkillDefinition,
   OperatorEntityBlackboardInitializerDefinition,
   SkillLevelSource,
-  UpgradeModifierDefinition,
 } from '../../compiler/intermediateDefinitions.ts';
 import type { CompiledPassiveSkillDefinitionSource } from '../../compiler/skills/passiveSkillBatch.ts';
 import type { PassiveSkillCompileRequestSource } from '../../compiler/skills/passiveSkillRequest.ts';
@@ -14,6 +13,8 @@ import {
 import { isPresentationOnlyActionSequence } from '../../compiler/skills/skillPresentationTargets.ts';
 import { compileCombatActionSequenceSource } from '../../compiler/buffs/buffRuntimeProjection.ts';
 import { collectNativeActionNodes } from '../../source/controlFlow.ts';
+import { collectMaterializedSequenceTargetGroups } from '../../compiler/optimization/nativeTargetUsage.ts';
+import { collectRandomPointTargetGroupKeys } from '../../compiler/optimization/targetGroupCardinalityAnalysis.ts';
 import { projectAbilityEvent } from '../../compiler/abilities/abilityEventProjection.ts';
 import { isOperatorPassiveAbilityEvent } from '../../../../../src/core/game-data/definitionGuards.ts';
 import type {
@@ -26,14 +27,10 @@ import {
 } from '../../compiler/actions/actionGraphBuilder.ts';
 import { collectCompiledBuffIds } from '../../compiler/references/compiledReferences.ts';
 import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
-import type { CombatActionProjectionContextSource } from '../../compiler/combatProjectionCommon.ts';
-import {
-  nativeActionName,
-  requireArray,
-  requireNonEmptyString,
-  requireNumber,
-  requireRecord,
-} from '../../source/primitives.ts';
+import type {
+  CombatActionProjectionContextSource,
+  CombatActionProjectionExtensionsSource,
+} from '../../compiler/combatProjectionCommon.ts';
 
 interface PlannedPassiveSkill {
   readonly graph: ActionGraphBuilder<CompiledBuffStepSource>;
@@ -49,17 +46,10 @@ interface PlannedPassiveSkill {
   }[];
   /** 构筑加载后只需执行一次的原生被动响应；战斗中构筑快照不再变化。 */
   readonly initializationSequences: readonly CompiledBuffSequenceSource[];
-  readonly reactionProjection?: CollectedBuffReactionProjection;
 }
 
 export interface CompiledOperatorUpgradePassiveSkillsSource {
   readonly definitions: readonly OperatorPassiveSkillDefinition[];
-  readonly modifiers: readonly UpgradeModifierDefinition[];
-  readonly semanticPassiveKeys: readonly string[];
-  readonly reactionPassiveInputs: ReadonlyMap<
-    string,
-    { readonly durationKey: string; readonly effectivenessKey: string }
-  >;
   readonly buffIds: readonly string[];
   readonly handledSourcePaths: readonly string[];
   readonly entityBlackboardInitializers: readonly OperatorEntityBlackboardInitializerDefinition[];
@@ -75,8 +65,8 @@ export function compileOperatorUpgradePassiveSkills(
   requests: readonly PassiveSkillCompileRequestSource[],
   definitions: readonly CompiledPassiveSkillDefinitionSource[],
   gameplayTagRegistry?: GameplayTagRegistry,
-  loadBuff?: (id: string) => unknown,
   predefinedTagQueries?: CombatActionProjectionContextSource['predefinedTagQueries'],
+  extensions?: CombatActionProjectionExtensionsSource,
 ): CompiledOperatorUpgradePassiveSkillsSource {
   const definitionById = new Map(definitions.map(item => [item.skillId, item]));
   const levelPlans = effectIds.map(effectId =>
@@ -87,8 +77,8 @@ export function compileOperatorUpgradePassiveSkills(
           request,
           definitionById,
           gameplayTagRegistry,
-          loadBuff,
           predefinedTagQueries,
+          extensions,
         ),
       ),
   );
@@ -100,7 +90,6 @@ export function compileOperatorUpgradePassiveSkills(
         Object.keys(passive.blackboard).sort(),
         passive.buffs.map(buff => [buff.buffId, Object.keys(buff.assignments).sort()]),
         passive.initializationSequences,
-        passive.reactionProjection,
         passive.abilityEventResponses,
         passive.graph.finish(),
       ]),
@@ -110,7 +99,6 @@ export function compileOperatorUpgradePassiveSkills(
     throw new Error('operator passive SkillData installation structure changes between levels');
   }
   const definitionsOutput = (levelPlans[0] ?? []).flatMap((passive, passiveIndex) => {
-    if (passive.reactionProjection !== undefined) return [];
     const blackboard: Record<string, number | readonly number[]> = {};
     const usedKeys = new Set<string>();
     for (const key of Object.keys(passive.blackboard).sort()) {
@@ -172,59 +160,8 @@ export function compileOperatorUpgradePassiveSkills(
       } satisfies OperatorPassiveSkillDefinition,
     ];
   });
-  const semanticPlans = (levelPlans[0] ?? []).flatMap((passive, passiveIndex) => {
-    const projection = passive.reactionProjection;
-    if (projection === undefined) return [];
-    const values = levelPlans.map(level => level[passiveIndex]!.blackboard);
-    return [
-      {
-        key: passive.key,
-        projection,
-        duration: mergePassiveLevelValues(
-          values.map(value =>
-            requireNumericLevelValue(
-              value[projection.durationInputKey],
-              `${passive.key}.${projection.durationInputKey}`,
-            ),
-          ),
-          `${passive.key}.${projection.durationInputKey}`,
-        ),
-        effectiveness: mergePassiveLevelValues(
-          values.map(value =>
-            requireNumericLevelValue(
-              value[projection.effectivenessInputKey],
-              `${passive.key}.${projection.effectivenessInputKey}`,
-            ),
-          ),
-          `${passive.key}.${projection.effectivenessInputKey}`,
-        ),
-      },
-    ];
-  });
   return {
     definitions: definitionsOutput,
-    modifiers: semanticPlans.flatMap(plan => [
-      {
-        kind: 'addReactionDuration' as const,
-        reaction: plan.projection.reaction,
-        seconds: plan.duration,
-      },
-      {
-        kind: 'addReactionEffectiveness' as const,
-        reaction: plan.projection.reaction,
-        value: plan.effectiveness,
-      },
-    ]),
-    semanticPassiveKeys: semanticPlans.map(plan => plan.key),
-    reactionPassiveInputs: new Map(
-      semanticPlans.map(plan => [
-        plan.key,
-        {
-          durationKey: plan.projection.durationInputKey,
-          effectivenessKey: plan.projection.effectivenessInputKey,
-        },
-      ]),
-    ),
     entityBlackboardInitializers: (levelPlans[0] ?? []).flatMap(passive =>
       passive.initializationSequences.flatMap(sequence => {
         const initializer = projectEntityBlackboardInitializer(passive.graph, sequence);
@@ -233,11 +170,7 @@ export function compileOperatorUpgradePassiveSkills(
     ),
     buffIds: [
       ...new Set([
-        ...levelPlans.flatMap(level =>
-          level.flatMap(item =>
-            item.reactionProjection === undefined ? item.buffs.map(b => b.buffId) : [],
-          ),
-        ),
+        ...levelPlans.flatMap(level => level.flatMap(item => item.buffs.map(b => b.buffId))),
         ...collectCompiledBuffIds(definitionsOutput),
       ]),
     ],
@@ -291,11 +224,6 @@ function projectEntityBlackboardInitializer(
   };
 }
 
-function requireNumericLevelValue(value: LevelValues | undefined, sourcePath: string): LevelValues {
-  if (value === undefined) throw new Error(`${sourcePath}: missing collected Buff reaction input`);
-  return value;
-}
-
 function mergePassiveLevelValues(values: readonly LevelValues[], sourcePath: string): LevelValues {
   if (values.length === 1) return values[0]!;
   if (values.some(Array.isArray)) {
@@ -308,8 +236,8 @@ function planPassiveSkill(
   request: PassiveSkillCompileRequestSource,
   definitions: ReadonlyMap<string, CompiledPassiveSkillDefinitionSource>,
   gameplayTagRegistry?: GameplayTagRegistry,
-  loadBuff?: (id: string) => unknown,
   predefinedTagQueries?: CombatActionProjectionContextSource['predefinedTagQueries'],
+  extensions?: CombatActionProjectionExtensionsSource,
 ): PlannedPassiveSkill {
   const graph = createActionGraphBuilder<CompiledBuffStepSource>();
   if (request.activeConditionIds?.length) {
@@ -330,13 +258,20 @@ function planPassiveSkill(
     throw new Error(`${request.sourcePath}: unsupported operator passive SkillData program`);
   }
   const blackboard = resolvePassiveSkillDefinitionBlackboard(request, compiled);
-  const reactionProjection = projectCollectedBuffReactionPassive(
-    skill,
-    gameplayTagRegistry,
-    loadBuff,
-  );
+  const sequences = skill.actionGraph.actionGroup.passiveEvents.flatMap(event => event.actions);
+  const targetWrites = sequences
+    .flatMap(collectNativeActionNodes)
+    .flatMap(node =>
+      node.metadata.enabled && node.body.kind === 'leaf' && node.body.value.family === 'targetGroup'
+        ? [node.body.value.action]
+        : [],
+    );
   const passiveEventContext = {
     graph,
+    materializedTargetGroupKeys: collectMaterializedSequenceTargetGroups(sequences),
+    randomPointTargetGroupKeys: collectRandomPointTargetGroupKeys(
+      Map.groupBy(targetWrites, write => write.targetGroupKey),
+    ),
     gameplayTagRegistry,
     predefinedTagQueries,
     actionOwnerTarget: 'caster' as const,
@@ -348,7 +283,7 @@ function planPassiveSkill(
     .filter(event => event.abilityEvent === 'OnCharDeckAttrChanged')
     .flatMap(event =>
       event.actions.map(sequence =>
-        compileCombatActionSequenceSource(sequence, passiveEventContext),
+        compileCombatActionSequenceSource(sequence, passiveEventContext, undefined, extensions),
       ),
     );
   const abilityEventResponses: NonNullable<
@@ -359,6 +294,7 @@ function planPassiveSkill(
       event.abilityEvent === 'OnAbilityEntityFinished' ||
       event.abilityEvent === 'OnAbilityEntitySpawned' ||
       event.abilityEvent === 'OnAddedBuff' ||
+      event.abilityEvent === 'OnSkillEnd' ||
       event.abilityEvent === 'OnObtainAtb' ||
       event.abilityEvent === 'OnReceiveHeal'
     ) {
@@ -376,10 +312,15 @@ function planPassiveSkill(
         abilityEventResponses.push({
           event: projected,
           priority: 0,
-          sequence: compileCombatActionSequenceSource(sequence, {
-            ...passiveEventContext,
-            actionTargetTarget: projected === 'addedBuff' ? 'eventSource' : 'eventTarget',
-          }),
+          sequence: compileCombatActionSequenceSource(
+            sequence,
+            {
+              ...passiveEventContext,
+              actionTargetTarget: projected === 'addedBuff' ? 'eventSource' : 'eventTarget',
+            },
+            undefined,
+            extensions,
+          ),
         });
       }
       return [];
@@ -406,7 +347,6 @@ function planPassiveSkill(
       ? { levelSource: request.levelSource.levelSource }
       : {}),
     blackboard,
-    ...(reactionProjection === undefined ? {} : { reactionProjection }),
     initializationSequences,
     buffs: skill.startupBuffs.map(buff => {
       const materialized = materializePassiveBuffInstallation(buff, blackboard);
@@ -426,175 +366,4 @@ function planPassiveSkill(
     }),
     abilityEventResponses,
   };
-}
-
-interface CollectedBuffReactionProjection {
-  readonly reaction: 'corrosion';
-  readonly durationInputKey: string;
-  readonly effectivenessInputKey: string;
-}
-
-/**
- * OnCollectOutputBuffBbValue 在腐蚀输出 Buff 创建前修改其 duration 与
- * max_def_decrease。固定模型把这一数据流投影为正式反应修正，不安装一个运行时永远不会收到
- * 该原生收集事件的伪监听器。形状不完全匹配时返回 undefined，后续普通 Buff 编译会严格报错。
- */
-function projectCollectedBuffReactionPassive(
-  skill: CompiledPassiveSkillDefinitionSource['definition']['skill'],
-  gameplayTagRegistry?: GameplayTagRegistry,
-  loadBuff?: (id: string) => unknown,
-): CollectedBuffReactionProjection | undefined {
-  if (skill.passiveType !== 'AddBuff' || skill.startupBuffs.length !== 1 || loadBuff === undefined)
-    return undefined;
-  const application = skill.startupBuffs[0]!;
-  if (!application.assignBlackboard) return undefined;
-  const root = requireRecord(loadBuff(application.buffId), `BuffData.${application.buffId}`);
-  if (root.lifeType !== 'Infinity') return undefined;
-  for (const field of [
-    'attributeModifier',
-    'damageModifier',
-    'healModifier',
-    'poiseModifier',
-    'globalModifier',
-    'shieldConfigs',
-    'buffEventAction',
-    'igniteEventAction',
-    'timelineActions',
-  ] as const) {
-    const value = root[field];
-    if (field === 'attributeModifier') {
-      const modifier = requireRecord(value, `BuffData.${application.buffId}.${field}`);
-      if (
-        requireArray(
-          modifier.attributeModifiers,
-          `BuffData.${application.buffId}.${field}.attributeModifiers`,
-        ).length
-      )
-        return undefined;
-    } else if (requireArray(value, `BuffData.${application.buffId}.${field}`).length)
-      return undefined;
-  }
-  const events = requireArray(
-    root.abilityEventAction,
-    `BuffData.${application.buffId}.abilityEventAction`,
-  );
-  if (events.length !== 1) return undefined;
-  const event = requireRecord(events[0], `BuffData.${application.buffId}.abilityEventAction[0]`);
-  if (event.abilityEvent !== 'OnCollectOutputBuffBbValue') return undefined;
-  const sequences = requireArray(
-    event.actions,
-    `BuffData.${application.buffId}.abilityEventAction[0].actions`,
-  );
-  if (sequences.length !== 1) return undefined;
-  const sequence = requireRecord(
-    sequences[0],
-    `BuffData.${application.buffId}.abilityEventAction[0].actions[0]`,
-  );
-  const actions = requireArray(
-    sequence.actionData,
-    `BuffData.${application.buffId}.abilityEventAction[0].actions[0].actionData`,
-  );
-  if (actions.length !== 3) return undefined;
-  const condition = requireRecord(actions[0], `BuffData.${application.buffId}.condition`);
-  if (
-    nativeActionName(
-      requireNonEmptyString(condition.$type, `BuffData.${application.buffId}.condition.$type`),
-    ) !== 'CheckBuffIdInContextAdvanced' ||
-    condition.checkType !== 'Tag'
-  )
-    return undefined;
-  const query = requireRecord(condition.query, `BuffData.${application.buffId}.condition.query`);
-  const tags = requireArray(query.tags, `BuffData.${application.buffId}.condition.query.tags`);
-  if (query.queryType !== 'HasAny' || tags.length !== 1) return undefined;
-  const tag = requireRecord(tags[0], `BuffData.${application.buffId}.condition.query.tags[0]`);
-  const tagId = requireNumber(
-    tag.tagId,
-    `BuffData.${application.buffId}.condition.query.tags[0].tagId`,
-  );
-  if (gameplayTagRegistry?.resolve(tagId).split('/').at(-1) !== 'Corrupt') return undefined;
-  const save = requireRecord(actions[1], `BuffData.${application.buffId}.save`);
-  if (
-    nativeActionName(
-      requireNonEmptyString(save.$type, `BuffData.${application.buffId}.save.$type`),
-    ) !== 'SaveCollectedBuffBbValue'
-  )
-    return undefined;
-  const durationOutputKey = requireNonEmptyString(
-    save.blackboardKey,
-    `BuffData.${application.buffId}.save.blackboardKey`,
-  );
-  const durationStoreKey = requireNonEmptyString(
-    save.storeKey,
-    `BuffData.${application.buffId}.save.storeKey`,
-  );
-  if (durationOutputKey !== 'duration') return undefined;
-  const branch = requireRecord(actions[2], `BuffData.${application.buffId}.branch`);
-  if (
-    nativeActionName(
-      requireNonEmptyString(branch.$type, `BuffData.${application.buffId}.branch.$type`),
-    ) !== 'IfElseAction'
-  )
-    return undefined;
-  const succeed = requireRecord(
-    branch.succeedActions,
-    `BuffData.${application.buffId}.branch.succeedActions`,
-  );
-  const succeedActions = requireArray(
-    succeed.actionData,
-    `BuffData.${application.buffId}.branch.succeedActions.actionData`,
-  );
-  const fail = requireRecord(
-    branch.failActions,
-    `BuffData.${application.buffId}.branch.failActions`,
-  );
-  const failActions = requireArray(
-    fail.actionData,
-    `BuffData.${application.buffId}.branch.failActions.actionData`,
-  );
-  if (succeedActions.length !== 3 || failActions.length !== 2) return undefined;
-  const durationModify = requireRecord(
-    succeedActions[0],
-    `BuffData.${application.buffId}.durationModify`,
-  );
-  const rateCalc = requireRecord(succeedActions[1], `BuffData.${application.buffId}.rateCalc`);
-  const effectivenessModify = requireRecord(
-    succeedActions[2],
-    `BuffData.${application.buffId}.effectivenessModify`,
-  );
-  const failRateCalc = requireRecord(failActions[0], `BuffData.${application.buffId}.failRateCalc`);
-  const failEffectivenessModify = requireRecord(
-    failActions[1],
-    `BuffData.${application.buffId}.failEffectivenessModify`,
-  );
-  if (
-    nativeActionName(requireNonEmptyString(durationModify.$type, 'durationModify.$type')) !==
-      'ModifyCollectedBuffBbValue' ||
-    durationModify.blackboardKey !== durationOutputKey ||
-    requireRecord(durationModify.addition, 'durationModify.addition').blackboardKey !==
-      'duration_add' ||
-    nativeActionName(requireNonEmptyString(rateCalc.$type, 'rateCalc.$type')) !==
-      'SimpleCalcBBAction' ||
-    rateCalc.key !== 'final_corrupt_rate' ||
-    requireRecord(rateCalc.value1, 'rateCalc.value1').blackboardKey !== 'corrupt_rate' ||
-    nativeActionName(
-      requireNonEmptyString(effectivenessModify.$type, 'effectivenessModify.$type'),
-    ) !== 'ModifyCollectedBuffBbValue' ||
-    effectivenessModify.blackboardKey !== 'max_def_decrease' ||
-    requireRecord(effectivenessModify.multiplier, 'effectivenessModify.multiplier')
-      .blackboardKey !== 'final_corrupt_rate' ||
-    nativeActionName(requireNonEmptyString(failRateCalc.$type, 'failRateCalc.$type')) !==
-      'SimpleCalcBBAction' ||
-    nativeActionName(
-      requireNonEmptyString(failEffectivenessModify.$type, 'failEffectivenessModify.$type'),
-    ) !== 'ModifyCollectedBuffBbValue'
-  )
-    return undefined;
-  const assignments = new Map(
-    application.assignments.map(item => [item.targetKey, item.inputValueKey]),
-  );
-  const durationInputKey = assignments.get('duration_add');
-  const effectivenessInputKey = assignments.get('corrupt_rate');
-  if (!durationInputKey || !effectivenessInputKey || durationStoreKey !== 'duration_dynamic')
-    return undefined;
-  return { reaction: 'corrosion', durationInputKey, effectivenessInputKey };
 }

@@ -19,6 +19,142 @@ function createRuntime() {
 }
 
 describe('LogicalAbilityEntityRuntime', () => {
+  it('范围候选按主体排除重复命中，独立部位与其他敌人保持独立，恢复后规则不变', () => {
+    const runtime = createRuntime();
+    const first = { kind: 'enemy', enemyId: 'enemy:first' } as const;
+    const second = { kind: 'enemy', enemyId: 'enemy:second' } as const;
+    const spawn = (mainBody: typeof first | typeof second, independent: boolean) =>
+      runtime.spawn({
+        abilityEntityId: 'part',
+        ownerId: 'caster',
+        source: mainBody,
+        definition: {
+          lifetime: { kind: 'infinite' },
+        },
+        soul: {
+          canBeHitIndividually: independent,
+          halfBlockAngle: 180,
+          onlyHitByNormalAttack: false,
+          mainBody,
+          damageRatio: 1,
+          poiseRatio: 1,
+          canBeDirectlyBuffed: false,
+          damageTransferType: 'sharedDamage',
+          vitals: {
+            health: 100,
+            maxHealth: 100,
+            poise: 0,
+            maxPoise: 0,
+            poiseRecoveryTime: 0,
+            poiseRecoveryTimeMultiplier: 1,
+            poiseBrokenEndTime: 0,
+            poiseImmune: false,
+          },
+        },
+      });
+    const soul = spawn(first, false);
+    const independent = spawn(second, true);
+    const candidates = [first, second, soul, independent];
+    expect(runtime.filterHitBoxParts(candidates, first, false)).toEqual([
+      first,
+      second,
+      independent,
+    ]);
+    expect(runtime.filterHitBoxParts(candidates, undefined, false)).toEqual([
+      first,
+      second,
+      independent,
+    ]);
+    expect(runtime.filterHitBoxParts(candidates, soul, false)).toEqual([second, soul, independent]);
+    expect(runtime.filterHitBoxParts([first, second], first, false)).toEqual([first, second]);
+    expect(runtime.filterHitBoxParts([soul], first, false)).toEqual([soul]);
+    const restored = new LogicalAbilityEntityRuntime({
+      restoredState: structuredClone(runtime.runtimeState),
+    });
+    expect(restored.filterHitBoxParts(candidates, first, false)).toEqual([
+      first,
+      second,
+      independent,
+    ]);
+  });
+  it('目标死亡只绑定出生首项，初始化换目标和切面恢复均不重绑', () => {
+    const runtime = createRuntime();
+    const first = { kind: 'enemy', enemyId: 'enemy:first' } as const;
+    const second = { kind: 'enemy', enemyId: 'enemy:second' } as const;
+    const entity = runtime.spawn({
+      abilityEntityId: 'bound',
+      definition: { lifetime: { kind: 'infinite' } },
+      ownerId: 'caster',
+      source: { kind: 'operator', operatorId: 'caster' },
+      targets: [first, second],
+      dieWhenTargetDies: true,
+      initialize: target => runtime.setTargets(target, [second]),
+    });
+    const restored = new LogicalAbilityEntityRuntime({
+      restoredState: structuredClone(runtime.runtimeState),
+    });
+    expect(restored.targets(entity)).toEqual([second]);
+    expect(restored.notifyEntityDied(second)).toBe(0);
+    expect(restored.notifyEntityDied(first)).toBe(1);
+    expect(restored.isAlive(entity)).toBe(false);
+    expect(restored.runtimeState.instances.get(entity.instanceId)?.pendingReleaseReason).toBe(
+      'targetDied',
+    );
+    expect(runtime.isAlive(entity)).toBe(true);
+  });
+
+  it('一名敌人死亡只清理其关联实体，恢复后仍保留另一名敌人的身份', () => {
+    const runtime = createRuntime();
+    const spawn = (instanceId: string) =>
+      runtime.spawn({
+        abilityEntityId: 'same-prefab',
+        definition: { lifetime: { kind: 'infinite' } },
+        ownerId: 'caster',
+        source: { kind: 'enemy', enemyId: 'enemy:' + instanceId },
+        dieWhenSourceDies: true,
+      });
+    const a = spawn('a');
+    const b = spawn('b');
+    expect(runtime.notifyEntityDied({ kind: 'enemy', enemyId: 'enemy:a' })).toBe(1);
+    expect(runtime.isAlive(a)).toBe(false);
+    expect(runtime.isAlive(b)).toBe(true);
+    const restored = new LogicalAbilityEntityRuntime({
+      restoredState: structuredClone(runtime.runtimeState),
+    });
+    expect(restored.notifyEntityDied({ kind: 'enemy', enemyId: 'enemy:a' })).toBe(0);
+    expect(restored.notifyEntityDied({ kind: 'enemy', enemyId: 'enemy:b' })).toBe(1);
+    expect(runtime.isAlive(b)).toBe(true);
+  });
+  it('恢复后来源死亡逐级传递，仅结束启用了联动的后代', () => {
+    const runtime = createRuntime();
+    const request = {
+      abilityEntityId: 'entity',
+      definition: { lifetime: { kind: 'infinite' } } as const,
+      ownerId: 'caster',
+      source: { kind: 'enemy', enemyId: 'enemy:a' } as const,
+      dieWhenSourceDies: true,
+    };
+    const parent = runtime.spawn(request);
+    const child = runtime.spawn({ ...request, source: parent });
+    const grandchild = runtime.spawn({ ...request, source: child });
+    const independent = runtime.spawn({ ...request, source: parent, dieWhenSourceDies: false });
+    const otherEnemyChild = runtime.spawn({
+      ...request,
+      source: { kind: 'enemy', enemyId: 'enemy:b' },
+    });
+    const restored = new LogicalAbilityEntityRuntime({
+      restoredState: structuredClone(runtime.runtimeState),
+    });
+
+    restored.notifyEntityDied(request.source);
+
+    for (const target of [parent, child, grandchild]) expect(restored.isAlive(target)).toBe(false);
+    expect(restored.isAlive(independent)).toBe(true);
+    expect(restored.isAlive(otherEnemyChild)).toBe(true);
+    expect(runtime.isAlive(parent)).toBe(true);
+    expect(restored.notifyEntityDied(request.source)).toBe(0);
+  });
+
   it('出生初始化写入的黑板先于子技能可见，初始化失败不启动子技能', () => {
     const runtime = createRuntime();
     const start = vi.fn();
@@ -52,15 +188,20 @@ describe('LogicalAbilityEntityRuntime', () => {
 
   it('Soul 主体不随目标改变，独立生命在恢复后保持隔离且死亡不提前回收', () => {
     const runtime = createRuntime();
+    expect(runtime.preferredAttackTarget({ kind: 'enemy', enemyId: 'enemy' })).toEqual({
+      kind: 'enemy',
+      enemyId: 'enemy',
+    });
     const entity = runtime.spawn({
       abilityEntityId: 'soul',
       ownerId: 'caster',
       source: { kind: 'operator', operatorId: 'caster' },
-      target: { kind: 'enemy' },
+      target: { kind: 'enemy', enemyId: 'enemy' },
       definition: { faction: 'bad', lifetime: { kind: 'infinite' } },
       soul: {
+        canBeDirectlyBuffed: false,
         damageTransferType: 'sharedDamage',
-        mainBody: { kind: 'enemy' },
+        mainBody: { kind: 'enemy', enemyId: 'enemy' },
         damageRatio: 1.5,
         poiseRatio: 1,
         vitals: {
@@ -77,7 +218,8 @@ describe('LogicalAbilityEntityRuntime', () => {
     });
     runtime.setTarget(entity, { kind: 'operator', operatorId: 'other' });
     runtime.soulVitals(entity)!.takeDamage(20);
-    expect(runtime.mainBody(entity)).toEqual({ kind: 'enemy' });
+    expect(runtime.mainBody(entity)).toEqual({ kind: 'enemy', enemyId: 'enemy' });
+    expect(runtime.resolvePartBuffSource(entity)).toEqual({ kind: 'enemy', enemyId: 'enemy' });
     expect(runtime.faction(entity)).toBe('bad');
     expect(runtime.snapshot(entity).source).toEqual({ kind: 'operator', operatorId: 'caster' });
     const ordinary = runtime.spawn({
@@ -87,7 +229,7 @@ describe('LogicalAbilityEntityRuntime', () => {
       definition: { lifetime: { kind: 'infinite' } },
     });
     const targetContext = new RuntimeTargetContext();
-    targetContext.set('parts', [entity, ordinary, entity, { kind: 'enemy' }]);
+    targetContext.set('parts', [entity, ordinary, entity, { kind: 'enemy', enemyId: 'enemy' }]);
     const targetOperations = new TargetContextOperationExecutor(
       'caster',
       { execute: () => false, evaluate: () => false },
@@ -95,9 +237,8 @@ describe('LogicalAbilityEntityRuntime', () => {
       undefined,
       undefined,
       undefined,
-      undefined,
       {
-        mainTarget: () => ({ kind: 'enemy' }),
+        mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }),
         ownerSpawned: query => runtime.findOwnerSpawned(query),
         mainBody: target => runtime.mainBody(target),
         ownerSoul: target => runtime.ownerSoul(target),
@@ -115,10 +256,10 @@ describe('LogicalAbilityEntityRuntime', () => {
       { blackboard: new ActionBlackboard(), targetContext },
     );
     expect(targetContext.get('parts')).toEqual([
-      { kind: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
       ordinary,
-      { kind: 'enemy' },
-      { kind: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
     ]);
     const queryContext = { blackboard: new ActionBlackboard(), targetContext };
     expect(
@@ -139,35 +280,44 @@ describe('LogicalAbilityEntityRuntime', () => {
     expect(spawned).not.toHaveBeenCalled();
     expect(killed).not.toHaveBeenCalled();
     expect(restored.soulVitals(entity)!.health).toBe(80);
-    expect(restored.mainBody(entity)).toEqual({ kind: 'enemy' });
+    expect(restored.mainBody(entity)).toEqual({ kind: 'enemy', enemyId: 'enemy' });
+    expect(restored.resolvePartBuffSource(entity)).toEqual({ kind: 'enemy', enemyId: 'enemy' });
     expect(restored.faction(entity)).toBe('bad');
-    expect(restored.ownerSoul({ kind: 'enemy' })).toEqual(entity);
+    expect(restored.ownerSoul({ kind: 'enemy', enemyId: 'enemy' })).toEqual(entity);
     expect(restored.ownerSoul(entity)).toEqual(entity);
+    expect(restored.preferredAttackTarget({ kind: 'enemy', enemyId: 'enemy' })).toEqual({
+      kind: 'enemy',
+      enemyId: 'enemy',
+    });
     restored.soulVitals(entity)!.takeDamage(100);
     expect(killed).toHaveBeenCalledOnce();
     expect(restored.isAlive(entity)).toBe(false);
     expect(restored.isActive(entity)).toBe(true);
-    expect(restored.ownerSoul({ kind: 'enemy' })).toEqual(entity);
+    expect(restored.ownerSoul({ kind: 'enemy', enemyId: 'enemy' })).toEqual(entity);
+    expect(restored.preferredAttackTarget({ kind: 'enemy', enemyId: 'enemy' })).toEqual({
+      kind: 'enemy',
+      enemyId: 'enemy',
+    });
     expect(runtime.soulVitals(entity)!.health).toBe(80);
     const deadRestored = new LogicalAbilityEntityRuntime({
       restoredState: structuredClone(restored.runtimeState),
       hooks: { killed },
     });
     expect(killed).toHaveBeenCalledOnce();
-    expect(deadRestored.ownerSoul({ kind: 'enemy' })).toEqual(entity);
+    expect(deadRestored.ownerSoul({ kind: 'enemy', enemyId: 'enemy' })).toEqual(entity);
     deadRestored.advanceFrame();
     expect(deadRestored.isActive(entity)).toBe(false);
-    expect(deadRestored.ownerSoul({ kind: 'enemy' })).toBeUndefined();
-    expect(runtime.ownerSoul({ kind: 'enemy' })).toEqual(entity);
+    expect(deadRestored.ownerSoul({ kind: 'enemy', enemyId: 'enemy' })).toBeUndefined();
+    expect(runtime.ownerSoul({ kind: 'enemy', enemyId: 'enemy' })).toEqual(entity);
     const finished = vi.fn();
     const bodyDeath = new LogicalAbilityEntityRuntime({
       restoredState: structuredClone(runtime.runtimeState),
       hooks: { finished },
     });
     // 墨影跟随主体死亡，不取决于来源干员或 dieWhenSourceDies 开关。
-    expect(bodyDeath.notifySourceDied({ kind: 'operator', operatorId: 'caster' })).toBe(0);
+    expect(bodyDeath.notifyEntityDied({ kind: 'operator', operatorId: 'caster' })).toBe(0);
     expect(bodyDeath.isAlive(entity)).toBe(true);
-    expect(bodyDeath.notifySourceDied({ kind: 'enemy' })).toBe(1);
+    expect(bodyDeath.notifyEntityDied({ kind: 'enemy', enemyId: 'enemy' })).toBe(1);
     expect(bodyDeath.isAlive(entity)).toBe(false);
     bodyDeath.advanceFrame();
     expect(finished).toHaveBeenCalledWith(
@@ -181,7 +331,7 @@ describe('LogicalAbilityEntityRuntime', () => {
     const entity = runtime.spawn({
       abilityEntityId: 'test',
       ownerId: 'owner',
-      source: { kind: 'enemy' },
+      source: { kind: 'enemy', enemyId: 'enemy' },
       definition: { lifetime: { kind: 'infinite' } },
     });
     const child = { skillId: 'child', start: vi.fn(), advance: vi.fn(), finish: vi.fn() };
@@ -204,7 +354,7 @@ describe('LogicalAbilityEntityRuntime', () => {
     runtime.spawn({
       abilityEntityId: 'test',
       ownerId: 'owner',
-      source: { kind: 'enemy' },
+      source: { kind: 'enemy', enemyId: 'enemy' },
       definition: { lifetime: { kind: 'infinite' }, blackboard: { value: 1 } },
     });
     const snapshot = vi.spyOn(ActionBlackboard.prototype, 'snapshot');
@@ -218,13 +368,13 @@ describe('LogicalAbilityEntityRuntime', () => {
     const first = original.spawn({
       abilityEntityId: 'first',
       ownerId: 'owner',
-      source: { kind: 'enemy' },
+      source: { kind: 'enemy', enemyId: 'enemy' },
       definition: { lifetime: { kind: 'infinite' } },
     });
     const second = original.spawn({
       abilityEntityId: 'second',
       ownerId: 'owner',
-      source: { kind: 'enemy' },
+      source: { kind: 'enemy', enemyId: 'enemy' },
       definition: { lifetime: { kind: 'infinite' } },
     });
     original.addChildBuff(first, {
@@ -327,7 +477,7 @@ describe('LogicalAbilityEntityRuntime', () => {
     const entity = runtime.spawn({
       abilityEntityId: 'entity',
       ownerId: 'owner',
-      source: { kind: 'enemy' },
+      source: { kind: 'enemy', enemyId: 'enemy' },
       definition: { lifetime: { kind: 'infinite' } },
     });
     const reference = createTestBuffReference();
@@ -354,7 +504,7 @@ describe('LogicalAbilityEntityRuntime', () => {
     runtime.spawn({
       abilityEntityId: 'entity',
       ownerId: 'owner',
-      source: { kind: 'enemy' },
+      source: { kind: 'enemy', enemyId: 'enemy' },
       definition: {
         lifetime: { kind: 'limited', durationSeconds: 1 },
         deathReleaseDelaySeconds: 0.5,
@@ -401,7 +551,7 @@ describe('LogicalAbilityEntityRuntime', () => {
       },
     });
     runtime.advanceFrame();
-    runtime.notifySourceDied(source);
+    runtime.notifyEntityDied(source);
     const blackboard = runtime.entityBlackboard(entity);
     const session = createStateTestSession(
       { directory: runtime.runtimeState, blackboard: blackboard.runtimeState },
@@ -414,7 +564,7 @@ describe('LogicalAbilityEntityRuntime', () => {
     expect(instance.pendingRelease).toBe(true);
     expect(instance.isAlive).toBe(false);
     expect(instance.pendingReleaseReason).toBe('sourceDied');
-    expect(copied.directory.deadSources).toEqual([source]);
+    expect(copied.directory.deadSources).toEqual([source, entity]);
     runtime.advanceFrame();
     runtime.advanceFrame();
     expect(runtime.runtimeState.instances.size).toBe(0);
@@ -672,7 +822,7 @@ describe('LogicalAbilityEntityRuntime', () => {
       expect(observed).toEqual(['spawned', 'child', 'finished']);
     },
   );
-  it('uses one instance set for zero-space range and owner/entity-id lookup', () => {
+  it('uses one instance set for zero-space range and direct-owner lookup', () => {
     const runtime = createRuntime();
     const a = runtime.spawn({
       abilityEntityId: 'water',
@@ -680,7 +830,7 @@ describe('LogicalAbilityEntityRuntime', () => {
       ownerId: 'a',
       source: { kind: 'operator', operatorId: 'a' },
     });
-    runtime.spawn({
+    const sword = runtime.spawn({
       abilityEntityId: 'sword',
       definition: { lifetime: { kind: 'infinite' } },
       ownerId: 'a',
@@ -697,16 +847,15 @@ describe('LogicalAbilityEntityRuntime', () => {
     expect(
       runtime.findOwnerSpawned({
         ownerId: 'a',
-        abilityEntityIds: ['water'],
       }),
-    ).toEqual([a]);
+    ).toEqual([a, sword]);
     const child = runtime.spawn({
       abilityEntityId: 'water',
       definition: { lifetime: { kind: 'infinite' } },
       ownerId: 'a',
       source: a,
     });
-    expect(runtime.findOwnerSpawned({ ownerId: 'a', abilityEntityIds: ['water'] })).toEqual([a]);
+    expect(runtime.findOwnerSpawned({ ownerId: 'a' })).toEqual([a, sword]);
     expect(runtime.findOwnerSpawned({ ownerId: `ability-entity:${a.instanceId}` })).toEqual([
       child,
     ]);
@@ -720,7 +869,7 @@ describe('LogicalAbilityEntityRuntime', () => {
       definition: { lifetime: { kind: 'limited', durationSeconds: 1 } },
       ownerId: 'a',
       source: { kind: 'operator', operatorId: 'a' },
-      target: { kind: 'enemy' },
+      target: { kind: 'enemy', enemyId: 'enemy' },
       overrideDurationSeconds: 0.5,
       blackboardAssignments: { EntityBB_power: 3 },
     });
@@ -767,7 +916,6 @@ describe('LogicalAbilityEntityRuntime', () => {
     expect(
       runtime.findOwnerSpawned({
         ownerId: 'arcane',
-        abilityEntityIds: ['seal'],
         sourceSkillCastId: 17,
       }),
     ).toEqual([first]);
@@ -820,11 +968,11 @@ describe('LogicalAbilityEntityRuntime', () => {
 
     expect(childSkillRequested).toHaveBeenCalledTimes(1);
     expect(runtime.isActive(entity)).toBe(true);
-    expect(runtime.notifySourceDied({ kind: 'operator', operatorId: 'a' })).toBe(1);
+    expect(runtime.notifyEntityDied({ kind: 'operator', operatorId: 'a' })).toBe(1);
     expect(runtime.isActive(entity)).toBe(true);
     expect(runtime.snapshot(entity).isAlive).toBe(false);
     expect(runtime.findOwnerSpawned({ ownerId: 'a' })).toEqual([entity]);
-    expect(runtime.notifySourceDied({ kind: 'operator', operatorId: 'a' })).toBe(0);
+    expect(runtime.notifyEntityDied({ kind: 'operator', operatorId: 'a' })).toBe(0);
     runtime.advanceFrame();
     expect(runtime.isActive(entity)).toBe(false);
     expect(runtime.activeCount).toBe(0);

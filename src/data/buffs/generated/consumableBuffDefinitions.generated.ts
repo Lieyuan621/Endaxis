@@ -3,12 +3,12 @@ import type { OperatorBuffDefinitions } from '../../../core/game-data/operatorDe
 
 import type { ActionGraphResourceDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
 import type { SkillBuffDefinition } from '../../../../packages/game-data-contract/src/buffs';
-const commonBuff1ActionGraph = {
+const commonBuff_buff_common_atk_buff_potion_1$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff1: SkillBuffDefinition = {
+const commonBuff_buff_common_atk_buff_potion_1: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -28,15 +28,15 @@ const commonBuff1: SkillBuffDefinition = {
   attributeModifiers: [
     { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'value' } },
   ],
-  actionGraph: commonBuff1ActionGraph,
+  actionGraph: commonBuff_buff_common_atk_buff_potion_1$actionGraph,
 };
 
-const commonBuff2ActionGraph = {
+const commonBuff_buff_common_atk_buff_potion_2$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff2: SkillBuffDefinition = {
+const commonBuff_buff_common_atk_buff_potion_2: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -56,15 +56,15 @@ const commonBuff2: SkillBuffDefinition = {
   attributeModifiers: [
     { attribute: 'Atk', slot: 'baseFinalAddition', value: { blackboardKey: 'value' } },
   ],
-  actionGraph: commonBuff2ActionGraph,
+  actionGraph: commonBuff_buff_common_atk_buff_potion_2$actionGraph,
 };
 
-const commonBuff3ActionGraph = {
+const commonBuff_buff_common_cdr_buff_potion_1$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff3: SkillBuffDefinition = {
+const commonBuff_buff_common_cdr_buff_potion_1: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -88,15 +88,15 @@ const commonBuff3: SkillBuffDefinition = {
       value: { blackboardKey: 'value' },
     },
   ],
-  actionGraph: commonBuff3ActionGraph,
+  actionGraph: commonBuff_buff_common_cdr_buff_potion_1$actionGraph,
 };
 
-const commonBuff4ActionGraph = {
+const commonBuff_buff_common_ctr_buff_potion_1$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff4: SkillBuffDefinition = {
+const commonBuff_buff_common_ctr_buff_potion_1: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -116,15 +116,15 @@ const commonBuff4: SkillBuffDefinition = {
   attributeModifiers: [
     { attribute: 'criticalRate', slot: 'addition', value: { blackboardKey: 'value' } },
   ],
-  actionGraph: commonBuff4ActionGraph,
+  actionGraph: commonBuff_buff_common_ctr_buff_potion_1$actionGraph,
 };
 
-const commonBuff5ActionGraph = {
+const commonBuff_buff_common_def_buff_potion_1$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff5: SkillBuffDefinition = {
+const commonBuff_buff_common_def_buff_potion_1: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -142,15 +142,15 @@ const commonBuff5: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [{ attribute: 'Def', slot: 'multiplier', value: { blackboardKey: 'value' } }],
-  actionGraph: commonBuff5ActionGraph,
+  actionGraph: commonBuff_buff_common_def_buff_potion_1$actionGraph,
 };
 
-const commonBuff6ActionGraph = {
+const commonBuff_buff_common_def_buff_potion_2$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff6: SkillBuffDefinition = {
+const commonBuff_buff_common_def_buff_potion_2: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -168,15 +168,15 @@ const commonBuff6: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [{ attribute: 'Def', slot: 'addition', value: { blackboardKey: 'value' } }],
-  actionGraph: commonBuff6ActionGraph,
+  actionGraph: commonBuff_buff_common_def_buff_potion_2$actionGraph,
 };
 
-const commonBuff7ActionGraph = {
+const commonBuff_buff_common_def_buff_potion_3$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff7: SkillBuffDefinition = {
+const commonBuff_buff_common_def_buff_potion_3: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -194,15 +194,15 @@ const commonBuff7: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [{ attribute: 'Def', slot: 'multiplier', value: { blackboardKey: 'value' } }],
-  actionGraph: commonBuff7ActionGraph,
+  actionGraph: commonBuff_buff_common_def_buff_potion_3$actionGraph,
 };
 
-const commonBuff8ActionGraph = {
+const commonBuff_buff_common_dmg_up_potion_1$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff8: SkillBuffDefinition = {
+const commonBuff_buff_common_dmg_up_potion_1: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -235,15 +235,15 @@ const commonBuff8: SkillBuffDefinition = {
     { attribute: 'natureDamageIncrease', slot: 'baseAddition', value: { blackboardKey: 'value' } },
     { attribute: 'etherDamageIncrease', slot: 'baseAddition', value: { blackboardKey: 'value' } },
   ],
-  actionGraph: commonBuff8ActionGraph,
+  actionGraph: commonBuff_buff_common_dmg_up_potion_1$actionGraph,
 };
 
-const commonBuff9ActionGraph = {
+const commonBuff_buff_common_healrt_buff_potion_1$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff9: SkillBuffDefinition = {
+const commonBuff_buff_common_healrt_buff_potion_1: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -263,15 +263,15 @@ const commonBuff9: SkillBuffDefinition = {
   attributeModifiers: [
     { attribute: 'healOutputIncrease', slot: 'addition', value: { blackboardKey: 'value' } },
   ],
-  actionGraph: commonBuff9ActionGraph,
+  actionGraph: commonBuff_buff_common_healrt_buff_potion_1$actionGraph,
 };
 
-const commonBuff10ActionGraph = {
+const commonBuff_buff_common_healrt_buff_potion_2$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff10: SkillBuffDefinition = {
+const commonBuff_buff_common_healrt_buff_potion_2: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -291,15 +291,15 @@ const commonBuff10: SkillBuffDefinition = {
   attributeModifiers: [
     { attribute: 'healTakenIncrease', slot: 'addition', value: { blackboardKey: 'value' } },
   ],
-  actionGraph: commonBuff10ActionGraph,
+  actionGraph: commonBuff_buff_common_healrt_buff_potion_2$actionGraph,
 };
 
-const commonBuff11ActionGraph = {
+const commonBuff_buff_common_mainattri_up_potion_1$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff11: SkillBuffDefinition = {
+const commonBuff_buff_common_mainattri_up_potion_1: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -322,15 +322,15 @@ const commonBuff11: SkillBuffDefinition = {
     { attribute: 'will', slot: 'addition', value: { blackboardKey: 'value' } },
     { attribute: 'agility', slot: 'addition', value: { blackboardKey: 'value' } },
   ],
-  actionGraph: commonBuff11ActionGraph,
+  actionGraph: commonBuff_buff_common_mainattri_up_potion_1$actionGraph,
 };
 
-const commonBuff12ActionGraph = {
+const commonBuff_buff_common_phydmg_up_potion_1$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff12: SkillBuffDefinition = {
+const commonBuff_buff_common_phydmg_up_potion_1: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -354,15 +354,15 @@ const commonBuff12: SkillBuffDefinition = {
       value: { blackboardKey: 'value' },
     },
   ],
-  actionGraph: commonBuff12ActionGraph,
+  actionGraph: commonBuff_buff_common_phydmg_up_potion_1$actionGraph,
 };
 
-const commonBuff13ActionGraph = {
+const commonBuff_buff_common_resis_up_potion_1$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff13: SkillBuffDefinition = {
+const commonBuff_buff_common_resis_up_potion_1: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -411,15 +411,15 @@ const commonBuff13: SkillBuffDefinition = {
       value: { blackboardKey: 'value' },
     },
   ],
-  actionGraph: commonBuff13ActionGraph,
+  actionGraph: commonBuff_buff_common_resis_up_potion_1$actionGraph,
 };
 
-const commonBuff14ActionGraph = {
+const commonBuff_buff_common_usprt_buff_potion_1$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff14: SkillBuffDefinition = {
+const commonBuff_buff_common_usprt_buff_potion_1: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -439,21 +439,21 @@ const commonBuff14: SkillBuffDefinition = {
   attributeModifiers: [
     { attribute: 'UltimateSpGainScalar', slot: 'addition', value: { blackboardKey: 'value' } },
   ],
-  actionGraph: commonBuff14ActionGraph,
+  actionGraph: commonBuff_buff_common_usprt_buff_potion_1$actionGraph,
 };
 export const consumableBuffDefinitions: OperatorBuffDefinitions = Object.freeze({
-  buff_common_atk_buff_potion_1: commonBuff1,
-  buff_common_atk_buff_potion_2: commonBuff2,
-  buff_common_cdr_buff_potion_1: commonBuff3,
-  buff_common_ctr_buff_potion_1: commonBuff4,
-  buff_common_def_buff_potion_1: commonBuff5,
-  buff_common_def_buff_potion_2: commonBuff6,
-  buff_common_def_buff_potion_3: commonBuff7,
-  buff_common_dmg_up_potion_1: commonBuff8,
-  buff_common_healrt_buff_potion_1: commonBuff9,
-  buff_common_healrt_buff_potion_2: commonBuff10,
-  buff_common_mainattri_up_potion_1: commonBuff11,
-  buff_common_phydmg_up_potion_1: commonBuff12,
-  buff_common_resis_up_potion_1: commonBuff13,
-  buff_common_usprt_buff_potion_1: commonBuff14,
+  buff_common_atk_buff_potion_1: commonBuff_buff_common_atk_buff_potion_1,
+  buff_common_atk_buff_potion_2: commonBuff_buff_common_atk_buff_potion_2,
+  buff_common_cdr_buff_potion_1: commonBuff_buff_common_cdr_buff_potion_1,
+  buff_common_ctr_buff_potion_1: commonBuff_buff_common_ctr_buff_potion_1,
+  buff_common_def_buff_potion_1: commonBuff_buff_common_def_buff_potion_1,
+  buff_common_def_buff_potion_2: commonBuff_buff_common_def_buff_potion_2,
+  buff_common_def_buff_potion_3: commonBuff_buff_common_def_buff_potion_3,
+  buff_common_dmg_up_potion_1: commonBuff_buff_common_dmg_up_potion_1,
+  buff_common_healrt_buff_potion_1: commonBuff_buff_common_healrt_buff_potion_1,
+  buff_common_healrt_buff_potion_2: commonBuff_buff_common_healrt_buff_potion_2,
+  buff_common_mainattri_up_potion_1: commonBuff_buff_common_mainattri_up_potion_1,
+  buff_common_phydmg_up_potion_1: commonBuff_buff_common_phydmg_up_potion_1,
+  buff_common_resis_up_potion_1: commonBuff_buff_common_resis_up_potion_1,
+  buff_common_usprt_buff_potion_1: commonBuff_buff_common_usprt_buff_potion_1,
 });

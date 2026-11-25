@@ -1,7 +1,7 @@
 import type { GraphSharedEntityValueUsage } from '../src/compiler/optimization/graphValueOptimization.ts';
 import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
 import { readGameplayTagPaths } from './readGameplayTagPaths.ts';
-import { formatGeneratedSource } from './formatGeneratedSource.ts';
+import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -189,9 +189,12 @@ export function compileWeaponStaticDefinitionsIndependently(
   skillData: unknown,
   patchTable: unknown,
 ): CompiledWeaponStaticDefinitionBatchSource {
-  // _ink 是特定场景变体，不属于可配装的标准武器；不进入正式定义与本地化闭包。
-  const weaponIds = Object.keys(requireRecord(weaponTable, 'WeaponBasicTable'))
-    .filter(id => !id.endsWith('_ink'))
+  const table = requireRecord(weaponTable, 'WeaponBasicTable');
+  const weaponIds = Object.keys(table)
+    .filter(id => {
+      const row = requireRecord(table[id], `WeaponBasicTable.${id}`);
+      return 'isStoryWeapon' in row ? row.isStoryWeapon !== true : !id.endsWith('_ink');
+    })
     .sort((left, right) => left.localeCompare(right));
   const definitions: CompiledWeaponStaticDefinitionBatchSource['definitions'][number][] = [];
   const runtimeDependencies: CompiledWeaponStaticDefinitionBatchSource['runtimeDependencies'][number][] =

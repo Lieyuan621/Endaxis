@@ -1,10 +1,13 @@
+import { isHitIdentity } from '../derivedObjectIdentity';
 /**
  * 顶层项目校验器使用的场景内部一致性规则。
  * 这里只检查持久化结构和引用关系，不应调用游戏数据或执行战斗规则。
  */
-import { ENEMY_EDITABLE_FIELDS, type JsonObject } from './schema';
+import { type JsonObject } from './schema';
+import { HIT_OVERRIDE_FIELDS } from './hitOverrides';
 import { validateScenarioBuff } from '../game-data/validateGlobalEffectDefinition';
 import { ENEMY_RANKS } from '../game-data/enemyRank';
+import { validateEnemyLifecycle } from './enemyLifecycleValidation';
 import {
   isObject,
   requireBoolean,
@@ -12,12 +15,10 @@ import {
   requireNonNegativeInteger,
   requirePositiveInteger,
   requireString,
-  validateEditedFields,
   validateFiniteNumberRecord,
   type ValidationIssue,
 } from './validationHelpers';
 
-const enemyEditableFields = new Set<string>(ENEMY_EDITABLE_FIELDS);
 const enemyRanks = new Set<string>(ENEMY_RANKS);
 
 export function validateOperatorInstance(
@@ -75,10 +76,34 @@ export function validateEnemy(value: unknown, path: string, issues: ValidationIs
     issues.push({ path, message: 'expected an object' });
     return;
   }
+  if (value.lifecycle !== undefined)
+    validateEnemyLifecycle(value.lifecycle, `${path}.lifecycle`, issues);
+  if (value.birthEffects !== undefined) {
+    const effects = value.birthEffects;
+    if (!isObject(effects))
+      issues.push({ path: `${path}.birthEffects`, message: 'expected an object' });
+    else {
+      if (
+        !Array.isArray(effects.enabledBuffs) ||
+        effects.enabledBuffs.some(key => typeof key !== 'string') ||
+        new Set(effects.enabledBuffs).size !== effects.enabledBuffs.length
+      )
+        issues.push({
+          path: `${path}.birthEffects.enabledBuffs`,
+          message: 'expected unique enabled birth buff keys',
+        });
+    }
+  }
   if (!isObject(value.source)) {
     issues.push({ path: `${path}.source`, message: 'expected an object' });
   } else if (value.source.kind === 'prefab') {
     requireString(value.source, 'enemyId', `${path}.source`, issues);
+    requirePositiveInteger(value.source.level, `${path}.source.level`, issues);
+  } else if (value.source.kind === 'stage') {
+    if (value.source.spawnId !== undefined)
+      requireString(value.source, 'spawnId', `${path}.source`, issues);
+    for (const key of ['stageId', 'enemyId', 'templateId'])
+      requireString(value.source, key, `${path}.source`, issues);
     requirePositiveInteger(value.source.level, `${path}.source.level`, issues);
   } else if (value.source.kind === 'custom') {
     requirePositiveInteger(value.source.level, `${path}.source.level`, issues);
@@ -140,7 +165,34 @@ export function validateEnemy(value: unknown, path: string, issues: ValidationIs
       );
     }
   }
-  validateEditedFields(value.edited, enemyEditableFields, `${path}.edited`, issues);
+}
+
+export function validateEnemyInstances(
+  value: readonly unknown[],
+  pathForIndex: (index: number) => string,
+  issues: ValidationIssue[],
+): void {
+  const identities = new Set<string>();
+  value.forEach((instance, index) => {
+    const itemPath = pathForIndex(index);
+    if (!isObject(instance)) {
+      issues.push({ path: itemPath, message: 'expected an object' });
+      return;
+    }
+    if (typeof instance.id !== 'string' || !instance.id.trim())
+      issues.push({ path: `${itemPath}.id`, message: 'expected a non-empty enemy instance id' });
+    else if (
+      instance.id !== 'enemy' &&
+      (!instance.id.startsWith('enemy:') || !instance.id.slice(6).trim())
+    )
+      issues.push({ path: `${itemPath}.id`, message: 'expected enemy or enemy:<instance id>' });
+    else if (identities.has(instance.id))
+      issues.push({ path: `${itemPath}.id`, message: 'duplicate enemy instance id' });
+    else identities.add(instance.id);
+    if (instance.name !== undefined && typeof instance.name !== 'string')
+      issues.push({ path: `${itemPath}.name`, message: 'expected a string' });
+    validateEnemy(instance.enemy, `${itemPath}.enemy`, issues);
+  });
 }
 
 export function validateBattle(value: unknown, path: string, issues: ValidationIssue[]): void {
@@ -148,21 +200,29 @@ export function validateBattle(value: unknown, path: string, issues: ValidationI
     issues.push({ path, message: 'expected an object' });
     return;
   }
+  if (value.enemyAutomaticDeath !== undefined)
+    requireBoolean(value.enemyAutomaticDeath, `${path}.enemyAutomaticDeath`, issues);
   requireNonNegativeInteger(value.prepFrames, `${path}.prepFrames`, issues);
   requirePositiveInteger(value.durationFrames, `${path}.durationFrames`, issues);
-  if (
-    value.reactionCriticalOverrides !== undefined &&
-    (!isObject(value.reactionCriticalOverrides) ||
-      Object.entries(value.reactionCriticalOverrides).some(
-        ([key, flag]) => key.length === 0 || typeof flag !== 'boolean',
-      ))
-  ) {
-    issues.push({
-      path: `${path}.reactionCriticalOverrides`,
-      message: 'expected non-empty hit keys mapped to booleans',
-    });
+  for (const field of HIT_OVERRIDE_FIELDS) {
+    const overrides = value[field];
+    if (overrides === undefined) continue;
+    if (!isObject(overrides)) {
+      issues.push({ path: `${path}.${field}`, message: 'expected an object' });
+      continue;
+    }
+    for (const [key, mark] of Object.entries(overrides)) {
+      const markPath = `${path}.${field}[${JSON.stringify(key)}]`;
+      if (!isHitIdentity(key)) issues.push({ path: markPath, message: 'invalid hit identity' });
+      if (field === 'hitWeaknessBreaks' && isObject(mark)) {
+        if (typeof mark.stagger !== 'number' || !Number.isFinite(mark.stagger) || mark.stagger < 0)
+          issues.push({
+            path: `${markPath}.stagger`,
+            message: 'expected a finite non-negative number',
+          });
+      } else requireBoolean(mark, markPath, issues);
+    }
   }
-
   if (value.random !== undefined) {
     const randomPath = `${path}.random`;
     if (!isObject(value.random)) {

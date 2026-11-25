@@ -1,3 +1,4 @@
+import type { CompiledAbilityEntityChildSkillProgram } from './combatProgram';
 import type { CompiledStepForKind } from './compiledGraphData.ts';
 /** 携带内联宿主的动作编译；入口绑定由调用方提供，不依赖树编译器。 */
 import type { CombatStepKind, LevelValues } from '../game-data/operatorDefinition';
@@ -11,14 +12,16 @@ import {
   type BindProgramResource,
 } from './compileProgramDefinitions';
 
-export type NestedActionKind = 'launchProjectile' | 'spawnAbilityEntity' | 'applyBuff';
+export type NestedActionKind =
+  'launchProjectile' | 'spawnAbilityEntity' | 'applyBuff' | 'setHealthFloor';
 export function isNestedAction<Step extends { kind: CombatStepKind }>(
   step: Step,
 ): step is Extract<Step, { kind: NestedActionKind }> {
   return (
     step.kind === 'launchProjectile' ||
     step.kind === 'spawnAbilityEntity' ||
-    step.kind === 'applyBuff'
+    step.kind === 'applyBuff' ||
+    step.kind === 'setHealthFloor'
   );
 }
 export function compileNestedAction(
@@ -28,31 +31,44 @@ export function compileNestedAction(
   compileEntry: (source: ActionGraphReference, path: string) => CompiledGraphEntry,
   resolveEntity: (id: string, path: string) => void,
   bindResource: BindProgramResource,
+  callbackSkills: ReadonlyMap<string, CompiledAbilityEntityChildSkillProgram> = new Map(),
 ): ResolvedCombatStepForKind<NestedActionKind> {
-  const definitions = createProgramDefinitionCompiler(skillLevel, compileEntry, bindResource);
+  const definitions = createProgramDefinitionCompiler(
+    skillLevel,
+    compileEntry,
+    bindResource,
+    callbackSkills,
+  );
   const keyed = step.key === undefined ? {} : { key: step.key };
   switch (step.kind) {
+    case 'setHealthFloor':
+      return {
+        ...keyed,
+        kind: step.kind,
+        parameters: step.parameters,
+        ...(step.afterSet === undefined
+          ? {}
+          : { afterSet: compileEntry(step.afterSet, `${path}.afterSet`) }),
+      };
     case 'launchProjectile': {
-      const timing = step.parameters.finish;
-      if (typeof timing === 'number') {
-        if (!Number.isFinite(timing) || timing <= 0)
-          throw new RangeError(`${path}: invalid projectile duration`);
-      } else if (
-        timing !== 'firstTickReach' &&
-        timing !== 'firstTickBlock' &&
-        (!Number.isSafeInteger(timing.reachAfterTicks) ||
-          timing.reachAfterTicks < 1 ||
-          !Number.isFinite(timing.maxDurationSeconds) ||
-          timing.maxDurationSeconds <= 0)
-      ) {
-        throw new RangeError(`${path}: invalid projectile reach timing`);
-      }
+      const parameters = step.parameters;
+      const schedule = parameters.schedule ?? {
+        endFrame: 0,
+        callbacks: step.callbacks.map(route => ({ event: route.event, triggerFrames: [0] })),
+      };
       const recycle = step.parameters.recycleDelaySeconds ?? 0;
       if (!Number.isFinite(recycle) || recycle < 0)
         throw new RangeError(`${path}: invalid projectile recycle delay`);
       return {
         ...keyed,
         ...step,
+        parameters: {
+          ...parameters,
+          schedule,
+          ...(step.callbacks.some(callback => callback.event === 'hit')
+            ? { hit: parameters.hit ?? {} }
+            : {}),
+        },
         callbacks: step.callbacks.map(({ event, skill }, index) => ({
           event,
           skill: definitions.childSkill(skill, `${path}.callbacks[${index}].skill`),

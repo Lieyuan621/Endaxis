@@ -199,7 +199,8 @@ describe('validateSkillDefinition', () => {
       kind: 'applyPhysicalInfliction',
       parameters: {
         type: 'fracture',
-        target: 'enemy',
+        target: { kind: 'fixed' as const, target: 'enemy' as const },
+        source: { kind: 'fixed' as const, target: 'caster' as const },
         isExtra: false,
       },
     };
@@ -216,7 +217,8 @@ describe('validateSkillDefinition', () => {
     const step: Record<string, unknown> = {
       kind: 'heal',
       parameters: {
-        target: 'controlledOperator',
+        target: { kind: 'mainCharacter' },
+        healer: { kind: 'source' },
         attribute: 'will',
         multiplier: [1, 2],
         addition: { kind: 'blackboard', key: 'base' },
@@ -236,7 +238,8 @@ describe('validateSkillDefinition', () => {
     const step: Record<string, unknown> = {
       kind: 'heal',
       parameters: {
-        target: 'controlledOperator',
+        target: { kind: 'mainCharacter' },
+        healer: { kind: 'source' },
         amount: { kind: 'blackboard', key: 'final_heal_value' },
         tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
       },
@@ -273,11 +276,10 @@ describe('validateSkillDefinition', () => {
     expect(validateSkillDefinition(definition)).toEqual([]);
   });
 
-  it('严格校验时间膨胀中的能力实体 ID 与 Context 查询', () => {
+  it('严格校验时间膨胀中的能力实体 Context 查询', () => {
     const queries: Array<Record<string, unknown>> = [
       {
         kind: 'ownerSpawned',
-        abilityEntityIds: ['abilityentity_test'],
       },
       { kind: 'context', contextKey: 'mirrors' },
     ];
@@ -299,19 +301,52 @@ describe('validateSkillDefinition', () => {
 
     expect(validateSkillDefinition(definition)).toEqual([]);
 
-    queries[0]!.abilityEntityIds = [];
     queries[1]!.contextKey = '';
 
     expect(validateSkillDefinition(definition)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          path: `${nodeActionPath('step-0')}.parameters.abilityEntityTargets[0].abilityEntityIds`,
-          message: 'expected a non-empty array',
-        }),
-        expect.objectContaining({
           path: `${nodeActionPath('step-0')}.parameters.abilityEntityTargets[1].contextKey`,
           message: 'expected a non-empty string',
         }),
+      ]),
+    );
+  });
+
+  it('实体时缓允许空目标列表，但不允许遗漏目标字段', () => {
+    const parameters: Record<string, unknown> = {
+      scope: 'entity',
+      durationSeconds: { kind: 'constant', value: 1 },
+      slot: 'Test/TimeSlot1',
+      priority: 2,
+      curve: { kind: 'named', key: 'ComboSkill' },
+      finishByAction: false,
+      targets: [],
+    };
+    const definition = skillWithSteps([{ kind: 'startTimeDilation', parameters }]);
+    expect(validateSkillDefinition(definition)).toEqual([]);
+    delete parameters.targets;
+    expect(validateSkillDefinition(definition)).toContainEqual(
+      expect.objectContaining({ message: 'expected array' }),
+    );
+  });
+
+  it('命中停顿单独校验攻击者、受击查询和影响范围', () => {
+    const parameters = {
+      scope: 'hitStop',
+      durationSeconds: { kind: 'constant', value: 1 },
+      priority: 2,
+      curve: { kind: 'named', key: 'ComboSkill' },
+      attacker: { kind: 'source' },
+      targets: { kind: 'inputTarget' },
+      affectType: 'Both',
+    };
+    const definition = skillWithSteps([{ kind: 'startTimeDilation', parameters }]);
+    expect(validateSkillDefinition(definition)).toEqual([]);
+    parameters.affectType = 'unknown';
+    expect(validateSkillDefinition(definition)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: `${nodeActionPath('step-0')}.parameters.affectType` }),
       ]),
     );
   });
@@ -759,7 +794,17 @@ describe('validateSkillDefinition', () => {
           kind: 'mergeContextTargets',
           parameters: {
             saveToContextKey: 'source',
-            sources: [{ kind: 'abilitySystemSource', owner }],
+            sources: [
+              {
+                kind: 'abilitySystemSource',
+                owner:
+                  owner === 'actionSource'
+                    ? { kind: 'source' }
+                    : owner === 'actionOwner'
+                      ? { kind: 'owner' }
+                      : owner,
+              },
+            ],
           },
         },
       ]);
@@ -810,7 +855,7 @@ describe('validateSkillDefinition', () => {
         kind: 'mergeContextTargets',
         parameters: {
           saveToContextKey: 'source',
-          sources: [{ kind: 'target', target: 'buffSource' }],
+          sources: [{ kind: 'source' }],
         },
       },
       second,

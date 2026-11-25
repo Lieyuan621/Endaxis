@@ -86,7 +86,8 @@ it('导电图标跟随真实等级升级、封顶和重新施加', async () => {
     entry =>
       entry.event === 'DamageApplied' && [73, 144, 324, 564, 774, 1084].includes(entry.frame),
   );
-  expect(hits.map(entry => entry.data?.['damageScale:normal:defender'])).toEqual([
-    1.12, 1.16, 1.2, 1.24, 1.24, 1.16,
-  ]);
+  // 原生 StoreAttributeValue 写回 float；不要求二进制浮点等于十进制字面量。
+  expect(hits.map(entry => entry.data?.['damageScale:normal:defender'])).toEqual(
+    [1.12, 1.16, 1.2, 1.24, 1.24, 1.16].map(value => expect.closeTo(value, 7)),
+  );
 });

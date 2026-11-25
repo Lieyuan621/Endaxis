@@ -18,7 +18,6 @@ interface LegacyProjectImporter {
   migrate(input: unknown): LegacyMigrationResult;
 }
 import {
-  ENEMY_EDITABLE_FIELDS,
   PROJECT_FPS,
   PROJECT_KIND,
   PROJECT_SCHEMA_VERSION,
@@ -434,27 +433,33 @@ function migrateScenario(
     name: string(wrapper.name) ?? `Legacy scenario ${scenarioIndex + 1}`,
     tracks: tracks as TrackListDocument,
     connections: migrateConnections(source, scenarioId, tracks as TrackListDocument, warnings),
-    enemy: {
-      source:
-        enemyDefinition === null || enemyId === null
-          ? { kind: 'custom', level: enemyLevel }
-          : { kind: 'prefab', enemyId, level: enemyLevel },
-      rank: enemyDefinition?.rank ?? 'mob',
-      editable: {
-        hp: number(constants.enemyHp) ?? 100000,
-        defense: number(constants.def) ?? 100,
-        superArmor: number(constants.superArmor) ?? 0,
-        finisherMultiplier: number(constants.finisherMultiplier) ?? 1,
-        resistances: resistance,
-        stagger: {
-          maximum: number(constants.maxStagger) ?? 300,
-          knotThresholds,
-          knotBreakDurationFrames: integer(constants.staggerNodeDuration) ?? 60,
-          brokenDurationFrames: integer(constants.staggerBreakDuration) ?? 300,
-          finisherSpRecovery: number(constants.executionRecovery) ?? 100,
+    level: {
+      kind: 'singleEnemy',
+      enemy: {
+        id: 'enemy',
+        name: '',
+        enemy: {
+          source:
+            enemyDefinition === null || enemyId === null
+              ? { kind: 'custom', level: enemyLevel }
+              : { kind: 'prefab', enemyId, level: enemyLevel },
+          rank: enemyDefinition?.rank ?? 'mob',
+          editable: {
+            hp: number(constants.enemyHp) ?? 100000,
+            defense: number(constants.def) ?? 100,
+            superArmor: number(constants.superArmor) ?? 0,
+            finisherMultiplier: number(constants.finisherMultiplier) ?? 1,
+            resistances: resistance,
+            stagger: {
+              maximum: number(constants.maxStagger) ?? 300,
+              knotThresholds,
+              knotBreakDurationFrames: integer(constants.staggerNodeDuration) ?? 60,
+              brokenDurationFrames: integer(constants.staggerBreakDuration) ?? 300,
+              finisherSpRecovery: number(constants.executionRecovery) ?? 100,
+            },
+          },
         },
       },
-      edited: [...ENEMY_EDITABLE_FIELDS],
     },
     battle: {
       prepFrames: integer(source.prepDuration) ?? 0,

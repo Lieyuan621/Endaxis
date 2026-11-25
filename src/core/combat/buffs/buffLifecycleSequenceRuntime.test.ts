@@ -10,10 +10,7 @@ import type {
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type { DamageTag } from '../../game-data/operatorDefinition';
 import { LogicalAbilityEntityRuntime } from '../abilities/logicalAbilityEntityRuntime';
-import {
-  ProjectileLifecycleRuntime,
-  type ProjectileFinishTiming,
-} from '../abilities/projectileLifecycleRuntime';
+import { ProjectileLifecycleRuntime } from '../abilities/projectileLifecycleRuntime';
 import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
@@ -473,10 +470,10 @@ describe('attachBuffLifecycleSequences', () => {
     );
     const originalProjectiles = new ProjectileLifecycleRuntime();
     const originalProjectile = originalProjectiles.launch({
-      finishDelaySeconds: 'firstTickReach',
+      schedule: { endFrame: 1, callbacks: [] },
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 1 / 30,
-      finish: () => {},
+
       beforeReset: () => {},
     });
     originalDispatcher.dispatch(
@@ -538,7 +535,7 @@ describe('attachBuffLifecycleSequences', () => {
     restoredProjectiles.bindRestoredRelations({
       resolveHost: () => ({
         resolveTickDeltaSeconds: () => 1 / 30,
-        finish: () => {},
+
         beforeReset: () => {},
       }),
     });
@@ -665,24 +662,26 @@ describe('attachBuffLifecycleSequences', () => {
       [false, true].flatMap(hasSource =>
         (
           [
-            { name: 'duration', finish: 1, finishTicks: 8, recycleDelay: 0, recycleTicks: 1 },
             {
-              name: 'presentation',
-              finish: 'firstTickReach',
+              name: 'long',
+              finishTicks: 8,
+              recycleDelay: 0,
+              recycleTicks: 1,
+            },
+            {
+              name: 'short',
               finishTicks: 1,
               recycleDelay: 0.25,
               recycleTicks: 2,
             },
             {
-              name: 'segments',
-              finish: { reachAfterTicks: 2, maxDurationSeconds: 2 },
+              name: 'medium',
               finishTicks: 2,
               recycleDelay: 0.25,
               recycleTicks: 2,
             },
           ] satisfies readonly {
             name: string;
-            finish: ProjectileFinishTiming;
             finishTicks: number;
             recycleDelay: number;
             recycleTicks: number;
@@ -692,7 +691,7 @@ describe('attachBuffLifecycleSequences', () => {
     ),
   )(
     'SkillAffix独立编号与投射物引用 processing=$processing hasSource=$hasSource lifetime=$name',
-    ({ processing, hasSource, finish: finishTiming, finishTicks, recycleDelay, recycleTicks }) => {
+    ({ processing, hasSource, finishTicks, recycleDelay, recycleTicks }) => {
       const container = new CombatBuffContainer<never>('owner', new CombatAttributeSet<never>());
       const dispatcher = new AbilityEventDispatcher<
         AbilityResponseEventName,
@@ -826,10 +825,13 @@ describe('attachBuffLifecycleSequences', () => {
       const projectiles = new ProjectileLifecycleRuntime();
       let projectileDelta: number | null = 0.125;
       const projectile = projectiles.launch({
-        finishDelaySeconds: finishTiming,
+        schedule: {
+          endFrame: Math.floor(finishTicks * 0.125 * 30),
+          callbacks: [],
+        },
         recycleDelaySeconds: recycleDelay,
         resolveTickDeltaSeconds: () => projectileDelta,
-        finish: () => {},
+
         beforeReset: () => {},
       });
       dispatcher.dispatch(
@@ -1307,6 +1309,9 @@ describe('attachBuffLifecycleSequences', () => {
     const operations: CombatOperationExecutor = {
       execute(step, context): boolean {
         if (step.kind === 'findOwnerSpawnedAbilityEntities') {
+          expect(context!.targetContext!.get('inherited')).toEqual([
+            { kind: 'enemy', enemyId: 'enemy' },
+          ]);
           context!.targetContext!.set('seals', [
             { kind: 'abilityEntity', instanceId: 11 },
             { kind: 'abilityEntity', instanceId: 12 },
@@ -1330,7 +1335,6 @@ describe('attachBuffLifecycleSequences', () => {
                 parameters: {
                   owner: { kind: 'source' },
                   saveToContextKey: 'seals',
-                  abilityEntityIds: ['seal'],
                 },
               },
               next: 'loop',
@@ -1357,8 +1361,14 @@ describe('attachBuffLifecycleSequences', () => {
     );
     const container = new CombatBuffContainer<never>('enemy', new CombatAttributeSet<never>());
 
-    container.add(definition, 'operator');
-
+    const inheritedTargetGroups = {
+      groups: new Map([['inherited', [{ kind: 'enemy' as const, enemyId: 'enemy' }]]]),
+    };
+    const buff = container.add(definition, 'operator', { inheritedTargetGroups });
+    inheritedTargetGroups.groups.clear();
+    expect(buff!.runtimeState.actionHost!.targets.groups.get('inherited')).toEqual([
+      { kind: 'enemy', enemyId: 'enemy' },
+    ]);
     expect(reached).toEqual([11, 12]);
   });
 
@@ -1547,7 +1557,8 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'damage-listener', stackingType: 'unique' },
       {},
-      () => new EventContextConditionExecutor(new TargetContextOperationExecutor('enemy', terminal)),
+      () =>
+        new EventContextConditionExecutor(new TargetContextOperationExecutor('enemy', terminal)),
       undefined,
       [
         {
@@ -1609,7 +1620,7 @@ describe('attachBuffLifecycleSequences', () => {
         return dispatcher.registerAction(event, priority, context =>
           handle(context, {
             inputTarget: { kind: 'operator', operatorId: context.payload.sourceId! },
-            triggerTarget: { kind: 'enemy' },
+            triggerTarget: { kind: 'enemy', enemyId: 'enemy' },
           }),
         );
       },
@@ -1629,8 +1640,7 @@ describe('attachBuffLifecycleSequences', () => {
             ...createKillEvent(sourceId).payload,
             sourceId,
             targetId: 'enemy',
-            tags,
-            features: [],
+            tags: tags,
           },
         },
         [],
@@ -1859,7 +1869,6 @@ describe('attachBuffLifecycleSequences', () => {
             sourceId: 'seal',
             targetId: 'enemy',
             tags: ['normalSkill'],
-            features: [],
           },
         },
         [],
@@ -2235,7 +2244,7 @@ describe('attachBuffLifecycleSequences', () => {
           reached.push([
             step.parameters.eventName,
             context?.actionSourceId,
-            context?.actionInputTarget,
+            context?.actionInputTargets?.[0],
           ]);
           return true;
         },
@@ -2313,7 +2322,7 @@ describe('attachBuffLifecycleSequences', () => {
             context?.actionSourceId,
             buff.enhanceCount,
             context?.buffSourceId,
-            context?.actionInputTarget,
+            context?.actionInputTargets?.[0],
           ]);
           return true;
         },
@@ -2362,6 +2371,14 @@ describe('attachBuffLifecycleSequences', () => {
     '点燃结束只由实际结束入口通知：%s',
     finishMode => {
       const reached: string[] = [];
+      const originalTransfer = {
+        currentMainBodyId: 'enemy',
+        mainBodyToPart: new Map([['enemy', 'old-part']]),
+      };
+      const igniteTransfer = {
+        currentMainBodyId: 'enemy',
+        mainBodyToPart: new Map([['enemy', 'new-part']]),
+      };
       const cast = {
         skillCastId: 52,
         originSkillId: 'ignite-skill',
@@ -2371,9 +2388,13 @@ describe('attachBuffLifecycleSequences', () => {
       const terminal: CombatOperationExecutor = {
         execute: (_step, context) => {
           reached.push(context?.buffSourceId ?? '<missing>');
+          expect(context?.partTransferInfo).toEqual(igniteTransfer);
           expect(context?.skillCastInfo).toEqual(cast);
           expect(context?.actionSourceId).toBe('original-source');
-          expect(context?.actionInputTarget).toEqual({ kind: 'operator', operatorId: 'operator' });
+          expect(context?.actionInputTargets?.[0]).toEqual({
+            kind: 'operator',
+            operatorId: 'operator',
+          });
           if (finishMode !== 'deferred')
             container.finishInstance(buff, finishMode, 'nested-source', cast);
           return true;
@@ -2419,14 +2440,18 @@ describe('attachBuffLifecycleSequences', () => {
       );
       const container = new CombatBuffContainer<never>('enemy', new CombatAttributeSet<never>());
       const originalCast = { ...cast, skillCastId: 12, originSkillId: 'original-skill' };
-      const buff = container.add(definition, 'original-source', { skillCastInfo: originalCast })!;
+      const buff = container.add(definition, 'original-source', {
+        skillCastInfo: originalCast,
+        partTransferInfo: originalTransfer,
+      })!;
       const consumed: unknown[] = [];
       container.configureConsumedObserver((instance, sourceId, layers, finishCast) => {
         consumed.push({ instance, sourceId, layers, finishCast });
       });
 
       expect(container.ignite('PhysicalStatus', 'operator')).toBe(0);
-      expect(container.ignite('EndminUlt', 'operator', cast)).toBe(1);
+      expect(container.ignite('EndminUlt', 'operator', cast, igniteTransfer)).toBe(1);
+      expect(buff.runtimeState.partTransferInfo).toEqual(originalTransfer);
       expect(reached).toEqual(
         finishMode === 'deferred' ? ['original-source', 'original-source'] : ['original-source'],
       );

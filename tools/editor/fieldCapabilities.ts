@@ -219,9 +219,7 @@ export function collectFieldCapabilities(
           supportsStructuredValue(
             field.valueSchema,
             field.valueSchema.references,
-            surface === 'action'
-              ? graphOperandSchemas(field.valueSchema, root, field.path)
-              : undefined,
+            graphOperandSchemas(field.valueSchema, root, field.path),
             surface === 'action'
               ? graphSequenceBoundaries(field.valueSchema, root, field.path)
               : undefined,

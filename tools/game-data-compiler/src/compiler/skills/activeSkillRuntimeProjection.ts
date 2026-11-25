@@ -21,11 +21,11 @@ import type {
   CombatActionProjectionExtensionsSource,
 } from '../combatProjectionCommon.ts';
 import {
+  projectGameplayTags,
   isCurrentTargetRestrictedSingleEnemyTargetGroup,
   isDynamicSingleEnemyTagTargetGroup,
   isPartyHitBoxTargetGroup,
   isStaticSingleEnemyTargetGroup,
-  isUniqueEnemyMainTargetInstantSearch,
   isZeroSpaceSingleEnemySmartTargetGroup,
 } from '../combatProjectionCommon.ts';
 import { evaluateFixedScenarioCondition } from '../conditions/combatConditionProjection.ts';
@@ -37,6 +37,7 @@ import {
 } from '../optimization/nativeSequenceOptimization.ts';
 import { collectUnobservedTargetQueryOutputs } from '../optimization/nativeTargetUsage.ts';
 import {
+  collectRandomPointTargetGroupKeys,
   compareKnownNumbers,
   isStaticControlledOperatorWrite,
   isStaticZeroSpacePointWrite,
@@ -73,6 +74,7 @@ export type CompiledActiveSkillTimelineSequenceSource = Readonly<
  * 原生时长与技能块宽度仍分别保留；技能等级的具体取值由最终消费者选择。
  */
 export interface CompiledActiveSkillRuntimeProjectionSource {
+  readonly skillTags?: SkillDefinition['skillTags'];
   readonly normalSkillSubType?: SkillDefinition['normalSkillSubType'];
   readonly actionGraph: ActionGraphResourceDefinition;
   readonly skillId: string;
@@ -81,6 +83,7 @@ export interface CompiledActiveSkillRuntimeProjectionSource {
   readonly exclusiveFrame: number;
   readonly offsetRecordFrame: number;
   readonly dontInterruptCombo?: boolean;
+  readonly switchToCenterBeforeCast?: boolean;
   /**
    * 原生输入窗口的编译期证据。它只供最终技能组装配选择“下一段”窗口，
    * 不属于 Endaxis 运行时技能契约，也不能直接按最早帧压成技能块宽度。
@@ -91,7 +94,6 @@ export interface CompiledActiveSkillRuntimeProjectionSource {
     readonly skillIds: readonly string[];
     readonly direct: boolean;
   }[];
-  readonly inputWindows?: SkillDefinition['inputWindows'];
   readonly blackboard: NonNullable<SkillDefinition['blackboard']>;
   readonly scheduledSequences: readonly CompiledActiveSkillTimelineSequenceSource[];
   /** 默认施放的目标；省略时由调用方提供，不能回退到敌人。 */
@@ -322,8 +324,6 @@ function collectGuardedProjectilePaths(
  */
 function evaluateStaticStumpConditionSequence(
   sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
-  staticEnemyTargetGroupKeys: ReadonlySet<string>,
-  context?: CombatActionProjectionContextSource,
 ): boolean | undefined {
   if (sequence.onlyExecuteWhenSourceIsMainCharacter || sequence.onlyExecuteWhenSourceIsGuard)
     return undefined;
@@ -335,49 +335,7 @@ function evaluateStaticStumpConditionSequence(
     const fixedResult = evaluateFixedScenarioCondition(condition);
     if (fixedResult === false) return false;
     if (fixedResult === true) continue;
-    if (condition.kind === 'entityCount') {
-      const knownSingleton =
-        (condition.targetSource === 'Context' &&
-          staticEnemyTargetGroupKeys.has(condition.targetGroupKey)) ||
-        (condition.target !== undefined && isUniqueEnemyMainTargetInstantSearch(condition.target));
-      if (
-        !knownSingleton ||
-        condition.containsHittableTarget ||
-        condition.excludeDeadEntity ||
-        condition.storeKey !== ''
-      )
-        return undefined;
-      const result = compareKnownNumbers(1, condition.comparison, condition.minimumCount);
-      if (result === undefined) return undefined;
-      if (!result) return false;
-      continue;
-    }
-    if (condition.kind === 'distance') {
-      const isKnownOperator = (target: TargetReferenceSource) =>
-        target.targetSource === 'MainCharacter' ||
-        (target.targetSource === 'Owner' && context?.actionOwnerTarget === 'caster') ||
-        (target.targetSource === 'Source' && context?.actionSourceTarget === 'caster');
-      const sourceIsMainCharacter = isKnownOperator(condition.source);
-      const targetIsMainCharacter = isKnownOperator(condition.target);
-      const sourceIsStaticEnemy =
-        condition.source.targetSource === 'Context' &&
-        staticEnemyTargetGroupKeys.has(condition.source.targetGroupKey);
-      const targetIsStaticEnemy =
-        condition.target.targetSource === 'Context' &&
-        staticEnemyTargetGroupKeys.has(condition.target.targetGroupKey);
-      if (
-        condition.containsHittableObject ||
-        !(
-          (sourceIsMainCharacter && targetIsStaticEnemy) ||
-          (targetIsMainCharacter && sourceIsStaticEnemy)
-        )
-      )
-        return undefined;
-      // lessThan=true 的原生语义是 <=。纳入非负目标半径只会让
-      // MainCharacter 到唯一木桩的有效距离更小；因此这里只证明 <= 非负阈值的真值。
-      if (!condition.lessThan || condition.distance < 0) return undefined;
-      continue;
-    }
+    // 目标类型不能证明目标存在或数量；即便坐标重合，空目标的距离判断也须运行时求值。
     return undefined;
   }
   return true;
@@ -385,7 +343,6 @@ function evaluateStaticStumpConditionSequence(
 
 function collectReachableTargetGroupActions(
   sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
-  staticEnemyTargetGroupKeys: ReadonlySet<string>,
 ): TargetGroupActionSource[] {
   const result: TargetGroupActionSource[] = [];
   const visit = (current: NativeSequenceSource<KnownNativeActionLeafSource>): void => {
@@ -398,10 +355,7 @@ function collectReachableTargetGroupActions(
       }
       switch (body.kind) {
         case 'ifElse': {
-          const value = evaluateStaticStumpConditionSequence(
-            body.condition,
-            staticEnemyTargetGroupKeys,
-          );
+          const value = evaluateStaticStumpConditionSequence(body.condition);
           visit(body.condition);
           if (value === true) visit(body.whenTrue);
           else if (value === false) visit(body.whenFalse);
@@ -786,18 +740,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   );
   const targetGroupWrites = timelineTargetGroupWrites.flat();
   const writesByKey = Map.groupBy(targetGroupWrites, write => write.targetGroupKey);
-  const randomPointTargetGroupKeys = new Set<string>();
-  for (const [key, writes] of writesByKey) {
-    const randomPointWrites = writes.filter(write => write.finderType === 'RandomPointFinder');
-    if (randomPointWrites.length === 0) continue;
-    if (
-      randomPointWrites.length !== writes.length ||
-      randomPointWrites.some(write => write.finderRandomPointCount === undefined)
-    ) {
-      throw new Error(`Context ${JSON.stringify(key)} mixes RandomPoint and incompatible writes`);
-    }
-    randomPointTargetGroupKeys.add(key);
-  }
+  const randomPointTargetGroupKeys = collectRandomPointTargetGroupKeys(writesByKey);
   const allActionNodes = graph.actionGroup.timelineActions.flatMap(timeline =>
     collectNativeActionNodes(timeline.sequence),
   );
@@ -892,7 +835,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   while (enemyClosureChanged) {
     enemyClosureChanged = false;
     const reachableWrites = graph.actionGroup.timelineActions.flatMap(timeline =>
-      collectReachableTargetGroupActions(timeline.sequence, staticEnemyTargetGroupKeys),
+      collectReachableTargetGroupActions(timeline.sequence),
     );
     const reachableWritesByKey = Map.groupBy(reachableWrites, write => write.targetGroupKey);
     for (const [key, writes] of reachableWritesByKey) {
@@ -933,6 +876,68 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
       ) {
         singleEnemyTargetGroupKeys.add(key);
         singleEnemyClosureChanged = true;
+      }
+    }
+  }
+  // 成员类型与数量分别传播。标签、优先级及限数只过滤成员，不把敌人变成其他对象。
+  const enemyTargetGroupKeys = new Set(singleEnemyTargetGroupKeys);
+  let enemyTypeChanged = true;
+  while (enemyTypeChanged) {
+    enemyTypeChanged = false;
+    for (const [key, writes] of writesByKey) {
+      if (enemyTargetGroupKeys.has(key) || writes.length === 0) continue;
+      if (
+        !writes.every(write => {
+          const enemyFinder =
+            input.context.actionOwnerTarget === 'caster' &&
+            write.producerType === 'FindTargetAction' &&
+            write.selectorOwner === 'ActionOwner' &&
+            (write.finderType === 'AllEnemyFinder' ||
+              write.finderType === 'InFightEnemyFinder' ||
+              (write.finderType === 'HitBoxFinder' &&
+                write.finderFactionTarget === 'Anti' &&
+                write.finderAutoSetTargetFaction !== false &&
+                (write.finderTargetObjectType === 'Normal' ||
+                  write.finderTargetObjectType === 'NoInteractive'))) &&
+            write.postProcessorTypes.every(type =>
+              [
+                'PriorityFilter',
+                'ExcludeTarget',
+                'ShuffleTarget',
+                'ReplacePartWithMainBody',
+              ].includes(type),
+            );
+          return (
+            enemyFinder ||
+            isAtMostSingleEnemyMerge(write, enemyTargetGroupKeys) ||
+            isAtMostSingleEnemyConversion(write, enemyTargetGroupKeys)
+          );
+        })
+      )
+        continue;
+      enemyTargetGroupKeys.add(key);
+      enemyTypeChanged = true;
+    }
+  }
+  // 原生无目标分支可能写入位置；CreateBuff 会跳过位置，实体宿主仍只能是敌人。
+  // 单独保留此证明，不能把位置目标纳入 enemyTargetGroupKeys。
+  const enemyOrSpatialTargetGroupKeys = new Set(enemyTargetGroupKeys);
+  let enemyOrSpatialChanged = true;
+  while (enemyOrSpatialChanged) {
+    enemyOrSpatialChanged = false;
+    for (const [key, writes] of writesByKey) {
+      if (enemyOrSpatialTargetGroupKeys.has(key) || writes.length === 0) continue;
+      if (
+        writes.every(
+          write =>
+            isStaticActiveSkillEnemyTargetGroup(write) ||
+            isStaticZeroSpacePointWrite(write) ||
+            isAtMostSingleEnemyMerge(write, enemyOrSpatialTargetGroupKeys) ||
+            isAtMostSingleEnemyConversion(write, enemyOrSpatialTargetGroupKeys),
+        )
+      ) {
+        enemyOrSpatialTargetGroupKeys.add(key);
+        enemyOrSpatialChanged = true;
       }
     }
   }
@@ -1114,61 +1119,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
       ];
     });
   });
-  const commandMappings: Array<
-    NonNullable<NonNullable<SkillDefinition['inputWindows']>['commandMappings']>[number]
-  > = [];
-  const allowedNextSkills: Array<
-    NonNullable<NonNullable<SkillDefinition['inputWindows']>['allowedNextSkills']>[number]
-  > = [];
-  let hasConditionalInputActions = false;
-  for (const timeline of graph.actionGroup.timelineActions) {
-    const directNodes = new Set(timeline.sequence.actions);
-    for (const node of collectNativeActionNodes(timeline.sequence)) {
-      if (
-        !node.metadata.enabled ||
-        node.body.kind !== 'leaf' ||
-        node.body.value.family !== 'inputControl'
-      ) {
-        continue;
-      }
-      const action = node.body.value.action;
-      if (action.kind !== 'comboCache' && action.kind !== 'allowNextSkill') continue;
-      if (!directNodes.has(node)) {
-        hasConditionalInputActions = true;
-        continue;
-      }
-      if (action.kind === 'allowNextSkill') {
-        allowedNextSkills.push({
-          startFrame: timeline.startFrame,
-          endFrame: timeline.endFrame,
-          skillIds: action.skillIds,
-        });
-        continue;
-      }
-      for (const mapping of action.mappings) {
-        // RefreshNextSkillRequest 只让 Attack 映射的 skillId 决定实际技能。
-        // NormalSkill/ComboSkill 映射仅供缓存配置，随后会被当前槽位 ID 覆盖；
-        // UltimateSkill 则直接以当前终结技构造请求。
-        if (mapping.commandType !== 'Attack') continue;
-        commandMappings.push({
-          startFrame: timeline.startFrame,
-          endFrame: timeline.endFrame,
-          input: 'basicAttack',
-          targetSkillId: mapping.skillId.length === 0 ? null : mapping.skillId,
-        });
-      }
-    }
-  }
-  const inputWindows: SkillDefinition['inputWindows'] | undefined =
-    commandMappings.length === 0 && allowedNextSkills.length === 0 && !hasConditionalInputActions
-      ? undefined
-      : {
-          ...(commandMappings.length === 0 ? {} : { commandMappings }),
-          ...(allowedNextSkills.length === 0 ? {} : { allowedNextSkills }),
-          ...(hasConditionalInputActions ? { hasConditionalActions: true } : {}),
-        };
-  // 静态查询可证明单次写入的结果，却不一定支配另一时间段的读取（例如只在非主控分支写入）。
-  // 出生位置、循环、过滤器等也读取 Context；统一使用目标用途分析，不能仅保护数量条件。
+
   const presentationOnlyTargetGroupKeys = collectPresentationOnlyTargetGroups(graph);
   const materializedTargetGroupKeys = collectMaterializedTargetGroups(
     graph,
@@ -1179,6 +1130,8 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     graph: program,
     staticEnemyTargetGroupKeys,
     singleEnemyTargetGroupKeys,
+    enemyTargetGroupKeys,
+    enemyOrSpatialTargetGroupKeys,
     staticZeroSpaceTargetGroupKeys,
     atMostOneZeroSpaceTargetGroupKeys,
     provenOnlyHitProjectilePaths: guardedProjectilePaths.onlyHit,
@@ -1211,20 +1164,12 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     const activeMainCharacterSequence = timeline.sequence.onlyExecuteWhenSourceIsMainCharacter
       ? { ...timeline.sequence, onlyExecuteWhenSourceIsMainCharacter: false }
       : timeline.sequence;
-    // 入口存在性与全资源写入保持身份必须同时成立；“写入时是敌人”不证明组已创建。
-    const guaranteedEnemyGroups = new Set(
-      [...guaranteedSingletonZeroSpaceTargetGroupKeysByTimeline[timelineIndex]!].filter(
-        key =>
-          staticEnemyTargetGroupKeys.has(key) &&
-          (writesByKey.get(key) ?? []).every(isStaticActiveSkillEnemyTargetGroup),
-      ),
-    );
     const executableSequence = pruneKnownNativeBranches(
       unwrapComboQtePrototypeGuard(
         activeMainCharacterSequence,
         input.context.comboQteTriggerBlackboardKeys,
       ),
-      condition => evaluateStaticStumpConditionSequence(condition, guaranteedEnemyGroups, context),
+      condition => evaluateStaticStumpConditionSequence(condition),
     );
     const writesRuntimeTargetGroup = collectNativeActionNodes(executableSequence).some(
       node =>
@@ -1356,6 +1301,15 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   );
   return {
     skillId: graph.skillId,
+    ...((graph.skillTagIds?.length ?? 0) === 0
+      ? {}
+      : {
+          skillTags: projectGameplayTags(
+            graph.skillTagIds ?? [],
+            context,
+            input.sourcePath + '.skillTags',
+          ),
+        }),
     ...(graph.normalSkillSubType === 'AdditionalNormalSkill'
       ? { normalSkillSubType: 'additionalNormalSkill' as const }
       : {}),
@@ -1370,8 +1324,8 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     ...(requireBoolean(prepared.root.dontInterruptCombo, `${input.sourcePath}.dontInterruptCombo`)
       ? { dontInterruptCombo: true }
       : {}),
+    ...(prepared.root.switchToCenterBeforeCast === true ? { switchToCenterBeforeCast: true } : {}),
     allowNextSkillTransitions,
-    ...(inputWindows === undefined ? {} : { inputWindows }),
     // 动态声明也进入技能实例初值；补丁同名键后覆盖。
     // 此处位于动作投影输出边界，不能回灌到上面的静态解析环境消除动态引用。
     blackboard: {

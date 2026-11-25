@@ -12,16 +12,43 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 9,
+              callbacks: [{ event: 'hit', triggerFrames: [9], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0006_wolfgd_combo_skill',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: true },
+            targets: { kind: 'context', contextKey: 'bomb' },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      spawnAbilityEntity_1: {
+                        action: {
+                          kind: 'spawnAbilityEntity',
+                          parameters: {
+                            bornAt: { kind: 'inputTarget' },
+                            abilityEntityId: 'abilityentity_chr_0006_wolfgd_combo_skill',
+                            childSkillId: 'chr_0006_wolfgd_combo_skill_abilityrange',
+                            source: { kind: 'source' },
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                          },
+                        },
+                        next: null,
+                      },
+                    },
+                  },
+                  macros: {},
+                },
                 skillId: 'chr_0006_wolfgd_combo_skill_projhit',
                 nativeSkillType: 'normalSkill',
                 naturalDurationFrames: 1,
@@ -35,26 +62,6 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 0, sequence: { $sequence: 'spawnAbilityEntity_1' } },
                 ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      spawnAbilityEntity_1: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
-                            abilityEntityId: 'abilityentity_chr_0006_wolfgd_combo_skill',
-                            childSkillId: 'chr_0006_wolfgd_combo_skill_abilityrange',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                          },
-                        },
-                        next: null,
-                      },
-                    },
-                  },
-                  macros: {},
-                },
               },
             },
           ],
@@ -64,7 +71,11 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'bomb', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'bomb',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'smart_target' },
+          },
         },
         next: 'launchProjectile_1',
       },
@@ -78,9 +89,23 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_4: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0006_wolfgd_normal_skill'] },
         },
         next: null,
       },
@@ -90,6 +115,7 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = {
+  actionGraph: wulfgardChr_0006_wolfgd_combo_skillActionGraph,
   key: 'chr_0006_wolfgd_combo_skill',
   element: 'heat',
   blackboard: {
@@ -102,22 +128,18 @@ export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = {
   exclusiveFrame: 30,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 30, endFrame: 65, skillIds: ['chr_0006_wolfgd_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 12, endFrame: 16, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_3' } },
+    { startFrame: 30, endFrame: 65, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: wulfgardChr_0006_wolfgd_combo_skillActionGraph,
 };
 
 export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
@@ -127,16 +149,77 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0006_wolfgd_normal_attack',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      changeResource_2: {
+                        action: {
+                          kind: 'changeResource',
+                          parameters: {
+                            resource: 'sp',
+                            amount: { kind: 'valueNode', nodeId: 'data_1' },
+                            coefficient: { kind: 'constant', value: 0.5 },
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                            spGainKind: 'gain',
+                            spGainSource: 'normalAttack',
+                          },
+                        },
+                        next: null,
+                      },
+                      ifElse_3: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+                          whenTrue: { $sequence: 'changeResource_2' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_4: {
+                        action: {
+                          kind: 'dealDamage',
+                          parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
+                            damageType: 'heat',
+                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+                            tags: ['normalAttack'],
+                          },
+                        },
+                        next: 'ifElse_3',
+                      },
+                    },
+                    dataNodes: {
+                      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+                      data_2: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
+                      data_3: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atk_scale' },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
                 skillId: 'chr_0006_wolfgd_attack1_projhit01',
                 nativeSkillType: 'normalSkill',
                 naturalDurationFrames: 1,
@@ -150,6 +233,42 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
                 ],
+              },
+            },
+          ],
+        },
+        next: null,
+      },
+      createSpatialPointTargets_2: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'tar',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
+        },
+        next: 'launchProjectile_1',
+      },
+      launchProjectile_3: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0006_wolfgd_normal_attack',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
                 actionGraph: {
                   main: {
                     nodes: {
@@ -182,6 +301,8 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
@@ -204,33 +325,6 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                   },
                   macros: {},
                 },
-              },
-            },
-          ],
-        },
-        next: null,
-      },
-      createSpatialPointTargets_2: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'launchProjectile_1',
-      },
-      launchProjectile_3: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
-            recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
-          },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
                 skillId: 'chr_0006_wolfgd_attack1_projhit',
                 nativeSkillType: 'normalSkill',
                 naturalDurationFrames: 1,
@@ -244,6 +338,89 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
                 ],
+              },
+            },
+          ],
+        },
+        next: null,
+      },
+      createSpatialPointTargets_4: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'tar',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
+        },
+        next: 'launchProjectile_3',
+      },
+      overrideBasicAttackMapping_5: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0006_wolfgd_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_6: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0006_wolfgd_attack2'] },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const wulfgardChr_0006_wolfgd_attack1: SkillDefinition = {
+  actionGraph: wulfgardChr_0006_wolfgd_attack1ActionGraph,
+  key: 'chr_0006_wolfgd_attack1',
+  element: 'heat',
+  blackboard: {
+    atb: 0,
+    atk_scale: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
+  },
+  timelineBlockFrames: 24,
+  naturalDurationFrames: 121,
+  exclusiveFrame: 30,
+  offsetRecordFrame: 7,
+  costFrame: 13,
+  scheduledSequences: [
+    { startFrame: 7, endFrame: 7, sequence: { $sequence: 'createSpatialPointTargets_2' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'createSpatialPointTargets_4' } },
+    { startFrame: 0, endFrame: 49, sequence: { $sequence: 'overrideBasicAttackMapping_5' } },
+    { startFrame: 24, endFrame: 49, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+  ],
+  defaultTarget: 'enemy',
+  skillType: 'basicAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+};
+
+export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
+  main: {
+    nodes: {
+      launchProjectile_1: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0006_wolfgd_normal_attack_2',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
                 actionGraph: {
                   main: {
                     nodes: {
@@ -276,6 +453,8 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
@@ -298,84 +477,6 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                   },
                   macros: {},
                 },
-              },
-            },
-          ],
-        },
-        next: null,
-      },
-      createSpatialPointTargets_4: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'launchProjectile_3',
-      },
-      reachSkillOperableBoundary_5: {
-        action: {
-          kind: 'reachSkillOperableBoundary',
-          parameters: { skillIds: ['chr_0006_wolfgd_attack2'] },
-        },
-        next: null,
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const wulfgardChr_0006_wolfgd_attack1: SkillDefinition = {
-  key: 'chr_0006_wolfgd_attack1',
-  element: 'heat',
-  blackboard: {
-    atb: 0,
-    atk_scale: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
-  },
-  timelineBlockFrames: 24,
-  naturalDurationFrames: 121,
-  exclusiveFrame: 30,
-  offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 49,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0006_wolfgd_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 24, endFrame: 49, skillIds: ['chr_0006_wolfgd_attack2'] }],
-  },
-  costFrame: 13,
-  scheduledSequences: [
-    { startFrame: 7, endFrame: 7, sequence: { $sequence: 'createSpatialPointTargets_2' } },
-    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'createSpatialPointTargets_4' } },
-    { startFrame: 24, endFrame: 49, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
-  ],
-  defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0006_wolfgd_attack2',
-  skillType: 'basicAttack',
-  levelSource: 'basicAttack',
-  nativeSkillType: 'attack',
-  actionGraph: wulfgardChr_0006_wolfgd_attack1ActionGraph,
-};
-
-export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
-  main: {
-    nodes: {
-      launchProjectile_1: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
-            recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
-          },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
                 skillId: 'chr_0006_wolfgd_attack2_projhit',
                 nativeSkillType: 'normalSkill',
                 naturalDurationFrames: 1,
@@ -389,60 +490,6 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
                 ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      changeResource_2: {
-                        action: {
-                          kind: 'changeResource',
-                          parameters: {
-                            resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_1' },
-                            coefficient: { kind: 'constant', value: 0.5 },
-                            source: { kind: 'source' },
-                            targets: { kind: 'source' },
-                            spGainKind: 'gain',
-                            spGainSource: 'normalAttack',
-                          },
-                        },
-                        next: null,
-                      },
-                      ifElse_3: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                          whenTrue: { $sequence: 'changeResource_2' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      dealDamage_4: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            damageType: 'heat',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-                            tags: ['normalAttack'],
-                          },
-                        },
-                        next: 'ifElse_3',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: {
-                        type: 'boolean',
-                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-                      },
-                      data_3: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
               },
             },
           ],
@@ -452,11 +499,22 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'tar',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: 'launchProjectile_1',
       },
-      reachSkillOperableBoundary_5: {
+      overrideBasicAttackMapping_5: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0006_wolfgd_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_6: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0006_wolfgd_attack3'] },
@@ -469,6 +527,7 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const wulfgardChr_0006_wolfgd_attack2: SkillDefinition = {
+  actionGraph: wulfgardChr_0006_wolfgd_attack2ActionGraph,
   key: 'chr_0006_wolfgd_attack2',
   element: 'heat',
   blackboard: {
@@ -479,29 +538,17 @@ export const wulfgardChr_0006_wolfgd_attack2: SkillDefinition = {
   naturalDurationFrames: 129,
   exclusiveFrame: 35,
   offsetRecordFrame: 10,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 38,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0006_wolfgd_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 23, endFrame: 38, skillIds: ['chr_0006_wolfgd_attack3'] }],
-  },
   costFrame: 11,
   scheduledSequences: [
     { startFrame: 10, endFrame: 10, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 16, endFrame: 16, sequence: { $sequence: 'createSpatialPointTargets_2' } },
-    { startFrame: 23, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
+    { startFrame: 0, endFrame: 38, sequence: { $sequence: 'overrideBasicAttackMapping_5' } },
+    { startFrame: 23, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0006_wolfgd_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: wulfgardChr_0006_wolfgd_attack2ActionGraph,
 };
 
 export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
@@ -511,29 +558,21 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0006_wolfgd_normal_attack_3',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0006_wolfgd_attack3_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -566,6 +605,8 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
@@ -588,6 +629,19 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0006_wolfgd_attack3_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
+                ],
               },
             },
           ],
@@ -597,11 +651,22 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'tar',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: 'launchProjectile_1',
       },
-      reachSkillOperableBoundary_7: {
+      overrideBasicAttackMapping_7: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0006_wolfgd_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0006_wolfgd_attack4'] },
@@ -614,6 +679,7 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const wulfgardChr_0006_wolfgd_attack3: SkillDefinition = {
+  actionGraph: wulfgardChr_0006_wolfgd_attack3ActionGraph,
   key: 'chr_0006_wolfgd_attack3',
   element: 'heat',
   blackboard: {
@@ -624,30 +690,18 @@ export const wulfgardChr_0006_wolfgd_attack3: SkillDefinition = {
   naturalDurationFrames: 146,
   exclusiveFrame: 52,
   offsetRecordFrame: 12,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 52,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0006_wolfgd_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 32, endFrame: 52, skillIds: ['chr_0006_wolfgd_attack4'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 12, endFrame: 12, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 18, endFrame: 18, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 24, endFrame: 24, sequence: { $sequence: 'createSpatialPointTargets_2' } },
-    { startFrame: 32, endFrame: 52, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 0, endFrame: 52, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 32, endFrame: 52, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0006_wolfgd_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: wulfgardChr_0006_wolfgd_attack3ActionGraph,
 };
 
 export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
@@ -657,29 +711,21 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 3,
+              callbacks: [{ event: 'hit', triggerFrames: [3], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0006_wolfgd_normal_attack_4',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0006_wolfgd_attack4_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0, poise: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -712,6 +758,8 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -720,6 +768,24 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
                           },
                         },
                         next: 'ifElse_3',
+                      },
+                      findTargets_5: {
+                        action: {
+                          kind: 'findTargets',
+                          parameters: {
+                            owner: { kind: 'owner' },
+                            query: {
+                              kind: 'factionHitBox',
+                              factionTarget: 'anti',
+                              owner: { kind: 'owner' },
+                              checkAlive: true,
+                              containsUnmarkable: false,
+                              replacePartsWithMainBodies: false,
+                            },
+                            saveToContextKey: 'tar',
+                          },
+                        },
+                        next: 'dealDamage_4',
                       },
                     },
                     dataNodes: {
@@ -737,6 +803,19 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0006_wolfgd_attack4_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0, poise: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_5' } },
+                ],
               },
             },
           ],
@@ -746,7 +825,11 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'tar',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: 'launchProjectile_1',
       },
@@ -756,6 +839,7 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const wulfgardChr_0006_wolfgd_attack4: SkillDefinition = {
+  actionGraph: wulfgardChr_0006_wolfgd_attack4ActionGraph,
   key: 'chr_0006_wolfgd_attack4',
   element: 'heat',
   blackboard: {
@@ -775,14 +859,20 @@ export const wulfgardChr_0006_wolfgd_attack4: SkillDefinition = {
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: wulfgardChr_0006_wolfgd_attack4ActionGraph,
 };
 
 export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
   main: {
     nodes: {
       gainFinisherSp_4: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       ifElse_5: {
@@ -799,11 +889,13 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 1,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'ifElse_5',
@@ -812,13 +904,13 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.07 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -833,7 +925,14 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_10: {
+      reachSkillOperableBoundary_10: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0006_wolfgd_normal_skill', 'chr_0006_wolfgd_combo_skill'] },
+        },
+        next: null,
+      },
+      applyBuff_11: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -846,7 +945,7 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_11: {
+      applyBuff_12: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -876,6 +975,7 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const wulfgardChr_0006_wolfgd_power_attack: SkillDefinition = {
+  actionGraph: wulfgardChr_0006_wolfgd_power_attackActionGraph,
   key: 'chr_0006_wolfgd_power_attack',
   element: 'heat',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -884,40 +984,58 @@ export const wulfgardChr_0006_wolfgd_power_attack: SkillDefinition = {
   exclusiveFrame: 60,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 34,
-        endFrame: 58,
-        skillIds: ['chr_0006_wolfgd_normal_skill', 'chr_0006_wolfgd_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 34, endFrame: 44, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 34, endFrame: 43, sequence: { $sequence: 'ifElse_9' } },
-    { startFrame: 0, endFrame: 60, sequence: { $sequence: 'applyBuff_10' } },
-    { startFrame: 0, endFrame: 34, sequence: { $sequence: 'applyBuff_11' } },
+    { startFrame: 34, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
+    { startFrame: 0, endFrame: 60, sequence: { $sequence: 'applyBuff_11' } },
+    { startFrame: 0, endFrame: 34, sequence: { $sequence: 'applyBuff_12' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: wulfgardChr_0006_wolfgd_power_attackActionGraph,
 };
 
 export const wulfgardChr_0006_wolfgd_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       dealDamage_2: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack', 'plungingAttack'],
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_3: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0006_wolfgd_attack1'] },
         },
         next: null,
       },
@@ -928,6 +1046,7 @@ export const wulfgardChr_0006_wolfgd_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const wulfgardChr_0006_wolfgd_plunging_attack_end: SkillDefinition = {
+  actionGraph: wulfgardChr_0006_wolfgd_plunging_attack_endActionGraph,
   key: 'chr_0006_wolfgd_plunging_attack_end',
   element: 'heat',
   blackboard: { atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8] },
@@ -935,16 +1054,16 @@ export const wulfgardChr_0006_wolfgd_plunging_attack_end: SkillDefinition = {
   naturalDurationFrames: 120,
   exclusiveFrame: 20,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [{ startFrame: 8, endFrame: 20, skillIds: ['chr_0006_wolfgd_attack1'] }],
-  },
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 2, endFrame: 6, sequence: { $sequence: 'dealDamage_2' } }],
+  scheduledSequences: [
+    { startFrame: 2, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 2, endFrame: 6, sequence: { $sequence: 'dealDamage_2' } },
+    { startFrame: 8, endFrame: 20, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: wulfgardChr_0006_wolfgd_plunging_attack_endActionGraph,
 };
 
 export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
@@ -954,29 +1073,22 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: true },
+            targets: { kind: 'context', contextKey: 'smart_target' },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0006_wolfgd_normal_skill_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0, poise_first_bullet: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_1' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -984,10 +1096,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
+                            tags: ['normalSkill', 'canBreakWeakness'],
                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                           },
                         },
@@ -1007,27 +1120,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                   },
                   macros: {},
                 },
-              },
-            },
-          ],
-        },
-        next: null,
-      },
-      launchProjectile_8: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
-            recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: true },
-          },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                skillId: 'chr_0006_wolfgd_normal_skill_projhit_FireSpellInfiction',
+                skillId: 'chr_0006_wolfgd_normal_skill_projhit',
                 nativeSkillType: 'normalSkill',
                 naturalDurationFrames: 1,
                 castResource: {
@@ -1038,12 +1131,34 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                 },
                 blackboard: { atk_scale: 0, poise_first_bullet: 0 },
                 scheduledSequences: [
-                  {
-                    startFrame: 0,
-                    endFrame: 0,
-                    sequence: { $sequence: 'applyElementalInfliction_2' },
-                  },
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_1' } },
                 ],
+              },
+            },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_8: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            targets: { kind: 'context', contextKey: 'smart_target' },
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
                 actionGraph: {
                   main: {
                     nodes: {
@@ -1051,10 +1166,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
+                            tags: ['normalSkill', 'canBreakWeakness'],
                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                           },
                         },
@@ -1063,7 +1179,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                       applyElementalInfliction_2: {
                         action: {
                           kind: 'applyElementalInfliction',
-                          parameters: { element: 'heat', isExtra: false },
+                          parameters: {
+                            element: 'heat',
+                            isExtra: false,
+                            target: { kind: 'inputTarget' },
+                          },
                         },
                         next: 'dealDamage_1',
                       },
@@ -1081,27 +1201,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                   },
                   macros: {},
                 },
-              },
-            },
-          ],
-        },
-        next: null,
-      },
-      launchProjectile_7: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
-            recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: true },
-          },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                skillId: 'chr_0006_wolfgd_normal_skill_projhit_1',
+                skillId: 'chr_0006_wolfgd_normal_skill_projhit_FireSpellInfiction',
                 nativeSkillType: 'normalSkill',
                 naturalDurationFrames: 1,
                 castResource: {
@@ -1112,8 +1212,38 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                 },
                 blackboard: { atk_scale: 0, poise_first_bullet: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_1' } },
+                  {
+                    startFrame: 0,
+                    endFrame: 0,
+                    sequence: { $sequence: 'applyElementalInfliction_2' },
+                  },
                 ],
+              },
+            },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_7: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0006_wolfgd_normal_skill',
+            faction: 'good',
+            recycleDelaySeconds: 0.0333333350718021,
+            targets: { kind: 'context', contextKey: 'smart_target' },
+            entityInitialValues: {},
+            hit: {},
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
                 actionGraph: {
                   main: {
                     nodes: {
@@ -1121,10 +1251,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
+                            tags: ['normalSkill', 'canBreakWeakness'],
                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                           },
                         },
@@ -1144,6 +1275,19 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0006_wolfgd_normal_skill_projhit_1',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0, poise_first_bullet: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_1' } },
+                ],
               },
             },
           ],
@@ -1239,7 +1383,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0006_wolfgd_talent_0'] },
             desiredKey: 'duration',
             outputKey: 'duration',
@@ -1251,7 +1395,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             query: { kind: 'id', buffIds: ['buff_chr_0006_wolfgd_talent_0'] },
             desiredKey: 'add',
             outputKey: 'add',
@@ -1287,38 +1431,22 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 2,
+              callbacks: [{ event: 'hit', triggerFrames: [2], hitKind: 'arrival' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0006_wolfgd_normal_skill_plus',
+            faction: 'good',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: true },
+            targets: { kind: 'context', contextKey: 'smart_target' },
+            entityInitialValues: {},
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0006_wolfgd_normal_skill_plus_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  atk_scale_plus: 0,
-                  atk_scale_plus_fail: 0,
-                  poise_extra_bullet: 0,
-                  poise_extra_bullet_fail: 0,
-                  potential_2: 0,
-                  potential_skillpower: 0,
-                  returnskillpower: 0,
-                  talent2: 0,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_17' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -1326,10 +1454,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
+                            tags: ['normalSkill', 'canBreakWeakness'],
                             stagger: { kind: 'valueNode', nodeId: 'data_2' },
                           },
                         },
@@ -1338,7 +1467,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                       applyElementalInfliction_10: {
                         action: {
                           kind: 'applyElementalInfliction',
-                          parameters: { element: 'heat', isExtra: false },
+                          parameters: {
+                            element: 'heat',
+                            isExtra: false,
+                            target: { kind: 'inputTarget' },
+                          },
                         },
                         next: 'dealDamage_9',
                       },
@@ -1382,10 +1515,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
+                            tags: ['normalSkill', 'canBreakWeakness'],
                             stagger: { kind: 'valueNode', nodeId: 'data_8' },
                           },
                         },
@@ -1405,7 +1539,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         action: {
                           kind: 'finishBuffsByTag',
                           parameters: {
-                            targets: { kind: 'fixed', target: 'enemy' },
+                            targets: { kind: 'inputTarget' },
                             finishSource: { kind: 'source' },
                             tagQueryType: 'hasAny',
                             buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
@@ -1428,7 +1562,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         action: {
                           kind: 'finishBuffsByTag',
                           parameters: {
-                            targets: { kind: 'fixed', target: 'enemy' },
+                            targets: { kind: 'inputTarget' },
                             finishSource: { kind: 'source' },
                             tagQueryType: 'hasAny',
                             buffTags: ['Skill/Character/Common/SpellStatus/Burning'],
@@ -1513,7 +1647,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           tagQueryType: 'hasAny',
                           tags: ['Skill/Character/Common/SpellStatus/Conduct'],
                         },
@@ -1522,7 +1656,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           tagQueryType: 'hasAny',
                           tags: ['Skill/Character/Common/SpellStatus/Burning'],
                         },
@@ -1531,7 +1665,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           tagQueryType: 'hasAny',
                           tags: [
                             'Skill/Character/Common/SpellStatus/Burning',
@@ -1543,6 +1677,28 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0006_wolfgd_normal_skill_plus_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {
+                  atk_scale_plus: 0,
+                  atk_scale_plus_fail: 0,
+                  poise_extra_bullet: 0,
+                  poise_extra_bullet_fail: 0,
+                  potential_2: 0,
+                  potential_skillpower: 0,
+                  returnskillpower: 0,
+                  talent2: 0,
+                },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_17' } },
+                ],
               },
             },
           ],
@@ -1600,6 +1756,13 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_81: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0006_wolfgd_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
@@ -1648,7 +1811,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'smart_target' },
           tagQueryType: 'hasAny',
           tags: [
             'Skill/Character/Common/SpellStatus/Burning',
@@ -1679,6 +1842,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = {
+  actionGraph: wulfgardChr_0006_wolfgd_normal_skillActionGraph,
   key: 'chr_0006_wolfgd_normal_skill',
   element: 'heat',
   blackboard: {
@@ -1703,12 +1867,6 @@ export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = {
   exclusiveFrame: 159,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 32, endFrame: 54, skillIds: ['chr_0006_wolfgd_normal_skill'] },
-      { startFrame: 152, endFrame: 184, skillIds: ['chr_0006_wolfgd_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 6, endFrame: 9, sequence: { $sequence: 'launchProjectile_1' } },
@@ -1719,13 +1877,15 @@ export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = {
     { startFrame: 31, endFrame: 32, sequence: { $sequence: 'ifElse_27' } },
     { startFrame: 48, endFrame: 51, sequence: { $sequence: 'markCurrentSkillCanInterrupt_28' } },
     { startFrame: 117, endFrame: 117, sequence: { $sequence: 'jumpTimeline_29' } },
+    { startFrame: 32, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_81' } },
+    { startFrame: 152, endFrame: 184, sequence: { $sequence: 'reachSkillOperableBoundary_81' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: wulfgardChr_0006_wolfgd_normal_skillActionGraph,
 };
 
 export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
@@ -1735,7 +1895,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             skill: { kind: 'type', skillType: 'comboSkill' },
             operation: 'set',
             basis: 'absoluteSeconds',
@@ -1769,125 +1929,222 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      launchProjectile_5: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: { inheritActionBlackboard: true, finish: 'firstTickReach' },
-          callbacks: [],
-        },
-        next: null,
-      },
-      createSpatialPointTargets_6: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'targetpoint', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'launchProjectile_5',
-      },
-      dealDamage_17: {
+      dealDamage_11: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'target1' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['ultimateSkill', 'canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
         next: null,
       },
-      mergeContextTargets_18: {
+      findTargets_12: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'target1',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_17',
+        next: 'dealDamage_11',
       },
-      mergeContextTargets_20: {
+      dealDamage_13: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'target2' },
+            damageType: 'heat',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['ultimateSkill', 'canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: null,
+      },
+      findTargets_14: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'target2',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_17',
+        next: 'dealDamage_13',
       },
-      mergeContextTargets_22: {
+      dealDamage_15: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'target3' },
+            damageType: 'heat',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['ultimateSkill', 'canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: null,
+      },
+      findTargets_16: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'target3',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
-        next: 'dealDamage_17',
+        next: 'dealDamage_15',
       },
-      mergeContextTargets_24: {
+      dealDamage_17: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'target4' },
+            damageType: 'heat',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['ultimateSkill', 'canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: null,
+      },
+      findTargets_18: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'target4',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
         next: 'dealDamage_17',
       },
-      mergeContextTargets_26: {
+      dealDamage_19: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'dealDamage',
           parameters: {
-            saveToContextKey: 'target5',
-            sources: [{ kind: 'target', target: 'enemy' }],
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'target5' },
+            damageType: 'heat',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['ultimateSkill', 'canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'dealDamage_17',
+        next: null,
       },
-      applyBuff_27: {
+      findTargets_20: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'target5',
+          },
+        },
+        next: 'dealDamage_19',
+      },
+      applyBuff_21: {
         action: {
           kind: 'applyBuff',
           parameters: {
             buffs: [{ buffId: 'buff_common_fire_fire_burning_triggered' }],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      repeatEachTick_28: {
+      repeatEachTick_22: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'target' },
               executeEachFrame: false,
               triggerIntervalSeconds: 0.2,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.2,
             },
           },
-          body: { $sequence: 'applyBuff_27' },
+          body: { $sequence: 'applyBuff_21' },
         },
         next: null,
       },
-      mergeContextTargets_29: {
+      findTargets_23: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
             saveToContextKey: 'target',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
-        next: 'repeatEachTick_28',
+        next: 'repeatEachTick_22',
       },
-      hideUi_30: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_31: {
+      reachSkillOperableBoundary_24: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0006_wolfgd_normal_skill', 'chr_0006_wolfgd_combo_skill'] },
+        },
+        next: null,
+      },
+      hideUi_25: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_26: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -1898,7 +2155,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_32: {
+      applyBuff_27: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1934,6 +2191,7 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const wulfgardChr_0006_wolfgd_ultimate_skill: SkillDefinition = {
+  actionGraph: wulfgardChr_0006_wolfgd_ultimate_skillActionGraph,
   key: 'chr_0006_wolfgd_ultimate_skill',
   element: 'heat',
   blackboard: {
@@ -1945,34 +2203,20 @@ export const wulfgardChr_0006_wolfgd_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 168,
   exclusiveFrame: 80,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 75,
-        endFrame: 89,
-        skillIds: ['chr_0006_wolfgd_normal_skill', 'chr_0006_wolfgd_combo_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 14, sequence: { $sequence: 'ifElse_3' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_4' } },
-    { startFrame: 45, endFrame: 47, sequence: { $sequence: 'createSpatialPointTargets_6' } },
-    { startFrame: 50, endFrame: 52, sequence: { $sequence: 'createSpatialPointTargets_6' } },
-    { startFrame: 56, endFrame: 58, sequence: { $sequence: 'createSpatialPointTargets_6' } },
-    { startFrame: 61, endFrame: 63, sequence: { $sequence: 'createSpatialPointTargets_6' } },
-    { startFrame: 45, endFrame: 47, sequence: { $sequence: 'createSpatialPointTargets_6' } },
-    { startFrame: 63, endFrame: 65, sequence: { $sequence: 'createSpatialPointTargets_6' } },
-    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'mergeContextTargets_18' } },
-    { startFrame: 52, endFrame: 55, sequence: { $sequence: 'mergeContextTargets_20' } },
-    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'mergeContextTargets_22' } },
-    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'mergeContextTargets_24' } },
-    { startFrame: 69, endFrame: 72, sequence: { $sequence: 'mergeContextTargets_26' } },
-    { startFrame: 45, endFrame: 72, sequence: { $sequence: 'mergeContextTargets_29' } },
-    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'hideUi_30' } },
-    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'startUltimateTimeDilation_31' } },
-    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'applyBuff_32' } },
+    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'findTargets_12' } },
+    { startFrame: 52, endFrame: 55, sequence: { $sequence: 'findTargets_14' } },
+    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'findTargets_16' } },
+    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'findTargets_18' } },
+    { startFrame: 69, endFrame: 72, sequence: { $sequence: 'findTargets_20' } },
+    { startFrame: 45, endFrame: 72, sequence: { $sequence: 'findTargets_23' } },
+    { startFrame: 75, endFrame: 89, sequence: { $sequence: 'reachSkillOperableBoundary_24' } },
+    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'hideUi_25' } },
+    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'startUltimateTimeDilation_26' } },
+    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'applyBuff_27' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 300,
@@ -1980,7 +2224,6 @@ export const wulfgardChr_0006_wolfgd_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: wulfgardChr_0006_wolfgd_ultimate_skillActionGraph,
 };
 
 export const wulfgardCommon_character_perfect_dodgeActionGraph = {
@@ -2391,10 +2634,11 @@ export const wulfgard: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-                    tags: ['comboSkill'],
-                    features: ['canBreakWeakness'],
+                    tags: ['canBreakWeakness', 'comboSkill'],
                     stagger: { kind: 'valueNode', nodeId: 'data_3' },
                   },
                   key: 'abilityentity_chr_0006_wolfgd_combo_skill:chr_0006_wolfgd_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_2/action',
@@ -2404,16 +2648,28 @@ export const wulfgard: OperatorDefinition = {
               applyElementalInfliction_3: {
                 action: {
                   kind: 'applyElementalInfliction',
-                  parameters: { element: 'heat', isExtra: false },
+                  parameters: {
+                    element: 'heat',
+                    isExtra: false,
+                    target: { kind: 'context', key: 'tar' },
+                  },
                 },
                 next: 'dealDamage_2',
               },
-              mergeContextTargets_4: {
+              findTargets_4: {
                 action: {
-                  kind: 'mergeContextTargets',
+                  kind: 'findTargets',
                   parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'factionHitBox',
+                      factionTarget: 'anti',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'target', target: 'enemy' }],
                   },
                 },
                 next: 'applyElementalInfliction_3',
@@ -2438,7 +2694,7 @@ export const wulfgard: OperatorDefinition = {
         },
         blackboard: { atk_scale: 5, poise: 0, usp: 0 },
         scheduledSequences: [
-          { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_4' } },
+          { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_4' } },
         ],
       },
     },

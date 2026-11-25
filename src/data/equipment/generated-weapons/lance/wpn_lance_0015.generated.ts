@@ -180,8 +180,8 @@ const definition = {
   icon: 'endaxis:weapons/lance/wpn_lance_0015',
   buffDefinitions: {
     buff_wpn_lance_0015_atkup: {
-      stackingType: 'refresh',
-      priority: { blackboardKey: 'pd_up' },
+      stackingType: 'highPriority',
+      priority: { blackboardKey: 'atk_up' },
       maxStackCount: { blackboardKey: 'max_stack' },
       durationSeconds: { blackboardKey: 'duration' },
       triggerIntervalSeconds: 0,
@@ -202,8 +202,8 @@ const definition = {
       actionGraph: { main: { nodes: {} }, macros: {} },
     },
     buff_wpn_lance_0015_dmgup: {
-      stackingType: 'refresh',
-      priority: { blackboardKey: 'pd_up' },
+      stackingType: 'highPriority',
+      priority: { blackboardKey: 'dmg_up' },
       maxStackCount: { blackboardKey: 'max_stack' },
       durationSeconds: { blackboardKey: 'duration2' },
       triggerIntervalSeconds: 0,

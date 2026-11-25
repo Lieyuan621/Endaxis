@@ -1,3 +1,4 @@
+import { gilberta } from '../../data/operators/gilberta.generated';
 import { describe, expect, it } from 'vitest';
 import { createGameDataRepository } from '../../data/gameDataRepository';
 import { perlica } from '../../data/operators/perlica.generated';
@@ -526,4 +527,21 @@ describe('projectDefinitionLibrary', () => {
       createProjectGameDataRepository(collidingBase, getProjectDefinitionLibrary(project)),
     ).toThrow(/conflicts with built-in data/);
   });
+});
+
+it('自定义干员保存往返保留独立投射物资源与技能引用', () => {
+  const id = 'project:operator:projectile-roundtrip';
+  const project = withProjectOperatorTemplate(
+    createEmptyProject({ createdWith: 'test' }),
+    id,
+    '投射物往返',
+    gilberta,
+  );
+  const derived = getProjectDefinitionLibrary(project).operators[id]!.definition;
+  expect(derived.skills).toEqual(gilberta.skills);
+  const parsed = parseProjectDocument(serializeProjectDocument(project));
+  expect(parsed.ok).toBe(true);
+  if (!parsed.ok) throw new Error('project roundtrip failed');
+  const restored = getProjectDefinitionLibrary(parsed.value).operators[id]!.definition;
+  expect(restored.skills).toEqual(gilberta.skills);
 });

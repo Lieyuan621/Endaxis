@@ -145,3 +145,13 @@ export function projectTickIntervalFrames(
   }
   return result;
 }
+
+export function distinctStrings(value: unknown, path: string): string[] {
+  const result = requireArray(value, path).map((item, index) =>
+    requireNonEmptyString(item, `${path}[${index}]`),
+  );
+  if (new Set(result).size !== result.length) {
+    throw new Error(`${path}: expected distinct values`);
+  }
+  return result;
+}

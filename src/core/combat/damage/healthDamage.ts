@@ -2,7 +2,7 @@
  * 已计算生命伤害与目标生命状态之间的写入边界。
  * 只能在承伤事件完成后的正确阶段调用，避免提前改变后续监听器看到的生命值。
  */
-import type { DamageFeature, DamageTag, DamageType } from '../../game-data/operatorDefinition';
+import type { DamageTag, DamageType } from '../../game-data/operatorDefinition';
 import type { CombatObjectRef, CombatReceiptSink } from '../receipt/combatReceipt';
 import type { CombatVitals, HealthDamageResult } from '../resources/combatVitals';
 import type {
@@ -46,7 +46,6 @@ export interface HealthDamageEventPayload {
   readonly damageType: DamageType;
   readonly tags: readonly DamageTag[];
   readonly gameplayTags?: readonly GameplayTag[];
-  readonly features: readonly DamageFeature[];
   readonly result: PlayerActiveDamageResult;
   /** 结算后 Take/OutputDamageContext 的实际扣血值；结算前事件尚无此值。 */
   readonly actualDamage?: number;
@@ -58,8 +57,11 @@ export interface HealthDamageEventPayload {
 export interface HealthDamageReceiptDetail {
   readonly damageTransferMultiplier?: number;
   readonly reactionDamageKind?: 'spellBurst' | 'physicalInfliction';
-  readonly reactionCriticalKey?: string;
-  readonly forcedCritical?: boolean;
+  readonly hitIdentity?: string;
+  readonly hitCriticalOverride?: boolean | null;
+  readonly canBreakWeakness?: boolean;
+  readonly breaksWeakness?: boolean;
+  readonly weaknessBreakStagger?: number;
   readonly 'damageScale:normal:attacker'?: number;
   readonly 'damageScale:normal:defender'?: number;
   readonly attackDetailRawBase?: number;
@@ -138,6 +140,7 @@ export interface HealthDamageReceiptDetail {
 
 /** 在正确事件边界写入一次生命伤害所需的状态和端口。 */
 export interface ExecuteHealthDamageInput {
+  readonly targetCanDie?: boolean;
   readonly partTransferInfo?: EnemyPartTransferInfo;
   /** 原生 HP/Minus 的 PowerAttack 清理先于 BeforeTakeDamage。 */
   readonly consumeFinisherEligibility?: () => void;
@@ -149,7 +152,6 @@ export interface ExecuteHealthDamageInput {
   readonly damageType: DamageType;
   readonly tags: readonly DamageTag[];
   readonly gameplayTags?: readonly GameplayTag[];
-  readonly features?: readonly DamageFeature[];
   readonly result: PlayerActiveDamageResult;
   /** 缺省沿用实际暴击结果；期望模式由伤害执行器显式给出确定性的后续效果策略。 */
   readonly triggersCriticalEffects?: boolean;
@@ -166,6 +168,9 @@ export interface ExecuteHealthDamageInput {
   readonly castId?: string;
   /** 存档中的命中身份；命中回执凭它与具体命中点对应。 */
   readonly hitId?: string;
+  /** 手工标记的敌方招式失衡；0 仍会发布击破事件。 */
+  readonly weaknessBreakStagger?: number;
+  readonly onWeaknessBreak?: (sourceId: string, targetId: string, stagger: number) => void;
   readonly emitSourceEvent: (
     event: HealthDamageSourceEvent,
     payload: HealthDamageEventPayload,
@@ -183,21 +188,20 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
   if (input.tags.includes('powerAttack')) input.consumeFinisherEligibility?.();
   const spellBurstType = spellBurstTypeFromDamageTags(input.tags);
   const beforePayload: HealthDamageEventPayload = {
+    ...(input.skillCastInfo === undefined ? {} : { skillCastInfo: input.skillCastInfo }),
     ...(input.partTransferInfo === undefined ? {} : { partTransferInfo: input.partTransferInfo }),
     sourceId: input.sourceId,
     targetId: input.targetId,
     damageType: input.damageType,
-    tags: input.tags,
+    tags: input.tags ?? [],
     gameplayTags: input.gameplayTags ?? [],
-    features: input.features ?? [],
     result: input.result,
     triggersCriticalEffects: input.triggersCriticalEffects ?? input.result.isCritical,
   };
-  // TakeDamageContext 不含施法身份；只为原生 OutputDamageContext 分支附加来源。
+  // 1.6.3 Take/OutputDamageContext 均保留施法来源，仅输出侧另带执行技能身份。
   const sourceBeforePayload = {
     ...beforePayload,
     ...(input.executingSkillId === undefined ? {} : { executingSkillId: input.executingSkillId }),
-    ...(input.skillCastInfo === undefined ? {} : { skillCastInfo: input.skillCastInfo }),
   };
 
   input.emitTargetEvent('beforeTakeDamage', beforePayload);
@@ -207,47 +211,57 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
       ? input.result
       : { ...input.result, value: input.absorbDamage(input.damageType, input.result.value) };
   const payload: HealthDamageEventPayload = { ...beforePayload, result };
-  const stateChange = applyHealthDamageWithKillEvents(input.target, payload, input.emitSourceEvent);
-  input.receipt.record({
-    ...(input.producedBy === undefined ? {} : { producedBy: input.producedBy }),
-    frame: input.clock.frame,
-    time: input.clock.time,
-    event: 'DamageApplied',
-    ...(input.appliedDamageModifiers?.length
-      ? { appliedDamageModifiers: input.appliedDamageModifiers }
-      : {}),
-    sourceId: input.sourceId,
-    targetId: input.targetId,
-    ...(input.skillMultiplierCalculation === undefined
-      ? {}
-      : { skillMultiplierCalculation: input.skillMultiplierCalculation }),
-    data: {
-      ...(input.partTransferInfo === undefined
-        ? {}
-        : {
-            transferredSourceId: input.partTransferInfo.mainBodyToPart.get(input.targetId),
-          }),
-      damageType: input.damageType,
-      value: result.value,
-      damageBeforeAbsorption: input.result.value,
-      actualDamage: stateChange.actualDamage,
-      remainingHealth: stateChange.currentHealth,
-      isCritical: result.isCritical,
-      criticalMultiplier: result.criticalMultiplier,
-      defenseMultiplier: result.defenseMultiplier,
-      resistanceMultiplier: result.resistanceMultiplier,
-      weaknessShelterMultiplier: result.weaknessShelterMultiplier,
-      runtimeExtensionMultiplier: result.runtimeExtensionMultiplier,
-      igniteMultiplier: result.igniteMultiplier,
-      physicalInflictionMultiplier: result.physicalInflictionMultiplier,
-      ...input.detail,
-      ...(spellBurstType === undefined ? {} : { spellBurstType }),
-      ...(input.stepKey === undefined ? {} : { stepKey: input.stepKey }),
-      ...(input.castId === undefined ? {} : { castId: input.castId }),
-      ...(input.hitId === undefined ? {} : { hitId: input.hitId }),
+  const stateChange = applyHealthDamageWithKillEvents(
+    input.target,
+    payload,
+    input.emitSourceEvent,
+    input.targetCanDie,
+    stateChange => {
+      input.receipt.record({
+        ...(input.producedBy === undefined ? {} : { producedBy: input.producedBy }),
+        frame: input.clock.frame,
+        time: input.clock.time,
+        event: 'DamageApplied',
+        ...(input.appliedDamageModifiers?.length
+          ? { appliedDamageModifiers: input.appliedDamageModifiers }
+          : {}),
+        sourceId: input.sourceId,
+        targetId: input.targetId,
+        ...(input.skillMultiplierCalculation === undefined
+          ? {}
+          : { skillMultiplierCalculation: input.skillMultiplierCalculation }),
+        data: {
+          ...(input.partTransferInfo === undefined
+            ? {}
+            : {
+                transferredSourceId: input.partTransferInfo.mainBodyToPart.get(input.targetId),
+              }),
+          damageType: input.damageType,
+          value: result.value,
+          damageBeforeAbsorption: input.result.value,
+          actualDamage: stateChange.actualDamage,
+          remainingHealth: stateChange.currentHealth,
+          isCritical: result.isCritical,
+          criticalMultiplier: result.criticalMultiplier,
+          defenseMultiplier: result.defenseMultiplier,
+          resistanceMultiplier: result.resistanceMultiplier,
+          weaknessShelterMultiplier: result.weaknessShelterMultiplier,
+          runtimeExtensionMultiplier: result.runtimeExtensionMultiplier,
+          igniteMultiplier: result.igniteMultiplier,
+          physicalInflictionMultiplier: result.physicalInflictionMultiplier,
+          ...input.detail,
+          ...(spellBurstType === undefined ? {} : { spellBurstType }),
+          ...(input.stepKey === undefined ? {} : { stepKey: input.stepKey }),
+          ...(input.castId === undefined ? {} : { castId: input.castId }),
+          ...(input.hitId === undefined ? {} : { hitId: input.hitId }),
+        },
+      });
     },
-  });
+  );
+
   input.emitTargetEvent('takeDamage', { ...payload, actualDamage: stateChange.actualDamage });
+  if (input.weaknessBreakStagger !== undefined)
+    input.onWeaknessBreak?.(input.sourceId, input.targetId, input.weaknessBreakStagger);
   input.emitSourceEvent('outputDamage', {
     ...sourceBeforePayload,
     result,
@@ -261,11 +275,13 @@ export function applyHealthDamageWithKillEvents(
   target: CombatVitals,
   payload: HealthDamageEventPayload,
   emitSourceEvent: ExecuteHealthDamageInput['emitSourceEvent'],
+  targetCanDie = true,
+  recordChange?: (result: HealthDamageResult) => void,
 ): HealthDamageResult {
-  const mayKillTarget = target.health > 0 && payload.result.value >= target.health;
+  const mayKillTarget = targetCanDie && target.health > 0 && payload.result.value >= target.health;
   if (mayKillTarget) emitSourceEvent('beforeKillEntity', payload);
   // takeDamage 同步触发生命观察者，包括能力实体的死亡与结束流程。
-  const stateChange = target.takeDamage(payload.result.value);
+  const stateChange = target.takeDamage(payload.result.value, recordChange);
   if (mayKillTarget && stateChange.currentHealth === 0) {
     emitSourceEvent('afterKillEntity', payload);
   }

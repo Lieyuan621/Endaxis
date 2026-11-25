@@ -112,7 +112,6 @@ describe('elementalAttachments', () => {
       skillCastId: null,
       damageType: 'electric' as const,
       tags: [],
-      features: [],
     };
     const results = (buff: typeof conduct) =>
       buff.damageModifiers.map(modifier => modifier.condition!.execute(input));

@@ -13,6 +13,7 @@ import {
 /** 时间轴轨道头部上方的编辑工具区，结构与尺寸以旧版 TimelineGrid 为准。 */
 const props = defineProps<{
   configurationReadOnly?: boolean;
+  prepFrames: number;
   snapLabel: string;
   zoomPercent: number;
   initialGaugeMode: 'empty' | 'full' | 'custom';
@@ -21,6 +22,8 @@ const props = defineProps<{
     initialGauge: string;
     snapPrecision: string;
     zoom: string;
+    prep: string;
+    prepDuration: string;
   };
 }>();
 
@@ -30,18 +33,54 @@ const emit = defineEmits<{
   setUnifiedInitialGauge: [value: number];
   updateZoomPercent: [percent: number];
   setZoomPercent: [percent: number];
+  setPrepFrames: [frames: number];
+  prepInfo: [event: MouseEvent];
 }>();
 
 const gaugeEditorOpen = ref(false);
+const prepEditorOpen = ref(false);
+const prepDraft = ref(0);
+const prepInput = ref<{ focus: () => void; select: () => void } | null>(null);
 const gaugeDraft = ref(100);
 const gaugeInput = ref<{ select: () => void } | null>(null);
+const interactionSession = useInteractionSession();
 usePopoverInteractionBoundary(
-  useInteractionSession(),
+  interactionSession,
   () => gaugeEditorOpen.value,
   () => {
     gaugeEditorOpen.value = false;
   },
 );
+usePopoverInteractionBoundary(interactionSession, () => prepEditorOpen.value, closePrepEditor);
+
+function closePrepEditor(): void {
+  prepEditorOpen.value = false;
+}
+
+function togglePrepEditor(event: MouseEvent): void {
+  if (props.configurationReadOnly) {
+    emit('prepInfo', event);
+    return;
+  }
+  prepEditorOpen.value = !prepEditorOpen.value;
+  gaugeEditorOpen.value = false;
+  if (prepEditorOpen.value) {
+    prepDraft.value = props.prepFrames;
+    void nextTick(() => {
+      prepInput.value?.focus();
+      prepInput.value?.select();
+    });
+  }
+}
+
+function applyPrepDraft(): void {
+  if (!prepEditorOpen.value) return;
+  const frames = Number(prepDraft.value);
+  closePrepEditor();
+  if (Number.isInteger(frames) && frames >= 0 && !props.configurationReadOnly) {
+    emit('setPrepFrames', frames);
+  }
+}
 
 function toggleGaugeEditor(event: Event): void {
   if (props.configurationReadOnly) {
@@ -50,6 +89,7 @@ function toggleGaugeEditor(event: Event): void {
   }
   event.preventDefault();
   gaugeEditorOpen.value = !gaugeEditorOpen.value;
+  prepEditorOpen.value = false;
   if (gaugeEditorOpen.value) void nextTick(() => gaugeInput.value?.select());
 }
 
@@ -80,6 +120,7 @@ function applyGaugeDraft(): void {
           aria-controls="timeline-initial-gauge-editor"
           @click="
             gaugeEditorOpen = false;
+            prepEditorOpen = false;
             emit('cycleInitialGauge');
           "
           @contextmenu="toggleGaugeEditor"
@@ -102,14 +143,13 @@ function applyGaugeDraft(): void {
         <form
           v-if="gaugeEditorOpen"
           id="timeline-initial-gauge-editor"
-          class="gauge-popover ea-floating-surface"
+          class="gauge-popover ea-floating-surface ea-compact-number-popover ea-compact-number-popover--energy"
           @submit.prevent="applyGaugeDraft"
         >
           <EaNumberInput
             ref="gaugeInput"
             v-model="gaugeDraft"
-            size="sm"
-            controls-position="right"
+            compact
             :min="0"
             :step="1"
             :aria-label="labels.initialGauge"
@@ -128,6 +168,44 @@ function applyGaugeDraft(): void {
       >
         <span class="snap-tool-value">{{ snapLabel }}</span>
       </EaButton>
+      <div class="prep-tool">
+        <EaButton
+          variant="ghost"
+          size="sm"
+          type="button"
+          class="mini-tool-button prep-tool-button"
+          :title="`${labels.prep}: ${prepFrames}f`"
+          :aria-label="`${labels.prep}: ${prepFrames}f`"
+          :aria-expanded="prepEditorOpen"
+          aria-controls="timeline-prep-editor"
+          @click.stop="togglePrepEditor"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v6l4 2" />
+          </svg>
+          <span>{{ prepFrames }}f</span>
+        </EaButton>
+        <form
+          v-if="prepEditorOpen"
+          id="timeline-prep-editor"
+          class="prep-popover ea-floating-surface ea-compact-number-popover"
+          @submit.prevent="applyPrepDraft"
+          @pointerdown.stop
+          @click.stop
+        >
+          <EaNumberInput
+            ref="prepInput"
+            v-model="prepDraft"
+            compact
+            :min="0"
+            :step="1"
+            :aria-label="labels.prepDuration"
+            @blur="applyPrepDraft"
+          />
+          <span class="ea-compact-number-popover__unit">f</span>
+        </form>
+      </div>
     </div>
 
     <div class="zoom-row">
@@ -197,7 +275,7 @@ function applyGaugeDraft(): void {
 
 .corner-button-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) 28px 46px;
   width: 100%;
   gap: 4px;
 }
@@ -233,9 +311,34 @@ function applyGaugeDraft(): void {
 }
 
 .initial-gauge-tool {
-  grid-column: span 2;
   position: relative;
   min-width: 0;
+}
+
+.prep-tool {
+  position: relative;
+  min-width: 0;
+}
+
+.prep-tool-button {
+  width: 100%;
+  gap: 2px;
+  font-size: 9px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.prep-tool-button svg {
+  flex: none;
+  width: 11px;
+  height: 11px;
+}
+
+.prep-popover {
+  position: absolute;
+  z-index: 25;
+  top: 24px;
+  left: 0;
 }
 
 .initial-gauge-tool .mini-tool-button {
@@ -256,16 +359,8 @@ function applyGaugeDraft(): void {
 .gauge-popover {
   position: absolute;
   z-index: 20;
-  top: 6px;
-  left: calc(100% + 4px);
-  display: flex;
-  align-items: center;
-  padding: 6px 8px;
-  transform: translateY(-50%);
-}
-
-.gauge-popover :deep(.ea-number-input) {
-  width: 72px;
+  top: 24px;
+  left: 0;
 }
 
 .gauge-tool-value {

@@ -125,10 +125,21 @@ export class CombatVitals {
   set stopPoiseRecovery(value: boolean) {
     this.runtimeState.stopPoiseRecovery = value;
   }
-  takeDamage(value: number): HealthDamageResult {
+  /** 先记录本次写入，再通知可能递归改变生命或上限的监听者。 */
+  takeDamage(
+    value: number,
+    recordChange?: (result: HealthDamageResult) => void,
+  ): HealthDamageResult {
     const result = takeVitalsDamage(this.runtimeState, value);
+    recordChange?.(result);
     if (result.currentHealth !== result.previousHealth) this.healthChanged?.();
     return result;
+  }
+  /** 人工死亡输入直接归零，不伪造伤害来源，不受伤害保底生命限制。 */
+  setHealthToZero(): void {
+    if (this.runtimeState.health === 0) return;
+    this.runtimeState.health = 0;
+    this.healthChanged?.();
   }
   /** 出生阶段的直接生命赋值，不伪装成治疗或产生治疗事件。 */
   initializeHealth(maxHealth: number): void {
@@ -139,8 +150,9 @@ export class CombatVitals {
     this.runtimeState.health = maxHealth;
     if (previousHealth !== maxHealth) this.healthChanged?.();
   }
-  heal(value: number): HealthHealResult {
+  heal(value: number, recordChange?: (result: HealthHealResult) => void): HealthHealResult {
     const result = healVitals(this.runtimeState, value);
+    recordChange?.(result);
     if (result.currentHealth !== result.previousHealth) this.healthChanged?.();
     return result;
   }
@@ -165,6 +177,17 @@ export class CombatVitals {
     this.runtimeState.health = health;
     // 原生即使生命数值未变，只要最大生命改变且仍存活，也发布 OnHpChange。
     this.healthChanged?.({ previousHealth: previous, previousMaxHealth });
+  }
+  synchronizeMaxPoise(maxPoise: number, previousMaxPoise: number): void {
+    if (!Number.isFinite(maxPoise) || maxPoise < 0)
+      throw new RangeError('maximum poise must be finite and non-negative');
+    const ratio =
+      previousMaxPoise === 0 ? 0 : Math.fround(this.poise / Math.fround(previousMaxPoise));
+    this.runtimeState.maxPoise = maxPoise;
+    this.runtimeState.poise = Math.min(
+      maxPoise,
+      Math.max(0, Math.fround(ratio * Math.fround(maxPoise))),
+    );
   }
   applyPoiseDelta(delta: number): number {
     return applyVitalsPoiseDelta(this.runtimeState, delta);

@@ -5258,6 +5258,163 @@
       }
     }
   },
+  "minghe": {
+    "name": "Argent Flow",
+    "talents": [
+      {
+        "name": "Zenith of Voltmancy",
+        "description": "When Argent Flow applies <#ba.conduct>Electrification</>, this <#ba.conduct>Electrification</> also increases all types of DMG Taken of the target for the same duration, and he also applies <@ba.key>Sunderization</> stack(s) on the target, the number of stacks is equal to the <#ba.conduct>Electrification</> <#ba.statuslevel>Status Level</> and maxes out at 12. <@ba.key>Sunderization</> lasts for 60s.\nWhen dealing <#ba.crush>Crush DMG</> to a target with <@ba.key>Sunderization</>, this <#ba.crush>Crush DMG</> is increased to <@ba.vup>1.2</> times the original and detonates all <@ba.key>Sunderization</> stacks. The explosion deals <@ba.vup>[Number of Sunderization stacks × 220% ATK]</> of <@ba.pulse>Electric DMG</> to the target and 40% of that DMG to other enemies near the said target.\n<@ba.info>When the explosion DMG of Sunderization is dealt to another enemy with Sunderization, it also detonates all Sunderization stacks of that enemy.</>"
+      },
+      {
+        "name": "Zenith of Voltmancy",
+        "description": "When Argent Flow applies <#ba.conduct>Electrification</>, this <#ba.conduct>Electrification</> also increases all types of DMG Taken of the target for the same duration, and he also applies <@ba.key>Sunderization</> stack(s) on the target, the number of stacks is equal to the <#ba.conduct>Electrification</> <#ba.statuslevel>Status Level</> and maxes out at 12. <@ba.key>Sunderization</> lasts for 60s.\nWhen dealing <#ba.crush>Crush DMG</> to a target with <@ba.key>Sunderization</>, this <#ba.crush>Crush DMG</> is increased to <@ba.vup>1.2</> times the original and detonates all <@ba.key>Sunderization</> stacks. The explosion deals <@ba.vup>[Number of Sunderization stacks × 330% ATK]</> of <@ba.pulse>Electric DMG</> to the target and 40% of that DMG to other enemies near the said target.\n<@ba.info>When the explosion DMG of Sunderization is dealt to another enemy with Sunderization, it also detonates all Sunderization stacks of that enemy.</>"
+      },
+      {
+        "name": "Springvolt Galore",
+        "description": "Battle skill <@ba.key>Bolt Rush</> improved: The entire team gains Arts Intensity <@ba.vup>+30</> for 20s.\nFor every point of Arts Intensity that Argent Flow has, increase <@ba.key>Sunderization</> explosion DMG by another <@ba.vup>0.4%</>."
+      },
+      {
+        "name": "Springvolt Galore",
+        "description": "Battle skill <@ba.key>Bolt Rush</> improved: The entire team gains Arts Intensity <@ba.vup>+45</> for 20s.\nFor every point of Arts Intensity that Argent Flow has, increase <@ba.key>Sunderization</> explosion DMG by another <@ba.vup>0.6%</>."
+      }
+    ],
+    "potentials": [
+      {
+        "name": "Wildswept Storm",
+        "description": "Talent <@ba.key>Zenith of Voltmancy</> improved: When applying <#ba.crush>Crush</> to a target with <@ba.key>Sunderization</>, the DMG dealt by this <#ba.crush>Crush</> is increased to <@ba.vup>1.4</> times the original. Proportion of <@ba.key>Sunderization</> explosion DMG dealt to other enemies near the target is increased to <@ba.vup>50%</>."
+      },
+      {
+        "name": "Electrified Spring",
+        "description": "Will <@ba.vup>+20</>, Arts Intensity <@ba.vup>+16</>."
+      },
+      {
+        "name": "Storm Blitz",
+        "description": "Battle skill <@ba.key>Bolt Rush</> improved: For every 1 stack of <#ba.pulseonchar>Electric Infliction</> <#ba.consume>consumed</>, Argent Flow gains <@ba.pulse>Electric DMG Dealt</> <@ba.vup>+6%</> for <@ba.vup>25</>s. This effect can reach <@ba.vup>6</> stacks. Duration of each stack is counted separately."
+      },
+      {
+        "name": "Starflow Illuminated",
+        "description": "Ultimate <@ba.key>Heavens Sundered</> improved: Ultimate Energy Cost <@ba.vup>-15%</>."
+      },
+      {
+        "name": "Invitation to Celestial Lights",
+        "description": "Talent <@ba.key>Springvolt Galore</> improved: When casting the battle skill <@ba.key>Bolt Rush</>, the entire team gains an additional Arts Intensity <@ba.vup>+15</>.\n<@ba.key>Sunderization</> explosion DMG bonus per point of Argent Flow's Arts Intensity is increased to <@ba.vup>1.2</> times the original."
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "Dust Resplendent",
+        "description": "BASIC ATTACK: \nAn attack with up to 5 sequences that deals <@ba.pd>Physical DMG</>. As the controlled operator, <#ba.lastcombo>Final Strike</> also deals <@ba.poise>23</> Stagger. \n\nDIVE ATTACK: \nBasic attack performed in mid-air becomes a dive attack that deals <@ba.pd>Physical DMG</> to nearby enemies. \n\nFINISHER: \nBasic attack performed near a Staggered enemy becomes a finisher attack that deals massive <@ba.pd>Physical DMG</> and recovers some SP.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "BATK SEQ 1 Multiplier",
+              "values": ["22%", "24%", "27%", "29%", "31%", "33%", "36%", "38%", "40%", "43%", "46%", "50%"]
+            },
+            {
+              "label": "BATK SEQ 2 Multiplier",
+              "values": ["24%", "27%", "29%", "32%", "34%", "37%", "39%", "42%", "44%", "47%", "51%", "55%"]
+            },
+            {
+              "label": "BATK SEQ 3 Multiplier",
+              "values": ["45%", "49%", "53%", "58%", "62%", "67%", "71%", "76%", "80%", "86%", "92%", "100%"]
+            },
+            {
+              "label": "BATK SEQ 4 Multiplier",
+              "values": ["62%", "68%", "75%", "81%", "87%", "93%", "100%", "106%", "112%", "120%", "129%", "140%"]
+            },
+            {
+              "label": "BATK SEQ 5 Multiplier",
+              "values": ["60%", "66%", "72%", "78%", "84%", "90%", "96%", "102%", "108%", "116%", "125%", "135%"]
+            },
+            {
+              "label": "Finisher ATK Multiplier",
+              "values": ["400%", "440%", "480%", "520%", "560%", "600%", "640%", "680%", "720%", "770%", "830%", "900%"]
+            },
+            {
+              "label": "Dive ATK Multiplier",
+              "values": ["80%", "88%", "96%", "104%", "112%", "120%", "128%", "136%", "144%", "154%", "166%", "180%"]
+            }
+          ]
+        }
+      },
+      "battleSkill": {
+        "name": "Darkness Cowed",
+        "description": "Argent Flow sweeps his lance and deals <@ba.pd>Physical DMG</> to nearby enemies and applies <#ba.airborne>Lift</> to target(s) in front of him.\nAfter Argent Flow casts his combo skill, his battle skill is temporarily changed to <@ba.key>Bolt Rush</>.\n<@ba.key>Bolt Rush</>: Argent Flow mounts his galloper Nuli to leap into mid-air, powers up quickly, and then charges at the target to forcibly apply <#ba.conduct>Electrification</> and deal <@ba.pulse>Electric DMG</> to enemies within a large area in front of him. When this <#ba.conduct>Electrification</> is applied on a target with <#ba.pulseinflict>Electric Infliction</>, it <#ba.consume>consumes</> all <#ba.pulseinflict>Electric Infliction</> stacks from the target and grants <#ba.conduct>Electrification</> <#ba.statuslevel>Status Level</> +1 per 1 stack consumed. After <#ba.consume>consuming</> the target's <#ba.pulseinflict>Electric Infliction</>, Argent Flow also applies 1 stack of <#ba.noguard>Vulnerability</>.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "Base DMG Multiplier",
+              "values": ["156%", "171%", "187%", "202%", "218%", "233%", "249%", "264%", "280%", "299%", "323%", "350%"]
+            },
+            {
+              "label": "Base Stagger",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
+            },
+            {
+              "label": "Bolt Rush DMG Multiplier",
+              "values": ["311%", "342%", "373%", "404%", "436%", "467%", "498%", "529%", "560%", "599%", "646%", "700%"]
+            },
+            {
+              "label": "Bolt Rush Stagger",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
+            }
+          ]
+        }
+      },
+      "comboSkill": {
+        "name": "Stars Shifted",
+        "description": "COMBO TRIGGER: When an enemy becomes <#ba.noguard>Vulnerable</>.\nArgent Flow wields his blade with lightning speed to unleash a multi-sequence attack that deals <@ba.pulse>Electric DMG</> to enemies along his path. When the final sequence scores a hit, it also applies <#ba.pulseinflict>Electric Infliction</>. Argent Flow's battle skill is then temporarily changed to <@ba.key>Bolt Rush</>.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "DMG Multiplier",
+              "values": ["160%", "176%", "192%", "208%", "224%", "240%", "256%", "272%", "288%", "308%", "332%", "360%"]
+            },
+            {
+              "label": "Stagger",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
+            },
+            {
+              "label": "Battle Skill Change Duration (s)",
+              "values": ["20", "20", "20", "20", "20", "20", "20", "20", "20", "20", "20", "20"]
+            },
+            {
+              "label": "Ultimate Energy Gain",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
+            }
+          ]
+        }
+      },
+      "ultimate": {
+        "name": "Heavens Sundered",
+        "description": "Argent Flow mounts Nuli and charges with his lance, dealing continuous <@ba.pulse>Electric DMG</> to targets in front of him while impaling and carrying weak enemies before him throughout the charge. After the charge ends, Argent Flow leaps into the air and unleashes a Cleansing Cleave at the ground. The slash deals <@ba.pulse>Electric DMG</> and applies 1 stack of <#ba.pulseinflict>Electric Infliction</>. Argent Flow then pierces the ground with his lance, applying <#ba.crush>Crush</> and dealing <@ba.pulse>Electric DMG</> to enemies within a large area.\n<@ba.info>If Argent Flow's ultimate charges into a non-weak enemy (that cannot be impaled and pushed), his charge will end early.</>",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "Charge DMG Multiplier",
+              "values": ["78%", "86%", "93%", "101%", "109%", "117%", "124%", "132%", "140%", "150%", "161%", "175%"]
+            },
+            {
+              "label": "Cleansing Cleave DMG Multiplier",
+              "values": ["222%", "244%", "267%", "289%", "311%", "333%", "356%", "378%", "400%", "428%", "461%", "500%"]
+            },
+            {
+              "label": "Ground Pierce DMG Multiplier",
+              "values": ["333%", "367%", "400%", "433%", "467%", "500%", "533%", "567%", "600%", "642%", "692%", "750%"]
+            },
+            {
+              "label": "Stagger",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
+            }
+          ]
+        }
+      }
+    }
+  },
   "purrchena": {
     "name": "Purrchena",
     "talents": [
@@ -5451,6 +5608,183 @@
       }
     }
   },
+  "kay": {
+    "name": "Kay",
+    "talents": [
+      {
+        "name": "Bottomless Arsenal",
+        "description": "Kay starts with 3 <@ba.key>Weapons</>. When the battle ends, Kay salvages all thrown <@ba.key>Weapons</>.\nSalvaging a <@ba.key>Weapon</> grants Kay 1 stack of <@ba.key>Hot Edgy Naives</>."
+      },
+      {
+        "name": "Bottomless Arsenal",
+        "description": "Kay starts with 3 <@ba.key>Weapons</>. When the battle ends, Kay salvages all thrown <@ba.key>Weapons</>.\nSalvaging a <@ba.key>Weapon</> grants Kay 1 stack of <@ba.key>Hot Edgy Naives</> and grants the entire team <#ba.spelldmg>Arts DMG Dealt</> <@ba.vup>+1%</>, with <@ba.natur>Nature DMG Dealt</> getting another <@ba.vup>+1%</>. Duration: <@ba.vup>15</>s. Max stacks for this effect: 3."
+      },
+      {
+        "name": "Bottomless Arsenal",
+        "description": "Kay starts with 3 <@ba.key>Weapons</>. When the battle ends, Kay salvages all thrown <@ba.key>Weapons</>.\nSalvaging a <@ba.key>Weapon</> grants Kay 1 stack of <@ba.key>Hot Edgy Naives</> and grants the entire team <#ba.spelldmg>Arts DMG Dealt</> <@ba.vup>+1.5%</>, with <@ba.natur>Nature DMG Dealt</> getting another <@ba.vup>+1.5%</>. Duration: <@ba.vup>15</>s. Max stacks for this effect: 3."
+      },
+      {
+        "name": "Have a Waffle!",
+        "description": "When an enemy is <@ba.poise>Staggered</> or triggers a <#ba.poiseknot>Stagger Node</>, it drops 1 <@ba.key>Picnic Waffle</>. Effect only triggers once every 30s.\n<@ba.info>Picnic Waffle has the same effects as Picnic Snack.</>"
+      },
+      {
+        "name": "Have a Waffle!",
+        "description": "When an enemy is <@ba.poise>Staggered</> or triggers a <#ba.poiseknot>Stagger Node</>, it drops 1 <@ba.key>Picnic Waffle</>. Effect only triggers once every 20s.\n<@ba.info>Picnic Waffle has the same effects as Picnic Snack.</>"
+      }
+    ],
+    "potentials": [
+      {
+        "name": "Wildness Ignited",
+        "description": "When entering battle, Kay gains 1 stack of <@ba.key>Hot Edgy Naives</>.\nTalent <@ba.key>Bottomless Arsenal</> improved: Each <@ba.key>Weapon</> salvage gives the entire team an additional <#ba.spelldmg>Arts DMG Dealt</> <@ba.vup>+2.0%</>, with additional <@ba.natur>Nature DMG Dealt</> getting another <@ba.vup>+2.0%</>, for an additional duration of <@ba.vup>+10</>s."
+      },
+      {
+        "name": "Expert Roamer",
+        "description": "Strength <@ba.vup>+20</>, <@ba.natur>Nature DMG Dealt</> <@ba.vup>+10%</>."
+      },
+      {
+        "name": "Picnic Prep",
+        "description": "Battle skill <@ba.key>\"Really Heavy Bash\"</> enhanced: Bonus DMG Multiplier per <@ba.key>Hot Edgy Naives</> stack is increased to <@ba.vup>1.2</> times the original. Ultimate <@ba.key>\"Really Sweet Combi-Bonker!\"</> improved: DMG Multiplier is increased to <@ba.vup>1.2</> times the original."
+      },
+      {
+        "name": "\"Bonkie I Made\"",
+        "description": "Ultimate <@ba.key>\"Really Sweet Combi-Bonker!\"</> improved: Ultimate Energy cost <@ba.vup>-15%</>."
+      },
+      {
+        "name": "\"Kwikker Smash\"",
+        "description": "Combo skill <@ba.key>\"Really Kwik Smash\"</> improved: Length of cooldown <@ba.vup>-1</>s. DMG Multiplier is increased to <@ba.vup>1.2</> times the original. SP Recovery is increased to <@ba.vup>1.3</> times the original."
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "Wild Wacky-Whack",
+        "description": "BASIC ATTACK: \nAn attack with up to 5 sequences that deals <@ba.pd>Physical DMG</>. As the controlled operator, <#ba.lastcombo>Final Strike</> also deals <@ba.poise>17</> Stagger. \n\nDIVE ATTACK: \nBasic attack performed in mid-air becomes a dive attack that deals <@ba.pd>Physical DMG</> to nearby enemies. \n\nFINISHER: \nBasic attack performed near a Staggered enemy becomes a finisher attack that deals massive <@ba.pd>Physical DMG</> and recovers some SP.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "BATK SEQ 1 Multiplier",
+              "values": ["21%", "23%", "26%", "28%", "30%", "32%", "34%", "36%", "38%", "41%", "44%", "48%"]
+            },
+            {
+              "label": "BATK SEQ 2 Multiplier",
+              "values": ["24%", "26%", "28%", "30%", "32%", "34%", "36%", "40%", "42%", "44%", "48%", "52%"]
+            },
+            {
+              "label": "BATK SEQ 3 Multiplier",
+              "values": ["28%", "28%", "32%", "36%", "36%", "40%", "44%", "44%", "48%", "52%", "56%", "60%"]
+            },
+            {
+              "label": "BATK SEQ 4 Multiplier",
+              "values": ["42%", "42%", "48%", "54%", "54%", "60%", "66%", "66%", "72%", "78%", "84%", "90%"]
+            },
+            {
+              "label": "BATK SEQ 5 Multiplier",
+              "values": ["59%", "65%", "70%", "76%", "82%", "88%", "94%", "100%", "106%", "113%", "122%", "132%"]
+            },
+            {
+              "label": "Finisher ATK Multiplier",
+              "values": ["400%", "440%", "480%", "520%", "560%", "600%", "640%", "680%", "720%", "770%", "830%", "900%"]
+            },
+            {
+              "label": "Dive ATK Multiplier",
+              "values": ["80%", "88%", "96%", "104%", "112%", "120%", "128%", "136%", "144%", "154%", "166%", "180%"]
+            }
+          ]
+        }
+      },
+      "battleSkill": {
+        "name": "\"Really Heavy Bash\"",
+        "description": "Kay leaps into mid-air for a short power-up, salvages all her <@ba.key>Weapons</>, then unleashes a powerful ground bash with her heavy hammer. The bash deals <@ba.natur>Nature DMG</> (based on her <@ba.key>Hot Edgy Naives</> stacks), applies <#ba.naturalinflict>Nature Infliction</> on enemies within the area of effect, and consumes all <@ba.key>Hot Edgy Naives</> stacks. If Kay consumes 3 <@ba.key>Hot Edgy Naives</> stacks, she also forcibly applies <#ba.burning>Combustion</> on enemies.\n<@ba.info>If ＞ 3 Hot Edgy Naives stacks are consumed, the effects will be the same as those for 3 stacks.</>",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "DMG Multiplier",
+              "values": ["133%", "147%", "160%", "173%", "187%", "200%", "213%", "227%", "240%", "257%", "277%", "300%"]
+            },
+            {
+              "label": "Stagger",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
+            },
+            {
+              "label": "Bonus DMG Multiplier per Hot Edgy Naives",
+              "values": ["44%", "49%", "53%", "58%", "62%", "67%", "71%", "76%", "80%", "86%", "92%", "100%"]
+            },
+            {
+              "label": "Combustion Duration (s)",
+              "values": ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5"]
+            }
+          ]
+        }
+      },
+      "comboSkill": {
+        "name": "\"Really Kwik Smash\"",
+        "description": "COMBO TRIGGER: While Kay has ≥ 1 <@ba.key>Weapon</> and either <#ba.naturalinflict>Nature Infliction</> is applied OR <#ba.spellburst>Arts Burst</> DMG is dealt to the enemy.\nKay throws a <@ba.key>Weapon</> at the target to deal <@ba.natur>Nature DMG</>. Hitting the enemy recovers some SP and also forcibly applies a <#ba.naturalburst>Nature Burst</>. The <@ba.key>Weapon</> will then drop at a random location in the battlefield. Kay <@ba.key>salvages</> the said <@ba.key>Weapon</> when the controlled operator touches it.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "DMG Multiplier",
+              "values": ["31%", "34%", "37%", "40%", "44%", "47%", "50%", "53%", "56%", "60%", "65%", "70%"]
+            },
+            {
+              "label": "Stagger",
+              "values": ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5"]
+            },
+            {
+              "label": "Ultimate Energy Gain",
+              "values": ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5"]
+            },
+            {
+              "label": "SP Recovery",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "11", "11", "11", "12"]
+            }
+          ]
+        }
+      },
+      "ultimate": {
+        "name": "\"Really Sweet Combi-Bonker!\"",
+        "description": "Kay kitbashes a combi-bonker that she swings multiple times before throwing it to cause an explosion that deals <@ba.natur>Nature DMG</> and applies <#ba.naturalinflict>Nature Infliction</> on enemies within the area of effect, recovers some SP, and leaves behind multiple <@ba.key>Picnic Snacks</>. When the controlled operator touches a <@ba.key>Picnic Snack</> and picks it up, Kay grants HP treatment to the said operator and recovers some SP. The attribute of Agility increases the amount of HP treatment.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "SEQ 1 DMG Multiplier",
+              "values": ["71%", "78%", "85%", "92%", "100%", "107%", "114%", "121%", "128%", "137%", "148%", "160%"]
+            },
+            {
+              "label": "SEQ 2 DMG Multiplier",
+              "values": ["89%", "98%", "107%", "116%", "124%", "133%", "142%", "151%", "160%", "171%", "184%", "200%"]
+            },
+            {
+              "label": "SEQ 3 DMG Multiplier",
+              "values": ["107%", "117%", "128%", "139%", "149%", "160%", "171%", "181%", "192%", "205%", "221%", "240%"]
+            },
+            {
+              "label": "Stagger",
+              "values": ["20", "20", "20", "20", "20", "20", "20", "20", "20", "20", "20", "20"]
+            },
+            {
+              "label": "SP Recovery",
+              "values": ["24", "24", "24", "24", "24", "24", "24", "24", "27", "27", "27", "30"]
+            },
+            {
+              "label": "Base Treatment",
+              "values": ["180", "216", "252", "288", "306", "324", "342", "360", "378", "387", "396", "405"]
+            },
+            {
+              "label": "Treatment Increase per Agility",
+              "values": ["0.42", "0.5", "0.59", "0.67", "0.71", "0.76", "0.8", "0.84", "0.88", "0.9", "0.92", "0.95"]
+            },
+            {
+              "label": "SP Recovery per Picnic Snack",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
+            }
+          ]
+        }
+      }
+    }
+  },
   "endministrator": {
     "name": "Endministrator",
     "talents": [
@@ -5527,34 +5861,6 @@
             {
               "label": "Dive ATK Multiplier",
               "values": ["80%", "88%", "96%", "104%", "112%", "120%", "128%", "136%", "144%", "154%", "166%", "180%"]
-            },
-            {
-              "label": "BATK SEQ 1 Multiplier",
-              "values": ["23%", "25%", "27%", "29%", "32%", "34%", "36%", "39%", "41%", "44%", "47%", "51%"]
-            },
-            {
-              "label": "BATK SEQ 2 Multiplier",
-              "values": ["27%", "30%", "32%", "35%", "38%", "41%", "43%", "46%", "49%", "52%", "56%", "61%"]
-            },
-            {
-              "label": "BATK SEQ 3 Multiplier",
-              "values": ["30%", "33%", "36%", "39%", "42%", "45%", "48%", "51%", "54%", "58%", "63%", "68%"]
-            },
-            {
-              "label": "BATK SEQ 4 Multiplier",
-              "values": ["35%", "38%", "41%", "45%", "48%", "52%", "55%", "59%", "62%", "67%", "72%", "78%"]
-            },
-            {
-              "label": "BATK SEQ 5 Multiplier",
-              "values": ["40%", "44%", "48%", "52%", "56%", "60%", "64%", "68%", "72%", "77%", "83%", "90%"]
-            },
-            {
-              "label": "Finisher ATK Multiplier",
-              "values": ["400%", "440%", "480%", "520%", "560%", "600%", "640%", "680%", "720%", "770%", "830%", "900%"]
-            },
-            {
-              "label": "Dive ATK Multiplier",
-              "values": ["80%", "88%", "96%", "104%", "112%", "120%", "128%", "136%", "144%", "154%", "166%", "180%"]
             }
           ]
         }
@@ -5565,14 +5871,6 @@
         "details": {
           "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
           "rows": [
-            {
-              "label": "DMG Multiplier",
-              "values": ["156%", "171%", "187%", "202%", "218%", "234%", "249%", "265%", "280%", "300%", "323%", "350%"]
-            },
-            {
-              "label": "Stagger",
-              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
-            },
             {
               "label": "DMG Multiplier",
               "values": ["156%", "171%", "187%", "202%", "218%", "234%", "249%", "265%", "280%", "300%", "323%", "350%"]
@@ -5609,26 +5907,6 @@
             {
               "label": "Ultimate Energy Gain",
               "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
-            },
-            {
-              "label": "DMG Multiplier",
-              "values": ["45%", "49%", "54%", "58%", "62%", "67%", "71%", "76%", "80%", "86%", "93%", "100%"]
-            },
-            {
-              "label": "Crystal Shattering DMG Multiplier",
-              "values": ["178%", "196%", "213%", "231%", "249%", "267%", "284%", "302%", "320%", "342%", "369%", "400%"]
-            },
-            {
-              "label": "Stagger",
-              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
-            },
-            {
-              "label": "Seal Duration (s)",
-              "values": ["4", "4", "4", "4", "4", "4", "4", "4", "4", "4.5", "4.5", "5"]
-            },
-            {
-              "label": "Ultimate Energy Gain",
-              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
             }
           ]
         }
@@ -5639,18 +5917,6 @@
         "details": {
           "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
           "rows": [
-            {
-              "label": "DMG Multiplier",
-              "values": ["356%", "391%", "427%", "462%", "498%", "533%", "569%", "604%", "640%", "684%", "738%", "800%"]
-            },
-            {
-              "label": "Bonus DMG Multiplier",
-              "values": ["267%", "294%", "320%", "347%", "374%", "400%", "427%", "454%", "480%", "514%", "554%", "600%"]
-            },
-            {
-              "label": "Stagger",
-              "values": ["25", "25", "25", "25", "25", "25", "25", "25", "25", "25", "25", "25"]
-            },
             {
               "label": "DMG Multiplier",
               "values": ["356%", "391%", "427%", "462%", "498%", "533%", "569%", "604%", "640%", "684%", "738%", "800%"]

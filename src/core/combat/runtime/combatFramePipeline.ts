@@ -5,7 +5,23 @@ import type { TimeDilationRuntime } from '../time/timeDilationRuntime';
 import type { ProjectileLifecycleRuntime } from '../abilities/projectileLifecycleRuntime';
 import { COMBAT_FRAME_INTERVAL } from '../time/combatClock';
 
+export interface EnemyFrameRuntimes {
+  readonly ownerId: string;
+  readonly buffs: Pick<
+    EnemyBuffRuntime,
+    'advanceFrame' | 'advanceWithDeltas' | 'recycleFinishedBuffs'
+  >;
+  readonly control?: { advance(deltaSeconds: number): void } | null;
+  readonly vitals?: (FrameRuntime & { advance?(deltaSeconds: number): void }) | null;
+}
+
 export interface CombatFramePipeline {
+  readonly primaryEnemyId: string;
+  /** 切出仍存活；未出生或死亡后不推进生命和失衡恢复。 */
+  readonly isEnemyAlive?: (ownerId: string) => boolean;
+  readonly additionalEnemies?: readonly EnemyFrameRuntimes[];
+  readonly enemyLifecycle?: FrameRuntime;
+  readonly typhoeaArchery?: FrameRuntime;
   readonly frameEndEvents?: FrameRuntime;
   readonly timeDilation: TimeDilationRuntime | null;
   readonly control: FrameRuntime;
@@ -17,7 +33,7 @@ export interface CombatFramePipeline {
     ProjectileLifecycleRuntime,
     'advanceFrame' | 'beginAbilityFrame' | 'advanceAbilityFrame'
   >;
-  readonly enemyBuffs: EnemyBuffRuntime;
+  readonly enemyBuffs: EnemyFrameRuntimes['buffs'];
   readonly enemyVitals?: (FrameRuntime & { advance?(deltaSeconds: number): void }) | null;
   readonly comboWindows: FrameRuntime & { advance?(deltaSeconds: number): void };
   /** PlayerController 的连续闪避窗口，每帧只推进一次。 */
@@ -32,14 +48,29 @@ export function bindCombatFramePipeline(
   systems: CombatFramePipeline,
 ): void {
   const { timeDilation, enemyBuffs, enemyControl, enemyVitals, projectiles } = systems;
+  const enemies: readonly EnemyFrameRuntimes[] = [
+    {
+      ownerId: systems.primaryEnemyId,
+      buffs: enemyBuffs,
+      control: enemyControl,
+      vitals: enemyVitals,
+    },
+    ...(systems.additionalEnemies ?? []),
+  ];
+  if (systems.enemyLifecycle !== undefined) simulation.add(systems.enemyLifecycle);
+  if (systems.typhoeaArchery !== undefined) simulation.add(systems.typhoeaArchery);
   if (timeDilation !== null) simulation.add(timeDilation);
   simulation.addInputPhase('controlInputs', systems.control);
   // 控制组件 FixedTick 早于 AbilitySystem 的 Buff PreLateTick。
-  if (enemyControl != null)
+  for (const enemy of enemies) {
+    if (enemy.control == null) continue;
     simulation.add({
       advanceFrame: () =>
-        enemyControl.advance(COMBAT_FRAME_INTERVAL * (timeDilation?.getEntityScale('enemy') ?? 1)),
+        enemy.control!.advance(
+          COMBAT_FRAME_INTERVAL * (timeDilation?.getEntityScale(enemy.ownerId) ?? 1),
+        ),
     });
+  }
   const advanceGlobal = (runtime: FrameRuntime & { advance?(deltaSeconds: number): void }) => {
     if (runtime.advance === undefined) runtime.advanceFrame();
     else runtime.advance(COMBAT_FRAME_INTERVAL * (timeDilation?.currentGlobalScale ?? 1));
@@ -50,25 +81,27 @@ export function bindCombatFramePipeline(
   simulation.add(systems.abilityEntities);
   simulation.add(projectiles);
   simulation.add({ advanceFrame: () => projectiles.beginAbilityFrame() });
-  simulation.add({
-    advanceFrame: () => {
-      if (timeDilation === null || enemyBuffs.advanceWithDeltas === undefined) {
-        enemyBuffs.advanceFrame();
-      } else {
-        enemyBuffs.advanceWithDeltas(
-          timeDilation.getAbilityTickDeltas('enemy', COMBAT_FRAME_INTERVAL),
-        );
-      }
-    },
-  });
-  if (enemyVitals != null)
+  for (const enemy of enemies)
     simulation.add({
       advanceFrame: () => {
-        if (timeDilation === null || enemyVitals.advance === undefined) enemyVitals.advanceFrame();
-        else enemyVitals.advance(COMBAT_FRAME_INTERVAL * timeDilation.currentGlobalScale);
+        if (timeDilation !== null && enemy.buffs.advanceWithDeltas !== undefined)
+          enemy.buffs.advanceWithDeltas(
+            timeDilation.getAbilityTickDeltas(enemy.ownerId, COMBAT_FRAME_INTERVAL),
+          );
+        else enemy.buffs.advanceFrame();
       },
     });
-  simulation.add({ advanceFrame: () => enemyBuffs.recycleFinishedBuffs?.() });
+  for (const enemy of enemies) {
+    const vitals = enemy.vitals;
+    if (vitals != null)
+      simulation.add({
+        advanceFrame: () => {
+          if (systems.isEnemyAlive?.(enemy.ownerId) !== false) advanceGlobal(vitals);
+        },
+      });
+  }
+  for (const enemy of enemies)
+    simulation.add({ advanceFrame: () => enemy.buffs.recycleFinishedBuffs?.() });
   // 本帧归零的连携窗口不能再被同帧输入消费。
   simulation.add({ advanceFrame: () => advanceGlobal(systems.comboWindows) });
   simulation.add(systems.playerMultiDash);

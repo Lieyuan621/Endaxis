@@ -1,9 +1,24 @@
-import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
-import { resolveOperationPartTransferInfo } from '../abilities/runtimeTargetContext';
-import type { InflictionElement } from '../../../../packages/game-data-contract/src/primitives';
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
+import type { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
+import { PHYSICAL_INFLICTION_TAGS } from '../status/physicalInfliction';
+import type { BuffLookupQuery } from '../../../../packages/game-data-contract/src/conditions';
+import {
+  copyEnemyPartTransferInfo,
+  resolveOperationPartTransferInfo,
+  RuntimeTargetContext,
+} from '../abilities/runtimeTargetContext';
+import type {
+  BuffSingleTarget,
+  InflictionElement,
+} from '../../../../packages/game-data-contract/src/primitives';
 import { stringInputExpression, valueInputBlackboardKey } from '../../compiler/compiledGraphData';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
-import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import {
+  singleTargetList,
+  firstRuntimeEntityTarget,
+  runtimeTargetEntityId,
+  runtimeTargetFromEntityId,
+} from '../../game-data/logicalAbilityEntity';
 import type { PhysicalInflictionType } from '../../game-data/operatorDefinition';
 import { ELEMENTAL_ATTACHMENT_TAGS } from '../infliction/elementalInfliction';
 import { FORCED_SPELL_STATUS_BUFFS } from '../infliction/forcedSpellStatus';
@@ -21,6 +36,7 @@ import { CHARACTER_INFLICTION_BUFFS } from '../infliction/characterInfliction';
 import { NATIVE_ELEMENT_VALUES } from '../infliction/elementalInfliction';
 import type { CombatObjectRef } from '../receipt/combatReceipt';
 import type { CombatOperationHostState } from '../state/actionState';
+import type { RuntimeTargetContextState } from '../state/abilityState';
 import type {
   ActionValueCalculation,
   ArtsIntensityFactor,
@@ -94,11 +110,10 @@ export interface BuffLifecycleOperationSource {
 
 /** 技能动作对目标 Buff 容器使用的最小稳定端口。 */
 export interface BuffOperationTarget {
-  findMatching?(
-    query: ResolvedCombatStepParameters['setBuffRemainingDuration']['query'],
-  ): Iterable<BuffQueryResult>;
+  definitionTags?(id: string): readonly GameplayTag[] | undefined;
+  findMatching?(query: BuffLookupQuery): Iterable<BuffQueryResult>;
   setRemainingDuration?(
-    query: ResolvedCombatStepParameters['setBuffRemainingDuration']['query'],
+    query: BuffLookupQuery,
     operation: 'assign' | 'add' | 'multiply',
     value: number,
   ): void;
@@ -121,6 +136,8 @@ export interface BuffOperationTarget {
   ): void;
   /** 只读原生属性值；技能费用等非 Buff 操作不得反向持有具体容器。 */
   getAttributeValue?(attribute: string): number;
+  pushRawAttributeOverride?(attribute: string, value: number): number;
+  popRawAttributeOverride?(attribute: string, token: number): void;
   /** 只绑定当前分支的属性变化，不重放恢复前的变化。 */
   bindAttributeChangeObserver?(
     attribute: string,
@@ -175,12 +192,19 @@ export interface BuffOperationTarget {
     sourceId?: string,
     finishSkillCastInfo?: CombatSkillCastInfo | null,
   ): number;
-  ignite?(igniteType: string, sourceId: string, skillCastInfo?: CombatSkillCastInfo): number;
+  ignite?(
+    igniteType: string,
+    sourceId: string,
+    skillCastInfo?: CombatSkillCastInfo,
+    partTransferInfo?: EnemyPartTransferInfo,
+  ): number;
   holdByIds(ids: readonly string[]): {
     readonly references?: readonly BuffReference[];
     release(): void;
   };
   releaseHeld?(references: readonly BuffReference[]): void;
+  addEntityTags?(tags: readonly GameplayTag[]): void;
+  removeEntityTags?(tags: readonly GameplayTag[]): void;
   getCountByTags(
     tags: readonly GameplayTag[],
     type: GameplayTagQueryType,
@@ -257,7 +281,7 @@ export interface BuffAppliedEvent {
 }
 
 export interface BuffConsumedEvent {
-  readonly buff: EventBuffInstance;
+  readonly buff: EventBuffInstance | null;
   readonly skillCastInfo?: CombatSkillCastInfo | null;
   readonly sourceOperatorId: string;
   readonly targetId: string;
@@ -272,6 +296,7 @@ export type { BuffApplicationHandle } from './combatBuffs';
 
 /** 定义身份与本次施加覆盖值已经分离求值后的运行时请求。 */
 export interface BuffApplicationRequest {
+  readonly inheritedTargetGroups?: RuntimeTargetContextState;
   readonly partTransferInfo?: EnemyPartTransferInfo;
   readonly blackboardValueCalculations?: Readonly<Record<string, ActionValueCalculation>>;
   readonly physicalInflictionType?: BuffAppliedEvent['physicalInflictionType'];
@@ -296,10 +321,12 @@ export interface BuffApplicationRequest {
 }
 
 export interface BuffOperationDependencies {
+  readonly physicalTagPredefine?: GameplayTagPredefine;
   readonly queryTargets?: (
-    query: ActionTargetQuery,
+    query: CompiledTargetQuery,
     context: CombatOperationContext,
   ) => readonly RuntimeTargetRef[];
+  readonly publishBuffConsumeEvent?: (event: BuffConsumedEvent) => void;
   readonly triggerCharacterInflictionEvent?: (
     ownerId: string,
     sourceId: string,
@@ -312,16 +339,18 @@ export interface BuffOperationDependencies {
     sourceId: string,
     element: InflictionElement,
   ) => void;
+  readonly resolveInflictionTarget?: (target: RuntimeTargetRef) => RuntimeTargetRef;
   readonly sourceId: string;
   /** 当前操作链解析 Buff/能力实体定义所使用的干员。 */
   readonly definitionOwnerId?: string;
   readonly sourceActionId?: string;
   readonly resolveTarget: (target: CombatTarget) => BuffOperationTarget;
-  /** 尚未迁入 ActionTargetQuery 的施加动作目标解析。 */
+  /** 尚未迁入 CompiledTargetQuery 的施加动作目标解析。 */
   readonly resolveApplicationTargets?: (
     target: Exclude<BuffApplicationTarget, 'currentAbilityEntity'>,
   ) => readonly BuffOperationTarget[];
   /** 当前子时间线/Context 句柄只在显式能力实体目标的施加路径使用。 */
+  readonly resolvePartBuffSource?: (target: RuntimeTargetRef) => RuntimeTargetRef;
   readonly resolveCurrentAbilityEntityTarget?: (target: RuntimeTargetRef) => BuffOperationTarget;
   /** 把动作所属能力实体的同名 TimedMarker 解析为本次实例的稳定展示时钟身份。 */
   readonly resolveAbilityEntityTimedMarkerSource?: (
@@ -401,7 +430,188 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     },
   };
 
+  #applyPhysicalInfliction(
+    parameters: Exclude<
+      ResolvedCombatStepParameters['applyPhysicalInfliction'],
+      { type: 'knockDown' }
+    >,
+    sourceId: string,
+    target: BuffOperationTarget,
+    context: CombatOperationContext,
+  ): void {
+    if (target.apply === undefined)
+      throw new Error(
+        `physical infliction target '${target.ownerId}' does not support Buff application`,
+      );
+    const noGuardCount = target.getCountByIds([PHYSICAL_NO_GUARD_BUFF]);
+    const hasNoGuard = noGuardCount > 0;
+    const entersPhysicalInfliction =
+      hasNoGuard || (parameters.type === 'airborne' && parameters.force);
+    const crushBlackboardValues: Readonly<Record<string, number>> =
+      hasNoGuard && parameters.type === 'crush'
+        ? (() => {
+            const values: Record<string, number> = {};
+            const multiplier = resolveActionValueOperand(
+              parameters.damageMultiplier,
+              context.blackboard,
+            );
+            if (Math.abs(multiplier - 1) > 1e-5) {
+              values.dmg_multiplier = multiplier;
+            }
+            if (parameters.ignoreHitEffect) {
+              values.ignore_hit_effect = 1;
+            }
+            return values;
+          })()
+        : {};
+    if (entersPhysicalInfliction) {
+      const predefine = this.dependencies.physicalTagPredefine;
+      if (predefine === undefined)
+        throw new Error('physical infliction requires native tag admission');
+      if (!predefine.canAddTag(target, PHYSICAL_INFLICTION_TAGS[parameters.type])) return;
+      this.dependencies.onBeforeOutputPhysicalInfliction?.({
+        sourceId: sourceId,
+        targetId: target.ownerId,
+        type: parameters.type,
+        isExtra: parameters.isExtra,
+        skillCastInfo: context.skillCastInfo,
+        ...(context.attachBuffToCurrentSkill === undefined
+          ? {}
+          : { attachBuffToCurrentSkill: context.attachBuffToCurrentSkill }),
+      });
+    }
+    const request: BuffApplicationRequest = !entersPhysicalInfliction
+      ? {
+          buffId: PHYSICAL_NO_GUARD_BUFF,
+          sourceId: sourceId,
+          ...(this.dependencies.sourceActionId === undefined
+            ? {}
+            : { sourceActionId: this.dependencies.sourceActionId }),
+          blackboardValues: {},
+          skillCastInfo: context.skillCastInfo,
+        }
+      : parameters.type === 'crush'
+        ? {
+            buffId: PHYSICAL_INFLICTION_BUFFS.crush,
+            sourceId: sourceId,
+            ...(this.dependencies.sourceActionId === undefined
+              ? {}
+              : { sourceActionId: this.dependencies.sourceActionId }),
+            blackboardValues: crushBlackboardValues,
+            skillCastInfo: context.skillCastInfo,
+          }
+        : parameters.type === 'fracture'
+          ? {
+              buffId: PHYSICAL_INFLICTION_BUFFS.fracture,
+              sourceId: sourceId,
+              ...(this.dependencies.sourceActionId === undefined
+                ? {}
+                : { sourceActionId: this.dependencies.sourceActionId }),
+              blackboardValues: {},
+              skillCastInfo: context.skillCastInfo,
+            }
+          : {
+              buffId: PHYSICAL_INFLICTION_BUFFS.airborne,
+              sourceId: sourceId,
+              ...(this.dependencies.sourceActionId === undefined
+                ? {}
+                : { sourceActionId: this.dependencies.sourceActionId }),
+              blackboardValues: {},
+              skillCastInfo: context.skillCastInfo,
+            };
+    const definition = this.dependencies.resolveBuffDefinition?.(request.buffId);
+    if (definition === undefined)
+      throw new Error(
+        `physical infliction Buff '${request.buffId}' is missing from the definition repository`,
+      );
+    target.apply({
+      ...request,
+      isExtra: entersPhysicalInfliction && parameters.isExtra,
+      definition,
+      definitionOwnerId: this.dependencies.definitionOwnerId ?? this.dependencies.sourceId,
+      physicalInflictionType: parameters.type,
+      producedBy: operationProducer(context, {
+        ownerId: sourceId,
+        actionId: this.dependencies.sourceActionId,
+      }),
+    });
+    if (entersPhysicalInfliction) {
+      this.dependencies.onPhysicalInflictionApplied?.({
+        sourceId: sourceId,
+        targetId: target.ownerId,
+        type: parameters.type,
+        isExtra: parameters.isExtra,
+        skillCastInfo: context.skillCastInfo,
+        ...(context.attachBuffToCurrentSkill === undefined
+          ? {}
+          : { attachBuffToCurrentSkill: context.attachBuffToCurrentSkill }),
+      });
+    }
+  }
+
   execute(step: RuntimeOperation, context?: CombatOperationContext): boolean {
+    if (step.kind === 'boneAttach') {
+      const state = context?.boneAttachState;
+      const query = this.dependencies.queryTargets;
+      const resolve = this.dependencies.resolveEventTarget;
+      if (!state || !context || !query || !resolve)
+        throw new Error('bone attachment requires target queries and action state');
+      if (state.targetId !== null) return true;
+      // 原生挂接持有单个目标与挂点来源，缺少任一对象则不建立控制。
+      const selected = query(step.parameters.target, context)[0];
+      const anchor = query(step.parameters.anchor, context)[0];
+      if (!selected || !anchor) return false;
+      const id = runtimeTargetEntityId(selected);
+      if (id === undefined) return false;
+      const target = resolve(id);
+      if (!target.addEntityTags) throw new Error('bone attachment requires entity tags');
+      state.targetId = id;
+      target.addEntityTags(['Status/Immobilized/BeCaught']);
+      return true;
+    }
+    if (step.kind === 'disableNormalSkill') {
+      const state = context?.actionRegistrationState;
+      const owner = context?.actionOwnerId;
+      if (!state || !owner || !this.dependencies.resolveEventTarget)
+        throw new Error('normal-skill restriction requires owner and action state');
+      const target = this.dependencies.resolveEventTarget(owner);
+      if (!target.addEntityTags) throw new Error('normal-skill restriction requires entity tags');
+      target.addEntityTags([
+        step.parameters.normalOnly
+          ? 'Status/DisableNormalSkillExceptForAdditional/WithUI'
+          : 'Status/DisableNormalSkill/WithUI',
+      ]);
+      state.registrationIds.push(1);
+      return true;
+    }
+    if (step.kind === 'triggerBuffConsumeEvent') {
+      const { queryTargets, publishBuffConsumeEvent } = this.dependencies;
+      if (!context || !queryTargets || !publishBuffConsumeEvent)
+        throw new Error('Buff consumption event requires target queries and an event publisher');
+      const layers = Math.trunc(
+        resolveActionValueOperand(step.parameters.layers, context.blackboard),
+      );
+      if (layers <= 0) return false;
+      const source = firstRuntimeEntityTarget(queryTargets(step.parameters.source, context));
+      const owner = firstRuntimeEntityTarget(queryTargets(step.parameters.owner, context));
+      if (!source || !owner) return false;
+      const buffId = step.parameters.buffId;
+      const target = this.#resolveContextTarget(owner);
+      const definition = this.dependencies.resolveBuffDefinition?.(buffId);
+      const tags = definition ? (definition.applyTags ?? []) : target.definitionTags?.(buffId);
+      if (!tags) throw new Error('missing consumed Buff definition: ' + buffId);
+      publishBuffConsumeEvent({
+        buff: null,
+        sourceOperatorId: runtimeTargetEntityId(source)!,
+        targetId: target.ownerId,
+        buffId,
+        layers,
+        buffTags: tags,
+        blackboardValues: {},
+        skillCastInfo: context.skillCastInfo,
+      });
+      return true;
+    }
     if (step.kind === 'triggerCharacterInflictionEvent') {
       const ownerId = context?.actionOwnerId ?? context?.buffOwnerId ?? this.dependencies.sourceId;
       const source = this.#resolveApplicationSource(step.parameters.eventSource, context, false);
@@ -413,10 +623,10 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     }
     if (step.kind === 'applyCharacterInfliction') {
       if (context === undefined) throw new Error('character infliction requires an action context');
-      const source =
-        step.parameters.source === 'battle'
-          ? { ownerId: 'battle' }
-          : this.#resolveApplicationSource(step.parameters.source, context, false);
+      const source = this.#resolveCreationSource(step.parameters, context);
+      if (source === undefined) return false;
+      const query = this.dependencies.queryTargets;
+      if (query === undefined) throw new Error('character infliction requires target queries');
       const isCharacter = this.dependencies.isCharacterTarget;
       if (isCharacter === undefined)
         throw new Error('character infliction requires an entity type resolver');
@@ -424,8 +634,10 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
         { heat: 'Fire', electric: 'Pulse', cryo: 'Cryst', nature: 'Natural' } as const
       )[step.parameters.element];
       const ids = CHARACTER_INFLICTION_BUFFS[nativeElement];
-      for (const target of this.#resolveApplicationTargets(step.parameters.target, context)) {
-        if (!isCharacter(target.ownerId)) continue;
+      for (const selected of query(step.parameters.target, context)) {
+        const id = runtimeTargetEntityId(selected);
+        if (id === undefined || !isCharacter(id)) continue;
+        const target = this.#resolveContextTarget(selected);
         if (
           !step.parameters.ignoreWeakImmune &&
           target.matchesEntityTags(
@@ -486,7 +698,12 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     if (step.kind === 'storeShieldValue') {
       if (context === undefined)
         throw new Error('storeShieldValue requires a combat operation context');
-      const ownerId = context.actionOwnerId ?? context.buffOwnerId;
+      if (this.dependencies.queryTargets === undefined)
+        throw new Error('storeShieldValue requires target queries');
+      const selected = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(step.parameters.target, context),
+      );
+      const ownerId = selected === undefined ? undefined : runtimeTargetEntityId(selected);
       if (ownerId === undefined) return true;
       const resolve = this.dependencies.resolveEventTarget;
       if (resolve === undefined)
@@ -520,10 +737,20 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     }
     if (step.kind === 'forceSpellStatus') {
       if (context === undefined) throw new Error('forceSpellStatus requires an action context');
-      const target = this.dependencies.resolveTarget(step.parameters.target);
+      let sourceId = context.actionSourceId ?? context.buffSourceId ?? this.dependencies.sourceId;
+      if (step.parameters.source !== undefined) {
+        if (!this.dependencies.queryTargets)
+          throw new Error('forceSpellStatus requires target queries');
+        const source = firstRuntimeEntityTarget(
+          this.dependencies.queryTargets(step.parameters.source, context),
+        );
+        const id = source && runtimeTargetEntityId(source);
+        if (id === undefined) return false;
+        sourceId = id;
+      }
       const buffId = FORCED_SPELL_STATUS_BUFFS[step.parameters.element];
       const definition = this.dependencies.resolveBuffDefinition?.(buffId);
-      if (definition === undefined || target.apply === undefined)
+      if (definition === undefined)
         throw new Error(
           `forceSpellStatus requires Buff definition '${buffId}' and an application target`,
         );
@@ -549,162 +776,95 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
         }),
       );
       const tags = [ELEMENTAL_ATTACHMENT_TAGS[step.parameters.consumedElement]];
-      const sourceId = context.actionSourceId ?? context.buffSourceId ?? this.dependencies.sourceId;
-      if (layers > 0) {
-        // 层数不足只跳过本目标，原生动作本身仍返回成功。
-        if (target.getCountByTags(tags, 'hasAny') < layers) return true;
-        if (target.finishCountByTags === undefined)
-          throw new Error('forceSpellStatus requires a count-aware Buff target');
-        target.finishCountByTags(
-          tags,
-          'hasAny',
-          layers,
-          'early',
-          false,
+      if (typeof step.parameters.target !== 'string' && !this.dependencies.queryTargets)
+        throw new Error('forceSpellStatus requires target queries');
+      const targets =
+        typeof step.parameters.target === 'string'
+          ? [this.dependencies.resolveTarget(step.parameters.target)]
+          : this.dependencies.queryTargets!(step.parameters.target, context)
+              .filter(target => target.kind !== 'spatialPoint')
+              .map(target =>
+                this.#resolveContextTarget(
+                  this.dependencies.resolvePartBuffSource?.(target) ?? target,
+                ),
+              );
+      for (const target of targets) {
+        if (!target.apply) throw new Error('forceSpellStatus requires an application target');
+        if (layers > 0) {
+          // 层数不足只跳过本目标，原生动作本身仍返回成功。
+          if (target.getCountByTags(tags, 'hasAny') < layers) continue;
+          if (target.finishCountByTags === undefined)
+            throw new Error('forceSpellStatus requires a count-aware Buff target');
+          target.finishCountByTags(
+            tags,
+            'hasAny',
+            layers,
+            'early',
+            false,
+            sourceId,
+            context.skillCastInfo ?? null,
+          );
+        }
+        target.apply({
+          buffId,
+          definition,
+          definitionOwnerId: this.dependencies.definitionOwnerId,
           sourceId,
-          context.skillCastInfo ?? null,
-        );
+          sourceActionId: this.dependencies.sourceActionId,
+          producedBy: operationProducer(context, {
+            ownerId: this.dependencies.sourceId,
+            actionId: this.dependencies.sourceActionId,
+          }),
+          blackboardValues: {
+            consumed_type: NATIVE_ELEMENT_VALUES[step.parameters.consumedElement],
+            consumed_layer: layers,
+            count,
+          },
+          ...(Object.keys(blackboardValueCalculations).length === 0
+            ? {}
+            : { blackboardValueCalculations }),
+          skillCastInfo: context.skillCastInfo,
+          isExtra: step.parameters.isExtra,
+        });
       }
-      target.apply({
-        buffId,
-        definition,
-        definitionOwnerId: this.dependencies.definitionOwnerId,
-        sourceId,
-        sourceActionId: this.dependencies.sourceActionId,
-        producedBy: operationProducer(context, {
-          ownerId: this.dependencies.sourceId,
-          actionId: this.dependencies.sourceActionId,
-        }),
-        blackboardValues: {
-          consumed_type: NATIVE_ELEMENT_VALUES[step.parameters.consumedElement],
-          consumed_layer: layers,
-          count,
-        },
-        ...(Object.keys(blackboardValueCalculations).length === 0
-          ? {}
-          : { blackboardValueCalculations }),
-        skillCastInfo: context.skillCastInfo,
-        isExtra: step.parameters.isExtra,
-      });
       return true;
     }
     if (step.kind === 'applyPhysicalInfliction') {
       if (step.parameters.type === 'knockDown')
         return this.dependencies.delegate.execute(step, context);
-      if (context?.skillCastInfo === undefined) {
-        throw new Error('applyPhysicalInfliction requires a skill runtime context');
-      }
-      const target = this.dependencies.resolveTarget(step.parameters.target);
-      if (target.apply === undefined) {
-        throw new Error(
-          `physical infliction target '${target.ownerId}' does not support Buff application`,
-        );
-      }
-      if (step.parameters.type === 'airborne' && step.parameters.targetFilter === 'skipAll') {
-        return step.parameters.returnWhen === 'always';
-      }
-      const noGuardCount = target.getCountByIds([PHYSICAL_NO_GUARD_BUFF]);
-      const hasNoGuard = noGuardCount > 0;
-      const entersPhysicalInfliction =
-        hasNoGuard || (step.parameters.type === 'airborne' && step.parameters.force);
-      if (entersPhysicalInfliction) {
-        this.dependencies.onBeforeOutputPhysicalInfliction?.({
-          sourceId: this.dependencies.sourceId,
-          targetId: target.ownerId,
-          type: step.parameters.type,
-          skillCastInfo: context.skillCastInfo,
-          ...(context.attachBuffToCurrentSkill === undefined
-            ? {}
-            : { attachBuffToCurrentSkill: context.attachBuffToCurrentSkill }),
-        });
-      }
-      const crushBlackboardValues: Readonly<Record<string, number>> =
-        hasNoGuard && step.parameters.type === 'crush'
-          ? (() => {
-              const values: Record<string, number> = {};
-              const multiplier = resolveActionValueOperand(
-                step.parameters.damageMultiplier,
-                context.blackboard,
-              );
-              if (Math.abs(multiplier - 1) > 1e-5) {
-                values.dmg_multiplier = multiplier;
-              }
-              if (step.parameters.ignoreHitEffect) {
-                values.ignore_hit_effect = 1;
-              }
-              return values;
-            })()
-          : {};
-      const request: BuffApplicationRequest = !entersPhysicalInfliction
-        ? {
-            buffId: PHYSICAL_NO_GUARD_BUFF,
-            sourceId: this.dependencies.sourceId,
-            ...(this.dependencies.sourceActionId === undefined
-              ? {}
-              : { sourceActionId: this.dependencies.sourceActionId }),
-            blackboardValues: {},
-            skillCastInfo: context.skillCastInfo,
+      if (context === undefined || this.dependencies.queryTargets === undefined)
+        throw new Error('physical infliction requires an action target query context');
+      const source = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(step.parameters.source, context),
+      );
+      const sourceId = source === undefined ? undefined : runtimeTargetEntityId(source);
+      if (sourceId === undefined) return false;
+      const targets = this.dependencies.queryTargets(step.parameters.target, context);
+      if (!(step.parameters.type === 'airborne' && step.parameters.targetFilter === 'skipAll')) {
+        for (const receiver of targets) {
+          if (runtimeTargetEntityId(receiver) === undefined) continue;
+          const normalized = this.dependencies.resolveInflictionTarget?.(receiver) ?? receiver;
+          if (step.parameters.type !== 'airborne' && normalized.kind !== 'enemy') {
+            if (
+              normalized.kind !== 'abilityEntity' ||
+              !this.dependencies.delegate.evaluate(
+                {
+                  kind: 'targetObjectTypeMatch',
+                  target: { kind: 'inputTarget' },
+                  objectTypes: ['enemy'],
+                },
+                { ...context, actionInputTargets: singleTargetList(normalized) },
+              )
+            )
+              continue;
           }
-        : step.parameters.type === 'crush'
-          ? {
-              buffId: PHYSICAL_INFLICTION_BUFFS.crush,
-              sourceId: this.dependencies.sourceId,
-              ...(this.dependencies.sourceActionId === undefined
-                ? {}
-                : { sourceActionId: this.dependencies.sourceActionId }),
-              blackboardValues: crushBlackboardValues,
-              skillCastInfo: context.skillCastInfo,
-            }
-          : step.parameters.type === 'fracture'
-            ? {
-                buffId: PHYSICAL_INFLICTION_BUFFS.fracture,
-                sourceId: this.dependencies.sourceId,
-                ...(this.dependencies.sourceActionId === undefined
-                  ? {}
-                  : { sourceActionId: this.dependencies.sourceActionId }),
-                blackboardValues: {},
-                skillCastInfo: context.skillCastInfo,
-              }
-            : {
-                buffId: PHYSICAL_INFLICTION_BUFFS.airborne,
-                sourceId: this.dependencies.sourceId,
-                ...(this.dependencies.sourceActionId === undefined
-                  ? {}
-                  : { sourceActionId: this.dependencies.sourceActionId }),
-                blackboardValues: {},
-                skillCastInfo: context.skillCastInfo,
-              };
-      const definition = this.dependencies.resolveBuffDefinition?.(request.buffId);
-      if (definition === undefined)
-        throw new Error(
-          `physical infliction Buff '${request.buffId}' is missing from the definition repository`,
-        );
-      const applied = target.apply({
-        ...request,
-        definition,
-        definitionOwnerId: this.dependencies.definitionOwnerId ?? this.dependencies.sourceId,
-        physicalInflictionType: step.parameters.type,
-        producedBy: operationProducer(context, {
-          ownerId: this.dependencies.sourceId,
-          actionId: this.dependencies.sourceActionId,
-        }),
-      });
-      if (applied && entersPhysicalInfliction) {
-        this.dependencies.onPhysicalInflictionApplied?.({
-          sourceId: this.dependencies.sourceId,
-          targetId: target.ownerId,
-          type: step.parameters.type,
-          skillCastInfo: context.skillCastInfo,
-          ...(context.attachBuffToCurrentSkill === undefined
-            ? {}
-            : { attachBuffToCurrentSkill: context.attachBuffToCurrentSkill }),
-        });
+          const target = this.#resolveContextTarget(normalized);
+          this.#applyPhysicalInfliction(step.parameters, sourceId, target, context);
+        }
       }
-      // 消费事实由 Buff 容器发布，不能再通过前后层数相减重复推算一次。
-      if (step.parameters.type !== 'airborne') return applied;
-      // 固定木桩不安装空间控制组件：状态 Buff 与通用 After 链仍执行，但不能伪造
-      // ApplyAirborne 的 Success/Interruption。真实 1.4.4 样本当前均使用 Always。
-      return step.parameters.returnWhen === 'always';
+      return step.parameters.type === 'airborne'
+        ? step.parameters.returnWhen === 'always'
+        : targets.length > 0;
     }
 
     if (step.kind === 'applyBuff') {
@@ -800,7 +960,8 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       if (context === undefined) {
         throw new Error('readBuffBlackboard requires a combat operation context');
       }
-      const target = this.#resolveSingleTarget(step.parameters.target, context);
+      const target = this.#resolveBuffReadTarget(step.parameters.target, context);
+      if (!target) return false;
       const buff =
         step.parameters.query.kind === 'tag'
           ? target.findFirstByTags(
@@ -833,12 +994,13 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
         throw new Error('readEventBuffBlackboard requires an action context');
       // 当前转换仅准入 GetTargetBuffBBAdvanced(Target, Context)。不能以事件 targetId
       // 替代 Sequence 传入的 TargetHandle；目标为空时原生先返回失败。
-      if (context.actionInputTarget === undefined) return false;
+      if (context.actionInputTargets?.[0] === undefined) return false;
       const event = context.event;
       if (
         event === undefined ||
         !('payload' in event) ||
-        (event.event !== 'buffConsumed' &&
+        (event.event !== 'outputBuff' &&
+          event.event !== 'buffConsumed' &&
           event.event !== 'buffAbsorbed' &&
           event.event !== 'buffAbsorbedFrameEnd' &&
           event.event !== 'buffConsumedFrameEnd' &&
@@ -847,6 +1009,7 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       ) {
         return false;
       }
+      if (event.payload.buff === null) return false;
       const value = event.payload.buff.blackboard.getNumber(step.parameters.desiredKey);
       context.blackboard.assignDynamic(
         step.parameters.outputKey,
@@ -870,7 +1033,9 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     if (step.kind === 'readBuffRemainingDuration') {
       if (context === undefined || this.dependencies.queryTargets === undefined)
         throw new Error('Buff lifetime query requires an action target resolver');
-      const selected = this.dependencies.queryTargets(step.parameters.target, context)[0];
+      const selected = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(step.parameters.target, context),
+      );
       let remaining = 0;
       if (selected !== undefined) {
         const target = this.#resolveContextTarget(selected);
@@ -896,7 +1061,13 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     if (step.kind === 'setBuffRemainingDuration') {
       if (context === undefined)
         throw new Error('Buff duration mutation requires an action context');
-      const target = this.#resolveSingleTarget(step.parameters.target, context);
+      if (this.dependencies.queryTargets === undefined)
+        throw new Error('Buff duration mutation requires an action target resolver');
+      const selected = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(step.parameters.target, context),
+      );
+      if (selected === undefined || runtimeTargetEntityId(selected) === undefined) return true;
+      const target = this.#resolveContextTarget(selected);
       if (target.setRemainingDuration === undefined)
         throw new Error('Buff target cannot modify duration');
       target.setRemainingDuration(
@@ -953,51 +1124,53 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
         );
         return true;
       }
-      const target = this.#resolveSingleTarget(step.parameters.target, context);
+      const target = this.#resolveBuffReadTarget(step.parameters.target, context);
       const skillCastId = step.parameters.sameSourceSkillCast
         ? this.#requireSkillCastId(context, 'readBuffStackCount')
         : undefined;
       const count =
-        step.parameters.countType === 'instance'
-          ? (() => {
-              if (skillCastId !== undefined) {
-                throw new Error(
-                  'readBuffStackCount instance mode does not support sameSourceSkillCast',
-                );
-              }
-              if (step.parameters.query.kind === 'id') {
-                if (target.getInstanceCountByIds === undefined) {
+        target === undefined
+          ? 0
+          : step.parameters.countType === 'instance'
+            ? (() => {
+                if (skillCastId !== undefined) {
                   throw new Error(
-                    'readBuffStackCount ID instance mode requires Buff instance counting',
+                    'readBuffStackCount instance mode does not support sameSourceSkillCast',
                   );
                 }
-                return target.getInstanceCountByIds(step.parameters.query.buffIds);
-              }
-              if (
-                step.parameters.query.kind !== 'tag' ||
-                target.getInstanceCountByTags === undefined
-              ) {
-                throw new Error(
-                  'readBuffStackCount instance mode requires a tag query and Buff instance counting',
+                if (step.parameters.query.kind === 'id') {
+                  if (target.getInstanceCountByIds === undefined) {
+                    throw new Error(
+                      'readBuffStackCount ID instance mode requires Buff instance counting',
+                    );
+                  }
+                  return target.getInstanceCountByIds(step.parameters.query.buffIds);
+                }
+                if (
+                  step.parameters.query.kind !== 'tag' ||
+                  target.getInstanceCountByTags === undefined
+                ) {
+                  throw new Error(
+                    'readBuffStackCount instance mode requires a tag query and Buff instance counting',
+                  );
+                }
+                return target.getInstanceCountByTags(
+                  step.parameters.query.buffTags,
+                  step.parameters.query.tagQueryType,
                 );
-              }
-              return target.getInstanceCountByTags(
-                step.parameters.query.buffTags,
-                step.parameters.query.tagQueryType,
-              );
-            })()
-          : step.parameters.query.kind === 'tag'
-            ? target.getCountByTags(
-                step.parameters.query.buffTags,
-                step.parameters.query.tagQueryType,
-                false,
-                skillCastId,
-              )
-            : // 原生 Save 的 Id 分支逐项求和，重复 ID 也重复计入；不做集合去重。
-              step.parameters.query.buffIds.reduce(
-                (sum, id) => sum + target.getCountByIds([id], skillCastId),
-                0,
-              );
+              })()
+            : step.parameters.query.kind === 'tag'
+              ? target.getCountByTags(
+                  step.parameters.query.buffTags,
+                  step.parameters.query.tagQueryType,
+                  false,
+                  skillCastId,
+                )
+              : // 原生 Save 的 Id 分支逐项求和，重复 ID 也重复计入；不做集合去重。
+                step.parameters.query.buffIds.reduce(
+                  (sum, id) => sum + target.getCountByIds([id], skillCastId),
+                  0,
+                );
       context.blackboard.assignDynamic(step.parameters.outputKey, count);
       const query = step.parameters.query;
       const sourceKey =
@@ -1024,7 +1197,9 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     if (step.kind === 'dispelBuffs') {
       if (context === undefined || this.dependencies.queryTargets === undefined)
         throw new Error('dispelBuffs requires an action target resolver');
-      const source = this.dependencies.queryTargets(step.parameters.source, context)[0];
+      const source = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(step.parameters.source, context),
+      );
       const sourceId = source === undefined ? undefined : runtimeTargetEntityId(source);
       if (sourceId === undefined) return true;
       const targets = this.dependencies.queryTargets(step.parameters.targets, context);
@@ -1047,7 +1222,9 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       const source =
         step.parameters.reason === 'other'
           ? undefined
-          : this.dependencies.queryTargets(step.parameters.finishSource, context)[0];
+          : firstRuntimeEntityTarget(
+              this.dependencies.queryTargets(step.parameters.finishSource, context),
+            );
       const finishSourceId = source === undefined ? undefined : runtimeTargetEntityId(source);
       const count =
         step.parameters.count === undefined
@@ -1056,7 +1233,11 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       const castInfo = context.skillCastInfo ?? null;
       for (const ref of targets) {
         if (runtimeTargetEntityId(ref) === undefined) continue;
-        const target = this.#resolveContextTarget(ref);
+        const buffSource =
+          step.kind === 'finishBuffsByTag'
+            ? (this.dependencies.resolvePartBuffSource?.(ref) ?? ref)
+            : ref;
+        const target = this.#resolveContextTarget(buffSource);
         if (step.kind === 'finishBuffsByTag') {
           if (count === undefined) {
             target.finishByTags(
@@ -1121,18 +1302,52 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     }
 
     if (step.kind === 'igniteBuffs') {
-      const target = this.#resolveSingleTarget(step.parameters.target, context);
-      if (target.ignite === undefined) {
-        throw new Error(`Buff target '${target.ownerId}' does not support ignite events`);
+      const { source, target: query, igniteType, successTargetContextKey } = step.parameters;
+      const queryTargets = this.dependencies.queryTargets;
+      let sourceId: string | undefined;
+      if (typeof source === 'string') {
+        sourceId =
+          source === 'currentBuffSource'
+            ? context?.buffSourceId
+            : this.#resolveSingleTarget(source, context).ownerId;
+      } else {
+        if (!context || !queryTargets) throw new Error('igniteBuffs requires target queries');
+        const first = firstRuntimeEntityTarget(queryTargets(source, context));
+        sourceId = first === undefined ? undefined : runtimeTargetEntityId(first);
       }
-      const sourceId =
-        step.parameters.source === 'currentBuffSource'
-          ? context?.buffSourceId
-          : this.#resolveSingleTarget(step.parameters.source, context).ownerId;
-      if (sourceId === undefined) {
-        throw new Error('igniteBuffs current Buff source requires a Buff operation context');
+      if (sourceId === undefined) return false;
+      const legacyTarget =
+        typeof query === 'string' ? this.#resolveSingleTarget(query, context) : undefined;
+      const targets =
+        legacyTarget !== undefined
+          ? [runtimeTargetFromEntityId(legacyTarget.ownerId)]
+          : (() => {
+              if (!context || !queryTargets || typeof query === 'string')
+                throw new Error('igniteBuffs requires target queries');
+              return [...queryTargets(query, context)];
+            })();
+      if (targets.length === 0) return false;
+      const successful: RuntimeTargetRef[] = [];
+      for (const selected of targets) {
+        if (selected.kind === 'spatialPoint') continue;
+        const receiver = this.dependencies.resolvePartBuffSource?.(selected) ?? selected;
+        const target = legacyTarget ?? this.#resolveContextTarget(receiver);
+        if (target.ignite === undefined)
+          throw new Error(`Buff target '${target.ownerId}' does not support ignite events`);
+        const originalId = runtimeTargetEntityId(selected);
+        const transfer = copyEnemyPartTransferInfo(
+          resolveOperationPartTransferInfo(context),
+          target.ownerId,
+          originalId !== target.ownerId ? originalId : undefined,
+        );
+        if (target.ignite(igniteType, sourceId, context?.skillCastInfo, transfer) > 0)
+          successful.push(receiver);
       }
-      target.ignite(step.parameters.igniteType, sourceId, context?.skillCastInfo);
+      if (successTargetContextKey) {
+        if (!context?.targetContext)
+          throw new Error('igniteBuffs success targets require a target context');
+        context.targetContext.set(successTargetContextKey, successful);
+      }
       return true;
     }
 
@@ -1178,96 +1393,34 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       : this.dependencies.delegate.execute(step, context);
   }
 
-  #resolveApplicationTargets(
-    target: BuffApplicationTarget,
-    context?: CombatOperationContext,
-  ): readonly BuffOperationTarget[] {
-    if (target === 'actionInputTarget') return [this.#resolveSingleTarget(target, context)];
-    if (target === 'eventSource') {
-      const resolve = this.dependencies.resolveEventTarget;
-      if (resolve === undefined) {
-        throw new Error('eventSource Buff application is not configured');
-      }
-      return [resolve(this.#requireEventSourceId(context))];
-    }
-    if (target === 'buffOwner') {
-      if (context?.buffOwnerId === undefined) {
-        throw new Error('buffOwner Buff application requires a Buff lifecycle context');
-      }
-      const resolve = this.dependencies.resolveEventTarget;
-      if (resolve === undefined) {
-        throw new Error('buffOwner Buff application is not configured');
-      }
-      return [resolve(context.buffOwnerId)];
-    }
-    if (target === 'buffSource') {
-      if (context?.buffSourceId === undefined) {
-        throw new Error('buffSource Buff application requires a Buff lifecycle context');
-      }
-      const resolve = this.dependencies.resolveEventTarget;
-      if (resolve === undefined) {
-        throw new Error('buffSource Buff application is not configured');
-      }
-      return [resolve(context.buffSourceId)];
-    }
-    if (target === 'eventTarget') {
-      if (context?.event === undefined) {
-        throw new Error('eventTarget Buff application requires an event context');
-      }
-      const resolve = this.dependencies.resolveEventTarget;
-      if (resolve === undefined) {
-        throw new Error('eventTarget Buff application is not configured');
-      }
-      const eventTargetId = abilityEventTargetId(context.event);
-      if (eventTargetId === undefined) {
-        throw new Error(`event '${context.event.kind}' does not expose a Buff target`);
-      }
-      return [resolve(eventTargetId)];
-    }
-    if (target === 'currentAbilityEntity') {
-      if (context?.currentTarget === undefined) {
-        throw new Error('currentAbilityEntity Buff application requires a current target');
-      }
-      const resolve = this.dependencies.resolveCurrentAbilityEntityTarget;
-      if (resolve === undefined) {
-        throw new Error('currentAbilityEntity Buff application is not configured');
-      }
-      return [resolve(context.currentTarget)];
-    }
-    if (target === 'currentTarget') {
-      return [this.#resolveContextTarget(context?.currentTarget)];
-    }
-    const resolved = this.dependencies.resolveApplicationTargets?.(target);
-    if (resolved !== undefined) return resolved;
-    if (
-      target === 'party' ||
-      target === 'partyExceptCaster' ||
-      target === 'partyExceptCasterAndSameCharacterType' ||
-      target === 'controlledOperator' ||
-      target === 'casterAndControlledOperator' ||
-      target === 'casterAndLowestHealthRatioOperatorExceptCaster'
-    ) {
-      throw new Error('collection Buff application requires a collection target resolver');
-    }
-    return [this.dependencies.resolveTarget(target)];
-  }
-
   #resolveCreationSource(
     parameters: Pick<ResolvedCombatStepForKind<'applyBuff'>['parameters'], 'source'>,
     context: CombatOperationContext | undefined,
   ): Pick<BuffOperationTarget, 'ownerId' | 'getAttributeValue'> | undefined {
     if (context === undefined || this.dependencies.queryTargets === undefined)
       throw new Error('applyBuff requires an action target query context');
-    const first = this.dependencies.queryTargets(
-      parameters.source ?? { kind: 'source' },
-      context,
-    )[0];
+    const first = firstRuntimeEntityTarget(
+      this.dependencies.queryTargets(parameters.source ?? { kind: 'source' }, context),
+    );
     const id = first === undefined ? undefined : runtimeTargetEntityId(first);
-    // 原生取首个包装器，不跳过位置目标寻找后续实体。
+    // 原生无位置输出的 GetActionTarget 读取首个实体。
     return id === undefined ? undefined : { ownerId: id };
   }
 
   /** Context 的实例身份是唯一依据，单层查询可能返回干员、敌人或另一能力实体。 */
+  #resolveBuffReadTarget(
+    target: BuffSingleTarget | CompiledTargetQuery,
+    context: CombatOperationContext,
+  ): BuffOperationTarget | undefined {
+    if (typeof target === 'string') return this.#resolveSingleTarget(target, context);
+    if (!this.dependencies.queryTargets || !this.dependencies.resolvePartBuffSource)
+      throw new Error('Buff read requires target queries and part resolution');
+    const selected = firstRuntimeEntityTarget(this.dependencies.queryTargets(target, context));
+    return selected
+      ? this.#resolveContextTarget(this.dependencies.resolvePartBuffSource(selected))
+      : undefined;
+  }
+
   #resolveContextTarget(target: RuntimeTargetRef | undefined): BuffOperationTarget {
     if (target === undefined)
       throw new Error('currentTarget Buff operation requires a current target');
@@ -1312,6 +1465,33 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
   }
 
   end(step: RuntimeOperation, context?: CombatOperationContext): void {
+    if (step.kind === 'boneAttach') {
+      const state = context?.boneAttachState;
+      if (!state) throw new Error('bone attachment requires action state');
+      if (state.targetId === null) return;
+      const target = this.dependencies.resolveEventTarget?.(state.targetId);
+      if (!target?.removeEntityTags) throw new Error('bone attachment requires entity tags');
+      state.targetId = null;
+      target.removeEntityTags(['Status/Immobilized/BeCaught']);
+      return;
+    }
+    if (step.kind === 'disableNormalSkill') {
+      const state = context?.actionRegistrationState;
+      const owner = context?.actionOwnerId;
+      if (!state || !owner || !this.dependencies.resolveEventTarget)
+        throw new Error('normal-skill restriction requires owner and action state');
+      const target = this.dependencies.resolveEventTarget(owner);
+      if (!target.removeEntityTags)
+        throw new Error('normal-skill restriction requires entity tags');
+      for (const _ of state.registrationIds)
+        target.removeEntityTags([
+          step.parameters.normalOnly
+            ? 'Status/DisableNormalSkillExceptForAdditional/WithUI'
+            : 'Status/DisableNormalSkill/WithUI',
+        ]);
+      state.registrationIds = [];
+      return;
+    }
     if (step.kind === 'skillAffix') {
       const state = context?.actionRegistrationState;
       if (state === undefined) throw new Error('SkillAffix requires action data');
@@ -1392,17 +1572,42 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
   #createBuffRequest(
     parameters: Pick<
       ResolvedCombatStepForKind<'applyBuff'>['parameters'],
-      'iconDurationSource' | 'inheritSourceSkillCastInfo' | 'isExtra'
+      | 'iconDurationSource'
+      | 'inheritSourceSkillCastInfo'
+      | 'delayedTriggerInputKey'
+      | 'isExtra'
+      | 'passTargetGroupsToBuff'
     >,
     entry: ResolvedCombatStepForKind<'applyBuff'>['parameters']['buffs'][number],
     context: CombatOperationContext | undefined,
     source: Pick<BuffOperationTarget, 'ownerId' | 'getAttributeValue'>,
   ): BuffApplicationRequest {
+    if (parameters.passTargetGroupsToBuff && context?.targetContext === undefined)
+      throw new Error('passTargetGroupsToBuff requires an action target context');
     const identity = stringInputExpression(entry.buffId);
     const dynamicId = typeof identity !== 'string';
     const assignments = entry.blackboardAssignments ?? {};
     const stringAssignments = entry.stringBlackboardAssignments ?? {};
-    const copiedAssignments = entry.copiedBlackboardAssignments ?? {};
+    const copiedAssignments = { ...entry.copiedBlackboardAssignments };
+    let inheritedTargetGroups = parameters.passTargetGroupsToBuff
+      ? context?.targetContext?.runtimeState
+      : undefined;
+    if (parameters.delayedTriggerInputKey !== undefined) {
+      if (!context) throw new Error('inherited Buff blackboard requires an action context');
+      const captured = new RuntimeTargetContext(
+        inheritedTargetGroups && { groups: new Map(inheritedTargetGroups.groups) },
+      );
+      captured.set(parameters.delayedTriggerInputKey, context.actionInputTargets ?? []);
+      inheritedTargetGroups = captured.runtimeState;
+      for (const key of Object.keys(context.blackboard.snapshot())) {
+        if (
+          !Object.hasOwn(assignments, key) &&
+          !Object.hasOwn(stringAssignments, key) &&
+          !Object.hasOwn(copiedAssignments, key)
+        )
+          copiedAssignments[key] = key;
+      }
+    }
     if (
       (Object.keys(assignments).length > 0 ||
         Object.keys(stringAssignments).length > 0 ||
@@ -1484,6 +1689,7 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     }
     return {
       buffId,
+      ...(inheritedTargetGroups === undefined ? {} : { inheritedTargetGroups }),
       partTransferInfo: resolveOperationPartTransferInfo(context),
       producedBy: operationProducer(context, {
         ownerId: this.dependencies.sourceId,
@@ -1611,7 +1817,13 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     ) {
       if (!context || !this.dependencies.queryTargets)
         throw new Error('Buff count requires an action target query');
-      const first = this.dependencies.queryTargets(condition.target, context)[0];
+      const queried = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(condition.target, context),
+      );
+      const first =
+        queried !== undefined
+          ? (this.dependencies.resolvePartBuffSource?.(queried) ?? queried)
+          : queried;
       let count = 0;
       if (first === undefined || first.kind === 'spatialPoint') {
         if (!condition.compareZeroWhenTargetMissing) return false;
@@ -1647,8 +1859,18 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       const targets = this.dependencies.queryTargets(condition.target, context);
       let found = false;
       for (let index = targets.length - 1; index >= 0; index -= 1) {
-        const reference = targets[index]!;
-        if (reference.kind === 'spatialPoint') continue;
+        const queried = targets[index]!;
+        if (queried.kind === 'spatialPoint') continue;
+        // 已回收的目标不参与标签判断。
+        if (
+          queried.kind === 'abilityEntity' &&
+          this.dependencies.isEntityAvailable?.(queried) === false
+        )
+          continue;
+        const reference =
+          condition.checkPartTags === true
+            ? queried
+            : (this.dependencies.resolvePartBuffSource?.(queried) ?? queried);
         const target =
           reference.kind === 'abilityEntity'
             ? this.dependencies.resolveCurrentAbilityEntityTarget?.(reference)
@@ -1705,21 +1927,11 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     context: CombatOperationContext | undefined,
   ): BuffOperationTarget {
     if (target === 'actionInputTarget') {
-      const inputTarget = context?.actionInputTarget;
+      const inputTarget = context?.actionInputTargets?.[0];
       if (inputTarget === undefined) {
         throw new Error('actionInputTarget Buff operation requires an action InputTarget');
       }
-      const resolve = this.dependencies.resolveEventTarget;
-      if (resolve === undefined) {
-        throw new Error('actionInputTarget Buff operation is not configured');
-      }
-      return resolve(
-        inputTarget.kind === 'operator'
-          ? inputTarget.operatorId
-          : inputTarget.kind === 'abilityEntity'
-            ? `ability-entity:${inputTarget.instanceId}`
-            : 'enemy',
-      );
+      return this.#resolveContextTarget(inputTarget);
     }
     if (target === 'eventSource') {
       const resolve = this.dependencies.resolveEventTarget;

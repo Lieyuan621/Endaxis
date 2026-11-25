@@ -43,8 +43,9 @@ it('恢复共享冷却直接绑定保存账本，后续推进不修改原分支'
   expect(original.snapshot.remainingFrames).toBe(75);
 });
 
-it('恢复后的连携冷却在实际预占时读取当前分支 Buff 倍率', () => {
+it('恢复后的连携冷却在实际预占时读取当前分支 Buff 倍率和附加秒数', () => {
   let multiplier = 2;
+  let addition = 3;
   const program = skill({ skillType: 'comboSkill', skillGroupKey: 'comboSkill' });
   const operator: CombatOperatorProgram = {
     operatorId: 'operator',
@@ -52,7 +53,8 @@ it('恢复后的连携冷却在实际预占时读取当前分支 Buff 倍率', (
     buffRuntime: Object.assign(
       new CombatBuffContainer('operator', new CombatAttributeSet<string>()),
       {
-        getAttributeValue: () => multiplier,
+        getAttributeValue: (attribute: string) =>
+          attribute === 'ComboSkillCooldownScalar' ? multiplier : addition,
         advanceFrame: () => {},
       },
     ),
@@ -61,11 +63,12 @@ it('恢复后的连携冷却在实际预占时读取当前分支 Buff 倍率', (
   const cooldown = bindRestoredCombatSkillCooldowns(operator, saved).get('skill')!.cooldown;
 
   expect(cooldown.tryReserve()).toBe(true);
-  expect(cooldown.snapshot.remainingFrames).toBe(200);
+  expect(cooldown.snapshot.remainingFrames).toBe(290);
   cooldown.overrideByTimeline(true);
   multiplier = 0.5;
+  addition = 1;
   expect(cooldown.tryReserve()).toBe(true);
-  expect(cooldown.snapshot.remainingFrames).toBe(50);
+  expect(cooldown.snapshot.remainingFrames).toBe(80);
 });
 
 it('固定面板修正只改变基础周期，错误的数据形状在绑定前失败', () => {

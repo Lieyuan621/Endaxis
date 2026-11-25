@@ -1,12 +1,15 @@
+import { inheritCombatOperationContext } from './inheritCombatOperationContext';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { CompiledCondition } from '../../compiler/compiledGraphData';
 import { conditionInputExpression } from '../../compiler/compiledGraphData';
 import type { RuntimeTargetGroup, RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
-import { runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
+import { singleTargetList, runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
 import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
 import type {
+  BoneAttachState,
   ActionBuffReferencesState,
   ActionRegistrationState,
+  ActionEntityTagsState,
   ActionSequenceState,
   ActionStepData,
   GraphLeafStepData,
@@ -47,9 +50,10 @@ import {
   type TimelineActionProcessor,
 } from '../timeline/timelineActionProcessor';
 import { ActionBlackboard, resolveActionValueOperand } from './actionBlackboard';
+import { resolveProjectileSchedule } from '../abilities/resolveProjectileSchedule';
 import type { CombatActionExecution } from './actionGraphExecution';
 import { ActionGraphExecution, type ActionGraphExecutionHost } from './actionGraphExecution';
-import { CombatStep } from './combatStep';
+import { CombatStep, type CombatExecutionContext } from './combatStep';
 
 /** 步骤自身没有可变数据；它调用的操作执行器仍须由所属宿主恢复。 */
 abstract class StatelessCombatStep extends CombatStep {
@@ -67,8 +71,10 @@ export interface CombatActionSequenceRuntimeHooks {
 }
 
 class OperationStep extends StatelessCombatStep {
+  #attachment: BoneAttachState | null = null;
   #registrationState: ActionRegistrationState | null = null;
   #buffReferencesState: ActionBuffReferencesState | null = null;
+  #entityTagsState: ActionEntityTagsState | null = null;
 
   constructor(
     readonly step: ResolvedCombatOperationStep,
@@ -76,11 +82,16 @@ class OperationStep extends StatelessCombatStep {
     readonly operationContext: CombatOperationContext,
   ) {
     super();
+    if (step.kind === 'addEntityTags') this.#entityTagsState = { references: [] };
+    if (step.kind === 'boneAttach') this.#attachment = { targetId: null };
     if (
       step.kind === 'changePlayerActionMode' ||
       step.kind === 'overrideBasicAttackMapping' ||
       step.kind === 'overrideMultiDashLimit' ||
+      step.kind === 'disableNormalSkill' ||
+      step.kind === 'limitMovementGait' ||
       step.kind === 'skillAffix' ||
+      step.kind === 'startTyphoeaArchery' ||
       (step.kind === 'changeSkillSlot' && step.parameters.lifetime !== undefined)
     )
       this.#registrationState = { registrationIds: [] };
@@ -93,6 +104,9 @@ class OperationStep extends StatelessCombatStep {
   }
 
   override get executionData(): OperationStepData {
+    if (this.#entityTagsState) return { kind: 'entityTags', entityTags: this.#entityTagsState };
+    if (this.#attachment) return { kind: 'boneAttach', attachment: this.#attachment };
+
     if (this.#registrationState !== null) {
       return {
         kind: this.#registrationKind(),
@@ -109,6 +123,17 @@ class OperationStep extends StatelessCombatStep {
   }
 
   override bindExecutionData(data: ActionStepData | null): void {
+    if (this.#entityTagsState) {
+      if (data?.kind !== 'entityTags') throw new Error('expected entity tag action data');
+      this.#entityTagsState = data.entityTags;
+      return;
+    }
+    if (this.#attachment) {
+      if (data?.kind !== 'boneAttach') throw new Error('expected bone attachment data');
+      this.#attachment = data.attachment;
+      return;
+    }
+
     if (this.step.kind === 'dealDamage' && this.step.parameters.takeAttackSnapshot === true) {
       const snapshots = this.operationContext.damageCalculationSnapshots;
       if (snapshots === undefined) {
@@ -132,16 +157,30 @@ class OperationStep extends StatelessCombatStep {
   }
 
   #withState<T>(operation: () => T): T {
-    if (this.#registrationState === null && this.#buffReferencesState === null) return operation();
+    if (
+      this.#registrationState === null &&
+      this.#buffReferencesState === null &&
+      this.#entityTagsState === null &&
+      this.#attachment === null
+    )
+      return operation();
     const context = this.operationContext;
+    const previousAttachment = context.boneAttachState;
+    if (this.#attachment) context.boneAttachState = this.#attachment;
     const previous = context.actionRegistrationState;
     const previousBuffs = context.actionBuffReferencesState;
+    const previousTags = context.actionEntityTagsState;
+    if (this.#entityTagsState) context.actionEntityTagsState = this.#entityTagsState;
     if (this.#registrationState !== null) context.actionRegistrationState = this.#registrationState;
     if (this.#buffReferencesState !== null)
       context.actionBuffReferencesState = this.#buffReferencesState;
     try {
       return operation();
     } finally {
+      if (previousTags === undefined) delete context.actionEntityTagsState;
+      else context.actionEntityTagsState = previousTags;
+      if (previousAttachment === undefined) delete context.boneAttachState;
+      else context.boneAttachState = previousAttachment;
       if (previous === undefined) delete context.actionRegistrationState;
       else context.actionRegistrationState = previous;
       if (previousBuffs === undefined) delete context.actionBuffReferencesState;
@@ -154,7 +193,10 @@ class OperationStep extends StatelessCombatStep {
     | 'basicAttackMapping'
     | 'multiDashLimit'
     | 'skillSlotReplacement'
-    | 'skillAffix' {
+    | 'normalSkillRestriction'
+    | 'movementGait'
+    | 'skillAffix'
+    | 'typhoeaArchery' {
     switch (this.step.kind) {
       case 'changePlayerActionMode':
         return 'playerActionMode';
@@ -164,8 +206,14 @@ class OperationStep extends StatelessCombatStep {
         return 'multiDashLimit';
       case 'changeSkillSlot':
         return 'skillSlotReplacement';
+      case 'disableNormalSkill':
+        return 'normalSkillRestriction';
+      case 'limitMovementGait':
+        return 'movementGait';
       case 'skillAffix':
         return 'skillAffix';
+      case 'startTyphoeaArchery':
+        return 'typhoeaArchery';
       default:
         throw new Error('operation does not own a registration');
     }
@@ -191,7 +239,120 @@ class OperationStep extends StatelessCombatStep {
   }
 
   override reset(): void {
+    // OverrideRawAttributeAction.OnReset 与 OnEnd 都释放句柄；外层执行器不必支持 prepare。
+    if (this.step.kind === 'overrideRawAttributes') this.end();
     this.#withState(() => this.runtime.operations.prepare?.(this.step, this.operationContext));
+  }
+}
+
+/** SetHpFloor持有句柄；回调即时结束，父End仅回收句柄，Reset重置同一子程序。 */
+class HealthFloorStep extends CombatStep {
+  readonly operation: OperationStep;
+  #data: Extract<GraphLeafStepData, { kind: 'healthFloor' }> = { kind: 'healthFloor', body: null };
+  #body: CombatActionExecution | undefined;
+  constructor(
+    readonly step: ResolvedCombatStepForKind<'setHealthFloor'>,
+    readonly runtime: CombatActionSequenceRuntime,
+    readonly context: CombatOperationContext,
+  ) {
+    super();
+    this.operation = new OperationStep(step, runtime, context);
+  }
+  override get executionData() {
+    return this.#data;
+  }
+  override bindExecutionData(data: ActionStepData | null): void {
+    if (data?.kind !== 'healthFloor') throw new Error('expected health floor callback state');
+    this.#data = data;
+    if (data.body !== null) this.#getBody();
+  }
+  #getBody(): CombatActionExecution | undefined {
+    if (!this.step.afterSet) return undefined;
+    if (!this.#body) {
+      this.#body = this.runtime.createSequence(
+        this.step.afterSet,
+        {
+          ...this.context,
+          event: undefined,
+          eventSkillCastInfo: undefined,
+          modifierContext: undefined,
+        },
+        this.#data.body ?? undefined,
+      );
+      this.#data.body = this.#body.runtimeState;
+    }
+    return this.#body;
+  }
+  execute(context: CombatExecutionContext): void {
+    this.tryExecute(context);
+  }
+  override tryExecute(context: CombatExecutionContext): boolean {
+    this.operation.tryExecute();
+    this.#getBody()?.executeInstant(context);
+    return true;
+  }
+  override end(): void {
+    this.operation.end();
+  }
+  override reset(context: CombatExecutionContext): void {
+    this.operation.reset();
+    this.#getBody()?.reset(context);
+  }
+}
+
+/** 原生 ContinuousFindTargetAction 复用单次查询，只额外保存计时和输入句柄。 */
+class ContinuousTargetQueryStep extends CombatStep {
+  #data: Extract<GraphLeafStepData, { kind: 'continuousTargetQuery' }> = {
+    kind: 'continuousTargetQuery',
+    timer: 0,
+    lastFindTime: 0,
+    inputTarget: null,
+  };
+  constructor(
+    readonly step: ResolvedCombatStepForKind<'findTargets'>,
+    readonly runtime: CombatActionSequenceRuntime,
+    readonly context: CombatOperationContext,
+  ) {
+    super();
+  }
+  override get executionData() {
+    return this.#data;
+  }
+  override bindExecutionData(data: ActionStepData | null): void {
+    if (data?.kind !== 'continuousTargetQuery')
+      throw new Error('expected continuous target query state');
+    this.#data = data;
+  }
+  execute(): void {
+    this.runtime.hooks.stepReached?.(this.step);
+    this.runtime.operations.execute(this.step, this.context);
+    this.#data.timer = 0;
+    this.#data.lastFindTime = 0;
+    this.#data.inputTarget = this.context.actionInputTargets?.[0]
+      ? { ...this.context.actionInputTargets?.[0] }
+      : null;
+  }
+  override tick(delta: number): void {
+    const state = this.#data;
+    state.timer = Math.fround(state.timer + Math.fround(delta));
+    if (
+      Math.fround(state.timer - state.lastFindTime) <=
+      Math.fround(this.step.parameters.continuousIntervalSeconds!)
+    )
+      return;
+    this.runtime.operations.execute(this.step, {
+      ...this.context,
+      actionInputTargets: singleTargetList(state.inputTarget ?? undefined),
+    });
+    state.lastFindTime = state.timer;
+  }
+  override end(): void {
+    this.#data.timer = 0;
+    this.#data.lastFindTime = 0;
+    this.#data.inputTarget = null;
+  }
+  override reset(): void {
+    this.end();
   }
 }
 
@@ -220,7 +381,10 @@ class ProjectileLaunchStep extends StatelessCombatStep {
     const selected = targets
       ? parent.targetContext!.get(targets.contextKey).map(target => ({ ...target }))
       : undefined;
-    const emitterCount = emitters ? parent.targetContext!.get(emitters.contextKey).length : 1;
+    const emitterTargets = emitters
+      ? parent.targetContext!.get(emitters.contextKey).map(target => ({ ...target }))
+      : undefined;
+    const emitterCount = emitterTargets?.length ?? 1;
     const filter = this.step.parameters.onlyHitTargets;
     if (filter && !this.runtime.operations.queryTargets)
       throw new Error('projectile hit filter requires a target query');
@@ -238,7 +402,11 @@ class ProjectileLaunchStep extends StatelessCombatStep {
       if (selected) {
         for (const target of selected)
           this.launchSingle(
-            { ...parent, currentTarget: target, actionInputTarget: target },
+            {
+              ...parent,
+              currentTarget: target,
+              actionInputTargets: singleTargetList(target),
+            },
             prepared.forkEntityScope(),
             onlyHitTargets,
           );
@@ -284,42 +452,35 @@ class ProjectileLaunchStep extends StatelessCombatStep {
         blackboard: context.blackboard.runtimeState,
         skillCastInfo: context.skillCastInfo ?? null,
         host: null,
-        ...(event === 'hit' && this.step.parameters.hit?.hitTagFilter !== undefined
-          ? { hitTagFilter: this.step.parameters.hit.hitTagFilter }
-          : {}),
       };
       return {
         program: skill,
-        runtime: new ProjectileCallbackRuntime(
-          state,
-          () => {
-            if (entity === undefined) throw new Error('projectile callback started before launch');
-            return createHost(
-              skill,
-              {
-                ...context,
-                actionInputTarget: state.inputTarget,
-                actionOwnerId: `ability-entity:${entity.instanceId}`,
-                actionSourceId: sourceId,
-                actionOwnerAbilityEntity: entity,
-              },
-              this.runtime.operations,
-            );
-          },
-          () =>
-            state.hitTagFilter === undefined ||
-            this.runtime.operations.evaluate(
-              { kind: 'entityTagMatch', target: { kind: 'inputTarget' }, ...state.hitTagFilter },
-              { ...context, actionInputTarget: state.inputTarget },
-            ),
-        ),
+        runtime: new ProjectileCallbackRuntime(state, () => {
+          if (entity === undefined) throw new Error('projectile callback started before launch');
+          return createHost(
+            skill,
+            {
+              ...context,
+              actionInputTargets: singleTargetList(state.inputTarget),
+              actionOwnerId: `ability-entity:${entity.instanceId}`,
+              actionSourceId: sourceId,
+              actionOwnerAbilityEntity: entity,
+            },
+            this.runtime.operations,
+          );
+        }),
       };
     });
-    entity = launch({
+    const launched = launch({
+      projectileId: this.step.parameters.projectileId,
+      faction: this.step.parameters.faction,
+      schedule: resolveProjectileSchedule(this.step.parameters.schedule, input =>
+        typeof input === 'number' ? input : resolveActionValueOperand(input, parent.blackboard),
+      ),
       entityBlackboard: blackboard.runtimeState.entity!,
       onlyHitTargets,
       syncTimeScale: this.step.parameters.syncTimeScale,
-      finish: this.step.parameters.finish,
+
       recycleDelaySeconds: this.step.parameters.recycleDelaySeconds ?? 0,
       callbacks,
       skillCastInfo: parent.skillCastInfo,
@@ -327,16 +488,36 @@ class ProjectileLaunchStep extends StatelessCombatStep {
       producedBy: operationProducer(parent),
       hit: this.step.parameters.hit,
       hitTarget:
-        this.step.parameters.hit?.target === 'currentTarget' ? parent.currentTarget : undefined,
-    }).target;
+        this.step.parameters.hit?.target === 'currentTarget' ||
+        (this.step.parameters.targets !== undefined &&
+          this.step.parameters.schedule.callbacks.some(
+            callback => callback.event === 'hit' && callback.hitKind === 'arrival',
+          ))
+          ? parent.currentTarget
+          : undefined,
+    });
+    entity = launched.target;
     // 原生在发射初始化末尾施放，目标为投射物自身。必须等 launch 返回后再执行：
     // 此时实例、来源、回收绑定均已就绪；恢复切面不会重新执行发射动作。
     for (const callback of callbacks)
-      if (callback.runtime.runtimeState.event === 'launch') callback.runtime.start(entity);
+      if (callback.runtime.runtimeState.event === 'launch')
+        callback.runtime.runtimeState.inputTarget = entity;
+    launched.startSchedule();
   }
 }
 
 class SkillOperableBoundaryStep extends StatelessCombatStep {
+  #activation: ActionRegistrationState = { registrationIds: [] };
+
+  override get executionData(): OperationStepData {
+    return { kind: 'allowedNextSkills', activation: this.#activation };
+  }
+
+  override bindExecutionData(data: ActionStepData | null): void {
+    if (data?.kind !== 'allowedNextSkills')
+      throw new Error('expected allowed-next-skill registration');
+    this.#activation = data.activation;
+  }
   constructor(
     readonly step: ResolvedCombatStepForKind<'reachSkillOperableBoundary'>,
     readonly runtime: CombatActionSequenceRuntime,
@@ -347,7 +528,17 @@ class SkillOperableBoundaryStep extends StatelessCombatStep {
 
   execute(): void {
     this.runtime.hooks.stepReached?.(this.step);
+    this.end();
+    const register = this.operationContext.registerAllowedNextSkills;
+    if (register !== undefined)
+      this.#activation.registrationIds.push(register(this.step.parameters.skillIds));
     this.operationContext.reachSkillOperableBoundary?.(this.step.parameters.skillIds);
+  }
+
+  override end(): void {
+    for (const id of this.#activation.registrationIds)
+      this.operationContext.finishAllowedNextSkills?.(id);
+    this.#activation.registrationIds = [];
   }
 }
 
@@ -411,8 +602,9 @@ export class CombatActionSequenceRuntime {
     const trace = this.operations.executionTrace;
     return {
       frame: this.operations.frame,
+      channelingCountTarget: this.operations.channelingCountTarget,
       get inputTarget() {
-        return operationContext.actionInputTarget;
+        return operationContext.actionInputTargets?.[0];
       },
       selectTargets: (selection, input) => {
         if (selection.kind === 'context')
@@ -472,19 +664,21 @@ export class CombatActionSequenceRuntime {
         return this.operations.ownerTagQuery(operationContext).matches(parameters);
       },
       withTarget: (target, asInput) =>
-        this.#graphHost({
-          ...operationContext,
-          currentTarget: target,
-          ...(asInput ? { actionInputTarget: target } : {}),
-        }),
+        this.#graphHost(
+          inheritCombatOperationContext(operationContext, {
+            currentTarget: target,
+            ...(asInput ? { actionInputTargets: singleTargetList(target) } : {}),
+          }),
+        ),
       withSavedInput: target =>
-        this.#graphHost({
-          ...operationContext,
-          actionInputTarget: target ?? undefined,
-          currentTarget: target ?? undefined,
-          event: undefined,
-          eventSkillCastInfo: undefined,
-        }),
+        this.#graphHost(
+          inheritCombatOperationContext(operationContext, {
+            actionInputTargets: singleTargetList(target ?? undefined),
+            currentTarget: target ?? undefined,
+            event: undefined,
+            eventSkillCastInfo: undefined,
+          }),
+        ),
       comboQte: {
         register: (early, active) => {
           const windows = this.operations.comboWindows;
@@ -580,6 +774,9 @@ export class CombatActionSequenceRuntime {
     step: CompiledGraphOperation,
     operationContext: CombatOperationContext,
   ): CombatStep & { readonly executionData: GraphLeafStepData } {
+    if (step.kind === 'setHealthFloor') return new HealthFloorStep(step, this, operationContext);
+    if (step.kind === 'findTargets' && step.parameters.continuousIntervalSeconds !== undefined)
+      return new ContinuousTargetQueryStep(step, this, operationContext);
     if (isCombatOperationStep(step)) return new OperationStep(step, this, operationContext);
     if (step.kind === 'launchProjectile')
       return new ProjectileLaunchStep(step, this, operationContext);

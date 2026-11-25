@@ -50,7 +50,7 @@ function executeFrame(step: StateTestContext<BranchState>, input: BranchInput): 
   state.frame++;
   advanceProjectileLifetimes(state.projectiles, {
     resolveTickDeltaSeconds: () => DELTA,
-    finish: instanceId => {
+    invokeScheduledCallback: instanceId => {
       state.damage.push({
         frame: state.frame,
         instanceId,
@@ -75,7 +75,10 @@ function executeFrame(step: StateTestContext<BranchState>, input: BranchInput): 
           resolveHandler: () => () => {
             const id = state.nextEntityId++;
             launchProjectile(state.projectiles, id, {
-              finishDelaySeconds: { reachAfterTicks: 2, maxDurationSeconds: 10 },
+              schedule: {
+                endFrame: 2,
+                callbacks: [{ event: 'finish', triggerFrames: [2] }],
+              },
               recycleDelaySeconds: 0,
             });
             registerProjectileReset(state.projectiles, id, id);

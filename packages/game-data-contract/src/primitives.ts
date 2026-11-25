@@ -68,8 +68,9 @@ export type ActionStringOperand = string | { readonly kind: 'stringNode'; readon
 /** 字符串数据节点的操作。变量在当前调用的作用域中读取。 */
 export type ActionStringExpression = ActionStringOperand | { readonly blackboardKey: string };
 
-/** HealAction 的 MultiplyAttributeCalculation 可读取的已支持来源属性。 */
-export type HealCalculationAttribute = OperatorAttribute | 'maxHealth';
+/** 原生 MultiplyAttributeCalculation 已支持读取的属性。 */
+export type MultiplyAttributeCalculationAttribute =
+  OperatorAttribute | 'maxHealth' | 'MaxUltimateSp';
 
 /** 游戏数据中允许出现的干员星级。 */
 export const OPERATOR_RARITIES = [4, 5, 6] as const;
@@ -172,69 +173,76 @@ export const ELEMENTAL_REACTIONS = [
 /** 元素附着组合形成、可被状态和事件引用的复合反应。 */
 export type ElementalReaction = (typeof ELEMENTAL_REACTIONS)[number];
 
-/** 已解析伤害命中携带的可叠加分类。 */
+/** 原生 DamageDecorateMask 的单个位标记，按位值升序排列。 */
 export const DAMAGE_TAGS = [
-  /** 普通攻击伤害。 */
-  'normalAttack',
-  /** 普通攻击连段最后一击。 */
-  'normalAttackLastCombo',
+  /** 失衡击破标记。 */
+  'poiseBreak',
+  /** 忽略护卫闪避标记。 */
+  'ignoreGuardDodge',
   /** 重击伤害。 */
   'powerAttack',
-  /** 战技伤害。 */
-  'normalSkill',
-  /** 连携技伤害。 */
-  'comboSkill',
-  /** 终结技伤害。 */
-  'ultimateSkill',
-  /** 下落攻击伤害。 */
-  'plungingAttack',
-  /** 冲刺攻击伤害。 */
-  'dashAttack',
-  /** 灼热爆发伤害。 */
-  'fireBurst',
-  /** 电磁爆发伤害。 */
-  'electricBurst',
-  /** 寒冷爆发伤害。 */
-  'cryoBurst',
-  /** 自然爆发伤害。 */
-  'natureBurst',
-  /** 灼热异常伤害。 */
-  'fireAbnormal',
+  /** 灼热异常初始伤害。 */
+  'fireAbnormalInitial',
   /** 电磁异常伤害。 */
   'electricAbnormal',
   /** 寒冷异常伤害。 */
   'cryoAbnormal',
-  /** 自然异常伤害。 */
-  'natureAbnormal',
-] as const;
-
-/** 单次伤害携带的可叠加语义分类，供公式、事件和机制筛选。 */
-export type DamageTag = (typeof DAMAGE_TAGS)[number];
-
-/** 不参与技能类型归类，但会影响命中处理或事件筛选的伤害特征。 */
-export const DAMAGE_FEATURES = [
+  /** 原生 IgniteByMud 标记。 */
+  'igniteByMud',
+  /** 普通攻击伤害。 */
+  'normalAttack',
+  /** 战技伤害。 */
+  'normalSkill',
+  /** 终结技伤害。 */
+  'ultimateSkill',
+  /** 下落攻击伤害。 */
+  'plungingAttack',
+  /** 爆炸标记。 */
+  'bomb',
   /** 可以削减弱点值。 */
   'canBreakWeakness',
+  /** 连携技伤害。 */
+  'comboSkill',
   /** 具有粉碎效果。 */
   'crush',
   /** 具有击飞效果。 */
   'airborne',
   /** 具有击倒效果。 */
   'knockDown',
+  /** 冲刺攻击伤害。 */
+  'dashAttack',
+  /** 忽略闪避免疫的基础位。 */
+  'ignoreDodgeImmune',
+  /** 忽略技能免疫标记。 */
+  'ignoreSkillImmune',
+  /** 自然异常伤害。 */
+  'natureAbnormal',
+  /** 普通攻击连段最后一击。 */
+  'normalAttackLastCombo',
+  /** 灼热爆发伤害。 */
+  'fireBurst',
+  /** 寒冷爆发伤害。 */
+  'cryoBurst',
+  /** 电磁爆发伤害。 */
+  'electricBurst',
+  /** 自然爆发伤害。 */
+  'natureBurst',
+  /** 燃烧伤害。 */
+  'fireAbnormal',
   /** 具有碎冰效果。 */
   'shatter',
   /** 持续伤害。 */
   'dot',
   /** 残留区域造成的伤害。 */
   'remainArea',
+  /** 碎甲伤害。 */
+  'fracture',
   /** 天赋造成的伤害。 */
   'talentDamage',
-  /** 物理异常造成的伤害。 */
-  'physicalInfliction',
 ] as const;
 
-/** 单次伤害携带的一种处理特征。 */
-export type DamageFeature = (typeof DAMAGE_FEATURES)[number];
+/** 单次伤害携带的可叠加语义分类，供公式、事件和机制筛选。 */
+export type DamageTag = (typeof DAMAGE_TAGS)[number];
 
 /** 技能在构筑、事件和伤害分类中使用的大类。 */
 export const SKILL_TYPES = [
@@ -349,11 +357,6 @@ export const TIMED_MARKER_TARGETS = [
 /** 定时标记还可明确落到触发当前响应的事件目标。 */
 export type TimedMarkerTarget = (typeof TIMED_MARKER_TARGETS)[number];
 
-/** 全局冷却按角色身份索引；Buff 的持有者与来源在执行时解析，不等同于施法者。 */
-export const GLOBAL_COOLDOWN_TARGETS = ['caster', 'buffOwner', 'buffSource'] as const;
-/** 全局冷却记录可以归属的一种对象。 */
-export type GlobalCooldownTarget = (typeof GLOBAL_COOLDOWN_TARGETS)[number];
-
 /** 全局时间膨胀可以排除的对象。 */
 export const TIME_DILATION_IGNORE_TARGETS = [...COMBAT_TARGETS, 'controlled'] as const;
 
@@ -463,33 +466,6 @@ export const DAMAGE_CALCULATIONS = [
 
 /** 命中进入标准或破防专用公式前处理的计算路径。 */
 export type DamageCalculation = (typeof DAMAGE_CALCULATIONS)[number];
-
-/** 治疗动作支持的目标选择方式。 */
-export const HEAL_TARGETS = [
-  /** 当前敌人目标。 */
-  'enemy',
-  /** 当前施法者。 */
-  'caster',
-  /** 当前 Buff 的来源。 */
-  'buffSource',
-  /** 当前 Buff 的持有者。 */
-  'buffOwner',
-  /** 当前主控干员。 */
-  'controlledOperator',
-  /** 全队生命比例最低的干员。 */
-  'lowestHealthRatioOperator',
-  /** 除当前主控外生命比例最低的干员。 */
-  'lowestHealthRatioOperatorExceptControlled',
-  /** 当前动作环境中绑定的目标。 */
-  'contextTarget',
-  /** `forEachContextTarget` 正在迭代的对象。 */
-  'currentTarget',
-  /** 本次技能施放输入中保存的目标。 */
-  'actionInputTarget',
-] as const;
-
-/** 当前原生治疗样本能够严格归约的队伍目标身份。 */
-export type HealTarget = (typeof HEAL_TARGETS)[number];
 
 /** 技力增加的结算种类。 */
 export const SP_GAIN_KINDS = [

@@ -1,3 +1,4 @@
+import { parseGameplayTagListSource } from './tagQuery.ts';
 import {
   parseKnownNativeActionLeafSource,
   type KnownNativeActionLeafSource,
@@ -67,7 +68,6 @@ const SKILL_DATA_FIELDS = new Set([
   'switchToCenterBeforeCast',
   'tagDuringAttach',
   'toggleBuffs',
-  'uiRangeHints',
   'useAIExclusiveFrame',
 ]);
 
@@ -101,6 +101,7 @@ export interface SkillActionGroupSource<TLeaf> {
  * SkillData 的动作图切片。其余根字段只做版本签名校验，不表示施法、UI 与智能选敌已经解析。
  */
 export interface SkillActionGraphSource<TLeaf> {
+  readonly skillTagIds?: readonly number[];
   readonly normalSkillSubType?: 'Normal' | 'AdditionalNormalSkill';
   readonly skillId: string;
   readonly level: number;
@@ -122,7 +123,7 @@ export function parseSkillActionGraphSource<TLeaf>(
   const root = requireRecord(value, sourcePath);
   const expectedFields = new Set(SKILL_DATA_FIELDS);
   // 新版字段逐项校验，不能忽略影响战技分型的非默认值。
-  for (const field of ['buffInputBase', 'canCastInWater', 'normalSkillSubType']) {
+  for (const field of ['buffInputBase', 'canCastInWater', 'normalSkillSubType', 'uiRangeHints']) {
     if (Object.hasOwn(root, field)) expectedFields.add(field);
   }
   requireExactFields(root, expectedFields, sourcePath);
@@ -144,6 +145,7 @@ export function parseSkillActionGraphSource<TLeaf>(
     ...(Object.hasOwn(root, 'canCastInWater')
       ? { canCastInWater: requireBoolean(root.canCastInWater, `${sourcePath}.canCastInWater`) }
       : {}),
+    skillTagIds: parseGameplayTagListSource(root.skillTags, `${sourcePath}.skillTags`),
     skillId: requireNonEmptyString(root.skillId, `${sourcePath}.skillId`),
     level: requireNonNegativeInteger(root.level, `${sourcePath}.level`),
     durationFrame: requireNonNegativeInteger(root.durationFrame, `${sourcePath}.durationFrame`),

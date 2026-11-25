@@ -3,6 +3,16 @@ import { CombatReceiptCollector } from '../../../core/combat/receipt/combatRecei
 import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 import { createCombatObjectNameResolver } from './combatObjectNames';
 
+it('不同敌人的名称缓存按实例隔离，不受查询顺序影响', () => {
+  const origins = new CombatObjectOrigins([]);
+  const names = createCombatObjectNameResolver(origins, node =>
+    node.ref.kind === 'enemy' ? (node.ref.enemyId === 'enemy' ? '首敌' : '第二个敌人') : undefined,
+  );
+  expect(names.display({ kind: 'enemy', enemyId: 'enemy' })).toBe('首敌');
+  expect(names.display({ kind: 'enemy', enemyId: 'enemy:second' })).toBe('第二个敌人');
+  expect(names.display({ kind: 'enemy', enemyId: 'enemy' })).toBe('首敌');
+});
+
 it('区分自身名称、继承展示名和来源名称，不改变未命名的直接来源身份', () => {
   const receipts = new CombatReceiptCollector();
   const parent = { kind: 'abilityEntity' as const, instanceId: 1 };

@@ -2,6 +2,7 @@ import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatRece
 import { PROJECT_FPS } from '../../../core/project/schema';
 import {
   isTimelineTimeDilationVisible,
+  timelineTimeDilationFallbackCastIds,
   type TimelineTimeDilationBand,
 } from '../../../core/projection/timelineDisplayTime';
 
@@ -18,10 +19,12 @@ export function prepareTimeDilationDragPreview(
   entries: readonly CombatReceiptEntry[],
   bands: readonly TimelineTimeDilationBand[],
   simulationEndFrame: number,
+  ultimateCastIds: ReadonlySet<string> = new Set(),
 ): readonly PreviewBandFact[] {
   const starts = new Map<number, CombatReceiptEntry>();
   const ends = new Map<number, CombatReceiptEntry>();
   const rejected: CombatReceiptEntry[] = [];
+  const fallbackCastIds = timelineTimeDilationFallbackCastIds(entries, ultimateCastIds);
   for (const entry of entries) {
     if (
       entry.event !== 'TimeDilationStarted' &&
@@ -66,7 +69,7 @@ export function prepareTimeDilationDragPreview(
   });
   for (const entry of rejected) {
     if (entry.data?.kind !== 'global') continue;
-    if (!isTimelineTimeDilationVisible(entry)) continue;
+    if (!isTimelineTimeDilationVisible(entry, fallbackCastIds, ultimateCastIds)) continue;
     const instanceId = entry.data.instanceId;
     const sourceCastId = entry.data.sourceCastId;
     if (typeof instanceId !== 'number' || typeof sourceCastId !== 'string') continue;

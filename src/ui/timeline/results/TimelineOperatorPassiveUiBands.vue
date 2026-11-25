@@ -10,9 +10,13 @@ import { passiveUiSkins } from '../../operators/passive-ui/registry';
 import { numericPassiveUiText } from '../../operators/passive-ui/state';
 import { frameToTimelinePx } from '../timelineGeometry';
 import { timelineUpperBuffTop } from './timelineTrackEffectLayout';
+import { useDurationBarColor } from './durationBarColorContext';
+import { resolveDurationBarColor } from './durationBarColor';
 
 const props = defineProps<{
   segments: readonly PositionedOperatorPassiveUiTimelineSegment[];
+  visibleLeftPx?: number;
+  visibleRightPx?: number;
   prepFrames: number;
   pxPerFrame: number;
   actionTop: number;
@@ -28,10 +32,12 @@ const props = defineProps<{
     title: string;
     triggered: boolean;
     linkBuffed: boolean;
+    hasOverride: boolean;
     stackIndex: number;
   }[];
 }>();
 const { t } = useI18n({ useScope: 'global' });
+const durationBarColor = useDurationBarColor();
 
 const emit = defineEmits<{
   'open-detail': [segment: PositionedOperatorPassiveUiTimelineSegment, title: string];
@@ -73,10 +79,26 @@ function segmentName(segment: PositionedOperatorPassiveUiTimelineSegment): strin
 const items = computed(() =>
   // 热更新时旧模拟结果可能仍引用已经移除的外观，不让失效展示阻断整条轨道。
   props.segments
-    .filter(
-      segment =>
-        segment.kind === 'abilityEntityCount' || passiveUiSkins[segment.appearance] !== undefined,
-    )
+    .filter(segment => {
+      if (segment.kind !== 'abilityEntityCount' && passiveUiSkins[segment.appearance] === undefined)
+        return false;
+      if (props.visibleLeftPx === undefined || props.visibleRightPx === undefined) return true;
+      const left = frameToTimelinePx(
+        segment.startFrame,
+        props.prepFrames,
+        props.pxPerFrame,
+        props.prepExpanded,
+        props.prepEndFrame,
+      );
+      const right = frameToTimelinePx(
+        segment.endFrame,
+        props.prepFrames,
+        props.pxPerFrame,
+        props.prepExpanded,
+        props.prepEndFrame,
+      );
+      return right >= props.visibleLeftPx && left <= props.visibleRightPx;
+    })
     .map(segment => {
       const left = frameToTimelinePx(
         segment.startFrame,
@@ -104,6 +126,14 @@ const items = computed(() =>
               : `${segment.operatorId}:${segment.kind}:${segment.kind === 'abilityEntityCount' ? `${segment.abilityEntityId}:${segment.entities.map(entity => entity.instanceId).join(',')}` : ''}:${segment.startFrame}`,
         title,
         name: segmentName(segment),
+        color: resolveDurationBarColor(durationBarColor.value, 'track', {
+          buffId:
+            segment.kind === 'abilityEntityCount'
+              ? segment.abilityEntityId
+              : segment.kind === 'buffProgress'
+                ? segment.buffId
+                : segment.appearance,
+        }),
         left,
         top: timelineUpperBuffTop(segment.lane),
         iconWidth: renderedIconWidth,
@@ -114,6 +144,19 @@ const items = computed(() =>
 const hitItems = computed(() => {
   const counts = new Map<string, number>();
   return (props.hits ?? []).flatMap(hit => {
+    const left = frameToTimelinePx(
+      hit.frame,
+      props.prepFrames,
+      props.pxPerFrame,
+      props.prepExpanded,
+      props.prepEndFrame,
+    );
+    if (
+      props.visibleLeftPx !== undefined &&
+      props.visibleRightPx !== undefined &&
+      (left < props.visibleLeftPx || left > props.visibleRightPx)
+    )
+      return [];
     const segment = props.segments.find(
       segment =>
         segment.kind === 'abilityEntityCount' &&
@@ -128,13 +171,7 @@ const hitItems = computed(() => {
       ? [
           {
             ...hit,
-            left: frameToTimelinePx(
-              hit.frame,
-              props.prepFrames,
-              props.pxPerFrame,
-              props.prepExpanded,
-              props.prepEndFrame,
-            ),
+            left,
             top: timelineUpperBuffTop(segment.lane) + 18 + index * 7,
           },
         ]
@@ -158,7 +195,7 @@ const hitItems = computed(() => {
       :title="hit.title"
       @pointerdown.stop
       @mousedown.stop.prevent="emit('hit-click', hit)"
-      ><span class="entity-hit-diamond"
+      ><span class="entity-hit-diamond" :class="{ 'timeline-hit--marked': hit.hasOverride }"
     /></span>
     <TimelineStatusSegment
       v-for="item in items"
@@ -167,6 +204,7 @@ const hitItems = computed(() => {
       :top="item.top"
       :width="item.width"
       :title="item.title"
+      :duration-color="item.color"
       :count="
         item.kind === 'abilityEntityCount'
           ? item.entities.length

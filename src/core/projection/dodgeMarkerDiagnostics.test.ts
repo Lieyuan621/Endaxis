@@ -28,7 +28,6 @@ describe('闪避标签结果投影', () => {
     expect(projectDodgeMarkerDiagnostics(receipt.entries).get('one')).toEqual({
       status: 'unverified',
       messages: [
-        { code: 'executed' },
         { code: 'interruptedSkill', castId: 'cast-a1' },
         { code: 'missingDashTiming' },
         { code: 'perfectDodgeDeclared' },

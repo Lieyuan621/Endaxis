@@ -1,4 +1,4 @@
-import { readActionTarget } from './targetEnums.ts';
+import { readActionTarget, readDirectionType } from './targetEnums.ts';
 import { parseAdvancedDirectionSource, type AdvancedDirectionSource } from './spatial.ts';
 import { parseBuffFindSettingsSource } from './buffFindSettings.ts';
 import {
@@ -19,10 +19,14 @@ import {
   parseSpawnedEntitySelectorIdentitySource,
   parseTargetReferenceSource,
   type HpRatioValidatorSource,
+  type BuffValidatorSource,
   type ShapeFinderSource,
   type ColliderShapeSource,
   type TargetReferenceSource,
   type SpatialPointFinderSource,
+  type PointFinderOffsetSource,
+  type RandomPointFinderSource,
+  type FixedPointFinderSource,
 } from './target.ts';
 import { parseTagQuerySource, type TagQuerySource } from './tagQuery.ts';
 import type { BlackboardLevelValues } from './scalar.ts';
@@ -42,7 +46,7 @@ import {
   smartTargetFallsBackToMainTarget,
 } from './selectorFacts.ts';
 
-export interface TargetGroupInputSource {
+export interface TargetGroupInputSource extends TargetReferenceSource {
   readonly targetSource: string;
   readonly targetGroupKey: string;
   readonly finderType: string | null;
@@ -56,29 +60,25 @@ export interface TargetGroupInputSource {
   readonly finderProjectileShape?: ColliderShapeSource;
   readonly finderOwnerPartsQuery: TagQuerySource | null;
   readonly finderPointBlackboardKeys?: readonly string[];
-  readonly finderRandomPointCount?: {
-    readonly value: number;
-    readonly blackboardKey: string | null;
-  };
+  readonly finderRandomPoint?: RandomPointFinderSource;
   readonly validatorTypes: readonly string[];
   readonly postProcessorTypes: readonly string[];
   readonly priorityFilters: readonly PriorityFilterSource[];
   readonly shuffleTargets: readonly ShuffleTargetSource[];
   readonly distanceValidators: readonly DistanceValidatorSource[];
   readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
+  readonly buffValidators?: readonly BuffValidatorSource[];
   readonly finderSpawnedObjectType: string | null;
   readonly validatorTagQueries: ReadonlyArray<readonly [string, readonly number[]]>;
-  readonly targetContainsParents?: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
-  readonly excludeTargets?: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
+  readonly targetContainsParents?: readonly TargetReferenceSource[];
+  readonly excludeTargets?: readonly TargetReferenceSource[];
 }
 
 export interface TargetGroupWriteSource {
+  readonly selectorDirection?: string;
+  readonly centerToGround?: boolean;
+  readonly enableAdvancedDirection?: boolean;
+  readonly advancedDirection?: AdvancedDirectionSource;
   readonly startFrame: number;
   readonly endFrame: number;
   readonly actionIndex: number;
@@ -103,10 +103,7 @@ export interface TargetGroupWriteSource {
   readonly finderProjectileShape?: ColliderShapeSource;
   readonly finderOwnerPartsQuery: TagQuerySource | null;
   readonly finderPointBlackboardKeys?: readonly string[];
-  readonly finderRandomPointCount?: {
-    readonly value: number;
-    readonly blackboardKey: string | null;
-  };
+  readonly finderRandomPoint?: RandomPointFinderSource;
   readonly validatorTypes: readonly string[];
   readonly postProcessorTypes: readonly string[];
   readonly inputTargets: readonly TargetGroupInputSource[];
@@ -114,16 +111,12 @@ export interface TargetGroupWriteSource {
   readonly finderSpawnedObjectType: string | null;
   readonly validatorTagQueries: ReadonlyArray<readonly [string, readonly number[]]>;
   /** TargetContainsValidator 的父集合来源；缺失等同没有该验证器。 */
-  readonly targetContainsParents?: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
-  readonly excludeTargets?: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
+  readonly targetContainsParents?: readonly TargetReferenceSource[];
+  readonly excludeTargets?: readonly TargetReferenceSource[];
   readonly finderFixedPointSnapToNavmesh: boolean | null;
+  readonly finderFixedPoint?: FixedPointFinderSource;
   readonly finderSpatialPoint?: SpatialPointFinderSource;
+  readonly finderPointOffset?: PointFinderOffsetSource;
   readonly center: string | null;
   readonly centerContextKey: string;
   readonly selectorOwner: string | null;
@@ -143,6 +136,7 @@ export interface TargetGroupWriteSource {
   readonly shuffleTargets: readonly ShuffleTargetSource[];
   readonly distanceValidators: readonly DistanceValidatorSource[];
   readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
+  readonly buffValidators?: readonly BuffValidatorSource[];
   readonly circularOrderIndexKey: string | null;
   readonly circularOrderDesiredCount: number | null;
   readonly circularOrderReverseFlag: number | null;
@@ -374,6 +368,7 @@ function parseTargetPostProcessorAction(
   );
   const direction = parseAdvancedDirectionSource(action.direction, `${path}.direction`);
   const input: TargetGroupInputSource = {
+    ...target,
     targetSource: target.targetSource,
     targetGroupKey: target.targetGroupKey,
     finderType: target.finderType,
@@ -394,6 +389,7 @@ function parseTargetPostProcessorAction(
     shuffleTargets: target.shuffleTargets,
     distanceValidators: target.distanceValidators,
     ...(target.hpRatioValidators ? { hpRatioValidators: target.hpRatioValidators } : {}),
+    ...(target.buffValidators ? { buffValidators: target.buffValidators } : {}),
     finderSpawnedObjectType: target.finderSpawnedObjectType,
     validatorTagQueries: target.validatorTagQueries,
   };
@@ -409,6 +405,7 @@ function parseTargetPostProcessorAction(
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
     ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+    ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
     center: center.targetSource,
     centerContextKey: center.targetGroupKey,
     selectorOwner: source.targetSource,
@@ -474,6 +471,7 @@ function parseConvertToTargetContextAction(
     source.targetSource === 'InstantSearch',
   );
   const input: TargetGroupInputSource = {
+    ...source,
     targetSource: source.targetSource,
     targetGroupKey: source.targetGroupKey,
     finderType: summary.finderType,
@@ -493,16 +491,16 @@ function parseConvertToTargetContextAction(
     ...(summary.finderPointBlackboardKeys.length === 0
       ? {}
       : { finderPointBlackboardKeys: summary.finderPointBlackboardKeys }),
-    ...(summary.finderRandomPointCount === null
-      ? {}
-      : { finderRandomPointCount: summary.finderRandomPointCount }),
+    ...(summary.finderRandomPoint === null ? {} : { finderRandomPoint: summary.finderRandomPoint }),
     ...(summary.finderSpatialPoint ? { finderSpatialPoint: summary.finderSpatialPoint } : {}),
+    ...(summary.finderPointOffset ? { finderPointOffset: summary.finderPointOffset } : {}),
     validatorTypes: summary.validatorTypes,
     postProcessorTypes: summary.postProcessorTypes,
     priorityFilters: summary.priorityFilters,
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
     ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+    ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
     finderSpawnedObjectType: source.finderSpawnedObjectType,
     validatorTagQueries: source.validatorTagQueries,
     ...(summary.targetContainsParents.length === 0
@@ -555,15 +553,14 @@ function parseConvertToTargetContextAction(
     ...(summary.finderPointBlackboardKeys.length === 0
       ? {}
       : { finderPointBlackboardKeys: summary.finderPointBlackboardKeys }),
-    ...(summary.finderRandomPointCount === null
-      ? {}
-      : { finderRandomPointCount: summary.finderRandomPointCount }),
+    ...(summary.finderRandomPoint === null ? {} : { finderRandomPoint: summary.finderRandomPoint }),
     validatorTypes: summary.validatorTypes,
     postProcessorTypes: summary.postProcessorTypes,
     priorityFilters: summary.priorityFilters,
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
     ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+    ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
     finderSpawnedObjectType: source.finderSpawnedObjectType,
     validatorTagQueries: source.validatorTagQueries,
     ...(summary.targetContainsParents.length === 0
@@ -636,9 +633,7 @@ function parseFindTargetAction(
     ...(summary.finderPointBlackboardKeys.length === 0
       ? {}
       : { finderPointBlackboardKeys: summary.finderPointBlackboardKeys }),
-    ...(summary.finderRandomPointCount === null
-      ? {}
-      : { finderRandomPointCount: summary.finderRandomPointCount }),
+    ...(summary.finderRandomPoint === null ? {} : { finderRandomPoint: summary.finderRandomPoint }),
     validatorTypes: summary.validatorTypes,
     postProcessorTypes: summary.postProcessorTypes,
     intervalSeconds,
@@ -649,7 +644,32 @@ function parseFindTargetAction(
       : { targetContainsParents: summary.targetContainsParents }),
     ...(summary.excludeTargets.length === 0 ? {} : { excludeTargets: summary.excludeTargets }),
     finderFixedPointSnapToNavmesh,
+    ...(summary.finderFixedPoint === null ? {} : { finderFixedPoint: summary.finderFixedPoint }),
     ...(summary.finderSpatialPoint ? { finderSpatialPoint: summary.finderSpatialPoint } : {}),
+    ...(summary.finderPointOffset ? { finderPointOffset: summary.finderPointOffset } : {}),
+    ...(summary.finderRandomPoint === null &&
+    summary.finderFixedPoint === null &&
+    !summary.finderPointOffset
+      ? {}
+      : {
+          selectorDirection: readDirectionType(
+            action.selectorDirection,
+            `${path}.selectorDirection`,
+          ),
+          centerToGround: requireBoolean(action.centerToGround, `${path}.centerToGround`),
+          enableAdvancedDirection: requireBoolean(
+            action.useAdvancedDirectionSetting,
+            `${path}.useAdvancedDirectionSetting`,
+          ),
+          ...(action.useAdvancedDirectionSetting === true
+            ? {
+                advancedDirection: parseAdvancedDirectionSource(
+                  action.advancedSelectorDirection,
+                  `${path}.advancedSelectorDirection`,
+                ),
+              }
+            : {}),
+        }),
     center: readActionTarget(action.center, `${path}.center`),
     centerContextKey: readOptionalReferenceKey(action.centerContextKey, `${path}.centerContextKey`),
     selectorOwner: readActionTarget(action.selectorOwner, `${path}.selectorOwner`),
@@ -670,6 +690,7 @@ function parseFindTargetAction(
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
     ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+    ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
     circularOrderIndexKey: circularOrder?.indexKey ?? null,
     circularOrderDesiredCount: circularOrder?.desiredCount ?? null,
     circularOrderReverseFlag: circularOrder?.reverseFlag ?? null,
@@ -709,6 +730,7 @@ function parseMergeTargetAction(
       target.targetSource === 'InstantSearch',
     );
     return {
+      ...target,
       targetSource: target.targetSource,
       targetGroupKey: target.targetGroupKey,
       finderType: summary.finderType,
@@ -731,6 +753,7 @@ function parseMergeTargetAction(
       shuffleTargets: summary.shuffleTargets,
       distanceValidators: summary.distanceValidators,
       ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+      ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
       finderSpawnedObjectType: target.finderSpawnedObjectType,
       validatorTagQueries: target.validatorTagQueries,
       ...(summary.targetContainsParents.length === 0
@@ -757,6 +780,7 @@ function parsePickTargetAction(
   const indexKey = requireString(index.blackboardKey, `${path}.index.blackboardKey`);
   if (useKey && !indexKey) throw new Error(`${path}.index.blackboardKey: invalid key`);
   const input: TargetGroupInputSource = {
+    ...target,
     targetSource: target.targetSource,
     targetGroupKey: target.targetGroupKey,
     finderType: target.finderType,
@@ -774,6 +798,7 @@ function parsePickTargetAction(
     shuffleTargets: target.shuffleTargets,
     distanceValidators: target.distanceValidators,
     ...(target.hpRatioValidators ? { hpRatioValidators: target.hpRatioValidators } : {}),
+    ...(target.buffValidators ? { buffValidators: target.buffValidators } : {}),
     finderSpawnedObjectType: null,
     validatorTagQueries: [],
   };

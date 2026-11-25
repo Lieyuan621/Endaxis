@@ -4,3 +4,6 @@ export const SECONDARY_ATTRIBUTE_ATTACK_FACTOR = Math.fround(0.002);
 /** 1.4.4 BattleConst：意志对治疗输出/受治疗属性的派生系数。 */
 export const HEAL_OUTPUT_INCREASE_PER_WILL = Math.fround(0);
 export const HEAL_TAKEN_INCREASE_PER_WILL = Math.fround(0.001);
+
+/** BattleConst：敏捷派生物理抗性、智识派生元素抗性的效率均为 0.001f。 */
+export const RESISTANCE_EFFICIENCY_PER_ATTRIBUTE = Math.fround(0.001);

@@ -1,3 +1,4 @@
+import { COUNT_SHIELD_DISPLAY_ID } from '../../../core/projection/countShieldTimeline';
 import type {
   BuffAttributeEffect,
   BuffDamageEffect,
@@ -199,19 +200,54 @@ export function resolveBuffEffectSummary(
         ? [`${i18n.t(group.nameKey)}${formatSigned(effect.value * 100)}%`]
         : [];
     }
+    const takenTypes: Readonly<Record<string, string>> = {
+      PhysicalDamageTakenScalar: 'physical',
+      FireDamageTakenScalar: 'heat',
+      PulseDamageTakenScalar: 'electric',
+      CrystDamageTakenScalar: 'cryo',
+      NaturalDamageTakenScalar: 'nature',
+      EtherDamageTakenScalar: 'ether',
+    };
+    const takenType = takenTypes[effect.attribute];
+    if (
+      takenType &&
+      Number.isFinite(effect.value) &&
+      (effect.slot === 'baseFinalMultiplier' || effect.slot === 'finalMultiplier')
+    ) {
+      const arts = ARTS_TYPES.map(type =>
+        attributes.find(
+          candidate =>
+            takenTypes[candidate.attribute] === type &&
+            candidate.slot === effect.slot &&
+            Math.abs(candidate.value - effect.value) < 1e-10,
+        ),
+      );
+      const mergeArts = arts.every(candidate => candidate !== undefined) && arts.includes(effect);
+      if (mergeArts && effect !== arts[0]) return [];
+      const name = i18n.t('buffEffects.defender', {
+        type: mergeArts ? i18n.t('buffEffects.arts') : i18n.t(`buffEffects.types.${takenType}`),
+      });
+      return [`${name}×${Number(effect.value.toFixed(4))}`];
+    }
     const simple = resolveSimpleBuffModifierDisplayName(effect, i18n);
     if (simple !== undefined) return [simple];
     // 独立乘法与百分比加算必须明确区分，不能都写成“攻击力 +N%”。
     const presentation = SIMPLE_MODIFIER_PRESENTATIONS[`${effect.attribute}\u0000baseAddition`];
+    const attributeNameKeys: Readonly<Record<string, string>> = {
+      MaxHp: 'buffEffects.maxHp',
+      MaxPoise: 'resourceMonitor.labels.maxStagger',
+      PoiseRecTime: 'resourceMonitor.labels.breakDuration',
+      BreakingAttackDamageTakenScalar: 'hitDetail.finisherMult',
+      PoiseRecTimeScalar: 'resourceMonitor.labels.breakDuration',
+    };
     const nameKey =
-      effect.attribute === 'Atk'
+      attributeNameKeys[effect.attribute] ??
+      (effect.attribute === 'Atk'
         ? 'statDetail.atkBonus'
         : presentation
           ? `effects.name.${presentation.nameKey}`
-          : undefined;
-    const slotKey = `statDetail.attackSlots.${effect.slot}`;
-    if (!nameKey || !i18n.te(nameKey) || !i18n.te(slotKey) || !Number.isFinite(effect.value))
-      return [];
+          : undefined);
+    if (!nameKey || !i18n.te(nameKey) || !Number.isFinite(effect.value)) return [];
     const multiply = effect.slot === 'finalMultiplier' || effect.slot === 'baseFinalMultiplier';
     const percentage =
       effect.slot === 'multiplier' ||
@@ -220,7 +256,7 @@ export function resolveBuffEffectSummary(
     const value = multiply
       ? `×${Number(effect.value.toFixed(4))}`
       : `${formatSigned(effect.value * (percentage ? 100 : 1))}${percentage ? '%' : ''}`;
-    return [`${i18n.t(nameKey)}（${i18n.t(slotKey)}）${value}`];
+    return [`${i18n.t(nameKey)}${value}`];
   });
   for (const effect of aggregateDamageEffects(segment.damageEffects ?? [])) {
     if (!Number.isFinite(effect.addition)) continue;
@@ -368,6 +404,7 @@ export function resolveBuffDisplayName(
   sourceName?: string,
   operatorNameKeys: ReadonlyMap<string, BuffDisplayName> = new Map(),
 ): string {
+  if (buffId === COUNT_SHIELD_DISPLAY_ID) return i18n.t('resourceMonitor.enemy.countShield');
   const customName = operatorNameKeys.get(buffId);
   if (typeof customName === 'object') return customName.text;
   const configuredNameKey =

@@ -184,14 +184,23 @@ describe('公共 Switch 投影', () => {
       kind: 'startTimeDilation',
       parameters: {
         scope: 'entity',
-        targets: ['enemy', 'caster'],
+        targets: [{ kind: 'owner' }, { kind: 'source' }],
         curve: { kind: 'named', key: 'interrupt_weakness' },
         priority: 20,
       },
     });
-    expect(() =>
-      project([select([option(0, [dilation])])], { ...context, fixedBuffOwnerTarget: undefined }),
-    ).toThrow('entity time-dilation');
+    const dynamic = project([select([option(0, [dilation])])], {
+      ...context,
+      fixedBuffOwnerTarget: undefined,
+    });
+    const dynamicSwitch = dynamic.steps[0];
+    if (dynamicSwitch?.kind !== 'switch') throw new Error('missing switch');
+    expect(
+      readActionGraphChain(dynamic.graph, dynamicSwitch.options[0]!.sequence)[0],
+    ).toMatchObject({
+      kind: 'startTimeDilation',
+      parameters: { targets: [{ kind: 'owner' }, { kind: 'source' }] },
+    });
     expect(() =>
       project([select([option(0, [{ ...dilation, useCurveKey: false, curveKey: '' }])])], context),
     ).toThrow('weightedMode');

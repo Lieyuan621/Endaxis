@@ -18,14 +18,18 @@ it('命中回调中的动作结束不会再触发超时结束技能', () => {
   const runtime = new ProjectileLifecycleRuntime();
   const finish = vi.fn();
   const ref = runtime.launch({
-    finishDelaySeconds: 10,
-    recycleDelaySeconds: 1,
-    firstTickHit: { finishOnHit: true },
-    hit: () => {
-      runtime.finishByAction(ref.target);
-      return true;
+    schedule: {
+      endFrame: 300,
+      callbacks: [
+        { event: 'hit', triggerFrames: [1] },
+        { event: 'finish', triggerFrames: [300] },
+      ],
     },
-    finish,
+    recycleDelaySeconds: 1,
+    invokeScheduledCallback: index => {
+      if (index === 0) runtime.finishByAction(ref.target);
+      else finish();
+    },
     beforeReset: () => {},
     resolveTickDeltaSeconds: () => COMBAT_FRAME_INTERVAL,
   });
@@ -38,15 +42,18 @@ it('动作结束投射物不施放结束技能，恢复后仍按同一延迟回�
   const finish = vi.fn();
   const reset = vi.fn();
   const ports = {
-    finish,
-    block: finish,
+    invokeScheduledCallback: finish,
     beforeReset: reset,
     resolveTickDeltaSeconds: () => COMBAT_FRAME_INTERVAL,
   };
   const original = new ProjectileLifecycleRuntime(() => 1);
   const ref = original.launch({
     ...ports,
-    finishDelaySeconds: 'firstTickBlock',
+
+    schedule: {
+      endFrame: 3,
+      callbacks: [{ event: 'block', triggerFrames: [3] }],
+    },
     recycleDelaySeconds: 0.05,
   });
   expect(original.finishByAction(ref.target)).toBe(true);
@@ -155,20 +162,23 @@ it.each(
       );
       return {
         ...bindProjectileCallbackLifecycle([callback], () => COMBAT_FRAME_INTERVAL),
-        startLaunch: () => callback.start({ kind: 'abilityEntity', instanceId: 1 }),
       };
     };
     const oldExecute = vi.fn(() => true);
     const originalPorts = bind(data, clock, receipt, oldExecute);
-    original.launch({
+    const launched = original.launch({
       callbacks: [data],
       callbackPrograms: [program],
-      finishDelaySeconds:
-        event === 'block' ? 'firstTickBlock' : { reachAfterTicks: 2, maxDurationSeconds: 1 },
+
+      schedule: {
+        endFrame: 3,
+        callbacks: [{ event, triggerFrames: [event === 'launch' ? 0 : 3] }],
+      },
       recycleDelaySeconds: 0.1,
       ...originalPorts,
     });
-    if (event === 'launch') originalPorts.startLaunch();
+    data.inputTarget = { kind: 'abilityEntity', instanceId: 1 };
+    launched.startSchedule();
     const advance = (runtime: ProjectileLifecycleRuntime, branchClock: CombatClock) => {
       runtime.beginAbilityFrame();
       runtime.advanceAbilityFrame();

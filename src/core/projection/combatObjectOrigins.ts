@@ -185,6 +185,18 @@ export class CombatObjectOrigins {
     return node;
   }
 
+  /** 内部初始化动作也有 action 身份，只有实际技能开始记录才能承接技能命中点。 */
+  isSkillCast(node: CombatObjectNode, throughSequence = Infinity): boolean {
+    this.#requireOwned(node);
+    if (node.ref.kind !== 'action') return false;
+    const cast = this.#casts.get(node.ref.actionId);
+    return (
+      cast !== undefined &&
+      cast.sequence <= throughSequence &&
+      combatObjectKey(cast.ref) === combatObjectKey(node.ref)
+    );
+  }
+
   #requireOwned(node: CombatObjectNode): void {
     if (!this.#owned.has(node)) throw new Error('object belongs to another origin query');
   }

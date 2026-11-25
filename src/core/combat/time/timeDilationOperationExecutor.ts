@@ -1,4 +1,4 @@
-import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+import type { CompiledCondition, CompiledTargetQuery } from '../../compiler/compiledGraphData.ts';
 
 /**
  * 执行技能步骤中的普通时间膨胀动作，并按动作生命周期清理实例。
@@ -17,7 +17,10 @@ import type { TimeDilationRuntime } from './timeDilationRuntime';
 import { createTimeDilationActionState, type TimeDilationActionState } from '../state/actionState';
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
 import { operationProducer } from '../receipt/combatObjectIdentity';
-import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import {
+  firstRuntimeEntityTarget,
+  runtimeTargetEntityId,
+} from '../../game-data/logicalAbilityEntity';
 
 type RuntimeOperation = ResolvedCombatOperationStep;
 
@@ -64,10 +67,10 @@ export class TimeDilationOperationExecutor implements CombatOperationExecutor {
     }
     if (context === undefined) throw new Error(`${step.kind} requires an operation context`);
     if (step.kind === 'setIgnoreGlobalTimeScale') {
-      const entityIds = this.#resolveAbilityEntityTargetIds(
-        step.parameters.abilityEntityTargets,
-        context,
-      );
+      const entityIds =
+        step.parameters.targets === undefined
+          ? this.#resolveAbilityEntityTargetIds(step.parameters.abilityEntityTargets ?? [], context)
+          : this.#resolveQueryTargetIds([step.parameters.targets], context);
       for (const entityId of entityIds) {
         this.dependencies.runtime.setIgnoreGlobalTimeScale(entityId, step.parameters.ignore);
       }
@@ -91,8 +94,10 @@ export class TimeDilationOperationExecutor implements CombatOperationExecutor {
         step.parameters.priority,
         resolveActionValueOperand(step.parameters.targetScale, context.blackboard),
         [
-          ...this.dependencies.resolveTargetIds('caster'),
-          ...step.parameters.ignoredTargets.flatMap(this.dependencies.resolveTargetIds),
+          ...(context.actionSourceId === undefined
+            ? this.dependencies.resolveTargetIds('caster')
+            : [context.actionSourceId]),
+          ...this.#resolveQueryTargetIds(step.parameters.ignoredTargets, context),
           ...this.#resolveAbilityEntityTargetIds(
             step.parameters.ignoredAbilityEntityTargets ?? [],
             context,
@@ -105,6 +110,38 @@ export class TimeDilationOperationExecutor implements CombatOperationExecutor {
       return true;
     }
     const parameters = step.parameters;
+    if (parameters.scope === 'hitStop') {
+      const query = this.dependencies.queryTargets;
+      if (!query) throw new Error('hit stop requires target query bindings');
+      const attacker = firstRuntimeEntityTarget(query(parameters.attacker, context));
+      const attackerId = attacker === undefined ? undefined : runtimeTargetEntityId(attacker);
+      if (attackerId === undefined) return true;
+      const targets = query({ kind: 'partBuffSource', targets: parameters.targets }, context);
+      const entityIds = [
+        ...(parameters.affectType === 'OnlyTarget' ? [] : [attackerId]),
+        ...(parameters.affectType === 'OnlyAttacker'
+          ? []
+          : targets.flatMap(target => {
+              const id = runtimeTargetEntityId(target);
+              return id === undefined ? [] : [id];
+            })),
+      ];
+      const durationSeconds = resolveActionValueOperand(
+        parameters.durationSeconds,
+        context.blackboard,
+      );
+      const curve = resolveTimeScaleCurve(parameters.curve, this.dependencies.runtime);
+      for (const entityId of entityIds)
+        this.dependencies.runtime.startEntity({
+          entityId,
+          durationSeconds,
+          slot: 'TimeDilation/Layer/Entity/HitStop',
+          priority: parameters.priority,
+          curve,
+          source,
+        });
+      return true;
+    }
     const durationSeconds = resolveActionValueOperand(
       parameters.durationSeconds,
       context.blackboard,
@@ -118,15 +155,16 @@ export class TimeDilationOperationExecutor implements CombatOperationExecutor {
               slot: parameters.slot,
               priority: parameters.priority,
               curve,
-              ignoredOperatorIds: parameters.ignoredTargets
-                .flatMap(this.dependencies.resolveTargetIds)
-                .concat(
-                  this.#resolveAbilityEntityTargetIds(
-                    parameters.ignoredAbilityEntityTargets ?? [],
-                    context,
-                    true,
-                  ),
+              ignoredOperatorIds: this.#resolveQueryTargetIds(
+                parameters.ignoredTargets,
+                context,
+              ).concat(
+                this.#resolveAbilityEntityTargetIds(
+                  parameters.ignoredAbilityEntityTargets ?? [],
+                  context,
+                  true,
                 ),
+              ),
               source,
               ...(parameters.influenceSkillCooldownSeconds === undefined
                 ? {}
@@ -144,14 +182,10 @@ export class TimeDilationOperationExecutor implements CombatOperationExecutor {
                 return [resolveSingleTargetId(this.dependencies, target, context)];
               if (!this.dependencies.queryTargets)
                 throw new Error('time dilation requires target query bindings');
-              return this.dependencies
-                .queryTargets(target, context)
-                .slice(0, 1)
-                .map(entity => {
-                  const id = runtimeTargetEntityId(entity);
-                  if (id === undefined) throw new Error('time dilation target must be an entity');
-                  return id;
-                });
+              return this.dependencies.queryTargets(target, context).flatMap(entity => {
+                const id = runtimeTargetEntityId(entity);
+                return id === undefined ? [] : [id];
+              });
             }),
             ...this.#resolveAbilityEntityTargetIds(parameters.abilityEntityTargets ?? [], context),
           ].map(entityId =>
@@ -175,6 +209,21 @@ export class TimeDilationOperationExecutor implements CombatOperationExecutor {
       ]);
     }
     return true;
+  }
+
+  #resolveQueryTargetIds(
+    targets: readonly (TimeDilationIgnoreTarget | CompiledTargetQuery)[],
+    context: CombatOperationContext,
+  ): string[] {
+    return targets.flatMap(target => {
+      if (typeof target === 'string') return [...this.dependencies.resolveTargetIds(target)];
+      if (!this.dependencies.queryTargets)
+        throw new Error('global time dilation requires target query bindings');
+      return this.dependencies.queryTargets(target, context).flatMap(entity => {
+        const id = runtimeTargetEntityId(entity);
+        return id === undefined ? [] : [id];
+      });
+    });
   }
 
   #resolveAbilityEntityTargetIds(

@@ -2,7 +2,7 @@ import type { ResolvedAbilityEntityDefinition } from './combatProgram';
 import type { OperatorAbilityEntityDefinitions } from '../game-data/operatorDefinition';
 import type {
   ActionGraphDefinitionRepository,
-  ImportedAbilityEntityDefinitions,
+  ActionGraphImports,
 } from './actionGraphDefinitionRepository';
 import { createProgramDefinitionCompiler } from './compileProgramDefinitions';
 
@@ -10,8 +10,8 @@ import { createProgramDefinitionCompiler } from './compileProgramDefinitions';
 export function createIndependentAbilityEntityImportResolver(
   definitions: OperatorAbilityEntityDefinitions | undefined,
   programs: ActionGraphDefinitionRepository,
-  importsForLevel?: (level: number) => ImportedAbilityEntityDefinitions,
-): (level: number) => ImportedAbilityEntityDefinitions {
+  importsForLevel?: (level: number) => ActionGraphImports,
+): (level: number) => ActionGraphImports {
   return level => programs.compileAbilityEntities(definitions, level, importsForLevel?.(level));
 }
 
@@ -20,16 +20,18 @@ export function compileIndependentAbilityEntityDefinitions(
   definitions: OperatorAbilityEntityDefinitions,
   level: number,
   programs: ActionGraphDefinitionRepository,
-  external: ImportedAbilityEntityDefinitions,
-): ImportedAbilityEntityDefinitions {
+  external: ActionGraphImports,
+): ActionGraphImports {
   const entries = Object.entries(definitions);
   const linked: Record<string, ResolvedAbilityEntityDefinition> = {};
   for (const [id] of entries) {
-    if (!id || Object.hasOwn(external, id))
+    if (!id || Object.hasOwn(external.abilityEntities, id))
       throw new Error(`duplicate imported AbilityEntity definition '${id}'`);
     linked[id] = {} as ResolvedAbilityEntityDefinition;
   }
-  const imports = { ...external, ...linked };
+  const imports = {
+    abilityEntities: { ...external.abilityEntities, ...linked },
+  };
   const compiler = createProgramDefinitionCompiler(
     level,
     (_entry, path) => {
@@ -44,6 +46,8 @@ export function compileIndependentAbilityEntityDefinitions(
     );
   });
   Object.values(linked).forEach(Object.freeze);
-  const result = Object.freeze(linked);
+  const result = Object.freeze({
+    abilityEntities: Object.freeze(linked),
+  });
   return result;
 }

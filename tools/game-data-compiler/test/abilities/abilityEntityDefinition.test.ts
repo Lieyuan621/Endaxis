@@ -1,9 +1,58 @@
 import { describe, expect, it } from 'vitest';
 import { compileAbilityEntityDefinitionSource } from '../../src/compiler/abilities/abilityEntityDefinition.ts';
 import { parseNativeAbilityEntityTemplateSource } from '../../src/source/abilityEntity.ts';
-import { abilityEntityFixture } from '../sourceFixtures.ts';
+import { abilityEntityFixture, activeSkillFixture, targetFixture } from '../sourceFixtures.ts';
 
 describe('能力实体模板定义投影', () => {
+  it('启用 AddBuff 被动只安装启动 Buff，不执行或拒绝残留时间轴', () => {
+    const template = {
+      ...parseNativeAbilityEntityTemplateSource(abilityEntityFixture(), 'fixture'),
+      bornTagIds: [],
+      skillDataBundle: {
+        allActiveSkillIds: [],
+        allPassiveSkillIds: ['passive'],
+        enabledPassiveSkillIds: ['passive'],
+      },
+    };
+    const passive = {
+      ...activeSkillFixture('passive', 'Passive'),
+      buffs: [{ buffId: 'startup', assignBlackboard: false, assignItems: [] }],
+      actionGroupData: {
+        passiveEventActions: [],
+        timelineActions: [
+          {
+            _startFrame: 0,
+            _endFrame: 1,
+            forceSyncAnimData: {
+              forceSync: false,
+              montageName: '',
+              targetFrame: 0,
+              playbackSpeed: 0,
+            },
+            _sequenceActionData: {
+              onlyExecuteWhenSourceIsMainChar: false,
+              onlyExecuteWhenSourceIsGuard: false,
+              actionData: [
+                {
+                  $type: 'Beyond.Gameplay.Core.FinishOwnerAction+Data, Gameplay.Beyond',
+                  isEnable: true,
+                  priorityLevel: 'Default',
+                  priorityOffset: 0,
+                  serverActionIndex: 0,
+                  owner: targetFixture('Owner'),
+                  skipDieDisplay: false,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    };
+    const result = compileAbilityEntityDefinitionSource(template, [], () => passive);
+    expect(result.passiveSkills).toHaveLength(1);
+    expect(JSON.stringify(result.passiveSkills)).toContain('startup');
+    expect(JSON.stringify(result.passiveSkills)).not.toContain('finishOwner');
+  });
   it('未登记子技能不加载资源，已登记但资源缺失仍报错', () => {
     const template = {
       ...parseNativeAbilityEntityTemplateSource(abilityEntityFixture(), 'fixture'),

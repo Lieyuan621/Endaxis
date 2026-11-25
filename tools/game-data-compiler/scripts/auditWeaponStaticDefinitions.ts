@@ -9,7 +9,6 @@ import {
   collectBuffRuntimeClosure,
   compileBuffRuntimeDefinitionSource,
   compileWeaponStaticDefinitionBatchSource,
-  isAfterEnemyDefeatedOnlyBuffRuntime,
   isPresentationOnlyBuffStackEffect,
   standardStumpBuffAbilityEventOmissionReason,
 } from '../src/index.ts';
@@ -117,7 +116,7 @@ export function auditWeaponStaticDefinitions(args: Arguments): {
         .map(([id]) => id),
     );
     for (const [buffId, source] of closure) {
-      if (visualOnlyIds.has(buffId) || isAfterEnemyDefeatedOnlyBuffRuntime(source)) {
+      if (visualOnlyIds.has(buffId)) {
         omittedBuffIds.push(buffId);
         continue;
       }

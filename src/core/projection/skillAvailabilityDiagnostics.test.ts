@@ -84,7 +84,7 @@ describe('projectSkillAvailabilityDiagnostics', () => {
     expect(
       projectSkillAvailabilityDiagnostics([
         receipt(0, 'UltimatePresentationChanged'),
-        receipt(1, 'UltimateInputBlockedByPresentation'),
+        receipt(1, 'SkillInputBlockedByPresentation'),
         receipt(2, 'SkillStarted'),
       ]),
     ).toEqual([
@@ -92,7 +92,7 @@ describe('projectSkillAvailabilityDiagnostics', () => {
         frame: 12,
         sourceId: 'perlica',
         skillId: 'battleSkill',
-        reasons: ['ultimateInputDuringPresentation'],
+        reasons: ['skillInputDuringPresentation'],
         receiptSequences: [1],
       },
     ]);

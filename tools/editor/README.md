@@ -6,7 +6,7 @@
 
 输入是 `packages/game-data-contract/src` 中的动作、条件和数值表达式类型。工具用 TypeScript TypeChecker 读取字段类型、可选性、枚举及注释，输出 `src/ui/action-graph/actionNodeSchemas.generated.ts`。
 
-浏览器只加载生成描述，不加载 TypeScript 编译器。不要手改输出文件。用户可见的名称与说明维护在 `src/i18n/locales/`，不另建语言资源目录。节点样式和交互见[编辑器架构](../../docs/architecture/editor.md)。
+浏览器只加载生成描述，不加载 TypeScript 编译器。不要手改输出文件。资产编辑器的名称与说明维护在 `src/i18n/locales/<语言 ID>/asset-editor.json`；加载器按语言与通用 UI 文案合并，翻译键保持不变。每个顶层命名空间只归属一个资源文件，避免合并时覆盖。节点样式和交互见[编辑器架构](../../docs/architecture/editor.md)。
 
 ## 执行
 
@@ -60,3 +60,5 @@ npm run check:field-capabilities -- --report
 共享判断计入常量声明开销，并重新统计父对象共享后的子值使用次数。回归夹具会执行生成的代码，比较完整展开结果与属性顺序，同时检查代表性重复输入确实缩小。
 
 递归引用身份使用声明的仓库相对路径与行列位置，不使用受 CRLF 影响的字符偏移；TypeScript 内置声明以实际依赖目录识别后使用固定包路径。软链入口与普通入口执行同一生成流程，两个 `--check` 都接受 LF/CRLF 检出。定位方式调整会重新生成内部引用 ID，但不改变引用目标、来源元数据或字段能力。
+
+通用操作复用 `common`，职业和武器类型复用 `enumTerms`，四维属性复用 `stats`。动态枚举所需的编辑器键可通过 vue-i18n 的 `@:命名空间.键` 引用共享文案。只有含义及使用语境一致时才共享，不能按文字相同批量合并；例如职业“术师”与动作“施放者”必须区分。

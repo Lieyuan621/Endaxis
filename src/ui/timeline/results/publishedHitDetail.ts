@@ -1,11 +1,11 @@
 import type { PublishedScenarioSimulation } from '../useScenarioSimulation';
 import { projectTimelineHitDetailEntries } from './timelineHitEffects';
-import { deriveHitId } from '../../../core/combat/timeline/deriveHitId';
 
 /** 技能身份跨换轨保持稳定；查看旧结果不能使用当前轨道下标查找旧回执。 */
 export function projectPublishedHitDetail(
   published: PublishedScenarioSimulation | null,
   target: { castId: string; hitId: string; executionFrame?: number } | null,
+  enemyId?: string,
 ) {
   if (published === null || target === null) return null;
   for (const track of published.scenario.tracks) {
@@ -14,14 +14,12 @@ export function projectPublishedHitDetail(
     return {
       track,
       cast,
-      forcedCritical: Object.entries(cast.simulationInputs?.criticalOverrides ?? {}).some(
-        ([key, result]) => result && deriveHitId(cast.id, key) === target.hitId,
-      ),
       entries: projectTimelineHitDetailEntries(
         published.run.receiptHistory.toArray(),
         cast.id,
         target.hitId,
         target.executionFrame,
+        enemyId,
       ),
     };
   }

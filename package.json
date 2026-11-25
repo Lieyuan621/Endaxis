@@ -18,6 +18,7 @@
     "preview": "vite preview",
     "download:game-data:sources": "node --experimental-strip-types tools/game-data-compiler/scripts/downloadGameDataSources.ts",
     "rebuild:game-data": "node --experimental-strip-types tools/game-data-compiler/scripts/rebuildGameData.ts",
+    "rebuild:game-data:local": "node --experimental-strip-types tools/game-data-compiler/scripts/rebuildLocalGameData.ts",
     "convert:legacy-timeline": "node --experimental-strip-types tools/legacy-timeline/cli.ts",
     "generate:game-data:operator-active-skill": "node --experimental-strip-types tools/game-data-compiler/scripts/generateOperatorActiveSkillRuntime.ts",
     "generate:game-data:operator-active-skills": "node --experimental-strip-types tools/game-data-compiler/scripts/generateOperatorActiveSkillRuntimeBatch.ts",
@@ -41,6 +42,7 @@
     "check:definition-fields": "node --experimental-strip-types tools/editor/generateDefinitionSchemas.ts --check",
     "check:field-capabilities": "node --experimental-strip-types tools/editor/checkFieldCapabilities.ts",
     "test": "vitest run src",
+    "test:all": "vitest run && npm run test:editor-schema",
     "test:game-data": "vitest run tools/game-data-compiler",
     "test:tools": "vitest run tools/legacy-timeline",
     "test:editor-schema": "node --experimental-strip-types --test tools/editor/generateActionNodeSchema.test.ts tools/editor/fieldSemantics.test.ts tools/editor/fieldDeclaration.test.ts tools/editor/fieldCapabilities.test.ts",
@@ -51,8 +53,9 @@
     "audit:game-data:candidate-equipment": "node --experimental-strip-types tools/game-data-compiler/scripts/auditCandidateEquipment.ts",
     "audit:game-data:enemies": "node --experimental-strip-types tools/game-data-compiler/scripts/auditCandidateEnemyDefinitions.ts",
     "verify:real-timeline-checkpoints": "node --experimental-strip-types tools/performance/verify-real-timeline-checkpoints.ts",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write . && npm run format:game-data",
+    "format:check": "prettier --check . && npm run format:game-data -- --check",
+    "format:game-data": "node --experimental-strip-types tools/game-data-compiler/scripts/formatGameData.ts",
     "prepare": "husky"
   },
   "dependencies": {

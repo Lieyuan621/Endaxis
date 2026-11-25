@@ -10,14 +10,17 @@ import {
   collectCombatInvisibleRandomKeys,
   isCombatInvisiblePresentationLeaf,
 } from '../optimization/nativePresentationUsage.ts';
-import { projectAuraParameters } from '../actions/combatActionLeafProjection.ts';
+import {
+  projectAuraParameters,
+  projectAuraTargets,
+} from '../actions/combatActionLeafProjection.ts';
 import { imageRefFromPath } from '../publication/imageResources.ts';
 import { isPresentationOnlyActionSequence } from '../skills/skillPresentationTargets.ts';
 import { simplifyNativeSequences } from '../optimization/nativeSequenceOptimization.ts';
 import { projectGameplayTags } from '../combatProjectionCommon.ts';
 import {
   buffPresentationNames,
-  buffPresentationIcons,
+  buffPresentationOverrides,
 } from '../../../config/buffPresentationNames.ts';
 import { createActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
 import { buffHasNoAffixIdentityWriter } from './buffCastIdentityProof.ts';
@@ -73,6 +76,7 @@ import {
   isPartyExceptOwnerInstantSearch,
   isPartyInstantSearch,
   scalarOperand,
+  requireActionOwnerProjection,
   actionValueOperand,
   DAMAGE_TYPES,
 } from '../combatProjectionCommon.ts';
@@ -81,6 +85,7 @@ import { compileEventCondition } from '../conditions/combatConditionProjection.t
 import { canOmitUnusedNativeCondition } from '../optimization/nativeConditionUsage.ts';
 import { assertPresentationCalculationIsolation } from '../scenario/presentationCalculationIsolation.ts';
 import {
+  collectRandomPointTargetGroupKeys,
   compareKnownNumbers,
   isStaticControlledOperatorWrite,
   isStaticZeroSpacePointWrite,
@@ -171,6 +176,7 @@ export function compileBuffRuntimeDefinitionSource(
     | 'gameplayTagRegistry'
     | 'predefinedTagQueries'
     | 'staticEnemyTargetGroupKeys'
+    | 'enemyOrSpatialTargetGroupKeys'
     | 'staticEmptyTargetGroupKeys'
     | 'staticZeroSpaceTargetGroupKeys'
     | 'atMostOneZeroSpaceTargetGroupKeys'
@@ -242,25 +248,6 @@ export function compileBuffRuntimeDefinitionSource(
   );
   const targetGroupWritesByKey = Map.groupBy(targetGroupWrites, write => write.targetGroupKey);
   const staticEmptyTargetGroupKeys = new Set(contextOverrides.staticEmptyTargetGroupKeys ?? []);
-  for (const write of targetGroupWrites) {
-    if (
-      contextOverrides.fixedBuffOwnerTarget === 'currentAbilityEntity' &&
-      write.producerType === 'FindTargetAction' &&
-      write.finderType === 'InFightEnemyFinder' &&
-      write.validatorTypes.length === 0 &&
-      write.postProcessorTypes.length === 2 &&
-      write.postProcessorTypes[0] === 'ExcludeTarget' &&
-      write.postProcessorTypes[1] === 'PriorityFilter' &&
-      write.excludeTargets?.length === 1 &&
-      write.excludeTargets[0]!.targetSource === 'Context' &&
-      staticEnemyTargetGroupKeys.has(write.excludeTargets[0]!.targetGroupKey) &&
-      write.priorityFilters.length === 1 &&
-      write.priorityFilters[0]!.filterType === 'DistanceFromOwnerAsc'
-    ) {
-      // 唯一敌人列表排除已证明的同一敌人后恒为空；PriorityFilter 不会再产生候选。
-      staticEmptyTargetGroupKeys.add(write.targetGroupKey);
-    }
-  }
   // 标签/智能目标筛选会令集合动态为空，但在固定木桩模型中不可能产生第二个敌人。
   // 这项证明只供 ForEach 保留“零次或一次”的运行时语义，不能升级成静态必有敌人。
   const singleEnemyTargetGroupKeys = new Set(staticEnemyTargetGroupKeys);
@@ -409,6 +396,7 @@ export function compileBuffRuntimeDefinitionSource(
     }
   }
   const projectionContextOverrides = {
+    randomPointTargetGroupKeys: collectRandomPointTargetGroupKeys(targetGroupWritesByKey),
     materializedTargetGroupKeys: collectMaterializedSequenceTargetGroups(allSequences),
     unobservedTargetQueryOutputs: collectUnobservedTargetQueryOutputs(allSequences),
     graph,
@@ -567,43 +555,50 @@ export function compileBuffRuntimeDefinitionSource(
         projectBuffAbilityEvent(event, sourcePath, contextOverrides.fixedBuffOwnerTarget),
       compileSequence: (sequence, _sequencePath, abilityEvent) =>
         compileLinearSequence(
-          omitFixedExternalOperatorHitEnemyGuard(
-            sequence,
-            abilityEvent,
-            contextOverrides.fixedBuffOwnerTarget,
-          ),
+          sequence,
           visualOnlyIds,
-          abilityEvent === 'OnBeforeAddedBuff'
+          abilityEvent === 'OnCollectAddedBuffBbValue' ||
+            abilityEvent === 'OnCollectOutputBuffBbValue'
             ? {
-                ...BUFF_BEFORE_ADDED_CONTEXT,
+                ...BUFF_ACTION_CONTEXT,
                 abilityEntityQueries,
                 ...abilityEventProjectionContext,
+                // 两个收集事件都没有 Target；输入是各自发布者。
+                actionTargetTarget:
+                  abilityEvent === 'OnCollectAddedBuffBbValue' ? 'eventTarget' : 'eventSource',
+                nativeAbilityEvent: abilityEvent,
               }
-            : abilityEvent === 'OnBeforeTakeDamage' ||
-                abilityEvent === 'OnBeforeTakePhysicalInfliction'
+            : abilityEvent === 'OnBeforeAddedBuff'
               ? {
-                  ...BUFF_BEFORE_TAKE_CONTEXT,
+                  ...BUFF_BEFORE_ADDED_CONTEXT,
                   abilityEntityQueries,
                   ...abilityEventProjectionContext,
                 }
-              : (abilityEvent === 'OnOutputDamage' ||
-                    abilityEvent === 'OnBeforeOutputDamage' ||
-                    abilityEvent === 'OnBeforeDamageAction') &&
-                  contextOverrides.fixedBuffOwnerTarget === 'caster'
+              : abilityEvent === 'OnBeforeTakeDamage' ||
+                  abilityEvent === 'OnBeforeTakePhysicalInfliction'
                 ? {
-                    ...BUFF_ACTION_CONTEXT,
-                    // 固定木桩场景中干员输出伤害的受击目标只能是唯一敌人。保留事件
-                    // 条件与动态标签筛选，但无需把已知身份降级成不可投影的 eventTarget。
-                    actionTargetTarget: 'enemy' as const,
+                    ...BUFF_BEFORE_TAKE_CONTEXT,
                     abilityEntityQueries,
                     ...abilityEventProjectionContext,
                   }
-                : {
-                    ...BUFF_ACTION_CONTEXT,
-                    abilityEntityQueries,
-                    ...abilityEventProjectionContext,
-                    nativeAbilityEvent: abilityEvent,
-                  },
+                : (abilityEvent === 'OnOutputDamage' ||
+                      abilityEvent === 'OnBeforeOutputDamage' ||
+                      abilityEvent === 'OnBeforeDamageAction') &&
+                    contextOverrides.fixedBuffOwnerTarget === 'caster'
+                  ? {
+                      ...BUFF_ACTION_CONTEXT,
+                      // 固定木桩场景中干员输出伤害的受击目标只能是唯一敌人。保留事件
+                      // 条件与动态标签筛选，但无需把已知身份降级成不可投影的 eventTarget。
+                      actionTargetTarget: 'enemy' as const,
+                      abilityEntityQueries,
+                      ...abilityEventProjectionContext,
+                    }
+                  : {
+                      ...BUFF_ACTION_CONTEXT,
+                      abilityEntityQueries,
+                      ...abilityEventProjectionContext,
+                      nativeAbilityEvent: abilityEvent,
+                    },
           extensions,
         ),
       isEmptySequence: sequence => sequence.$sequence === null,
@@ -667,17 +662,11 @@ export function compileBuffRuntimeDefinitionSource(
     ...(source.presentation.hasIcon ||
     source.presentation.spritePath !== '' ||
     buffPresentationNames[source.graph.buffId] ||
-    buffPresentationIcons[source.graph.buffId]
+    buffPresentationOverrides[source.graph.buffId]
       ? {
           presentation: {
             ...compilePresentation(source.presentation),
-            ...(buffPresentationIcons[source.graph.buffId]
-              ? {
-                  icon: buffPresentationIcons[source.graph.buffId]!,
-                  visible: true,
-                  showInSquadIcon: true,
-                }
-              : {}),
+            ...buffPresentationOverrides[source.graph.buffId],
             ...(buffPresentationNames[source.graph.buffId]
               ? { nameKey: buffPresentationNames[source.graph.buffId] }
               : {}),
@@ -705,7 +694,10 @@ export function compileBuffRuntimeDefinitionSource(
       });
       if (
         modifier.modifyAttributeType === 'Specific' &&
-        !isCombatRuntimeAttributeRelevant(modifier.attributeType)
+        !isCombatRuntimeAttributeRelevant(
+          modifier.attributeType,
+          projectionContextOverrides.fixedBuffOwnerTarget,
+        )
       )
         return [];
       const attribute =
@@ -760,41 +752,6 @@ export function compileBuffRuntimeDefinitionSource(
     ...(igniteEventResponses.length === 0 ? {} : { igniteEventResponses }),
   };
   return { ...definition, actionGraph: { main: graph.finish(), macros: {} } };
-}
-
-/**
- * 当前 operatorHit 外部事实固定由唯一敌人发出，且输入协议不表示 Dot / RemainArea。
- * 角色受击监听开头的对应类型与 ExceptAny 守卫因此恒真；只删除这些无黑板副作用的精确前缀，
- * 不推广到敌方 Buff、其他事件或其他掩码。
- */
-function omitFixedExternalOperatorHitEnemyGuard(
-  sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
-  abilityEvent: string | number,
-  fixedBuffOwnerTarget?: 'caster' | 'enemy' | 'currentAbilityEntity',
-): NativeSequenceSource<KnownNativeActionLeafSource> {
-  if (
-    fixedBuffOwnerTarget !== 'caster' ||
-    (abilityEvent !== 'OnBeforeTakeDamage' && abilityEvent !== 'OnTakeDamage')
-  ) {
-    return sequence;
-  }
-  let omitted = 0;
-  for (const node of sequence.actions) {
-    if (node.body.kind !== 'leaf' || node.body.value.family !== 'condition') break;
-    const condition = node.body.value.action;
-    const isEnemySourceGuard =
-      condition.kind === 'objectTypeMatch' &&
-      condition.target.targetSource === 'Target' &&
-      condition.target.targetGroupKey === '' &&
-      condition.objectTypeMask === 'Enemy';
-    const isDirectDamageGuard =
-      condition.kind === 'damageDecorateMask' &&
-      condition.checkType === 'ExceptAny' &&
-      condition.mask === 268435456 + 536870912;
-    if (!isEnemySourceGuard && !isDirectDamageGuard) break;
-    omitted += 1;
-  }
-  return omitted === 0 ? sequence : { ...sequence, actions: sequence.actions.slice(omitted) };
 }
 
 function compileBuffDamageModifiers(
@@ -950,18 +907,24 @@ function compileBuffPoiseModifiers(
       if (
         side === null ||
         processor.modifier.modifyAttributeType !== 'Specific' ||
-        processor.modifier.attributeType !== expectedAttribute ||
-        processor.modifier.formulaItem !== 'BaseAddition'
+        processor.modifier.attributeType !== expectedAttribute
       ) {
         throw new Error(
           `poiseModifier[${modifierIndex}].poiseProcessors[${processorIndex}]: unsupported instant poise attribute modifier`,
         );
       }
+      const compiled = compileResolvedAttributeModifierSource({
+        sourcePath: `poiseModifier[${modifierIndex}].poiseProcessors[${processorIndex}]`,
+        modifyAttributeType: processor.modifier.modifyAttributeType,
+        attributeType: processor.modifier.attributeType,
+        formulaItem: processor.modifier.formulaItem,
+        value: 0,
+      });
       return {
         kind: 'modifyPoiseScalar' as const,
         timing: 'beforeCalculation' as const,
         side,
-        addition: scalarOperand(processor.modifier.parameter),
+        values: { slot: compiled.slot, value: scalarOperand(processor.modifier.parameter) },
       };
     });
     return { enabledSide, ...(condition === undefined ? {} : { condition }), processors };
@@ -1091,9 +1054,7 @@ function compileLinearSequence(
       .every(
         node =>
           node.body.kind !== 'leaf' ||
-          ['presentation', 'presentationCalculation', 'spatial', 'selfDefense'].includes(
-            node.body.value.family,
-          ),
+          ['presentation', 'presentationCalculation', 'spatial'].includes(node.body.value.family),
       )
   ) {
     return { $sequence: null };
@@ -1154,7 +1115,7 @@ function leafActionReadsContextKey(leaf: KnownNativeActionLeafSource, key: strin
   if (leaf.family === 'spatial' && leaf.action.kind === 'teleportPositionSelection') {
     return JSON.stringify({ ...leaf.action, outputContextKey: '' }).includes(JSON.stringify(key));
   }
-  return JSON.stringify(leaf.action).includes(JSON.stringify(key));
+  return JSON.stringify('action' in leaf ? leaf.action : leaf).includes(JSON.stringify(key));
 }
 
 function createBuffSequenceProjection(
@@ -1180,6 +1141,38 @@ function createBuffSequenceProjection(
     node: NativeActionNodeSource<KnownNativeActionLeafSource>,
     partyTargetGroups: ReadonlyMap<string, BuffProjectionTargetGroup>,
   ) => {
+    if (node.body.kind === 'leaf' && node.body.value.family === 'healthFloor') {
+      const action = node.body.value.action;
+      requireActionOwnerProjection(context, node.sourcePath);
+      const afterSet = compileActionSequenceProgram(action.actionAfterSet, {
+        ...createBuffSequenceProjection(
+          visualOnlyIds,
+          {
+            ...context,
+            // 原生传入同一InputTarget，但显式清空EventContext；不可沿用受击事件专属投影。
+            restrictEventSourceTargetProjection: false,
+            modifierContext: undefined,
+          },
+          extensions,
+        ),
+        initialState: () => partyTargetGroups,
+        resultIsConsumed: false,
+      });
+      return {
+        steps: [
+          {
+            kind: 'setHealthFloor' as const,
+            parameters: {
+              target: 'actionOwner' as const,
+              mode: action.useRatio ? ('maxHealthRatio' as const) : ('absolute' as const),
+              value: actionValueOperand(action.useRatio ? action.floorRatio : action.floorValue),
+            },
+            afterSet,
+          },
+        ],
+        state: partyTargetGroups,
+      };
+    }
     if (node.body.kind === 'leaf' && node.body.value.family === 'tagQueryListener') {
       const action = node.body.value.action;
       const query =
@@ -1289,10 +1282,10 @@ function createBuffSequenceProjection(
               aura.kind === 'globalPartyAura'
                 ? projectAuraParameters(node, visualOnlyIds, context)
                 : {
-                    targets:
-                      aura.target === 'enemy'
-                        ? { kind: 'fixed' as const, target: 'enemy' as const }
-                        : { kind: 'characterTeam' as const, excludeOwner: false },
+                    ...(aura.maxInfluenceCountPerTarget === undefined
+                      ? {}
+                      : { maxInfluenceCountPerTarget: aura.maxInfluenceCountPerTarget }),
+                    targets: projectAuraTargets(aura),
                     buffs: [],
                   },
             onEnter: compileCallback(aura.actionOnEnter),
@@ -1338,7 +1331,8 @@ function createBuffSequenceProjection(
           event.abilityEvent === 'OnBeforeAddedBuff' ||
           event.abilityEvent === 'OnOutputBuff' ||
           event.abilityEvent === 'OnBeforeTakeDamage' ||
-          event.abilityEvent === 'OnSkillEnd',
+          event.abilityEvent === 'OnSkillEnd' ||
+          event.abilityEvent === 'OnAfterKillEntity',
       )
         ? compileEventListenerNode(
             node,
@@ -1554,6 +1548,30 @@ function createBuffSequenceProjection(
     },
     compileForEach: (node, partyTargetGroups) => {
       if (
+        node.body.target.targetSource === 'InstantSearch' &&
+        node.body.target.finderType === 'CharacterTeamFinder' &&
+        !node.body.action.onlyExecuteWhenSourceIsMainCharacter &&
+        !node.body.action.onlyExecuteWhenSourceIsGuard
+      ) {
+        const targets = projectActionTargetQuery(
+          node.body.target,
+          context,
+          `${node.sourcePath}.target`,
+        );
+        const body = compileActionSequenceProgram(node.body.action, {
+          ...createBuffSequenceProjection(
+            visualOnlyIds,
+            { ...context, actionTargetTarget: 'currentOperator' },
+            extensions,
+          ),
+          initialState: () => partyTargetGroups,
+        });
+        return {
+          steps: [{ kind: 'forEachContextTarget', parameters: { targets }, body }],
+          state: partyTargetGroups,
+        };
+      }
+      if (
         node.body.target.targetSource === 'Context' &&
         [
           'party',
@@ -1564,12 +1582,10 @@ function createBuffSequenceProjection(
           'casterAndControlledOperator',
           'casterAndLowestHealthRatioOperatorExceptCaster',
         ].includes(partyTargetGroups.get(node.body.target.targetGroupKey) ?? '') &&
-        node.body.target.finderType === null &&
-        node.body.target.validatorTypes.length === 0 &&
-        node.body.target.postProcessorTypes.length === 0 &&
         !node.body.action.onlyExecuteWhenSourceIsMainCharacter &&
         !node.body.action.onlyExecuteWhenSourceIsGuard
       ) {
+        // GetTargetsView 的 Context 分支只读取已保存集合，不运行残留的 selector。
         const body = compileActionSequenceProgram(node.body.action, {
           ...createBuffSequenceProjection(
             visualOnlyIds,
@@ -1599,9 +1615,8 @@ function createBuffSequenceProjection(
         !node.body.action.onlyExecuteWhenSourceIsMainCharacter &&
         !node.body.action.onlyExecuteWhenSourceIsGuard
       ) {
-        // 投射物 hit 回调的直接 Target 已由回调入口绑定为唯一木桩；原生 ForEach
-        // 对这个单体集合精确执行一次。仍须保留 ExecuteInstant 的结果隔离；内部
-        // 条件失败只结束本次迭代，不能截断 ForEach 后面的兄弟动作。
+        // Target 读取本次调用的输入句柄；可能为空，也可能不是首敌。
+        // 保留 ExecuteInstant 的结果隔离；内部失败不截断外层兄弟动作。
         const body = compileActionSequenceProgram(node.body.action, {
           ...createBuffSequenceProjection(visualOnlyIds, context, extensions),
           initialState: () => partyTargetGroups,
@@ -1610,7 +1625,7 @@ function createBuffSequenceProjection(
           steps: [
             {
               kind: 'forEachContextTarget',
-              parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+              parameters: { targets: { kind: 'inputTarget' } },
               body,
             },
           ],
@@ -1619,39 +1634,10 @@ function createBuffSequenceProjection(
       }
       if (
         node.body.target.targetSource === 'Context' &&
-        partyTargetGroups.get(node.body.target.targetGroupKey) !== 'dynamicEnemy' &&
         (context.staticEnemyTargetGroupKeys?.has(node.body.target.targetGroupKey) === true ||
-          partyTargetGroups.get(node.body.target.targetGroupKey) === 'enemy') &&
-        node.body.target.finderType === null &&
-        node.body.target.validatorTypes.length === 0 &&
-        node.body.target.postProcessorTypes.length === 0 &&
-        !node.body.action.onlyExecuteWhenSourceIsMainCharacter &&
-        !node.body.action.onlyExecuteWhenSourceIsGuard
-      ) {
-        // 固定木桩模型中该静态集合恒为且仅为一个敌人，ForEach 因而精确执行一次；
-        // 不能直接展开 body，否则会把原生忽略的子序列 false 泄漏给外层 Sequence。
-        const loopContext: CombatActionProjectionContextSource = {
-          ...context,
-          actionTargetTarget: 'enemy',
-        };
-        const body = compileActionSequenceProgram(node.body.action, {
-          ...createBuffSequenceProjection(visualOnlyIds, loopContext, extensions),
-          initialState: () => partyTargetGroups,
-        });
-        return {
-          steps: [
-            {
-              kind: 'forEachContextTarget',
-              parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-              body,
-            },
-          ],
-          state: partyTargetGroups,
-        };
-      }
-      if (
-        node.body.target.targetSource === 'Context' &&
-        (context.singleEnemyTargetGroupKeys?.has(node.body.target.targetGroupKey) === true ||
+          partyTargetGroups.get(node.body.target.targetGroupKey) === 'enemy' ||
+          context.enemyTargetGroupKeys?.has(node.body.target.targetGroupKey) === true ||
+          context.singleEnemyTargetGroupKeys?.has(node.body.target.targetGroupKey) === true ||
           partyTargetGroups.get(node.body.target.targetGroupKey) === 'dynamicEnemy') &&
         node.body.target.finderType === null &&
         node.body.target.validatorTypes.length === 0 &&
@@ -1744,6 +1730,31 @@ function createBuffSequenceProjection(
           state: partyTargetGroups,
         };
       }
+      if (
+        node.body.target.targetSource === 'Context' &&
+        !node.body.action.onlyExecuteWhenSourceIsMainCharacter &&
+        !node.body.action.onlyExecuteWhenSourceIsGuard
+      ) {
+        // 跨分支或时间段写入的集合不必静态证明成员种类；每次迭代绑定真实输入目标。
+        const body = compileActionSequenceProgram(node.body.action, {
+          ...createBuffSequenceProjection(
+            visualOnlyIds,
+            { ...context, actionTargetTarget: 'actionInputTarget' },
+            extensions,
+          ),
+          initialState: () => partyTargetGroups,
+        });
+        return {
+          steps: [
+            {
+              kind: 'forEachContextTarget',
+              parameters: { targets: { kind: 'context', key: node.body.target.targetGroupKey } },
+              body,
+            },
+          ],
+          state: partyTargetGroups,
+        };
+      }
       const excludeOwner = isPartyExceptOwnerInstantSearch(node.body.target);
       if (!excludeOwner && !isPartyInstantSearch(node.body.target)) return null;
       const body = compileActionSequenceProgram(node.body.action, {
@@ -1794,11 +1805,65 @@ function createBuffSequenceProjection(
       };
     },
     compileOnce: (node, partyTargetGroups) => {
+      const inputKey = node.body.delayedTriggerInputKey;
       const body = compileActionSequenceProgram(node.body.action, {
+        ...createBuffSequenceProjection(
+          visualOnlyIds,
+          inputKey === undefined
+            ? context
+            : { ...context, actionTargetTarget: 'actionInputTarget' },
+          extensions,
+        ),
+        initialState: () => partyTargetGroups,
+        resultIsConsumed: inputKey !== undefined,
+      });
+      return {
+        steps: [
+          {
+            kind: 'once',
+            parameters: inputKey === undefined ? {} : { delayedTriggerInputKey: inputKey },
+            body,
+          },
+        ],
+        state: partyTargetGroups,
+      };
+    },
+    compileTickIntervalV2: (node, partyTargetGroups) => {
+      const action = node.body;
+      if (
+        action.tickInterval.blackboardKey !== null ||
+        action.fixedTickCount.blackboardKey !== null
+      )
+        return null;
+      let intervalSeconds = Math.fround(action.tickInterval.value);
+      let totalTickCount = action.totalTickCount;
+      if (action.tickMode === 'FixedCount' && action.fixedTickCount.value > 0) {
+        totalTickCount = action.fixedTickCount.value;
+        if (action.totalDurationSeconds > 0)
+          intervalSeconds = Math.fround(action.totalDurationSeconds / totalTickCount);
+      }
+      const body = compileActionSequenceProgram(action.actionOnTick, {
         ...createBuffSequenceProjection(visualOnlyIds, context, extensions),
         initialState: () => partyTargetGroups,
+        resultIsConsumed: false,
       });
-      return { steps: [{ kind: 'once', parameters: {}, body }], state: partyTargetGroups };
+      return {
+        steps: [
+          {
+            kind: 'repeatEachTick',
+            parameters: {
+              nativeTickIntervalV2: {
+                executeEachFrame: action.tickMode === 'EachFrame',
+                intervalSeconds,
+                totalTickCount,
+                totalDurationSeconds: action.totalDurationSeconds,
+              },
+            },
+            body,
+          },
+        ],
+        state: partyTargetGroups,
+      };
     },
     compileTickInterval: (node, partyTargetGroups) => {
       if (context.timelineRange === undefined || node.body.useIntervalBlackboardKey) return null;
@@ -1887,9 +1952,8 @@ function createBuffSequenceProjection(
         parameters: {
           nativeChanneling: {
             catchUpMissedTicks: node.body.catchUpMissedTicks,
-            target: groupedEnemy
-              ? { kind: 'fixed' as const, target: 'enemy' as const }
-              : target.targetSource === 'Context'
+            target:
+              target.targetSource === 'Context'
                 ? { kind: 'context' as const, key: target.targetGroupKey }
                 : {
                     kind:
@@ -1933,9 +1997,10 @@ function compileEventListenerNode(
   }
   if (
     context.actionOwnerTarget !== 'caster' &&
-    context.actionOwnerTarget !== 'currentAbilityEntity'
+    context.actionOwnerTarget !== 'currentAbilityEntity' &&
+    context.actionOwnerTarget !== 'buffOwner'
   ) {
-    // 目前只接主动技能或能力实体子技能时间轴上的临时监听器；Buff 宿主不能借用。
+    // 监听绑定当前动作宿主；Buff 使用其真实宿主，由图节点生命周期注销。
     throw new Error(`${node.sourcePath}: unsupported EventListenerAction owner`);
   }
   const programs = compileAbilityEventPrograms(node.body.value.action.events, {
@@ -1945,8 +2010,11 @@ function compileEventListenerNode(
       if (
         event === 'addedBuff' ||
         event === 'beforeAddedBuff' ||
+        event === 'beforeAddedBuffBeforeImmune' ||
+        event === 'beforeOutputBuffBeforeImmune' ||
         event === 'outputBuff' ||
-        event === 'beforeTakeDamage'
+        event === 'beforeTakeDamage' ||
+        event === 'afterKillEntity'
       )
         return event;
       // 只允许编译后为空的结束回调省略，不能按事件名提前跳过动作检查。
@@ -1960,13 +2028,17 @@ function compileEventListenerNode(
           {
             ...context,
             // Added/BeforeTakeDamage 在接收者发布且 Target 是来源；Output 在来源发布且
-            // Target 是接收者。外部 operatorHit 只陈述受击事实，不制造敌方伤害或扣血。
+            // Target 是接收者。来源可能是敌人，也可能是合约或角色自身，不能静态绑定为敌人。
             actionTargetTarget:
               event === 'beforeTakeDamage'
-                ? 'enemy'
-                : event === 'outputBuff'
+                ? 'eventSource'
+                : event === 'outputBuff' ||
+                    event === 'beforeOutputBuffBeforeImmune' ||
+                    event === 'afterKillEntity'
                   ? 'eventTarget'
-                  : event === 'addedBuff' || event === 'beforeAddedBuff'
+                  : event === 'addedBuff' ||
+                      event === 'beforeAddedBuff' ||
+                      event === 'beforeAddedBuffBeforeImmune'
                     ? 'eventSource'
                     : context.actionTargetTarget,
           },
@@ -1988,11 +2060,8 @@ function compileEventListenerNode(
       : [
           {
             key: program.sequence.key,
-            // 原生事件直达公共订阅；受击事实仍是木桩模型的显式输入桥接。
-            event:
-              program.event === 'beforeTakeDamage'
-                ? { kind: 'operatorHit' as const }
-                : { kind: 'abilityEvent' as const, event: program.event },
+            // 临时监听注册到宿主的实际能力事件，保留受伤前后的阶段差异。
+            event: { kind: 'abilityEvent' as const, event: program.event },
             phase: 'dataAction' as const,
             priority: program.priority,
             sequence: program.sequence.sequence,
@@ -2046,23 +2115,24 @@ function isCombatInvisibleTogglable(
     actionNodes.every(
       child =>
         child.body.kind === 'leaf' &&
-        ((child.body.value.family === 'inputControl' && !isBuffAttackMapping(child)) ||
+        ((child.body.value.family === 'inputControl' && !isRetainedInputControlAction(child)) ||
           child.body.value.family === 'presentation' ||
           (onlyReadsMoveInput &&
-            ['spatial', 'presentationCalculation', 'selfDefense'].includes(
-              child.body.value.family,
-            ))),
+            ['spatial', 'presentationCalculation'].includes(child.body.value.family))),
     )
   );
 }
 
-function isBuffAttackMapping(node: NativeActionNodeSource<KnownNativeActionLeafSource>): boolean {
+function isRetainedInputControlAction(
+  node: NativeActionNodeSource<KnownNativeActionLeafSource>,
+): boolean {
   return (
     node.metadata.enabled &&
     node.body.kind === 'leaf' &&
     node.body.value.family === 'inputControl' &&
-    node.body.value.action.kind === 'comboCache' &&
-    node.body.value.action.mappings.some(mapping => mapping.commandType === 'Attack')
+    (node.body.value.action.kind === 'addEntityControlTags' ||
+      (node.body.value.action.kind === 'comboCache' &&
+        node.body.value.action.mappings.some(mapping => mapping.commandType === 'Attack')))
   );
 }
 
@@ -2130,24 +2200,6 @@ export function isPresentationOnlyBuffStackEffect(source: BuffRuntimeSource): bo
     source.graph.buffEvents.length === 0 &&
     source.graph.abilityEvents.length === 0 &&
     source.graph.igniteEvents.length === 0
-  );
-}
-
-export function isAfterEnemyDefeatedOnlyBuffRuntime(source: BuffRuntimeSource): boolean {
-  return (
-    source.unsupportedPayloads.length === 0 &&
-    source.attributeModifiers.modifiers.length === 0 &&
-    source.damageModifiers.length === 0 &&
-    source.healModifiers.length === 0 &&
-    source.poiseModifiers.length === 0 &&
-    source.shields.length === 0 &&
-    source.applyTagIds.length === 0 &&
-    source.extendTagIds.length === 0 &&
-    (!buffShowsTimelineActions(source) || source.graph.timelineActions.length === 0) &&
-    source.graph.buffEvents.length === 0 &&
-    source.graph.igniteEvents.length === 0 &&
-    source.graph.abilityEvents.length > 0 &&
-    source.graph.abilityEvents.every(event => event.event === 'OnAfterKillEntity')
   );
 }
 

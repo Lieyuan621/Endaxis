@@ -1,6 +1,11 @@
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
-import { runtimeTargetEntityId, type RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+
+import {
+  firstRuntimeEntityTarget,
+  runtimeTargetEntityId,
+  type RuntimeTargetRef,
+} from '../../game-data/logicalAbilityEntity';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { CombatObjectRef } from '../receipt/combatReceipt';
 
@@ -48,9 +53,10 @@ export interface ElementalInflictionEventPayload {
 /** 元素附着执行节点所需的状态读写、事件、回执和后继执行端口。 */
 export interface ElementalInflictionOperationDependencies {
   readonly queryTargets?: (
-    query: ActionTargetQuery,
+    query: CompiledTargetQuery,
     context: CombatOperationContext,
   ) => readonly RuntimeTargetRef[];
+  readonly resolveDefaultTarget?: () => RuntimeTargetRef | undefined;
   readonly resolveInflictionTarget?: (target: RuntimeTargetRef) => RuntimeTargetRef;
   readonly sourceOperatorId: string;
   /** 存档中的技能释放身份；附着回执凭它与具体施放对应。单元测试程序可能缺失。 */
@@ -59,14 +65,19 @@ export interface ElementalInflictionOperationDependencies {
   readonly skillId: string;
   readonly clock: CombatClock;
   readonly receipt: CombatReceiptSink;
-  readonly getExistingAttachment: (sourceId?: string) => ExistingElementalAttachment | null;
+  readonly getExistingAttachment: (
+    sourceId?: string,
+    targetId?: string,
+  ) => ExistingElementalAttachment | null;
   readonly applyOperation: (
     operation: ElementalInflictionOperation,
     skillCastInfo: CombatSkillCastInfo | undefined,
     producedBy?: CombatObjectRef,
     sourceId?: string,
+    targetId?: string,
   ) => ElementalInflictionBuffIdentity | void;
   readonly triggerSpellBurst?: (payload: {
+    readonly targetId: string;
     readonly burstType: 'Fire' | 'Pulse' | 'Cryst' | 'Natural';
     readonly sourceId: string;
     readonly skillCastInfo?: CombatSkillCastInfo;
@@ -95,6 +106,7 @@ export class ElementalInflictionOperationExecutor implements CombatOperationExec
       if (this.dependencies.triggerSpellBurst === undefined)
         throw new Error(`spell burst '${step.parameters.burstType}' has no runtime port`);
       this.dependencies.triggerSpellBurst({
+        targetId: context?.buffOwnerId ?? this.dependencies.targetId,
         burstType: step.parameters.burstType,
         sourceId: context?.buffSourceId ?? this.dependencies.sourceOperatorId,
         ...(context?.skillCastInfo === undefined ? {} : { skillCastInfo: context.skillCastInfo }),
@@ -110,7 +122,9 @@ export class ElementalInflictionOperationExecutor implements CombatOperationExec
     if (step.parameters.source !== undefined) {
       if (!context || !this.dependencies.queryTargets)
         throw new Error('elemental infliction source requires target bindings');
-      const source = this.dependencies.queryTargets(step.parameters.source, context)[0];
+      const source = firstRuntimeEntityTarget(
+        this.dependencies.queryTargets(step.parameters.source, context),
+      );
       // 原生来源为空返回成功，并且不继续读取目标。
       if (source === undefined) return true;
       const id = runtimeTargetEntityId(source);
@@ -122,35 +136,54 @@ export class ElementalInflictionOperationExecutor implements CombatOperationExec
         throw new Error('elemental infliction target requires target bindings');
       const targets = this.dependencies.queryTargets(step.parameters.target, context);
       for (const target of targets) {
+        // 位置点可出现在命中目标组中，但没有可承载元素附着的实体。
+        if (target.kind === 'spatialPoint') continue;
         const routed = this.dependencies.resolveInflictionTarget?.(target) ?? target;
-        if (runtimeTargetEntityId(routed) !== this.dependencies.targetId)
+        if (routed.kind !== 'enemy')
           throw new Error('elemental infliction target is not the bound enemy');
         // 不去重：原生逐项处理目标；两个部位转到同一主体仍是两次附着。
-        this.#apply(step, context, sourceId);
+        this.#apply(step, context, sourceId, runtimeTargetEntityId(routed)!);
       }
       return true;
     }
-    // 当前附着适配器只绑定一个敌方容器。保留 Owner 身份并在产生任何事件前校验，
+    if (step.parameters.target !== 'buffOwner' && this.dependencies.resolveDefaultTarget) {
+      const target = this.dependencies.resolveDefaultTarget();
+      if (target === undefined) return true;
+      const routed = this.dependencies.resolveInflictionTarget?.(target) ?? target;
+      if (routed.kind !== 'enemy')
+        throw new Error('elemental infliction default target is not an enemy');
+      return this.#apply(step, context, sourceId, runtimeTargetEntityId(routed)!);
+    }
+    // 保留 Owner 身份并在产生任何事件前校验当前支持的敌人宿主，
     // 避免把挂在干员或能力实体上的动作悄悄转成对木桩施加附着。
     if (step.parameters.target === 'buffOwner') {
       if (context?.buffOwnerId === undefined)
         throw new Error("elemental infliction target 'buffOwner' requires a Buff lifecycle owner");
-      if (context.buffOwnerId !== this.dependencies.targetId)
+      if (
+        context.buffOwnerId !== this.dependencies.targetId &&
+        !context.buffOwnerId.startsWith('enemy:')
+      )
         throw new Error(
           `elemental infliction target '${context.buffOwnerId}' is not the bound enemy`,
         );
     }
-    return this.#apply(step, context, sourceId);
+    return this.#apply(
+      step,
+      context,
+      sourceId,
+      step.parameters.target === 'buffOwner' ? context!.buffOwnerId! : this.dependencies.targetId,
+    );
   }
 
   #apply(
     step: InflictionStep,
     context: CombatOperationContext | undefined,
     sourceId: string,
+    targetId: string,
   ): boolean {
     const payload: ElementalInflictionEventPayload = {
       sourceId,
-      targetId: this.dependencies.targetId,
+      targetId,
       skillId: this.dependencies.skillId,
       element: step.parameters.element,
       isExtra: step.parameters.isExtra,
@@ -158,7 +191,7 @@ export class ElementalInflictionOperationExecutor implements CombatOperationExec
     };
     this.dependencies.emitSourceEvent('beforeOutputInfliction', payload);
     this.dependencies.emitTargetEvent('beforeTakeInfliction', payload);
-    const existing = this.dependencies.getExistingAttachment(sourceId);
+    const existing = this.dependencies.getExistingAttachment(sourceId, targetId);
     const operations = resolveElementalInfliction(
       step.parameters.element,
       existing,
@@ -176,6 +209,7 @@ export class ElementalInflictionOperationExecutor implements CombatOperationExec
         context?.skillCastInfo,
         producedBy,
         sourceId,
+        targetId,
       );
       if (operation.kind === 'consumeAttachment') consumedInstance = instance;
       if (operation.kind === 'createCompoundStatus') outputInstance = instance;
@@ -187,7 +221,7 @@ export class ElementalInflictionOperationExecutor implements CombatOperationExec
         event: 'ElementalAttachmentConverted',
         ...(producedBy === undefined ? {} : { producedBy }),
         sourceId,
-        targetId: this.dependencies.targetId,
+        targetId,
         data: {
           consumedBuffId: consumedInstance.buffId,
           consumedInstanceId: consumedInstance.instanceId,
@@ -201,7 +235,7 @@ export class ElementalInflictionOperationExecutor implements CombatOperationExec
     }
     this.dependencies.emitSourceEvent('afterOutputInfliction', payload);
     this.dependencies.emitTargetEvent('afterTakeInfliction', payload);
-    const current = this.dependencies.getExistingAttachment(sourceId);
+    const current = this.dependencies.getExistingAttachment(sourceId, targetId);
     const compound = operations.find(operation => operation.kind === 'createCompoundStatus');
     const outcomeKind: ElementalInflictionOutcomeKind = operations.some(
       operation => operation.kind === 'triggerBurst',
@@ -215,7 +249,7 @@ export class ElementalInflictionOperationExecutor implements CombatOperationExec
       time: this.dependencies.clock.time,
       event: 'ElementalInflictionApplied',
       sourceId,
-      targetId: this.dependencies.targetId,
+      targetId,
       data: {
         skillId: this.dependencies.skillId,
         ...(this.dependencies.castId === undefined ? {} : { castId: this.dependencies.castId }),

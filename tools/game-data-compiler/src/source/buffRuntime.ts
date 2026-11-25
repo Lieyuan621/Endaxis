@@ -640,6 +640,11 @@ function parsePresentation(
   sourcePath: string,
 ): BuffPresentationSource {
   const icon = requireRecord(root.iconConfig, `${sourcePath}.iconConfig`);
+  if ('showStackCountInMainCharHpBar' in icon)
+    requireBoolean(
+      icon.showStackCountInMainCharHpBar,
+      `${sourcePath}.iconConfig.showStackCountInMainCharHpBar`,
+    );
   requireExactFields(
     icon,
     new Set([
@@ -651,6 +656,7 @@ function parsePresentation(
       'onlyShowForMainCharacter',
       'blinkInMainCharHpBar',
       'showProgressInHpBar',
+      ...('showStackCountInMainCharHpBar' in icon ? ['showStackCountInMainCharHpBar'] : []),
       ...('showProgressInEnemyHeadBar' in icon ? ['showProgressInEnemyHeadBar'] : []),
       'showProgressInNormalSkillButton',
       'useWeakProgressInNormalSkillButton',

@@ -131,7 +131,7 @@ const definition = {
               action: {
                 kind: 'readBuffStackCount',
                 parameters: {
-                  target: 'caster',
+                  target: { kind: 'owner' },
                   outputKey: 'count',
                   query: { kind: 'id', buffIds: ['buff_wpn_sword_0015_exist'] },
                 },

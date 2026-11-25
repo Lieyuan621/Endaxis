@@ -190,7 +190,13 @@ function normalizeLeaf(
   if (!Object.hasOwn(LEAF_FIELDS, type))
     throw new Error(`${path}: unsupported Unity action ${type}`);
   const data = requireRecord(reference.data, `${path}.data`);
-  requireExactFields(data, new Set([...META, ...LEAF_FIELDS[type]!]), `${path}.data`);
+  const fields = new Set([...META, ...LEAF_FIELDS[type]!]);
+  if (
+    type === 'Beyond.Gameplay.Core.Conditions.CheckObjectTypeMatch/Data' &&
+    'treatPartAsOriginalType' in data
+  )
+    fields.add('treatPartAsOriginalType');
+  requireExactFields(data, fields, `${path}.data`);
   if (data.priorityLevel !== 0)
     throw new Error(`${path}: only audited Default priority is supported`);
   const result: Record<string, unknown> = {
@@ -496,12 +502,14 @@ function normalizeSelectorReference(
   if (
     reference.rid !== rid ||
     reference.assembly !== 'Gameplay.Beyond' ||
-    reference.decodeStatus !== 'raw' ||
+    (reference.decodeStatus !== 'raw' && reference.decodeStatus !== 'complete') ||
     reference.length !== 0 ||
     reference.rawBase64 !== ''
   ) {
     throw new Error(`${path} RID ${rid}: expected audited empty selector reference`);
   }
+  if (reference.decodeStatus === 'complete')
+    requireExactFields(requireRecord(reference.data, `${path}.data`), new Set(), `${path}.data`);
   const type = `${requireString(reference.namespace, `${path}.namespace`)}.${requireString(reference.class, `${path}.class`)}`;
   const normalizedType = EMPTY_SELECTOR_COMPONENT_TYPES[role].get(type);
   if (normalizedType === undefined)

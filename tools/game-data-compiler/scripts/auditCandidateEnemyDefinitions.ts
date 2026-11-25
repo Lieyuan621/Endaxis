@@ -54,7 +54,7 @@ function parseArguments(values: readonly string[]): Arguments {
   );
   const selectionCategories = resolve(
     parsed.get('--selection-categories') ??
-      'tools/game-data-compiler/config/enemies/selection-categories.json',
+      'tools/game-data-compiler/config/enemies/hidden-enemies.json',
   );
   if (!isAbsolute(tablesDirectory) || !isAbsolute(rankEvidence))
     throw new Error('--tables and --rank-evidence are required');

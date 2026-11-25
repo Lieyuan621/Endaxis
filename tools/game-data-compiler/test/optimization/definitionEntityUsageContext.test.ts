@@ -1,3 +1,4 @@
+import type { SkillDefinition as PublishedSkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { TargetContextOperationExecutor } from '../../../../src/core/combat/abilities/targetContextOperationExecutor.ts';
 import { extractDefinitionDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 import { skillFixture } from '../../../../src/test/skillFixture';
@@ -135,7 +136,13 @@ const spawn = (
 });
 const callback = (body: GraphSequenceSource): CombatStepForKind<'launchProjectile'> => ({
   kind: 'launchProjectile',
-  parameters: { inheritActionBlackboard: true, finish: 1, recycleDelaySeconds: 1 },
+  parameters: {
+    projectileId: 'fixture_projectile',
+    schedule: { endFrame: 30, callbacks: [] },
+    inheritActionBlackboard: true,
+
+    recycleDelaySeconds: 1,
+  },
   callbacks: [
     {
       event: 'finish',
@@ -385,7 +392,7 @@ describe('实体用途分阶段收集', () => {
     ]);
   });
 
-  it('收集摘要保留未知访问诊断；实际实体接收方缺失时仍保守保留', () => {
+  it('收集摘要保留未知访问诊断，但不扩散到已解析的实体接收方', () => {
     // 模拟外部反序列化后尚未登记的新动作，走真实用途分析的保守分支。
     const unknown: GraphSequenceSource = program([
       { kind: 'unregisteredAction', parameters: {} } as unknown as ActionGraphStep,
@@ -412,8 +419,8 @@ describe('实体用途分阶段收集', () => {
       });
       expect(
         pruneUnusedGraphSkillValues(value, new Set(), createGraphEntityUsageContext({}, result))
-          .report.retainedReason,
-      ).toBe('unresolved-blackboard-access');
+          .skill.blackboard,
+      ).toEqual({ known: 7 });
     }
     expect(earlier.unknownAccess).toBe(false);
   });
@@ -541,10 +548,11 @@ describe('跨技能黑板用途', () => {
             nonReturnedSpCost: 0,
           },
           launchProjectile: request => {
-            finish = () => request.callbacks.forEach(callback => callback.runtime.start());
+            finish = () => request.callbacks.forEach(callback => callback.runtime.invoke());
             return {
               instanceId: 1,
               target: { kind: 'abilityEntity', instanceId: 1 },
+              startSchedule: () => {},
               onReset: () => ({ registrationId: 1, dispose() {} }),
             };
           },
@@ -561,7 +569,15 @@ describe('跨技能黑板用途', () => {
       );
       runtime
         .createSequence(
-          compileGraphSequence(source.scheduledSequences[0]!.sequence, source.actionGraph),
+          compileGraphSequence(
+            source.scheduledSequences[0]!.sequence,
+            source.actionGraph,
+            1,
+            'test-support',
+            {
+              abilityEntities: {},
+            },
+          ),
         )
         .executeInstant({});
       blackboard.assign({ value: 100 });
@@ -695,14 +711,14 @@ describe('跨技能黑板用途', () => {
   });
 
   it('队友环排序确实读取生成实体上的普通键，而不是查询者自己的同名板', () => {
-    const query: CombatStepForKind<'findOwnerSpawnedAbilityEntities'> = {
+    const query = {
       kind: 'findOwnerSpawnedAbilityEntities',
       parameters: {
         owner: { kind: 'context', key: 'owner' },
         saveToContextKey: 'found',
         circularOrder: { indexBlackboardKey: 'slot', desiredCount: 3, reverseFlag: 1 },
       },
-    };
+    } satisfies CombatStepForKind<'findOwnerSpawnedAbilityEntities'>;
     const collected = collectGraphSharedEntityValueUsage(
       input({ mechanicSequences: [program([query])] }),
     );
@@ -715,7 +731,7 @@ describe('跨技能黑板用途', () => {
       new Set(),
       createGraphEntityUsageContext({}, collected),
     ).skill;
-    expect(pruned.blackboard).toEqual({ slot: 2, unused: 99 });
+    expect(pruned.blackboard).toEqual({ slot: 2 });
     const run = (source: SkillDefinition) => {
       const entities = new LogicalAbilityEntityRuntime({});
       const executor = new AbilityEntityOperationExecutor(
@@ -740,7 +756,15 @@ describe('跨技能黑板用途', () => {
       });
       runtime
         .createSequence(
-          compileGraphSequence(source.scheduledSequences[0]!.sequence, source.actionGraph),
+          compileGraphSequence(
+            source.scheduledSequences[0]!.sequence,
+            source.actionGraph,
+            1,
+            'test-support',
+            {
+              abilityEntities: {},
+            },
+          ),
         )
         .executeInstant({});
       for (const slot of [0, 1])
@@ -838,7 +862,7 @@ describe('跨技能黑板用途', () => {
     expect(
       pruneUnusedGraphSkillValues(value, new Set(), createGraphEntityUsageContext({}, collected))
         .report.removedInitialKeys,
-    ).toEqual([]);
+    ).toEqual(['mechanic', 'gearValue', 'callbackRead', 'unused']);
 
     const entityBoard = new ActionBlackboard({ remote: 7 });
     const buffBoard = new ActionBlackboard({ own: 1 }, entityBoard);
@@ -868,7 +892,6 @@ describe('跨技能黑板用途', () => {
                     damageType: 'physical',
                     attackScale: { blackboardKey: 'systemValue' },
                     tags: [],
-                    features: [],
                     canCritical: false,
                   },
                 ],
@@ -1015,7 +1038,7 @@ describe('跨技能黑板用途', () => {
     const result = finalizeOperatorDefinition(operator, 'apply', usage);
     const entity = result.operator.abilityEntityDefinitions!.entity!;
     for (const value of [entity.childSkill!, entity.childSkills!.child!]) {
-      expect(value.blackboard).toEqual({ forwarded: 1, EntityBB_shared: 0 });
+      expect(value.blackboard).toEqual({ EntityBB_shared: 0 });
       expect(
         Object.values(value.actionGraph.main.nodes).filter(
           node => node.action.kind === 'modifyActionValue',
@@ -1023,18 +1046,19 @@ describe('跨技能黑板用途', () => {
       ).toHaveLength(2);
     }
     expect(result.report.resourceValues.filter(report => report.resourceId === 'child')).toEqual([
-      expect.objectContaining({ removedInitialKeys: ['unused'] }),
-      expect.objectContaining({ removedInitialKeys: ['unused'] }),
+      expect.objectContaining({ removedInitialKeys: ['unused', 'forwarded'] }),
+      expect.objectContaining({ removedInitialKeys: ['unused', 'forwarded'] }),
     ]);
   });
   it('嵌在动作中的投射物回调也按独立技能裁剪，不依赖干员目录入口', () => {
     const value = skill([callback(program([assign('unused', 2), spend('value')]))], {});
-    const result = finalizeDefinitionResources(value, 'apply');
+    const result = finalizeDefinitionResources<PublishedSkillDefinition>(value, 'apply');
     const launch = Object.values(result.value.actionGraph.main.nodes).find(
       node => node.action.kind === 'launchProjectile',
     )!.action;
     if (launch.kind !== 'launchProjectile') throw new Error('missing projectile');
     const child = launch.callbacks[0]!.skill;
+    if ('$skill' in child) throw new Error('expected an inline callback');
     expect(Object.values(child.actionGraph.main.nodes).map(node => node.action.kind)).toEqual([
       'changeResource',
     ]);

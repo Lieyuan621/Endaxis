@@ -102,33 +102,6 @@ const definition = {
           value: [0.12, 0.144, 0.168, 0.192, 0.216, 0.24, 0.264, 0.288, 0.336],
         },
       ],
-      skillId: 'sk_wpn_pistol_0009',
-      eventHandlers: [
-        {
-          key: 'skill3:event:0:sequence:0',
-          abilityEvent: 'buffConsumed',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_5' },
-        },
-        {
-          key: 'skill3:event:1:sequence:0',
-          abilityEvent: 'buffConsumed',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_10' },
-        },
-        {
-          key: 'skill3:event:2:sequence:0',
-          abilityEvent: 'buffConsumed',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_15' },
-        },
-        {
-          key: 'skill3:event:3:sequence:0',
-          abilityEvent: 'buffConsumed',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_20' },
-        },
-      ],
       actionGraph: {
         main: {
           nodes: {
@@ -136,7 +109,7 @@ const definition = {
               action: {
                 kind: 'setGlobalCooldown',
                 parameters: {
-                  target: 'caster',
+                  target: { kind: 'source' },
                   markerId: 'buff_wpn_pistol_0009_cd',
                   durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                 },
@@ -426,6 +399,33 @@ const definition = {
         },
         macros: {},
       },
+      skillId: 'sk_wpn_pistol_0009',
+      eventHandlers: [
+        {
+          key: 'skill3:event:0:sequence:0',
+          abilityEvent: 'buffConsumed',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_5' },
+        },
+        {
+          key: 'skill3:event:1:sequence:0',
+          abilityEvent: 'buffConsumed',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_10' },
+        },
+        {
+          key: 'skill3:event:2:sequence:0',
+          abilityEvent: 'buffConsumed',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_15' },
+        },
+        {
+          key: 'skill3:event:3:sequence:0',
+          abilityEvent: 'buffConsumed',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_20' },
+        },
+      ],
       blackboard: {
         cd: [25, 25, 25, 25, 25, 25, 25, 25, 25],
         dmg_taken_up: [0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.28],

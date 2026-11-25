@@ -3,6 +3,7 @@
  * 每次消费输入都重新求值，节点和引用不进入可恢复的执行状态。
  */
 import type {
+  ActionTargetQuery,
   ActionValueExpression,
   CombatConditionExpression,
 } from '../../../packages/game-data-contract/src/conditions';
@@ -155,3 +156,5 @@ export function conditionInvokesAction(input: CompiledCondition): boolean {
   actionResultDependencies.set(input, result);
   return result;
 }
+
+export type CompiledTargetQuery = CompiledInputs<ActionTargetQuery>;

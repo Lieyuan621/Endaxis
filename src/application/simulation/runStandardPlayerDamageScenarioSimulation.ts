@@ -1,3 +1,6 @@
+import { firstScenarioEnemy, levelEnemies } from '../../core/project/level';
+import { compileScenarioEnemyInstances } from '../../core/compiler/compileScenarioEnemyInstances';
+import type { RangeSampleSource } from '../../core/combat/random/simulationRandom';
 import type { ActionExecutionTrace } from '../../core/combat/actions/actionExecutionTrace';
 import type { CombatReceiptView } from '../../core/combat/receipt/combatReceiptHistory';
 import type { ResolvedCombatStepForKind } from '../../core/compiler/combatProgram';
@@ -61,6 +64,7 @@ export interface RunStandardPlayerDamageScenarioInput {
   readonly endFrame: number;
   readonly criticalSamples: CriticalSampleSource;
   readonly probabilitySamples?: ProbabilitySampleSource;
+  readonly rangeSamples?: RangeSampleSource;
   readonly randomMode?: SimulationRandomMode;
   readonly randomState?: StandardPlayerDamageEnvironmentOptions['randomState'];
   /** 存在完整随机状态时用于恢复分支重建样本源；自定义无状态样本端口省略。 */
@@ -80,7 +84,7 @@ export interface RunStandardPlayerDamageScenarioInput {
   readonly continuationPlanMode?: 'continuation' | 'compact';
 }
 
-/** 本次模拟唯一敌人生命账本的初始与最终快照；投影和结果收集读取同一实例。 */
+/** 本次模拟敌人生命账本的初始与最终快照；投影和结果收集读取同一实例。 */
 export interface EnemyVitalsSimulationResult {
   readonly initialHealth: number;
   readonly maxHealth: number;
@@ -92,6 +96,7 @@ export interface EnemyVitalsSimulationResult {
 export interface StandardPlayerDamageScenarioResult extends ScenarioSimulationResult {
   readonly finalEnemyHealth: number;
   readonly enemyVitals: EnemyVitalsSimulationResult;
+  readonly enemyVitalsById: Readonly<Record<string, EnemyVitalsSimulationResult>>;
 }
 
 export interface PreparedStandardPlayerDamageScenarioRuntime {
@@ -129,15 +134,32 @@ export function prepareStandardPlayerDamageScenarioRuntime(
   input: RunStandardPlayerDamageScenarioInput,
 ): PreparedStandardPlayerDamageScenarioRuntime {
   assertScenarioSimulationEndFrame(input.scenario, input.endFrame);
-  const enemy = compileScenarioEnemy(input.scenario.enemy);
+  const enemy = compileScenarioEnemy(firstScenarioEnemy(input.scenario).enemy, input.options.index);
   const enemyVitals = createEnemyCombatVitals(enemy);
   const controlTimeline = resolveControlTimeline(
     input.scenario.tracks,
     input.options.liveInputInitialFrame === undefined ? input.scenario.battle.controlSwitches : [],
     input.options.liveInputInitialFrame ?? -input.scenario.battle.prepFrames,
   );
+  const additionalEnemies = new Map(
+    [
+      ...compileScenarioEnemyInstances(
+        levelEnemies(input.scenario.level).slice(1),
+        input.options.liveInputInitialFrame ?? -input.scenario.battle.prepFrames,
+        input.options.index,
+      ),
+    ].map(([id, program]) => [id, { program, vitals: createEnemyCombatVitals(program) }]),
+  );
+  const weaknessBreakStagger = new Map<string, number>();
+  for (const [hit, mark] of Object.entries(input.scenario.battle.hitWeaknessBreaks ?? {})) {
+    if (mark) weaknessBreakStagger.set(hit, mark === true ? 0 : mark.stagger);
+  }
   const restoredEnvironmentBase = {
-    reactionCriticalOverrides: input.scenario.battle.reactionCriticalOverrides,
+    primaryEnemyId: firstScenarioEnemy(input.scenario).id,
+    enemyAutomaticDeath: input.scenario.battle.enemyAutomaticDeath ?? false,
+    additionalEnemies,
+    weaknessBreakStagger,
+    hitCriticalOverrides: input.scenario.battle.hitCriticalOverrides,
     resolveNonRandomRuntimeSnapshot: input.resolveNonRandomRuntimeSnapshot,
     tagRegistry: gameplayTagRegistry,
     tagPredefine: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
@@ -163,6 +185,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
     criticalSamples: input.criticalSamples,
     ...(input.randomState === undefined ? {} : { randomState: input.randomState }),
     randomMode: input.randomMode,
+    ...(input.rangeSamples === undefined ? {} : { rangeSamples: input.rangeSamples }),
     ...(input.probabilitySamples === undefined
       ? {}
       : { probabilitySamples: input.probabilitySamples }),
@@ -215,6 +238,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
       ...restoredEnvironmentBase,
       criticalSamples: input.criticalSamples,
       randomMode: input.randomMode,
+      ...(input.rangeSamples === undefined ? {} : { rangeSamples: input.rangeSamples }),
       ...(input.probabilitySamples === undefined
         ? {}
         : { probabilitySamples: input.probabilitySamples }),
@@ -257,6 +281,20 @@ export function collectStandardPlayerDamageStateGraphResult(
   return Object.freeze({
     ...result,
     finalEnemyHealth: vitals.health,
+    enemyVitalsById: Object.freeze(
+      Object.fromEntries(
+        [...(environmentState.enemyInstances ?? [])].map(([id, enemy]) => [
+          id,
+          Object.freeze({
+            initialHealth: enemy.initialVitals.health,
+            maxHealth: enemy.initialVitals.maxHealth,
+            initialPoise: enemy.initialVitals.poise,
+            maxPoise: enemy.initialVitals.maxPoise,
+            finalPoise: enemy.vitals.poise,
+          }),
+        ]),
+      ),
+    ),
     enemyVitals: Object.freeze({
       initialHealth: compiled.enemy.health,
       maxHealth: vitals.maxHealth,

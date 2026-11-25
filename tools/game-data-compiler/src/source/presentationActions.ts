@@ -47,6 +47,128 @@ export interface PlaySoundActionSource {
   readonly timeDilationFadeInDurationMilliseconds: number;
 }
 
+export interface ShowSquadTipsActionSource {
+  readonly kind: 'showSquadTips';
+  readonly textId: string;
+}
+
+export interface RewardComboStateActionSource {
+  readonly kind: 'rewardComboState';
+  readonly target: TargetReferenceSource;
+  readonly enabled: boolean;
+  readonly finishByAction: boolean;
+}
+
+/** 1.6.3：只写连携奖励表现标志；保留目标以供编译器证明返回值可安全省略。 */
+export function parseRewardComboStateActionSource(
+  value: unknown,
+  path: string,
+): RewardComboStateActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(
+    action,
+    new Set([...ACTION_META_FIELDS, 'target', 'isInRewardComboState', 'finishByAction']),
+    path,
+  );
+  return {
+    kind: 'rewardComboState',
+    target: parseTargetReferenceSource(action.target, `${path}.target`),
+    enabled: requireBoolean(action.isInRewardComboState, `${path}.isInRewardComboState`),
+    finishByAction: requireBoolean(action.finishByAction, `${path}.finishByAction`),
+  };
+}
+
+/** 1.6.3 只向 BattleManager 的队伍提示文本列表添加/移除条目。 */
+export function parseShowSquadTipsActionSource(
+  value: unknown,
+  path: string,
+): ShowSquadTipsActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(action, new Set([...ACTION_META_FIELDS, 'textId']), path);
+  return { kind: 'showSquadTips', textId: requireString(action.textId, `${path}.textId`) };
+}
+
+export interface RefreshHeadBarShowHideActionSource {
+  readonly kind: 'refreshHeadBarShowHide';
+}
+
+/** 原生仅发送头顶血条显示配置刷新事件。 */
+export function parseRefreshHeadBarShowHideActionSource(
+  value: unknown,
+  path: string,
+): RefreshHeadBarShowHideActionSource {
+  requireExactFields(requireRecord(value, path), new Set(ACTION_META_FIELDS), path);
+  return { kind: 'refreshHeadBarShowHide' };
+}
+
+export interface ShakeCountShieldUiActionSource {
+  readonly kind: 'shakeCountShieldUi';
+  readonly target: TargetReferenceSource;
+}
+
+/** 1.6.3 仅在显示计数非零时通知 HUD 播放计数盾抖动。 */
+export function parseShakeCountShieldUiActionSource(
+  value: unknown,
+  path: string,
+): ShakeCountShieldUiActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(
+    action,
+    new Set([
+      '$type',
+      'isEnable',
+      'priorityLevel',
+      'priorityOffset',
+      'serverActionIndex',
+      'targetSetting',
+    ]),
+    path,
+  );
+  return {
+    kind: 'shakeCountShieldUi',
+    target: parseTargetReferenceSource(action.targetSetting, `${path}.targetSetting`),
+  };
+}
+
+export interface CountShieldUiActionSource {
+  readonly kind: 'countShieldUi';
+  readonly target: TargetReferenceSource;
+  readonly remove: boolean;
+  readonly maximum: ScalarSource;
+  readonly current: ScalarSource;
+}
+
+/** 1.6.3 CountShieldUIAction 只更新 AbilitySystem 的 uiMax/CurCountShield 与 HUD 通知。 */
+export function parseCountShieldUiActionSource(
+  value: unknown,
+  path: string,
+  blackboard: BlackboardLevelValues,
+): CountShieldUiActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(
+    action,
+    new Set([
+      '$type',
+      'isEnable',
+      'priorityLevel',
+      'priorityOffset',
+      'serverActionIndex',
+      'targetSetting',
+      'removeCountShieldUI',
+      'maxCountShield',
+      'curCountShield',
+    ]),
+    path,
+  );
+  return {
+    kind: 'countShieldUi',
+    target: parseTargetReferenceSource(action.targetSetting, `${path}.targetSetting`),
+    remove: requireBoolean(action.removeCountShieldUI, `${path}.removeCountShieldUI`),
+    maximum: parseScalarSource(action.maxCountShield, `${path}.maxCountShield`, blackboard),
+    current: parseScalarSource(action.curCountShield, `${path}.curCountShield`, blackboard),
+  };
+}
+
 export interface SkillTypeMutationActionSource {
   readonly kind: 'skillTypeMutation';
   readonly target: TargetReferenceSource;
@@ -124,7 +246,13 @@ export function parseHideHeadBarActionSource(
 }
 
 export type CameraPresentationActionSource =
-  HideUiActionSource | OtherCameraPresentationActionSource;
+  HideUiActionSource | OtherCameraPresentationActionSource | VoicePresentationActionSource;
+
+export interface VoicePresentationActionSource {
+  readonly kind: 'voiceTrigger' | 'voicePause' | 'voiceResume';
+  readonly outputKey?: string;
+  readonly inputKey?: string;
+}
 
 export interface OtherCameraPresentationActionSource {
   readonly kind:
@@ -141,7 +269,6 @@ export interface OtherCameraPresentationActionSource {
     | 'igniteBuffText'
     | 'immuneText'
     | 'weaponMountPoint'
-    | 'voiceTrigger'
     | 'voiceInterrupt'
     | 'overrideCameraFollow'
     | 'temporaryUnlock'
@@ -364,7 +491,8 @@ export function parseForceTargetInFightActionSource(
   const attacker = parseTargetReferenceSource(action.attacker, `${path}.attacker`);
   const target = parseTargetReferenceSource(action.target, `${path}.target`);
   const sourceToOwner =
-    isPlainTargetReference(attacker, 'Source') && isPlainTargetReference(target, 'Owner');
+    (isPlainTargetReference(attacker, 'Source') || isPlainTargetReference(attacker, 'Target')) &&
+    isPlainTargetReference(target, 'Owner');
   const contextToShape =
     attacker.targetGroupKey.length > 0 &&
     isPlainTargetReference({ ...attacker, targetGroupKey: '' }, 'Context') &&
@@ -990,10 +1118,20 @@ export function parseAnimatedCameraActionSource(
       'checkCollisionOnEnd',
       'checkCollisionTime',
       'endByInput',
+      ...('useControllerLifetimeImpulse' in action
+        ? ['useControllerLifetimeImpulse', 'controllerLifetimeImpulseDefinition']
+        : []),
     ]),
     path,
   );
   requireString(action.cameraAnimKey, `${path}.cameraAnimKey`);
+  if ('useControllerLifetimeImpulse' in action) {
+    requireBoolean(action.useControllerLifetimeImpulse, `${path}.useControllerLifetimeImpulse`);
+    requireRecord(
+      action.controllerLifetimeImpulseDefinition,
+      `${path}.controllerLifetimeImpulseDefinition`,
+    );
+  }
   for (const key of [
     'duration',
     'outRelativeHorizontalAngle',
@@ -1109,17 +1247,41 @@ export function parseVoiceTriggerActionSource(
   for (const key of ['_jumpToWhenPlayMs', '_seekFadeInMs']) {
     if (key in action) requireInteger(action[key], `${path}.${key}`);
   }
-  // 原生把成功播放的句柄写回动作黑板；有写回时不能直接按纯语音省略。
-  if (
-    '_responseQuestIdKey' in action &&
-    readOptionalReferenceKey(action._responseQuestIdKey, `${path}._responseQuestIdKey`) !== ''
-  ) {
-    throw new Error(
-      `${path}._responseQuestIdKey: voice handle consumers require explicit projection`,
-    );
-  }
+  const outputKey =
+    '_responseQuestIdKey' in action
+      ? readOptionalReferenceKey(action._responseQuestIdKey, `${path}._responseQuestIdKey`)
+      : '';
   parseTargetReferenceSource(action.targetSettings, `${path}.targetSettings`);
-  return { kind: 'voiceTrigger' };
+  return { kind: 'voiceTrigger', ...(outputKey ? { outputKey } : {}) };
+}
+
+/** 句柄只用于语音系统的暂停、恢复和跳转，不是战斗调度句柄。 */
+export function parseVoicePlaybackActionSource(
+  value: unknown,
+  path: string,
+  resume: boolean,
+): VoicePresentationActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(
+    action,
+    new Set([
+      ...ACTION_META_FIELDS,
+      '_responseQuestIdKey',
+      '_fadeTimeMs',
+      ...(resume ? ['_seekOnResume', '_seekTimeMs'] : []),
+    ]),
+    path,
+  );
+  const inputKey = readOptionalReferenceKey(
+    action._responseQuestIdKey,
+    `${path}._responseQuestIdKey`,
+  );
+  requireInteger(action._fadeTimeMs, `${path}._fadeTimeMs`);
+  if (resume) {
+    requireBoolean(action._seekOnResume, `${path}._seekOnResume`);
+    requireInteger(action._seekTimeMs, `${path}._seekTimeMs`);
+  }
+  return { kind: resume ? 'voiceResume' : 'voicePause', inputKey };
 }
 
 export function parseVoiceInterruptActionSource(
@@ -1569,6 +1731,9 @@ export function parseCameraPresentationActionSource(
       ? [
           ...ACTION_META_FIELDS,
           'realCameraShake2D',
+          ...(Object.hasOwn(action, 'onlyWhenActionSourceIsMainChar')
+            ? ['onlyWhenActionSourceIsMainChar']
+            : []),
           'targetSettings',
           'releaseWhenActionEnds',
           '_mountPoint',
@@ -1686,10 +1851,13 @@ export function parseEffectActionSource(
       'isCreateWithSourceModelActive',
       ...('alignSpawnPhaseToTimeline' in action ? ['alignSpawnPhaseToTimeline'] : []),
       ...('spawnPhaseAlignFrame' in action ? ['spawnPhaseAlignFrame'] : []),
+      ...('stopPostProcessWhenHidden' in action ? ['stopPostProcessWhenHidden'] : []),
     ]),
     path,
   );
   const config = requireRecord(action.effectActionCfg, `${path}.effectActionCfg`);
+  if ('stopPostProcessWhenHidden' in action)
+    requireBoolean(action.stopPostProcessWhenHidden, `${path}.stopPostProcessWhenHidden`);
   // 1.6.3 新增特效相位对齐；本批资源均未启用，不把开启形态默认为无影响。
   if ('alignSpawnPhaseToTimeline' in action || 'spawnPhaseAlignFrame' in action) {
     const align = requireBoolean(

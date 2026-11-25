@@ -22,16 +22,17 @@ describe('无敌人主动行为的控制状态边界', () => {
     }
   });
 
-  it('敌方受击事件保留，但唯一木桩死亡后的事件省略', () => {
+  it('敌人受击、死亡和干员击杀响应保留，供可死亡敌人继续执行', () => {
     expect(standardStumpBuffAbilityEventOmissionReason('OnBeforeTakeDamage', 'enemy')).toBeNull();
     expect(standardStumpBuffAbilityEventOmissionReason('OnTakeDamage', 'enemy')).toBeNull();
-    expect(standardStumpBuffAbilityEventOmissionReason('OnOwnerHpZero', 'enemy')).not.toBeNull();
-    expect(standardStumpBuffAbilityEventOmissionReason('OnOwnerDead', 'enemy')).not.toBeNull();
+    expect(standardStumpBuffAbilityEventOmissionReason('OnOwnerHpZero', 'enemy')).toBeNull();
+    expect(standardStumpBuffAbilityEventOmissionReason('OnOwnerDead', 'enemy')).toBeNull();
+    expect(standardStumpBuffAbilityEventOmissionReason('OnAfterKillEntity', 'caster')).toBeNull();
   });
 
-  it('敌人输出 Buff 只在被动木桩归属已证明时省略', () => {
+  it('敌人没有主动技能不代表死亡响应不能输出 Buff', () => {
     expect(standardStumpBuffAbilityEventOmissionReason('OnOutputBuff')).toBeNull();
     expect(standardStumpBuffAbilityEventOmissionReason('OnOutputBuff', 'caster')).toBeNull();
-    expect(standardStumpBuffAbilityEventOmissionReason('OnOutputBuff', 'enemy')).not.toBeNull();
+    expect(standardStumpBuffAbilityEventOmissionReason('OnOutputBuff', 'enemy')).toBeNull();
   });
 });

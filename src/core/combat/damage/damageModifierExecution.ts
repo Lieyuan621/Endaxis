@@ -17,7 +17,7 @@ import type {
 export function applyDamageModifier(
   ownerId: string,
   definition: Omit<DamageModifierDefinition, 'condition'>,
-  resolveNumber: (value: DamageModifierNumber) => number,
+  resolveNumber: (value: DamageModifierNumber, missingValue?: number) => number,
   condition: DamageModifierConditionRuntime | undefined,
   timing: DamageProcessTiming,
   side: DamageModifierSide,
@@ -35,9 +35,8 @@ export function applyDamageModifier(
       targetId: context.targetId,
       skillCastId: context.skillCastId,
       damageType: context.damageType,
-      tags: context.tags,
+      tags: context.tags ?? [],
       gameplayTags: context.gameplayTags,
-      features: context.features,
     })
   )
     return;
@@ -50,7 +49,7 @@ function applyProcessor(
   processor: DamageProcessorDefinition,
   timing: DamageProcessTiming,
   context: PlayerDamageContext,
-  resolveNumber: (value: DamageModifierNumber) => number,
+  resolveNumber: (value: DamageModifierNumber, missingValue?: number) => number,
   recordModifier?: (side: DamageScaleSide, result: DamageModifierResult) => void,
   modifierSide: DamageModifierSide = 'attacker',
 ): void {
@@ -67,7 +66,8 @@ function applyProcessor(
       return;
     case 'damageScale':
       if (timing === 'afterCalculation' && context.targetHealthType === 'normal') {
-        const addition = resolveNumber(processor.addition);
+        // 原生 DamageScaleProcessor 经 ActionBlackboard.GetFloat 读取，缺键时返回 0。
+        const addition = resolveNumber(processor.addition, 0);
         context.damageScales.modify(processor.side, processor.zone, addition);
         recordModifier?.(processor.side, { kind: 'damageScale', zone: processor.zone, addition });
       }

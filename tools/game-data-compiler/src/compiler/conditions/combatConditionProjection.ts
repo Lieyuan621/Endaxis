@@ -1,5 +1,9 @@
+import { projectDamageDecorateMask } from '../damageDecorateMask.ts';
+import { projectSelectorBuffValidators } from './selectorBuffProjection.ts';
+import { projectNativeTagQueryType } from '../../source/tagQuery.ts';
 import type { SkillInterruptReason } from '../../../../../packages/game-data-contract/src/conditions.ts';
 import type { SkillType } from '../../../../../packages/game-data-contract/src/primitives.ts';
+import { projectWeaponType } from '../build/weaponType.ts';
 import { COMBO_CAMERA_ALPHA_SETTINGS } from '../intermediateDefinitions.ts';
 
 import type { TargetReferenceSource } from '../../source/target.ts';
@@ -10,7 +14,6 @@ import type {
 import {
   isPartyInstantSearch,
   isPartyExceptOwnerInstantSearch,
-  isUniqueEnemyHitBoxInstantSearch,
   projectGameplayTags,
 } from '../combatProjectionCommon.ts';
 import { projectSpGainKind, projectSpGainSource } from '../../source/spGainEnums.ts';
@@ -55,6 +58,23 @@ function compileConditionLeaf(
   sourcePath: string,
   context: CombatActionProjectionContextSource,
 ): CompiledBuffConditionSource {
+  if (condition.kind === 'skillGameplayTag') {
+    return {
+      kind: 'eventSkillTagsMatch',
+      tagQueryType: condition.queryType,
+      tags: projectGameplayTags(condition.tagIds, context, sourcePath + '.gameplayTagList'),
+    };
+  }
+  if (condition.kind === 'globalBuffCount') {
+    const operator = COMPARISON_OPERATORS[condition.comparison];
+    if (!operator) throw new Error(`${sourcePath}: unsupported global Buff comparison`);
+    return {
+      kind: 'globalBuffCountCompare',
+      globalBuffId: condition.globalBuffId,
+      operator,
+      value: actionValueOperand(condition.value),
+    };
+  }
   if (condition.kind === 'damageTransferredSource') {
     return {
       kind: 'eventTransferredPartTagsMatch',
@@ -135,6 +155,8 @@ function compileConditionLeaf(
       throw new Error(`${sourcePath}: unsupported damage ignore-immune-level comparison`);
     return { kind: 'constant', value: true };
   }
+  if (condition.kind === 'buffFinishReason')
+    return { kind: 'eventBuffFinishReasonIn', reasons: condition.reasons };
   if (condition.kind === 'abilityEntityFinishReason') {
     return { kind: 'eventAbilityEntityFinishReasonIn', reasons: condition.reasons };
   }
@@ -221,9 +243,11 @@ function compileConditionLeaf(
       'skillHasHit',
       // OnOutputDamage 的装饰标签来自事件伤害包，不会把固定 enemy Target 当作普通动作输入。
       'damageDecorateMask',
+      'damageSkillCastRecorded',
       'damageGameplayTag',
       'originSkillType',
       'profession',
+      'weaponType',
     ].includes(condition.kind)
   )
     throw new Error(`${sourcePath}: unaudited single-enemy action condition ${condition.kind}`);
@@ -238,6 +262,7 @@ function compileConditionLeaf(
       'any',
       'entityTag',
       'abilityEntityDuration',
+      'weaponType',
       'health',
     ].includes(condition.kind)
   )
@@ -303,9 +328,11 @@ function compileConditionLeaf(
       'mainOperator',
       'floatCompare',
       'originSkillType',
+      'weaponType',
       'skillCastId',
       'timedMarker',
       'damageDecorateMask',
+      'damageSkillCastRecorded',
       // 受击响应读取本次伤害元素；Owner 标签仍由下方固定 Buff 宿主解析，
       // 概率只推进本响应自己的随机流，三者都不借用事件来源身份。
       'damageType',
@@ -318,6 +345,17 @@ function compileConditionLeaf(
     return {
       kind: 'checkMainCharacter',
       target: projectActionTargetQuery(condition.target, context, `${sourcePath}.checkTarget`),
+    };
+  }
+  if (condition.kind === 'weaponType') {
+    return {
+      kind: 'operatorWeaponTypeIn',
+      target: projectActionTargetQuery(condition.target, context, `${sourcePath}.checkTarget`),
+      // Endaxis 的干员契约没有 None/Gun；不把它们误映射为手铳或施术单元。
+      // 所有能进入模拟的干员必有这五类之一，过滤后仍保留空掩码不匹配的结果。
+      weaponTypes: condition.weaponTypes
+        .filter(type => type !== 'None' && type !== 'Gun')
+        .map(type => projectWeaponType(type, `${sourcePath}.weaponTypes`)),
     };
   }
   if (condition.kind === 'profession') {
@@ -334,21 +372,25 @@ function compileConditionLeaf(
       Wisd: 'intellect',
       Will: 'will',
     } as const;
-    const left = condition.leftAttribute === 'Blackboard' ? actionValueOperand(condition.leftValue)
-      : attributes[condition.leftAttribute as keyof typeof attributes];
-    const right = condition.rightAttribute === 'Blackboard' ? actionValueOperand(condition.rightValue)
-      : attributes[condition.rightAttribute as keyof typeof attributes];
+    const left =
+      condition.leftAttribute === 'Blackboard'
+        ? actionValueOperand(condition.leftValue)
+        : attributes[condition.leftAttribute as keyof typeof attributes];
+    const right =
+      condition.rightAttribute === 'Blackboard'
+        ? actionValueOperand(condition.rightValue)
+        : attributes[condition.rightAttribute as keyof typeof attributes];
     const operator = COMPARISON_OPERATORS[condition.comparison];
-    if (
-      left === undefined ||
-      right === undefined ||
-      operator === undefined
-    ) {
+    if (left === undefined || right === undefined || operator === undefined) {
       throw new Error(`${sourcePath}: unsupported Deck attribute comparison`);
     }
-    return { kind: 'deckAttributeCompare',
+    return {
+      kind: 'deckAttributeCompare',
       target: projectActionTargetQuery(condition.target, context, `${sourcePath}.target`),
-      left, operator, right };
+      left,
+      operator,
+      right,
+    };
   }
   if (condition.kind === 'floatCompare') {
     const operator = COMPARISON_OPERATORS[condition.comparison];
@@ -407,15 +449,15 @@ function compileConditionLeaf(
     const skillTypes = mapNativeSkillTypes(condition.skillTypes, condition.attackTypeMask);
     if (condition.checkTargetCurrentSkill) {
       const skillOwner = condition.skillOwner;
-      if (
-        skillOwner === undefined ||
-        condition.mustBeforeExclusiveTime
-      ) {
+      if (skillOwner === undefined || condition.mustBeforeExclusiveTime) {
         throw new Error(`${sourcePath}: unsupported current skill type condition`);
       }
-      return { kind: 'currentSkillTypeIn',
+      return {
+        kind: 'currentSkillTypeIn',
         target: projectActionTargetQuery(skillOwner, context, `${sourcePath}.skillOwner`),
-        skillTypes, ...subtypeFilter };
+        skillTypes,
+        ...subtypeFilter,
+      };
     }
     return {
       kind: 'eventSkillTypeIn',
@@ -489,6 +531,7 @@ function compileConditionLeaf(
       ),
     };
   }
+  if (condition.kind === 'damageSkillCastRecorded') return { kind: 'eventDamageSkillCastRecorded' };
   if (condition.kind === 'damageTypeMask') {
     return {
       kind: 'eventDamageTypeIn',
@@ -508,63 +551,16 @@ function compileConditionLeaf(
   }
   if (condition.kind === 'damageDecorateMask') {
     const match = {
+      Exact: 'exact',
       HasAny: 'hasAny',
       HasAll: 'hasAll',
       ExceptAny: 'exceptAny',
       ExceptAll: 'exceptAll',
-    }[condition.checkType] as 'hasAny' | 'hasAll' | 'exceptAny' | 'exceptAll' | undefined;
-    const has = (bit: number) => Math.floor(condition.mask / bit) % 2 === 1;
-    const tags = [
-      ...(has(4) ? (['powerAttack'] as const) : []),
-      ...(has(128) ? (['normalAttack'] as const) : []),
-      ...(has(256) ? (['normalSkill'] as const) : []),
-      ...(has(512) ? (['ultimateSkill'] as const) : []),
-      ...(has(1024) ? (['plungingAttack'] as const) : []),
-      ...(has(8192) ? (['comboSkill'] as const) : []),
-      ...(has(131072) ? (['dashAttack'] as const) : []),
-      ...(has(2097152) ? (['normalAttackLastCombo'] as const) : []),
-      ...(has(4194304) ? (['fireBurst'] as const) : []),
-      ...(has(8388608) ? (['cryoBurst'] as const) : []),
-      ...(has(16777216) ? (['electricBurst'] as const) : []),
-      ...(has(33554432) ? (['natureBurst'] as const) : []),
-    ];
-    const features = [
-      ...(has(4096) ? (['canBreakWeakness'] as const) : []),
-      ...(has(16384) ? (['crush'] as const) : []),
-      ...(has(32768) ? (['airborne'] as const) : []),
-      ...(has(65536) ? (['knockDown'] as const) : []),
-      ...(has(134217728) ? (['shatter'] as const) : []),
-      ...(has(268435456) ? (['dot'] as const) : []),
-      ...(has(536870912) ? (['remainArea'] as const) : []),
-      ...(has(1073741824) ? (['physicalInfliction'] as const) : []),
-      ...(has(2147483648) ? (['talentDamage'] as const) : []),
-    ];
-    const knownBits = [
-      4, 128, 256, 512, 1024, 4096, 8192, 16384, 32768, 65536, 131072, 2097152, 4194304, 8388608,
-      16777216, 33554432, 134217728, 268435456, 536870912, 1073741824, 2147483648,
-    ];
-    if (
-      match === undefined ||
-      tags.length + features.length === 0 ||
-      !Number.isSafeInteger(condition.mask) ||
-      condition.mask < 0 ||
-      condition.mask - knownBits.reduce((sum, bit) => sum + (has(bit) ? bit : 0), 0) !== 0
-    ) {
+    }[condition.checkType] as 'exact' | 'hasAny' | 'hasAll' | 'exceptAny' | 'exceptAll' | undefined;
+    const { tags } = projectDamageDecorateMask(condition.mask, sourcePath);
+    if (match === undefined)
       throw new Error(`${sourcePath}: unsupported damage decorate mask ${condition.mask}`);
-    }
-    const projected = [
-      ...(tags.length === 0 ? [] : [{ kind: 'eventDamageTagsMatch' as const, match, tags }]),
-      ...(features.length === 0
-        ? []
-        : [{ kind: 'eventDamageFeaturesMatch' as const, match, features }]),
-    ];
-    if (projected.length === 1) return projected[0]!;
-    // 位掩码跨 Tag/Feature 两个公共域时还原同一个原生位判断：HasAny/ExceptAll
-    // 是域间“或”，HasAll/ExceptAny 是域间“且”。
-    return {
-      kind: condition.checkType === 'HasAny' || condition.checkType === 'ExceptAll' ? 'any' : 'all',
-      conditions: projected,
-    };
+    return { kind: 'eventDamageTagsMatch', match, tags };
   }
   if (condition.kind === 'damageGameplayTag') {
     return {
@@ -639,7 +635,10 @@ function compileConditionLeaf(
     return {
       kind: 'targetObjectTypeMatch',
       target: projectActionTargetQuery(condition.target, context, `${sourcePath}.target`),
-      objectTypes: projectObjectTypeSelection(condition.objectTypeMask, `${sourcePath}.objectTypeMask`),
+      objectTypes: projectObjectTypeSelection(
+        condition.objectTypeMask,
+        `${sourcePath}.objectTypeMask`,
+      ),
     };
   }
   if (condition.kind === 'targetIdentity') {
@@ -688,13 +687,24 @@ function compileConditionLeaf(
       if (condition.countType === 'BuffIdCount' && !condition.limitSkillCastId)
         return { kind: 'buffTagIdCountCompare', ...common, ...tags };
       if (condition.countType === 'BuffCount')
-        return { kind: 'buffStackCompare', ...common, ...tags,
-          ...(condition.limitSkillCastId ? { sameSourceSkillCast: true } : {}) };
+        return {
+          kind: 'buffStackCompare',
+          ...common,
+          ...tags,
+          ...(condition.limitSkillCastId ? { sameSourceSkillCast: true } : {}),
+        };
     }
-    if (condition.buffCheckType === 'Id' && condition.countType === 'BuffCount' &&
-      condition.buffIds.every(id => id.length > 0))
-      return { kind: 'buffIdStackCompare', ...common, buffIds: condition.buffIds,
-        ...(condition.limitSkillCastId ? { sameSourceSkillCast: true } : {}) };
+    if (
+      condition.buffCheckType === 'Id' &&
+      condition.countType === 'BuffCount' &&
+      condition.buffIds.every(id => id.length > 0)
+    )
+      return {
+        kind: 'buffIdStackCompare',
+        ...common,
+        buffIds: condition.buffIds,
+        ...(condition.limitSkillCastId ? { sameSourceSkillCast: true } : {}),
+      };
     throw new Error(`${sourcePath}: unsupported Buff count mode`);
   }
   if (condition.kind === 'poise') {
@@ -711,6 +721,7 @@ function compileConditionLeaf(
   if (condition.kind === 'entityTag') {
     return {
       kind: 'entityTagMatch',
+      ...(condition.sourceType === 'CheckPartTagMatch' ? { checkPartTags: true } : {}),
       target: projectActionTargetQuery(condition.target, context, `${sourcePath}.checkTarget`),
       tagQueryType: condition.tagQueryType,
       tags: projectGameplayTags(condition.tagIds, context, sourcePath),
@@ -758,7 +769,6 @@ function compileConditionLeaf(
   }
   throw new Error(`${sourcePath}: unsupported Buff runtime condition ${condition.kind}`);
 }
-
 
 const SKILL_TYPES: Readonly<Record<string, SkillType>> = {
   NormalSkill: 'battleSkill',
@@ -811,9 +821,78 @@ export function projectActionTargetQuery(
   context: CombatActionProjectionContextSource,
   path: string,
 ): ActionTargetQuery {
+  if (
+    target.targetSource === 'InstantSearch' &&
+    target.postProcessorTypes.length > 0 &&
+    target.postProcessorTypes.every(type => type === 'ExcludeTarget')
+  ) {
+    const excludedTargets = target.excludeTargets ?? [];
+    if (excludedTargets.length !== target.postProcessorTypes.length)
+      throw new Error(`${path}: incomplete ExcludeTarget postprocessor sources`);
+    let query = projectActionTargetQuery(
+      { ...target, postProcessorTypes: [], excludeTargets: [] },
+      context,
+      path,
+    );
+    for (const [index, excluded] of excludedTargets.entries()) {
+      query = {
+        kind: 'exclude',
+        targets: query,
+        excludeTargets: projectActionTargetQuery(
+          excluded,
+          context,
+          `${path}.excludeTargets[${index}]`,
+        ),
+      };
+    }
+    return query;
+  }
+  if (target.targetSource === 'InstantSearch' && target.validatorTypes.includes('BuffValidator')) {
+    const validators = target.buffValidators ?? [];
+    if (validators.length !== target.validatorTypes.filter(type => type === 'BuffValidator').length)
+      throw new Error(`${path}: incomplete BuffValidator sources`);
+    return projectSelectorBuffValidators(
+      projectActionTargetQuery(
+        {
+          ...target,
+          validatorTypes: target.validatorTypes.filter(type => type !== 'BuffValidator'),
+          buffValidators: [],
+        },
+        context,
+        path,
+      ),
+      validators,
+      context,
+      path,
+    );
+  }
+  if (target.targetSource === 'InstantSearch' && target.validatorTypes.includes('TagValidator')) {
+    if (
+      target.validatorTagQueries.length !==
+      target.validatorTypes.filter(type => type === 'TagValidator').length
+    )
+      throw new Error(`${path}: incomplete TagValidator sources`);
+    let query = projectActionTargetQuery(
+      {
+        ...target,
+        validatorTypes: target.validatorTypes.filter(type => type !== 'TagValidator'),
+        validatorTagQueries: [],
+      },
+      context,
+      path,
+    );
+    for (const [queryType, tagIds] of target.validatorTagQueries) {
+      query = {
+        kind: 'tagFilter',
+        targets: query,
+        tags: projectGameplayTags(tagIds, context, path),
+        tagQueryType: projectNativeTagQueryType(queryType, path),
+      };
+    }
+    return query;
+  }
   if (isPartyInstantSearch(target)) return { kind: 'characterTeam', excludeOwner: false };
   if (isPartyExceptOwnerInstantSearch(target)) return { kind: 'characterTeam', excludeOwner: true };
-  if (isUniqueEnemyHitBoxInstantSearch(target)) return { kind: 'fixed', target: 'enemy' };
   if (target.targetSource !== 'InstantSearch') {
     switch (target.targetSource) {
       case 'Owner':
@@ -821,9 +900,6 @@ export function projectActionTargetQuery(
       case 'Source':
         return { kind: 'source' };
       case 'Target':
-        // 宿主明确提供的固定目标与回调输入槽不是同一来源；后者允许为空。
-        if (context.actionTargetTarget === 'enemy' || context.actionTargetTarget === 'caster')
-          return { kind: 'fixed', target: context.actionTargetTarget };
         return { kind: 'inputTarget' };
       case 'MainCharacter':
         return { kind: 'mainCharacter' };
@@ -831,8 +907,6 @@ export function projectActionTargetQuery(
         return { kind: 'battleMainTarget' };
       case 'Context':
         if (target.targetGroupKey) {
-          if (context.staticEnemyTargetGroupKeys?.has(target.targetGroupKey))
-            return { kind: 'fixed', target: 'enemy' };
           return { kind: 'context', key: target.targetGroupKey };
         }
     }
@@ -845,6 +919,44 @@ export function projectActionTargetQuery(
       return { kind: 'context', key: target.ownerContextKey };
     throw new Error(`${path}: unsupported selector owner ${target.selectorOwner}`);
   };
+  if (
+    target.finderType === 'AllEnemyFinder' &&
+    target.postProcessorTypes.length === 0 &&
+    target.validatorTypes.every(type => type === 'ExcludeOwnerValidator')
+  ) {
+    const targets: ActionTargetQuery = {
+      kind: 'enemyByTags',
+      scope: 'global',
+      reverse: true,
+      tagQueryType: 'hasAll',
+      tags: [],
+    };
+    return target.validatorTypes.includes('ExcludeOwnerValidator')
+      ? { kind: 'exclude', targets, excludeTargets: owner() }
+      : targets;
+  }
+  if (
+    target.finderType === 'HitBoxFinder' &&
+    target.finderAutoSetTargetFaction === true &&
+    (target.finderFactionTarget === 'Ally' || target.finderFactionTarget === 'Anti') &&
+    target.finderTargetObjectType === 'Normal' &&
+    target.finderCheckAlive !== null &&
+    target.finderCheckAlive !== undefined &&
+    target.finderContainsUnMarkable !== undefined &&
+    target.validatorTypes.length === 0 &&
+    target.postProcessorTypes.length === 0 &&
+    target.priorityFilters.length === 0 &&
+    target.shuffleTargets.length === 0 &&
+    target.distanceValidators.length === 0
+  )
+    return {
+      kind: 'factionHitBox',
+      factionTarget: target.finderFactionTarget === 'Ally' ? 'ally' : 'anti',
+      owner: owner(),
+      checkAlive: target.finderCheckAlive,
+      containsUnmarkable: target.finderContainsUnMarkable,
+      replacePartsWithMainBodies: false,
+    };
   if (target.finderType === 'FixedPointFinder') {
     // 导航采样失败保留原位置，成功只替换坐标；均输出一个位置目标。
     // 零空间模型省略坐标修饰，但过滤器可能改变结果，不能一并忽略。
@@ -870,6 +982,12 @@ export function projectActionTargetQuery(
     };
   }
   if (
+    target.finderType === 'GodEntityFinder' &&
+    target.validatorTypes.length === 0 &&
+    target.postProcessorTypes.length === 0
+  )
+    return { kind: 'godEntity' };
+  if (
     target.finderType === 'SourceFinder' &&
     target.validatorTypes.length === 0 &&
     target.postProcessorTypes.length === 0
@@ -883,6 +1001,19 @@ export function projectActionTargetQuery(
     return { kind: 'mainTarget', owner: owner() };
   if (
     target.finderType === 'CharacterTeamFinder' &&
+    target.validatorTypes.length === 0 &&
+    target.postProcessorTypes.length === 0
+  )
+    return { kind: 'characterTeam', excludeOwner: false };
+  if (
+    target.finderType === 'CharacterTeamFinder' &&
+    target.validatorTypes.length === 1 &&
+    target.validatorTypes[0] === 'ExcludeOwnerValidator' &&
+    target.postProcessorTypes.length === 0
+  )
+    return { kind: 'characterTeam', excludeOwner: true, owner: owner() };
+  if (
+    target.finderType === 'CharacterTeamFinder' &&
     target.validatorTypes.length === 1 &&
     target.validatorTypes[0] === 'MainCharacterValidator' &&
     target.postProcessorTypes.length === 0
@@ -890,11 +1021,17 @@ export function projectActionTargetQuery(
     return { kind: 'mainCharacter' };
   if (
     target.finderType === 'OwnerSpawnedEntityFinder' &&
-    target.finderSpawnedObjectType === 'All' &&
+    (target.finderSpawnedObjectType === 'All' ||
+      target.finderSpawnedObjectType === 'AbilityEntity') &&
     target.validatorTypes.length === 0 &&
     target.postProcessorTypes.length === 0
   ) {
-    return { kind: 'ownerSpawned', owner: owner(), objectType: 'all', sameSourceSkillCast: false };
+    return {
+      kind: 'ownerSpawned',
+      owner: owner(),
+      objectType: target.finderSpawnedObjectType === 'All' ? 'all' : 'abilityEntity',
+      sameSourceSkillCast: false,
+    };
   }
   if (target.finderType === 'OwnerSpawnedEntityFinder' && context.abilityEntityQueries) {
     const query = compileTargetReferenceAbilityEntityQuerySource(
@@ -913,7 +1050,6 @@ export function projectActionTargetQuery(
       kind: 'ownerSpawned',
       owner: owner(),
       objectType: 'abilityEntity',
-      abilityEntityIds: query.candidateTemplateIds,
       sameSourceSkillCast: query.validators.some(v => v.kind === 'sameSkillCast'),
     };
   }

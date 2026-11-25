@@ -45,5 +45,13 @@ export function findBuffDamageSegment<T extends BuffTimelineSegment>(
   entry: CombatReceiptEntry,
   segments: readonly T[],
 ): T | undefined {
-  return findBuffTimelineSegmentForDamage(entry, segments);
+  return (
+    findBuffTimelineSegmentForDamage(entry, segments) ??
+    segments.find(
+      segment =>
+        'windows' in segment &&
+        Array.isArray(segment.windows) &&
+        findBuffTimelineSegmentForDamage(entry, segment.windows) !== undefined,
+    )
+  );
 }

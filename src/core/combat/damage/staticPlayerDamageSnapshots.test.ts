@@ -140,6 +140,29 @@ const electricDamage: ResolvedCombatStepForKind<'dealDamage'> = {
 };
 
 describe('resolveStaticPlayerDamageSnapshots', () => {
+  it('目标属性公式冻结当前目标值，不从来源同名属性或项目默认值补全', () => {
+    const attacker = createOperatorAttackAttributes(panel);
+    attacker.setRawValue('Def', 100);
+    const defender = new CombatAttributeSet<string>();
+    initializeEnemyCombatAttributes(defender, enemy.defenderAttributes);
+    const step = {
+      ...electricDamage,
+      parameters: {
+        ...electricDamage.parameters,
+        calculation: 'attribute' as const,
+        calculationAttribute: 'Def',
+        attributeSource: 'target' as const,
+      },
+    };
+    expect(() =>
+      resolveStaticPlayerDamageSnapshots(createContext(), step, attacker, defender),
+    ).toThrow('not available on the defender');
+    defender.define('Def', 8000, {});
+    const snapshot = resolveStaticPlayerDamageSnapshots(createContext(), step, attacker, defender);
+    expect(snapshot.defender.calculationAttributeValue).toBe(8000);
+    expect(snapshot.attacker.calculationAttributeValue).toBeUndefined();
+  });
+
   it('preserves distinct static providers and applies the existing element and skill filters', () => {
     const first = { kind: 'equipment', contribution: { kind: 'gearSet', slug: 'first' } } as const;
     const second = {
@@ -227,7 +250,7 @@ describe('resolveStaticPlayerDamageSnapshots', () => {
       electricDamage,
       attributes,
     ).attacker;
-    const frozen = freezeAttackReceiptDetail(captured.attack, captured.attackDetail);
+    const frozen = freezeAttackReceiptDetail(captured.attack!, captured.attackDetail);
     const base = (700 * 1.38 + 10) * 1.1;
     expect(captured.attack).toBeCloseTo(base * (1 + 123 * 0.005 + 60 * 0.002));
     expect(frozen.attackDetailActualBase).toBeCloseTo(base);
@@ -238,7 +261,7 @@ describe('resolveStaticPlayerDamageSnapshots', () => {
     });
     attributes.removeModifier(bonus);
     attributes.setRawValue('intellect', 999);
-    expect(freezeAttackReceiptDetail(captured.attack, captured.attackDetail)).toEqual(frozen);
+    expect(freezeAttackReceiptDetail(captured.attack!, captured.attackDetail)).toEqual(frozen);
   });
   it('carries equipment attack percentages and flat attack into the hit source detail', () => {
     const weaponSource = {
@@ -286,7 +309,7 @@ describe('resolveStaticPlayerDamageSnapshots', () => {
       attributes,
     ).attacker;
     expect(captured.attack).toBeCloseTo(1123.2);
-    const frozen = freezeAttackReceiptDetail(captured.attack, captured.attackDetail);
+    const frozen = freezeAttackReceiptDetail(captured.attack!, captured.attackDetail);
     expect(frozen.attackDetailAttackPercent).toBeCloseTo(0.576);
     expect(frozen.attackDetailFlatAttack).toBe(20);
     expect(captured.modifierDetails).toEqual([

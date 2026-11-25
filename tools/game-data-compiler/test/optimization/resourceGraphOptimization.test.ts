@@ -1,3 +1,4 @@
+import type { SkillDefinition as PublishedSkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { extractResourceDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 import { COMPILED_BUFF_CAPTURED_TARGET_GROUPS } from '../../src/compiler/buffs/compiledBuffMetadata.ts';
 import { skillFixture } from '../../../../src/test/skillFixture';
@@ -47,6 +48,34 @@ function repeatedMiddleResource() {
 }
 
 describe('独立资源图构建与优化', () => {
+  it('裁剪与宏提取保留任意位置的字段顺序，嵌套资源及重复优化也一致', () => {
+    type Position = 'first' | 'middle' | 'last';
+    const make = (position: Position) => {
+      const { entries, actionGraph } = repeatedMiddleResource();
+      return position === 'first'
+        ? { actionGraph, label: 'resource', entries }
+        : position === 'middle'
+          ? { label: 'resource', actionGraph, entries }
+          : { label: 'resource', entries, actionGraph };
+    };
+    const positions: Position[] = ['first', 'middle', 'last'];
+    const input = {
+      resources: positions.map(position => ({
+        ...make(position),
+        child: make('middle'),
+      })),
+    };
+    const original = JSON.stringify(input);
+    const once = optimizeResourceGraphs(input, 'apply').value;
+    for (const [index, resource] of once.resources.entries()) {
+      expect(Object.keys(resource)).toEqual(Object.keys(input.resources[index]!));
+      expect(Object.keys(resource.child)).toEqual(Object.keys(input.resources[index]!.child));
+      expect(Object.keys(resource.actionGraph.macros)).toHaveLength(1);
+    }
+    expect(JSON.stringify(optimizeResourceGraphs(once, 'apply').value)).toBe(JSON.stringify(once));
+    expect(JSON.stringify(input)).toBe(original);
+  });
+
   it('干员实体初值只证明自己的技能读取安全，不越过子资源边界', () => {
     const graph = createActionGraphBuilder();
     const sequence = graph.sequence([
@@ -257,7 +286,7 @@ describe('独立资源图构建与优化', () => {
                   kind,
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target' as const, target: 'enemy' as const }],
+                    sources: [{ kind: 'fixed' as const, target: 'enemy' as const }],
                   },
                 }
               : {
@@ -636,7 +665,7 @@ describe('独立资源图构建与优化', () => {
       scheduledSequences: resource.entries.map(sequence => ({ startFrame: 0, sequence })),
       actionGraph: resource.actionGraph,
     };
-    const result = finalizeDefinitionResources(definition, mode);
+    const result = finalizeDefinitionResources<PublishedSkillDefinition>(definition, mode);
     expect(result.report.resourceValues.flatMap(item => item.removedWrites).length).toBeGreaterThan(
       10,
     );
@@ -649,7 +678,7 @@ describe('独立资源图构建与优化', () => {
       expect(result.value.scheduledSequences).toEqual([]);
     } else expect(result.value).toEqual(definition);
     expect(
-      finalizeDefinitionResources(definition, 'off', () => {
+      finalizeDefinitionResources<PublishedSkillDefinition>(definition, 'off', () => {
         throw new Error('关闭优化时不应裁剪');
       }).value,
     ).toEqual(definition);
@@ -672,6 +701,7 @@ describe('独立资源图构建与优化', () => {
     expect(() => validateFinalOwner(applied.value, 'skill')).not.toThrow();
     const again = optimizeResourceGraphs(applied.value, 'apply');
     expect(again.value).toEqual(applied.value);
+    expect(JSON.stringify(again.value)).toBe(JSON.stringify(applied.value));
     expect(() => validateFinalOwner(again.value, 'skill')).not.toThrow();
   });
 
@@ -839,7 +869,7 @@ it('Buff 裁剪保留跨生命周期、参数和外部查询读取，只删除�
   const finish = graph.sequence([
     {
       kind: 'setCharacterPassiveUiValue',
-      parameters: { target: 'caster', value: { kind: 'blackboard', key: 'later' } },
+      parameters: { target: { kind: 'source' }, value: { kind: 'blackboard', key: 'later' } },
     },
   ]);
   const definitions = {
@@ -903,7 +933,7 @@ it('被动技能跨启用和事件共用变量，保留养成补丁与实体共�
     {
       kind: 'setCharacterPassiveUiValue',
       parameters: {
-        target: 'caster',
+        target: { kind: 'source' },
         value: { kind: 'blackboard', key: 'eventValue' },
       },
     },

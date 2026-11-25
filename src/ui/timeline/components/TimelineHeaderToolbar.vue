@@ -3,8 +3,11 @@ import { EaPopover } from '@/design-system';
 /** 时间轴顶部方案栏。DOM 分区与视觉契约以旧版 TimelineEditor 为准。 */
 import {
   EaButton,
+  EaCopyIcon,
   EaDeleteIcon,
   EaDiceIcon,
+  EaExportIcon,
+  EaImportIcon,
   EaInput,
   EaNumberInput,
   EaPlusIcon,
@@ -44,6 +47,9 @@ const props = defineProps<{
   appearance: 'light' | 'dark';
   randomMode: 'expected' | 'sampled';
   automaticControlSwitches: boolean;
+  multiEnemyEnabled: boolean;
+  multiEnemyRequired: boolean;
+  enemyAutomaticDeath: boolean;
   comboSkillPriorityEnabled: boolean;
   comboSkillPriorityOperators: readonly {
     id: string | null;
@@ -104,6 +110,8 @@ const emit = defineEmits<{
   setAppearance: [appearance: 'light' | 'dark'];
   setRandomMode: [mode: 'expected' | 'sampled'];
   toggleAutomaticControlSwitches: [];
+  toggleMultiEnemy: [];
+  toggleEnemyAutomaticDeath: [];
   toggleComboSkillPriority: [];
   setComboSkillPriorityOrder: [order: string[]];
   setGlobalRandomSeed: [seed: number];
@@ -118,33 +126,55 @@ const renameInput = ref<{ focus: () => void; select: () => void } | null>(null);
 const projectMenuOpen = ref(false);
 const moreMenuOpen = ref(false);
 const displayMenuOpen = ref(false);
+const scenarioSettingsOpen = ref(false);
 usePopoverInteractionBoundary(
   useInteractionSession(),
-  () => projectMenuOpen.value || moreMenuOpen.value || displayMenuOpen.value,
+  () =>
+    projectMenuOpen.value ||
+    moreMenuOpen.value ||
+    displayMenuOpen.value ||
+    scenarioSettingsOpen.value,
   () => {
     projectMenuOpen.value = false;
     moreMenuOpen.value = false;
     displayMenuOpen.value = false;
+    scenarioSettingsOpen.value = false;
   },
 );
 watch(projectMenuOpen, open => {
   if (open) {
     displayMenuOpen.value = false;
     moreMenuOpen.value = false;
+    scenarioSettingsOpen.value = false;
   }
 });
 watch(displayMenuOpen, open => {
   if (open) {
     projectMenuOpen.value = false;
     moreMenuOpen.value = false;
+    scenarioSettingsOpen.value = false;
   }
 });
 watch(moreMenuOpen, open => {
   if (open) {
     projectMenuOpen.value = false;
     displayMenuOpen.value = false;
+    scenarioSettingsOpen.value = false;
   }
 });
+watch(scenarioSettingsOpen, open => {
+  if (open) {
+    projectMenuOpen.value = false;
+    displayMenuOpen.value = false;
+    moreMenuOpen.value = false;
+  }
+});
+watch(
+  () => props.activeScenarioId,
+  () => {
+    scenarioSettingsOpen.value = false;
+  },
+);
 const scenarioTabs = ref<HTMLElement | null>(null);
 const scenarioTabsMaskStyle = ref({ maskImage: 'none', WebkitMaskImage: 'none' });
 let scenarioTabsResizeObserver: ResizeObserver | null = null;
@@ -156,6 +186,7 @@ function updateScenarioTabsScrollMask(): void {
 }
 
 function beginRename(): void {
+  scenarioSettingsOpen.value = false;
   renameDraft.value = props.scenarioName;
   renaming.value = true;
   void nextTick(() => {
@@ -225,6 +256,231 @@ onBeforeUnmount(() => {
   <div class="timeline-header-content" @click.self="$emit('clearSelection')">
     <div class="tech-scenario-bar" @click.self="$emit('clearSelection')">
       <div class="ts-header-group" @click.self="$emit('clearSelection')">
+        <EaPopover
+          v-model:visible="scenarioSettingsOpen"
+          placement="bottom-start"
+          trigger="click"
+          :width="280"
+          :show-arrow="true"
+          popper-class="header-more-popper"
+        >
+          <template #reference>
+            <EaButton
+              variant="ghost"
+              size="sm"
+              icon-only
+              type="button"
+              class="ts-settings-button toolbar-no-shrink"
+              :title="labels.scenarioSettings"
+              :aria-label="labels.scenarioSettings"
+              :aria-expanded="scenarioSettingsOpen"
+              :data-keyboard-shortcut-scope="scenarioSettingsOpen ? 'overlay' : undefined"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M19 9.03 L21.89 9.72 L21.89 14.28 L19 14.97 A7.6 7.6 0 0 1 18.07 16.57 L18.92 19.42 L14.97 21.71 L12.93 19.54 A7.6 7.6 0 0 1 11.07 19.54 L9.03 21.71 L5.08 19.42 L5.93 16.57 A7.6 7.6 0 0 1 5 14.97 L2.11 14.28 L2.11 9.72 L5 9.03 A7.6 7.6 0 0 1 5.93 7.43 L5.08 4.58 L9.03 2.29 L11.07 4.46 A7.6 7.6 0 0 1 12.93 4.46 L14.97 2.29 L18.92 4.58 L18.07 7.43 A7.6 7.6 0 0 1 19 9.03 Z"
+                />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </EaButton>
+          </template>
+          <div
+            class="header-more-panel header-scenario-settings-panel"
+            data-keyboard-shortcut-scope="overlay"
+          >
+            <section class="header-more-section">
+              <h4 class="header-more-section__title">{{ labels.scenarioSettings }}</h4>
+              <div class="header-more-checklist">
+                <EaButton
+                  type="button"
+                  class="header-more-check-row header-more-tool-row"
+                  :title="t('timeline.header.automaticControlSwitchesHelp')"
+                  :aria-pressed="automaticControlSwitches"
+                  :disabled="configurationReadOnly"
+                  @click="$emit('toggleAutomaticControlSwitches')"
+                >
+                  <svg
+                    class="header-more-tool-row__icon"
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 7h13m-3-3 3 3-3 3M20 17H7m3-3-3 3 3 3" />
+                  </svg>
+                  <span class="header-more-tool-row__label">{{
+                    labels.automaticControlSwitches
+                  }}</span>
+                  <svg
+                    class="header-more-tool-row__check"
+                    viewBox="0 0 16 16"
+                    width="13"
+                    height="13"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline v-if="automaticControlSwitches" points="3,8 6.5,11.5 13,4.5" />
+                  </svg>
+                </EaButton>
+              </div>
+              <div class="header-more-checklist">
+                <EaButton
+                  type="button"
+                  class="header-more-check-row header-more-tool-row"
+                  :title="
+                    multiEnemyRequired
+                      ? t('timeline.header.multiEnemyRequired')
+                      : t('timeline.header.multiEnemy')
+                  "
+                  :aria-pressed="multiEnemyEnabled"
+                  :disabled="configurationReadOnly || multiEnemyRequired"
+                  @click="$emit('toggleMultiEnemy')"
+                >
+                  <svg
+                    class="header-more-tool-row__icon"
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="9" cy="7" r="3" />
+                    <path d="M3 21v-3a6 6 0 0 1 12 0v3M17 4a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v3" />
+                  </svg>
+                  <span class="header-more-tool-row__label">{{
+                    t('timeline.header.multiEnemy')
+                  }}</span>
+                  <svg
+                    class="header-more-tool-row__check"
+                    viewBox="0 0 16 16"
+                    width="13"
+                    height="13"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline v-if="multiEnemyEnabled" points="3,8 6.5,11.5 13,4.5" />
+                  </svg>
+                </EaButton>
+              </div>
+              <div v-if="multiEnemyEnabled" class="header-more-checklist">
+                <EaButton
+                  type="button"
+                  class="header-more-check-row header-more-tool-row"
+                  :title="t('timeline.header.enemyAutomaticDeathHelp')"
+                  :aria-pressed="enemyAutomaticDeath"
+                  :disabled="configurationReadOnly"
+                  @click="$emit('toggleEnemyAutomaticDeath')"
+                >
+                  <svg
+                    class="header-more-tool-row__icon"
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <g fill="currentColor" stroke="none">
+                      <path
+                        d="M7 10.5h10c1-3.5 5-2.5 3 1.5 2 4-2 5-3 1.5H7C6 17 2 16 4 12 2 8 6 7 7 10.5Z"
+                        transform="rotate(45 12 12)"
+                      />
+                      <path
+                        d="M7 10.5h10c1-3.5 5-2.5 3 1.5 2 4-2 5-3 1.5H7C6 17 2 16 4 12 2 8 6 7 7 10.5Z"
+                        transform="rotate(-45 12 12)"
+                      />
+                    </g>
+                  </svg>
+                  <span class="header-more-tool-row__label">{{
+                    t('timeline.header.enemyAutomaticDeath')
+                  }}</span>
+                  <svg
+                    class="header-more-tool-row__check"
+                    viewBox="0 0 16 16"
+                    width="13"
+                    height="13"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline v-if="enemyAutomaticDeath" points="3,8 6.5,11.5 13,4.5" />
+                  </svg>
+                </EaButton>
+              </div>
+              <ComboSkillPrioritySettings
+                :enabled="comboSkillPriorityEnabled"
+                :operators="comboSkillPriorityOperators"
+                :read-only="configurationReadOnly"
+                @toggle="$emit('toggleComboSkillPriority')"
+                @reorder="$emit('setComboSkillPriorityOrder', $event)"
+              />
+              <div class="header-more-mode-row">
+                <span>{{ t('timeline.random.mode') }}</span>
+                <div
+                  class="header-more-segment"
+                  role="group"
+                  :aria-label="t('timeline.random.mode')"
+                >
+                  <EaButton
+                    v-for="mode in ['expected', 'sampled'] as const"
+                    :key="mode"
+                    type="button"
+                    @click="$emit('setRandomMode', mode)"
+                    :disabled="configurationReadOnly"
+                    :pressed="randomMode === mode"
+                  >
+                    {{ t(`timeline.random.${mode}`) }}
+                  </EaButton>
+                </div>
+              </div>
+              <div v-if="randomMode === 'sampled'" class="header-more-pref-row">
+                <span>{{ t('timeline.random.globalSeed') }}</span>
+                <EaNumberInput
+                  class="header-more-number-input"
+                  :min="0"
+                  :max="0xffffffff"
+                  :step="1"
+                  size="sm"
+                  controls-position="right"
+                  :model-value="globalRandomSeed"
+                  @change="commitGlobalRandomSeed"
+                  :disabled="configurationReadOnly"
+                />
+                <EaButton
+                  size="sm"
+                  icon-only
+                  type="button"
+                  :title="t('timeline.random.roll')"
+                  :aria-label="t('timeline.random.roll')"
+                  @click="$emit('rollGlobalRandomSeed')"
+                  :disabled="configurationReadOnly"
+                >
+                  <EaDiceIcon />
+                </EaButton>
+              </div>
+            </section>
+          </div>
+        </EaPopover>
         <EaButton
           variant="ghost"
           size="sm"
@@ -251,10 +507,7 @@ onBeforeUnmount(() => {
           :aria-label="labels.duplicate"
           @click="$emit('duplicate')"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-          </svg>
+          <EaCopyIcon />
         </EaButton>
 
         <EaButton
@@ -365,11 +618,7 @@ onBeforeUnmount(() => {
                 :title="t('timeline.header.loadTooltip')"
                 @click="runProjectAction('open')"
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
+                <EaImportIcon :size="14" />
                 <span>{{ labels.open }}</span>
               </EaButton>
               <EaButton
@@ -391,11 +640,7 @@ onBeforeUnmount(() => {
                 class="header-more-action header-project-action header-project-action--wide"
                 @click="runProjectAction('export')"
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M14 3h7v7" />
-                  <path d="M10 14L21 3" />
-                  <path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7" />
-                </svg>
+                <EaExportIcon :size="14" />
                 <span>{{ labels.export }}</span>
               </EaButton>
             </div>
@@ -424,9 +669,9 @@ onBeforeUnmount(() => {
         v-model:visible="displayMenuOpen"
         placement="bottom-end"
         trigger="click"
-        :width="280"
+        :width="320"
         :show-arrow="true"
-        popper-class="header-more-popper"
+        popper-class="header-more-popper timeline-display-popper"
       >
         <template #reference>
           <EaButton
@@ -445,51 +690,51 @@ onBeforeUnmount(() => {
           </EaButton>
         </template>
         <div class="timeline-display-menu" data-keyboard-shortcut-scope="overlay">
-          <EaButton
-            type="button"
-            class="timeline-display-guide"
-            @click="$emit('toggleCursorGuide')"
-            :pressed="cursorGuideEnabled"
-          >
-            <svg
-              class="timeline-display-guide__icon"
-              viewBox="0 0 24 24"
-              width="22"
-              height="22"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 3v18M3 12h18" />
-              <path d="M7 6H5v2M17 6h2v2M7 18H5v-2M17 18h2v-2" />
-              <circle cx="12" cy="12" r="2.5" />
-            </svg>
-            <span class="timeline-display-guide__content"
-              ><strong>{{ t('display.cursorGuide') }}</strong
-              ><small>Ctrl + G</small></span
-            >
-            <svg
-              class="timeline-display-guide__check"
-              viewBox="0 0 16 16"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              aria-hidden="true"
-            >
-              <rect x="1" y="1" width="14" height="14" rx="2" />
-              <polyline v-if="cursorGuideEnabled" points="3,8 6.5,11.5 13,4.5" />
-            </svg>
-          </EaButton>
           <div class="timeline-display-scroll">
             <section class="timeline-display-section">
               <h4 class="timeline-display-section__title">
                 {{ t('timeline.header.sectionViewBehavior') }}
               </h4>
+              <EaButton
+                type="button"
+                class="timeline-display-guide"
+                @click="$emit('toggleCursorGuide')"
+                :pressed="cursorGuideEnabled"
+              >
+                <svg
+                  class="timeline-display-guide__icon"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 3v18M3 12h18" />
+                  <path d="M7 6H5v2M17 6h2v2M7 18H5v-2M17 18h2v-2" />
+                  <circle cx="12" cy="12" r="2.5" />
+                </svg>
+                <span class="timeline-display-guide__content"
+                  ><strong>{{ t('display.cursorGuide') }}</strong
+                  ><small>Ctrl + G</small></span
+                >
+                <svg
+                  class="timeline-display-guide__check"
+                  viewBox="0 0 16 16"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  aria-hidden="true"
+                >
+                  <rect x="1" y="1" width="14" height="14" rx="2" />
+                  <polyline v-if="cursorGuideEnabled" points="3,8 6.5,11.5 13,4.5" />
+                </svg>
+              </EaButton>
               <div class="header-more-mode-row">
                 <span>{{ t('display.buffLayout') }}</span>
                 <div class="header-more-segment" role="group" :aria-label="t('display.buffLayout')">
@@ -578,7 +823,7 @@ onBeforeUnmount(() => {
         v-model:visible="moreMenuOpen"
         placement="bottom-end"
         trigger="click"
-        :width="280"
+        :width="320"
         :show-arrow="true"
         popper-class="header-more-popper"
       >
@@ -599,15 +844,15 @@ onBeforeUnmount(() => {
             {{ labels.more }}
           </EaButton>
         </template>
-        <div class="header-more-panel" data-keyboard-shortcut-scope="overlay">
+        <div class="header-more-panel header-tools-panel" data-keyboard-shortcut-scope="overlay">
           <section class="header-more-section">
             <h4 class="header-more-section__title">
               {{ t('timeline.header.sectionEditTools') }}
             </h4>
-            <div class="header-more-checklist header-more-checklist--grid">
+            <div class="header-tools-list">
               <EaButton
                 type="button"
-                class="header-more-check-row header-more-tool-row"
+                class="header-more-tool-tile"
                 @click="$emit('toggleBoxSelect')"
                 :pressed="boxSelectEnabled"
               >
@@ -629,23 +874,10 @@ onBeforeUnmount(() => {
                 <span class="header-more-tool-row__label">{{
                   t('timeline.header.editTools.boxSelect')
                 }}</span>
-                <svg
-                  class="header-more-tool-row__check"
-                  viewBox="0 0 16 16"
-                  width="13"
-                  height="13"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  aria-hidden="true"
-                >
-                  <rect x="1" y="1" width="14" height="14" rx="2" />
-                  <polyline v-if="boxSelectEnabled" points="3,8 6.5,11.5 13,4.5" />
-                </svg>
               </EaButton>
               <EaButton
                 type="button"
-                class="header-more-check-row header-more-tool-row"
+                class="header-more-tool-tile"
                 @click="$emit('toggleConnectionTool')"
                 :pressed="connectionToolEnabled"
               >
@@ -668,19 +900,6 @@ onBeforeUnmount(() => {
                 <span class="header-more-tool-row__label">{{
                   t('timeline.header.editTools.connection')
                 }}</span>
-                <svg
-                  class="header-more-tool-row__check"
-                  viewBox="0 0 16 16"
-                  width="13"
-                  height="13"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  aria-hidden="true"
-                >
-                  <rect x="1" y="1" width="14" height="14" rx="2" />
-                  <polyline v-if="connectionToolEnabled" points="3,8 6.5,11.5 13,4.5" />
-                </svg>
               </EaButton>
             </div>
           </section>
@@ -694,103 +913,36 @@ onBeforeUnmount(() => {
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m12 3 9 5v8l-9 5-9-5V8z M3 8l9 5 9-5 M12 13v8" />
               </svg>
-              <span>{{ t('assetWorkspace.title') }}</span>
+              <span>{{ t('assetWorkspace.openWorkspace') }}</span>
             </EaButton>
           </section>
           <section class="header-more-section">
-            <h4 class="header-more-section__title">{{ labels.scenarioSettings }}</h4>
-            <div class="header-more-checklist">
-              <EaButton
-                type="button"
-                class="header-more-check-row header-more-tool-row"
-                :title="t('timeline.header.automaticControlSwitchesHelp')"
-                :aria-pressed="automaticControlSwitches"
-                :disabled="configurationReadOnly"
-                @click="$emit('toggleAutomaticControlSwitches')"
-              >
-                <svg
-                  class="header-more-tool-row__icon"
-                  viewBox="0 0 24 24"
-                  width="18"
-                  height="18"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M4 7h13m-3-3 3 3-3 3M20 17H7m3-3-3 3 3 3" />
-                </svg>
-                <span class="header-more-tool-row__label">{{
-                  labels.automaticControlSwitches
-                }}</span>
-                <svg
-                  class="header-more-tool-row__check"
-                  viewBox="0 0 16 16"
-                  width="13"
-                  height="13"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  aria-hidden="true"
-                >
-                  <rect x="1" y="1" width="14" height="14" rx="2" />
-                  <polyline v-if="automaticControlSwitches" points="3,8 6.5,11.5 13,4.5" />
-                </svg>
-              </EaButton>
-            </div>
-            <ComboSkillPrioritySettings
-              :enabled="comboSkillPriorityEnabled"
-              :operators="comboSkillPriorityOperators"
-              :read-only="configurationReadOnly"
-              @toggle="$emit('toggleComboSkillPriority')"
-              @reorder="$emit('setComboSkillPriorityOrder', $event)"
-            />
-            <div class="header-more-mode-row">
-              <span>{{ t('timeline.random.mode') }}</span>
-              <div class="header-more-segment" role="group" :aria-label="t('timeline.random.mode')">
-                <EaButton
-                  v-for="mode in ['expected', 'sampled'] as const"
-                  :key="mode"
-                  type="button"
-                  @click="$emit('setRandomMode', mode)"
-                  :disabled="configurationReadOnly"
-                  :pressed="randomMode === mode"
-                >
-                  {{ t(`timeline.random.${mode}`) }}
-                </EaButton>
-              </div>
-            </div>
-            <div v-if="randomMode === 'sampled'" class="header-more-pref-row">
-              <span>{{ t('timeline.random.globalSeed') }}</span>
-              <EaNumberInput
-                class="header-more-seed-input"
-                :min="0"
-                :max="0xffffffff"
-                :step="1"
-                size="sm"
-                controls-position="right"
-                :model-value="globalRandomSeed"
-                @change="commitGlobalRandomSeed"
-                :disabled="configurationReadOnly"
-              />
+            <div class="header-tools-heading">
+              <h4 class="header-more-section__title">{{ labels.preferences }}</h4>
               <EaButton
                 size="sm"
                 icon-only
                 type="button"
-                :title="t('timeline.random.roll')"
-                :aria-label="t('timeline.random.roll')"
-                @click="$emit('rollGlobalRandomSeed')"
-                :disabled="configurationReadOnly"
+                class="header-more-action header-more-action--icon"
+                :title="t('timeline.header.shortcutsTooltip')"
+                :aria-label="labels.shortcuts"
+                @click="$emit('shortcuts')"
               >
-                <EaDiceIcon />
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M6 8h2m2 0h2m2 0h2m2 0h1M6 12h2m2 0h2m2 0h2M7 16h10" />
+                </svg>
               </EaButton>
             </div>
-          </section>
-          <section class="header-more-section">
-            <h4 class="header-more-section__title">{{ labels.preferences }}</h4>
-            <div class="header-more-mode-row">
+            <div class="header-more-mode-row header-more-pref-row">
               <span>{{ labels.keycapMode }}</span>
               <div class="header-more-segment" role="group" :aria-label="labels.keycapMode">
                 <EaButton
@@ -805,7 +957,13 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div class="header-more-pref-row">
-              <div class="header-more-locale" :title="t('timeline.header.languageTooltip')">
+              <span class="header-more-pref-label">{{ t('timeline.header.languageLabel') }}</span>
+              <div
+                class="header-more-locale"
+                role="group"
+                :aria-label="t('timeline.header.languageLabel')"
+                :title="t('timeline.header.languageTooltip')"
+              >
                 <EaButton
                   size="sm"
                   v-for="localeId in localeIds"
@@ -819,31 +977,9 @@ onBeforeUnmount(() => {
                   {{ localeLabel(localeId) }}
                 </EaButton>
               </div>
-              <EaButton
-                size="sm"
-                icon-only
-                class="header-more-action header-more-action--icon"
-                type="button"
-                :title="t('timeline.header.shortcutsTooltip')"
-                :aria-label="labels.shortcuts"
-                @click="$emit('shortcuts')"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  aria-hidden="true"
-                >
-                  <rect x="2" y="4" width="20" height="16" rx="2" />
-                  <path d="M6 8h2m2 0h2m2 0h2m2 0h1M6 12h2m2 0h2m2 0h2M7 16h10" />
-                </svg>
-              </EaButton>
             </div>
-            <div class="header-more-pref-row header-more-pref-row--appearance">
-              <span class="header-more-appearance__label">{{ labels.appearance }}</span>
+            <div class="header-more-pref-row">
+              <span class="header-more-pref-label">{{ labels.appearance }}</span>
               <div class="header-more-appearance">
                 <EaButton
                   size="sm"
@@ -936,6 +1072,7 @@ onBeforeUnmount(() => {
 
 .ts-title-wrapper {
   min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   align-items: baseline;
   margin-left: 4px;
@@ -973,10 +1110,16 @@ onBeforeUnmount(() => {
 .ts-title-input {
   --ea-control-border: var(--ea-gold);
 
-  width: 120px;
+  width: 100%;
+  max-width: 120px;
   color: var(--ea-gold);
   font-size: 16px;
   font-weight: 700;
+}
+
+.ts-settings-button.ea-button[aria-expanded='true'] {
+  background: var(--ea-active-fill);
+  color: var(--ea-fg);
 }
 
 .ts-tab-item {
@@ -1045,6 +1188,16 @@ onBeforeUnmount(() => {
   stroke: none;
 }
 
+.ts-header-group .ea-button .ea-copy-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.ts-header-group .ts-settings-button.ea-button svg {
+  width: 18px;
+  height: 18px;
+}
+
 .header-more-panel,
 .timeline-display-menu {
   display: flex;
@@ -1077,6 +1230,68 @@ onBeforeUnmount(() => {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.5px;
+}
+
+.header-tools-panel .header-more-section__title {
+  color: var(--ea-fg-muted);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.header-tools-panel .header-more-section + .header-more-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top-color: var(--ea-border-soft);
+}
+
+.header-tools-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.header-more-tool-tile.ea-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  justify-content: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border: 1px solid var(--ea-border-soft);
+  background: var(--ea-fill-soft);
+  color: var(--ea-fg-secondary);
+  font-size: 11px;
+}
+
+.header-more-tool-tile .header-more-tool-row__label {
+  flex: 0 1 auto;
+  text-align: left;
+}
+
+.header-more-tool-tile.ea-button[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--ea-gold) 45%, var(--ea-border-soft));
+  background: color-mix(in srgb, var(--ea-gold) 5%, var(--ea-fill-soft));
+  color: var(--ea-fg);
+  box-shadow: none;
+}
+
+.header-more-tool-tile.ea-button[aria-pressed='true'] .header-more-tool-row__icon {
+  color: var(--ea-gold);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .header-more-tool-tile.ea-button:hover:not(:disabled) {
+    border-color: var(--ea-border-strong);
+    background: var(--ea-hover-fill);
+  }
+}
+
+.header-tools-heading {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .header-project-actions {
@@ -1115,26 +1330,23 @@ onBeforeUnmount(() => {
   gap: 6px;
 }
 
-.header-more-seed-input {
+.header-more-number-input {
   width: 126px;
 }
 
 .header-more-locale {
   display: inline-grid;
-  grid-template-columns: repeat(3, 1.75rem);
+  grid-template-columns: repeat(2, 28px);
   gap: 4px;
 }
 
-.header-more-pref-row .header-more-action--icon {
-  margin-left: auto;
-}
-
-.header-more-pref-row--appearance {
+.header-tools-panel .header-more-pref-row {
+  min-height: 28px;
   justify-content: space-between;
-  margin-top: 2px;
+  flex-wrap: nowrap;
 }
 
-.header-more-appearance__label {
+.header-more-pref-label {
   color: var(--ea-fg-muted);
   font-size: 11px;
   font-weight: 600;
@@ -1157,7 +1369,14 @@ onBeforeUnmount(() => {
   --ea-control-fg: var(--ea-fg-secondary);
 }
 
-.header-more-appearance__btn.ea-button,
+.header-more-appearance__btn.ea-button {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+}
+
 .header-more-action--icon.ea-button {
   width: 28px;
   min-width: 28px;
@@ -1181,25 +1400,25 @@ onBeforeUnmount(() => {
   --ea-control-pressed-border-hover: var(--ea-border-strong);
   --ea-control-pressed-bg-hover: var(--ea-hover-fill);
   --ea-control-pressed-fg-hover: var(--ea-fg);
-  width: calc(100% - 4px);
-  min-height: 48px;
+  width: 100%;
+  min-height: 32px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 0 4px 10px 0;
-  padding: 8px 10px;
-  border: 1px solid var(--ea-border);
-  border-radius: 4px;
-  background: var(--ea-fill-soft);
+  gap: 8px;
+  margin: 0;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--ea-fg-secondary);
   text-align: left;
   cursor: pointer;
 }
 
 .timeline-display-guide.ea-button[aria-pressed='true'] {
-  border-color: var(--ea-border);
-  background: var(--ea-fill-soft);
+  border-color: transparent;
+  background: transparent;
   color: var(--ea-fg-secondary);
   box-shadow: none;
 }
@@ -1207,7 +1426,7 @@ onBeforeUnmount(() => {
 @media (hover: hover) and (pointer: fine) {
   .timeline-display-guide:hover,
   .timeline-display-guide.ea-button[aria-pressed='true']:hover:not(:disabled) {
-    border-color: var(--ea-border-strong);
+    border-color: transparent;
     background: var(--ea-hover-fill);
     color: var(--ea-fg);
     box-shadow: none;
@@ -1235,8 +1454,8 @@ onBeforeUnmount(() => {
   min-width: 0;
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 8px;
 }
 
 .timeline-display-guide__content strong {
@@ -1245,6 +1464,7 @@ onBeforeUnmount(() => {
 }
 
 .timeline-display-guide__content small {
+  margin-left: auto;
   color: var(--ea-fg-faint);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
@@ -1306,5 +1526,20 @@ onBeforeUnmount(() => {
 <style>
 .header-more-popper {
   padding: 12px;
+}
+
+.timeline-display-popper .timeline-display-menu .header-more-checklist--grid {
+  gap: 2px 6px;
+  border: 0;
+  background: transparent;
+}
+
+.timeline-display-popper
+  .timeline-display-menu
+  .header-more-checklist--grid
+  .header-more-check-row {
+  min-height: 28px;
+  padding: 4px 6px;
+  border: 0;
 }
 </style>

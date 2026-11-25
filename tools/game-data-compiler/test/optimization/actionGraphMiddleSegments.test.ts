@@ -172,7 +172,13 @@ describe('同步直线中间段宏提取', () => {
     { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
     {
       kind: 'launchProjectile',
-      parameters: { inheritActionBlackboard: true, finish: 1, recycleDelaySeconds: 2 },
+      parameters: {
+        projectileId: 'fixture_projectile',
+        schedule: { endFrame: 30, callbacks: [] },
+        inheritActionBlackboard: true,
+
+        recycleDelaySeconds: 2,
+      },
       callbacks: [
         {
           event: 'finish',

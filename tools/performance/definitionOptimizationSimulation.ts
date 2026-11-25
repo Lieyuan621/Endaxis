@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../../src/core/project/level';
 /**
  * 候选模拟对比：使用相同场景与随机输入，只替换候选定义。
  * 由候选审计的 Vite 运行视图加载；数据转换代码不依赖模拟器。
@@ -168,7 +169,7 @@ export function optimizationSimulationScenario(
     binding => includeVariants || binding.origin === 'base',
   );
   scenario.battle.durationFrames = bindings.length * 210 + 600;
-  scenario.enemy.editable.hp = 1_000_000_000;
+  firstScenarioEnemy(scenario).enemy.editable.hp = 1_000_000_000;
   scenario.battle.resourceRules = {
     maxSp: 1000,
     initialSp: 1000,

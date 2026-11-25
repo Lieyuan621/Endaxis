@@ -1,4 +1,5 @@
 import { abilityEntityPresentations } from '../../../config/abilityEntityPresentations.ts';
+import { parseReferenceAwareSkillActionGraphSource } from '../../source/referenceGraph.ts';
 import type { CompiledAbilityEntityTemplateCatalogSource } from '../../compiler/abilities/abilityEntityCatalog.ts';
 import { compileAbilityEntityTemplateCatalogSource } from '../../compiler/abilities/abilityEntityCatalog.ts';
 import { compileAbilityEntityDefinitionSource } from '../../compiler/abilities/abilityEntityDefinition.ts';
@@ -108,6 +109,7 @@ export interface OperatorDefinitionAssemblyInput {
   readonly globalBuffCatalog: unknown;
   readonly skillSettingCatalog: unknown;
   readonly passiveSkills: PassiveSkillCompilationBatchSource;
+  readonly passiveSkillExtensions?: CombatActionProjectionExtensionsSource;
   /** 角色自身始终安装的隐藏被动请求；与养成解锁的请求分开。 */
   readonly basePassiveSkillRequests?: readonly PassiveSkillCompileRequestSource[];
   /** 角色模板原生常驻连携条件；已经过 RID 展开、黑板与事件投影。 */
@@ -223,8 +225,8 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       progression.talentPassiveSkillRequests,
       input.passiveSkills.definitions,
       input.gameplayTagRegistry,
-      input.loadBuff,
       input.predefinedTagQueries,
+      input.passiveSkillExtensions,
     );
   });
   const potentialPassivePlans = input.potentialBindings.map(binding => {
@@ -236,8 +238,8 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       progression.potentialPassiveSkillRequests,
       input.passiveSkills.definitions,
       input.gameplayTagRegistry,
-      input.loadBuff,
       input.predefinedTagQueries,
+      input.passiveSkillExtensions,
     );
   });
   const basePassivePlans = (input.basePassiveSkillRequests ?? []).map(request =>
@@ -246,8 +248,8 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       [request],
       input.passiveSkills.definitions,
       input.gameplayTagRegistry,
-      input.loadBuff,
       input.predefinedTagQueries,
+      input.passiveSkillExtensions,
     ),
   );
   const installedPassiveSkillSourcePaths = new Set([
@@ -259,14 +261,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     ...basePassivePlans.flatMap(plan => plan.definitions.map(definition => definition.key)),
     ...talentPassivePlans.flatMap(plan => plan.definitions.map(definition => definition.key)),
     ...potentialPassivePlans.flatMap(plan => plan.definitions.map(definition => definition.key)),
-    ...talentPassivePlans.flatMap(plan => plan.semanticPassiveKeys),
-    ...potentialPassivePlans.flatMap(plan => plan.semanticPassiveKeys),
   ]);
-  const reactionPassiveInputs = new Map(
-    [...talentPassivePlans, ...potentialPassivePlans, ...basePassivePlans].flatMap(plan => [
-      ...plan.reactionPassiveInputs,
-    ]),
-  );
   const runtimeReplacementSkillKeys = new Set(input.runtimeReplacementSkillKeys ?? []);
   const knownSkillKeys = new Set(skillLibrary.activeSkills.entries.map(skill => skill.key));
   for (const key of runtimeReplacementSkillKeys) {
@@ -284,16 +279,13 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     ),
     installedPassiveSkillSourcePaths,
     passiveSkillKeys,
-    reactionPassiveInputs,
   };
   const talents = input.talentBindings.map((binding, index) => {
     const definition = compileOperatorTalentDefinition(progression, binding, context);
     const plan = talentPassivePlans[index]!;
     const passiveSkills = plan.definitions;
-    const modifiers = [...(definition.modifiers ?? []), ...plan.modifiers];
     return {
       ...definition,
-      ...(modifiers.length ? { modifiers } : {}),
       ...(passiveSkills.length ? { passiveSkills } : {}),
     };
   });
@@ -301,10 +293,8 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     const definition = compileOperatorPotentialDefinition(progression, binding, context);
     const plan = potentialPassivePlans[index]!;
     const passiveSkills = plan.definitions;
-    const modifiers = [...(definition.modifiers ?? []), ...plan.modifiers];
     return {
       ...definition,
-      ...(modifiers.length ? { modifiers } : {}),
       ...(passiveSkills.length ? { passiveSkills } : {}),
     };
   });
@@ -326,9 +316,12 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     addEntityBinding(spawn);
   }
   // 已编译回调也属于技能依赖：事件监听器等叶内子序列可能创建实体。
-  for (const spawn of collectCompiledAbilityEntitySpawns(
-    combatSkills.map(item => item.definition),
-  )) {
+  for (const spawn of collectCompiledAbilityEntitySpawns([
+    ...combatSkills.map(item => item.definition),
+    ...basePassivePlans.flatMap(plan => plan.definitions),
+    ...talentPassivePlans.flatMap(plan => plan.definitions),
+    ...potentialPassivePlans.flatMap(plan => plan.definitions),
+  ])) {
     addEntityBinding(spawn);
   }
   const baseRoots = [
@@ -352,6 +345,26 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
   let roots = baseRoots;
   let preliminaryBuffSources: ReadonlyMap<string, BuffRuntimeSource> = new Map();
   let changed = true;
+  const visitedBuffProjectileSkills = new Set<string>();
+  function bindProjectileCallbackEntities(skillId: string): boolean {
+    if (visitedBuffProjectileSkills.has(skillId)) return false;
+    visitedBuffProjectileSkills.add(skillId);
+    const graph = parseReferenceAwareSkillActionGraphSource(input.loadSkill(skillId), skillId, {});
+    let added = false;
+    for (const timeline of graph.actionGroup.timelineActions) {
+      for (const node of collectNativeActionNodes(timeline.sequence)) {
+        if (!node.metadata.enabled || node.body.kind !== 'leaf') continue;
+        const leaf = node.body.value;
+        if (leaf.family === 'abilityEntity' && leaf.action.kind === 'abilityEntitySpawn')
+          added = addEntityBinding({ ...leaf.action, sourcePath: node.sourcePath }) || added;
+        if (leaf.family === 'projectile')
+          for (const callback of leaf.action.callbacks)
+            if (callback.enabled && callback.skillId)
+              added = bindProjectileCallbackEntities(callback.skillId) || added;
+      }
+    }
+    return added;
+  }
   while (changed) {
     changed = false;
     if (input.loadAbilityEntity !== undefined) {
@@ -447,6 +460,10 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
           item => item.contextKey,
         );
         for (const node of nodes) {
+          if (node.metadata.enabled && node.body.kind === 'leaf' && node.body.value.family === 'projectile')
+            for (const callback of node.body.value.action.callbacks)
+              if (callback.enabled && callback.skillId)
+                changed = bindProjectileCallbackEntities(callback.skillId) || changed;
           if (
             node.metadata.enabled &&
             node.body.kind === 'forEach' &&
@@ -944,7 +961,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
         : { ...definition, skillSlotReplacements: replacements },
       id,
     );
-    if (id.startsWith('buff_chr_')) privateBuffs[id] = keyedDefinition;
+    if (id.startsWith('buff_chr_') || id.startsWith('buff_delay_trigger_chr_')) privateBuffs[id] = keyedDefinition;
     else {
       // 物理/元素反应等系统 Buff 不使用 buff_common_ 前缀，但与角色私有 Buff 一样
       // 由稳定身份决定归属；旧统一链接器也把所有非 buff_chr_* 定义放入共享目录。
@@ -1178,11 +1195,6 @@ export function selectBasicAttackTimelineBlockFrames(
   }[],
 ): void {
   const selectedFrames = new Map<string, number>();
-  const selectedTargets = new Map<string, string>();
-  const selectedWindows = new Map<
-    string,
-    readonly { readonly startFrame: number; readonly endFrame: number }[]
-  >();
   const selectRoute = (skillKeys: readonly string[]): void => {
     if (skillKeys.length < 2) return;
     for (let index = 0; index < skillKeys.length; index += 1) {
@@ -1213,28 +1225,6 @@ export function selectBasicAttackTimelineBlockFrames(
         );
       }
       selectedFrames.set(key, frame);
-      const previousTarget = selectedTargets.get(key);
-      if (previousTarget !== undefined && previousTarget !== nextDefinition.key) {
-        throw new Error(
-          `basic attack '${key}' has conflicting ordered continuations '${previousTarget}' and '${nextDefinition.key}'`,
-        );
-      }
-      selectedTargets.set(key, nextDefinition.key);
-      selectedWindows.set(
-        key,
-        candidates
-          .map(item => ({ startFrame: item.startFrame, endFrame: item.endFrame }))
-          .filter(
-            (item, itemIndex, items) =>
-              items.findIndex(
-                candidate =>
-                  candidate.startFrame === item.startFrame && candidate.endFrame === item.endFrame,
-              ) === itemIndex,
-          )
-          .sort(
-            (left, right) => left.startFrame - right.startFrame || left.endFrame - right.endFrame,
-          ),
-      );
     }
   };
   for (const group of groups) {
@@ -1244,29 +1234,9 @@ export function selectBasicAttackTimelineBlockFrames(
   }
   for (const [key, frame] of selectedFrames) {
     const definition = definitions.get(key)!;
-    const continuationSkillId = selectedTargets.get(key)!;
-    const recoveredAllowedNextSkills = (selectedWindows.get(key) ?? []).map(window => ({
-      ...window,
-      skillIds: [continuationSkillId],
-    }));
-    const existingAllowedNextSkills = definition.inputWindows?.allowedNextSkills ?? [];
     definitions.set(key, {
       ...definition,
       timelineBlockFrames: frame,
-      timelineContinuationSkillId: continuationSkillId,
-      inputWindows: {
-        ...definition.inputWindows,
-        allowedNextSkills: [...existingAllowedNextSkills, ...recoveredAllowedNextSkills].filter(
-          (window, windowIndex, windows) =>
-            windows.findIndex(
-              candidate =>
-                candidate.startFrame === window.startFrame &&
-                candidate.endFrame === window.endFrame &&
-                candidate.skillIds.length === window.skillIds.length &&
-                candidate.skillIds.every((id, idIndex) => id === window.skillIds[idIndex]),
-            ) === windowIndex,
-        ),
-      },
     });
   }
 }

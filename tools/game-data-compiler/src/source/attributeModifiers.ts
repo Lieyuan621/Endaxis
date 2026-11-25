@@ -24,7 +24,7 @@ export const MODIFIER_TYPES = [
 ] as const;
 export type ModifierTypeSource = (typeof MODIFIER_TYPES)[number];
 
-/** Beyond.GEnums.AttributeType 的 1.4.4 数字顺序；索引就是原生枚举值。 */
+/** Beyond.GEnums.AttributeType 的 1.6.3 数字顺序；索引就是原生枚举值。 */
 export const ATTRIBUTE_TYPES = [
   'Level',
   'MaxHp',
@@ -127,6 +127,13 @@ export const ATTRIBUTE_TYPES = [
   'FireResistance',
   'EtherResistance',
   'ComboSkillCooldownDecrease',
+  'PhysicalDamageTakenReduction',
+  'NaturalDamageTakenReduction',
+  'CrystDamageTakenReduction',
+  'PulseDamageTakenReduction',
+  'FireDamageTakenReduction',
+  'EtherDamageTakenReduction',
+  'ComboSkillAtbCostAddition',
   'Enum',
 ] as const;
 export type AttributeTypeSource = (typeof ATTRIBUTE_TYPES)[number];

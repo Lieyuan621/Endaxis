@@ -41,6 +41,28 @@ function createResources() {
 }
 
 describe('CombatResources', () => {
+  it('动态上限参与百分比回能和写入钳制，恢复时保留基础配置', () => {
+    let maximum = 120;
+    const initial = createResources().snapshot();
+    const resources = new CombatResources(initial, { maxUltimateEnergy: () => maximum });
+    resources.changeUltimateEnergy('source', 1, {
+      isPercentValue: true,
+      ignoreGainMultiplier: true,
+    });
+    expect(resources.getUltimateEnergy('source')).toBe(120);
+    expect(resources.snapshot().squad[0]?.maxUltimateEnergy).toBe(120);
+    const restored = new CombatResources(
+      initial,
+      { maxUltimateEnergy: () => maximum },
+      structuredClone(resources.runtimeState),
+    );
+    maximum = 100;
+    expect(restored.getMaxUltimateEnergy('source')).toBe(100);
+    expect(restored.getUltimateEnergy('source')).toBe(120);
+    restored.changeUltimateEnergy('source', 0);
+    expect(restored.getUltimateEnergy('source')).toBe(100);
+    expect(resources.getUltimateEnergy('source')).toBe(120);
+  });
   it('同一切面的支付、回能限制和暂停恢复在各分支独立结算', () => {
     const resources = createResources();
     const handle = resources.requestUltimateEnergyRecoveryRestriction('source', new Set());

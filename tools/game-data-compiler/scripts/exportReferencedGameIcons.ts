@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 import { runConcurrent } from './downloadGameDataSources.ts';
 import { AkedbSnapshot, DEFAULT_CDN, isMissingResource } from './gameDataProviders.ts';
+import { loadLocalImageSources } from './localImageSources.ts';
 import { readGameIconReferences } from '../src/compiler/publication/gameIconReferences.ts';
 import { requireRecord, requireNonEmptyString } from '../src/source/primitives.ts';
 
@@ -33,6 +34,18 @@ const PUBLIC_ICON_SOURCE_ALIASES = new Map<
   string,
   { readonly sourceName: string; readonly preferredPathSegment: string }
 >([
+  [
+    '/icons/icon_attribute_agi.webp',
+    { sourceName: 'icon_attribute_agi.png', preferredPathSegment: '/attributeicon/' },
+  ],
+  [
+    '/icons/icon_attribute_big_agi.webp',
+    { sourceName: 'icon_attribute_big_agi.png', preferredPathSegment: '/attributeicon/' },
+  ],
+  [
+    '/icons/icon_combo_skill_cooldown.webp',
+    { sourceName: 'icon_combo_skill_cooldown.png', preferredPathSegment: '/attributeicon/' },
+  ],
   [
     '/icons/icon_battle_affix_combo.webp',
     { sourceName: 'icon_term_ba_combo.png', preferredPathSegment: '/termicon/' },
@@ -125,12 +138,12 @@ const PUBLIC_ICON_SOURCE_ALIASES = new Map<
 
 export type ExportGameIconsArguments = {
   readonly workers: number;
-  readonly sourceMode: 'hybrid' | 'vfs-only';
+  readonly sourceMode: 'hybrid' | 'local-only';
   readonly cdn: string;
   readonly overwrite: boolean;
   readonly dryRun: boolean;
   readonly prune: boolean;
-  readonly vfsBaseUrl: string;
+  readonly localBase: string;
   readonly gameDataSourceRoot: string;
   readonly outputRoot: string;
   /** 额外扫描尚未发布的候选定义；不改变正式 src 的默认闭包。 */
@@ -140,12 +153,12 @@ export type ExportGameIconsArguments = {
 
 export function parseArguments(argv: readonly string[]): ExportGameIconsArguments {
   let workers = 6;
-  let sourceMode: 'hybrid' | 'vfs-only' = 'hybrid';
+  let sourceMode: 'hybrid' | 'local-only' = 'hybrid';
   let cdn = DEFAULT_CDN;
   let overwrite = false;
   let dryRun = false;
   let prune = false;
-  let vfsBaseUrl = 'http://127.0.0.1:8765';
+  let localBase = 'http://127.0.0.1:8766';
   let gameDataSourceRoot = path.join(PROJECT_ROOT, 'tmp', 'game-data-sources');
   let outputRoot = PUBLIC_ROOT;
   const additionalReferenceRoots: string[] = [];
@@ -158,12 +171,11 @@ export function parseArguments(argv: readonly string[]): ExportGameIconsArgument
     } else if (argument === '--overwrite') overwrite = true;
     else if (argument === '--dry-run') dryRun = true;
     else if (argument === '--prune') prune = true;
-    else if (argument === '--vfs-base-url')
-      vfsBaseUrl = requireArgumentValue(argv, ++index, argument);
+    else if (argument === '--local-base') localBase = requireArgumentValue(argv, ++index, argument);
     else if (argument === '--cdn') cdn = requireArgumentValue(argv, ++index, argument);
     else if (argument === '--source-mode') {
       const mode = requireArgumentValue(argv, ++index, argument);
-      if (mode !== 'hybrid' && mode !== 'vfs-only') throw new Error('invalid --source-mode');
+      if (mode !== 'hybrid' && mode !== 'local-only') throw new Error('invalid --source-mode');
       sourceMode = mode;
     } else if (argument === '--game-data-source-root') {
       gameDataSourceRoot = path.resolve(requireArgumentValue(argv, ++index, argument));
@@ -180,7 +192,7 @@ export function parseArguments(argv: readonly string[]): ExportGameIconsArgument
     overwrite,
     dryRun,
     prune,
-    vfsBaseUrl,
+    localBase,
     gameDataSourceRoot,
     outputRoot,
     additionalReferenceRoots,
@@ -250,6 +262,26 @@ async function collectLiteralReferences(
   return references;
 }
 
+/** 合约期数装饰图由项目维护；发布目录同步时仍需复制到隔离候选。 */
+export async function addProjectContractSeasonDecorations(
+  references: Map<string, Set<string>>,
+  publicRoot = PUBLIC_ROOT,
+): Promise<void> {
+  const directory = path.join(publicRoot, 'contingency_contract');
+  const seasons = await readdir(directory, { withFileTypes: true }).catch(error => {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw error;
+  });
+  for (const season of seasons) {
+    if (!season.isDirectory() || !/^[1-9]\d*$/.test(season.name)) continue;
+    const publicPath = `/contingency_contract/${season.name}/deco_contingency.webp`;
+    if (!(await exists(path.join(directory, season.name, 'deco_contingency.webp')))) continue;
+    const owners = references.get(publicPath) ?? new Set<string>();
+    owners.add('project contract decoration');
+    references.set(publicPath, owners);
+  }
+}
+
 async function findTableDirectory(sourceRoot: string): Promise<string> {
   const entries = await readdir(sourceRoot, { withFileTypes: true });
   const candidates = entries
@@ -317,11 +349,10 @@ export async function addOperatorImpliedReferences(
       });
     };
     const assetCharacterId =
-      assets.portraitCharacterId === undefined
+      assets.avatarCharacterId === undefined
         ? operator.charId
-        : requireNonEmptyString(assets.portraitCharacterId, `${assetPath}.portraitCharacterId`);
+        : requireNonEmptyString(assets.avatarCharacterId, `${assetPath}.avatarCharacterId`);
     add('avatar', `icon_round_${assetCharacterId}`, '/charroundicon/');
-    add('portrait', `icon_${assetCharacterId}`, '/charicon/');
     // Default icons are implicit in definitions; explicit variants share the same naming rule.
     const nativeName = operator.charId.split('_').slice(2).join('_');
     for (const [name, prefix] of [
@@ -407,7 +438,7 @@ export async function addEquipmentConfiguredReferences(
   return result;
 }
 
-function sourcePlanForReference(
+export function sourcePlanForReference(
   publicPath: string,
   configuredOverrides: ReadonlyMap<
     string,
@@ -424,7 +455,14 @@ function sourcePlanForReference(
     };
   }
   const stem = path.posix.basename(publicPath, '.webp');
-  if (stem === 'default' || stem === 'default_icon' || publicPath === '/icons/global_config.webp') {
+  if (
+    stem === 'default' ||
+    stem === 'default_icon' ||
+    publicPath === '/icons/global_config.webp' ||
+    publicPath === '/icons/icon_equipmake.webp' ||
+    /^\/contingency_contract\/deco_contract_[01]\.webp$/.test(publicPath) ||
+    /^\/contingency_contract\/[1-9]\d*\/deco_contingency\.webp$/.test(publicPath)
+  ) {
     return { sourceNames: [], preferredPathSegments: [], localOnly: true };
   }
   if (publicPath.startsWith('/weapons/')) {
@@ -466,6 +504,7 @@ async function buildReferenceClosure(
   arguments_: ExportGameIconsArguments,
 ): Promise<readonly IconReference[]> {
   const references = await collectLiteralReferences(arguments_.additionalReferenceRoots);
+  await addProjectContractSeasonDecorations(references);
   const configuredOverrides = await addOperatorImpliedReferences(
     references,
     arguments_.gameDataSourceRoot,
@@ -484,20 +523,20 @@ async function buildReferenceClosure(
     }));
 }
 
+const localImageInventories = new WeakMap<ExportGameIconsArguments, Promise<Candidate[]>>();
 async function queryCandidates(
-  baseUrl: string,
+  args: ExportGameIconsArguments,
   sourceNames: readonly string[],
 ): Promise<Candidate[]> {
-  const candidates = new Map<number, Candidate>();
-  for (const sourceName of [...new Set(sourceNames)]) {
-    const url = new URL('/api/manifest-assets/by-name', baseUrl);
-    url.searchParams.set('name', sourceName);
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`${url}: ${response.status} ${await response.text()}`);
-    const document = (await response.json()) as { candidates: Candidate[] };
-    for (const candidate of document.candidates) candidates.set(candidate.assetIndex, candidate);
+  let inventory = localImageInventories.get(args);
+  if (!inventory) {
+    inventory = loadLocalImageSources(args.localBase).then(rows =>
+      rows.map((row, assetIndex) => ({ ...row, assetIndex })),
+    );
+    localImageInventories.set(args, inventory);
   }
-  return [...candidates.values()];
+  const names = new Set(sourceNames.map(name => name.toLowerCase()));
+  return (await inventory).filter(row => names.has(path.posix.basename(row.path).toLowerCase()));
 }
 
 function selectCandidate(reference: IconReference, candidates: readonly Candidate[]): Candidate {
@@ -537,7 +576,7 @@ export async function exportReference(
     throw new Error(`unsafe game icon output path: ${reference.publicPath}`);
   }
   if (reference.localOnly) {
-    // 项目占位图不是游戏资源。隔离导出时从正式目录复制，不伪装成 VFS 重导结果。
+    // 隔离导出时复制项目占位图，来源保留为项目资源。
     const localPath = path.resolve(PUBLIC_ROOT, relativePath);
     if (!(await exists(localPath)))
       throw new Error(`${reference.publicPath}: missing project fallback asset`);
@@ -587,9 +626,9 @@ export async function exportReference(
     throw new Error(`${reference.publicPath}: image unavailable in AKEDB`);
   const selected = selectCandidate(
     reference,
-    await queryCandidates(arguments_.vfsBaseUrl, reference.sourceNames),
+    await queryCandidates(arguments_, reference.sourceNames),
   );
-  const identity = { provider: 'vfs-index-browser', version: null, fallbackReason };
+  const identity = { provider: 'ake-data-tool', version: null, fallbackReason };
   if (arguments_.dryRun) {
     return {
       publicPath: reference.publicPath,
@@ -598,7 +637,7 @@ export async function exportReference(
       ...identity,
     };
   }
-  const sourceUrl = new URL(selected.rawUrl, arguments_.vfsBaseUrl);
+  const sourceUrl = new URL(selected.rawUrl, arguments_.localBase);
   const response = await fetch(sourceUrl);
   if (!response.ok) throw new Error(`${sourceUrl}: ${response.status} ${await response.text()}`);
   const png = Buffer.from(await response.arrayBuffer());

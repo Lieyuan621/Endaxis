@@ -1,6 +1,23 @@
 <script setup lang="ts">
+import { publicAssetUrl } from '../../utils/publicAssetUrl';
+import {
+  copyEnemyTrack,
+  instantiateEnemyTrack,
+  type EnemyTrackClipboard,
+} from './interaction/enemyTrackClipboard';
+import TimelineEnemyEffectMarkers from './results/TimelineEnemyEffectMarkers.vue';
+import TimelineDamageHit from './results/TimelineDamageHit.vue';
+import TimelineControlSwitchMarker from './results/TimelineControlSwitchMarker.vue';
+import { firstScenarioEnemy, levelEnemies, mapLevelEnemies } from '../../core/project/level';
 import { roundHitDamage } from './results/hitDamageDisplay';
-import { EaButton, EaDialog, EaNumberInput, EaSelect, type EaSelectValue } from '@/design-system';
+import {
+  EaButton,
+  EaChevronIcon,
+  EaDialog,
+  EaNumberInput,
+  EaSelect,
+  type EaSelectValue,
+} from '@/design-system';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import {
   computed,
@@ -36,10 +53,19 @@ import { ActionExecutionTrace } from '../../core/combat/actions/actionExecutionT
 import type { OperatorPanelContributionReceipt } from '../../core/compiler/resolveOperatorPanel';
 import type { SkillGraphPresentation } from '../../core/project/graphPresentation';
 import { getSkillCastPlacementAnchor } from '../../core/project/skillCastPlacement';
+import { projectPublishedEnemyCurves } from './results/publishedEnemyCurves';
+import {
+  projectControlSwitchMarkers,
+  projectControlSwitchWarnings,
+  controlSwitchDiagnosticKey,
+} from './results/controlSwitchMarkers';
 import { projectCombatHudSnapshot } from '../../core/projection/combatHudSnapshot';
 import { projectDodgeMarkerDiagnostics } from '../../core/projection/dodgeMarkerDiagnostics';
 import { projectDodgeMarkerEffects } from '../../core/projection/dodgeMarkerEffects';
-import { projectEnemyEffectViz } from '../../core/projection/enemyEffectViz';
+import {
+  projectEnemyEffectViz,
+  projectEnemyEffectVizesForTargets,
+} from '../../core/projection/enemyEffectViz';
 import { elementalAttachments } from '../../data/buffs/elementalAttachments';
 import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from '../../data/contingencyContract/contingencyContractAdapter';
 import {
@@ -53,7 +79,6 @@ import {
 } from '../../data/contingencyContract/contingencyContractCatalog';
 import { ALL_GAME_TEXT_FAMILIES, setLocale } from '../../i18n';
 import { useAppearance } from '../appearance/useAppearance';
-import OperatorAvatar from '../components/OperatorAvatar.vue';
 import { ELEMENT_COLORS } from '../gameColors';
 import {
   getConsumableGameDescription,
@@ -87,6 +112,8 @@ import { useAsyncModalBoundary } from '../interaction/useAsyncModalBoundary';
 import { projectOperatorSkillOutcomes } from '../operators/skillOutcomeRegistry';
 import { useRuntimeEnvironment } from '../useRuntimeEnvironment';
 import ContingencyContractPanel from './components/ContingencyContractPanel.vue';
+import { removeScenarioEnemy } from '../../core/project/enemyTargeting';
+import type { StageEnemySelection } from '../../application/editor/enemyEditorCommands';
 import EnemySettingsPanel from './components/EnemySettingsPanel.vue';
 import GlobalResourcePanel from './components/GlobalResourcePanel.vue';
 import TimelineAsyncDialogLoading from './components/TimelineAsyncDialogLoading.vue';
@@ -94,6 +121,7 @@ import TimelineCornerToolbar from './components/TimelineCornerToolbar.vue';
 import TimelineCursorGuide, {
   type TimelineCursorGaugeRow,
 } from './components/TimelineCursorGuide.vue';
+import TimelineDodgeIcon from './interaction/TimelineDodgeIcon.vue';
 import TimelineHeaderToolbar from './components/TimelineHeaderToolbar.vue';
 import type {
   TimelineEditorProps,
@@ -136,6 +164,13 @@ import SimulationPerformanceAudit from './results/SimulationPerformanceAudit.vue
 import TimelineBuffBands from './results/TimelineBuffBands.vue';
 import TimelineComboWindowBands from './results/TimelineComboWindowBands.vue';
 import TimelineEnemyEffects from './results/TimelineEnemyEffects.vue';
+import type { EnemyDocument, EnemyLifecycleDocument } from '../../core/project/schema';
+import {
+  getEnemyRuntimeDefinitionId,
+  getEnemySourceDefinitionId,
+} from '../../core/game-data/enemyDefinition';
+import { isMultiEnemyModeEnabled, requiresMultiEnemyMode } from '../../core/project/multiEnemyMode';
+import TimelineEnemyOverview from './results/TimelineEnemyOverview.vue';
 import TimelineEnemyStatusSections from './results/TimelineEnemyStatusSections.vue';
 import TimelineOperatorPassiveUiBands from './results/TimelineOperatorPassiveUiBands.vue';
 import TimelineOperatorSkillOutcomes from './results/TimelineOperatorSkillOutcomes.vue';
@@ -163,6 +198,16 @@ import {
   resolveSkillGroupPlacementSkills,
   skillPlacementDisplayFrames,
 } from '../../application/editor/skillGroupPlacement';
+import {
+  loadOperatorBuildPresets,
+  saveOperatorBuildPresets,
+} from '../../data/browserOperatorBuildPresets';
+import {
+  readOperatorPresetFile,
+  serializeOperatorPresets,
+  operatorPresetFilename,
+} from '../../application/editor/operatorBuildPresetFile';
+import type { OperatorBuildPreset } from '../../application/editor/operatorBuildPreset';
 import { openProject } from '../../application/openProject';
 import { captureScenarioSimulationGameData } from '../../application/simulation/scenarioSimulationGameData';
 import type { CombatReceiptEntry } from '../../core/combat/receipt/combatReceipt';
@@ -202,8 +247,8 @@ import {
 } from '../../core/projection/buffTimelineViz';
 import { CombatObjectOrigins } from '../../core/projection/combatObjectOrigins';
 import { projectComboWindowTimelineViz } from '../../core/projection/comboWindowTimelineViz';
-import { SINGLE_ENEMY_TARGET_ID } from '../../core/projection/enemyHealthChangePoints';
 import {
+  hasHitOverride,
   projectHitDamageReceipts,
   type HitDamageReceipt,
 } from '../../core/projection/hitEffectProjection';
@@ -244,6 +289,11 @@ import {
   type ExportScenarioScope,
 } from '../../application/editor/projectTransfer';
 import { groupPlacedSkillSequence, placeLibrarySkillGroup } from './interaction/placeSkillGroup';
+import {
+  filterHideUiPlacementReceipts,
+  projectHideUiPlacementIntervals,
+  snapSkillPlacementDelta,
+} from './interaction/hideUiPlacement';
 import {
   findSkillCastGroupInsertion,
   matchingPublishedSkillCastIds,
@@ -292,18 +342,20 @@ import {
   dissolveSkillCastGroups,
   insertSkillCastIntoGroup,
   resolveInitialUltimateEnergyPresetMode,
+  canCollapseTimelinePrep,
   setBattleDurationFrames,
   setBattlePrepFrames,
   setControlSwitchTrack,
   setGlobalConfig,
-  setReactionDamageForcedCritical,
   setScenarioBuffAttributes,
   setSimulationRangeBoundary,
   setSkillCastColor,
   setSkillCastDisabled,
-  setSkillCastForcedCritical,
+  setHitOverride,
+  setHitWeaknessBreakStagger,
   setSkillCastLocked,
   setSkillCastRandomSeed,
+  setSkillCastInitialBlackboard,
   setTimelinePrepExpanded,
   setUnifiedInitialUltimateEnergy,
   swapTimelineTracks,
@@ -327,11 +379,13 @@ import {
 } from './interaction/timelineEditorSelection';
 import {
   collectTimelineItems,
+  minimumEditableTimelineInputFrame,
   moveTimelineItems,
   planTimelineItemMove,
   removeTimelineItems,
   timelineItemKey,
   type TimelineItemKind,
+  type TimelineMovePlan,
 } from './interaction/timelineItems';
 import { handleTimelineEditorShortcut } from './interaction/timelineKeyboardShortcuts';
 import { resolveTimelineLibraryDropFrame } from './interaction/timelineLibraryDropGeometry';
@@ -357,7 +411,11 @@ import {
 import { useTimelineLoadoutEditor } from './library/useTimelineLoadoutEditor';
 import { embedProjectCodeInPng } from './pngProjectData';
 import { createProjectDocumentIdAllocator } from './projectDocumentIdAllocator';
-import { selectProjectExportScope, useProjectFileSession } from './projectFileSession';
+import {
+  downloadProjectJson,
+  selectProjectExportScope,
+  useProjectFileSession,
+} from './projectFileSession';
 import { projectOpenFailureMessage } from './projectOpenFailureMessage';
 import BattleLogPanel from './results/BattleLogPanel.vue';
 import {
@@ -370,8 +428,15 @@ import {
   createCombatObjectNameResolver,
   type CombatObjectOwnName,
 } from './results/combatObjectNames';
-import { layoutEnemyDamageHits } from './results/enemyDamageHitLayout';
-import { isEnemyTimelineBuffVisible, layoutEnemyStatusRows } from './results/enemyStatusRows';
+import {
+  layoutEnemyDamageHits,
+  layoutEnemyOverviewDamageHits,
+} from './results/enemyDamageHitLayout';
+import {
+  isEnemyTimelineBuffVisible,
+  layoutEnemyStatusRows,
+  layoutEnemyOverviewStatuses,
+} from './results/enemyStatusRows';
 import {
   isPhysicalStatusRowBuff,
   projectPhysicalStatusDisplay,
@@ -380,7 +445,9 @@ import {
   capturePublishedEquipmentSources,
   resolvePublishedBuffSource,
   resolvePublishedEquipmentTrait,
+  type PublishedBuffSource,
 } from './results/publishedBuffSource';
+import { capturePublishedOperatorMetadata } from './results/publishedOperatorMetadata';
 import { projectPublishedHitDetail } from './results/publishedHitDetail';
 import {
   projectTimelineHitOccurrences,
@@ -466,6 +533,15 @@ function defineLazyDialog<T extends Component>(load: () => Promise<{ default: T 
 }
 
 const contractSeason = ref(1);
+const contractDecoUrl = computed(() =>
+  publicAssetUrl(`/contingency_contract/${contractSeason.value}/deco_contingency.webp`),
+);
+function useContractDecoFallback(event: Event): void {
+  const image = event.currentTarget;
+  if (!(image instanceof HTMLImageElement)) return;
+  const fallback = publicAssetUrl('/contingency_contract/deco_contract_0.webp');
+  if (image.getAttribute('src') !== fallback) image.src = fallback;
+}
 const contractSeasonOptions = computed(() =>
   contingencyContractSeasons.map(season => ({ value: season.id, label: t(season.nameKey) })),
 );
@@ -527,9 +603,65 @@ const AssetWorkspace = defineLazyDialog(() => import('../asset-workspace/AssetWo
 const GearLoadoutBuildDialog = defineLazyDialog(
   () => import('./library/GearLoadoutBuildDialog.vue'),
 );
+const LoadoutBuildDialog = defineLazyDialog(() => import('./library/LoadoutBuildDialog.vue'));
+type LoadoutBuildTab = 'operator' | 'weapon' | 'gear';
+const showLoadoutBuildDialog = ref(false);
+const activeLoadoutBuildTab = ref<LoadoutBuildTab>('operator');
 const OperatorPanelDialog = defineLazyDialog(() => import('./library/OperatorPanelDialog.vue'));
 const OperatorPresetsDialog = defineLazyDialog(() => import('./library/OperatorPresetsDialog.vue'));
 const showOperatorPresets = ref(false);
+const OperatorPresetTransferDialog = defineLazyDialog(
+  () => import('./library/OperatorPresetTransferDialog.vue'),
+);
+const incomingPresets = shallowRef<OperatorBuildPreset[] | null>(null);
+const exportTarget = ref<'project' | 'presets'>('project');
+const exportOperatorSlug = ref<string>();
+const exportPresetItems = shallowRef<OperatorBuildPreset[]>([]);
+const exportPresetsReady = ref(false);
+const exportPresetsError = ref('');
+async function preparePresetExport(): Promise<void> {
+  exportPresetsReady.value = false;
+  exportPresetsError.value = '';
+  await openAfterGameDataLoad(['operators', 'weapons', 'gears'], () => {
+    try {
+      exportPresetItems.value = loadOperatorBuildPresets();
+      exportPresetsReady.value = true;
+    } catch {
+      exportPresetsError.value = t('operatorPresets.loadError');
+    }
+  });
+  if (!exportPresetsReady.value && !exportPresetsError.value)
+    exportPresetsError.value = t('operatorPresets.loadError');
+}
+function openFileExport(target: 'project' | 'presets' = 'project', operatorSlug?: string): void {
+  exportTarget.value = target;
+  exportOperatorSlug.value = operatorSlug;
+  exportPresetsReady.value = false;
+  exportPresetsError.value = '';
+  showExportDialog.value = true;
+}
+function exportPresetFile(presets: OperatorBuildPreset[]): void {
+  try {
+    downloadProjectJson(serializeOperatorPresets(presets), operatorPresetFilename());
+    showExportDialog.value = false;
+  } catch {
+    ElMessage.error(t('operatorPresets.exportError'));
+  }
+}
+function importPresetSelection(selected: OperatorBuildPreset[]): void {
+  try {
+    const previous = loadOperatorBuildPresets();
+    saveOperatorBuildPresets([
+      ...previous,
+      ...selected.map(p => ({ ...p, id: crypto.randomUUID() })),
+    ]);
+    incomingPresets.value = null;
+    ElMessage.success(t('operatorPresets.imported', { count: selected.length }));
+  } catch {
+    ElMessage.error(t('operatorPresets.saveError'));
+  }
+}
+
 const OperatorBuildDialog = defineLazyDialog(() => import('./library/OperatorBuildDialog.vue'));
 const WeaponBuildDialog = defineLazyDialog(() => import('./library/WeaponBuildDialog.vue'));
 const OperatorSelectionDialog = defineLazyDialog(
@@ -574,6 +706,9 @@ const { t, te, locale } = useI18n({ useScope: 'global' });
 const { appearance, setAppearance } = useAppearance();
 const environment = useRuntimeEnvironment();
 const mobileLayout = computed(() => resolveTimelineLayout(environment.value) === 'mobile');
+watch(mobileLayout, isMobile => {
+  if (isMobile) showLoadoutBuildDialog.value = false;
+});
 const TIMELINE_TRACK_HEADER_WIDTH = 180;
 const TIMELINE_RULER_HEIGHT = 60;
 const TIMELINE_SCROLLBAR_SIZE = 12;
@@ -741,7 +876,7 @@ const onlySkillsSelected = computed(
 const selectedCastId = computed(() => actionSelection.value.primaryId);
 const showDamageAnalysis = ref(false);
 const showExportDialog = ref(false);
-
+const renderAllTimelineEffects = ref(false);
 const showReceiveDialog = ref(false);
 const receivingProjectCode = ref(false);
 const showSmallImageExport = ref(false);
@@ -758,6 +893,7 @@ const projectDefinitionLibrary = shallowRef<ProjectDefinitionLibraryDocument>({
 });
 const operatorDefinitionRevision = ref(0);
 const hoveredCastId = ref<string | null>(null);
+const enemyTrackClipboard = shallowRef<EnemyTrackClipboard | null>(null);
 const timelineClipboard = shallowRef<TimelineActionClipboard | null>(null);
 const projectFileInput = ref<HTMLInputElement | null>(null);
 const cursorFrame = ref(30);
@@ -769,9 +905,27 @@ const timelineScroll = ref<HTMLElement | null>(null);
 const timelineHorizontalScrollbar = ref<HTMLElement | null>(null);
 const timelineVerticalScrollbar = ref<HTMLElement | null>(null);
 const timelineScrollLeft = ref(0);
+// 把逐像素滚动更新留给小组件；父模板只依赖分桶后的可见窗口。
+const timelineScrollState = { left: timelineScrollLeft };
 const timelineScrollTop = ref(0);
 const timelineViewportWidth = ref(1200);
 const timelineViewportHeight = ref(0);
+const EFFECT_WINDOW_STEP_PX = 256;
+const effectViewportBucketPx = computed(
+  () =>
+    Math.floor(
+      Math.max(0, timelineScrollLeft.value - TIMELINE_TRACK_HEADER_WIDTH) / EFFECT_WINDOW_STEP_PX,
+    ) * EFFECT_WINDOW_STEP_PX,
+);
+const visibleEffectLeftPx = computed(() =>
+  Math.max(0, effectViewportBucketPx.value - EFFECT_WINDOW_STEP_PX),
+);
+const visibleEffectRightPx = computed(
+  () => effectViewportBucketPx.value + timelineViewportWidth.value + EFFECT_WINDOW_STEP_PX * 2,
+);
+const visibleEnemyEffectRightPx = computed(
+  () => effectViewportBucketPx.value + timelineViewportWidth.value + EFFECT_WINDOW_STEP_PX,
+);
 const displayedCompactTrackHeights = computed(() =>
   resolveCompactTrackHeights(
     compactTrackHeights.value,
@@ -896,7 +1050,15 @@ const suppliedProject =
     : parseProjectDocument(props.initialProject, { gameDataRepository });
 if (suppliedProject !== undefined && !suppliedProject.ok)
   throw new Error('临时预览轴未通过项目校验');
-const initialProject = suppliedProject?.ok
+function expandShortPrepInProject(project: EndaxisProjectDocument): EndaxisProjectDocument {
+  const scenarios = project.scenarios.map(scenario =>
+    canCollapseTimelinePrep(scenario) ? scenario : setTimelinePrepExpanded(scenario, true),
+  );
+  return scenarios.every((scenario, index) => scenario === project.scenarios[index])
+    ? project
+    : { ...project, scenarios };
+}
+let initialProject = suppliedProject?.ok
   ? structuredClone(suppliedProject.value)
   : createEmptyProject({
       projectId: 'sample',
@@ -908,6 +1070,7 @@ if (props.initialScenario !== undefined) {
   initialProject.activeScenarioId = initialScenario.id;
   initialProject.scenarios = [initialScenario];
 }
+initialProject = expandShortPrepInProject(initialProject);
 const projectSession = new ProjectEditorSession(initialProject);
 projectDefinitionLibrary.value = getProjectDefinitionLibrary(initialProject);
 const scenarioSession = new ActiveScenarioEditorSession(projectSession);
@@ -983,14 +1146,12 @@ onMounted(() => {
   }
 });
 const scenario = shallowRef(scenarioSession.snapshot.scenario);
-/** 折叠准备区只保留展开入口；此时不能把新的时间轴输入写进不可见历史。 */
-const minimumEditableInputFrame = computed(() =>
-  scenario.value.inheritance?.frame !== undefined
-    ? scenario.value.inheritance.frame
-    : scenario.value.editor.prepExpanded
-      ? -scenario.value.battle.prepFrames
-      : 0,
+const hasPrepHistory = computed(
+  () => scenario.value.battle.prepFrames + (scenario.value.inheritance?.frame ?? 0) > 0,
 );
+const canCollapsePrep = computed(() => canCollapseTimelinePrep(scenario.value));
+/** 折叠准备区只保留展开入口；此时不能把新的时间轴输入写进不可见历史。 */
+const minimumEditableInputFrame = computed(() => minimumEditableTimelineInputFrame(scenario.value));
 const timelinePrepPreviewFrames = ref<number | null>(null);
 const displayedTimelinePrepFrames = computed(
   () => timelinePrepPreviewFrames.value ?? scenario.value.battle.prepFrames,
@@ -1060,21 +1221,76 @@ async function receiveProjectCode(code: string): Promise<void> {
   }
 }
 
-async function handleProjectFileChange(event: Event): Promise<void> {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  input.value = '';
-  if (file === undefined) return;
+async function openProjectFile(file: File): Promise<void> {
   try {
     const content =
       /\.png$/i.test(file.name) || file.type === 'image/png'
         ? await projectFileReader.readPng(file)
         : await projectFileReader.read(file);
-    if (content !== null) await openProjectContent(content);
+    if (content !== null) {
+      // 文件入口按显式 kind 分发；普通项目与个人预设继续使用原文件格式。
+      let kind: unknown;
+      try {
+        kind = (JSON.parse(content) as { kind?: unknown })?.kind;
+      } catch {
+        /* 旧项目由项目加载器解释 */
+      }
+      if (kind === 'EndaxisPresets') {
+        let presets: OperatorBuildPreset[];
+        try {
+          presets = readOperatorPresetFile(content);
+        } catch {
+          ElMessage.error(t('operatorPresets.importError'));
+          return;
+        }
+        await openAfterGameDataLoad(['operators', 'weapons', 'gears'], () => {
+          incomingPresets.value = presets;
+        });
+      } else await openProjectContent(content);
+    }
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '打开项目失败');
   }
 }
+
+async function handleProjectFileChange(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (file !== undefined) await openProjectFile(file);
+}
+
+function isExternalFileDrag(event: DragEvent): boolean {
+  return event.dataTransfer?.types.includes('Files') ?? false;
+}
+
+function handleExternalProjectDragOver(event: DragEvent): void {
+  if (!isExternalFileDrag(event)) return;
+  event.preventDefault();
+  if (event.dataTransfer !== null) event.dataTransfer.dropEffect = 'copy';
+}
+
+function handleExternalProjectDrop(event: DragEvent): void {
+  if (!isExternalFileDrag(event)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const file = event.dataTransfer?.files[0];
+  if (file === undefined) return;
+  if (!/\.(json|png)$/i.test(file.name) && !['application/json', 'image/png'].includes(file.type)) {
+    ElMessage.warning(t('fileTransfer.unsupported'));
+    return;
+  }
+  void openProjectFile(file);
+}
+
+onMounted(() => {
+  window.addEventListener('dragover', handleExternalProjectDragOver, true);
+  window.addEventListener('drop', handleExternalProjectDrop, true);
+});
+onScopeDispose(() => {
+  window.removeEventListener('dragover', handleExternalProjectDragOver, true);
+  window.removeEventListener('drop', handleExternalProjectDrop, true);
+});
 
 const legacyConversionConfirmation = shallowRef<{
   content: string;
@@ -1103,6 +1319,11 @@ const pendingProjectImport = shallowRef<{
   project: EndaxisProjectDocument;
   resolve: (selection: ProjectImportSelection | null) => void;
 } | null>(null);
+// 文件面板期间保留预设筛选与草稿；确认面板和项目导入一样使用公共对话框边界。
+const presetManagerSuspended = computed(
+  () =>
+    showExportDialog.value || incomingPresets.value !== null || pendingProjectImport.value !== null,
+);
 function finishProjectImport(selection: ProjectImportSelection | null) {
   const pending = pendingProjectImport.value;
   pendingProjectImport.value = null;
@@ -1247,10 +1468,11 @@ async function acceptOpenedProject(
   convertedLegacyProject = false,
   selection: ProjectImportSelection = { mode: 'replace', scenarioIds: [] },
 ): Promise<void> {
+  const preparedProject = expandShortPrepInProject(project);
   if (selection.mode === 'append') {
     const merged = appendProjectScenarios(
       projectSession.snapshot.project,
-      project,
+      preparedProject,
       selection.scenarioIds,
       () => `scenario:${crypto.randomUUID()}`,
     );
@@ -1260,7 +1482,7 @@ async function acceptOpenedProject(
     projectSession.commit('importScenarios', () => merged);
   } else {
     resetSimulationPublication();
-    projectSession.replaceProject(project);
+    projectSession.replaceProject(preparedProject);
   }
   selectedTrack.value = 0;
   clearTimelineSelection();
@@ -1331,6 +1553,7 @@ async function exportTimelineLongImage(options: {
     background: 'rgba(0, 0, 0, 0.9)',
   });
   try {
+    renderAllTimelineEffects.value = true;
     await nextTick();
     const timelineMain = document.querySelector<HTMLElement>('.timeline-main');
     if (timelineMain === null) throw new Error('timeline workspace missing');
@@ -1352,6 +1575,7 @@ async function exportTimelineLongImage(options: {
       }),
     );
   } finally {
+    renderAllTimelineEffects.value = false;
     loading.close();
   }
 }
@@ -1416,6 +1640,11 @@ const operatorBuffDisplayNameKeys = computed(() => {
   return names;
 });
 
+const buildSourceOperators = computed(() => {
+  operatorDefinitionRevision.value;
+  return capturePublishedOperatorMetadata(scenario.value, editorGameDataRepository);
+});
+
 const {
   operatorDialogTrack,
   weaponDialogTrack,
@@ -1432,6 +1661,7 @@ const {
   selectableGears,
   selectedGearBuild,
   panelResolution,
+  buildAttributes,
   selectedPanel,
   openOperatorDialog: openOperatorDialogNow,
   selectTrack,
@@ -1442,6 +1672,7 @@ const {
   selectWeapon,
   clearWeapon,
   openGearDialog: openGearDialogNow,
+  switchGearDialogSlot,
   selectGear,
   clearGear,
   changeGearRefineTier,
@@ -1512,6 +1743,13 @@ async function openOperatorDialog(trackIndex?: TrackIndex): Promise<void> {
   await openAfterGameDataLoad('operators', () => openOperatorDialogNow(trackIndex));
 }
 
+function openLoadoutBuildDialog(trackIndex: TrackIndex): void {
+  if (configurationReadOnly.value || scenario.value.tracks[trackIndex]?.operator == null) return;
+  selectTrack(trackIndex);
+  activeLoadoutBuildTab.value = 'operator';
+  showLoadoutBuildDialog.value = true;
+}
+
 async function openWeaponDialog(trackIndex?: TrackIndex): Promise<void> {
   await openAfterGameDataLoad('weapons', () => openWeaponDialogNow(trackIndex));
 }
@@ -1519,13 +1757,54 @@ async function openWeaponDialog(trackIndex?: TrackIndex): Promise<void> {
 async function openGearDialog(trackIndex?: TrackIndex, slot?: TrackGearSlot): Promise<void> {
   await openAfterGameDataLoad('gears', () => openGearDialogNow(trackIndex, slot));
 }
+const monitoredEnemyId = ref(firstScenarioEnemy(scenario.value).id);
+const enemyDetailOpen = ref(false);
+const multiEnemyEnabled = computed(() => isMultiEnemyModeEnabled(scenario.value));
+const multiEnemyRequired = computed(() => requiresMultiEnemyMode(scenario.value));
+const showingEnemyOverview = computed(() => multiEnemyEnabled.value && !enemyDetailOpen.value);
+watch(multiEnemyEnabled, () => {
+  enemyDetailOpen.value = false;
+  monitoredEnemyId.value = firstScenarioEnemy(scenario.value).id;
+});
+function openEnemyDetail(id: string): void {
+  monitoredEnemyId.value = id;
+  enemyDetailOpen.value = true;
+}
+function toggleMultiEnemy(): void {
+  if (multiEnemyRequired.value) return;
+  commitScenario('toggleMultiEnemy', current => ({
+    ...current,
+    level:
+      current.level.kind === 'singleEnemy'
+        ? { kind: 'multiEnemies', enemies: [current.level.enemy] }
+        : { kind: 'singleEnemy', enemy: firstScenarioEnemy(current) },
+    ...(isMultiEnemyModeEnabled(current)
+      ? { battle: { ...current.battle, enemyAutomaticDeath: false } }
+      : {}),
+  }));
+}
+watch(activeProjectScenarioId, () => {
+  enemyDetailOpen.value = false;
+  monitoredEnemyId.value = firstScenarioEnemy(scenario.value).id;
+});
+watch(
+  () => levelEnemies(scenario.value.level),
+  enemies => {
+    if (!enemies?.some(enemy => enemy.id === monitoredEnemyId.value)) {
+      monitoredEnemyId.value = firstScenarioEnemy(scenario.value).id;
+    }
+  },
+);
+const monitoredEnemyInstanceId = computed(() => monitoredEnemyId.value);
 const {
   enemies,
   selectedDefinition: selectedEnemyDefinition,
   selectDefinitionEnemy,
+  selectStageEnemies,
   selectCustomEnemy,
   saveEnemyValues,
 } = useTimelineEnemyEditor({
+  enemyInstanceId: monitoredEnemyInstanceId,
   scenario,
   session: scenarioSession,
   gameData: editorGameDataRepository,
@@ -1535,20 +1814,27 @@ const viewModel = computed(() => {
   void operatorDefinitionRevision.value;
   return projectTimelineEditor(scenario.value, editorGameDataRepository);
 });
-const projectedControlSwitches = computed(() => {
-  if (scenario.value.battle.automaticControlSwitches === false) return [];
-  const tracksById = new Map(
-    scenario.value.tracks.flatMap((track, index) =>
-      track === null ? [] : [[track.id, index] as const],
-    ),
-  );
-  return publishedReceiptEntries.value.flatMap(entry => {
-    if (entry.event !== 'AutomaticControlSwitched' || entry.sourceId === undefined) return [];
-    const trackIndex = tracksById.get(entry.sourceId);
-    if (trackIndex === undefined) return [];
-    return [{ id: `automatic-control:${entry.sequence}`, frame: entry.frame, trackIndex }];
-  });
-});
+const projectedControlSwitches = computed(() =>
+  projectControlSwitchMarkers(
+    publishedReceiptEntries.value,
+    scenario.value.tracks,
+    scenario.value.battle.automaticControlSwitches !== false,
+  ),
+);
+const controlSwitchWarnings = computed(() =>
+  projectControlSwitchWarnings(publishedReceiptEntries.value, scenario.value.tracks),
+);
+function controlSwitchWarning(
+  trackIndex: number,
+  frame: number,
+  kind: 'manual' | 'automatic' | 'skill',
+) {
+  return (
+    controlSwitchWarnings.value.get(controlSwitchDiagnosticKey(trackIndex, frame, kind)) ?? []
+  )
+    .map(reason => t(`timeline.skillWarnings.${reason}`))
+    .join('\n');
+}
 const skillCastDefinitionDurations = computed(
   () =>
     new Map(
@@ -1634,7 +1920,7 @@ const mobileEnemyBuffsByCastId = computed(() => {
     ...mobilePhysicalStatusSegments.value,
   ]) {
     if (
-      segment.targetId !== SINGLE_ENEMY_TARGET_ID ||
+      segment.targetId !== monitoredEnemyId.value ||
       (!isPhysicalStatusRowBuff(segment) && !isEnemyTimelineBuffVisible(segment)) ||
       (!attachmentBuffIds.has(segment.buffId) &&
         segment.iconStyleInSquad !== 'SpellAbnormal' &&
@@ -2345,6 +2631,7 @@ async function openAssetWorkspace(): Promise<void> {
 const globalEffectChoices = computed(() => [
   ...gameDataRepository.getGlobalEffects().map(definition => ({
     id: definition.id,
+    icon: resolveImage(definition.buff.presentation?.icon),
     name: globalEffectDisplayName(definition.id) ?? definition.id,
     description:
       definition.descriptionKey !== undefined && te(definition.descriptionKey)
@@ -2354,6 +2641,7 @@ const globalEffectChoices = computed(() => [
   })),
   ...Object.values(projectDefinitionLibrary.value.globalEffects ?? {}).map(template => ({
     id: template.id,
+    icon: resolveImage(template.definition.buff.presentation?.icon),
     name: template.name,
     description: undefined,
     custom: true,
@@ -2613,6 +2901,7 @@ const {
   commit: commitScenario,
   simulate: ensureCurrentSimulation,
   blocked: () => ElMessage.warning(t('timelineGrid.action.locked')),
+  resolveDelta: resolveHideUiMoveDelta,
   dropped: (event, items) => {
     itemClickSequence = null;
     if (items.length === 1 && items[0]!.ref.kind === 'skill')
@@ -2715,15 +3004,55 @@ const mobileOperationHints = computed(() =>
     perfect: operation.perfect === true,
   })),
 );
+const ultimateTimeDilationCastIds = computed(
+  () =>
+    new Set(
+      viewModel.value.tracks.flatMap(track =>
+        track.skillCasts.filter(cast => cast.operationType === 'ultimate').map(cast => cast.id),
+      ),
+    ),
+);
 const publishedTimeDilationBands = computed(() => {
   if (simulationRun.value === null) return [];
-  return projectTimelineTimeDilationBands(publishedReceiptEntries.value, simulationRun.value.frame);
+  return projectTimelineTimeDilationBands(
+    publishedReceiptEntries.value,
+    simulationRun.value.frame,
+    ultimateTimeDilationCastIds.value,
+  );
 });
+const hideUiPlacementReceipts = computed(() =>
+  filterHideUiPlacementReceipts(
+    publishedReceiptEntries.value,
+    compatibleSkillCastReceiptIds.value,
+    scenario.value.inheritance?.frame ?? -Infinity,
+  ),
+);
+function hideUiPlacementIntervals(excluded: ReadonlySet<string> = new Set()) {
+  return projectHideUiPlacementIntervals(hideUiPlacementReceipts.value, excluded);
+}
+function resolveHideUiMoveDelta(plan: TimelineMovePlan, delta: number): number | null {
+  const skills = plan.items.filter(item => item.ref.kind === 'skill');
+  return snapSkillPlacementDelta(
+    skills.flatMap(item => (item.frame === undefined ? [] : [item.frame])),
+    Math.max(plan.minimumDelta, Math.min(plan.maximumDelta, delta)),
+    hideUiPlacementIntervals(new Set(skills.map(item => item.ref.id))),
+    plan.maximumDelta,
+  );
+}
+function moveEditableTimelineItems(
+  document: ScenarioDocument,
+  plan: TimelineMovePlan,
+  delta: number,
+): ScenarioDocument {
+  const snapped = resolveHideUiMoveDelta(plan, delta);
+  return snapped === null ? document : moveTimelineItems(document, plan, snapped).scenario;
+}
 const publishedTimeDilationPreviewFacts = computed(() =>
   prepareTimeDilationDragPreview(
     publishedReceiptEntries.value,
     publishedTimeDilationBands.value,
     simulationRun.value?.frame ?? 0,
+    ultimateTimeDilationCastIds.value,
   ),
 );
 const timeDilationBands = computed(() => {
@@ -2785,6 +3114,14 @@ function timelineFramePx(frame: number, prepFrames = scenario.value.battle.prepF
     scenario.value.inheritance?.frame ?? 0,
   );
 }
+const displayedPrepWidthPx = computed(() =>
+  timelineFramePx(scenario.value.inheritance?.frame ?? 0, displayedTimelinePrepFrames.value),
+);
+const prepToggleLeftPx = computed(
+  () =>
+    TIMELINE_TRACK_HEADER_WIDTH +
+    (displayedPrepWidthPx.value < 18 ? -18 : displayedPrepWidthPx.value - 18),
+);
 function timelineFrameSpanPx(startFrame: number, durationFrames: number): number {
   return Math.max(0, timelineFramePx(startFrame + durationFrames) - timelineFramePx(startFrame));
 }
@@ -2989,9 +3326,8 @@ function alignSelectedCastToTarget(event: PointerEvent, targetCastId: string): b
   });
   const plan = planTimelineItemMove(timelineItems.value, itemSelection.value.selectedIds);
   if (!plan) return true;
-  const changed = commitScenario(
-    'alignTimelineItems',
-    current => moveTimelineItems(current, plan, frame - source.startFrame).scenario,
+  const changed = commitScenario('alignTimelineItems', current =>
+    moveEditableTimelineItems(current, plan, frame - source.startFrame),
   );
   alignmentGuide.value = null;
   if (changed) ElMessage.success(alignmentPresentation(mode).result);
@@ -3043,6 +3379,31 @@ const visibleSkillEndFrames = computed(() => {
   return ends;
 });
 
+const skillCastBlockLayout = computed(() => {
+  const layout = new Map<string, { width: number; stackOrder: number }>();
+  for (const track of viewModel.value.tracks) {
+    const blocks = track.skillCasts.map(cast => {
+      const start = castActualStartFrame(cast.id, cast.startFrame);
+      return {
+        id: cast.id,
+        width: Math.max(
+          2,
+          timelineFrameSpanPx(
+            start,
+            Math.max(0, (visibleSkillEndFrames.value.get(cast.id) ?? cast.startFrame) - start),
+          ),
+        ),
+      };
+    });
+    // 按实际显示宽度从宽到窄叠放，同宽保留原顺序。
+    blocks.sort((a, b) => b.width - a.width);
+    blocks.forEach((block, stackOrder) => {
+      layout.set(block.id, { width: block.width, stackOrder });
+    });
+  }
+  return layout;
+});
+
 function castActualDurationPending(castId: string, definitionDurationFrames: number): boolean {
   return (
     definitionDurationFrames > 0 &&
@@ -3052,17 +3413,17 @@ function castActualDurationPending(castId: string, definitionDurationFrames: num
   );
 }
 
-function timelinePointerActualFrame(pointerPx: number): number {
-  return Math.max(
-    minimumEditableInputFrame.value,
-    timelinePxToFrame(
-      pointerPx,
-      scenario.value.battle.prepFrames,
-      pxPerFrame.value,
-      scenario.value.editor.prepExpanded,
-      scenario.value.inheritance?.frame ?? 0,
-    ),
+function timelinePixelFrame(pointerPx: number): number {
+  return timelinePxToFrame(
+    pointerPx,
+    scenario.value.battle.prepFrames,
+    pxPerFrame.value,
+    scenario.value.editor.prepExpanded,
+    scenario.value.inheritance?.frame ?? 0,
   );
+}
+function timelinePointerActualFrame(pointerPx: number): number {
+  return Math.max(minimumEditableInputFrame.value, timelinePixelFrame(pointerPx));
 }
 function formatGuideNumber(value: number | null): string {
   if (value === null) return '--';
@@ -3120,6 +3481,49 @@ const attachmentBuffIds = new Set(
     .filter(buff => buff.role?.kind === 'elementalAttachment')
     .map(buff => buff.id),
 );
+
+const monitoredEnemy = computed(
+  () =>
+    (
+      levelEnemies(scenario.value.level).find(enemy => enemy.id === monitoredEnemyId.value) ??
+      firstScenarioEnemy(scenario.value)
+    ).enemy,
+);
+const monitoredEnemyName = computed(() => {
+  const instance =
+    levelEnemies(scenario.value.level).find(enemy => enemy.id === monitoredEnemyId.value) ??
+    firstScenarioEnemy(scenario.value);
+  const source = instance.enemy.source;
+  return (
+    instance.name ||
+    (source.kind === 'custom'
+      ? t('resourceMonitor.enemy.custom')
+      : enemyName(source.enemyId.replaceAll('_', '-')))
+  );
+});
+const monitoredEnemyIndex = computed(
+  () =>
+    levelEnemies(scenario.value.level).findIndex(enemy => enemy.id === monitoredEnemyId.value) + 1,
+);
+const monitoredCurves = computed(() =>
+  projectPublishedEnemyCurves(publishedSimulation.value, monitoredEnemyId.value),
+);
+const publishedEnemyTargetSelection = computed(() => {
+  const published = publishedSimulation.value;
+  return {
+    order: published ? levelEnemies(published.scenario.level).map(enemy => enemy.id) : [],
+    switches: published?.scenario.battle.enemyTargetSwitches ?? [],
+  };
+});
+const publishedMonitoredEnemy = computed(() => {
+  const published = publishedSimulation.value;
+  return published === null
+    ? undefined
+    : levelEnemies(published.scenario.level).find(enemy => enemy.id === monitoredEnemyId.value)
+        ?.enemy;
+});
+const monitoredHealthCurve = computed(() => monitoredCurves.value?.health ?? null);
+const monitoredPoiseCurve = computed(() => monitoredCurves.value?.poise ?? null);
 const enemyEffectViz = computed(() => {
   const current = simulationRun.value;
   if (current === null) {
@@ -3135,6 +3539,7 @@ const enemyEffectViz = computed(() => {
         Object.entries(operator.abilityEntityDamageBuffs ?? {}),
       ),
     ),
+    monitoredEnemyId.value,
   );
 });
 
@@ -3142,18 +3547,24 @@ const poiseBrokenSegments = computed(() => {
   const current = simulationRun.value;
   return current === null
     ? []
-    : projectPoiseBrokenSegments(publishedReceiptEntries.value, current.frame);
+    : projectPoiseBrokenSegments(
+        publishedReceiptEntries.value,
+        current.frame,
+        monitoredEnemyId.value,
+      );
 });
 const poiseKnotSegments = computed(() => {
   const current = simulationRun.value;
   if (current === null) return [];
-  const stagger = scenario.value.enemy.editable.stagger;
+  const stagger = publishedMonitoredEnemy.value?.editable.stagger;
+  if (!stagger) return [];
   return projectPoiseKnotSegments(
     publishedReceiptEntries.value,
     stagger.maximum,
     stagger.knotThresholds,
     stagger.knotBreakDurationFrames,
     current.frame,
+    monitoredEnemyId.value,
   );
 });
 
@@ -3165,24 +3576,37 @@ const buffTimelineSegments = computed(() => {
     : projectBuffTimelineViz(publishedReceiptEntries.value, current.frame);
 });
 const physicalStatusSegments = computed(() =>
-  projectPhysicalStatusDisplay(publishedReceiptEntries.value, simulationRun.value?.frame ?? 0, {
-    enemySuperArmor: scenario.value.enemy.editable.superArmor,
-  }).filter(segment => segment.targetId === SINGLE_ENEMY_TARGET_ID),
+  (publishedSimulation.value ? levelEnemies(publishedSimulation.value.scenario.level) : []).flatMap(
+    ({ id, enemy }) =>
+      projectPhysicalStatusDisplay(publishedReceiptEntries.value, simulationRun.value?.frame ?? 0, {
+        enemySuperArmor: enemy.editable.superArmor,
+      }).filter(segment => segment.targetId === id),
+  ),
 );
 const mobilePhysicalStatusSegments = computed(() => {
-  const physical = physicalStatusSegments.value;
+  const physical = physicalStatusSegments.value.filter(
+    segment => segment.targetId === monitoredEnemyId.value,
+  );
   const hiddenIcons = layoutEnemyStatusRows(physical, [], attachmentBuffIds).hiddenIcons;
   return physical.filter(segment => !hiddenIcons.has(segment));
 });
 
 /** 光标快照只消费已经生成的生命周期段，不回查或重算 Buff 运行时。 */
+// HUD 和专属状态只解释已发布的模拟。拖动草稿尚未产生新回执时，
+// 不让当前轴的 viewModel 变化反复重扫整份旧回执。
+const publishedOperatorTracks = computed(() => {
+  void operatorDefinitionRevision.value;
+  return (publishedSimulation.value?.scenario.tracks ?? []).flatMap(track =>
+    track?.operator ? [{ id: track.id, slug: track.operator.operatorSlug }] : [],
+  );
+});
+
 const combatHudInitialSkillSlots = computed(() =>
-  viewModel.value.tracks.flatMap(track => {
-    if (track.operatorInstanceId === null || track.operatorSlug === null) return [];
-    const definition = editorGameDataRepository.getOperator(track.operatorSlug);
+  publishedOperatorTracks.value.flatMap(track => {
+    const definition = editorGameDataRepository.getOperator(track.slug);
     return [
       {
-        operatorId: track.operatorInstanceId,
+        operatorId: track.id,
         slots: (definition?.skillSlots ?? []).map(slot => ({
           skillSlotKey: slot.key,
           currentSkillKey: slot.baseSkillKey,
@@ -3193,18 +3617,17 @@ const combatHudInitialSkillSlots = computed(() =>
 );
 
 const operatorStatusTimelineSources = computed(() =>
-  viewModel.value.tracks.flatMap(track => {
-    if (track.operatorInstanceId === null || track.operatorSlug === null) return [];
-    const operator = editorGameDataRepository.getOperator(track.operatorSlug);
+  publishedOperatorTracks.value.flatMap(track => {
+    const operator = editorGameDataRepository.getOperator(track.slug);
     const definition = operator?.passiveUi;
     return [
-      ...(definition === undefined ? [] : [{ operatorId: track.operatorInstanceId, definition }]),
+      ...(definition === undefined ? [] : [{ operatorId: track.id, definition }]),
       ...Object.entries(operator?.abilityEntityDefinitions ?? {}).flatMap(
         ([abilityEntityId, entity]) =>
           entity.presentation && !entity.presentation.damageDisplayBuffId
             ? [
                 {
-                  operatorId: track.operatorInstanceId!,
+                  operatorId: track.id,
                   definition: {
                     kind: 'abilityEntityCount' as const,
                     abilityEntityId,
@@ -3220,10 +3643,9 @@ const operatorStatusTimelineSources = computed(() =>
 
 /** 专属 UI 不只采样光标快照；非零状态还要保留完整生命周期供轨道展示。 */
 const combatHudOperatorPassiveUis = computed(() =>
-  viewModel.value.tracks.flatMap(track => {
-    if (track.operatorInstanceId === null || track.operatorSlug === null) return [];
-    const definition = editorGameDataRepository.getOperator(track.operatorSlug)?.passiveUi;
-    return definition ? [{ operatorId: track.operatorInstanceId, definition }] : [];
+  publishedOperatorTracks.value.flatMap(track => {
+    const definition = editorGameDataRepository.getOperator(track.slug)?.passiveUi;
+    return definition ? [{ operatorId: track.id, definition }] : [];
   }),
 );
 const operatorPassiveUiTimelineSegments = computed(() => {
@@ -3236,6 +3658,27 @@ const operatorPassiveUiTimelineSegments = computed(() => {
         operatorStatusTimelineSources.value,
       );
 });
+const enemyAbilityEntitySegments = computed(() =>
+  operatorPassiveUiTimelineSegments.value.filter(
+    segment => segment.kind === 'abilityEntityCount' && segment.placement === 'enemy',
+  ),
+);
+const enemyEffectLabels = computed(() => ({ burst: t('timeline.effect.burst') }));
+const enemyEffectHudLabels = computed(() => ({
+  status: t('resourceMonitor.modules.enemyStatus'),
+  compactStatus: t('resourceMonitor.modules.enemyStatusCompact'),
+  hp: t('timeline.simGuide.enemyHp'),
+  poise: t('timeline.simGuide.poise'),
+  recovering: t('timeline.simGuide.poiseRecovering'),
+  brokenEndWindow: t('timeline.simGuide.poiseBrokenEndWindow'),
+}));
+const enemyMonitorSectionLabels = computed(() => ({
+  affliction: showingEnemyOverview.value
+    ? t('timeline.enemies.title')
+    : t('resourceMonitor.modules.enemyStatus'),
+  poise: t('resourceMonitor.modules.stagger'),
+  sp: t('resourceMonitor.modules.sp'),
+}));
 
 /** 旧版底部摘要固定取最后一次敌人受伤时刻，而不是跟随隐藏的编辑光标。 */
 const collapsedMonitorSectionCount = ref(0);
@@ -3243,18 +3686,20 @@ const enemyLastDamageFrame = computed(() => {
   const current = simulationRun.value;
   if (current === null) return null;
   return (
-    current.enemyHealthCurve.points.filter(point => point.sequence !== null).at(-1)?.frame ?? null
+    monitoredHealthCurve.value?.points.filter(point => point.sequence !== null).at(-1)?.frame ??
+    null
   );
 });
 
 const combatHudSnapshot = computed(() => {
   const current = simulationRun.value;
-  if (current === null) return null;
+  if (current === null || !monitoredHealthCurve.value || !monitoredPoiseCurve.value) return null;
   return projectCombatHudSnapshot({
     frame: enemyLastDamageFrame.value ?? 0,
     endFrame: current.frame,
-    enemyHealthCurve: current.enemyHealthCurve,
-    poiseCurve: current.poiseCurve,
+    enemyTargetId: monitoredEnemyId.value,
+    enemyHealthCurve: monitoredHealthCurve.value,
+    poiseCurve: monitoredPoiseCurve.value,
     resourceCurves: current.resourceCurves,
     receiptEntries: publishedReceiptEntries.value,
     operatorSkillSlots: combatHudInitialSkillSlots.value,
@@ -3342,7 +3787,7 @@ const positionedBuffsByTarget = computed(() => {
   const grouped = new Map<string, BuffTimelineSegment[]>();
   for (const segment of buffTimelineSegments.value) {
     if (
-      segment.targetId === SINGLE_ENEMY_TARGET_ID &&
+      runtimeTargetFromEntityId(segment.targetId).kind === 'enemy' &&
       (isPhysicalStatusRowBuff(segment) || !isEnemyTimelineBuffVisible(segment))
     )
       continue;
@@ -3351,17 +3796,17 @@ const positionedBuffsByTarget = computed(() => {
     grouped.set(segment.targetId, list);
   }
   const physical = physicalStatusSegments.value;
-  if (physical.length && !grouped.has(SINGLE_ENEMY_TARGET_ID))
-    grouped.set(SINGLE_ENEMY_TARGET_ID, []);
+  for (const segment of physical)
+    if (!grouped.has(segment.targetId)) grouped.set(segment.targetId, []);
   const positioned = new Map<string, PositionedDisplayBuffTimelineSegment[]>();
   for (const [targetId, segments] of grouped) {
     const displaySegments = [
       ...mergeOverlappingBuffTimelineSegments(segments),
-      ...(targetId === SINGLE_ENEMY_TARGET_ID ? physical : []),
+      ...physical.filter(segment => segment.targetId === targetId),
     ];
     positioned.set(
       targetId,
-      targetId === SINGLE_ENEMY_TARGET_ID
+      runtimeTargetFromEntityId(targetId).kind === 'enemy'
         ? [...layoutBuffTimelineSegments(displaySegments)]
         : [
             ...layoutBuffTimelineSegments(
@@ -3375,6 +3820,85 @@ const positionedBuffsByTarget = computed(() => {
   }
   return positioned;
 });
+
+const emptyPositionedBuffSegments: readonly PositionedDisplayBuffTimelineSegment[] = Object.freeze(
+  [],
+);
+const positionedBuffsByTargetAndPlacement = computed(() => {
+  const partitions = new Map<
+    string,
+    Record<BuffTimelineSegment['placement'], readonly PositionedDisplayBuffTimelineSegment[]>
+  >();
+  for (const [targetId, segments] of positionedBuffsByTarget.value) {
+    const upper: PositionedDisplayBuffTimelineSegment[] = [];
+    const lower: PositionedDisplayBuffTimelineSegment[] = [];
+    for (const segment of segments) (segment.placement === 'upper' ? upper : lower).push(segment);
+    partitions.set(targetId, { upper, lower });
+  }
+  return partitions;
+});
+
+const enemyOverviewEffects = computed(() =>
+  projectEnemyEffectVizesForTargets(
+    publishedReceiptEntries.value,
+    simulationRun.value?.frame ?? 0,
+    new Map(
+      [...publishedOperators.value.values()].flatMap(operator =>
+        Object.entries(operator.abilityEntityDamageBuffs ?? {}),
+      ),
+    ),
+    enemyOverviewRows.value.map(enemy => enemy.id),
+  ),
+);
+
+const enemyOverviewStatuses = computed(
+  () =>
+    new Map(
+      enemyOverviewRows.value.map(enemy => [
+        enemy.id,
+        layoutEnemyOverviewStatuses(
+          buffSegmentsForTarget(enemy.id),
+          attachmentBuffIds,
+          enemyOverviewEffects.value.get(enemy.id)?.markers ?? [],
+        ),
+      ]),
+    ),
+);
+
+const enemyOverviewDamageHits = computed(
+  () =>
+    new Map(
+      enemyOverviewRows.value.map(enemy => {
+        const viz = enemyOverviewEffects.value.get(enemy.id)!;
+        const entityIds = new Set(
+          operatorPassiveUiTimelineSegments.value.flatMap(segment =>
+            segment.kind === 'abilityEntityCount' && segment.placement === 'enemy'
+              ? segment.entities.map(entity => entity.instanceId)
+              : [],
+          ),
+        );
+        const entries = new Map((viz.damageHits ?? []).map(entry => [entry.sequence, entry]));
+        for (const entry of publishedReceiptEntries.value) {
+          if (
+            entry.event === 'DamageApplied' &&
+            entry.targetId === enemy.id &&
+            entry.producedBy?.kind === 'abilityEntity' &&
+            entityIds.has(entry.producedBy.instanceId)
+          )
+            entries.set(entry.sequence, entry);
+        }
+        const hits = layoutEnemyOverviewDamageHits(
+          [...entries.values()],
+          enemyOverviewStatuses.value.get(enemy.id)?.segments ?? [],
+          attachmentBuffIds,
+          viz.damageBuffs ?? [],
+          viz.damageDisplayOwners ?? {},
+          enemyOverviewStatuses.value.get(enemy.id)?.markerPositions[0]?.row,
+        );
+        return [enemy.id, hits] as const;
+      }),
+    ),
+);
 
 const positionedOperatorPassiveUisByTarget = computed(() => {
   const grouped = new Map<string, OperatorPassiveUiTimelineSegment[]>();
@@ -3404,11 +3928,11 @@ function buffSegmentsForTarget(
   targetId: string | null,
   placement?: BuffTimelineSegment['placement'],
 ): readonly PositionedDisplayBuffTimelineSegment[] {
-  if (targetId === null) return [];
-  const segments = positionedBuffsByTarget.value.get(targetId) ?? [];
+  if (targetId === null) return emptyPositionedBuffSegments;
   return placement === undefined
-    ? segments
-    : segments.filter(segment => segment.placement === placement);
+    ? (positionedBuffsByTarget.value.get(targetId) ?? emptyPositionedBuffSegments)
+    : (positionedBuffsByTargetAndPlacement.value.get(targetId)?.[placement] ??
+        emptyPositionedBuffSegments);
 }
 
 function operatorPassiveUiSegmentsForTarget(
@@ -3584,17 +4108,22 @@ function hitMarkerTitle(label: TimelineHitEffectLabel | undefined): string {
   const parts: string[] = [];
   for (const damage of label.damage) {
     parts.push(
-      `${roundHitDamage(damage.value)}${publishedRandomMode.value === 'sampled' && damage.isCritical ? '!' : ''} ${damageElementLabel(damage.damageType)}`,
+      `${publishedEntityDisplayName(damage.targetId)}: ${roundHitDamage(damage.value)}${publishedRandomMode.value === 'sampled' && damage.isCritical ? '!' : ''} ${damageElementLabel(damage.damageType)}`,
     );
   }
   for (const infliction of label.infliction) {
-    parts.push(`${damageElementLabel(infliction.element)}${t('timeline.hitInflictionSuffix')}`);
+    parts.push(
+      `${publishedEntityDisplayName(infliction.targetId)}: ${damageElementLabel(infliction.element)}${t('timeline.hitInflictionSuffix')}`,
+    );
   }
-  return parts.join(' · ');
+  return parts.join('\n');
 }
 
+const hitTargetFilter = computed(() =>
+  showingEnemyOverview.value ? undefined : monitoredEnemyId.value,
+);
 const publishedHitOccurrences = computed(() =>
-  projectTimelineHitOccurrences(publishedReceiptEntries.value),
+  projectTimelineHitOccurrences(publishedReceiptEntries.value, undefined, hitTargetFilter.value),
 );
 const hitOccurrences = computed(
   () =>
@@ -3607,7 +4136,11 @@ const hitOccurrences = computed(
 const mobileDamageReceiptsByCast = computed(() => {
   const byCast = new Map<string, HitDamageReceipt[]>();
   for (const receipt of projectHitDamageReceipts(publishedReceiptEntries.value)) {
-    if (receipt.castId === undefined || !compatibleSkillCastReceiptIds.value.has(receipt.castId))
+    if (
+      (hitTargetFilter.value !== undefined && receipt.targetId !== hitTargetFilter.value) ||
+      receipt.castId === undefined ||
+      !compatibleSkillCastReceiptIds.value.has(receipt.castId)
+    )
       continue;
     const entries = byCast.get(receipt.castId) ?? [];
     entries.push(receipt);
@@ -3636,7 +4169,7 @@ function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMark
         triggered: hit.triggered,
         stackIndex: hit.stackIndex,
         linkBuffed: hit.linkBuffed,
-        forcedCritical: cast.simulationInputs?.criticalOverrides?.[hit.stepKey] === true,
+        hasOverride: hit.hasOverride,
         title: hitMarkerTitle(hit.label),
       }));
   }
@@ -3651,7 +4184,6 @@ function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMark
         timelineFramePx(
           hitActualFrames.value.get(marker.hitId) ?? publishedStartFrame + marker.frameOffset,
         ) - timelineFramePx(publishedStartFrame),
-      forcedCritical: cast.simulationInputs?.criticalOverrides?.[marker.stepKey] === true,
     }));
 }
 
@@ -3702,15 +4234,23 @@ const hitDetailTarget = ref<{
 } | null>(null);
 const enemyDamageDetailSequence = useSimulationReceiptSelection(simulationRun);
 const publishedHitDetail = computed(() =>
-  projectPublishedHitDetail(publishedSimulation.value, hitDetailTarget.value),
+  projectPublishedHitDetail(
+    publishedSimulation.value,
+    hitDetailTarget.value,
+    hitTargetFilter.value,
+  ),
 );
 const enemyDamageDetailEntries = computed(() => {
   if (enemyDamageDetailSequence.value === null) return [];
+  const overviewGroup = [...enemyOverviewDamageHits.value.values()]
+    .flat()
+    .find(hit => hit.group.some(entry => entry.sequence === enemyDamageDetailSequence.value));
+  if (showingEnemyOverview.value && overviewGroup) return overviewGroup.group;
   const entries = publishedReceiptEntries.value;
   return (
     layoutEnemyDamageHits(
       entries,
-      buffSegmentsForTarget('enemy'),
+      buffSegmentsForTarget(monitoredEnemyId.value),
       enemyEffectViz.value.markers,
       attachmentBuffIds,
       enemyEffectViz.value.damageBuffs,
@@ -3734,59 +4274,41 @@ function damageSourceDescription(entry: CombatReceiptEntry) {
   const slug = track?.operator?.operatorSlug;
   return [slug ? publishedOperatorName(slug) : entry.sourceId, name].filter(Boolean).join(' · ');
 }
-const hitDetail = computed(() => {
-  const entry = selectedHitDetailEntry.value;
-  if (entry?.data?.canCritical === false) return null;
-  const castId = entry?.data?.castId;
-  const stepKey = entry?.data?.stepKey;
-  if (typeof castId !== 'string' || typeof stepKey !== 'string') return null;
-  for (const [index, track] of scenario.value.tracks.entries()) {
-    const cast = track?.skillCasts.find(candidate => candidate.id === castId);
-    if (cast) return { cast, stepKey, trackIndex: index as TrackIndex };
-  }
-  return null;
-});
 const hitDetailEntries = computed(() =>
   hitDetailTarget.value !== null
     ? (publishedHitDetail.value?.entries ?? [])
     : enemyDamageDetailEntries.value,
 );
-const selectedHitDetailSequence = ref<number>();
-const selectedHitDetailEntry = computed(
-  () =>
-    hitDetailEntries.value.find(entry => entry.sequence === selectedHitDetailSequence.value) ??
-    hitDetailEntries.value[0],
-);
-const reactionCriticalKeys = computed(() =>
-  (selectedHitDetailEntry.value ? [selectedHitDetailEntry.value] : []).flatMap(entry =>
-    typeof entry.data?.reactionCriticalKey === 'string' && entry.data.canCritical !== false
-      ? [entry.data.reactionCriticalKey]
-      : [],
-  ),
-);
-const hitDetailResultForceCritical = computed(() =>
-  reactionCriticalKeys.value.length > 0
-    ? reactionCriticalKeys.value.every(
-        key => publishedSimulation.value?.scenario.battle.reactionCriticalOverrides?.[key] === true,
-      )
-    : (publishedSimulation.value?.scenario.tracks.some(track =>
-        track?.skillCasts.some(
-          cast =>
-            cast.id === selectedHitDetailEntry.value?.data?.castId &&
-            cast.simulationInputs?.criticalOverrides?.[
-              String(selectedHitDetailEntry.value?.data?.stepKey)
-            ] === true,
-        ),
-      ) ?? false),
-);
-const hitDetailForceCritical = computed(() => {
-  if (reactionCriticalKeys.value.length > 0)
-    return reactionCriticalKeys.value.every(
-      key => scenario.value.battle.reactionCriticalOverrides?.[key] === true,
-    );
-  const detail = hitDetail.value;
-  return detail?.cast.simulationInputs?.criticalOverrides?.[detail.stepKey] === true;
-});
+function hitWeaknessBreakOptions(targetId: string) {
+  const level = publishedSimulation.value?.scenario.level;
+  const enemy = level && levelEnemies(level).find(instance => instance.id === targetId)?.enemy;
+  const definitionId = enemy && getEnemyRuntimeDefinitionId(enemy);
+  return definitionId
+    ? (editorGameDataRepository.getEnemy(definitionId)?.weaknessBreakOptions ?? [])
+    : [];
+}
+async function updateHitMark(
+  field: 'hitCriticalOverrides' | 'hitWeaknessBreaks',
+  key: string,
+  value: boolean | number | undefined,
+) {
+  const entry = hitDetailEntries.value.find(hit => hit.data?.hitIdentity === key);
+  const permission = field === 'hitCriticalOverrides' ? 'canCritical' : 'canBreakWeakness';
+  if (
+    publishedSimulation.value?.scenario.id !== scenario.value.id ||
+    entry?.data?.[permission] !== true
+  )
+    return;
+  if (
+    commitScenario(field, current =>
+      typeof value === 'number'
+        ? setHitWeaknessBreakStagger(current, key, value)
+        : setHitOverride(current, field, key, value),
+    )
+  ) {
+    await nextTick(simulateNow);
+  }
+}
 function hitDetailContributionSourceLabel(
   entry: Pick<OperatorPanelContributionReceipt, 'source'>,
   sequence?: number,
@@ -3812,21 +4334,6 @@ function hitDetailContributionSourceLabel(
   });
 }
 
-function toggleHitDetailForceCritical(forced: boolean): void {
-  if (reactionCriticalKeys.value.length > 0) {
-    const changed = commitScenario('setReactionDamageForcedCritical', current =>
-      setReactionDamageForcedCritical(current, reactionCriticalKeys.value, forced),
-    );
-    if (changed) void simulateNow();
-    return;
-  }
-  const detail = hitDetail.value;
-  if (detail === null) return;
-  const changed = commitScenario('setSkillCastForcedCritical', current =>
-    setSkillCastForcedCritical(current, detail.trackIndex, detail.cast.id, detail.stepKey, forced),
-  );
-  if (changed) void simulateNow();
-}
 function formatGuideFrame(frame: number): string {
   const seconds = Math.floor(frame / PROJECT_FPS);
   return `${seconds}s${frame % PROJECT_FPS}f`;
@@ -3840,13 +4347,17 @@ const cursorGuideMetrics = computed(() => {
   const gauges: TimelineCursorGaugeRow[] = [];
   const current = simulationRun.value;
   const snapshot =
-    current === null || frame > current.frame
+    current === null ||
+    frame > current.frame ||
+    !monitoredHealthCurve.value ||
+    !monitoredPoiseCurve.value
       ? null
       : projectCombatHudSnapshot({
           frame,
           endFrame: current.frame,
-          enemyHealthCurve: current.enemyHealthCurve,
-          poiseCurve: current.poiseCurve,
+          enemyTargetId: monitoredEnemyId.value,
+          enemyHealthCurve: monitoredHealthCurve.value,
+          poiseCurve: monitoredPoiseCurve.value,
           resourceCurves: current.resourceCurves,
           receiptEntries: publishedReceiptEntries.value,
           operatorSkillSlots: combatHudInitialSkillSlots.value,
@@ -3886,7 +4397,7 @@ const cursorEnemyEffects = computed(() => {
     string,
     { buffId: string; title: string; icon: string | null; layers: number }
   >();
-  for (const segment of buffSegmentsForTarget(SINGLE_ENEMY_TARGET_ID)) {
+  for (const segment of buffSegmentsForTarget(monitoredEnemyId.value)) {
     if (segment.startFrame > frame || segment.endFrame <= frame) continue;
     const previous = byBuffId.get(segment.buffId);
     if (previous !== undefined && previous.layers >= segment.layers) continue;
@@ -3947,12 +4458,6 @@ function enemyName(enemyId: string): string {
   return getEnemyGameName(enemyId, locale.value);
 }
 
-const enemyHudName = computed(() =>
-  scenario.value.enemy.source.kind === 'prefab'
-    ? enemyName(scenario.value.enemy.source.enemyId)
-    : t('resourceMonitor.enemy.custom'),
-);
-
 function skillName(groupKey: string, slug: string | null): string {
   if (slug === null) return groupKey;
   const definition = editorGameDataRepository.getOperator(slug);
@@ -3999,6 +4504,20 @@ function explicitBuffName(id: string): string | undefined {
 }
 
 const objectOwnName: CombatObjectOwnName = node => {
+  if (node.ref.kind === 'enemy') {
+    const published = publishedSimulation.value?.scenario;
+    if (!published) return undefined;
+    const id = node.ref.enemyId;
+    const instance = levelEnemies(published.level).find(enemy => enemy.id === id);
+    const enemy = instance?.enemy;
+    const name = instance?.name;
+    if (name?.trim()) return name;
+    return enemy === undefined
+      ? undefined
+      : enemy.source.kind === 'custom'
+        ? t('resourceMonitor.enemy.custom')
+        : enemyName(enemy.source.enemyId.replaceAll('_', '-'));
+  }
   if (node.ref.kind === 'buff' && typeof node.fact?.data?.buffId === 'string')
     return explicitBuffName(node.fact.data.buffId);
   if (node.ref.kind === 'abilityEntity' && typeof node.fact?.data?.abilityEntityId === 'string') {
@@ -4070,7 +4589,7 @@ function buffSourceName(segment: BuffPresentationSource): string | undefined {
     );
     return formatContingencyContractBuffSourceName(
       t('contingencyContract.title'),
-      t(season?.nameKey ?? 'contingencyContract.operationName'),
+      t(season?.nameKey ?? 'contingencyContract.operations.indie_contract001'),
       contractTagName,
     );
   }
@@ -4080,7 +4599,24 @@ function buffSourceName(segment: BuffPresentationSource): string | undefined {
     publishedOperators.value,
     publishedWeaponSources.value,
   );
-  if (source === undefined) return undefined;
+  return source === undefined ? undefined : publishedBuffSourceName(source);
+}
+
+function buildModifierSourceName(source: {
+  sourceId: string;
+  sourceActionId: string;
+}): string | undefined {
+  const origin = resolvePublishedBuffSource(
+    source,
+    scenario.value,
+    buildSourceOperators.value,
+    capturePublishedEquipmentSources(editorGameDataRepository.getWeapons()),
+    capturePublishedEquipmentSources(editorGameDataRepository.getGears(), 'gear'),
+  );
+  return origin === undefined ? undefined : publishedBuffSourceName(origin);
+}
+
+function publishedBuffSourceName(source: PublishedBuffSource): string {
   switch (source.kind) {
     case 'custom':
       return source.name;
@@ -4800,9 +5336,8 @@ function setItemFrame(kind: TimelineItemKind, id: string, frame: number): void {
   const origin =
     item.frame ?? (kind === 'skill' ? displayedSkillCastStartFrames.value.get(id) : undefined);
   if (origin === undefined) return;
-  commitScenario(
-    'moveTimelineItems',
-    current => moveTimelineItems(current, plan, frame - origin).scenario,
+  commitScenario('moveTimelineItems', current =>
+    moveEditableTimelineItems(current, plan, frame - origin),
   );
 }
 function removeItem(kind: TimelineItemKind, id: string): boolean {
@@ -5367,6 +5902,14 @@ async function placeGroup(
   dropPoint?: { x: number; y: number },
 ): Promise<void> {
   startFrame = Math.max(minimumEditableInputFrame.value, startFrame);
+  const snappedStart = snapSkillPlacementDelta(
+    [startFrame],
+    0,
+    hideUiPlacementIntervals(),
+    scenario.value.battle.durationFrames - startFrame,
+  );
+  if (snappedStart === null) return;
+  startFrame += snappedStart;
   const operatorSlug = viewModel.value.tracks[trackIndex]?.operatorSlug ?? null;
   const operator =
     operatorSlug === null ? null : editorGameDataRepository.getOperator(operatorSlug);
@@ -5609,6 +6152,7 @@ function resetTransientScenarioUi(): void {
   showOperatorBuildDialog.value = false;
   showWeaponBuildDialog.value = false;
   showGearBuildDialog.value = false;
+  showLoadoutBuildDialog.value = false;
   resetDialogVisible.value = false;
 }
 
@@ -5919,8 +6463,25 @@ function pasteClipboardAtTimelinePosition(frame?: number): boolean {
         )
       : pointerMarkerFrame(timelinePointerClientX.value, 0, minimumFrame);
   const result = pasteTimelineActions(scenario.value, clipboard, frame ?? pasteFrame, ids);
+  if (result.unmatchedTracks) {
+    ElMessage.warning(t('timeline.hitMarks.pasteMismatch'));
+    return true;
+  }
   if (!result.itemRefs.length) return false;
-  if (!commitScenario('pasteTimelineItems', () => result.scenario)) return false;
+  const pastedItems = collectTimelineItems(result.scenario);
+  const pastePlan = planTimelineItemMove(
+    pastedItems,
+    new Set(result.itemRefs.map(timelineItemKey)),
+  );
+  const pasteDelta = pastePlan === null ? 0 : resolveHideUiMoveDelta(pastePlan, 0);
+  if (pasteDelta === null) return false;
+  const pastedScenario =
+    pastePlan === null
+      ? result.scenario
+      : moveTimelineItems(result.scenario, pastePlan, pasteDelta).scenario;
+  if (!commitScenario('pasteTimelineItems', () => pastedScenario)) return false;
+  if (result.skippedHitOverrides)
+    ElMessage.warning(t('timeline.hitMarks.pasteSkipped', { count: result.skippedHitOverrides }));
   const keys = result.itemRefs.map(timelineItemKey);
   applyItemSelection({ selectedIds: new Set(keys), primaryId: keys.at(-1) ?? null });
   return true;
@@ -5938,6 +6499,7 @@ function cutSelectedActions(): boolean {
   // 删除提交成功后才替换剪贴板，失败时保留原选区和上一次复制内容。
   if (!commitScenario('removeTimelineItems', current => removeTimelineItems(current, items)))
     return false;
+  enemyTrackClipboard.value = null;
   timelineClipboard.value = clipboard;
   clearTimelineSelection();
   return true;
@@ -5956,6 +6518,7 @@ function pasteContextSelection(): void {
 }
 
 function copySelectedActions(): boolean {
+  enemyTrackClipboard.value = null;
   timelineClipboard.value = copyTimelineItems(
     scenario.value,
     selectedItems.value,
@@ -5983,9 +6546,8 @@ function nudgeSelectedActions(direction: -1 | 1): boolean {
     ElMessage.warning(t('timelineGrid.action.locked'));
     return true;
   }
-  commitScenario(
-    'moveTimelineItems',
-    current => moveTimelineItems(current, plan, direction * snapFrames.value).scenario,
+  commitScenario('moveTimelineItems', current =>
+    moveEditableTimelineItems(current, plan, direction * snapFrames.value),
   );
   return true;
 }
@@ -6241,7 +6803,10 @@ const selectedContingencyContractTagIds = computed(() =>
   }),
 );
 
-function setSelectedContingencyContractTagIds(tagIds: readonly number[]): void {
+function setSelectedContingencyContractTagIds(
+  tagIds: readonly number[],
+  resetParameterTagIds: readonly number[] = [],
+): void {
   commitScenario('setContingencyContractTags', current => ({
     ...current,
     mechanics: {
@@ -6255,6 +6820,11 @@ function setSelectedContingencyContractTagIds(tagIds: readonly number[]): void {
           )
           .map(selection => ({
             ...selection,
+            ...(resetParameterTagIds.some(
+              tagId => selection.mechanicId === contingencyContractMechanicId(tagId),
+            )
+              ? { parameters: {} }
+              : {}),
             enabled: tagIds.some(
               tagId => selection.mechanicId === contingencyContractMechanicId(tagId),
             ),
@@ -6342,6 +6912,14 @@ function setContextCastColor(color: string | null): void {
   contextMenuTarget.value = null;
 }
 
+function setSelectedCastInitialBlackboard(value: Readonly<Record<string, number>>): void {
+  const selected = selectedCastModel.value;
+  if (selected === null) return;
+  commitScenario('setSkillCastInitialBlackboard', current =>
+    setSkillCastInitialBlackboard(current, selected.trackIndex, selected.cast.id, value),
+  );
+}
+
 function setSelectedCastRandomSeed(seed: number | null): void {
   const selected = selectedCastModel.value;
   if (selected === null) return;
@@ -6380,6 +6958,143 @@ const comboSkillPriorityOperators = computed(() => {
       track.operatorAssetSlug === null ? null : getOperatorAvatarPath(track.operatorAssetSlug),
   }));
 });
+
+function enemyOverviewIcon(enemy: EnemyDocument): string | undefined {
+  const id = getEnemySourceDefinitionId(enemy.source);
+  return id === null ? undefined : resolveImage(editorGameDataRepository.getEnemy(id)?.icon);
+}
+const enemyOverviewRows = computed(() =>
+  levelEnemies(scenario.value.level).map(instance => ({
+    id: instance.id,
+    customName: instance.name,
+    name:
+      instance.name ||
+      (instance.enemy.source.kind === 'custom'
+        ? t('resourceMonitor.enemy.custom')
+        : enemyName(instance.enemy.source.enemyId.replaceAll('_', '-'))),
+    icon: enemyOverviewIcon(instance.enemy),
+    lifecycle: instance.enemy.lifecycle,
+  })),
+);
+function updateEnemyLifecycle(id: string, lifecycle: EnemyLifecycleDocument): void {
+  commitScenario('updateEnemyLifecycle', current => ({
+    ...current,
+    level: mapLevelEnemies(current.level, item =>
+      item.id === id ? { ...item, enemy: { ...item.enemy, lifecycle } } : item,
+    ),
+  }));
+}
+function renameEnemyInstance(id: string, name: string): void {
+  commitScenario('renameEnemy', current => ({
+    ...current,
+    level: mapLevelEnemies(current.level, item =>
+      item.id === id
+        ? { id: item.id, enemy: item.enemy, ...(name.trim() && { name: name.trim() }) }
+        : item,
+    ),
+  }));
+}
+function removeEnemyInstance(id: string): void {
+  commitScenario('removeEnemy', current => removeScenarioEnemy(current, id));
+  monitoredEnemyId.value = firstScenarioEnemy(scenario.value).id;
+}
+function reorderEnemyInstance(id: string, beforeId?: string): void {
+  commitScenario('reorderEnemies', current => {
+    if (current.level.kind !== 'multiEnemies') return current;
+    const item = current.level.enemies.find(enemy => enemy.id === id);
+    if (!item || id === beforeId) return current;
+    const enemies = current.level.enemies.filter(enemy => enemy.id !== id);
+    const index =
+      beforeId === undefined ? enemies.length : enemies.findIndex(enemy => enemy.id === beforeId);
+    if (index < 0) return current;
+    enemies.splice(index, 0, item);
+    return { ...current, level: { kind: 'multiEnemies', enemies } };
+  });
+}
+function setEnemyTarget(targetId: string, frame: number, id?: string): void {
+  commitScenario('setEnemyTarget', current => ({
+    ...current,
+    battle: {
+      ...current.battle,
+      enemyTargetSwitches: [
+        ...(current.battle.enemyTargetSwitches ?? []).filter(
+          marker => marker.id !== id && marker.frame !== frame,
+        ),
+        { id: id ?? ids.allocate('enemyTarget'), frame, targetId },
+      ].sort((a, b) => a.frame - b.frame),
+    },
+  }));
+}
+function removeEnemyTarget(id: string): void {
+  commitScenario('removeEnemyTarget', current => ({
+    ...current,
+    battle: {
+      ...current.battle,
+      enemyTargetSwitches: current.battle.enemyTargetSwitches?.filter(marker => marker.id !== id),
+    },
+  }));
+}
+function applyStageEnemies(entries: StageEnemySelection[]): void {
+  if (configurationReadOnly.value) return;
+  selectStageEnemies(entries, () => ids.allocate('enemy'));
+  monitoredEnemyId.value = firstScenarioEnemy(scenario.value).id;
+  enemyDetailOpen.value = false;
+}
+function copyEnemyInstance(id: string): void {
+  const enemy = levelEnemies(scenario.value.level).find(enemy => enemy.id === id);
+  if (!enemy) return;
+  enemyTrackClipboard.value = copyEnemyTrack(
+    toRaw(enemy),
+    toRaw(scenario.value.battle.enemyTargetSwitches ?? []),
+  );
+  timelineClipboard.value = null;
+  ElMessage.success({ message: t('timeline.shortcut.copied'), duration: 800 });
+}
+function pasteEnemyInstance(beforeId?: string): void {
+  if (!enemyTrackClipboard.value) return;
+  const copied = instantiateEnemyTrack(enemyTrackClipboard.value, ids);
+  commitScenario('pasteEnemy', current => {
+    const enemies = [...levelEnemies(current.level)];
+    const index =
+      beforeId === undefined ? enemies.length : enemies.findIndex(enemy => enemy.id === beforeId);
+    if (index < 0) return current;
+    enemies.splice(index, 0, copied.enemy);
+    return {
+      ...current,
+      level: { kind: 'multiEnemies', enemies },
+      battle: {
+        ...current.battle,
+        enemyTargetSwitches: [
+          ...(current.battle.enemyTargetSwitches ?? []),
+          ...copied.switches,
+        ].sort((a, b) => a.frame - b.frame),
+      },
+    };
+  });
+  monitoredEnemyId.value = copied.enemy.id;
+  ElMessage.success({ message: t('timeline.shortcut.pasted'), duration: 800 });
+}
+
+function addEnemyInstance(): void {
+  const id = ids.allocate('enemy');
+  const enemy = structuredClone(toRaw(firstScenarioEnemy(scenario.value).enemy));
+  delete enemy.lifecycle;
+  commitScenario('addEnemy', current => ({
+    ...current,
+    level: {
+      kind: 'multiEnemies',
+      enemies: [...levelEnemies(current.level), { id, enemy }],
+    },
+  }));
+  monitoredEnemyId.value = id;
+}
+
+function toggleEnemyAutomaticDeath(): void {
+  commitScenario('toggleEnemyAutomaticDeath', current => ({
+    ...current,
+    battle: { ...current.battle, enemyAutomaticDeath: !current.battle.enemyAutomaticDeath },
+  }));
+}
 
 function toggleComboSkillPriority(): void {
   commitScenario('toggleComboSkillPriority', current => ({
@@ -6572,13 +7287,14 @@ function setMobileGuideFrame(frame: number | null): void {
     :selected-track="selectedTrack"
     :selected-cast-id="selectedCastId"
     :prep-frames="scenario.battle.prepFrames"
+    :can-collapse-prep="canCollapsePrep"
     :duration-frames="scenario.battle.durationFrames"
     :prep-expanded="scenario.editor.prepExpanded"
     :minimum-editable-frame="minimumEditableInputFrame"
     :read-only="configurationReadOnly"
     :can-undo="canUndo"
     :can-redo="canRedo"
-    :enemy-name="enemyHudName"
+    :enemy-name="monitoredEnemyName"
     :analysis="damageAnalysis"
     :freeze-bands="timeDilationBands"
     :stagger-bands="poiseBrokenSegments"
@@ -6598,7 +7314,7 @@ function setMobileGuideFrame(frame: number | null): void {
     @redo="restoreEditorHistory('redo')"
     @open-project="requestOpenProject"
     @receive-project="requestReceiveProject"
-    @export-project="showExportDialog = true"
+    @export-project="openFileExport()"
     @reset-project="resetDialogVisible = true"
     @select-track="selectTrack"
     @swap-tracks="swapTrackOrder"
@@ -6625,8 +7341,13 @@ function setMobileGuideFrame(frame: number | null): void {
   >
     <template #enemy>
       <EnemySettingsPanel
+        :multi-enemy-enabled="multiEnemyEnabled"
+        :selected-enemy-index="monitoredEnemyIndex"
+        :selected-enemy-name="monitoredEnemyName"
+        @select-stage="applyStageEnemies"
         :read-only="configurationReadOnly"
-        :enemy="scenario.enemy"
+        :enemy="monitoredEnemy"
+        :build-attributes="buildAttributes.enemies.get(monitoredEnemyId)"
         :definition="selectedEnemyDefinition"
         :enemies="enemies"
         :fps="PROJECT_FPS"
@@ -6710,38 +7431,6 @@ function setMobileGuideFrame(frame: number | null): void {
             </h3>
           </div>
           <div class="library-header__divider"></div>
-          <div class="library-section-title library-section-title--status">
-            <strong>{{ t('actionLibrary.section.operatorStatusAdjust') }}</strong>
-            <span>{{ t('actionLibrary.hints.adjustOperatorStatus') }}</span>
-          </div>
-          <div class="sidebar-tabs" role="group">
-            <EaButton
-              variant="ghost"
-              type="button"
-              :disabled="configurationReadOnly || selectedLoadoutModel.operator === null"
-              @click="showOperatorBuildDialog = true"
-            >
-              {{ t('timeline.operatorTab') }}
-            </EaButton>
-            <EaButton
-              variant="ghost"
-              type="button"
-              :disabled="configurationReadOnly || selectedLoadoutModel.weapon === null"
-              @click="showWeaponBuildDialog = true"
-            >
-              {{ t('timeline.weaponTab') }}
-            </EaButton>
-            <EaButton
-              variant="ghost"
-              type="button"
-              :disabled="
-                configurationReadOnly || !Object.values(selectedLoadoutModel.gears).some(Boolean)
-              "
-              @click="showGearBuildDialog = true"
-            >
-              {{ t('timeline.gearTab') }}
-            </EaButton>
-          </div>
         </div>
         <div class="skill-section">
           <div class="library-section-title">
@@ -6779,9 +7468,14 @@ function setMobileGuideFrame(frame: number | null): void {
 
     <template #left-bottom="{ tool }">
       <EnemySettingsPanel
+        :multi-enemy-enabled="multiEnemyEnabled"
+        :selected-enemy-index="monitoredEnemyIndex"
+        :selected-enemy-name="monitoredEnemyName"
+        @select-stage="applyStageEnemies"
         :read-only="configurationReadOnly"
         v-if="tool === 'enemy'"
-        :enemy="scenario.enemy"
+        :enemy="monitoredEnemy"
+        :build-attributes="buildAttributes.enemies.get(monitoredEnemyId)"
         :definition="selectedEnemyDefinition"
         :enemies="enemies"
         :fps="PROJECT_FPS"
@@ -6839,9 +7533,11 @@ function setMobileGuideFrame(frame: number | null): void {
       />
       <div v-else-if="tool === 'contract'" class="contract-side-panel">
         <img
-          src="/contingency_contract/1/deco_contingency_select_tag_3.webp"
+          :key="contractSeason"
+          :src="contractDecoUrl"
           alt=""
           aria-hidden="true"
+          @error="useContractDecoFallback"
         />
         <div class="contract-side-title">{{ t('contingencyContract.title') }}</div>
         <EaSelect
@@ -6879,6 +7575,9 @@ function setMobileGuideFrame(frame: number | null): void {
         :appearance="appearance"
         :random-mode="scenario.battle.random?.mode ?? 'expected'"
         :automatic-control-switches="scenario.battle.automaticControlSwitches !== false"
+        :multi-enemy-enabled="multiEnemyEnabled"
+        :multi-enemy-required="multiEnemyRequired"
+        :enemy-automatic-death="scenario.battle.enemyAutomaticDeath ?? false"
         :combo-skill-priority-enabled="scenario.battle.comboSkillPriority?.enabled ?? false"
         :combo-skill-priority-operators="comboSkillPriorityOperators"
         :global-random-seed="scenario.battle.random?.globalSeed ?? 0"
@@ -6903,6 +7602,7 @@ function setMobileGuideFrame(frame: number | null): void {
             comboWindows: t('timeline.header.viewLayers.comboWindows'),
             switchMarkers: t('timeline.header.viewLayers.switchMarkers'),
             effectLinks: t('timeline.header.viewLayers.effectLinks'),
+            dodgeMarkers: t('timeline.header.viewLayers.dodgeMarkers'),
           },
           viewOperators: t('timeline.header.sectionViewOperators'),
           viewOperatorsEmpty: t('timeline.header.hideEffectsEmpty'),
@@ -6931,7 +7631,7 @@ function setMobileGuideFrame(frame: number | null): void {
         @open="requestOpenProject"
         @receive="requestReceiveProject"
         @asset-workspace="openAssetWorkspace"
-        @export="showExportDialog = true"
+        @export="openFileExport()"
         @reset="resetDialogVisible = true"
         @toggle-view-layer="toggleTimelineViewLayer"
         @toggle-operator-effects="toggleOperatorEffectsVisibility"
@@ -6940,6 +7640,8 @@ function setMobileGuideFrame(frame: number | null): void {
         @set-keycap-mode="keycapMode = $event"
         @set-random-mode="setScenarioRandomMode"
         @toggle-automatic-control-switches="toggleAutomaticControlSwitches"
+        @toggle-multi-enemy="toggleMultiEnemy"
+        @toggle-enemy-automatic-death="toggleEnemyAutomaticDeath"
         @toggle-combo-skill-priority="toggleComboSkillPriority"
         @set-combo-skill-priority-order="setComboSkillPriorityOrder"
         @set-global-random-seed="setGlobalRandomSeed"
@@ -6968,7 +7670,9 @@ function setMobileGuideFrame(frame: number | null): void {
           class="timeline-surface"
           :class="{
             'is-library-placing': libraryPlacement !== null,
-            'is-history-collapsed': !scenario.editor.prepExpanded,
+            'is-history-collapsed': !scenario.editor.prepExpanded && hasPrepHistory,
+            'is-compact-prep':
+              scenario.editor.prepExpanded && hasPrepHistory && displayedPrepWidthPx < 28,
           }"
           :style="timelineSurfaceStyle"
           @mousemove="updateCursorGuide"
@@ -6978,6 +7682,7 @@ function setMobileGuideFrame(frame: number | null): void {
           <div class="corner-placeholder">
             <TimelineCornerToolbar
               :configuration-read-only="configurationReadOnly"
+              :prep-frames="scenario.battle.prepFrames + (scenario.inheritance?.frame ?? 0)"
               :snap-label="snapFrames === PRECISE_TIMELINE_SNAP_FRAMES ? '1f' : '0.1s'"
               :zoom-percent="timelineZoomPercent"
               :initial-gauge-mode="initialUltimateEnergyPresetMode"
@@ -6986,12 +7691,16 @@ function setMobileGuideFrame(frame: number | null): void {
                 initialGauge: t('timelineGrid.toolbar.initialGauge'),
                 snapPrecision: t('timelineGrid.toolbar.snapPrecision'),
                 zoom: 'SCALE',
+                prep: t(configurationReadOnly ? 'inheritance.boundary' : 'timelineGrid.prep.title'),
+                prepDuration: t('timelineGrid.prep.setDurationTitle'),
               }"
               @toggle-snap-precision="toggleSnapPrecision"
               @cycle-initial-gauge="cycleInitialUltimateEnergyPreset"
               @set-unified-initial-gauge="setUnifiedTrackInitialUltimateEnergy"
               @update-zoom-percent="updateTimelineZoomPercent"
               @set-zoom-percent="setTimelineZoomPercent"
+              @set-prep-frames="setTimelinePrepFrames"
+              @prep-info="openInheritanceInfo"
             />
           </div>
           <TimelineRuler
@@ -7007,15 +7716,15 @@ function setMobileGuideFrame(frame: number | null): void {
             :snap-frames="snapFrames"
             :operations="rulerOperations"
             :keycap-mode="keycapMode"
-            :visible-left-px="Math.max(0, timelineScrollLeft - TIMELINE_TRACK_HEADER_WIDTH)"
+            :visible-left-px="effectViewportBucketPx"
             :visible-width-px="timelineViewportWidth"
             @seek="seekTimeline"
-            @prep-info="openInheritanceInfo"
             @resize-history="beginInheritedHistoryResize"
             @set-prep-frames="setTimelinePrepFrames"
             @set-duration-frames="setTimelineDurationFrames"
           />
           <div
+            v-if="hasPrepHistory && (!scenario.editor.prepExpanded || displayedPrepWidthPx >= 28)"
             class="timeline-battle-start-boundary"
             :class="{ 'is-prep-collapsed': !scenario.editor.prepExpanded }"
             :style="{
@@ -7032,10 +7741,7 @@ function setMobileGuideFrame(frame: number | null): void {
             @contextmenu="openInheritanceInfo"
           ></div>
           <div
-            v-if="
-              scenario.battle.prepFrames + (scenario.inheritance?.frame ?? 0) > 0 &&
-              !scenario.editor.prepExpanded
-            "
+            v-if="canCollapsePrep && !scenario.editor.prepExpanded"
             class="prep-collapsed-entry"
             :style="{ left: `${TIMELINE_TRACK_HEADER_WIDTH}px` }"
           >
@@ -7050,16 +7756,15 @@ function setMobileGuideFrame(frame: number | null): void {
               :title="t('timelineGrid.prep.expand')"
               @click.stop="setPrepExpanded(true)"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="8 6 16 12 8 18" /></svg>
+              <EaChevronIcon :size="16" :stroke-width="3" />
             </EaButton>
             <span>{{ t('timelineGrid.prep.expand') }}</span>
           </div>
           <div
-            v-else-if="scenario.battle.prepFrames + (scenario.inheritance?.frame ?? 0) > 0"
+            v-else-if="canCollapsePrep"
             class="prep-expanded-collapse"
-            :style="{
-              left: `${TIMELINE_TRACK_HEADER_WIDTH + Math.max(0, timelineFramePx(scenario.inheritance?.frame ?? 0) - 18)}px`,
-            }"
+            :class="{ 'is-outside-prep': displayedPrepWidthPx < 18 }"
+            :style="{ left: `${prepToggleLeftPx}px` }"
           >
             <EaButton
               variant="ghost"
@@ -7075,9 +7780,7 @@ function setMobileGuideFrame(frame: number | null): void {
               "
               @click.stop="setPrepExpanded(false)"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <polyline points="16 6 8 12 16 18" />
-              </svg>
+              <EaChevronIcon direction="left" :size="16" :stroke-width="3" />
             </EaButton>
           </div>
           <TimelineConnectionLayer
@@ -7090,6 +7793,7 @@ function setMobileGuideFrame(frame: number | null): void {
             :track-header-width="TIMELINE_TRACK_HEADER_WIDTH"
             :cast-actual-start-frames="skillCastActualStartFrames"
             :cast-actual-duration-frames="skillCastActualDurationFrames"
+            :skill-accent-color="skillAccentColor"
             :selected-connection-id="selectedConnectionId"
             :hovered-skill-cast-id="hoveredCastId"
             :dragging-connection="connectionDrag !== null"
@@ -7264,7 +7968,6 @@ function setMobileGuideFrame(frame: number | null): void {
             :key="marker.id"
             class="timeline-marker team-event-marker"
             :class="{
-              'combo-cooldown-guide': true,
               'is-ready': marker.event.mode === 'ready',
               selected: isItemSelected('externalEvent', marker.id),
             }"
@@ -7288,16 +7991,8 @@ function setMobileGuideFrame(frame: number | null): void {
               )
             "
           >
-            <div class="combo-cooldown-marker">
-              <svg v-if="marker.event.mode === 'ready'" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20 11a8 8 0 1 1-2.3-5.7" />
-                <path d="M20 4v7h-7" />
-              </svg>
-              <svg v-else viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="8" />
-                <path d="M12 7v5l3 2" />
-              </svg>
-            </div>
+            <span>{{ formatGuideFrame(marker.frame) }}</span>
+            <b>{{ t(`comboControl.${marker.event.mode}Short`) }}</b>
           </div>
 
           <div class="track-stack">
@@ -7377,6 +8072,8 @@ function setMobileGuideFrame(frame: number | null): void {
                 "
                 @reorder-drop="dropTrackOrder($event, track.trackIndex)"
                 @stats="openPanelDialog(track.trackIndex)"
+                @presets="openOperatorPresets(track.trackIndex)"
+                @adjust="openLoadoutBuildDialog(track.trackIndex)"
                 @weapon="openWeaponDialog(track.trackIndex)"
                 @gear="openGearDialog(track.trackIndex, $event)"
                 @update-initial-ultimate-energy="
@@ -7439,6 +8136,8 @@ function setMobileGuideFrame(frame: number | null): void {
                     timelineViewLayers.upperEffects && isOperatorEffectsVisible(track.trackIndex)
                   "
                   :segments="buffSegmentsForTarget(track.operatorInstanceId, 'upper')"
+                  :visible-left-px="renderAllTimelineEffects ? undefined : visibleEffectLeftPx"
+                  :visible-right-px="renderAllTimelineEffects ? undefined : visibleEffectRightPx"
                   :source-name="buffSourceName"
                   :display-name="buffDisplayName"
                   :operator-buff-name-keys="operatorBuffDisplayNameKeys"
@@ -7469,6 +8168,8 @@ function setMobileGuideFrame(frame: number | null): void {
                     timelineViewLayers.upperEffects && isOperatorEffectsVisible(track.trackIndex)
                   "
                   :segments="operatorPassiveUiSegmentsForTarget(track.operatorInstanceId)"
+                  :visible-left-px="renderAllTimelineEffects ? undefined : visibleEffectLeftPx"
+                  :visible-right-px="renderAllTimelineEffects ? undefined : visibleEffectRightPx"
                   :prep-frames="scenario.battle.prepFrames"
                   :prep-expanded="scenario.editor.prepExpanded"
                   :prep-end-frame="scenario.inheritance?.frame ?? 0"
@@ -7492,6 +8193,8 @@ function setMobileGuideFrame(frame: number | null): void {
                 <TimelineBuffBands
                   v-if="timelineViewLayers.lowerBuffs && isOperatorEffectsVisible(track.trackIndex)"
                   :segments="buffSegmentsForTarget(track.operatorInstanceId, 'lower')"
+                  :visible-left-px="renderAllTimelineEffects ? undefined : visibleEffectLeftPx"
+                  :visible-right-px="renderAllTimelineEffects ? undefined : visibleEffectRightPx"
                   :source-name="buffSourceName"
                   :display-name="buffDisplayName"
                   :operator-buff-name-keys="operatorBuffDisplayNameKeys"
@@ -7519,15 +8222,18 @@ function setMobileGuideFrame(frame: number | null): void {
                     trackEffectLayout(track.trackIndex, track.operatorInstanceId).actionTop
                   "
                   :label="t('timeline.header.viewLayers.comboWindows')"
+                  :locked-label="t('timeline.header.viewLayers.comboWindowsLocked')"
                   :perfect-label="t('effects.name.perfectTiming')"
                 />
                 <div
+                  v-if="hasPrepHistory"
                   class="prep-zone"
                   :style="{
                     width: `${timelineFramePx(scenario.inheritance?.frame ?? 0, displayedTimelinePrepFrames)}px`,
                   }"
                 ></div>
                 <div
+                  v-if="hasPrepHistory"
                   class="battle-start-line"
                   :style="{
                     left: `${timelineFramePx(scenario.inheritance?.frame ?? 0, displayedTimelinePrepFrames)}px`,
@@ -7570,7 +8276,7 @@ function setMobileGuideFrame(frame: number | null): void {
                     aria-hidden="true"
                   />
                 </EaButton>
-                <div
+                <TimelineControlSwitchMarker
                   v-if="
                     timelineViewLayers.switchMarkers && isOperatorEffectsVisible(track.trackIndex)
                   "
@@ -7578,17 +8284,20 @@ function setMobileGuideFrame(frame: number | null): void {
                     item => item.trackIndex === track.trackIndex,
                   )"
                   :key="marker.id"
-                  class="timeline-marker track-switch-marker"
                   :data-timeline-item-key="
                     timelineItemKey({ kind: 'controlSwitch', id: marker.id })
                   "
-                  :class="{
-                    selected: isItemSelected('controlSwitch', marker.id),
-                    dragging: itemDragging('controlSwitch', marker.id),
-                  }"
-                  :style="{
-                    left: `${timelineFramePx(marker.frame)}px`,
-                  }"
+                  :selected="isItemSelected('controlSwitch', marker.id)"
+                  :dragging="itemDragging('controlSwitch', marker.id)"
+                  :warning="!!controlSwitchWarning(track.trackIndex, marker.frame, 'manual')"
+                  :title="controlSwitchWarning(track.trackIndex, marker.frame, 'manual')"
+                  :left="timelineFramePx(marker.frame)"
+                  :avatar="
+                    track.operatorSlug
+                      ? getOperatorAvatarPath(track.operatorAssetSlug ?? track.operatorSlug)
+                      : undefined
+                  "
+                  :time-label="formatGuideFrame(marker.frame)"
                   @pointerdown="
                     beginItemMove($event, timelineItemKey({ kind: 'controlSwitch', id: marker.id }))
                   "
@@ -7603,18 +8312,8 @@ function setMobileGuideFrame(frame: number | null): void {
                       t('timeline.markerLabels.controlSwitch'),
                     )
                   "
-                >
-                  <OperatorAvatar
-                    v-if="track.operatorSlug"
-                    class="track-switch-marker__avatar"
-                    :src="getOperatorAvatarPath(track.operatorAssetSlug ?? track.operatorSlug)"
-                  />
-                  <span class="track-switch-marker__time">
-                    {{ formatGuideFrame(marker.frame) }}
-                  </span>
-                  <i class="track-switch-marker__pointer"></i>
-                </div>
-                <div
+                />
+                <TimelineControlSwitchMarker
                   v-if="
                     timelineViewLayers.switchMarkers && isOperatorEffectsVisible(track.trackIndex)
                   "
@@ -7622,22 +8321,37 @@ function setMobileGuideFrame(frame: number | null): void {
                     item => item.trackIndex === track.trackIndex,
                   )"
                   :key="marker.id"
-                  class="timeline-marker track-switch-marker track-switch-marker--automatic"
-                  :style="{ left: `${timelineFramePx(marker.frame)}px` }"
-                  :title="t('timeline.header.automaticControlSwitchesHelp')"
-                  :aria-label="t('timeline.markerLabels.automaticControlSwitch')"
-                >
-                  <OperatorAvatar
-                    v-if="track.operatorSlug"
-                    class="track-switch-marker__avatar"
-                    :src="getOperatorAvatarPath(track.operatorAssetSlug ?? track.operatorSlug)"
-                  />
-                  <span class="track-switch-marker__time">{{
-                    formatGuideFrame(marker.frame)
-                  }}</span>
-                  <i class="track-switch-marker__pointer"></i>
-                </div>
+                  projected
+                  :warning="!!controlSwitchWarning(track.trackIndex, marker.frame, marker.kind)"
+                  :left="timelineFramePx(marker.frame)"
+                  :avatar="
+                    track.operatorSlug
+                      ? getOperatorAvatarPath(track.operatorAssetSlug ?? track.operatorSlug)
+                      : undefined
+                  "
+                  :time-label="formatGuideFrame(marker.frame)"
+                  :title="
+                    [
+                      t(
+                        marker.kind === 'skill'
+                          ? 'timeline.markerLabels.skillControlSwitch'
+                          : 'timeline.header.automaticControlSwitchesHelp',
+                      ),
+                      controlSwitchWarning(track.trackIndex, marker.frame, marker.kind),
+                    ]
+                      .filter(Boolean)
+                      .join('\n')
+                  "
+                  :label="
+                    t(
+                      marker.kind === 'skill'
+                        ? 'timeline.markerLabels.skillControlSwitch'
+                        : 'timeline.markerLabels.automaticControlSwitch',
+                    )
+                  "
+                />
                 <div
+                  v-if="timelineViewLayers.dodgeMarkers"
                   v-for="marker in (scenario.battle.dodgeMarkers ?? []).filter(
                     item => item.trackIndex === track.trackIndex,
                   )"
@@ -7672,13 +8386,7 @@ function setMobileGuideFrame(frame: number | null): void {
                     )
                   "
                 >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M4 15c4-7 9-8 16-6M13 5l7 4-5 6" />
-                    <path
-                      v-if="marker.mode.kind === 'perfectDodge'"
-                      d="m6 4 .8 2.2L9 7l-2.2.8L6 10l-.8-2.2L3 7l2.2-.8Z"
-                    />
-                  </svg>
+                  <TimelineDodgeIcon class="dodge-marker__icon" :kind="marker.mode.kind" />
                   <span v-if="dodgeMarkerWarningIds.has(marker.id)" class="dodge-marker__warning">{{
                     dodgeMarkerResults.get(marker.id)?.status === 'warning' ? '!' : '?'
                   }}</span>
@@ -7713,23 +8421,16 @@ function setMobileGuideFrame(frame: number | null): void {
                   @select="selectSkillCastGroup(group.casts.map(cast => cast.id))"
                 />
                 <TimelineActionBlock
-                  v-for="(cast, castIndex) in track.skillCasts"
+                  v-for="cast in track.skillCasts"
                   :key="cast.id"
                   :action-id="cast.id"
+                  :visible-left-px="renderAllTimelineEffects ? undefined : visibleEffectLeftPx"
+                  :visible-right-px="renderAllTimelineEffects ? undefined : visibleEffectRightPx"
                   :label="timelineCastLabel(cast, track)"
                   :operation-type="cast.operationType"
                   :left="timelineFramePx(castActualStartFrame(cast.id, cast.startFrame))"
-                  :width="
-                    timelineFrameSpanPx(
-                      castActualStartFrame(cast.id, cast.startFrame),
-                      Math.max(
-                        0,
-                        (visibleSkillEndFrames.get(cast.id) ?? cast.startFrame) -
-                          castActualStartFrame(cast.id, cast.startFrame),
-                      ),
-                    )
-                  "
-                  :stack-order="castIndex"
+                  :width="skillCastBlockLayout.get(cast.id)!.width"
+                  :stack-order="skillCastBlockLayout.get(cast.id)!.stackOrder"
                   :duration-pending="castActualDurationPending(cast.id, cast.durationFrames)"
                   :selected="actionSelection.selectedIds.has(cast.id)"
                   :perfect="perfectComboCastIds.has(cast.id)"
@@ -7870,90 +8571,204 @@ function setMobileGuideFrame(frame: number | null): void {
       <section v-else-if="tool === 'enemy'" class="simulation-panel">
         <div v-if="simulationRun !== null" class="simulation-curves">
           <TimelineEnemyStatusSections
+            :key="showingEnemyOverview ? 'overview' : 'detail'"
+            :overview="showingEnemyOverview"
             @collapsed-count-change="collapsedMonitorSectionCount = $event"
             :expand-all-token="expandAllToken"
-            :labels="{
-              affliction: t('resourceMonitor.modules.enemyStatus'),
-              poise: t('resourceMonitor.modules.stagger'),
-              sp: t('resourceMonitor.modules.sp'),
-            }"
+            :labels="enemyMonitorSectionLabels"
             :collapse-label="t('common.close')"
             :expand-label="t('timelineGrid.prep.expand')"
             @collapse-panel="collapsePanel"
           >
             <template #affliction="{ compact }">
-              <TimelineEnemyEffects
-                :compact="compact"
-                @open-damage-detail="
-                  hitDetailTarget = null;
-                  enemyDamageDetailSequence = $event;
-                "
-                :duration-frames="scenario.battle.durationFrames"
-                v-if="combatHudSnapshot !== null"
-                :viz="enemyEffectViz"
-                :entity-segments="
-                  operatorPassiveUiTimelineSegments.filter(
-                    segment =>
-                      segment.kind === 'abilityEntityCount' && segment.placement === 'enemy',
-                  )
-                "
-                :entity-hits="entityStatusHits"
-                @open-entity-detail="openOperatorPassiveUiDetail"
-                @open-entity-hit="
-                  hit => {
-                    const trackIndex = scenario.tracks.findIndex(track =>
-                      track?.skillCasts.some(cast => cast.id === hit.castId),
-                    );
-                    if (trackIndex >= 0)
-                      hitDetailTarget = {
-                        trackIndex: trackIndex as TrackIndex,
-                        castId: hit.castId,
-                        hitId: hit.hitId,
-                        executionFrame: hit.frame,
-                      };
-                  }
-                "
-                :attachment-buff-ids="attachmentBuffIds"
-                :buffs="buffSegmentsForTarget('enemy')"
-                :source-name="buffSourceName"
-                :display-name="buffDisplayName"
-                :operator-buff-name-keys="operatorBuffDisplayNameKeys"
-                :icon="buffIcon"
-                :timeline-width="timelineWidth"
-                :prep-frames="scenario.battle.prepFrames"
-                :prep-expanded="scenario.editor.prepExpanded"
-                :prep-end-frame="scenario.inheritance?.frame ?? 0"
-                :px-per-frame="pxPerFrame"
-                :track-header-width="TIMELINE_TRACK_HEADER_WIDTH"
-                :scroll-left="timelineScrollLeft"
-                :snapshot-frame="enemyLastDamageFrame"
-                :hud-snapshot="combatHudSnapshot.enemy"
-                :enemy-name="enemyHudName"
-                :enemy-level="scenario.enemy.source.level"
-                :poise-knot-thresholds="scenario.enemy.editable.stagger.knotThresholds"
-                :hud-labels="{
-                  status: t('resourceMonitor.modules.enemyStatus'),
-                  compactStatus: t('resourceMonitor.modules.enemyStatusCompact'),
-                  hp: t('timeline.simGuide.enemyHp'),
-                  poise: t('timeline.simGuide.poise'),
-                  recovering: t('timeline.simGuide.poiseRecovering'),
-                  brokenEndWindow: t('timeline.simGuide.poiseBrokenEndWindow'),
-                }"
-                :labels="{
-                  burst: t('timeline.effect.burst'),
-                }"
-                @open-buff-detail="openBuffDetail"
-              />
+              <template v-if="showingEnemyOverview">
+                <TimelineEnemyOverview
+                  :timeline-width="timelineWidth"
+                  :duration-frames="scenario.battle.durationFrames"
+                  :prep-frames="scenario.battle.prepFrames"
+                  :prep-expanded="scenario.editor.prepExpanded"
+                  :prep-end-frame="scenario.inheritance?.frame ?? 0"
+                  :px-per-frame="pxPerFrame"
+                  :px-frame="timelinePixelFrame"
+                  :snap-frames="snapFrames"
+                  :key="activeProjectScenarioId"
+                  :selected-id="monitoredEnemyId"
+                  :health-curve="monitoredHealthCurve"
+                  :target-switches="scenario.battle.enemyTargetSwitches"
+                  :published-target-selection="publishedEnemyTargetSelection"
+                  :published-initial-frame="-(publishedSimulation?.scenario.battle.prepFrames ?? 0)"
+                  :published-end-frame="publishedSimulation?.run.frame ?? 0"
+                  @reorder="reorderEnemyInstance"
+                  @set-target="setEnemyTarget"
+                  @remove-target="removeEnemyTarget"
+                  :enemies="enemyOverviewRows"
+                  :status-lanes="
+                    id =>
+                      Math.max(
+                        enemyOverviewStatuses.get(id)?.laneCount ?? 0,
+                        ...(enemyOverviewDamageHits.get(id) ?? []).map(hit => hit.row + 1),
+                      )
+                  "
+                  :entries="publishedReceiptEntries"
+                  :end-frame="
+                    scenario.battle.simulationRange?.endFrame ?? scenario.battle.durationFrames
+                  "
+                  :frame-px="timelineFramePx"
+                  :scroll-state="timelineScrollState"
+                  :header-width="TIMELINE_TRACK_HEADER_WIDTH"
+                  :read-only="configurationReadOnly"
+                  :initial-frame="-scenario.battle.prepFrames"
+                  :minimum-editable-frame="minimumEditableInputFrame"
+                  :automatic-death="scenario.battle.enemyAutomaticDeath ?? false"
+                  @update-lifecycle="updateEnemyLifecycle"
+                  @select="monitoredEnemyId = $event"
+                  @open-detail="openEnemyDetail"
+                  @rename="renameEnemyInstance"
+                  @remove="removeEnemyInstance"
+                  @add="addEnemyInstance"
+                  :can-paste="enemyTrackClipboard !== null"
+                  @copy="copyEnemyInstance"
+                  @paste="pasteEnemyInstance"
+                >
+                  <template #hits="{ id, iconSize, statusTop }">
+                    <TimelineEnemyEffectMarkers
+                      :markers="enemyOverviewEffects.get(id)?.markers ?? []"
+                      :positions="enemyOverviewStatuses.get(id)?.markerPositions ?? []"
+                      :icon-size="iconSize"
+                      :top="statusTop + 2"
+                      :frame-px="timelineFramePx"
+                      :burst-label="t('timeline.effect.burst')"
+                      @open-damage-detail="
+                        hitDetailTarget = null;
+                        enemyDamageDetailSequence = $event;
+                      "
+                    />
+                    <TimelineDamageHit
+                      v-for="hit in enemyOverviewDamageHits.get(id) ?? []"
+                      :key="hit.group[0]!.sequence"
+                      :x="timelineFramePx(hit.group[0]!.frame)"
+                      :has-override="hit.group.some(hasHitOverride)"
+                      :y="
+                        hit.row < 0
+                          ? iconSize - 2
+                          : statusTop + 2 + hit.row * (iconSize + 4) + iconSize - 3
+                      "
+                      :title="
+                        hit.group
+                          .map(
+                            entry =>
+                              publishedEntityDisplayName(entry.targetId!) +
+                              ' · ' +
+                              damageSourceDescription(entry) +
+                              ': ' +
+                              roundHitDamage(
+                                Number(entry.data?.expectedDamage ?? entry.data?.value ?? 0),
+                              ),
+                          )
+                          .join('\n')
+                      "
+                      @activate="
+                        hitDetailTarget = null;
+                        enemyDamageDetailSequence = hit.group[0]!.sequence;
+                      "
+                    />
+                  </template>
+                  <template #states="{ id, iconSize }">
+                    <TimelineBuffBands
+                      :row-size="iconSize"
+                      :segments="enemyOverviewStatuses.get(id)?.segments ?? []"
+                      :visible-left-px="renderAllTimelineEffects ? undefined : visibleEffectLeftPx"
+                      :visible-right-px="
+                        renderAllTimelineEffects ? undefined : visibleEffectRightPx
+                      "
+                      color-surface="enemy"
+                      :attachment-conversions="enemyOverviewEffects.get(id)?.attachmentConversions"
+                      :hidden-icons="enemyOverviewStatuses.get(id)?.hiddenIcons"
+                      :source-name="buffSourceName"
+                      :display-name="buffDisplayName"
+                      :operator-buff-name-keys="operatorBuffDisplayNameKeys"
+                      :icon="buffIcon"
+                      :prep-frames="scenario.battle.prepFrames"
+                      :prep-expanded="scenario.editor.prepExpanded"
+                      :prep-end-frame="scenario.inheritance?.frame ?? 0"
+                      :px-per-frame="pxPerFrame"
+                      placement="upper"
+                      @open-detail="openBuffDetail"
+                    />
+                  </template>
+                </TimelineEnemyOverview>
+              </template>
+              <template v-else>
+                <TimelineEnemyEffects
+                  :compact="compact"
+                  :show-overview-return="multiEnemyEnabled"
+                  @return-overview="enemyDetailOpen = false"
+                  @open-damage-detail="
+                    hitDetailTarget = null;
+                    enemyDamageDetailSequence = $event;
+                  "
+                  :duration-frames="scenario.battle.durationFrames"
+                  v-if="combatHudSnapshot !== null"
+                  :viz="enemyEffectViz"
+                  :entity-segments="enemyAbilityEntitySegments"
+                  :entity-hits="entityStatusHits"
+                  @open-entity-detail="openOperatorPassiveUiDetail"
+                  @open-entity-hit="
+                    hit => {
+                      const trackIndex = scenario.tracks.findIndex(track =>
+                        track?.skillCasts.some(cast => cast.id === hit.castId),
+                      );
+                      if (trackIndex >= 0)
+                        hitDetailTarget = {
+                          trackIndex: trackIndex as TrackIndex,
+                          castId: hit.castId,
+                          hitId: hit.hitId,
+                          executionFrame: hit.frame,
+                        };
+                    }
+                  "
+                  :attachment-buff-ids="attachmentBuffIds"
+                  :buffs="buffSegmentsForTarget(monitoredEnemyId)"
+                  :source-name="buffSourceName"
+                  :display-name="buffDisplayName"
+                  :operator-buff-name-keys="operatorBuffDisplayNameKeys"
+                  :icon="buffIcon"
+                  :timeline-width="timelineWidth"
+                  :visible-left-px="renderAllTimelineEffects ? undefined : effectViewportBucketPx"
+                  :visible-right-px="
+                    renderAllTimelineEffects ? undefined : visibleEnemyEffectRightPx
+                  "
+                  :prep-frames="scenario.battle.prepFrames"
+                  :prep-expanded="scenario.editor.prepExpanded"
+                  :prep-end-frame="scenario.inheritance?.frame ?? 0"
+                  :px-per-frame="pxPerFrame"
+                  :track-header-width="TIMELINE_TRACK_HEADER_WIDTH"
+                  :scroll-state="timelineScrollState"
+                  :snapshot-frame="enemyLastDamageFrame"
+                  :hud-snapshot="combatHudSnapshot.enemy"
+                  :enemy-name="monitoredEnemyName"
+                  :target-name="publishedEntityDisplayName"
+                  :enemy-level="monitoredEnemy.source.level"
+                  :poise-knot-thresholds="
+                    publishedMonitoredEnemy?.editable.stagger.knotThresholds ?? []
+                  "
+                  :hud-labels="enemyEffectHudLabels"
+                  :labels="enemyEffectLabels"
+                  @open-buff-detail="openBuffDetail"
+                />
+              </template>
             </template>
             <template #poise="{ compact }">
               <TimelineResourceCurves
                 :compact="compact"
                 :poise-broken-segments="poiseBrokenSegments"
                 :poise-knot-segments="poiseKnotSegments"
-                :poise-knot-thresholds="scenario.enemy.editable.stagger.knotThresholds"
+                :poise-knot-thresholds="
+                  publishedMonitoredEnemy?.editable.stagger.knotThresholds ?? []
+                "
                 :poise-broken-label="t('resourceMonitor.stagger.weak')"
                 :sp-curve="simulationRun.resourceCurves.sp"
-                :poise-curve="simulationRun.poiseCurve"
+                :poise-curve="monitoredPoiseCurve"
                 :visible-kinds="['poise']"
                 :poise-label="
                   t(
@@ -7970,7 +8785,7 @@ function setMobileGuideFrame(frame: number | null): void {
                 :prep-end-frame="scenario.inheritance?.frame ?? 0"
                 :px-per-frame="pxPerFrame"
                 :track-header-width="TIMELINE_TRACK_HEADER_WIDTH"
-                :scroll-left="timelineScrollLeft"
+                :scroll-state="timelineScrollState"
               />
             </template>
             <template #sp="{ compact }">
@@ -7987,7 +8802,7 @@ function setMobileGuideFrame(frame: number | null): void {
                 :prep-end-frame="scenario.inheritance?.frame ?? 0"
                 :px-per-frame="pxPerFrame"
                 :track-header-width="TIMELINE_TRACK_HEADER_WIDTH"
-                :scroll-left="timelineScrollLeft"
+                :scroll-state="timelineScrollState"
                 :sp-label="t('resourceMonitor.modules.sp')"
                 :initial-sp="scenario.battle.resourceRules.initialSp"
                 :max-sp="scenario.battle.resourceRules.maxSp"
@@ -8118,6 +8933,7 @@ function setMobileGuideFrame(frame: number | null): void {
         :input-read-only="selectedCastId !== null && isHistoricalSkillInput(selectedCastId)"
         :label="selectedCastModel?.label ?? ''"
         :current-definition="selectedCastModel?.currentDefinition ?? null"
+        :operator-definition="selectedCastModel?.operator ?? undefined"
         :actual-duration-frames="
           selectedCastId === null ? undefined : skillCastActualDurationFrames.get(selectedCastId)
         "
@@ -8136,6 +8952,7 @@ function setMobileGuideFrame(frame: number | null): void {
         @edit-graph="openSkillGraphEditor"
         @execution-trace="openExecutionTrace"
         @set-random-seed="setSelectedCastRandomSeed"
+        @set-initial-blackboard="setSelectedCastInitialBlackboard"
         @roll-random-seed="rollSelectedCastRandomSeed"
         @set-start-frame="setSelectedCastStartFrame"
         @set-locked="setSelectedCastLocked"
@@ -8384,6 +9201,7 @@ function setMobileGuideFrame(frame: number | null): void {
     v-if="operatorDialogTrack !== null"
     :visible="operatorDialogTrack !== null"
     :operators="editorGameDataRepository.getOperators()"
+    :selected-slug="viewModel.tracks[operatorDialogTrack]?.operatorSlug ?? null"
     :selected-slugs="
       viewModel.tracks.flatMap(track => (track.operatorSlug === null ? [] : [track.operatorSlug]))
     "
@@ -8422,14 +9240,13 @@ function setMobileGuideFrame(frame: number | null): void {
       }),
       searchPlaceholder: t('timelineGrid.equipmentDialog.searchPlaceholder'),
       unequip: t('common.unequip'),
-      close: t('common.close'),
       empty: t('timelineGrid.equipmentDialog.empty'),
-      defense: t('timeline.gearDialog.defense'),
       noSet: t('timeline.gearDialog.noSet'),
     }"
     @close="gearDialogTarget = null"
     @select="selectGear"
     @clear="clearGear"
+    @change-slot="switchGearDialogSlot"
     @change-refine-tier="changeGearRefineTier"
   />
   <ExecutionTraceDialog
@@ -8458,13 +9275,57 @@ function setMobileGuideFrame(frame: number | null): void {
     @update:visible="showWeaponBuildDialog = $event"
     @change="updateWeaponBuild"
   />
+  <LoadoutBuildDialog
+    v-if="showLoadoutBuildDialog && !mobileLayout"
+    :visible="showLoadoutBuildDialog"
+    :active-tab="activeLoadoutBuildTab"
+    :operator-name="operatorName(selectedTrackModel.operatorSlug)"
+    :has-weapon="selectedLoadoutModel.weapon !== null"
+    :has-gear="Object.values(selectedLoadoutModel.gears).some(Boolean)"
+    @update:visible="showLoadoutBuildDialog = $event"
+    @update:active-tab="activeLoadoutBuildTab = $event"
+  >
+    <template #operator>
+      <OperatorBuildDialog
+        embedded
+        :visible="showLoadoutBuildDialog"
+        :operator="selectedLoadoutModel.operator"
+        :custom-definition="selectedOperatorCustomDefinition"
+        :build-attributes="operatorBuildPanel?.attributes ?? null"
+        @change="updateOperatorBuild"
+      />
+    </template>
+    <template #weapon>
+      <WeaponBuildDialog
+        v-if="selectedLoadoutModel.weapon !== null"
+        embedded
+        :visible="showLoadoutBuildDialog"
+        :weapon="selectedLoadoutModel.weapon"
+        @change="updateWeaponBuild"
+      />
+    </template>
+    <template #gear>
+      <GearLoadoutBuildDialog
+        v-if="Object.values(selectedLoadoutModel.gears).some(Boolean)"
+        embedded
+        :visible="showLoadoutBuildDialog"
+        :gears="selectedLoadoutModel.gears"
+        :gear-set-names="gearSetNames"
+        :gear-set-text-slugs="gearSetTextSlugs"
+        @update="updateGearBuild"
+      />
+    </template>
+  </LoadoutBuildDialog>
   <OperatorPresetsDialog
     v-if="showOperatorPresets"
     :track="scenario.tracks[selectedTrack]"
     :game-data="editorGameDataRepository"
     :read-only="configurationReadOnly"
     :apply="applyBuildPreset"
-    @close="showOperatorPresets = false"
+    :suspended="presetManagerSuspended"
+    @import-file="requestOpenProject"
+    @export-presets="openFileExport('presets', $event)"
+    @close="!presetManagerSuspended && (showOperatorPresets = false)"
   />
   <OperatorBuildDialog
     v-if="showOperatorBuildDialog"
@@ -8497,6 +9358,14 @@ function setMobileGuideFrame(frame: number | null): void {
     v-if="panelDialogTrack !== null"
     :visible="panelDialogTrack !== null"
     :panel="selectedPanel"
+    :build-modifiers="
+      selectedPanel ? buildAttributes.operatorModifiers.get(selectedPanel.operatorId) : undefined
+    "
+    :build-modifier-source-name="buildModifierSourceName"
+    :mechanic-selections="scenario.mechanics.selections"
+    :build-attributes="
+      selectedPanel ? buildAttributes.operators.get(selectedPanel.operatorId) : undefined
+    "
     :operator="panelDialogOperator"
     :operator-name="panelDialogOperatorName"
     :weapons="capturePublishedEquipmentSources(editorGameDataRepository.getWeapons())"
@@ -8532,16 +9401,28 @@ function setMobileGuideFrame(frame: number | null): void {
             item.buffId)
     "
     :source-description="damageSourceDescription"
+    :target-label="t('timeline.hitDetail.target')"
     :visible="hitDetailTarget !== null || enemyDamageDetailSequence !== null"
-    :allow-force-critical="hitDetail !== null || reactionCriticalKeys.length > 0"
-    :force-critical="hitDetailForceCritical"
-    :result-force-critical="hitDetailResultForceCritical"
+    :critical-overrides="scenario.battle.hitCriticalOverrides"
+    :weakness-breaks="scenario.battle.hitWeaknessBreaks"
+    :weakness-break-options="hitWeaknessBreakOptions"
+    @set-critical-override="(key, value) => updateHitMark('hitCriticalOverrides', key, value)"
+    @set-weakness-break="
+      (key, value) => updateHitMark('hitWeaknessBreaks', key, value || undefined)
+    "
+    @set-weakness-break-stagger="(key, value) => updateHitMark('hitWeaknessBreaks', key, value)"
     :entries="hitDetailEntries"
+    :initial-sequence="enemyDamageDetailSequence ?? undefined"
     :contribution-source-label="hitDetailContributionSourceLabel"
     :damage-type-label="damageElementLabel"
     :skill-type-label="skillTypeLabel"
     :labels="{
       dialogTitle: t('hitDetail.title'),
+      breakWeakness: t('timeline.hitMarks.breakWeakness'),
+      interruptStagger: t('timeline.hitMarks.interruptStagger'),
+      defaultCritical: t('timeline.hitMarks.default'),
+      forceCritical: t('timeline.hitMarks.critical'),
+      forceNonCritical: t('timeline.hitMarks.nonCritical'),
       previousHit: t('timeline.hitDetail.previousHit'),
       nextHit: t('timeline.hitDetail.nextHit'),
       context: t('hitDetail.context'),
@@ -8553,7 +9434,7 @@ function setMobileGuideFrame(frame: number | null): void {
       expectedDamage: t('hitDetail.expectedDamage'),
       actualDamage: t('hitDetail.actualDamage'),
       forcedDamage: t('hitDetail.forcedDamage'),
-      forceCrit: t('hitDetail.forceCrit'),
+      forcedNonCriticalDamage: t('hitDetail.forcedNonCriticalDamage'),
       criticalDamage: t('hitDetail.critDamage'),
       nonCriticalDamage: t('hitDetail.nonCritDamage'),
       attack: t('hitDetail.attack'),
@@ -8610,23 +9491,21 @@ function setMobileGuideFrame(frame: number | null): void {
       staggerMultiplier: t('hitDetail.staggerMult'),
       finisherMultiplier: t('hitDetail.finisherMult'),
       additionalScale: t('hitDetail.additionalScale'),
-      stacksDetail: (stacks: number) => t('hitDetail.linkDetail', { stacks }),
+      stacksDetail: (stacks: string) => t('hitDetail.linkDetail', { stacks }),
       baseMultiplier: t('hitDetail.baseMultiplier'),
       fixedMultiplier: t('hitDetail.fixedMultiplier'),
       hitFraction: t('hitDetail.hitFraction'),
-      levelDetail: (level: number) => t('hitDetail.levelCoeffDetail', { level }),
-      artsIntensityDetail: (value: number) => t('hitDetail.artsIntensityDetail', { value }),
+      levelDetail: (level: string) => t('hitDetail.levelCoeffDetail', { level }),
+      artsIntensityDetail: (value: string) => t('hitDetail.artsIntensityDetail', { value }),
       damageTaken: t('hitDetail.dmgTaken'),
       defenseMultiplier: t('hitDetail.defMult'),
       resistanceMultiplier: t('hitDetail.resMult'),
-      defenseDetail: (value: number) => t('hitDetail.defDetail', { def: value }),
+      defenseDetail: (value: string) => t('hitDetail.defDetail', { def: value }),
     }"
     @close="
       hitDetailTarget = null;
       enemyDamageDetailSequence = null;
     "
-    @toggle-force-critical="toggleHitDetailForceCritical"
-    @select-entry="selectedHitDetailSequence = $event"
   />
   <TimelineBuffDetailDialog
     :receipt-entries="publishedReceiptEntries"
@@ -8672,6 +9551,13 @@ function setMobileGuideFrame(frame: number | null): void {
     @update:visible="showReceiveDialog = $event"
     @receive="receiveProjectCode"
   />
+  <OperatorPresetTransferDialog
+    v-if="incomingPresets"
+    :presets="incomingPresets"
+    :game-data="editorGameDataRepository"
+    @close="incomingPresets = null"
+    @confirm="importPresetSelection"
+  />
   <TimelineProjectImportDialog
     v-if="pendingProjectImport"
     :project="pendingProjectImport.project"
@@ -8681,6 +9567,14 @@ function setMobileGuideFrame(frame: number | null): void {
   <TimelineExportDialog
     v-if="showExportDialog"
     :visible="showExportDialog"
+    :initial-target="exportTarget"
+    :preset-operator-slug="exportOperatorSlug"
+    :presets="exportPresetItems"
+    :game-data="editorGameDataRepository"
+    :presets-ready="exportPresetsReady"
+    :presets-error="exportPresetsError"
+    @request-presets="preparePresetExport"
+    @export-presets="exportPresetFile"
     :current-scenario-name="scenario.name"
     :scenarios="projectScenarios"
     :max-duration="Math.max(10, Math.round(scenario.battle.durationFrames / PROJECT_FPS))"
@@ -8771,6 +9665,13 @@ function setMobileGuideFrame(frame: number | null): void {
     @update:visible="showShortcutHelp = $event"
   />
 </template>
+
+<style>
+.timeline-hit--marked {
+  outline: 1px solid var(--ea-gold);
+  outline-offset: -1px;
+}
+</style>
 
 <style scoped>
 .legacy-conversion-actions .ea-button {
@@ -8891,20 +9792,6 @@ button:disabled {
   white-space: nowrap;
 }
 
-.sidebar-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.sidebar-tabs button {
-  min-width: 0;
-  padding: 0 4px;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 .library-section-title {
   display: flex;
   flex-direction: column;
@@ -8920,10 +9807,6 @@ button:disabled {
 .library-section-title span {
   color: var(--ea-fg-secondary);
   font-size: 10px;
-}
-
-.library-section-title--status {
-  margin-top: 12px;
 }
 
 .skill-section {
@@ -9115,7 +9998,6 @@ button:disabled {
 .prep-collapsed-entry,
 .prep-expanded-collapse {
   position: absolute;
-  /* 与轨道分隔线重合时，准备区按钮优先命中；仍低于固定轨道头和标尺。 */
   z-index: 41;
   top: calc(60px + (100% - 60px) / 2);
   transform: translateY(-50%);
@@ -9128,6 +10010,10 @@ button:disabled {
 .prep-collapsed-entry {
   width: 18px;
   gap: 8px;
+}
+
+.prep-expanded-collapse.is-outside-prep {
+  z-index: 90;
 }
 
 .prep-collapsed-entry > span {
@@ -9408,11 +10294,18 @@ button:disabled {
 }
 
 .team-event-marker {
+  --combo-control-color: #f15b8a;
   top: 60px;
   bottom: 0;
   width: 1px;
-  border-left: 1px dashed #ff7875;
-  box-shadow: none;
+  background: color-mix(in srgb, var(--combo-control-color) 55%, transparent);
+  cursor: grab;
+  /* 竖线不抢准备区拖动，标签仍显示在轨道内容上方。 */
+  z-index: auto;
+}
+
+.team-event-marker.is-ready {
+  --combo-control-color: #20d9d2;
 }
 
 .cycle-boundary-marker::after,
@@ -9463,84 +10356,29 @@ button:disabled {
 .team-event-marker > span,
 .team-event-marker > b {
   position: absolute;
-  left: 4px;
+  z-index: 12;
+  left: 0;
   padding: 2px 4px;
-  background: rgb(80 16 20 / 92%);
-  color: #ffccc7;
   font-size: 10px;
-  font-weight: 500;
+  font-family: monospace;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: auto;
   white-space: nowrap;
 }
 
 .team-event-marker > span {
-  top: 2px;
+  top: 0;
+  border-radius: 0 4px 4px 0;
+  background: var(--combo-control-color);
+  color: #222;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 30%);
 }
 
 .team-event-marker > b {
-  top: 20px;
-}
-
-.track-switch-marker {
-  top: calc(var(--timeline-action-top, 55px) - 42px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  z-index: 30;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  transform: translateX(-50%);
-  transition: transform 0.1s;
-  cursor: grab;
-}
-
-.track-switch-marker.dragging {
-  transition: none;
-  cursor: grabbing;
-}
-
-.track-switch-marker--automatic {
-  opacity: 0.48;
-  pointer-events: none;
-}
-
-.track-switch-marker--automatic .track-switch-marker__avatar,
-.track-switch-marker--automatic .track-switch-marker__time {
-  border-style: dashed;
-  box-shadow: none;
-}
-
-.track-switch-marker__avatar.operator-avatar-crop {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid #d3adff;
-  background: #222;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 50%);
-}
-
-.track-switch-marker__time {
-  padding: 1px 5px;
-  border: 1px solid rgb(211 173 255 / 65%);
-  border-radius: 10px;
-  background: rgb(24 18 30 / 92%);
-  box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
-  color: #f0dcff;
-  font-size: 9px;
-  font-weight: bold;
-  line-height: 1.2;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
-  white-space: nowrap;
-}
-
-.track-switch-marker__pointer {
-  width: 0;
-  height: 0;
-  border-top: 7px solid #d3adff;
-  border-right: 5px solid transparent;
-  border-left: 5px solid transparent;
-  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 40%));
+  top: 28px;
+  color: var(--combo-control-color);
+  text-shadow: 0 0 2px color-mix(in srgb, var(--combo-control-color) 50%, transparent);
 }
 
 .dodge-marker {
@@ -9568,14 +10406,11 @@ button:disabled {
   color: #ffe69a;
 }
 
-.dodge-marker > svg {
+.dodge-marker__icon {
   width: 18px;
   height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .dodge-marker__pointer {
@@ -9622,40 +10457,13 @@ button:disabled {
   box-shadow: 0 0 7px currentColor;
 }
 
-.timeline-marker.track-switch-marker.selected {
-  outline: 0;
-}
-
-.track-switch-marker.selected .track-switch-marker__avatar {
-  border-color: #fff;
-  box-shadow: 0 0 8px #fff;
-}
-
-.track-switch-marker.selected .track-switch-marker__time {
-  border-color: rgb(255 255 255 / 85%);
-  color: #fff;
-}
-
-.track-switch-marker.selected .track-switch-marker__pointer {
-  border-top-color: #fff;
-}
-
 .timeline-marker.selected:not(.simulation-range-marker):not(.cycle-boundary-marker):not(
     .track-switch-marker
-  ) {
+  ):not(.team-event-marker) {
   outline: 2px solid var(--ea-gold);
   outline-offset: 2px;
 }
 
-.team-event-marker.combo-cooldown-guide {
-  --combo-control-color: #f15b8a;
-  width: 1px;
-  border: 0;
-  background: color-mix(in srgb, var(--combo-control-color) 55%, transparent);
-  cursor: grab;
-  /* 图标可高于 0 秒线命中区，竖线本身仍不抢准备区拖动。 */
-  z-index: auto;
-}
 .controlled-combo-cooldown-bar {
   position: absolute;
   top: calc(var(--timeline-action-top) + 57px);
@@ -9684,44 +10492,20 @@ button:disabled {
   background: currentColor;
   transform: translateY(-50%);
 }
-.team-event-marker.combo-cooldown-guide.is-ready {
-  --combo-control-color: #20d9d2;
-}
-.combo-cooldown-guide.selected {
+.team-event-marker.selected {
   width: 2px;
   background: #fff;
   box-shadow: 0 0 8px rgb(255 255 255 / 75%);
   outline: 0;
   z-index: 31;
 }
-.combo-cooldown-marker {
-  position: absolute;
-  z-index: 12;
-  top: 0;
-  left: 50%;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  color: #161616;
-  background: var(--combo-control-color);
-  border: 1px solid color-mix(in srgb, var(--combo-control-color) 72%, #fff);
-  transform: translateX(-50%);
-  box-shadow: 0 2px 6px rgb(0 0 0 / 45%);
-}
-.combo-cooldown-guide.selected .combo-cooldown-marker {
-  color: #111;
+.team-event-marker.selected > span {
   background: #fff;
-  border-color: #fff;
+  color: #111;
 }
-.combo-cooldown-marker svg {
-  width: 15px;
-  height: 15px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.team-event-marker.selected > b {
+  color: #fff;
+  text-shadow: 0 0 2px rgb(255 255 255 / 80%);
 }
 
 .simulation-panel {
@@ -9740,9 +10524,9 @@ button:disabled {
 }
 
 .simulation-curves > :deep(.enemy-status-sections) {
-  flex: 1 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
-  height: 100%;
 }
 
 .simulation-panel__empty {
@@ -9864,6 +10648,11 @@ button:disabled {
   background: var(--ea-prep-fill);
   z-index: 0;
   pointer-events: none;
+}
+
+/* 短准备区按真实帧宽显示，但加深底色，避免窄色带在轨道背景中消失。 */
+.timeline-surface.is-compact-prep .track-lane .prep-zone {
+  background: color-mix(in srgb, var(--ea-prep-fill) 75%, var(--ea-mark-strong) 25%);
 }
 
 .battle-start-line {

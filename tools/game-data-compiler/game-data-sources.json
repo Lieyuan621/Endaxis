@@ -23,6 +23,15 @@
     "UseItemTable",
     "EquipSuitTable",
     "DisplayEnemyTypeTable",
+    "WikiGroupTable",
+    "WikiEntryTable",
+    "WikiEntryDataTable",
+    "DungeonTable",
+    "DungeonSeriesTable",
+    "HighDifficultySeriesTable",
+    "HighDifficultyBossGroupTable",
+    "HighDifficultyBossGameTable",
+    "SeasonTowerGameGroupTable",
     "EnemyAbilityDescTable",
     "EnemyAttributeTemplateTable",
     "EnemyDisplayInfoTable",
@@ -34,11 +43,15 @@
     "I18nTextTable_EN"
   ],
   "jsonCollections": {
+    "SpawnerConfig": "SpawnerConfig",
     "SkillData": "SkillData",
     "BuffData": "BuffData",
     "ProjectileData": "ProjectileData",
     "AbilityEntityData": "AbilityEntityData",
     "CharacterData": "CharacterData"
   },
-  "jsonFiles": ["GameplayConfig/GameplayTagPredefineTable.json"]
+  "jsonFiles": [
+    "GameplayConfig/GameplayTagPredefineTable.json",
+    "LevelData/indie_hdg035/indie_hdg035_lv_data_sub_battle.json"
+  ]
 }

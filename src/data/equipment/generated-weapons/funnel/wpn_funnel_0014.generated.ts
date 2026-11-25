@@ -39,21 +39,6 @@ const definition = {
           value: [0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.28],
         },
       ],
-      skillId: 'sk_wpn_funnel_0014',
-      eventHandlers: [
-        {
-          key: 'skill3:event:0:sequence:0',
-          abilityEvent: 'beforeOutputSpellBurst',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_2' },
-        },
-        {
-          key: 'skill3:event:1:sequence:0',
-          abilityEvent: 'beforeOutputPhysicalInfliction',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_2' },
-        },
-      ],
       actionGraph: {
         main: {
           nodes: {
@@ -96,6 +81,21 @@ const definition = {
         },
         macros: {},
       },
+      skillId: 'sk_wpn_funnel_0014',
+      eventHandlers: [
+        {
+          key: 'skill3:event:0:sequence:0',
+          abilityEvent: 'beforeOutputSpellBurst',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_2' },
+        },
+        {
+          key: 'skill3:event:1:sequence:0',
+          abilityEvent: 'beforeOutputPhysicalInfliction',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_2' },
+        },
+      ],
       blackboard: {
         dmg_up: [0.08, 0.096, 0.112, 0.128, 0.144, 0.16, 0.176, 0.192, 0.224],
         duration: [15, 15, 15, 15, 15, 15, 15, 15, 15],

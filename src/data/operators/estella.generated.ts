@@ -8,6 +8,24 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const estellaChr_0021_whiten_attack1ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -28,13 +46,13 @@ export const estellaChr_0021_whiten_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.08 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_3',
@@ -53,6 +71,8 @@ export const estellaChr_0021_whiten_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -60,7 +80,14 @@ export const estellaChr_0021_whiten_attack1ActionGraph = {
         },
         next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_7: {
+      overrideBasicAttackMapping_7: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0021_whiten_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0021_whiten_attack2'] },
@@ -81,6 +108,7 @@ export const estellaChr_0021_whiten_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_attack1: SkillDefinition = {
+  actionGraph: estellaChr_0021_whiten_attack1ActionGraph,
   key: 'chr_0021_whiten_attack1',
   element: 'physical',
   blackboard: {
@@ -91,33 +119,40 @@ export const estellaChr_0021_whiten_attack1: SkillDefinition = {
   naturalDurationFrames: 105,
   exclusiveFrame: 18,
   offsetRecordFrame: 6,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 6,
-        endFrame: 28,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0021_whiten_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 13, endFrame: 28, skillIds: ['chr_0021_whiten_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 13, endFrame: 28, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 6, endFrame: 28, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 13, endFrame: 28, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0021_whiten_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: estellaChr_0021_whiten_attack1ActionGraph,
 };
 
 export const estellaChr_0021_whiten_attack2ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -138,13 +173,13 @@ export const estellaChr_0021_whiten_attack2ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.16 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_3',
@@ -163,6 +198,8 @@ export const estellaChr_0021_whiten_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -170,7 +207,14 @@ export const estellaChr_0021_whiten_attack2ActionGraph = {
         },
         next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_7: {
+      overrideBasicAttackMapping_7: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0021_whiten_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0021_whiten_attack3'] },
@@ -191,6 +235,7 @@ export const estellaChr_0021_whiten_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_attack2: SkillDefinition = {
+  actionGraph: estellaChr_0021_whiten_attack2ActionGraph,
   key: 'chr_0021_whiten_attack2',
   element: 'physical',
   blackboard: {
@@ -201,33 +246,40 @@ export const estellaChr_0021_whiten_attack2: SkillDefinition = {
   naturalDurationFrames: 123,
   exclusiveFrame: 28,
   offsetRecordFrame: 6,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 7,
-        endFrame: 30,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0021_whiten_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 16, endFrame: 30, skillIds: ['chr_0021_whiten_attack3'] }],
-  },
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 16, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 7, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 16, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0021_whiten_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: estellaChr_0021_whiten_attack2ActionGraph,
 };
 
 export const estellaChr_0021_whiten_attack3ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_4: {
         action: {
           kind: 'changeResource',
@@ -248,13 +300,13 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_4',
@@ -273,6 +325,8 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -284,13 +338,13 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_4',
@@ -309,6 +363,8 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['normalAttack'],
@@ -316,7 +372,14 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
         },
         next: 'ifElse_11',
       },
-      reachSkillOperableBoundary_13: {
+      overrideBasicAttackMapping_13: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0021_whiten_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_14: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0021_whiten_attack4'] },
@@ -342,6 +405,7 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_attack3: SkillDefinition = {
+  actionGraph: estellaChr_0021_whiten_attack3ActionGraph,
   key: 'chr_0021_whiten_attack3',
   element: 'physical',
   blackboard: {
@@ -353,34 +417,42 @@ export const estellaChr_0021_whiten_attack3: SkillDefinition = {
   naturalDurationFrames: 153,
   exclusiveFrame: 28,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 15,
-        endFrame: 43,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0021_whiten_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 28, endFrame: 43, skillIds: ['chr_0021_whiten_attack4'] }],
-  },
   costFrame: 20,
   scheduledSequences: [
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 18, endFrame: 19, sequence: { $sequence: 'dealDamage_12' } },
-    { startFrame: 28, endFrame: 43, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
+    { startFrame: 15, endFrame: 43, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
+    { startFrame: 28, endFrame: 43, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0021_whiten_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: estellaChr_0021_whiten_attack3ActionGraph,
 };
 
 export const estellaChr_0021_whiten_attack4ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -401,13 +473,13 @@ export const estellaChr_0021_whiten_attack4ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.38 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_3',
@@ -426,6 +498,8 @@ export const estellaChr_0021_whiten_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -435,7 +509,14 @@ export const estellaChr_0021_whiten_attack4ActionGraph = {
         },
         next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_7: {
+      overrideBasicAttackMapping_7: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0021_whiten_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0021_whiten_attack1'] },
@@ -457,6 +538,7 @@ export const estellaChr_0021_whiten_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_attack4: SkillDefinition = {
+  actionGraph: estellaChr_0021_whiten_attack4ActionGraph,
   key: 'chr_0021_whiten_attack4',
   element: 'physical',
   blackboard: {
@@ -468,28 +550,17 @@ export const estellaChr_0021_whiten_attack4: SkillDefinition = {
   naturalDurationFrames: 134,
   exclusiveFrame: 46,
   offsetRecordFrame: 21,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 24,
-        endFrame: 59,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0021_whiten_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 46, endFrame: 59, skillIds: ['chr_0021_whiten_attack1'] }],
-  },
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 21, endFrame: 22, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 46, endFrame: 59, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 24, endFrame: 59, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 46, endFrame: 59, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0021_whiten_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: estellaChr_0021_whiten_attack4ActionGraph,
 };
 
 export const estellaChr_0021_whiten_power_attackActionGraph = {
@@ -499,13 +570,13 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'white_power' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -521,7 +592,14 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
         next: null,
       },
       gainFinisherSp_5: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       ifElse_6: {
@@ -538,11 +616,13 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             calculation: 'breakingAttack',
             calculationMultiplier: 1,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'ifElse_6',
@@ -573,6 +653,13 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_10: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0021_whiten_normal_skill', 'chr_0021_whiten_combo_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
@@ -590,6 +677,7 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_power_attack: SkillDefinition = {
+  actionGraph: estellaChr_0021_whiten_power_attackActionGraph,
   key: 'chr_0021_whiten_power_attack',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -598,32 +686,41 @@ export const estellaChr_0021_whiten_power_attack: SkillDefinition = {
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 30,
-        endFrame: 58,
-        skillIds: ['chr_0021_whiten_normal_skill', 'chr_0021_whiten_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 30, endFrame: 33, sequence: { $sequence: 'ifElse_3' } },
     { startFrame: 30, endFrame: 39, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_8' } },
     { startFrame: 0, endFrame: 30, sequence: { $sequence: 'applyBuff_9' } },
+    { startFrame: 30, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: estellaChr_0021_whiten_power_attackActionGraph,
 };
 
 export const estellaChr_0021_whiten_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -654,6 +751,8 @@ export const estellaChr_0021_whiten_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -675,6 +774,7 @@ export const estellaChr_0021_whiten_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_plunging_attack_end: SkillDefinition = {
+  actionGraph: estellaChr_0021_whiten_plunging_attack_endActionGraph,
   key: 'chr_0021_whiten_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -686,12 +786,14 @@ export const estellaChr_0021_whiten_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 15,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: estellaChr_0021_whiten_plunging_attack_endActionGraph,
 };
 
 export const estellaChr_0021_whiten_normal_skillActionGraph = {
@@ -700,7 +802,11 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'front', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'front',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'mainchar' },
+          },
         },
         next: null,
       },
@@ -732,31 +838,56 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         },
         next: 'findCharacterTeamTargets_4',
       },
-      createSpatialPointTargets_6: {
+      createSpatialPointTargets_7: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'mainchar' },
+          },
         },
         next: null,
       },
-      ifElse_7: {
+      ifElse_10: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'createSpatialPointTargets_6' },
-          whenFalse: { $sequence: null },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'createSpatialPointTargets_7' },
         },
         next: null,
       },
-      findCharacterTeamTargets_8: {
+      createSpatialPointTargets_9: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'maintar' },
+          },
+        },
+        next: null,
+      },
+      ifElse_11: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_9' },
+          whenFalse: { $sequence: 'ifElse_10' },
+        },
+        next: null,
+      },
+      findCharacterTeamTargets_12: {
         action: {
           kind: 'findCharacterTeamTargets',
           parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
         },
-        next: 'ifElse_7',
+        next: 'ifElse_11',
       },
-      findTargets_9: {
+      findTargets_13: {
         action: {
           kind: 'findTargets',
           parameters: {
@@ -767,64 +898,69 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         },
         next: null,
       },
-      launchProjectile_29: {
+      launchProjectile_34: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            schedule: {
+              endFrame: 1,
+              callbacks: [{ event: 'hit', triggerFrames: [1], hitKind: 'collision' }],
+            },
             inheritActionBlackboard: true,
-            entityInitialValues: { EntityBB_first_hit: 0 },
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0021_whiten_normal_skill',
+            faction: 'good',
             recycleDelaySeconds: 5,
-            hit: { finishOnHit: false },
+            targets: { kind: 'context', contextKey: 'tar_behind' },
+            entityInitialValues: { EntityBB_first_hit: 0 },
+            hit: {},
           },
           callbacks: [
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0021_whiten_normal_skill_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 150,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0, dmg_up: 0, poise: 30, up_atk_scale: 0 },
-                scheduledSequences: [
-                  {
-                    startFrame: 0,
-                    endFrame: 0,
-                    sequence: { $sequence: 'applyElementalInfliction_10' },
-                  },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      dealDamage_7: {
+                      startTimeDilation_7: {
                         action: {
-                          kind: 'dealDamage',
+                          kind: 'startTimeDilation',
                           parameters: {
-                            damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                            scope: 'hitStop',
+                            attacker: { kind: 'source' },
+                            targets: { kind: 'inputTarget' },
+                            affectType: 'OnlyTarget',
+                            durationSeconds: { kind: 'constant', value: 0.05 },
+                            priority: 10,
+                            curve: { kind: 'named', key: 'char_hard_stop' },
                           },
                         },
                         next: null,
+                      },
+                      dealDamage_8: {
+                        action: {
+                          kind: 'dealDamage',
+                          parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
+                            damageType: 'cryo',
+                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                            tags: ['normalSkill', 'canBreakWeakness'],
+                            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                          },
+                        },
+                        next: 'startTimeDilation_7',
                       },
                       startTimeDilation_2: {
                         action: {
                           kind: 'startTimeDilation',
                           parameters: {
-                            scope: 'entity',
+                            scope: 'hitStop',
+                            attacker: { kind: 'source' },
+                            targets: { kind: 'inputTarget' },
+                            affectType: 'Both',
                             durationSeconds: { kind: 'constant', value: 0.05 },
-                            slot: 'TimeDilation/Layer/Entity/HitStop',
                             priority: 10,
                             curve: { kind: 'named', key: 'char_hard_stop' },
-                            finishByAction: false,
-                            targets: ['enemy', 'caster'],
                           },
                         },
                         next: null,
@@ -845,10 +981,11 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'cryo',
                             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
+                            tags: ['normalSkill', 'canBreakWeakness'],
                             instantDamageScaleModifiers: [
                               {
                                 side: 'attacker',
@@ -883,30 +1020,34 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
                         },
                         next: 'modifyActionValue_5',
                       },
-                      ifElse_8: {
+                      ifElse_9: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
                           condition: { kind: 'conditionNode', nodeId: 'data_6' },
                           whenTrue: { $sequence: 'modifyActionValue_6' },
-                          whenFalse: { $sequence: 'dealDamage_7' },
+                          whenFalse: { $sequence: 'dealDamage_8' },
                         },
                         next: null,
                       },
-                      forEachContextTarget_9: {
+                      forEachContextTarget_10: {
                         action: {
                           kind: 'forEachContextTarget',
-                          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-                          body: { $sequence: 'ifElse_8' },
+                          parameters: { targets: { kind: 'inputTarget' } },
+                          body: { $sequence: 'ifElse_9' },
                         },
                         next: null,
                       },
-                      applyElementalInfliction_10: {
+                      applyElementalInfliction_11: {
                         action: {
                           kind: 'applyElementalInfliction',
-                          parameters: { element: 'cryo', isExtra: false },
+                          parameters: {
+                            element: 'cryo',
+                            isExtra: false,
+                            target: { kind: 'inputTarget' },
+                          },
                         },
-                        next: 'forEachContextTarget_9',
+                        next: 'forEachContextTarget_10',
                       },
                     },
                     dataNodes: {
@@ -937,41 +1078,41 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0021_whiten_normal_skill_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 150,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0, dmg_up: 0, poise: 30, up_atk_scale: 0 },
+                scheduledSequences: [
+                  {
+                    startFrame: 0,
+                    endFrame: 0,
+                    sequence: { $sequence: 'applyElementalInfliction_11' },
+                  },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      createSpatialPointTargets_30: {
+      createSpatialPointTargets_35: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'tar_behind', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'launchProjectile_29',
-      },
-      ifElse_31: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'createSpatialPointTargets_30' },
-          whenFalse: { $sequence: 'createSpatialPointTargets_30' },
-        },
-        next: null,
-      },
-      findTargets_32: {
-        action: {
-          kind: 'findTargets',
           parameters: {
-            owner: { kind: 'owner' },
-            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
-            saveToContextKey: 'maintar',
+            saveToContextKey: 'tar_behind',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
           },
         },
-        next: 'ifElse_31',
+        next: 'launchProjectile_34',
       },
-      finishBuffsById_33: {
+      finishBuffsById_38: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -983,7 +1124,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         },
         next: null,
       },
-      changeResource_34: {
+      changeResource_39: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -993,29 +1134,50 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
             source: { kind: 'source' },
             targets: { kind: 'source' },
             spGainKind: 'refund',
-            spGainSource: 'default',
+            spGainSource: 'skill',
           },
         },
-        next: 'finishBuffsById_33',
+        next: 'finishBuffsById_38',
       },
-      readBuffBlackboard_35: {
+      readBuffBlackboard_40: {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             query: { kind: 'id', buffIds: ['buff_chr_0021_whiten_talent_0_active'] },
             desiredKey: 'atb',
             outputKey: 'atb',
           },
         },
-        next: 'changeResource_34',
+        next: 'changeResource_39',
       },
-      checkCondition_36: {
+      checkCondition_41: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
-        next: 'readBuffBlackboard_35',
+        next: 'readBuffBlackboard_40',
+      },
+      ifElse_opt2: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_35' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_35' },
+        },
+        next: null,
+      },
+      findTargets_opt3: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'maintar',
+          },
+        },
+        next: 'ifElse_opt2',
       },
     },
     dataNodes: {
@@ -1023,7 +1185,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'maintar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1032,11 +1194,18 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
       },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
       },
       data_3: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'maintar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_5: {
@@ -1050,12 +1219,17 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
           buffIds: ['buff_chr_0021_whiten_talent_0_active'],
         },
       },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_normal_skill: SkillDefinition = {
+  actionGraph: estellaChr_0021_whiten_normal_skillActionGraph,
   key: 'chr_0021_whiten_normal_skill',
   element: 'cryo',
   blackboard: {
@@ -1073,30 +1247,48 @@ export const estellaChr_0021_whiten_normal_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_5' } },
-    { startFrame: 0, endFrame: 7, sequence: { $sequence: 'findCharacterTeamTargets_8' } },
-    { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_9' } },
-    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'findTargets_32' } },
-    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'checkCondition_36' } },
+    { startFrame: 0, endFrame: 7, sequence: { $sequence: 'findCharacterTeamTargets_12' } },
+    { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_13' } },
+    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'findTargets_opt3' } },
+    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'checkCondition_41' } },
   ],
   defaultTarget: 'owner',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: estellaChr_0021_whiten_normal_skillActionGraph,
 };
 
 export const estellaChr_0021_whiten_combo_skillActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       dealDamage_12: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
@@ -1107,7 +1299,8 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'inputTarget' },
             isExtra: false,
             duration: { kind: 'constant', value: 0 },
             height: { kind: 'constant', value: 0 },
@@ -1123,10 +1316,11 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['canBreakWeakness', 'comboSkill'],
             stagger: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
@@ -1137,7 +1331,8 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'inputTarget' },
             isExtra: false,
             duration: { kind: 'constant', value: 0 },
             height: { kind: 'constant', value: 0 },
@@ -1159,7 +1354,7 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
                 copiedBlackboardAssignments: { duration: 'duration', rate: 'rate' },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -1197,7 +1392,7 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         },
         next: null,
       },
-      changeResource_15: {
+      changeResource_16: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1210,72 +1405,72 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_16: {
+      ifElse_17: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_9' },
-          whenTrue: { $sequence: 'changeResource_15' },
+          whenTrue: { $sequence: 'changeResource_16' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      forEachContextTarget_17: {
+      forEachContextTarget_18: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'tar' } },
           body: { $sequence: 'ifElse_14' },
         },
-        next: 'ifElse_16',
+        next: 'ifElse_17',
+      },
+      startTimeDilation_21: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
+            durationSeconds: { kind: 'constant', value: 0.3 },
+            priority: 10,
+            curve: { kind: 'named', key: 'whiten_combo' },
+          },
+        },
+        next: null,
       },
       startTimeDilation_20: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'whiten_combo' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_19: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'whiten_combo' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      ifElse_21: {
+      ifElse_22: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'startTimeDilation_19' },
-          whenFalse: { $sequence: 'startTimeDilation_20' },
+          whenTrue: { $sequence: 'startTimeDilation_20' },
+          whenFalse: { $sequence: 'startTimeDilation_21' },
         },
         next: null,
       },
-      checkCondition_22: {
+      checkCondition_23: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
         },
-        next: 'ifElse_21',
+        next: 'ifElse_22',
       },
-      startTimeDilation_23: {
+      startTimeDilation_24: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1285,9 +1480,23 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_25: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0021_whiten_normal_skill'] },
         },
         next: null,
       },
@@ -1314,7 +1523,7 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/SpellStatus/Frozen'],
         },
@@ -1322,7 +1531,14 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
       data_8: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
       data_9: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_10: {
         type: 'boolean',
@@ -1332,7 +1548,7 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1345,6 +1561,7 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_combo_skill: SkillDefinition = {
+  actionGraph: estellaChr_0021_whiten_combo_skillActionGraph,
   key: 'chr_0021_whiten_combo_skill',
   element: 'physical',
   blackboard: {
@@ -1362,23 +1579,20 @@ export const estellaChr_0021_whiten_combo_skill: SkillDefinition = {
   exclusiveFrame: 33,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 20, endFrame: 59, skillIds: ['chr_0021_whiten_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 19, endFrame: 34, sequence: { $sequence: 'forEachContextTarget_17' } },
-    { startFrame: 19, endFrame: 22, sequence: { $sequence: 'checkCondition_22' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_23' } },
+    { startFrame: 19, endFrame: 22, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 19, endFrame: 34, sequence: { $sequence: 'forEachContextTarget_18' } },
+    { startFrame: 19, endFrame: 22, sequence: { $sequence: 'checkCondition_23' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_24' } },
+    { startFrame: 20, endFrame: 59, sequence: { $sequence: 'reachSkillOperableBoundary_25' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 510],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: estellaChr_0021_whiten_combo_skillActionGraph,
 };
 
 export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
@@ -1411,12 +1625,31 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
         },
         next: null,
       },
+      findTargets_4: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       applyPhysicalInfliction_5: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'inputTarget' },
             isExtra: false,
             duration: { kind: 'constant', value: 0 },
             height: { kind: 'constant', value: 0 },
@@ -1439,10 +1672,11 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['ultimateSkill', 'canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
@@ -1473,7 +1707,7 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
       forEachContextTarget_10: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          parameters: { targets: { kind: 'context', key: 'tar' } },
           body: { $sequence: 'checkCondition_6' },
         },
         next: 'modifyActionValue_9',
@@ -1491,13 +1725,33 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
         },
         next: null,
       },
+      overrideBasicAttackMapping_12: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0021_whiten_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_13: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0021_whiten_attack1',
+              'chr_0021_whiten_normal_skill',
+              'chr_0021_whiten_combo_skill',
+            ],
+          },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
         },
@@ -1512,6 +1766,7 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_ultimate_skill: SkillDefinition = {
+  actionGraph: estellaChr_0021_whiten_ultimate_skillActionGraph,
   key: 'chr_0021_whiten_ultimate_skill',
   element: 'physical',
   blackboard: {
@@ -1524,34 +1779,16 @@ export const estellaChr_0021_whiten_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 168,
   exclusiveFrame: 77,
   offsetRecordFrame: 0,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 51,
-        endFrame: 77,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0021_whiten_attack1',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 60,
-        endFrame: 77,
-        skillIds: [
-          'chr_0021_whiten_attack1',
-          'chr_0021_whiten_normal_skill',
-          'chr_0021_whiten_combo_skill',
-        ],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 30, sequence: { $sequence: 'startTimeDilation_1' } },
     { startFrame: 0, endFrame: 54, sequence: { $sequence: 'hideUi_2' } },
     { startFrame: 0, endFrame: 54, sequence: { $sequence: 'startUltimateTimeDilation_3' } },
+    { startFrame: 54, endFrame: 57, sequence: { $sequence: 'findTargets_4' } },
     { startFrame: 54, endFrame: 57, sequence: { $sequence: 'forEachContextTarget_10' } },
     { startFrame: 0, endFrame: 77, sequence: { $sequence: 'applyBuff_11' } },
+    { startFrame: 51, endFrame: 77, sequence: { $sequence: 'overrideBasicAttackMapping_12' } },
+    { startFrame: 60, endFrame: 77, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 300,
@@ -1559,7 +1796,6 @@ export const estellaChr_0021_whiten_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: estellaChr_0021_whiten_ultimate_skillActionGraph,
 };
 
 export const estellaCommon_character_perfect_dodgeActionGraph = {
@@ -1707,7 +1943,7 @@ const estellaBuff2ActionGraph = {
         action: {
           kind: 'aura',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'enemyByTags', tagQueryType: 'hasAll', tags: [], scope: 'global' },
             source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             buffs: [

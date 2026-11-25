@@ -7,8 +7,10 @@ import type { AkedbSnapshot } from '../scripts/gameDataProviders.ts';
 import {
   addEquipmentConfiguredReferences,
   addOperatorImpliedReferences,
+  addProjectContractSeasonDecorations,
   exportReference,
   parseArguments,
+  sourcePlanForReference,
 } from '../scripts/exportReferencedGameIcons.ts';
 
 const temporaryRoots: string[] = [];
@@ -22,7 +24,7 @@ afterEach(async () => {
 async function isolatedArguments(flags: string[] = []) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'endaxis-icons-'));
   temporaryRoots.push(root);
-  return parseArguments(['--output-root', root, '--source-mode', 'vfs-only', ...flags]);
+  return parseArguments(['--output-root', root, '--source-mode', 'local-only', ...flags]);
 }
 
 const reference = {
@@ -33,6 +35,32 @@ const reference = {
 };
 
 describe('全量图片隔离导出', () => {
+  it('把各期项目装饰图作为本地资源保留到隔离候选', async () => {
+    const publicRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'endaxis-contract-deco-'));
+    temporaryRoots.push(publicRoot);
+    for (const season of ['1', '2', 'other']) {
+      const directory = path.join(publicRoot, 'contingency_contract', season);
+      await fs.mkdir(directory, { recursive: true });
+      await fs.writeFile(path.join(directory, 'deco_contingency.webp'), 'fixture');
+    }
+    const references = new Map<string, Set<string>>();
+    await addProjectContractSeasonDecorations(references, publicRoot);
+    expect([...references.keys()]).toEqual([
+      '/contingency_contract/1/deco_contingency.webp',
+      '/contingency_contract/2/deco_contingency.webp',
+    ]);
+    for (const publicPath of references.keys()) {
+      expect(sourcePlanForReference(publicPath, new Map())).toMatchObject({ localOnly: true });
+    }
+    for (const publicPath of [
+      '/contingency_contract/deco_contract_0.webp',
+      '/contingency_contract/deco_contract_1.webp',
+      '/icons/icon_equipmake.webp',
+    ]) {
+      expect(sourcePlanForReference(publicPath, new Map())).toMatchObject({ localOnly: true });
+    }
+  });
+
   it('平铺图标从 AKEDB 选取稳定的同名资源，缺失不回退 VFS', async () => {
     const args = await isolatedArguments(['--source-mode', 'hybrid']);
     const assetPath = 'assets/beyond/dynamicassets/gameplay/ui/sprites/bufficon/example.png';
@@ -144,7 +172,7 @@ describe('全量图片隔离导出', () => {
             charId: 'chr_9000_sample',
             skillGroups: [{ operationType: 'battleSkill' }],
             assets: {
-              portraitCharacterId: 'chr_0001_portrait',
+              avatarCharacterId: 'chr_0001_avatar',
               icons: {
                 charge: { sourceName: 'custom_charge', preferredPathSegment: '/bufficon/' },
               },
@@ -156,8 +184,10 @@ describe('全量图片隔离导出', () => {
     const references = new Map<string, Set<string>>();
     const overrides = await addOperatorImpliedReferences(references, root, manifest);
     expect(overrides.get('/operators/custom/avatar.webp')?.sourceNames).toEqual([
-      'icon_round_chr_0001_portrait.png',
+      'icon_round_chr_0001_avatar.png',
     ]);
+    expect(overrides.has('/operators/custom/portrait.webp')).toBe(false);
+    expect(references.has('/operators/custom/portrait.webp')).toBe(false);
     expect(overrides.has('/operators/custom/battle.webp')).toBe(false);
     expect(overrides.get('/operators/custom/battle 01.webp')?.sourceNames).toEqual([
       'icon_skill_sample_01.png',
@@ -181,10 +211,10 @@ describe('全量图片隔离导出', () => {
       .png()
       .toBuffer();
     const request = vi.fn(async (url: URL) =>
-      url.pathname.includes('/by-name')
-        ? Response.json({
-            candidates: [{ assetIndex: 1, path: 'assets/fixture.png', rawUrl: '/fixture.png' }],
-          })
+      url.pathname.endsWith('/api/images/manifest.json')
+        ? Response.json([
+            { path: 'assets/fixture.png', contentFile: '/api/images/assets/fixture.png' },
+          ])
         : new Response(new Uint8Array(png)),
     );
     vi.stubGlobal('fetch', request);

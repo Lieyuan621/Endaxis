@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { publicAssetUrl } from '../../../utils/publicAssetUrl';
 import { resolveImage } from '../../imageResources';
 import { EaTooltip } from '@/design-system';
 import { EaButton, EaDeleteIcon, EaNumberInput, EaPopover } from '@/design-system';
@@ -8,6 +9,7 @@ import {
   contractDisplayBlackboard,
 } from '../../../data/contingencyContract/definitions';
 import { computed } from 'vue';
+import ContractShareControls from './ContractShareControls.vue';
 import { useI18n } from 'vue-i18n';
 import { GameRichTextRenderer } from '../../presentation';
 import { contingencyContractTagText } from '../contingencyContractBuffPresentation';
@@ -26,7 +28,7 @@ const props = defineProps<{
   selections: readonly MechanicSelectionDocument[];
 }>();
 const emit = defineEmits<{
-  setSelectedTagIds: [tagIds: readonly number[]];
+  setSelectedTagIds: [tagIds: readonly number[], resetParameterTagIds?: readonly number[]];
   setInitialVariable: [tagId: number, key: string, value: number];
   clearInitialVariables: [tagId: number];
 }>();
@@ -217,7 +219,6 @@ function description(tag: ContingencyContractTagPresentation): string {
 
 <template>
   <section class="cc-panel">
-    <p v-if="season === 2" class="cc-preview-note">{{ t('contingencyContract.preview.note') }}</p>
     <div class="cc-body">
       <div class="cc-groups">
         <div class="cc-grid" :style="{ width: `${gridWidth}px`, height: `${gridHeight}px` }">
@@ -407,10 +408,17 @@ function description(tag: ContingencyContractTagPresentation): string {
       <aside class="cc-detail">
         <div class="cc-detail-toolbar">
           <div class="cc-total-score" :title="t('contingencyContract.score')">
-            <img src="/contingency_contract/deco_contract_027.webp" alt="" /><strong>{{
-              selectedScore
-            }}</strong>
+            <img
+              :src="publicAssetUrl('/contingency_contract/deco_contract_1.webp')"
+              alt=""
+            /><strong>{{ selectedScore }}</strong>
           </div>
+          <ContractShareControls
+            :season="season"
+            :selected-tag-ids="selectedTagIds"
+            :read-only="readOnly"
+            @import="(ids, resetIds) => emit('setSelectedTagIds', ids, resetIds)"
+          />
           <EaButton
             size="sm"
             type="button"
@@ -523,12 +531,6 @@ function description(tag: ContingencyContractTagPresentation): string {
 .cc-variable :deep(.ea-number-input) {
   width: 100px;
   flex-shrink: 0;
-}
-.cc-preview-note {
-  margin: 0;
-  padding: 10px 12px;
-  color: var(--ea-fg-muted);
-  font-size: 12px;
 }
 .cc-panel {
   height: 100%;
@@ -677,7 +679,7 @@ function description(tag: ContingencyContractTagPresentation): string {
 }
 .cc-detail-toolbar {
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   justify-content: space-between;
   gap: 8px;

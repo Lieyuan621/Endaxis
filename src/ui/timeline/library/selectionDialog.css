@@ -22,6 +22,30 @@
   gap: 12px;
 }
 
+.selector-unequip-button.ea-button {
+  --selector-unequip-border: var(--ea-number-input-border, var(--ea-control-border));
+  min-width: 76px;
+  border: 0;
+  background: var(--ea-number-input-bg, var(--ea-fill-input));
+  box-shadow: 0 0 0 1px var(--selector-unequip-border) inset;
+  color: var(--ea-control-fg);
+  font-weight: 600;
+}
+
+.selector-unequip-button.ea-button:focus-visible {
+  box-shadow:
+    var(--ea-focus-ring),
+    0 0 0 1px var(--selector-unequip-border) inset;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .selector-unequip-button.ea-button:hover:not(:disabled) {
+    --selector-unequip-border: color-mix(in srgb, var(--ea-danger) 55%, var(--ea-control-border));
+    background: var(--ea-number-input-bg, var(--ea-fill-input));
+    color: var(--ea-danger-soft);
+  }
+}
+
 .element-filters,
 .class-filters {
   flex-wrap: wrap;
@@ -51,39 +75,200 @@
   line-height: 1;
 }
 
-.equipment-affix-filter-section {
+.gear-selector-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
+  align-items: start;
+  gap: 9px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+}
+
+.gear-selector-header .header-left-group {
+  justify-content: flex-start;
+}
+
+.gear-selector-header .equipment-tier-picker {
+  margin-left: auto;
+}
+
+.gear-selector-header .equipment-affix-filter-strip {
   width: 100%;
 }
 
-.equipment-affix-filter-strip {
-  --equipment-filter-divider-skew: -18deg;
+.equipment-filter-section {
+  width: 100%;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.equipment-filter-heading {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 6px 8px;
+  min-width: 0;
+  min-height: 24px;
+  gap: 8px;
+}
+
+.equipment-filter-toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ea-fg-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.equipment-filter-toggle:hover {
+  color: var(--ea-fg);
+}
+
+.equipment-filter-toggle:focus-visible {
+  outline: 1px solid var(--ea-gold);
+  outline-offset: 2px;
+}
+
+.equipment-filter-active {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.equipment-filter-empty {
+  color: var(--ea-fg-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.equipment-filter-tag {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  max-width: 150px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, #2dd4bf 32%, transparent);
+  background: rgba(45, 212, 191, 0.08);
+  color: #2dd4bf;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.equipment-filter-tag:hover {
+  border-color: #2dd4bf;
+  color: var(--ea-fg);
+}
+
+.equipment-filter-tag:focus-visible {
+  outline: 1px solid var(--ea-gold);
+  outline-offset: 2px;
+}
+
+.equipment-filter-tag-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.equipment-filter-clear {
+  flex: none;
+  margin-left: auto;
+}
+
+.equipment-filter-panel {
+  max-height: min(340px, 40dvh);
+  padding: 9px 4px 2px 0;
+  overflow-y: auto;
+  scrollbar-color: var(--ea-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.equipment-filter-group {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
   min-width: 0;
 }
 
-.equipment-affix-filter-divider {
-  position: relative;
-  flex: 0 0 12px;
-  width: 12px;
-  height: 26px;
-  opacity: 0.85;
+.equipment-filter-group + .equipment-filter-group {
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid var(--ea-border-soft);
 }
 
-.equipment-affix-filter-divider::before {
-  position: absolute;
-  top: 4px;
-  bottom: 4px;
-  left: 50%;
-  width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.32), transparent);
-  content: '';
-  transform: translateX(-50%) skewX(var(--equipment-filter-divider-skew));
-  transform-origin: center;
+.equipment-filter-label,
+.equipment-set-filter-level {
+  padding-top: 6px;
+  color: var(--ea-fg-muted);
+  font-size: 11px;
+  white-space: nowrap;
 }
 
+.equipment-filter-content {
+  min-width: 0;
+}
+
+.equipment-filter-reset {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.equipment-affix-filter-strip,
+.equipment-set-filter-strip {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.equipment-attribute-filter-options,
+.equipment-set-filter-options {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.equipment-affix-filter-group {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.equipment-affix-filter-row {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  gap: 6px;
+}
+
+.equipment-set-filter-group {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
 .char-selector-dialog.ea-dialog--scroll-body .el-dialog__body {
   display: flex;
   flex-direction: column;
@@ -397,10 +582,6 @@ html[data-theme='light'] .empty-roster {
   color: rgba(26, 27, 30, 0.45);
 }
 
-html[data-theme='light'] .equipment-affix-filter-divider::before {
-  background: linear-gradient(180deg, transparent, rgba(26, 27, 30, 0.28), transparent);
-}
-
 html[data-theme='light'] .eq-affix-icon-img {
   filter: drop-shadow(0 1px 1px rgba(26, 27, 30, 0.25));
 }
@@ -457,8 +638,11 @@ html[data-theme='light'] .eq-affix-icon-img {
 
   .element-filters,
   .class-filters,
-  .equipment-affix-filter-strip {
+  .equipment-affix-filter-group,
+  .equipment-attribute-filter-options,
+  .equipment-set-filter-options {
     width: 100%;
+    display: flex;
     flex-wrap: nowrap;
     justify-content: flex-start;
     padding-bottom: 2px;
@@ -470,15 +654,17 @@ html[data-theme='light'] .eq-affix-icon-img {
 
   .element-filters > .ea-filter-chip,
   .class-filters > .ea-filter-chip,
-  .equipment-affix-filter-strip > .ea-filter-chip {
+  .equipment-affix-filter-row > .ea-filter-chip,
+  .equipment-attribute-filter-options > .ea-filter-chip,
+  .equipment-set-filter-options > .ea-filter-chip {
     width: auto;
     min-width: max-content;
     flex: 0 0 auto;
     white-space: nowrap;
   }
 
-  .equipment-affix-filter-divider {
-    flex-shrink: 0;
+  .equipment-affix-filter-row {
+    display: contents;
   }
 
   .equipment-tier-picker {

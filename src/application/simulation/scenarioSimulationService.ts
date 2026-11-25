@@ -1,3 +1,5 @@
+import { CombatRuntimeAssembly } from '../../core/combat/runtime/combatRuntimeAssembly';
+import { compileScenarioMechanics } from '../../core/compiler/compileScenarioRuntimeAssembly';
 import type { ActionExecutionTrace } from '../../core/combat/actions/actionExecutionTrace';
 import type { ResolvedCombatStepForKind } from '../../core/compiler/combatProgram';
 
@@ -6,7 +8,6 @@ import {
   compileFixedCombatInputSchedule,
 } from './compileFixedCombatInputSchedule';
 import { IncrementalScenarioSimulation } from './incrementalScenarioSimulation';
-import { projectPreviewSeasonTwoDiagnostics } from './previewSeasonTwoDiagnostics';
 import { InheritedScenarioSimulation } from './inheritedScenarioSimulation';
 import { planRecursiveSkillChain, type RecursiveSkillChain } from './recursiveSkillChain';
 /**
@@ -38,11 +39,6 @@ import {
   projectComboWindowDiagnostics,
   type ComboWindowDiagnostic,
 } from '../../core/projection/comboWindowDiagnostics';
-import {
-  projectEnemyHealthCurveFromReceipt,
-  type EnemyHealthCurve,
-} from '../../core/projection/enemyHealthCurves';
-import { projectPoiseCurveFromReceipt, type PoiseCurve } from '../../core/projection/poiseCurves';
 import {
   projectSkillAvailabilityDiagnostics,
   type SkillAvailabilityDiagnostic,
@@ -125,10 +121,6 @@ export type ScenarioSimulationPerformanceSubscriber = (
 ) => void;
 
 export interface ScenarioSimulationRun extends StandardPlayerDamageScenarioResult {
-  /** 与本次模拟同一份回执投影的敌人生命曲线。 */
-  readonly enemyHealthCurve: EnemyHealthCurve;
-  /** 与本次模拟同一份回执投影的敌人失衡曲线。 */
-  readonly poiseCurve: PoiseCurve;
   readonly availabilityDiagnostics: readonly SkillAvailabilityDiagnostic[];
   readonly executionDiagnostics: readonly SkillExecutionDiagnostic[];
   readonly comboWindowDiagnostics: readonly ComboWindowDiagnostic[];
@@ -359,6 +351,34 @@ export class ScenarioSimulationService {
     return this.#createCombatSession(scenario, scenario.battle.durationFrames, initialFrame);
   }
 
+  /** 完成正常开场初始化后供构筑面板读取；不推进时间或执行时间轴输入。 */
+  createBuildAttributeRuntime(scenario: ScenarioDocument): CombatRuntimeAssembly {
+    const input = this.#createStandardSimulationInput(scenario, 0);
+    const prepared = prepareStandardPlayerDamageScenarioRuntime({
+      ...input,
+      options: { ...input.options, liveInputInitialFrame: 0 },
+    });
+    const compiled = prepared.compiled;
+    const assembly = new CombatRuntimeAssembly(compiled);
+    if (!compiled.operators.length) {
+      const mechanics = compileScenarioMechanics(scenario, input.options);
+      assembly.initializeScenePrograms(
+        mechanics.contributions.flatMap(entry =>
+          entry.contribution.kind === 'battleInitializationSequence'
+            ? [{ key: entry.selectionId, sequence: entry.contribution.sequence }]
+            : [],
+        ),
+        {
+          ...input.options.index.actionPrograms.compileCommonDefinitions(
+            input.options.index.getCommonDefinitionSources(),
+          ).buffDefinitions,
+          ...mechanics.buffDefinitions,
+        },
+      );
+    }
+    return assembly;
+  }
+
   /** 仅解析已指定帧的人工输入；不包含自定义技能程序，普通固定轴转换优先用此入口。 */
   compileFixedInputs(scenario: ScenarioDocument) {
     return compileFixedCombatInputSchedule(scenario, this.#options.index);
@@ -411,6 +431,7 @@ export class ScenarioSimulationService {
         : { continuationPlanCastIds, continuationPlanMode }),
       criticalSamples: this.#options.criticalSamples ?? randomSource,
       probabilitySamples: this.#options.probabilitySamples ?? randomSource,
+      rangeSamples: randomSource,
       randomMode: randomSettings.mode,
       simulationRandomSettings: randomSettings,
       ...(this.#options.criticalSamples === undefined &&
@@ -460,31 +481,9 @@ export class ScenarioSimulationService {
 
       const run = Object.freeze({
         ...result,
-        enemyHealthCurve: projectEnemyHealthCurveFromReceipt(
-          {
-            health: result.enemyVitals.initialHealth,
-            maxHealth: result.enemyVitals.maxHealth,
-          },
-          result.receiptEntries,
-          -scenario.battle.prepFrames,
+        availabilityDiagnostics: freezeDiagnostics(
+          projectSkillAvailabilityDiagnostics(result.receiptEntries),
         ),
-        // 失衡曲线初始值同样来自本次模拟唯一的敌人账本，而不是重新从静态敌人推导。
-        poiseCurve: projectPoiseCurveFromReceipt(
-          {
-            poise: result.enemyVitals.initialPoise,
-            maxPoise: result.enemyVitals.maxPoise,
-          },
-          result.receiptEntries,
-          -scenario.battle.prepFrames,
-        ),
-        availabilityDiagnostics: freezeDiagnostics([
-          ...projectSkillAvailabilityDiagnostics(result.receiptEntries),
-          ...projectPreviewSeasonTwoDiagnostics(
-            result.receiptEntries,
-            scenario,
-            this.#options.index,
-          ),
-        ]),
         executionDiagnostics: freezeDiagnostics(
           projectSkillExecutionDiagnostics(result.receiptEntries),
         ),

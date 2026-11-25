@@ -70,11 +70,11 @@ const definition = {
         macros: {},
       },
       skillId: 'sk_wpn_sword_0011',
-      enableSequence: { $sequence: 'applyBuff_1' },
       blackboard: {
         install_0_dmg_up: [0.35, 0.42, 0.49, 0.56, 0.63, 0.7, 0.77, 0.84, 0.98],
         install_0_phy_dmg_up: [0.15, 0.18, 0.21, 0.24, 0.27, 0.3, 0.33, 0.36, 0.42],
       },
+      enableSequence: { $sequence: 'applyBuff_1' },
     },
   ],
   assetSlug: 'wpn_sword_0011',

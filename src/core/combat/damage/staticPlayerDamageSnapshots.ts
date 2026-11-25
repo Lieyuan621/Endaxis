@@ -37,6 +37,11 @@ export function initializeEnemyCombatAttributes(
     // 当前 1.4.4 AttributeType 已确认这些属性走原生八槽；敌人项目值本身允许为负，
     // 因而不在 Endaxis 额外猜造上下限。
     attributes.define(attribute, defender.resistances[damageType].percent, {});
+    attributes.define(
+      attribute.replace('Resistance', 'DamageTakenScalar'),
+      defender.resistances[damageType].damageTakenMultiplier,
+      {},
+    );
   }
   // 与干员共用既有区间属性键及零基数；不额外猜造易伤属性的上下限。
   for (const attribute of DAMAGE_SCALE_ATTRIBUTE_KEYS) attributes.define(attribute, 0, {});
@@ -44,7 +49,7 @@ export function initializeEnemyCombatAttributes(
   attributes.define('shelterDamageMultiplier', defender.shelterDamageMultiplier, {});
   // WeakAction 可以把同一关键词载体挂到任意实体；敌人虽不主动攻击，仍须承载并显示该 Buff。
   attributes.define('weaknessDamageMultiplier', 1, {});
-  // Slow 载体只派生移动速度；零距离木桩仍需保存该原生属性。
+  // 保存减速状态的原生属性；木桩不据此模拟移动。
   attributes.define('SlowActionSpeedScalar', 0, {});
   // 木桩没有基础治疗加成；合约回血仍使用双方治疗属性及其 Buff 修正。
   attributes.define('healOutputIncrease', 0, {});
@@ -66,6 +71,7 @@ const STATIC_DAMAGE_INCREASE_ATTRIBUTE: Readonly<
   normalAttack: 'normalAttackDamageIncrease',
   battleSkill: 'normalSkillDamageIncrease',
   physical: 'physicalDamageIncrease',
+  nature: 'natureDamageIncrease',
   electric: 'electricDamageIncrease',
   cryo: 'cryoDamageIncrease',
 };
@@ -77,7 +83,7 @@ const EMPTY_DAMAGE_SCALES = Object.freeze(
   >,
 );
 
-function captureDamageScales(attributes: CombatAttributeSet<string>) {
+export function captureDamageScales(attributes: CombatAttributeSet<string>) {
   const result = { ...EMPTY_DAMAGE_SCALES };
   for (const key of DAMAGE_SCALE_ATTRIBUTE_KEYS) result[key] = attributes.get(key);
   return result;
@@ -144,6 +150,7 @@ export function resolveStaticPlayerDamageSnapshots(
     readonly attacker: readonly AppliedDamageModifier[];
     readonly defender: readonly AppliedDamageModifier[];
   },
+  defenderOverride?: PlayerDamageAttributeSnapshots['defender'],
 ): PlayerDamageAttributeSnapshots {
   const panel = context.panel;
   if (panel === undefined) {
@@ -223,7 +230,8 @@ export function resolveStaticPlayerDamageSnapshots(
       ...attackerDamageScales,
       attack: attack.value,
       attackDetail: captureAttackReceiptSnapshot(panel, operatorAttributes, attack),
-      ...(step.parameters.calculation === 'attribute'
+      ...(step.parameters.calculation === 'attribute' &&
+      step.parameters.attributeSource !== 'target'
         ? (() => {
             const attribute = step.parameters.calculationAttribute;
             if (attribute === undefined || !operatorAttributes.has(attribute)) {
@@ -247,7 +255,18 @@ export function resolveStaticPlayerDamageSnapshots(
       igniteDamageMultiplier: operatorAttributes.get('IgniteDamageScalar'),
       physicalInflictionDamageMultiplier: operatorAttributes.get('PhysicalInflictionDamageScalar'),
     },
-    defender: {
+    defender: defenderOverride ?? {
+      ...(step.parameters.calculation === 'attribute' &&
+      step.parameters.attributeSource === 'target'
+        ? (() => {
+            const attribute = step.parameters.calculationAttribute;
+            if (attribute === undefined || !enemyAttributes?.has(attribute))
+              throw new Error(
+                `damage calculation attribute '${attribute ?? ''}' is not available on the defender`,
+              );
+            return { calculationAttributeValue: enemyAttributes.get(attribute) };
+          })()
+        : {}),
       baseResistancePercent:
         context.enemy.defenderAttributes.resistances[
           step.parameters.damageType as keyof typeof context.enemy.defenderAttributes.resistances
@@ -267,6 +286,9 @@ export function resolveStaticPlayerDamageSnapshots(
                     damageType as keyof typeof ENEMY_RESISTANCE_ATTRIBUTES
                   ],
                   percent: enemyAttributes.get(attribute),
+                  damageTakenMultiplier: enemyAttributes.get(
+                    attribute.replace('Resistance', 'DamageTakenScalar'),
+                  ),
                 },
               ]),
             ) as PlayerDamageAttributeSnapshots['defender']['resistances'],

@@ -1,3 +1,5 @@
+import type { StageEnemyIdentity } from '../../../packages/game-data-contract/src/enemies';
+export type { StageEnemyIdentity } from '../../../packages/game-data-contract/src/enemies';
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
 import type { SimulationRandomMode } from '../combat/random/simulationRandom';
 import type { GlobalEffectDefinition } from '../game-data/globalEffectDefinition';
@@ -22,7 +24,7 @@ import type {
 } from '../game-data/equipmentDefinition';
 
 export const PROJECT_KIND = 'EndaxisProject' as const;
-export const PROJECT_SCHEMA_VERSION = 1 as const;
+export const PROJECT_SCHEMA_VERSION = 3 as const;
 export const PROJECT_FPS = 30 as const;
 
 /** 存档 JSON 相关结构定义 */
@@ -167,8 +169,7 @@ export interface SkillCastDocument {
   simulationInputs?: {
     /** 随机模式下只接管这个技能块及其派生行为；省略时使用场景全局种子。 */
     randomSeed?: number;
-    /** 按伤害 step key 覆盖本次结果；true 为暴击，false 为明确不暴击。 */
-    criticalOverrides?: Record<string, boolean>;
+    initialBlackboard?: Readonly<Record<string, number>>;
   };
   /** 完整覆盖所属技能；正式项目必须携带自身局部图，不能借用模板节点或内嵌 Buff。 */
   customDefinition?: SkillDefinition;
@@ -248,29 +249,41 @@ export interface EnemyEditableValues {
   stagger: EnemyStaggerEditableValues;
 }
 
-export const ENEMY_EDITABLE_FIELDS = [
-  'hp',
-  'defense',
-  'superArmor',
-  'finisherMultiplier',
-  'resistances',
-  'stagger.maximum',
-  'stagger.knotThresholds',
-  'stagger.knotBreakDurationFrames',
-  'stagger.brokenDurationFrames',
-  'stagger.finisherSpRecovery',
-] as const;
-/** 用户可以覆盖的敌人默认值路径。 */
-export type EnemyEditableField = (typeof ENEMY_EDITABLE_FIELDS)[number];
-
-/** 场景中的敌人：来自定义（prefab）的实例，或自定义敌人配置。 */
+/** 场景中的敌人：基础预制体、原生关卡敌人，或自定义配置；均保存基础数值。 */
 export interface EnemyDocument {
-  source: { kind: 'prefab'; enemyId: string; level: number } | { kind: 'custom'; level: number };
+  /** 引用出生规则；editable 始终保存基础属性，结算值只在运行时派生。 */
+  birthEffects?: {
+    /** 显式启用的出生效果键；空列表表示全部关闭，读取时不合并定义默认项。 */
+    enabledBuffs: string[];
+  };
+  source:
+    | { kind: 'prefab'; enemyId: string; level: number }
+    | ({ kind: 'stage'; level: number } & StageEnemyIdentity)
+    | { kind: 'custom'; level: number };
   /** 场景实例捕获的原生战斗等级；运行时不回查敌人定义。 */
   rank: EnemyRank;
   editable: EnemyEditableValues;
-  /** `editable` 中被用户改离已捕获默认值的键。 */
-  edited: EnemyEditableField[];
+  /** 省略时模拟开始即存在，全程在场，不设手动死亡时间。 */
+  lifecycle?: EnemyLifecycleDocument;
+}
+
+/** 关卡中的敌人实例，身份不随轨道顺序改变。 */
+export interface EnemyInstanceDocument {
+  id: string;
+  name?: string;
+  enemy: EnemyDocument;
+}
+
+/** 关卡类型同时决定敌人配置与编辑视图。 */
+export type LevelDocument =
+  | { kind: 'singleEnemy'; enemy: EnemyInstanceDocument }
+  | { kind: 'multiEnemies'; enemies: EnemyInstanceDocument[] };
+
+/** 敌人时间线输入；手动死亡时间在自动死亡开启期间仍保存。 */
+export interface EnemyLifecycleDocument {
+  spawnFrame: number;
+  presenceChanges: { id: string; frame: number; present: boolean }[];
+  deathFrame?: number;
 }
 
 /** 循环分界线 */
@@ -315,10 +328,17 @@ export interface DodgeMarkerDocument {
   mode: { kind: 'dodge' } | { kind: 'perfectDodge'; successDelayFrames: number };
 }
 
+/** true 只触发击破事件；stagger 是被打断的招式额外产生的失衡值。 */
+export type HitWeaknessBreak = boolean | { readonly stagger: number };
+
 /** 一次模拟的时间范围、共享资源规则与控制事件。敌人失衡规则归敌人实例所有。 */
 export interface BattleDocument {
-  /** 法术爆发、物理异常的逐次命中覆盖，与技能块本身的覆盖分开。 */
-  reactionCriticalOverrides?: Record<string, boolean>;
+  enemyTargetSwitches?: { id: string; frame: number; targetId: string }[];
+  /** 省略/关闭时维持木桩规则，死亡只能由敌人的手动死亡时间触发。 */
+  enemyAutomaticDeath?: boolean;
+  /** 按用户可见的创建链及局部次数定位实际命中，不引用内部图节点。 */
+  hitCriticalOverrides?: Record<string, boolean>;
+  hitWeaknessBreaks?: Record<string, HitWeaknessBreak>;
   prepFrames: number;
   durationFrames: number;
   /** 模拟起始线和模拟终止线 */
@@ -405,7 +425,7 @@ export interface ScenarioDocument {
   inheritance?: ScenarioInheritanceDocument;
   tracks: TrackListDocument;
   connections: ConnectionDocument[];
-  enemy: EnemyDocument;
+  level: LevelDocument;
   battle: BattleDocument;
   mechanics: ScenarioMechanicsDocument;
   globalConfig: GlobalConfigDocument;

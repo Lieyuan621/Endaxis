@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { ProjectileLifecycleRuntime } from './projectileLifecycleRuntime';
 import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
@@ -60,9 +61,12 @@ describe('AbilityEntityOperationExecutor', () => {
     const finishSkill = vi.fn();
     const sourceProjectile = projectiles.launch({
       source: { kind: 'operator', operatorId: 'source' },
-      finishDelaySeconds: 10,
+      schedule: {
+        endFrame: 300,
+        callbacks: [{ event: 'finish', triggerFrames: [300] }],
+      },
       recycleDelaySeconds: 1,
-      finish: finishSkill,
+      invokeScheduledCallback: finishSkill,
       beforeReset: () => {},
       resolveTickDeltaSeconds: () => 1 / 30,
     });
@@ -78,7 +82,6 @@ describe('AbilityEntityOperationExecutor', () => {
     const delegate = new TargetContextOperationExecutor(
       'definition-owner',
       { execute: () => false, evaluate: () => false },
-      undefined,
       undefined,
       undefined,
       undefined,
@@ -105,7 +108,6 @@ describe('AbilityEntityOperationExecutor', () => {
             parameters: {
               owner: { kind },
               saveToContextKey: 'children',
-              abilityEntityIds: ['sword'],
             },
           },
           {
@@ -136,7 +138,6 @@ describe('AbilityEntityOperationExecutor', () => {
             kind: 'ownerSpawned',
             objectType: 'abilityEntity',
             owner: { kind: 'source' },
-            abilityEntityIds: ['sword'],
             sameSourceSkillCast: false,
           },
         },
@@ -183,6 +184,48 @@ describe('AbilityEntityOperationExecutor', () => {
     clock.advanceFrame();
     entities.advanceFrame();
   }
+  it('目标写入替换完整控制器句柄、复制输入并允许清空，非能力实体宿主不执行查询', () => {
+    const entities = new LogicalAbilityEntityRuntime({});
+    const entity = entities.spawn({
+      abilityEntityId: 'entity',
+      definition: { lifetime: { kind: 'infinite' } },
+      ownerId: 'owner',
+      source: { kind: 'operator', operatorId: 'owner' },
+    });
+    const targetContext = new RuntimeTargetContext();
+    targetContext.set('victims', [
+      { kind: 'enemy', enemyId: 'enemy:first' },
+      { kind: 'enemy', enemyId: 'enemy:second' },
+    ]);
+    const queryTargets = vi.fn(() => targetContext.get('victims'));
+    const executor = new AbilityEntityOperationExecutor('owner', entities, {
+      execute: () => false,
+      evaluate: () => false,
+      queryTargets,
+    });
+    const step = {
+      kind: 'setAbilityEntityTarget',
+      parameters: { targets: { kind: 'context', key: 'victims' } },
+    } as const;
+    const context = {
+      blackboard: new ActionBlackboard(),
+      targetContext,
+      actionOwnerId: `ability-entity:${entity.instanceId}`,
+    };
+    expect(executor.execute(step, context)).toBe(true);
+    const saved = entities.targets(entity);
+    expect(saved).toEqual(targetContext.get('victims'));
+    targetContext.set('victims', []);
+    expect(entities.targets(entity)).toEqual(saved);
+    expect(executor.execute(step, context)).toBe(true);
+    expect(entities.targets(entity)).toEqual([]);
+    expect(entities.snapshot(entity).target).toBeUndefined();
+    queryTargets.mockClear();
+    expect(
+      executor.execute(step, { ...context, actionOwnerId: 'owner', currentTarget: entity }),
+    ).toBe(false);
+    expect(queryTargets).not.toHaveBeenCalled();
+  });
   it('出生动作查询一次并逐目标生成，完成后统一保存且只计算一次持续时间', () => {
     const entities = new LogicalAbilityEntityRuntime({});
     const targetContext = new RuntimeTargetContext();
@@ -191,7 +234,7 @@ describe('AbilityEntityOperationExecutor', () => {
       { kind: 'spatialPoint', pointId: 1 },
       { kind: 'spatialPoint', pointId: 2 },
     ]);
-    targetContext.setSingle('victim', { kind: 'enemy' });
+    targetContext.setSingle('victim', { kind: 'enemy', enemyId: 'enemy' });
     const queryTargets = vi.fn((query: { readonly kind: string; readonly key?: string }) =>
       targetContext.get(query.key!),
     );
@@ -226,7 +269,7 @@ describe('AbilityEntityOperationExecutor', () => {
     const created = entities.findOwnerSpawned({ ownerId: 'owner' });
     expect(created).toHaveLength(2);
     expect(created.map(entity => entities.snapshot(entity).target)).toEqual([
-      { kind: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
       { kind: 'operator', operatorId: 'ally' },
     ]);
     for (const entity of created)
@@ -252,6 +295,87 @@ describe('AbilityEntityOperationExecutor', () => {
     ).toThrow();
   });
 
+  it.each([false, true])(
+    '控制器保留目标集合，子技能按开关保存输入且重新施放读取新目标：multi=%s',
+    allowMultiInputTarget => {
+      const entities = new LogicalAbilityEntityRuntime({ resolveDeltaSeconds: () => 1 / 30 });
+      const targets = [
+        { kind: 'enemy' as const, enemyId: 'enemy:first' },
+        { kind: 'enemy' as const, enemyId: 'enemy:second' },
+      ];
+      const execute = vi.fn(
+        (_step: ResolvedCombatOperationStep, context?: CombatOperationContext) => {
+          expect(context?.actionInputTargets).toBeDefined();
+          return true;
+        },
+      );
+      const delegate = {
+        execute,
+        evaluate: () => false,
+        queryTargets: (query: { kind: string }) =>
+          query.kind === 'context' ? targets : [{ kind: 'operator' as const, operatorId: 'owner' }],
+      };
+      const definition = {
+        lifetime: { kind: 'infinite' as const },
+        childSkill: {
+          ...childMetadata,
+          skillId: 'child',
+          initialBlackboard: {},
+          timelineActions: [
+            {
+              startFrame: 0,
+              sequence: stepEntry('observe-targets', {
+                kind: 'triggerCustomAbilityEvent',
+                parameters: { eventName: 'observe', eventParam: 0, target: 'caster' },
+              }),
+            },
+          ],
+        },
+      };
+      const executor = new AbilityEntityOperationExecutor(
+        'owner',
+        entities,
+        delegate,
+        { createCallbackSkillHost, resolveOperations: () => delegate },
+        () => definition,
+      );
+      executor.execute(
+        {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'owner' },
+            target: { kind: 'context', key: 'victims' },
+            allowMultiInputTarget,
+            abilityEntityId: 'entity',
+            definition,
+            dieWhenSourceDies: false,
+          },
+        },
+        { blackboard: new ActionBlackboard() },
+      );
+      const created = entities.findOwnerSpawned({ ownerId: 'owner' });
+      expect(created).toHaveLength(1);
+      const entity = created[0]!;
+      expect(entities.snapshot(entity).targets).toEqual(targets);
+      const firstContext = execute.mock.calls[0]![1]!;
+      const expected = targets
+        .slice(0, allowMultiInputTarget ? 2 : 1)
+        .map(target => ({ ...target }));
+      targets[0]!.enemyId = 'enemy:changed';
+      expect(firstContext.actionInputTargets).toEqual(expected);
+      const replacement = { kind: 'enemy' as const, enemyId: 'enemy:replacement' };
+      entities.setTarget(entity, replacement);
+      expect(firstContext.actionInputTargets).toEqual(expected);
+      for (let i = 0; i < 31; i++) advance(entities);
+      executor.execute(
+        { kind: 'startCurrentAbilityEntityChildSkillById', parameters: { childSkillId: 'child' } },
+        { blackboard: new ActionBlackboard(), currentTarget: entity },
+      );
+      expect(execute).toHaveBeenCalledTimes(2);
+      expect(execute.mock.calls[1]![1]!.actionInputTargets).toEqual([replacement]);
+      expect(entities.snapshot(entity).allowMultiInputTarget).toBe(allowMultiInputTarget);
+    },
+  );
   it('两个实体共用子技能程序，结束一个实例只清理它自己的动作创建物', () => {
     const entities = new LogicalAbilityEntityRuntime({});
     const programs = new AbilityEntityChildSkillPrograms();
@@ -325,6 +449,10 @@ describe('AbilityEntityOperationExecutor', () => {
   });
 
   it.each(['running', 'queued'] as const)('恢复 %s 实体技能，不重放初始化或丢失请求', mode => {
+    const restoredTargets = [
+      { kind: 'enemy' as const, enemyId: 'enemy:first' },
+      { kind: 'enemy' as const, enemyId: 'enemy:second' },
+    ];
     const definition = {
       lifetime: { kind: 'limited' as const, durationSeconds: 10 },
       childSkill: {
@@ -360,7 +488,10 @@ describe('AbilityEntityOperationExecutor', () => {
       originalEntities,
       {
         execute: originalExecute,
-        queryTargets: () => [{ kind: 'operator' as const, operatorId: 'owner' }],
+        queryTargets: query =>
+          query.kind === 'context'
+            ? restoredTargets
+            : [{ kind: 'operator' as const, operatorId: 'owner' }],
         evaluate: () => false,
       },
       { createCallbackSkillHost, resolveOperations: () => originalExecutor, programs },
@@ -389,6 +520,8 @@ describe('AbilityEntityOperationExecutor', () => {
           parameters: {
             bornAt: { kind: 'owner' as const },
             abilityEntityId: 'entity',
+            target: { kind: 'context', key: 'victims' },
+            allowMultiInputTarget: true,
             dieWhenSourceDies: false,
           },
         },
@@ -421,6 +554,12 @@ describe('AbilityEntityOperationExecutor', () => {
     });
     expect(restoredExecute).not.toHaveBeenCalled();
     expect([...saved.instances.values()][0]!.childSkills).toHaveLength(1);
+    if (mode === 'running') {
+      const instance = [...saved.instances.values()][0]!;
+      expect(instance.targets).toEqual(restoredTargets);
+      expect(instance.allowMultiInputTarget).toBe(true);
+      expect(instance.childSkills[0]!.host.skill.execution.inputTargets).toEqual(restoredTargets);
+    }
     advance(restoredEntities);
     if (mode === 'queued') {
       expect(restoredExecute.mock.calls.map(call => call[0].parameters)).toEqual([
@@ -517,7 +656,16 @@ describe('AbilityEntityOperationExecutor', () => {
 
   it('does not retain the source cast identity when the native spawn disables inheritance', () => {
     const entities = new LogicalAbilityEntityRuntime({});
-    const definition = { lifetime: { kind: 'limited' as const, durationSeconds: 3 } };
+    const definition = {
+      lifetime: { kind: 'limited' as const, durationSeconds: 3 },
+      childSkill: {
+        ...childMetadata,
+        skillId: 'independent-child',
+        initialBlackboard: {},
+        timelineActions: [],
+      },
+    };
+    const resolveOperations = vi.fn(() => ({ execute: () => true, evaluate: () => false }));
     const executor = new AbilityEntityOperationExecutor(
       'typhoeus',
       entities,
@@ -526,7 +674,7 @@ describe('AbilityEntityOperationExecutor', () => {
         queryTargets: () => [{ kind: 'operator' as const, operatorId: 'owner' }],
         evaluate: () => false,
       },
-      undefined,
+      { resolveOperations, createCallbackSkillHost },
       () => definition,
     );
 
@@ -553,6 +701,11 @@ describe('AbilityEntityOperationExecutor', () => {
 
     const [entity] = entities.findOwnerSpawned({ ownerId: 'typhoeus' });
     expect(entity).toBeDefined();
+    expect(resolveOperations).toHaveBeenCalledExactlyOnceWith(
+      expect.anything(),
+      expect.objectContaining({ skillId: 'independent-child' }),
+      undefined,
+    );
     expect(entities.snapshot(entity!).sourceSkillCastId).toBeUndefined();
     expect(entities.snapshot(entity!).skillCastInfo).toBeNull();
     const saved = structuredClone(entities.runtimeState).instances.get(
@@ -715,7 +868,6 @@ describe('AbilityEntityOperationExecutor', () => {
         parameters: {
           owner: { kind: 'source' },
           saveToContextKey: 'robots',
-          abilityEntityIds: ['robot'],
           maxTargets: 1,
         },
       },
@@ -756,7 +908,6 @@ describe('AbilityEntityOperationExecutor', () => {
         parameters: {
           owner: { kind: 'context', key: 'seraph' },
           saveToContextKey: 'ball',
-          abilityEntityIds: ['healing-ball'],
         },
       },
       { blackboard: new ActionBlackboard(), targetContext },
@@ -796,7 +947,10 @@ describe('AbilityEntityOperationExecutor', () => {
     const entities = new LogicalAbilityEntityRuntime({});
     const executor = new AbilityEntityOperationExecutor('arcane', entities, {
       execute: () => false,
-      queryTargets: () => [{ kind: 'operator' as const, operatorId: 'owner' }],
+      queryTargets: query =>
+        query.kind === 'battleMainTarget'
+          ? [{ kind: 'enemy', enemyId: 'enemy:second' }]
+          : [{ kind: 'operator', operatorId: 'owner' }],
       evaluate: () => false,
     });
     const targetContext = new RuntimeTargetContext();
@@ -836,7 +990,7 @@ describe('AbilityEntityOperationExecutor', () => {
     if (entity === undefined) throw new Error('expected spawned entity context');
     expect(entities.snapshot(entity)).toMatchObject({
       ownerId: 'arcane',
-      target: { kind: 'enemy' },
+      target: { kind: 'enemy', enemyId: 'enemy:second' },
       remainingDurationSeconds: 40,
       blackboard: {
         EntityBB_wisd_greater_will: 3,
@@ -936,7 +1090,7 @@ describe('AbilityEntityOperationExecutor', () => {
     expect(child).toBeDefined();
     if (child === undefined) throw new Error('expected nested AbilityEntity');
     expect(entities.snapshot(child).source).toEqual(parent);
-    entities.notifySourceDied(parent);
+    entities.kill(parent);
     expect(entities.snapshot(child).isAlive).toBe(false);
   });
 
@@ -973,16 +1127,25 @@ describe('AbilityEntityOperationExecutor', () => {
     const entities = new LogicalAbilityEntityRuntime({});
     const targetContext = new RuntimeTargetContext();
     targetContext.set('source', [
+      { kind: 'spatialPoint', pointId: 1 },
       { kind: 'operator', operatorId: 'actual-source' },
-      { kind: 'enemy' },
+      { kind: 'enemy', enemyId: 'enemy' },
     ]);
     const executor = new AbilityEntityOperationExecutor(
       'definition-owner',
       entities,
-      new TargetContextOperationExecutor('definition-owner', {
-        execute: () => false,
-        evaluate: () => false,
-      }),
+      new TargetContextOperationExecutor(
+        'definition-owner',
+        {
+          execute: () => false,
+          evaluate: () => false,
+        },
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+      ),
     );
     const step = {
       kind: 'spawnAbilityEntity' as const,
@@ -1022,7 +1185,10 @@ describe('AbilityEntityOperationExecutor', () => {
       queryTargets: (query, context) =>
         query.kind === 'context'
           ? context.targetContext!.get(query.key)
-          : [{ kind: 'operator' as const, operatorId: 'avywenna' }],
+          : [
+              { kind: 'spatialPoint' as const, pointId: 1 },
+              { kind: 'operator' as const, operatorId: 'avywenna' },
+            ],
       evaluate: () => false,
     });
     const blackboard = new ActionBlackboard();
@@ -1035,7 +1201,6 @@ describe('AbilityEntityOperationExecutor', () => {
           parameters: {
             owner: { kind: 'source' },
             saveToContextKey: 'ComboLances',
-            abilityEntityIds: ['lance'],
           },
         },
         { blackboard, targetContext },
@@ -1072,7 +1237,6 @@ describe('AbilityEntityOperationExecutor', () => {
         parameters: {
           owner: { kind: 'source' },
           saveToContextKey: 'places',
-          abilityEntityIds: ['place'],
           circularOrder: {
             indexBlackboardKey: 'EntityBB_index',
             desiredCount: 4,
@@ -1117,7 +1281,6 @@ describe('AbilityEntityOperationExecutor', () => {
           parameters: {
             owner: { kind: 'source' },
             saveToContextKey: 'places',
-            abilityEntityIds: ['place'],
             circularOrder: {
               indexBlackboardKey: 'EntityBB_index',
               desiredCount,
@@ -1132,59 +1295,6 @@ describe('AbilityEntityOperationExecutor', () => {
     expect(targetContext.get('places')).toEqual([]);
     execute(2);
     expect(targetContext.get('places')).toHaveLength(2);
-  });
-
-  it('picks one stable Context handle by a blackboard index and overwrites the output group', () => {
-    const executor = new AbilityEntityOperationExecutor(
-      'zhuang-fangyi',
-      new LogicalAbilityEntityRuntime({}),
-      {
-        execute: () => false,
-        queryTargets: () => [{ kind: 'operator' as const, operatorId: 'owner' }],
-        evaluate: () => false,
-      },
-    );
-    const targetContext = new RuntimeTargetContext();
-    targetContext.set('swords', [
-      { kind: 'abilityEntity', instanceId: 4 },
-      { kind: 'abilityEntity', instanceId: 7 },
-    ]);
-    targetContext.setSingle('swordInst', { kind: 'enemy' });
-
-    expect(
-      executor.execute(
-        {
-          kind: 'pickContextTarget',
-          parameters: {
-            sourceContextKey: 'swords',
-            saveToContextKey: 'swordInst',
-            index: numberInput({ kind: 'blackboard', key: 'swordIndex' }),
-          },
-        },
-        {
-          blackboard: new ActionBlackboard({ swordIndex: 1 }),
-          targetContext,
-        },
-      ),
-    ).toBe(true);
-    expect(targetContext.get('swordInst')).toEqual([{ kind: 'abilityEntity', instanceId: 7 }]);
-    for (const source of ['missing', 'empty', 'swords']) {
-      targetContext.set('empty', []);
-      expect(
-        executor.execute(
-          {
-            kind: 'pickContextTarget',
-            parameters: {
-              sourceContextKey: source,
-              saveToContextKey: 'swordInst',
-              index: numberInput({ kind: 'constant', value: 2 }),
-            },
-          },
-          { blackboard: new ActionBlackboard(), targetContext },
-        ),
-      ).toBe(false);
-      expect(targetContext.get('swordInst')).toEqual([{ kind: 'abilityEntity', instanceId: 7 }]);
-    }
   });
 
   it('applies SkillCastIdValidator semantics to owner-spawned queries', () => {
@@ -1220,7 +1330,6 @@ describe('AbilityEntityOperationExecutor', () => {
         parameters: {
           owner: { kind: 'source' },
           saveToContextKey: 'seals',
-          abilityEntityIds: ['seal'],
           sameSourceSkillCast: true,
         },
       },
@@ -1244,10 +1353,18 @@ describe('AbilityEntityOperationExecutor', () => {
     const executor = new AbilityEntityOperationExecutor(
       'tangtang',
       entities,
-      new TargetContextOperationExecutor('tangtang', {
-        execute: () => false,
-        evaluate: () => false,
-      }),
+      new TargetContextOperationExecutor(
+        'tangtang',
+        {
+          execute: () => false,
+          evaluate: () => false,
+        },
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+      ),
     );
     const blackboard = new ActionBlackboard();
     const precisionTarget = entities.spawn({
@@ -1264,7 +1381,11 @@ describe('AbilityEntityOperationExecutor', () => {
           operator: 'greater',
           value: { kind: 'constant', value: 255.99998474121094 },
         },
-        { blackboard, currentTarget: precisionTarget, actionInputTarget: precisionTarget },
+        {
+          blackboard,
+          currentTarget: precisionTarget,
+          actionInputTargets: [{ kind: 'spatialPoint', pointId: 1 }, precisionTarget],
+        },
       ),
     ).toBe(true);
     entities.finish(precisionTarget);
@@ -1283,7 +1404,11 @@ describe('AbilityEntityOperationExecutor', () => {
           operator: 'equal',
           value: { kind: 'constant', value: -1 },
         },
-        { blackboard, currentTarget: infiniteTarget, actionInputTarget: infiniteTarget },
+        {
+          blackboard,
+          currentTarget: infiniteTarget,
+          actionInputTargets: singleTargetList(infiniteTarget),
+        },
       ),
     ).toBe(true);
     entities.finish(infiniteTarget);
@@ -1296,7 +1421,7 @@ describe('AbilityEntityOperationExecutor', () => {
           operator: 'less',
           value: { kind: 'constant', value: 13 },
         },
-        { blackboard, currentTarget: entity, actionInputTarget: entity },
+        { blackboard, currentTarget: entity, actionInputTargets: singleTargetList(entity) },
       ),
     ).toBe(true);
 
@@ -1329,7 +1454,7 @@ describe('AbilityEntityOperationExecutor', () => {
           kind: 'setAbilityEntityRemainingDuration',
           parameters: { target: { kind: 'inputTarget' }, value: { kind: 'constant', value: 30 } },
         },
-        { blackboard, currentTarget: entity, actionInputTarget: entity },
+        { blackboard, currentTarget: entity, actionInputTargets: singleTargetList(entity) },
       ),
     ).toBe(true);
     expect(entities.snapshot(entity).remainingDurationSeconds).toBe(12);
@@ -1341,7 +1466,7 @@ describe('AbilityEntityOperationExecutor', () => {
       source: { kind: 'operator', operatorId: 'tangtang' },
     });
     const targetContext = new RuntimeTargetContext();
-    targetContext.set('waters', [entity, second]);
+    targetContext.set('waters', [{ kind: 'spatialPoint', pointId: 1 }, entity, second]);
     executor.execute(
       {
         kind: 'setAbilityEntityRemainingDuration',
@@ -1354,7 +1479,7 @@ describe('AbilityEntityOperationExecutor', () => {
     );
     expect(entities.snapshot(entity).remainingDurationSeconds).toBe(3);
     expect(entities.snapshot(second).remainingDurationSeconds).toBe(12);
-    for (const targets of [[], [{ kind: 'enemy' as const }, second]]) {
+    for (const targets of [[], [{ kind: 'enemy' as const, enemyId: 'enemy' }, second]]) {
       targetContext.set('waters', targets);
       expect(
         executor.execute(
@@ -1382,7 +1507,7 @@ describe('AbilityEntityOperationExecutor', () => {
     expect(
       executor.execute(
         { kind: 'finishOwner', parameters: { targets: { kind: 'inputTarget' } } },
-        { blackboard, currentTarget: entity, actionInputTarget: entity },
+        { blackboard, currentTarget: entity, actionInputTargets: singleTargetList(entity) },
       ),
     ).toBe(true);
     expect(entities.activeCount).toBe(1);
@@ -1392,7 +1517,7 @@ describe('AbilityEntityOperationExecutor', () => {
     expect(
       executor.execute(
         { kind: 'finishOwner', parameters: { targets: { kind: 'inputTarget' } } },
-        { blackboard, currentTarget: entity, actionInputTarget: entity },
+        { blackboard, currentTarget: entity, actionInputTargets: singleTargetList(entity) },
       ),
     ).toBe(true);
   });
@@ -1541,6 +1666,29 @@ describe('AbilityEntityOperationExecutor', () => {
       ],
     });
 
+    const definition = {
+      lifetime: { kind: 'limited' as const, durationSeconds: 10 },
+      childSkills: {
+        'child-a': child('child-a', 'wrong-child'),
+        'child-b': child('child-b', 'selected-child'),
+      },
+    };
+    executor.execute(
+      {
+        kind: 'spawnAbilityEntity',
+        parameters: {
+          bornAt: { kind: 'owner' as const },
+          abilityEntityId: 'idle-host',
+
+          definition,
+          dieWhenSourceDies: false,
+        },
+      },
+      { blackboard: new ActionBlackboard() },
+    );
+
+    expect(execute).not.toHaveBeenCalled();
+    expect(entities.snapshot(entities.findAll()[0]!).childSkillId).toBeUndefined();
     executor.execute(
       {
         kind: 'spawnAbilityEntity',
@@ -1548,13 +1696,7 @@ describe('AbilityEntityOperationExecutor', () => {
           bornAt: { kind: 'owner' as const },
           abilityEntityId: 'multi-child-host',
           childSkillId: 'child-b',
-          definition: {
-            lifetime: { kind: 'limited', durationSeconds: 10 },
-            childSkills: {
-              'child-a': child('child-a', 'wrong-child'),
-              'child-b': child('child-b', 'selected-child'),
-            },
-          },
+          definition,
           dieWhenSourceDies: false,
         },
       },
@@ -1568,7 +1710,7 @@ describe('AbilityEntityOperationExecutor', () => {
       }),
       expect.anything(),
     );
-    expect(entities.snapshot(entities.findAll()[0]!).childSkillId).toBe('child-b');
+    expect(entities.snapshot(entities.findAll()[1]!).childSkillId).toBe('child-b');
   });
 
   it('keeps the spawned entity alive when its requested child skill is unregistered', () => {
@@ -1684,10 +1826,18 @@ describe('AbilityEntityOperationExecutor', () => {
 
   it('allows an embedded child timeline to finish its own host entity', () => {
     const entities = new LogicalAbilityEntityRuntime({});
-    const delegate = new TargetContextOperationExecutor('fixture', {
-      execute: () => false,
-      evaluate: () => false,
-    });
+    const delegate = new TargetContextOperationExecutor(
+      'fixture',
+      {
+        execute: () => false,
+        evaluate: () => false,
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { mainTarget: () => ({ kind: 'enemy', enemyId: 'enemy' }), ownerSpawned: () => [] },
+    );
     let executor!: AbilityEntityOperationExecutor;
     executor = new AbilityEntityOperationExecutor('fixture', entities, delegate, {
       createCallbackSkillHost,
@@ -1780,7 +1930,11 @@ describe('AbilityEntityOperationExecutor', () => {
     if (mode === 'deferred') {
       const request = { nativeSkillId: 'seal-end', skipApplyCost: false };
       const context = { blackboard: new ActionBlackboard() };
-      executor.requestSkillCast(entity, { ...request, inputTarget: { kind: 'enemy' } }, context);
+      executor.requestSkillCast(
+        entity,
+        { ...request, inputTarget: { kind: 'enemy', enemyId: 'enemy' } },
+        context,
+      );
       executor.requestSkillCast(
         entity,
         {
@@ -1817,11 +1971,62 @@ describe('AbilityEntityOperationExecutor', () => {
       expect(execute).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
-          actionInputTarget: { kind: 'abilityEntity', instanceId: 21 },
+          actionInputTargets: singleTargetList({ kind: 'abilityEntity', instanceId: 21 }),
           actionOwnerAbilityEntity: entity,
         }),
       );
       expect(entities.childSkillHosts(entity).ability.runtimeState.postSkillCastRequest).toBeNull();
     }
   });
+});
+
+it('自有实体按当前标签筛选后才截断，不限制生成期模板名单', () => {
+  let id = 1;
+  const entities = new LogicalAbilityEntityRuntime({ allocateInstanceId: () => id++ });
+  const spawn = (ownerId: string, abilityEntityId: string) =>
+    entities.spawn({
+      abilityEntityId,
+      ownerId,
+      source: { kind: 'operator', operatorId: ownerId },
+      definition: { lifetime: { kind: 'infinite' } },
+    });
+  const first = spawn('owner', 'unlisted-first');
+  const second = spawn('owner', 'unlisted-second');
+  spawn('other', 'unlisted-second');
+  let matching = second.instanceId;
+  const delegate = new TargetContextOperationExecutor(
+    'owner',
+    { execute: () => false, evaluate: () => false },
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      mainTarget: () => undefined,
+      ownerSpawned: query => entities.findOwnerSpawned(query),
+      matchesTags: target => target.kind === 'abilityEntity' && target.instanceId === matching,
+    },
+  );
+  const executor = new AbilityEntityOperationExecutor('owner', entities, delegate);
+  const context = {
+    blackboard: new ActionBlackboard(),
+    targetContext: new RuntimeTargetContext(),
+    actionOwnerId: 'owner',
+  };
+  const step = {
+    kind: 'findOwnerSpawnedAbilityEntities' as const,
+    parameters: {
+      owner: { kind: 'owner' as const },
+      saveToContextKey: 'result',
+      maxTargets: 1,
+      tagFilters: [{ queryType: 'hasAny' as const, tags: ['Test/Marked'] }],
+    },
+  };
+  executor.execute(step, context);
+  expect(context.targetContext.get('result')).toEqual([second]);
+  matching = first.instanceId;
+  executor.execute(step, context);
+  expect(context.targetContext.get('result')).toEqual([first]);
+  executor.execute({ ...step, parameters: { ...step.parameters, objectType: 'none' } }, context);
+  expect(context.targetContext.get('result')).toEqual([]);
 });

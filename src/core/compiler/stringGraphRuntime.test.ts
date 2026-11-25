@@ -49,7 +49,12 @@ function execute(
   board: ActionBlackboard,
 ) {
   const request = vi.fn();
-  const executor = new SkillCastOperationExecutor({ casterId: 'caster', request, delegate });
+  const executor = new SkillCastOperationExecutor({
+    casterId: 'caster',
+    request,
+    delegate,
+    queryTargets: () => [{ kind: 'enemy', enemyId: 'enemy:chosen' }],
+  });
   const compilation = createActionGraphCompilation(source, 1);
   const entry = compilation.compileEntry({ $sequence: 'entry' }, 'test');
   new CombatActionSequenceRuntime(executor, { blackboard: board })
@@ -87,7 +92,12 @@ describe('字符串数据图绑定与契约边界', () => {
     const request = vi.fn<SkillCastOperationExecutorDependencies['request']>(() =>
       board.assign({ id: 'second' }),
     );
-    const executor = new SkillCastOperationExecutor({ casterId: 'caster', request, delegate });
+    const executor = new SkillCastOperationExecutor({
+      casterId: 'caster',
+      request,
+      delegate,
+      queryTargets: () => [{ kind: 'enemy', enemyId: 'enemy:chosen' }],
+    });
     const entry = createActionGraphCompilation(source, 1).compileEntry(
       { $sequence: 'entry' },
       'test',
@@ -234,7 +244,12 @@ describe('字符串数据图实际消费与切面恢复', () => {
           ...source.dataNodes,
           condition: {
             type: 'boolean',
-            expression: { kind: 'timedMarkerPresent', markerId: reference, target, returnTrueIfNotExists: false },
+            expression: {
+              kind: 'timedMarkerPresent',
+              markerId: reference,
+              target,
+              returnTrueIfNotExists: false,
+            },
           },
         },
       };
@@ -270,7 +285,12 @@ describe('字符串数据图实际消费与切面恢复', () => {
     ];
     const board = new ActionBlackboard({ id: 'before' });
     const request = vi.fn();
-    const executor = new SkillCastOperationExecutor({ casterId: 'caster', request, delegate });
+    const executor = new SkillCastOperationExecutor({
+      casterId: 'caster',
+      request,
+      delegate,
+      queryTargets: () => [{ kind: 'enemy', enemyId: 'enemy:chosen' }],
+    });
     const timeline = new CombatActionSequenceRuntime(executor, {
       blackboard: board,
     }).createTimeline(actions);
@@ -284,6 +304,7 @@ describe('字符串数据图实际消费与切面恢复', () => {
     const restoredBoard = ActionBlackboard.bindRuntimeState(saved.board);
     const restoredRequest = vi.fn();
     const restoredExecutor = new SkillCastOperationExecutor({
+      queryTargets: () => [{ kind: 'enemy', enemyId: 'enemy' }],
       casterId: 'caster',
       request: restoredRequest,
       delegate,

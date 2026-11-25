@@ -1,3 +1,4 @@
+import { EMPTY_GRAPH_IMPORTS, type ActionGraphImports } from '../core/compiler/actionGraphImports';
 import type {
   ActionGraphDefinition,
   ActionGraphNode,
@@ -19,8 +20,15 @@ export const compileGraphEntry = (
   entry: string | null,
   nodes: ActionGraphDefinition['nodes'],
   dataNodes: ActionGraphDefinition['dataNodes'] = {},
+  resourceImports: ActionGraphImports = EMPTY_GRAPH_IMPORTS,
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation(
+    { nodes, dataNodes },
+    1,
+    revision,
+    {},
+    resourceImports,
+  ).compileAll(),
   entry,
   callSite: revision,
 });

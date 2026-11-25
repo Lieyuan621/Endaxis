@@ -5,6 +5,7 @@ import type { CombatOperationExecutor } from '../skills/skillRuntime';
 
 describe('CustomAbilityEventOperationExecutor', () => {
   it('snapshots receivers before synchronous callbacks and skips source lookup for an empty group', () => {
+    const blackboard = new ActionBlackboard({ count: 3 });
     const receivers = [
       { kind: 'abilityEntity' as const, instanceId: 2 },
       { kind: 'abilityEntity' as const, instanceId: 3 },
@@ -14,6 +15,7 @@ describe('CustomAbilityEventOperationExecutor', () => {
     );
     const emit = vi.fn((_ownerId: string, _payload: unknown) => {
       receivers.length = 0;
+      blackboard.assign({ count: 7 });
     });
     const executor = new CustomAbilityEventOperationExecutor({
       sourceId: 'si',
@@ -25,21 +27,29 @@ describe('CustomAbilityEventOperationExecutor', () => {
       kind: 'triggerCustomAbilityEvent' as const,
       parameters: {
         eventName: 'yichuline1',
-        eventParam: 0,
+        eventParam: {
+          kind: 'valueNode' as const,
+          nodeId: 'count',
+          node: {
+            type: 'number' as const,
+            expression: { kind: 'blackboard' as const, key: 'count' },
+          },
+        },
         target: { kind: 'context' as const, key: 'moying1' },
         source: { kind: 'source' as const },
       },
     };
-    const context = { blackboard: new ActionBlackboard() };
+    const context = { blackboard };
     expect(executor.execute(step, context)).toBe(true);
     expect(emit.mock.calls.map(args => args[0])).toEqual(['ability-entity:2', 'ability-entity:3']);
     expect(emit).toHaveBeenLastCalledWith('ability-entity:3', {
       sourceId: 'si',
       targetId: 'ability-entity:3',
       eventName: 'yichuline1',
-      eventParam: 0,
+      eventParam: 3,
     });
     queryTargets.mockClear();
+    context.blackboard = new ActionBlackboard();
     expect(executor.execute(step, context)).toBe(true);
     expect(queryTargets).toHaveBeenCalledTimes(1);
     expect(emit).toHaveBeenCalledTimes(2);

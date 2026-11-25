@@ -1,10 +1,21 @@
 import { describe, expect, it } from 'vitest';
+import { existsSync } from 'node:fs';
+import { imageCatalog } from '../../imageCatalog.generated';
 import {
   contingencyContractTags,
   isContingencyContractTagLocked,
   toggleContingencyContractTag,
 } from './contingencyContractCatalog';
 describe('contingencyContractCatalog', () => {
+  it('registers every contract icon and includes its public file', () => {
+    const images = new Map(imageCatalog.map(image => [image.ref, image.path]));
+    for (const tag of contingencyContractTags) {
+      const path = images.get(tag.icon);
+      expect(path, `tag ${tag.tagId}: ${tag.icon}`).toBeDefined();
+      expect(existsSync(new URL(`../../../public${path}`, import.meta.url))).toBe(true);
+    }
+  });
+
   it('gives unsupported tags a reason visible to the user', () => {
     for (const tag of contingencyContractTags) {
       if (tag.support === 'supported') {

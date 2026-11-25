@@ -19,9 +19,14 @@ export interface AbilityEventResponse<Event extends AbilityEvent = AbilityEvent>
 /** 游戏能力系统中可被数据定义监听的事件名称。 */
 export const ABILITY_EVENTS = [
   'enterFight',
+  'enemyEnterFight',
+  'collectAddedBuffBlackboard',
+  'collectOutputBuffBlackboard',
   'ownerSwitchToCenter',
   'ownerSwitchToGuard',
   'ownerHpZero',
+  'beforeSetHpDirectly',
+  'ownerDead',
   'hpChanged',
   'abilityEntitySpawned',
   'abilityEntityFinished',
@@ -64,6 +69,8 @@ export const ABILITY_EVENTS = [
   'skillEnd',
   'skillInterrupted',
   'beforeOutputBuff',
+  'beforeAddedBuffBeforeImmune',
+  'beforeOutputBuffBeforeImmune',
   'beforeAddedBuff',
   'outputBuff',
   'addedBuff',
@@ -108,6 +115,11 @@ export const ABILITY_EVENT_ACTION_CONTEXT_BINDINGS = {
 
   /** 生命变化由对象自身发布，不把伤害或治疗来源冒充为事件来源。 */
   hpChanged: { inputTarget: 'eventSource', triggerTarget: 'eventSource' },
+  /** 敌人首次加入战斗时发布无目标事件，输入是该敌人，Trigger 为空。 */
+  enemyEnterFight: { inputTarget: 'eventSource', triggerTarget: null },
+  /** 无目标收集事件：InputTarget 是发布者，不构造 Trigger。 */
+  collectAddedBuffBlackboard: { inputTarget: 'eventTarget', triggerTarget: null },
+  collectOutputBuffBlackboard: { inputTarget: 'eventSource', triggerTarget: null },
   /** 自定义事件的输入是显式来源，触发者是接收事件的对象。 */
   customAbilityEvent: { inputTarget: 'eventSource', triggerTarget: 'eventTarget' },
   /** 投射物是输入目标，闪避中的角色是事件来源和触发者。 */
@@ -120,6 +132,8 @@ export const ABILITY_EVENT_ACTION_CONTEXT_BINDINGS = {
   abilityEntityFinished: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   abilityEntitySelfFinished: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   /** Buff 来源是输入目标，接收者是事件来源和触发者。 */
+  beforeAddedBuffBeforeImmune: { inputTarget: 'eventSource', triggerTarget: 'eventTarget' },
+  beforeOutputBuffBeforeImmune: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   beforeAddedBuff: { inputTarget: 'eventSource', triggerTarget: 'eventTarget' },
   /** Buff 来源是输入目标，接收者是事件来源和触发者。 */
   addedBuff: { inputTarget: 'eventSource', triggerTarget: 'eventTarget' },
@@ -136,6 +150,7 @@ export const ABILITY_EVENT_ACTION_CONTEXT_BINDINGS = {
   /** 暴击承伤沿用产生它的 TakeDamageContext：伤害来源是输入目标，承伤者是触发者。 */
   takeCriticalDamage: { inputTarget: 'eventSource', triggerTarget: 'eventTarget' },
   /** 伤害目标是输入目标，输出者是事件来源和触发者。 */
+  afterOutputWeaknessTriggered: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   outputDamage: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   /** 暴击输出沿用产生它的 OutputDamageContext：伤害目标是输入目标，输出者是触发者。 */
   outputCriticalDamage: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
@@ -143,6 +158,9 @@ export const ABILITY_EVENT_ACTION_CONTEXT_BINDINGS = {
   buffEndsEarly: { inputTarget: 'eventSource', triggerTarget: 'eventTarget' },
   /** 异常目标是输入目标，输出者是事件来源和触发者。 */
   beforeOutputInfliction: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
+  /** 倒地组件在输出方发布通知，输入仍是被施加倒地的实体。 */
+  beforeOutputKnockDown: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
+  afterOutputKnockDown: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   /** 物理异常目标是输入目标，输出者是事件来源和触发者。 */
   beforeOutputPhysicalInfliction: {
     inputTarget: 'eventTarget',

@@ -9,6 +9,7 @@ export const TIMELINE_VIEW_LAYER_IDS = [
   'comboWindows',
   'switchMarkers',
   'effectLinks',
+  'dodgeMarkers',
 ] as const;
 
 export type TimelineViewLayerId = (typeof TIMELINE_VIEW_LAYER_IDS)[number];

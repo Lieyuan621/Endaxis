@@ -83,8 +83,8 @@ describe('legacy enemy status density and dividers', () => {
       { affliction: false, poise: true, sp: false },
       DEFAULT_MONITOR_SECTION_WEIGHTS,
     );
-    expect(layout.bodies).toEqual({ affliction: 80, poise: 0, sp: 86 });
-    expect(layout.rects.poise).toEqual({ bodyHeight: 0, stripHeight: 14, shellHeight: 14 });
+    expect(layout.bodies).toEqual({ affliction: 74, poise: 0, sp: 86 });
+    expect(layout.rects.poise).toEqual({ bodyHeight: 0, stripHeight: 20, shellHeight: 20 });
     expect(Object.values(layout.rects).reduce((sum, section) => sum + section.shellHeight, 0)).toBe(
       180,
     );
@@ -101,4 +101,23 @@ describe('legacy enemy status density and dividers', () => {
       200,
     );
   });
+});
+
+it('总览只分配总览和技力两段高度，隐藏的失衡不占空间', () => {
+  const result = resolveMonitorSectionLayout(
+    300,
+    { affliction: false, poise: true, sp: false },
+    DEFAULT_MONITOR_SECTION_WEIGHTS,
+    ['affliction', 'sp'],
+  );
+  expect(result.rects.poise.shellHeight).toBe(0);
+  expect(result.rects.affliction.shellHeight + result.rects.sp.shellHeight).toBe(300);
+  const collapsed = resolveMonitorSectionLayout(
+    300,
+    { affliction: true, poise: false, sp: false },
+    DEFAULT_MONITOR_SECTION_WEIGHTS,
+    ['affliction', 'sp'],
+  );
+  expect(collapsed.rects.affliction.shellHeight).toBe(20);
+  expect(collapsed.rects.sp.shellHeight).toBe(280);
 });

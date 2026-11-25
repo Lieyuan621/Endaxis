@@ -1,9 +1,15 @@
+import type { EnemyStageDefinition } from '../../../packages/game-data-contract/src/enemies';
+import { levelEnemies } from '../../core/project/level';
 /**
  * 后台模拟当前场景所需的最小游戏数据包。
  *
  * 主线程已经为了编辑器选择器加载了完整游戏数据。本文件从中选出当前场景实际引用的定义，
  * Worker 收到后恢复为只读查询仓库，避免在第二个 JavaScript 运行环境中再次加载全部生成数据。
  */
+import {
+  getEnemySourceDefinitionId,
+  getEnemyRuntimeDefinitionId,
+} from '../../core/game-data/enemyDefinition';
 import type {
   CommonDefinitionSource,
   GameDataRepository,
@@ -30,6 +36,7 @@ export interface ScenarioSimulationGameData {
   readonly weapons: readonly WeaponDefinition[];
   readonly gears: readonly GearDefinition[];
   readonly gearSets: readonly GearSetDefinition[];
+  readonly enemyStages?: readonly EnemyStageDefinition[];
   readonly enemies: readonly EnemyDefinition[];
   readonly mechanics: readonly MechanicDefinitionRef[];
   readonly consumables: readonly ConsumableDefinition[];
@@ -61,8 +68,8 @@ export function scenarioSimulationGameDataSelectionKey(scenario: ScenarioDocumen
       if (instance !== null) identities.add(`gear:${instance.gearSlug}`);
     }
   }
-  if (scenario.enemy.source.kind === 'prefab')
-    identities.add(`enemy:${scenario.enemy.source.enemyId}`);
+  for (const enemyId of referencedEnemyDefinitionIds(scenario)) identities.add(`enemy:${enemyId}`);
+  for (const id of referencedStageIds(scenario)) identities.add(`enemyStage:${id}`);
   for (const selection of scenario.mechanics.selections)
     identities.add(`mechanic:${selection.mechanicId}`);
   for (const effect of scenario.globalConfig.effects ?? [])
@@ -108,8 +115,7 @@ export function captureScenarioSimulationGameData(
     }
   }
 
-  if (scenario.enemy.source.kind === 'prefab') {
-    const id = scenario.enemy.source.enemyId;
+  for (const id of referencedEnemyDefinitionIds(scenario)) {
     addDefinition(enemies, id, requireDefinition(repository.getEnemy(id), 'enemy', id));
   }
   for (const selection of scenario.mechanics.selections) {
@@ -148,10 +154,24 @@ export function captureScenarioSimulationGameData(
     gears: [...gears.values()],
     gearSets: [...gearSets.values()],
     enemies: [...enemies.values()],
+    enemyStages: [...referencedStageIds(scenario)].map(id =>
+      requireDefinition(repository.getEnemyStage?.(id) ?? null, 'enemy stage', id),
+    ),
     mechanics: [...mechanics.values()],
     consumables: repository.getConsumables(),
     globalEffects: [...globalEffects.values()],
   };
+}
+
+function referencedEnemyDefinitionIds(scenario: ScenarioDocument): ReadonlySet<string> {
+  const ids = new Set<string>();
+  for (const enemy of levelEnemies(scenario.level).map(item => item.enemy)) {
+    const id = getEnemySourceDefinitionId(enemy.source);
+    if (id !== null) ids.add(id);
+    const runtimeId = getEnemyRuntimeDefinitionId(enemy);
+    if (runtimeId) ids.add(runtimeId);
+  }
+  return ids;
 }
 
 /** 在 Worker 内把纯数据包恢复成编译器使用的查询端口。 */
@@ -166,8 +186,17 @@ export function restoreScenarioSimulationGameData(
     gears: data.gears,
     gearSets: data.gearSets,
     enemies: data.enemies,
+    enemyStages: data.enemyStages,
     mechanics: data.mechanics,
     consumables: data.consumables,
     globalEffects: data.globalEffects,
   });
+}
+
+function referencedStageIds(scenario: ScenarioDocument): ReadonlySet<string> {
+  return new Set(
+    levelEnemies(scenario.level).flatMap(({ enemy }) =>
+      enemy.source.kind === 'stage' && enemy.source.spawnId ? [enemy.source.stageId] : [],
+    ),
+  );
 }

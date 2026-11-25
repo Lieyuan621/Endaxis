@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { expect, it } from 'vitest';
 import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
 import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
@@ -68,10 +69,49 @@ it.each([
           outputKey: 'result',
         },
       },
-      { blackboard, event, actionInputTarget: { kind: 'enemy' } },
+      {
+        blackboard,
+        event,
+        actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' }),
+      },
     ),
   ).toBe(false);
   expect(blackboard.getNumber('result')).toBe(9);
+});
+
+it('输出 Buff 事件读取新施加实例的黑板', () => {
+  const blackboard = new ActionBlackboard({ result: 0 });
+  const buff = createEventBuff({ count: 3 });
+  const executor = new BuffOperationExecutor({
+    sourceId: 'owner',
+    resolveTarget: () => {
+      throw new Error('must not query another Buff');
+    },
+    delegate: { execute: () => false, evaluate: () => false },
+  });
+  expect(
+    executor.execute(
+      {
+        kind: 'readEventBuffBlackboard',
+        parameters: { desiredKey: 'count', outputKey: 'result' },
+      },
+      {
+        blackboard,
+        actionInputTargets: singleTargetList({ kind: 'enemy', enemyId: 'enemy' }),
+        event: {
+          event: 'outputBuff',
+          payload: {
+            buff,
+            sourceId: 'owner',
+            targetId: 'enemy',
+            buffId: 'buff:test',
+            buffTags: [],
+          },
+        },
+      },
+    ),
+  ).toBe(true);
+  expect(blackboard.getNumber('result')).toBe(3);
 });
 
 it.each(['finishedBuff', 'buffEndsEarly', 'buffConsumed', 'buffAbsorbed'] as const)(
@@ -102,13 +142,13 @@ it.each(['finishedBuff', 'buffEndsEarly', 'buffConsumed', 'buffAbsorbed'] as con
     });
     dispatcher.registerAction(event, 10, published => {
       expect(published.payload.buff).toBe(buff);
-      published.payload.buff.blackboard.assignDynamic('count', 7);
+      published.payload.buff!.blackboard.assignDynamic('count', 7);
     });
     dispatcher.registerAction(event, 0, published => {
       withAbilityEventResponseContext(
         context,
         published,
-        { inputTarget: { kind: 'enemy' }, triggerTarget: null },
+        { inputTarget: { kind: 'enemy', enemyId: 'enemy' }, triggerTarget: null },
         () => {
           executor.execute(
             {

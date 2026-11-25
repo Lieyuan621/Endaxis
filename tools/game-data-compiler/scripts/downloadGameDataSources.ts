@@ -7,12 +7,12 @@ import { createCompilerTemporaryDirectory, renameWithRetry } from '../src/io.ts'
 import {
   AkedbSnapshot,
   DEFAULT_CDN,
-  DEFAULT_VFS_BASE,
+  DEFAULT_LOCAL_BASE,
   ResourceHttpError,
   isMissingResource,
   parseJson,
   sha256,
-  vfsResource,
+  localResource,
   type ResourceBytes,
 } from './gameDataProviders.ts';
 
@@ -23,12 +23,12 @@ export interface GameDataSourceCatalog {
 }
 
 export interface DownloadArguments {
-  readonly vfsBase: string;
-  readonly sourceMode?: 'hybrid' | 'vfs-only';
+  readonly localBase: string;
+  readonly sourceMode?: 'hybrid' | 'local-only';
   readonly cdn?: string;
   readonly version?: string;
   /** 由调用方声明；未知时保留 null，不伪装成已证明与 AKEDB 同版本。 */
-  readonly vfsVersion?: string;
+  readonly localVersion?: string;
   readonly sourceCatalog: string;
   readonly output: string;
   readonly workers: number;
@@ -85,7 +85,7 @@ export async function downloadGameDataSources(args: DownloadArguments): Promise<
     );
   }
   const mode = args.sourceMode ?? 'hybrid';
-  if (mode !== 'hybrid' && mode !== 'vfs-only') throw new Error('invalid source mode');
+  if (mode !== 'hybrid' && mode !== 'local-only') throw new Error('invalid source mode');
   const provenance: SourceProvenanceEntry[] = [];
   const inventories: Array<{ collection: string; vfs: string; files: number }> = [];
   const output = path.resolve(args.output);
@@ -132,12 +132,14 @@ export async function downloadGameDataSources(args: DownloadArguments): Promise<
           reason = 'akedb-http-404';
         }
       }
-      // BuffData 的动作与叠层字段只采用 AKEDB 解码。VFS 的同名或补缺文件
-      // 不能进入正式来源快照；缺件留给来源维护者补齐。
-      if (akedb && logicalPath.startsWith('BuffData/')) {
-        throw new Error(`${logicalPath}: AKEDB BuffData is unavailable (${reason})`);
-      }
-      const result = await vfsResource(args.vfsBase, logicalPath, args.vfsVersion ?? null);
+      const result = await localResource(args.localBase, logicalPath, args.localVersion ?? null);
+      if (
+        (logicalPath.startsWith('BuffData/') || logicalPath.startsWith('SpawnerConfig/')) &&
+        result.provider !== 'ake-data-tool'
+      )
+        throw new Error(
+          logicalPath + ': AKEDB data is unavailable; local fallback must be an AKE export',
+        );
       return { ...result, ...(reason ? { fallbackReason: reason } : {}) };
     }
 
@@ -169,36 +171,31 @@ export async function downloadGameDataSources(args: DownloadArguments): Promise<
       for (const logicalPath of catalog.jsonFiles) await save(logicalPath, logicalPath);
       for (const [collection, directory] of Object.entries(catalog.jsonCollections)) {
         const cdnFiles = akedb?.collectionFiles(collection) ?? [];
-        const akedbOnly = collection === 'BuffData' && akedb !== null;
-        if (akedbOnly && cdnFiles.length === 0)
-          throw new Error('BuffData: AKEDB inventory is empty');
         let vfsFiles: string[] = [];
-        let vfsStatus = akedbOnly ? 'not-used' : 'available';
+        let vfsStatus = 'available';
         // 取并集以发现 AKEDB 尚未收录的新文件；同名资源只取 AKEDB，不覆盖或合并字段。
         let rawInventory: ResourceBytes | undefined;
-        if (!akedbOnly) {
-          try {
-            rawInventory = await vfsResource(
-              args.vfsBase,
-              `${collection}/manifest.json`,
-              args.vfsVersion ?? null,
-            );
-          } catch (error) {
-            const unavailable =
-              error instanceof ResourceHttpError ||
-              error instanceof TypeError ||
-              (error instanceof DOMException && error.name === 'TimeoutError');
-            if (cdnFiles.length === 0 || !unavailable) throw error;
-            vfsStatus = 'unavailable: ' + String(error);
-            process.stderr.write(`${collection}: VFS inventory unavailable; AKEDB coverage only\n`);
-          }
+        try {
+          rawInventory = await localResource(
+            args.localBase,
+            `${collection}/manifest.json`,
+            args.localVersion ?? null,
+          );
+        } catch (error) {
+          const unavailable =
+            error instanceof ResourceHttpError ||
+            error instanceof TypeError ||
+            (error instanceof DOMException && error.name === 'TimeoutError');
+          if (cdnFiles.length === 0 || !unavailable) throw error;
+          vfsStatus = 'unavailable: ' + String(error);
+          process.stderr.write(`${collection}: VFS inventory unavailable; AKEDB coverage only\n`);
         }
         // 非 BuffData 的坏清单不是网络不可用，必须阻断，不能静默缩小资源集合。
         if (rawInventory)
           vfsFiles = parseCollectionManifest(parseJson(rawInventory.content), collection);
         const entries = [...new Set([...cdnFiles, ...vfsFiles])].sort();
         entries.forEach(name => {
-          if (!/^[A-Za-z0-9_.-]+\.json$/.test(name) || name.includes('..'))
+          if (!/^(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.json$/.test(name) || name.includes('..'))
             throw new Error('unsafe collection filename');
         });
         inventories.push({ collection, vfs: vfsStatus, files: entries.length });
@@ -220,7 +217,11 @@ export async function downloadGameDataSources(args: DownloadArguments): Promise<
       akedb: akedb
         ? { version: akedb.version, assetRevision: akedb.revision, evidence: akedb.evidence }
         : null,
-      vfs: { base: args.vfsBase, declaredVersion: args.vfsVersion ?? null, versionVerified: false },
+      vfs: {
+        base: args.localBase,
+        declaredVersion: args.localVersion ?? null,
+        versionVerified: false,
+      },
       inventories,
       entries: sorted,
     });
@@ -233,7 +234,7 @@ export async function downloadGameDataSources(args: DownloadArguments): Promise<
   }
 }
 
-function parseCollectionManifest(value: unknown, collection: string): string[] {
+export function parseCollectionManifest(value: unknown, collection: string): string[] {
   if (!Array.isArray(value)) throw new Error(`${collection} manifest: expected array`);
   const files = value.map((rawEntry, index) => {
     const entry = requireRecord(rawEntry, `${collection} manifest[${index}]`);
@@ -241,8 +242,10 @@ function parseCollectionManifest(value: unknown, collection: string): string[] {
       entry.contentFile,
       `${collection} manifest[${index}].contentFile`,
     );
-    const fileName = path.posix.basename(new URL(contentFile, 'http://local/').pathname);
-    if (!/^[A-Za-z0-9_.-]+\.json$/.test(fileName)) {
+    const prefix = `/api/data/${collection}/`;
+    const pathname = new URL(contentFile, `http://local${prefix}`).pathname;
+    const fileName = pathname.startsWith(prefix) ? pathname.slice(prefix.length) : '';
+    if (!/^(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.json$/.test(fileName) || fileName.includes('..')) {
       throw new Error(`${collection} manifest[${index}]: unsafe JSON filename`);
     }
     return fileName;
@@ -310,11 +313,11 @@ export function parseArguments(values: readonly string[]): DownloadArguments {
     index += 1;
   }
   const allowed = new Set([
-    '--vfs-base',
+    '--local-base',
     '--source-mode',
     '--cdn',
     '--version',
-    '--vfs-version',
+    '--local-version',
     '--source-catalog',
     '--output',
     '--workers',
@@ -324,16 +327,16 @@ export function parseArguments(values: readonly string[]): DownloadArguments {
     if (!allowed.has(key)) throw new Error(`unknown argument: ${key}`);
   if (
     result.has('--source-mode') &&
-    !['hybrid', 'vfs-only'].includes(result.get('--source-mode')!)
+    !['hybrid', 'local-only'].includes(result.get('--source-mode')!)
   ) {
-    throw new Error('--source-mode must be hybrid or vfs-only');
+    throw new Error('--source-mode must be hybrid or local-only');
   }
   return {
-    vfsBase: result.get('--vfs-base') ?? DEFAULT_VFS_BASE,
-    sourceMode: result.get('--source-mode') === 'vfs-only' ? 'vfs-only' : 'hybrid',
+    localBase: result.get('--local-base') ?? DEFAULT_LOCAL_BASE,
+    sourceMode: result.get('--source-mode') === 'local-only' ? 'local-only' : 'hybrid',
     cdn: result.get('--cdn') ?? DEFAULT_CDN,
     version: result.get('--version') ?? 'latest',
-    ...(result.has('--vfs-version') ? { vfsVersion: result.get('--vfs-version')! } : {}),
+    ...(result.has('--local-version') ? { localVersion: result.get('--local-version')! } : {}),
     sourceCatalog: path.resolve(
       result.get('--source-catalog') ??
         path.join(projectRoot, 'tools/game-data-compiler/game-data-sources.json'),
@@ -378,7 +381,10 @@ function requireSafeName(value: string, sourcePath: string): void {
 
 function requireSafeCollectionFile(value: string, sourcePath: string): string {
   const parsed = requireNonEmptyString(value, sourcePath).replace(/\\/g, '/');
-  if (!/^[A-Za-z0-9_]+\/[A-Za-z0-9_.-]+\.json$/.test(parsed)) {
+  if (
+    !/^[A-Za-z0-9_]+\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.json$/.test(parsed) ||
+    parsed.includes('..')
+  ) {
     throw new Error(`${sourcePath}: expected collection/file.json`);
   }
   return parsed;

@@ -379,7 +379,7 @@ describe('ChannelingAction 单目标身份投影', () => {
         kind: 'applyBuff',
         parameters: {
           buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
-          targets: { kind: 'fixed', target: 'caster' },
+          targets: { kind: 'inputTarget' },
         },
       },
     ]);
@@ -433,7 +433,7 @@ describe('ChannelingAction 单目标身份投影', () => {
         kind: 'applyBuff',
         parameters: {
           buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
-          targets: { kind: 'fixed', target: 'enemy' },
+          targets: { kind: 'inputTarget' },
         },
       },
     ]);

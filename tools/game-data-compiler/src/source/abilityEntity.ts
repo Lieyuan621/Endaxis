@@ -93,7 +93,8 @@ export function parseAbilityEntityBlackboardReceiverSource(value: unknown, sourc
   if (native.decodeStatus !== 'complete') throw new Error(`${nativePath}: invalid decodeStatus`);
   if (native.id !== template.gameId) throw new Error(`${nativePath}: template ID mismatch`);
   const data = requireRecord(native.template, `${nativePath}.template`);
-  if (data.id !== template.gameId) throw new Error(`${nativePath}.template: template ID mismatch`);
+  if (typeof data.id !== 'string' || data.id.toLowerCase() !== template.gameId.toLowerCase())
+    throw new Error(`${nativePath}.template: template ID mismatch`);
   const bundle = parseSkillBundleReferences(
     data.skillDataBundle,
     `${nativePath}.template.skillDataBundle`,
@@ -168,6 +169,8 @@ export interface NativeSoulAbilitySystemSource {
   readonly useMainBodyHp: boolean;
   readonly useMainBodyPoise: boolean;
   readonly canBeHitIndividually: boolean;
+  /** 原生部位阻挡半角，单位为度；180 表示全方向。 */
+  readonly halfBlockAngle: number;
   readonly onlyHitByNormalAttack: boolean;
   readonly canBeDirectlyBuffed: boolean;
   readonly asIndividualInExcludeTargetProcessor: boolean;
@@ -203,6 +206,7 @@ function parseSoulAbilitySystemSource(value: unknown, path: string): NativeSoulA
     useMainBodyHp: requireBoolean(data.useMainBodyHp, `${path}.useMainBodyHp`),
     useMainBodyPoise: requireBoolean(data.useMainBodyPoise, `${path}.useMainBodyPoise`),
     canBeHitIndividually: requireBoolean(data.canBeHitIndividually, `${path}.canBeHitIndividually`),
+    halfBlockAngle: requireNumber(data.halfBlockAngle, `${path}.halfBlockAngle`),
     onlyHitByNormalAttack: requireBoolean(
       data.onlyHitByNormalAttack,
       `${path}.onlyHitByNormalAttack`,

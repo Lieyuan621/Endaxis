@@ -1,4 +1,5 @@
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
+import { runtimeTargetFromEntityId } from '../../../core/game-data/logicalAbilityEntity';
 import type { CombatReceiptView } from '../../../core/combat/receipt/combatReceiptHistory';
 
 /** 手工刷新日志的完整单元：回执不能脱离它对应的技能/来源标签更新。 */
@@ -41,7 +42,12 @@ function receiptCastId(entry: CombatReceiptEntry): string | null {
 }
 
 function damageValue(entry: CombatReceiptEntry): number {
-  if (entry.event !== 'DamageApplied' || entry.targetId !== 'enemy') return 0;
+  if (
+    entry.event !== 'DamageApplied' ||
+    entry.targetId === undefined ||
+    runtimeTargetFromEntityId(entry.targetId).kind !== 'enemy'
+  )
+    return 0;
   const value = entry.data?.value;
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
 }

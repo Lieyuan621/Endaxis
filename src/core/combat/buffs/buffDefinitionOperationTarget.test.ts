@@ -1,3 +1,4 @@
+import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
 import { describe, expect, it, vi } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -856,3 +857,91 @@ describe('BuffDefinitionOperationTarget', () => {
     );
   });
 });
+
+it.each(['source', 'recipient'] as const)(
+  '免疫前%s取消只影响本次请求，替换仍执行且不消耗添加冷却',
+  phase => {
+    const container = new CombatBuffContainer('target', new CombatAttributeSet());
+    const definition: CombatBuffDefinition<string> = {
+      id: 'incoming',
+      stackingType: 'unlimited',
+      addingCooldownSeconds: 5,
+    };
+    const existing = container.add(
+      { ...definition, addingCooldownSeconds: undefined },
+      'old-source',
+    )!;
+    const regular: string[] = [];
+    const target = new BuffDefinitionOperationTarget(
+      container,
+      { get: id => (id === 'incoming' ? definition : { id, stackingType: 'unlimited' }) },
+      undefined,
+      undefined,
+      () => regular.push('added'),
+      () => regular.push('beforeOutput'),
+      undefined,
+      () => regular.push('beforeAdded'),
+    );
+    const writer = new EventContextConditionExecutor({
+      execute: () => false,
+      evaluate: () => false,
+    });
+    const seen: string[] = [];
+    target.configureBeforeImmunityEvents({
+      beforeOutput: event => {
+        seen.push('source:' + event.buffId);
+        expect(Object.hasOwn(event, 'isExtra')).toBe(false);
+        if (phase === 'source' && event.buffId === 'incoming') {
+          expect(
+            writer.execute(
+              { kind: 'terminateAddingBuff', parameters: {} },
+              {
+                blackboard: new ActionBlackboard(),
+                event: { event: 'beforeOutputBuffBeforeImmune', payload: event },
+              },
+            ),
+          ).toBe(true);
+          expect(
+            target.apply({ buffId: 'replacement', sourceId: 'new-source', blackboardValues: {} }),
+          ).toBe(true);
+        }
+      },
+      beforeAdded: event => {
+        seen.push('recipient:' + event.buffId);
+        if (phase === 'recipient' && event.buffId === 'incoming') {
+          writer.execute(
+            { kind: 'terminateAddingBuff', parameters: {} },
+            {
+              blackboard: new ActionBlackboard(),
+              event: { event: 'beforeAddedBuffBeforeImmune', payload: event },
+            },
+          );
+          expect(
+            target.apply({ buffId: 'replacement', sourceId: 'new-source', blackboardValues: {} }),
+          ).toBe(true);
+        }
+      },
+    });
+    expect(
+      target.apply({ buffId: 'incoming', sourceId: 'source', blackboardValues: {}, isExtra: true }),
+    ).toBe(false);
+    expect(existing.isFinished).toBe(false);
+    expect(container.getCountById('incoming')).toBe(1);
+    expect(container.getCountById('replacement')).toBe(1);
+    expect(seen.includes('recipient:incoming')).toBe(phase === 'recipient');
+    expect(regular).toEqual(['beforeOutput', 'beforeAdded', 'added']);
+    target.configureBeforeImmunityEvents({});
+    expect(target.apply({ buffId: 'incoming', sourceId: 'source', blackboardValues: {} })).toBe(
+      true,
+    );
+    expect(target.apply({ buffId: 'incoming', sourceId: 'source', blackboardValues: {} })).toBe(
+      false,
+    );
+    expect(
+      writer.execute(
+        { kind: 'terminateAddingBuff', parameters: {} },
+        { blackboard: new ActionBlackboard() },
+      ),
+    ).toBe(true);
+  },
+);

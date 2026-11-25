@@ -4,6 +4,59 @@ import { parseSelectorSummarySource } from '../src/source/target.ts';
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 
 describe('新版目标集合字段', () => {
+  it('空间点保留自定义两点方向，不能只留下启用标记', () => {
+    const action = {
+      $type: 'Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond',
+      isEnable: true,
+      priorityLevel: 'Default',
+      priorityOffset: 0,
+      serverActionIndex: 1,
+      targetGroupKey: 'point',
+      center: 'ContextTarget',
+      centerContextKey: 'start',
+      useCenterEntityMountPoint: false,
+      centerMountPoint: 'None',
+      centerToGround: false,
+      selectorOwner: 'ActionOwner',
+      selectorOwnerContextKey: '',
+      selectorData: {
+        finderData: {
+          $type: 'Beyond.Gameplay.Core.Selector+FixedPointFinder+Data, Gameplay.Beyond',
+          positionOffset: { x: 0, y: 1, z: 2 },
+          rotationOffset: { x: 0, y: 0, z: 0, w: 1 },
+          snapToNavmesh: false,
+          sampleRadius: scalarFixture(0),
+        },
+        validatorData: [],
+        postProcessorData: [],
+      },
+      selectorDirection: 'SourceForward',
+      target: 'ActionSource',
+      contextKey: '',
+      useAdvancedDirectionSetting: true,
+      advancedSelectorDirection: {
+        directionType: 'SourceToTarget',
+        source: targetFixture('Context', undefined, 'start'),
+        target: targetFixture('Context', undefined, 'enemy'),
+        sourceMountPoint: 'None',
+        targetMountPoint: 'None',
+        customSourceAndTarget: true,
+        clampToXZ: true,
+        invertDirection: true,
+      },
+    };
+    expect(parseTargetGroupActionSource(action, 'point')).toMatchObject({
+      enableAdvancedDirection: true,
+      advancedDirection: {
+        directionType: 'SourceToTarget',
+        customSourceAndTarget: true,
+        clampToXZ: true,
+        invertDirection: true,
+        source: { targetSource: 'Context', targetGroupKey: 'start' },
+        target: { targetSource: 'Context', targetGroupKey: 'enemy' },
+      },
+    });
+  });
   it('命中盒保留不可选中筛选开关，缺失时不擅自补默认值', () => {
     const finder = {
       $type: 'Beyond.Gameplay.Core.Selector+HitBoxFinder+Data, Gameplay.Beyond',
@@ -128,8 +181,26 @@ describe('新版目标集合字段', () => {
   it.each(['Circle', 'Sector'])('%s 的默认二维尺寸不改变点数和黑板依赖', shape => {
     const old = parse({ ...finder, shape });
     expect(parse({ ...finder, shape, extent2D: zeroExtent })).toEqual(old);
-    expect(old.finderRandomPointCount).toEqual({ value: 2, blackboardKey: 'point_count' });
+    expect(old.finderRandomPoint?.count).toEqual({ value: 2, blackboardKey: 'point_count' });
     expect(old.finderPointBlackboardKeys).toContain('point_count');
+    const geometry = parse({
+      ...finder,
+      shape,
+      radius: scalarFixture(6, 'radius'),
+      minRadius: scalarFixture(3),
+      angle: scalarFixture(200),
+      snapToNavMesh: true,
+      localPlaneRotationEulers: { x: scalarFixture(-90), y: scalarFixture(0), z: scalarFixture(0) },
+    });
+    expect(geometry.finderRandomPoint).toMatchObject({
+      shape,
+      radius: { value: 6, blackboardKey: 'radius' },
+      minimumRadius: { value: 3 },
+      angle: { value: 200 },
+      snapToNavMesh: true,
+      localPlaneRotation: [{ value: -90 }, { value: 0 }, { value: 0 }],
+    });
+    expect(geometry.finderPointBlackboardKeys).toContain('radius');
   });
   it.each([
     null,

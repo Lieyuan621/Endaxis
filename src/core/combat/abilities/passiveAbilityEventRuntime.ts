@@ -49,6 +49,7 @@ export class PassiveAbilityEventRuntime {
     responses: NonNullable<CompiledOperatorPassiveProgram['abilityEventResponses']>,
     register: RegisterPassiveAbilityEventAction,
     state?: PassiveAbilityEventState,
+    definitionOperatorId?: string,
   ) {
     this.#state =
       state ??
@@ -82,7 +83,13 @@ export class PassiveAbilityEventRuntime {
             this.#lifecycle.canExecuteAction && ownerContext.canExecuteAction?.() !== false,
           addAbilityChildBuff: child => this.addChildBuff(child),
         };
-        const sequence = new CombatActionSequenceRuntime(operations, context).createSequence(
+        const sequence = new CombatActionSequenceRuntime(
+          operations,
+          context,
+          {},
+          undefined,
+          definitionOperatorId,
+        ).createSequence(
           response.sequence,
           context,
           restoring ? this.#state.responses[index] : undefined,

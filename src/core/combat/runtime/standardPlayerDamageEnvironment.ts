@@ -1,13 +1,16 @@
+import { isPhysicalInflictionDamage } from '../damage/damageDecorationGroups';
+import { RecoverPoiseOperationExecutor } from '../heal/recoverPoiseOperationExecutor';
+import type { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
+import type { EnemyLifecycle } from '../enemies/enemyLifecycle';
+import type { RangeSampleSource } from '../random/simulationRandom';
+import { bindOperatorResistanceDerivation } from '../attributes/operatorAttackAttributes';
+import type { BeforeBuffImmunityEvents } from '../buffs/buffApplicationEvents';
 import { ABILITY_EVENTS } from '../../../../packages/game-data-contract/src/abilityEvents';
 import type { CombatBuffDefinitionEntry } from '../../../../packages/game-data-contract/src/buffs';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { BuffAppliedEvent } from '../buffs/buffOperationExecutor';
 import type { CombatBuffDefinitionCompilerPorts } from '../buffs/combatBuffDefinitions';
 import type { CombatBuffDefinition } from '../buffs/combatBuffs';
-import {
-  nextReactionDamageKey,
-  type ReactionDamageIdentity,
-} from '../damage/reactionDamageCritical';
 import type { AbilityEventRuntimeActionContext } from '../events/abilityEventActionContext';
 import type { AbilityEventPayloadMap, CombatAbilityEvent } from '../events/combatAbilityEvent';
 import { submitSimulationCastSeed } from '../random/simulationRandom';
@@ -33,7 +36,6 @@ import type {
   CombatSkillCastInfo,
 } from '../state/foundationState';
 import type { BuffContainerState } from '../state/instanceState';
-import type { CombatOperatorProgram } from './combatRuntimeAssembly';
 /**
  * 标准战斗环境：一场模拟里敌人的元素附着、反应和 Buff 都由它管；
  * 敌人生命与失衡账本由场景装配层创建并以明确依赖注入，本环境只持有同一实例。
@@ -49,8 +51,11 @@ import {
   MAIN_ATTRIBUTE_ATTACK_FACTOR,
   SECONDARY_ATTRIBUTE_ATTACK_FACTOR,
 } from '../../game-data/battleConstants';
-import { runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
-import type { HealCalculationAttribute, HealTarget } from '../../game-data/operatorDefinition';
+import {
+  runtimeTargetFromEntityId,
+  runtimeTargetEntityId,
+} from '../../game-data/logicalAbilityEntity';
+import type { MultiplyAttributeCalculationAttribute } from '../../game-data/operatorDefinition';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatAttributeSet, createCombatAttributeModifier } from '../attributes/combatAttributes';
 import {
@@ -72,7 +77,10 @@ import {
 } from '../buffs/poiseBreakBuffRuntime';
 import type { HealthDamageEventPayload } from '../damage/healthDamage';
 import type { PlayerDamageNonRandomRuntimeSnapshot } from '../damage/playerActiveDamageInput';
-import type { DamageModifierSide } from '../damage/playerDamageContext';
+import type {
+  DamageModifierSide,
+  PlayerDamageAttributeSnapshots,
+} from '../damage/playerDamageContext';
 import {
   PlayerDamageOperationExecutor,
   type PlayerDamageOperationDependencies,
@@ -80,6 +88,7 @@ import {
 import type { PoiseDamageModifier } from '../damage/poiseDamage';
 import {
   initializeEnemyCombatAttributes,
+  captureDamageScales,
   resolveStaticPlayerDamageSnapshots,
 } from '../damage/staticPlayerDamageSnapshots';
 import { resolveAbilityEventActionContextBinding } from '../events/abilityEventActionContext';
@@ -186,6 +195,7 @@ function damageEffects(buff: CombatBuff<string>): BuffDamageEffect[] {
         modifier.numberSource,
         processor.addition,
         'damage',
+        0,
       );
       if (!Number.isFinite(addition) || addition === 0) return [];
       return [
@@ -248,9 +258,15 @@ type EnvironmentOptions = Pick<
   | 'bindBattleRuntime'
   | 'registerCombatAbilityEvent'
   | 'enemyVitalsRuntime'
+  | 'bindEnemyHealthChanged'
+  | 'readEnemyLifecycleState'
+  | 'enemyInstances'
+  | 'readEnemyProgram'
   | 'createOperatorBuffRuntime'
   | 'createAbilityEntityBuffRuntime'
   | 'resolveUltimateEnergyGainMultiplier'
+  | 'resolveMaxUltimateEnergy'
+  | 'createBirthVitalsExecutor'
   | 'createOperationExecutor'
   | 'emitAbilityEvent'
   | 'onPostSkillCastRequest'
@@ -295,11 +311,14 @@ export interface StandardPlayerDamagePayloadMap
 }
 
 export interface StandardPlayerDamageEnvironmentOptions {
-  readonly reactionCriticalOverrides?: Readonly<Record<string, boolean>>;
+  readonly primaryEnemyId: string;
+  readonly weaknessBreakStagger?: ReadonlyMap<string, number>;
+  readonly hitCriticalOverrides?: Readonly<Record<string, boolean>>;
   /** 暴击样本和命中特殊倍率必须由具有证据的上层策略提供。 */
   readonly criticalSamples: CriticalSampleSource;
   /** RandomUtil.Dice 的独立样本源，不与暴击随机流混用。 */
   readonly probabilitySamples?: ProbabilitySampleSource;
+  readonly rangeSamples?: RangeSampleSource;
   readonly randomMode?: SimulationRandomMode;
   /** 必须与两个样本端口实际消费的状态一致；自定义源不能用空状态冒充。 */
   readonly randomState?: SimulationRandomState;
@@ -327,6 +346,14 @@ export interface StandardPlayerDamageEnvironmentOptions {
    * 伤害写入、生命条件求值和失衡恢复推进都引用这一实例，环境不再自行构造或回退到静态生命值。
    */
   readonly enemyVitals: CombatVitals;
+  readonly enemyAutomaticDeath?: boolean;
+  readonly additionalEnemies?: ReadonlyMap<
+    string,
+    {
+      readonly program: CombatOperationExecutorContext['enemy'];
+      readonly vitals: CombatVitals;
+    }
+  >;
   /** 当前游戏版本的完整标签层级；缺省时只执行裸 ID 精确匹配。 */
   readonly tagRegistry?: GameplayTagRegistry;
   /** 当前帧主控身份由场景控制时间线提供；仅在伤害修正使用该条件时需要。 */
@@ -371,17 +398,31 @@ function panelAttackDetail(panel: ResolvedOperatorPanel) {
     ) as Record<keyof typeof ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE, number>,
   };
 }
+interface EnemyCombatRuntime {
+  readonly ownerId: string;
+  readonly vitals: CombatVitals;
+  readonly attributes: CombatAttributeSet<string>;
+  readonly buffs: CombatBuffContainer<string>;
+  readonly buffRuntime: BuffDefinitionOperationTarget<string>;
+  readonly knockDown: OrdinaryKnockDownRuntime | null;
+  readonly poiseBreakBuffs: PoiseBreakBuffRuntime;
+  vitalsRuntime: CombatVitalsRuntime | null;
+  healthChanged?: () => void;
+  lifecycle?: EnemyLifecycle;
+}
+
 export class StandardPlayerDamageEnvironment {
+  readonly #beforeBuffImmunityEvents: BeforeBuffImmunityEvents = {
+    beforeOutput: event => this.#emit(event.sourceId, 'beforeOutputBuffBeforeImmune', event),
+    beforeAdded: event => this.#emit(event.targetId, 'beforeAddedBuffBeforeImmune', event),
+  };
+
   readonly runtimeState: StandardCombatEnvironmentState;
   readonly runtimeOptions: EnvironmentOptions;
   readonly #events = new Map<
     string,
     AbilityEventDispatcher<StandardPlayerDamageEvent, StandardPlayerDamagePayloadMap>
   >();
-  readonly #enemyAttributes: CombatAttributeSet<string>;
-  readonly #enemyBuffs: CombatBuffContainer<string>;
-  readonly #enemyBuffRuntime: BuffDefinitionOperationTarget<string>;
-  readonly #enemyKnockDown: OrdinaryKnockDownRuntime | null;
   readonly #operatorBuffRuntimes = new Map<string, BuffDefinitionOperationTarget<string>>();
   readonly #postSkillRequestListeners = new Map<
     string,
@@ -389,12 +430,10 @@ export class StandardPlayerDamageEnvironment {
   >();
   readonly #postSkillRequestListenerState: ReturnType<typeof createPostSkillRequestListenerState>;
   readonly #inflictionAdapters = new Map<string, ElementalInflictionBuffAdapter<string>>();
-  readonly #reactionModifiers = new Map<
-    string,
-    NonNullable<CombatOperatorProgram['reactionModifiers']>
-  >();
   #resolveAbilitySystemSourceId: (entityId: string) => string = entityId => entityId;
   #resolveSharedDamageTransfer: PlayerDamageOperationDependencies['resolveSharedDamageTransfer'];
+  #targetExists: PlayerDamageOperationDependencies['targetExists'];
+  #resolveCombatSemanticEvents: (() => CombatSemanticEventRuntime) | undefined;
   #resolveProjectileRuntimeDependencies:
     ((definitionOperatorId: string) => ProjectileRuntimeDependencies) | null = null;
   readonly #operatorPanels = new Map<string, ResolvedOperatorPanel>();
@@ -404,17 +443,160 @@ export class StandardPlayerDamageEnvironment {
   #receipt: CombatReceiptSink | null = null;
   #elementalDefinitions: CompiledCombatBuffDefinitions<string> | null = null;
   #skillSettings: CompoundStatusSkillSettingSource | null = null;
-  readonly #enemyVitals: CombatVitals;
-  #enemyVitalsRuntime: CombatVitalsRuntime | null = null;
-  readonly #poiseBreakBuffs: PoiseBreakBuffRuntime;
   readonly #poiseBreakDefinitions = new Map<
     string,
     Readonly<Record<string, ResolvedSkillBuffDefinition>>
   >();
+  get #primaryEnemyId(): string {
+    return this.options.primaryEnemyId;
+  }
   #enemyIdentity: CombatOperationExecutorContext['enemy'] | null = null;
   #resources: CombatResources | null = null;
   #boundByAssembly = false;
   readonly #eventStates: NonNullable<CombatStateGraph['events']['native']>;
+
+  readonly #enemies = new Map<string, EnemyCombatRuntime>();
+
+  get #primaryEnemy(): EnemyCombatRuntime {
+    const enemy = this.#enemies.get(this.#primaryEnemyId);
+    if (enemy === undefined) throw new Error('primary enemy is not initialized');
+    return enemy;
+  }
+
+  #createEnemyRuntime(
+    ownerId: string,
+    vitals: CombatVitals,
+    restoredEnemyBuffs?: BuffContainerState<string>,
+    restored?: Pick<StandardCombatEnvironmentState, 'knockDown' | 'poiseBreakBuffs'>,
+  ): EnemyCombatRuntime {
+    this.#bindHealthChangeEvent(ownerId, vitals);
+    const options = this.options;
+    const enemyAttributes = new CombatAttributeSet<string>(restoredEnemyBuffs?.attributes);
+    if (restoredEnemyBuffs === undefined)
+      enemyAttributes.define('MaxHp', vitals.maxHealth, { minimum: 0 });
+    enemyAttributes.bindChangeObserver('MaxHp', (value, previous) =>
+      vitals.synchronizeMaxHealth(value, previous),
+    );
+    if (restoredEnemyBuffs === undefined) {
+      enemyAttributes.define('PoiseRecTime', vitals.runtimeState.poiseRecoveryTime, {});
+      enemyAttributes.define(
+        'PoiseRecTimeScalar',
+        vitals.runtimeState.poiseRecoveryTimeMultiplier,
+        { minimum: 0 },
+      );
+    }
+    enemyAttributes.bindChangeObserver('PoiseRecTime', value => {
+      vitals.runtimeState.poiseRecoveryTime = value;
+    });
+    enemyAttributes.bindChangeObserver('PoiseRecTimeScalar', value => {
+      vitals.runtimeState.poiseRecoveryTimeMultiplier = value;
+    });
+    if (restoredEnemyBuffs === undefined) enemyAttributes.define('MaxPoise', vitals.maxPoise, {});
+    enemyAttributes.bindChangeObserver('MaxPoise', (value, previous) => {
+      const previousPoise = vitals.poise;
+      vitals.synchronizeMaxPoise(value, previous);
+      const clock = this.#requireClock();
+      this.#requireReceipt().record({
+        frame: clock.frame,
+        time: clock.time,
+        event: 'MaxPoiseChanged',
+        targetId: ownerId,
+        data: {
+          previousPoise,
+          previousMaxPoise: previous,
+          currentPoise: vitals.poise,
+          maxPoise: value,
+        },
+      });
+    });
+    const enemyBlackboard =
+      restoredEnemyBuffs === undefined
+        ? undefined
+        : ActionBlackboard.bindRuntimeState(restoredEnemyBuffs.entityBlackboard);
+    const buffs = new CombatBuffContainer(
+      ownerId,
+      enemyAttributes,
+      options.tagRegistry,
+      null,
+      enemyBlackboard,
+      (buff, reason, skillCastInfo) =>
+        this.#recordOwnedBuffFinished(ownerId, buff, reason, skillCastInfo),
+      (buff, layerCount, reason, skillCastInfo) =>
+        this.#emitBuffEnhanceChanged(ownerId, buff, layerCount, reason, skillCastInfo),
+      undefined,
+      (gainedValue, currentValue) =>
+        this.#emit(ownerId, 'afterAddedShield', {
+          sourceId: ownerId,
+          targetId: ownerId,
+          gainedValue,
+          currentValue,
+        }),
+      (definition, sourceId, blackboard, modifiedKeys, skillCastInfo) => {
+        this.#collectBuffBlackboard(
+          ownerId,
+          definition,
+          sourceId,
+          blackboard,
+          modifiedKeys,
+          skillCastInfo,
+        );
+      },
+      buff => this.#recordBuffRemoval(ownerId, buff, 'other', 'BuffReleased'),
+      restoredEnemyBuffs,
+      (buff, producedBy) => this.#recordBuffCreated(buff, producedBy),
+      (buff, previousLayers, sourceId, skillCastInfo, producedBy) =>
+        this.#recordBuffStackChanged(buff, previousLayers, sourceId, skillCastInfo, producedBy),
+      (buff, previous) => this.#recordBuffModifierChanged(buff, previous),
+      buff => this.#recordBuffEnabledChanged(buff),
+      this.options.tagPredefine,
+    );
+    const buffRuntime = new BuffDefinitionOperationTarget(
+      buffs,
+      {
+        get: id => this.#resolveEnvironmentBuffDefinition(id),
+        compile: entry => this.#compileInlineBuffDefinition(entry),
+      },
+      undefined,
+      this.#buffAbilityEventRegistrar(ownerId),
+      (event, buff) => {
+        this.#recordOwnedBuffApplied(ownerId, event, buff);
+        this.#emit(ownerId, 'addedBuff', event);
+      },
+      event => this.#emit(event.sourceId, 'beforeOutputBuff', event),
+      event => this.#emit(event.sourceId, 'outputBuff', event),
+      event => this.#emit(ownerId, 'beforeAddedBuff', event),
+      (event, handle, subscriptions) =>
+        subscriptions === undefined
+          ? this.eventsFor(ownerId).registerCallback(event, handle)
+          : this.#bindSingleBuffSubscription(ownerId, event, subscriptions, handle),
+      (handle, restoredRegistrationId) =>
+        this.#registerPostSkillRequest(ownerId, handle, restoredRegistrationId),
+      definitionOperatorId => this.#requireProjectileRuntimeDependencies(definitionOperatorId),
+      undefined,
+      () => this.#resolveCombatSemanticEvents?.(),
+    );
+    buffRuntime.configureBeforeImmunityEvents(this.#beforeBuffImmunityEvents);
+    const knockDown =
+      options.knockDown === undefined
+        ? null
+        : new OrdinaryKnockDownRuntime(
+            buffs,
+            options.knockDown.predefine,
+            options.knockDown.onDurationElapsed,
+            restored?.knockDown ?? undefined,
+          );
+    const poiseBreakBuffs = new PoiseBreakBuffRuntime(buffRuntime, restored?.poiseBreakBuffs);
+    return {
+      ownerId,
+      vitals,
+      attributes: enemyAttributes,
+      buffs,
+      buffRuntime,
+      knockDown,
+      poiseBreakBuffs,
+      vitalsRuntime: null,
+    };
+  }
 
   constructor(readonly options: StandardPlayerDamageEnvironmentOptions) {
     const restored = options.restoredState;
@@ -438,125 +620,86 @@ export class StandardPlayerDamageEnvironment {
       this.#bindHealthChangeEvent(operatorId, vitals);
       this.#operatorVitals.set(operatorId, vitals);
     }
-    this.#bindHealthChangeEvent('enemy', options.enemyVitals);
-    const restoredEnemyBuffs = options.restoredBuffStates?.enemy;
-    const enemyAttributes = new CombatAttributeSet<string>(restoredEnemyBuffs?.attributes);
-    if (restoredEnemyBuffs === undefined)
-      enemyAttributes.define('MaxHp', options.enemyVitals.maxHealth, { minimum: 0 });
-    enemyAttributes.bindChangeObserver('MaxHp', (value, previous) =>
-      options.enemyVitals.synchronizeMaxHealth(value, previous),
-    );
-    const enemyBlackboard =
-      restoredEnemyBuffs === undefined
-        ? undefined
-        : ActionBlackboard.bindRuntimeState(restoredEnemyBuffs.entityBlackboard);
-    this.#enemyAttributes = enemyAttributes;
-    this.#enemyBuffs = new CombatBuffContainer(
-      'enemy',
-      enemyAttributes,
-      options.tagRegistry,
-      null,
-      enemyBlackboard,
-      (buff, reason, skillCastInfo) =>
-        this.#recordOwnedBuffFinished('enemy', buff, reason, skillCastInfo),
-      (buff, layerCount, reason, skillCastInfo) =>
-        this.#emitBuffEnhanceChanged('enemy', buff, layerCount, reason, skillCastInfo),
-      undefined,
-      (gainedValue, currentValue) =>
-        this.#emit('enemy', 'afterAddedShield', {
-          sourceId: 'enemy',
-          targetId: 'enemy',
-          gainedValue,
-          currentValue,
-        }),
-      (definition, sourceId, blackboard) => {
-        // 原生来源侧收集发生在 Buff.Reset；直接施加与反应创建共用此处。
-        const modifier = this.#reactionModifiers
-          .get(sourceId)
-          ?.find(m => m.reaction === 'corrosion');
-        if (
-          modifier === undefined ||
-          !this.#enemyBuffs.tagRegistry.query(
-            definition.applyTags ?? [],
-            ['Skill/Character/Common/SpellStatus/Corrupt'],
-            'hasAny',
-          )
-        )
-          return;
-        const duration = blackboard.getNumber('duration');
-        if (duration !== undefined && duration > 0)
-          blackboard.assignDynamic('duration', duration + modifier.durationSecondsAddition);
-        const maximum = blackboard.getNumber('max_def_decrease');
-        if (maximum !== undefined)
-          blackboard.assignDynamic(
-            'max_def_decrease',
-            maximum * (1 + modifier.effectivenessAddition),
-          );
-      },
-      undefined,
-      restoredEnemyBuffs,
-      (buff, producedBy) => this.#recordBuffCreated(buff, producedBy),
-      (buff, previousLayers, sourceId, skillCastInfo, producedBy) =>
-        this.#recordBuffStackChanged(buff, previousLayers, sourceId, skillCastInfo, producedBy),
-      (buff, previous) => this.#recordBuffModifierChanged(buff, previous),
-      buff => this.#recordBuffEnabledChanged(buff),
-      this.options.tagPredefine,
-    );
-    this.#enemyBuffRuntime = new BuffDefinitionOperationTarget(
-      this.#enemyBuffs,
-      {
-        get: id => this.#resolveEnvironmentBuffDefinition(id),
-        compile: entry => this.#compileInlineBuffDefinition(entry),
-      },
-      undefined,
-      this.#buffAbilityEventRegistrar('enemy'),
-      (event, buff) => {
-        this.#recordOwnedBuffApplied('enemy', event, buff);
-        this.#emit('enemy', 'addedBuff', event);
-      },
-      event => this.#emit(event.sourceId, 'beforeOutputBuff', event),
-      event => this.#emit(event.sourceId, 'outputBuff', event),
-      event => this.#emit('enemy', 'beforeAddedBuff', event),
-      (event, handle, subscriptions) =>
-        subscriptions === undefined
-          ? this.eventsFor('enemy').registerCallback(event, handle)
-          : this.#bindSingleBuffSubscription('enemy', event, subscriptions, handle),
-      (handle, restoredRegistrationId) =>
-        this.#registerPostSkillRequest('enemy', handle, restoredRegistrationId),
-      definitionOperatorId => this.#requireProjectileRuntimeDependencies(definitionOperatorId),
-    );
-    // 敌人生命账本由场景装配层创建并注入，环境只持有引用，不在首次绑定时另行构造。
-    this.#enemyVitals = options.enemyVitals;
-    this.#enemyKnockDown =
-      options.knockDown === undefined
-        ? null
-        : new OrdinaryKnockDownRuntime(
-            this.#enemyBuffs,
-            options.knockDown.predefine,
-            options.knockDown.onDurationElapsed,
-            restored?.knockDown ?? undefined,
-          );
-    this.#poiseBreakBuffs = new PoiseBreakBuffRuntime(
-      this.#enemyBuffRuntime,
-      restored?.poiseBreakBuffs,
+    this.#enemies.set(
+      this.#primaryEnemyId,
+      this.#createEnemyRuntime(
+        this.#primaryEnemyId,
+        options.enemyVitals,
+        options.restoredBuffStates?.enemy ??
+          restored?.enemyInstances?.get(this.#primaryEnemyId)?.buffs,
+        restored,
+      ),
     );
     this.runtimeState = restored ?? {
+      enemyInstances: new Map(),
       buffFrameEndEvents: new Map(),
-      reactionDamageCounts: new Map(),
       random: options.randomState ?? null,
-      enemyVitals: this.#enemyVitals.runtimeState,
+      enemyVitals: this.#primaryEnemy.vitals.runtimeState,
       operatorVitals: new Map(),
-      knockDown: this.#enemyKnockDown?.runtimeState ?? null,
-      poiseBreakBuffs: this.#poiseBreakBuffs.runtimeState,
+      knockDown: this.#primaryEnemy.knockDown?.runtimeState ?? null,
+      poiseBreakBuffs: this.#primaryEnemy.poiseBreakBuffs.runtimeState,
       postSkillRequestListeners: this.#postSkillRequestListenerState,
     };
+    for (const [id, input] of options.additionalEnemies ?? []) {
+      if (id !== 'enemy' && (!id.startsWith('enemy:') || id.length === 'enemy:'.length))
+        throw new Error(`invalid enemy instance identity '${id}'`);
+      const state = restored?.enemyInstances?.get(id);
+      if (
+        restored === undefined &&
+        [...this.#enemies.values()].some(
+          enemy => enemy.vitals.runtimeState === input.vitals.runtimeState,
+        )
+      )
+        throw new Error(`enemy '${id}' shares another enemy's health ledger`);
+      if (restored !== undefined && state === undefined)
+        throw new Error(`restored enemy '${id}' is missing its state`);
+      const runtime = this.#createEnemyRuntime(
+        id,
+        state === undefined ? input.vitals : CombatVitals.bindRuntimeState(state.vitals),
+        state?.buffs,
+        state,
+      );
+      if (state === undefined)
+        initializeEnemyCombatAttributes(runtime.attributes, input.program.defenderAttributes);
+      this.#enemies.set(id, runtime);
+    }
+    for (const id of restored?.enemyInstances?.keys() ?? []) {
+      if (!this.#enemies.has(id)) throw new Error(`restored enemy '${id}' is missing its program`);
+    }
+    if (restored === undefined) {
+      for (const [id, enemy] of this.#enemies)
+        this.runtimeState.enemyInstances!.set(id, {
+          initialVitals: {
+            health: enemy.vitals.health,
+            poise: enemy.vitals.poise,
+            maxHealth: enemy.vitals.maxHealth,
+            maxPoise: enemy.vitals.maxPoise,
+          },
+          lifecycle: enemy.lifecycle?.runtimeState,
+          vitals: enemy.vitals.runtimeState,
+          buffs: enemy.buffs.runtimeState,
+          knockDown: enemy.knockDown?.runtimeState ?? null,
+          poiseBreakBuffs: enemy.poiseBreakBuffs.runtimeState,
+        });
+    }
     // 对象字面量中的 getter 会把自己的 this 绑定为字面量本身，因此用箭头闭包引用环境实例。
-    const vitalsRuntimeOf = (): FrameRuntime | null => this.#enemyVitalsRuntime;
+    const vitalsRuntimeOf = (): FrameRuntime | null => this.#primaryEnemy.vitalsRuntime;
     this.runtimeOptions = {
+      enemyInstances: this.#enemies,
+      readEnemyProgram: id => options.additionalEnemies?.get(id)?.program,
+      readEnemyLifecycleState: id => this.runtimeState.enemyInstances?.get(id)?.lifecycle,
+      bindEnemyHealthChanged: (id, listener, lifecycle) => {
+        const enemy = this.#enemies.get(id);
+        const saved = this.runtimeState.enemyInstances?.get(id);
+        if (!enemy || !saved) throw new Error(`enemy '${id}' has no environment state`);
+        enemy.lifecycle = lifecycle;
+        enemy.healthChanged = listener;
+        this.runtimeState.enemyInstances!.set(id, { ...saved, lifecycle: lifecycle.runtimeState });
+      },
       ...(options.probabilitySamples === undefined
         ? {}
         : { probabilitySamples: options.probabilitySamples }),
-      enemyBuffRuntime: this.#enemyBuffRuntime,
+      enemyBuffRuntime: this.#primaryEnemy.buffRuntime,
       submitCastRandomSeed: (castId, seed) => {
         const state = this.runtimeState.random;
         if (state !== null) submitSimulationCastSeed(state, castId, seed);
@@ -581,6 +724,14 @@ export class StandardPlayerDamageEnvironment {
       bindBattleRuntime: context => {
         this.#bindBattleRuntime(context, true);
         return {
+          additionalEnemies: [...this.#enemies.values()]
+            .filter(enemy => enemy.ownerId !== this.#primaryEnemyId)
+            .map(enemy => ({
+              ownerId: enemy.ownerId,
+              buffs: enemy.buffRuntime,
+              control: enemy.knockDown,
+              vitals: enemy.vitalsRuntime,
+            })),
           eventStates: this.#eventStates,
           environmentState: this.runtimeState,
           frameEndEvents: { advanceFrame: () => this.#flushBuffFrameEndEvents() },
@@ -600,22 +751,22 @@ export class StandardPlayerDamageEnvironment {
               }),
             );
           },
-          enemyVitalsRuntime: this.#enemyVitalsRuntime,
-          enemyControlRuntime: this.#enemyKnockDown,
+          enemyVitalsRuntime: this.#primaryEnemy.vitalsRuntime,
+          enemyControlRuntime: this.#primaryEnemy.knockDown,
         };
       },
       get enemyVitalsRuntime() {
         return vitalsRuntimeOf();
       },
-      createOperatorBuffRuntime: (operatorId, panel, reactionModifiers, restoredState) => {
-        if (reactionModifiers !== undefined)
-          this.#reactionModifiers.set(operatorId, reactionModifiers);
+      createOperatorBuffRuntime: (operatorId, panel, restoredState) => {
         if (panel !== undefined) {
           this.#operatorPanels.set(operatorId, panel);
           this.#ensureOperatorVitals(operatorId, panel);
         }
         return this.#operatorBuffRuntime(operatorId, panel, restoredState);
       },
+      resolveMaxUltimateEnergy: operatorId =>
+        this.#operatorBuffRuntime(operatorId).container.attributes.get('MaxUltimateSp'),
       resolveUltimateEnergyGainMultiplier: operatorId =>
         this.#operatorBuffRuntime(operatorId).container.attributes.get('UltimateSpGainScalar'),
       createAbilityEntityBuffRuntime: (
@@ -643,7 +794,15 @@ export class StandardPlayerDamageEnvironment {
               gainedValue,
               currentValue,
             }),
-          undefined,
+          (definition, sourceId, blackboard, modifiedKeys, skillCastInfo) =>
+            this.#collectBuffBlackboard(
+              entityId,
+              definition,
+              sourceId,
+              blackboard,
+              modifiedKeys,
+              skillCastInfo,
+            ),
           buff => this.#recordBuffRemoval(entityId, buff, 'other', 'BuffReleased'),
           restoredState,
           (buff, producedBy) => this.#recordBuffCreated(buff, producedBy),
@@ -654,7 +813,7 @@ export class StandardPlayerDamageEnvironment {
           this.options.tagPredefine,
         );
         if (restoredState === undefined) container.addEntityTags(bornTags);
-        return new BuffDefinitionOperationTarget(
+        const runtime = new BuffDefinitionOperationTarget(
           container,
           {
             get: id => this.#resolveEnvironmentBuffDefinition(id),
@@ -673,8 +832,13 @@ export class StandardPlayerDamageEnvironment {
           (handle, restoredRegistrationId) =>
             this.#registerPostSkillRequest(entityId, handle, restoredRegistrationId),
           definitionOperatorId => this.#requireProjectileRuntimeDependencies(definitionOperatorId),
+          undefined,
+          () => this.#resolveCombatSemanticEvents?.(),
         );
+        runtime.configureBeforeImmunityEvents(this.#beforeBuffImmunityEvents);
+        return runtime;
       },
+      createBirthVitalsExecutor: (context, delegate) => this.#createHealExecutor(context, delegate),
       createOperationExecutor: context => this.#createOperationExecutor(context),
       readSourceAttributeValue: (sourceId, request) =>
         this.#readSourceAttributeValue(sourceId, request),
@@ -721,26 +885,48 @@ export class StandardPlayerDamageEnvironment {
       // 固定木桩投影：没有干员死亡或敌方沉默状态；不把 HP=0 当 markDie，也不猜查询 Tag。
       // 未来若引入这两类外部事实，调用方必须覆盖该资格端口。
       comboConditionEligibility: { isAlive: () => true, isSilenced: () => false },
-      resolveVitals: (target, operatorId, buffSourceId) => {
-        if (target === 'enemy') return this.enemyVitals;
-        if (target === 'caster') return this.#requireOperatorVitals(operatorId);
-        return this.#resolveHealTarget(target, operatorId, this.#requireClock().frame, buffSourceId)
-          .vitals;
-      },
+      resolveVitals: (target, operatorId) =>
+        target === 'enemy' ? this.enemyVitals : this.#requireOperatorVitals(operatorId),
       resolveOperatorVitals: operatorId => this.#requireOperatorVitals(operatorId),
     };
   }
 
   get enemyVitals(): CombatVitals {
-    return this.#enemyVitals;
+    return this.#primaryEnemy.vitals;
+  }
+
+  /** 按真实实体身份读取同一份生命、Buff、附着与控制状态，不从主敌人复制。 */
+  enemyInstance(ownerId: string): EnemyCombatRuntime | undefined {
+    return this.#enemies.get(ownerId);
   }
 
   /** 已绑定敌人时返回账本推进器；空场景（从未绑定敌人）返回 null。 */
   get enemyVitalsRuntime(): FrameRuntime | null {
-    return this.#enemyVitalsRuntime;
+    return this.#primaryEnemy.vitalsRuntime;
   }
 
-  /** 返回本场战斗内指定实体独占的事件中心，供后续 Buff、天赋和活动机制注册监听。 */
+  /** Buff.Reset 的接收侧与来源侧收集共用本次新实例黑板，早于寿命及修正参数求值。 */
+  #collectBuffBlackboard(
+    ownerId: string,
+    definition: CombatBuffDefinition<string>,
+    sourceId: string,
+    blackboard: ActionBlackboard,
+    modifiedKeys: Set<string>,
+    skillCastInfo: CombatSkillCastInfo | null,
+  ): void {
+    const payload = {
+      targetId: ownerId,
+      sourceId,
+      buffId: definition.id,
+      buffTags: definition.applyTags ?? [],
+      blackboard,
+      modifiedKeys,
+      skillCastInfo,
+    };
+    this.#emit(ownerId, 'collectAddedBuffBlackboard', payload);
+    this.#emit(sourceId, 'collectOutputBuffBlackboard', payload);
+  }
+
   #registerPostSkillRequest(
     ownerId: string,
     handle: (info: CombatSkillCastInfo | null) => void,
@@ -802,6 +988,7 @@ export class StandardPlayerDamageEnvironment {
   #damagePreparationPorts(
     operatorId: string,
     operatorBuffs: CombatBuffContainer<string>,
+    defenderBuffs: CombatBuffContainer<string> = this.#primaryEnemy.buffs,
   ): Pick<
     PlayerDamageOperationDependencies,
     | 'applyDamageModifiers'
@@ -811,9 +998,13 @@ export class StandardPlayerDamageEnvironment {
   > {
     return {
       applyDamageModifiers: (timing, side, damageContext) =>
-        this.#buffContainer(side, operatorBuffs).applyDamageModifiers(timing, side, damageContext),
+        (side === 'attacker' ? operatorBuffs : defenderBuffs).applyDamageModifiers(
+          timing,
+          side,
+          damageContext,
+        ),
       addInstantAttributeModifier: (side, request) => {
-        const attributes = this.#buffContainer(side, operatorBuffs).attributes;
+        const attributes = (side === 'attacker' ? operatorBuffs : defenderBuffs).attributes;
         if (!attributes.has(request.attribute)) {
           throw new Error(
             `instant attribute '${request.attribute}' is not available on the ${side} side`,
@@ -829,7 +1020,7 @@ export class StandardPlayerDamageEnvironment {
         );
       },
       clearInstantAttributeModifiers: side =>
-        this.#buffContainer(side, operatorBuffs).attributes.clearInstantModifiers(),
+        (side === 'attacker' ? operatorBuffs : defenderBuffs).attributes.clearInstantModifiers(),
       emitPreparationEvent: (event, payload) => this.#emit(operatorId, event, payload),
     };
   }
@@ -844,6 +1035,7 @@ export class StandardPlayerDamageEnvironment {
       this.#resolveAbilitySystemSourceId = context.resolveAbilitySystemSourceId;
     }
     // 主动、被动和恢复后的宿主都从同一装配根取得目录；独立 Buff 伤害复用此端口。
+    if (context.targetExists !== undefined) this.#targetExists = context.targetExists;
     if (context.resolveSharedDamageTransfer !== undefined)
       this.#resolveSharedDamageTransfer = context.resolveSharedDamageTransfer;
     this.#bindBattleRuntime(context);
@@ -855,8 +1047,15 @@ export class StandardPlayerDamageEnvironment {
     }
     const operatorBuffs = this.#operatorBuffRuntime(operatorId, context.panel).container;
     const damage = new PlayerDamageOperationExecutor({
+      resolveAttackerDependencies: sourceId => this.#auxiliaryDamageDependencies(sourceId),
+      resolveTargetDependencies: (targetId, current, step) =>
+        this.#bindDamageTarget(targetId, current, step),
+      lifeDrain: this.#lifeDrainPorts(),
+      queryTargets: 'queryTargets' in context ? context.queryTargets : undefined,
       sourceOperatorId: operatorId,
       resolveSharedDamageTransfer: context.resolveSharedDamageTransfer,
+      targetExists: context.targetExists,
+      resolveDefaultDamageTarget: context.resolveDefaultDamageTarget,
       castId: 'program' in context ? context.castId : undefined,
       skillId: program?.skillId,
       executingSkillId: program?.executionSkillId ?? program?.skillId,
@@ -866,8 +1065,10 @@ export class StandardPlayerDamageEnvironment {
         : {
             sourceActionId: `equipment:${context.source.kind}:${context.source.slug}:${context.handlerKey}`,
           }),
-      targetId: 'enemy',
+      targetId: this.#primaryEnemyId,
       targetVitals: this.enemyVitals,
+      isTargetAlive: id => this.#enemies.get(id)?.lifecycle?.alive ?? true,
+      canTargetDie: id => this.#enemies.get(id)?.lifecycle?.automaticDeath ?? true,
       clock: context.clock,
       receipt: context.receipt,
       ...(context.panel?.attackDetail === undefined
@@ -875,81 +1076,85 @@ export class StandardPlayerDamageEnvironment {
         : {
             attackDetail: panelAttackDetail(context.panel)!,
           }),
-      captureAttributeSnapshots: step =>
+      captureAttributeSnapshots: (step, defender) =>
         resolveStaticPlayerDamageSnapshots(
           context,
           step,
           operatorBuffs.attributes,
-          this.#enemyAttributes,
+          this.#primaryEnemy.attributes,
           {
             attacker: operatorBuffs.captureAttributeModifierDetails('attacker'),
-            defender: this.#enemyBuffs.captureAttributeModifierDetails('defender'),
+            defender: this.#primaryEnemy.buffs.captureAttributeModifierDetails('defender'),
           },
+          defender,
         ),
       criticalSamples: this.options.criticalSamples,
       randomMode: this.options.randomMode,
-      resolveCriticalOverride: step =>
-        step.key === undefined
-          ? undefined
-          : 'program' in context
-            ? context.readSimulationInputs?.()?.criticalOverrides?.[step.key]
-            : undefined,
-      resolveReactionCriticalOverride: identity => this.#resolveReactionCriticalOverride(identity),
+      resolveHitMarks: this.#resolveHitMarks,
+      emitWeaknessBreak: this.#emitWeaknessBreak,
       resolveNonRandomRuntimeSnapshot: step =>
         this.options.resolveNonRandomRuntimeSnapshot(context, step),
       ...this.#damagePreparationPorts(operatorId, operatorBuffs),
-      // PoiseDamageOutputScalar 的基础值为 1；构筑面板保存 BaseAddition 的增量。
-      resolvePoiseMultipliers: () => ({
-        output: 1 + (context.panel?.staggerDamagePercent ?? 0),
-        taken: 1,
-      }),
-      applyPoiseModifiers: (timing, side, poiseContext) =>
-        this.#buffContainer(side, operatorBuffs).applyPoiseModifiers(timing, side, poiseContext),
-      isSourceControlled: () => {
-        if (this.#isOperatorControlled === undefined || this.#clock === null) return false;
-        return this.#isOperatorControlled(operatorBuffs.ownerId, this.#clock.frame);
-      },
+      ...this.#damagePoisePorts(operatorId, context.panel, operatorBuffs),
       emitHealthSourceEvent: (event, payload) => {
         this.#emit(operatorId, event, payload);
       },
-      emitHealthTargetEvent: (event, payload) => this.#emit('enemy', event, payload),
-      absorbHealthDamage: (damageType, value) => this.#enemyBuffs.absorbDamage(damageType, value),
+      emitHealthTargetEvent: (event, payload) => this.#emit(this.#primaryEnemyId, event, payload),
+      absorbHealthDamage: (damageType, value) =>
+        this.#primaryEnemy.buffs.absorbDamage(damageType, value),
       emitPoiseSourceEvent: (event, modifier) => this.#emit(operatorId, event, modifier),
-      emitPoiseTargetEvent: (event, modifier) => this.#emit('enemy', event, modifier),
+      emitPoiseTargetEvent: (event, modifier) => this.#emit(this.#primaryEnemyId, event, modifier),
       beforePoiseZero: modifier => this.#beginPoiseBreak(modifier.sourceId),
-      consumeFinisherEligibility: () => this.#poiseBreakBuffs.consumeFinisher(),
+      consumeFinisherEligibility: () => this.#primaryEnemy.poiseBreakBuffs.consumeFinisher(),
       // 配装元素链仍需独立闭环，不能因 HP 伤害可用而自动开放。
       delegate: 'program' in context ? this.#createInflictionExecutor(context) : strictTerminal,
     });
     const delegate = 'program' in context ? this.#createKnockDownExecutor(context, damage) : damage;
-    return this.#createHealExecutor(context, operatorId, delegate);
+    return this.#createHealExecutor(context, delegate);
   }
 
   #createKnockDownExecutor(
     context: CombatOperationExecutorContext,
     delegate: CombatOperationExecutor,
   ): CombatOperationExecutor {
-    const control = this.#enemyKnockDown;
+    const control = this.#primaryEnemy.knockDown;
     if (control === null) return delegate;
-    const sourceId = context.program.operatorId;
-    const record = (event: string) =>
+
+    const record = (event: string, payload: KnockDownEventPayload) =>
       context.receipt.record({
         frame: context.clock.frame,
         time: context.clock.time,
         event,
-        sourceId,
-        targetId: 'enemy',
+        sourceId: payload.sourceId,
+        targetId: payload.targetId,
         data: { type: 'knockDown' },
       });
     return new KnockDownOperationExecutor({
-      sourceId,
-      target: this.#enemyBuffRuntime,
-      // 固定木桩不安装 markDie；HP 账本归零不等于原生死亡标记。
-      isTargetAlive: () => true,
+      exitOwnerControl: ownerId => {
+        // 无受控组件的宿主无需处理；不能改为结束宿主的异常 Buff。
+        this.#enemies.get(ownerId)?.knockDown?.exit();
+      },
+      queryTargets: (query, actionContext) => {
+        if (context.queryTargets === undefined)
+          throw new Error('knock-down target query is unavailable');
+        return context.queryTargets(query, actionContext);
+      },
+      resolveTarget: selected => {
+        const target = context.resolveInflictionTarget?.(selected) ?? selected;
+        if (target.kind !== 'enemy')
+          throw new Error('knock-down receiver requires a supported control binding');
+        const receiver = this.#enemies.get(runtimeTargetEntityId(target)!);
+        if (receiver?.knockDown == null)
+          throw new Error('knock-down target has no control runtime');
+        return {
+          target: receiver.buffRuntime,
+          isTargetAlive: () => receiver.lifecycle?.alive ?? true,
+          getControl: () => receiver.knockDown!,
+        };
+      },
       predefine: control.predefine,
-      getControl: () => control,
-      readSourceDurationAddition: () =>
-        this.#operatorBuffRuntime(sourceId).container.attributes.get('KnockDownTimeAddition'),
+      readSourceDurationAddition: sourceId =>
+        this.#entityBuffContainer(sourceId).attributes.get('KnockDownTimeAddition'),
       resolveBuffDefinition: id => context.buffDefinitions?.[id],
       emit: (event, payload) => {
         const output =
@@ -957,38 +1162,36 @@ export class StandardPlayerDamageEnvironment {
           event === 'afterOutputKnockDown' ||
           event === 'beforeOutputPhysicalInfliction' ||
           event === 'afterOutputPhysicalInfliction';
-        this.#emit(output ? sourceId : 'enemy', event, payload);
+        this.#emit(output ? payload.sourceId : payload.targetId, event, payload);
       },
-      onNoGuard: () => record('PhysicalNoGuardApplied'),
+      onNoGuard: payload => record('PhysicalNoGuardApplied', payload),
       // 木桩不安装敌人动作/动画控制回调，组件的 Buff、标签、计时和事件已经保留。
       onControlApplied: () => {},
-      onPhysicalInflictionApplied: () => record('PhysicalInflictionApplied'),
+      onPhysicalInflictionApplied: payload => record('PhysicalInflictionApplied', payload),
       delegate,
     });
   }
 
   #createHealExecutor(
-    context: Pick<CombatOperationExecutorContext, 'clock' | 'receipt' | 'semanticEvents'>,
-    sourceOperatorId: string,
+    context: Pick<
+      CombatOperationExecutorContext,
+      'clock' | 'receipt' | 'semanticEvents' | 'queryTargets'
+    >,
     delegate: CombatOperationExecutor,
   ): CombatOperationExecutor {
-    return new HealOperationExecutor({
-      sourceOperatorId,
+    const dependencies: ConstructorParameters<typeof HealOperationExecutor>[0] = {
       clock: context.clock,
       receipt: context.receipt,
       resolveSourceAttribute: (sourceOperatorId, attribute) =>
         this.#readHealAttributeValue(sourceOperatorId, attribute),
       resolveTargetAttribute: (targetId, attribute) =>
         this.#readHealAttributeValue(targetId, attribute),
-      resolveTarget: (target, buffSourceId, buffOwnerId) =>
-        this.#resolveHealTarget(
-          target,
-          sourceOperatorId,
-          context.clock.frame,
-          buffSourceId,
-          buffOwnerId,
-        ),
-      resolveContextTarget: entityId => this.#resolveHealEntity(entityId),
+      queryTargets: (query, operationContext) => {
+        if (context.queryTargets === undefined) throw new Error('heal target query is unavailable');
+        return context.queryTargets(query, operationContext);
+      },
+      resolveEntity: entityId => this.#resolveHealEntity(entityId),
+      isTargetAlive: entityId => this.#enemies.get(entityId)?.lifecycle?.alive ?? true,
       applyHealModifiers: (timing, side, healContext) =>
         this.#healBuffContainer(
           side,
@@ -1010,34 +1213,42 @@ export class StandardPlayerDamageEnvironment {
         );
       },
       delegate,
+    };
+    return new HealOperationExecutor({
+      ...dependencies,
+      delegate: new RecoverPoiseOperationExecutor(dependencies),
     });
   }
 
   #createInflictionExecutor(context: CombatOperationExecutorContext): CombatOperationExecutor {
     if (this.options.elementalInflictionDocument === undefined) return strictTerminal;
     return new ElementalInflictionOperationExecutor({
+      resolveDefaultTarget: context.resolveDefaultDamageTarget,
       queryTargets: context.queryTargets,
       resolveInflictionTarget: context.resolveInflictionTarget,
       sourceOperatorId: context.program.operatorId,
       castId: context.castId,
-      targetId: 'enemy',
+      targetId: this.#primaryEnemyId,
       skillId: context.program.skillId,
       clock: context.clock,
       receipt: context.receipt,
-      getExistingAttachment: (sourceId = context.program.operatorId) =>
-        this.#inflictionAdapter(sourceId).getExistingAttachment(),
+      getExistingAttachment: (
+        sourceId = context.program.operatorId,
+        targetId = this.#primaryEnemyId,
+      ) => this.#inflictionAdapter(sourceId, targetId).getExistingAttachment(),
       applyOperation: (
         operation: ElementalInflictionOperation,
         skillCastInfo,
         producedBy,
         sourceId = context.program.operatorId,
+        targetId = this.#primaryEnemyId,
       ) => {
         if (operation.kind === 'triggerBurst') {
           // 元素目录只提供系统身份；已生成的完整定义必须独占执行，不能再叠加旧聚合回调。
           const buffId = this.#ensureElementalDefinitions().getBurst(operation.element).id;
           const definition = context.buffDefinitions?.[buffId];
           if (definition !== undefined) {
-            const buff = this.#enemyBuffRuntime.applyScoped({
+            const buff = this.#enemies.get(targetId)!.buffRuntime.applyScoped({
               buffId,
               definition,
               sourceId,
@@ -1051,12 +1262,15 @@ export class StandardPlayerDamageEnvironment {
           }
         }
         // 未迁移的定义继续走兼容目录；定义存在但无效时直接失败，不回退掩盖错误。
-        return this.#inflictionAdapter(sourceId).apply(operation, { skillCastInfo, producedBy });
+        return this.#inflictionAdapter(sourceId, targetId).apply(operation, {
+          skillCastInfo,
+          producedBy,
+        });
       },
       // 原生 TriggerSpellBurstEventAction 只发布事件；后续 DamageAction 自己结算伤害。
       triggerSpellBurst: payload => this.#emitSpellBurstEvents(payload),
       emitSourceEvent: (event, payload) => this.#emitInfliction(payload.sourceId, event, payload),
-      emitTargetEvent: (event, payload) => this.#emitInfliction('enemy', event, payload),
+      emitTargetEvent: (event, payload) => this.#emitInfliction(payload.targetId, event, payload),
       delegate: strictTerminal,
     });
   }
@@ -1076,6 +1290,8 @@ export class StandardPlayerDamageEnvironment {
     if (this.#enemyIdentity !== null && this.#enemyIdentity !== context.enemy) {
       throw new Error('standard player damage environment cannot be shared across enemies');
     }
+    this.#resolveCombatSemanticEvents =
+      context.resolveCombatSemanticEvents ?? this.#resolveCombatSemanticEvents;
     this.#clock = context.clock;
     this.#isOperatorControlled =
       context.isOperatorControlled ??
@@ -1084,22 +1300,38 @@ export class StandardPlayerDamageEnvironment {
     this.#receipt = context.receipt;
     this.#resources = context.resources;
     this.#enemyIdentity = context.enemy;
+    if (!this.#primaryEnemy.attributes.has('Level'))
+      this.#primaryEnemy.attributes.define('Level', context.enemy.source.level, {});
     if (context.resolveProjectileRuntimeDependencies !== undefined) {
       this.#resolveProjectileRuntimeDependencies = context.resolveProjectileRuntimeDependencies;
     }
     if (byAssembly) this.#boundByAssembly = true;
-    if (!this.#enemyAttributes.has('FireResistance')) {
-      initializeEnemyCombatAttributes(this.#enemyAttributes, context.enemy.defenderAttributes);
+    if (!this.#primaryEnemy.attributes.has('FireResistance')) {
+      initializeEnemyCombatAttributes(
+        this.#primaryEnemy.attributes,
+        context.enemy.defenderAttributes,
+      );
     }
-    if (this.#enemyVitalsRuntime !== null) return;
+    for (const enemy of this.#enemies.values()) {
+      if (enemy.ownerId === this.#primaryEnemyId || enemy.vitalsRuntime !== null) continue;
+      enemy.vitalsRuntime = new CombatVitalsRuntime({
+        ownerId: enemy.ownerId,
+        clock: context.clock,
+        vitals: enemy.vitals,
+        receipt: context.receipt,
+        emitOwnerEvent: event => this.#emit(enemy.ownerId, event, {}),
+        beforePoiseRecovered: () => enemy.poiseBreakBuffs.recover(),
+      });
+    }
+    if (this.#primaryEnemy.vitalsRuntime !== null) return;
     // 生命账本在场景装配层创建；这里只按本场时钟与回执把它的逐帧推进器接入运行时。
-    this.#enemyVitalsRuntime = new CombatVitalsRuntime({
-      ownerId: 'enemy',
+    this.#primaryEnemy.vitalsRuntime = new CombatVitalsRuntime({
+      ownerId: this.#primaryEnemyId,
       clock: context.clock,
-      vitals: this.#enemyVitals,
+      vitals: this.#primaryEnemy.vitals,
       receipt: context.receipt,
-      emitOwnerEvent: event => this.#emit('enemy', event, {}),
-      beforePoiseRecovered: () => this.#poiseBreakBuffs.recover(),
+      emitOwnerEvent: event => this.#emit(this.#primaryEnemyId, event, {}),
+      beforePoiseRecovered: () => this.#primaryEnemy.poiseBreakBuffs.recover(),
     });
   }
 
@@ -1144,6 +1376,7 @@ export class StandardPlayerDamageEnvironment {
         event: 'hpChanged',
         payload: { sourceId: ownerId, targetId: ownerId },
       });
+      this.#enemies.get(ownerId)?.healthChanged?.();
     });
   }
 
@@ -1157,64 +1390,9 @@ export class StandardPlayerDamageEnvironment {
 
   #resolveHealEntity(entityId: string): ResolvedHealTarget {
     return {
-      operatorId: entityId,
-      vitals: entityId === 'enemy' ? this.#enemyVitals : this.#requireOperatorVitals(entityId),
+      entityId,
+      vitals: this.#enemies.get(entityId)?.vitals ?? this.#requireOperatorVitals(entityId),
     };
-  }
-
-  #resolveHealTarget(
-    target: HealTarget,
-    sourceOperatorId: string,
-    frame: number,
-    buffSourceId?: string,
-    buffOwnerId?: string,
-  ): ResolvedHealTarget {
-    if (target === 'enemy') return this.#resolveHealEntity('enemy');
-    if (target === 'buffSource') {
-      if (buffSourceId === undefined) {
-        throw new Error("heal target 'buffSource' requires a Buff lifecycle source");
-      }
-      return this.#resolveHealEntity(buffSourceId);
-    }
-    if (target === 'buffOwner') {
-      if (buffOwnerId === undefined) {
-        throw new Error("heal target 'buffOwner' requires a Buff lifecycle owner");
-      }
-      return this.#resolveHealEntity(buffOwnerId);
-    }
-    if (target === 'caster') {
-      return this.#resolveHealEntity(sourceOperatorId);
-    }
-    const isControlled = this.#isOperatorControlled;
-    if (isControlled === undefined) {
-      throw new Error(`heal target '${target}' requires the scenario control timeline`);
-    }
-    const controlled = [...this.#operatorVitals.keys()].filter(operatorId =>
-      isControlled(operatorId, frame),
-    );
-    if (controlled.length !== 1) {
-      throw new Error(`heal target '${target}' requires exactly one controlled operator`);
-    }
-    if (target === 'controlledOperator') {
-      const operatorId = controlled[0]!;
-      return { operatorId, vitals: this.#requireOperatorVitals(operatorId) };
-    }
-    const candidates = [...this.#operatorVitals.entries()].filter(
-      ([operatorId]) => target === 'lowestHealthRatioOperator' || operatorId !== controlled[0],
-    );
-    if (candidates.length === 0) {
-      throw new Error(`heal target '${target}' has no non-controlled operator`);
-    }
-    let selected = candidates[0]!;
-    for (const candidate of candidates.slice(1)) {
-      if (
-        candidate[1].health / candidate[1].maxHealth <
-        selected[1].health / selected[1].maxHealth
-      ) {
-        selected = candidate;
-      }
-    }
-    return { operatorId: selected[0], vitals: selected[1] };
   }
 
   #operatorBuffRuntime(
@@ -1241,9 +1419,31 @@ export class StandardPlayerDamageEnvironment {
           : new CombatAttributeSet<string>(configuredState.attributes);
       if (panel !== undefined && configuredState === undefined)
         attributes.define('MaxHp', panel.health, { minimum: 0 });
+      if (panel !== undefined && configuredState === undefined)
+        attributes.define('Level', panel.level, {});
+      if (configuredState === undefined) {
+        const resource = this.#resources?.runtimeState.operators.get(operatorId);
+        if (resource !== undefined)
+          attributes.define('MaxUltimateSp', resource.maxUltimateEnergy, {});
+      }
+      if (configuredState !== undefined) bindOperatorResistanceDerivation(attributes);
       attributes.bindChangeObserver('MaxHp', (value, previous) =>
         this.#requireOperatorVitals(operatorId).synchronizeMaxHealth(value, previous),
       );
+      attributes.bindChangeObserver('MaxUltimateSp', () => {
+        if (this.#resources === null) return;
+        const change = this.#resources.changeUltimateEnergy(operatorId, 0);
+        if (!change.applied) return;
+        const clock = this.#requireClock();
+        this.#requireReceipt().record({
+          frame: clock.frame,
+          time: clock.time,
+          event: 'UltimateEnergyChanged',
+          sourceId: operatorId,
+          targetId: operatorId,
+          data: { ...change, recipient: 'operator' },
+        });
+      });
       const entityBlackboard =
         configuredState === undefined
           ? undefined
@@ -1277,7 +1477,15 @@ export class StandardPlayerDamageEnvironment {
             gainedValue,
             currentValue,
           }),
-        undefined,
+        (definition, sourceId, blackboard, modifiedKeys, skillCastInfo) =>
+          this.#collectBuffBlackboard(
+            operatorId,
+            definition,
+            sourceId,
+            blackboard,
+            modifiedKeys,
+            skillCastInfo,
+          ),
         undefined,
         configuredState,
         (buff, producedBy) => this.#recordBuffCreated(buff, producedBy),
@@ -1309,7 +1517,10 @@ export class StandardPlayerDamageEnvironment {
         (handle, restoredRegistrationId) =>
           this.#registerPostSkillRequest(operatorId, handle, restoredRegistrationId),
         definitionOperatorId => this.#requireProjectileRuntimeDependencies(definitionOperatorId),
+        undefined,
+        () => this.#resolveCombatSemanticEvents?.(),
       );
+      runtime.configureBeforeImmunityEvents(this.#beforeBuffImmunityEvents);
       this.#operatorBuffRuntimes.set(operatorId, runtime);
     }
     return runtime;
@@ -1360,16 +1571,22 @@ export class StandardPlayerDamageEnvironment {
 
   #compileInlineBuffDefinition(entry: CombatBuffDefinitionEntry): CombatBuffDefinition<string> {
     const definitions = new CompiledCombatBuffDefinitions(`inline:${entry.id}`, [entry], {
-      emitElementalInflictionStarted: payload =>
-        this.#emit('enemy', 'elementalInflictionStarted', payload),
+      emitElementalInflictionStarted: (payload, buff) =>
+        this.#emit(buff.owner.ownerId, 'elementalInflictionStarted', payload),
       onSpellBurstTriggered: payload => this.#onSpellBurstTriggered(payload),
       onAttackScaledDamageTriggered: payload => this.#onBuffDamageTriggered(payload),
       readAttribute: (request, buff) => this.#readSourceAttributeValue(buff.sourceId, request),
     });
     return definitions.get(entry.id)!;
   }
-  #inflictionAdapter(operatorId: string): ElementalInflictionBuffAdapter<string> {
-    let adapter = this.#inflictionAdapters.get(operatorId);
+  #inflictionAdapter(
+    operatorId: string,
+    targetId = this.#primaryEnemyId,
+  ): ElementalInflictionBuffAdapter<string> {
+    const key = JSON.stringify([operatorId, targetId]);
+    const enemy = this.#enemies.get(targetId);
+    if (!enemy) throw new Error(`unknown infliction target '${targetId}'`);
+    let adapter = this.#inflictionAdapters.get(key);
     if (adapter === undefined) {
       const resolveCompoundStatusBlackboard =
         this.options.compoundStatusFactories === undefined
@@ -1410,45 +1627,24 @@ export class StandardPlayerDamageEnvironment {
                     `but the registered definition is '${definition.id}'`,
                 );
               }
-              const blackboard = { ...result.blackboardValues } as Record<string, number>;
-              // 腐蚀已由有原生事件证据的公共初始化入口处理；其他既有反应配置保持原入口。
-              const reaction =
-                incomingElement === 'electric'
-                  ? 'electrification'
-                  : incomingElement === 'cryo'
-                    ? 'frozen'
-                    : incomingElement === 'heat'
-                      ? 'burning'
-                      : null;
-              const modifier = this.#reactionModifiers
-                .get(operatorId)
-                ?.find(m => m.reaction === reaction);
-              if (modifier !== undefined) {
-                if (typeof blackboard.duration !== 'number')
-                  throw new Error(`reaction '${reaction}' has no numeric duration output`);
-                if (modifier.effectivenessAddition !== 0)
-                  throw new Error(
-                    `reaction '${reaction}' effectiveness modifier has no connected factory output`,
-                  );
-                blackboard.duration += modifier.durationSecondsAddition;
-              }
-              return blackboard;
+              return { ...result.blackboardValues } as Record<string, number>;
             };
       adapter = new ElementalInflictionBuffAdapter(
-        this.#enemyBuffs,
+        enemy.buffs,
         operatorId,
         this.#ensureElementalDefinitions(),
         undefined,
         (event, buff) => {
-          this.#recordOwnedBuffApplied('enemy', event, buff);
-          this.#emit('enemy', 'addedBuff', event);
+          this.#recordOwnedBuffApplied(targetId, event, buff);
+          this.#emit(targetId, 'addedBuff', event);
         },
         resolveCompoundStatusBlackboard,
         event => this.#emit(operatorId, 'beforeOutputBuff', event),
         event => this.#emit(operatorId, 'outputBuff', event),
-        event => this.#emit('enemy', 'beforeAddedBuff', event),
+        event => this.#emit(targetId, 'beforeAddedBuff', event),
+        this.#beforeBuffImmunityEvents,
       );
-      this.#inflictionAdapters.set(operatorId, adapter);
+      this.#inflictionAdapters.set(key, adapter);
     }
     return adapter;
   }
@@ -1461,12 +1657,12 @@ export class StandardPlayerDamageEnvironment {
     }
     this.#elementalDefinitions = compileCombatBuffDefinitions(document, {
       resolveLifecycleOperations: source =>
-        (source.ownerId === 'enemy'
-          ? this.#enemyBuffRuntime
-          : this.#operatorBuffRuntime(source.ownerId)
+        (
+          this.#enemies.get(source.ownerId)?.buffRuntime ??
+          this.#operatorBuffRuntime(source.ownerId)
         ).resolveLifecycleOperations(source),
-      emitElementalInflictionStarted: payload =>
-        this.#emit('enemy', 'elementalInflictionStarted', payload),
+      emitElementalInflictionStarted: (payload, buff) =>
+        this.#emit(buff.owner.ownerId, 'elementalInflictionStarted', payload),
       onSpellBurstTriggered: payload => this.#onSpellBurstTriggered(payload),
       onAttackScaledDamageTriggered: payload => this.#onBuffDamageTriggered(payload),
       readAttribute: (request, buff) => this.#readSourceAttributeValue(buff.sourceId, request),
@@ -1490,21 +1686,27 @@ export class StandardPlayerDamageEnvironment {
     },
   ): number {
     sourceId = this.#resolveAbilitySystemSourceId(sourceId);
-    if (sourceId === 'enemy') {
+    const enemy = this.#enemies.get(sourceId);
+    if (enemy !== undefined) {
       if (request.attribute.kind !== 'specific') {
         throw new Error(
           `combat attribute source enemy has no '${request.attribute.kind}' attribute`,
         );
       }
-      const key = request.attribute.key === 'maxHealth' ? 'MaxHp' : request.attribute.key;
-      if (!this.#enemyAttributes.has(key)) {
+      const key =
+        request.attribute.key === 'maxHealth'
+          ? 'MaxHp'
+          : request.attribute.key === 'level'
+            ? 'Level'
+            : request.attribute.key;
+      if (!enemy.attributes.has(key)) {
         throw new Error(
           `combat attribute source 'enemy' has no attribute '${request.attribute.key}'`,
         );
       }
       return request.stage === 'armedNonConverted'
-        ? this.#enemyAttributes.getArmed(key, ATTRIBUTE_MODIFIER_SOURCES.nonConverted)
-        : this.#enemyAttributes.get(key, ATTRIBUTE_MODIFIER_SOURCES.nonConverted);
+        ? enemy.attributes.getArmed(key, ATTRIBUTE_MODIFIER_SOURCES.nonConverted)
+        : enemy.attributes.get(key, ATTRIBUTE_MODIFIER_SOURCES.nonConverted);
     }
     if (request.attribute.kind === 'specific' && request.attribute.key === 'maxUltimateEnergy') {
       if (this.#resources === null) {
@@ -1516,15 +1718,16 @@ export class StandardPlayerDamageEnvironment {
     if (panel === undefined) {
       throw new Error(`combat attribute source operator '${sourceId}' has no resolved panel`);
     }
-    // 原生 StoreAttributeValue(Specific/Level) 读取当前角色等级；等级不是 Buff 可修改的
-    // CombatAttributeSet 槽位，因此从同一次构筑解析得到的面板身份直接返回。
-    if (request.attribute.kind === 'specific' && request.attribute.key === 'level') {
-      return panel.level;
-    }
     const attributes = this.#operatorBuffRuntime(sourceId, panel).container.attributes;
     const keys =
       request.attribute.kind === 'specific'
-        ? [request.attribute.key === 'maxHealth' ? 'MaxHp' : request.attribute.key]
+        ? [
+            request.attribute.key === 'maxHealth'
+              ? 'MaxHp'
+              : request.attribute.key === 'level'
+                ? 'Level'
+                : request.attribute.key,
+          ]
         : request.attribute.kind === 'main'
           ? [panel.mainAttribute]
           : request.attribute.kind === 'secondary'
@@ -1546,25 +1749,28 @@ export class StandardPlayerDamageEnvironment {
   /** 原生事件动作按来源、目标顺序发布，不读取倍率、不抽随机数、不造成伤害。 */
   #emitSpellBurstEvents(payload: {
     readonly burstType: string;
+    readonly targetId: string;
     readonly sourceId: string;
     readonly skillCastInfo?: CombatSkillCastInfo;
   }): void {
     const event = {
       sourceId: payload.sourceId,
-      targetId: 'enemy',
+      targetId: payload.targetId,
       burstType: payload.burstType,
       skillCastInfo: payload.skillCastInfo ?? null,
     };
     this.#emit(payload.sourceId, 'beforeOutputSpellBurst', event);
-    this.#emit('enemy', 'beforeTakeSpellBurst', event);
+    this.#emit(payload.targetId, 'beforeTakeSpellBurst', event);
   }
 
   /** 旧语义目录聚合了事件、倍率读取与伤害；只允许该目录端口调用此兼容入口。 */
   #onSpellBurstTriggered(payload: {
     readonly burstType: string;
+    readonly targetId: string;
     readonly sourceId: string;
     readonly skillCastInfo?: CombatSkillCastInfo;
   }): void {
+    if (this.#enemies.get(payload.targetId)?.lifecycle?.alive === false) return;
     const index = this.#ensureElementalDefinitions();
     const definition = index.getSpellBurst(payload.burstType);
     if (definition === null) {
@@ -1587,16 +1793,14 @@ export class StandardPlayerDamageEnvironment {
       definition,
       enhance: operatorAttributes.get('PhysicalAndSpellInflictionEnhance'),
       settings,
-      damage: this.#auxiliaryDamageDependencies(payload.sourceId, payload.skillCastInfo),
+      damage: {
+        ...this.#auxiliaryDamageDependencies(payload.sourceId, payload.skillCastInfo),
+        resolveDefaultDamageTarget: () => runtimeTargetFromEntityId(payload.targetId),
+      },
     });
   }
 
   /** 独立伤害共用来源属性、准备事件、伤害处理器和护盾，不伪造技能运行上下文。 */
-  #resolveReactionCriticalOverride(identity: ReactionDamageIdentity) {
-    const key = nextReactionDamageKey(this.runtimeState.reactionDamageCounts, identity);
-    return { key, value: this.options.reactionCriticalOverrides?.[key] };
-  }
-
   #auxiliaryDamageDependencies(
     sourceId: string,
     skillCastInfo?: CombatSkillCastInfo,
@@ -1606,10 +1810,16 @@ export class StandardPlayerDamageEnvironment {
       throw new Error(`damage source operator '${sourceId}' has no resolved panel`);
     const operatorBuffs = this.#operatorBuffRuntime(sourceId, panel).container;
     return {
+      resolveAttackerDependencies: sourceId => this.#auxiliaryDamageDependencies(sourceId),
+      resolveTargetDependencies: (targetId, current, step) =>
+        this.#bindDamageTarget(targetId, current, step),
+      lifeDrain: this.#lifeDrainPorts(),
       ...this.#damagePreparationPorts(sourceId, operatorBuffs),
       sourceOperatorId: sourceId,
       resolveSharedDamageTransfer: this.#resolveSharedDamageTransfer,
-      resolveReactionCriticalOverride: identity => this.#resolveReactionCriticalOverride(identity),
+      targetExists: this.#targetExists,
+      resolveHitMarks: this.#resolveHitMarks,
+      emitWeaknessBreak: this.#emitWeaknessBreak,
       ...(skillCastInfo === undefined
         ? {}
         : {
@@ -1617,50 +1827,185 @@ export class StandardPlayerDamageEnvironment {
             sourceActionId: skillCastInfo.originCastId,
             castId: skillCastInfo.originCastId,
           }),
-      targetId: 'enemy',
+      targetId: this.#primaryEnemyId,
       targetVitals: this.enemyVitals,
+      isTargetAlive: id => this.#enemies.get(id)?.lifecycle?.alive ?? true,
+      canTargetDie: id => this.#enemies.get(id)?.lifecycle?.automaticDeath ?? true,
       clock: this.#requireClock(),
       receipt: this.#requireReceipt(),
       ...(panel.attackDetail === undefined ? {} : { attackDetail: panelAttackDetail(panel)! }),
-      captureAttributeSnapshots: step =>
-        resolveStaticPlayerDamageSnapshots(
+      captureAttributeSnapshots: (step, defender) => {
+        return resolveStaticPlayerDamageSnapshots(
           { operatorId: sourceId, panel, enemy: this.#requireEnemyIdentity() },
           step,
           operatorBuffs.attributes,
-          this.#enemyAttributes,
+          this.#primaryEnemy.attributes,
           {
             attacker: operatorBuffs.captureAttributeModifierDetails('attacker'),
-            defender: this.#enemyBuffs.captureAttributeModifierDetails('defender'),
+            defender: this.#primaryEnemy.buffs.captureAttributeModifierDetails('defender'),
           },
-        ),
+          defender,
+        );
+      },
       criticalSamples: this.options.criticalSamples,
       randomMode: this.options.randomMode,
       resolveNonRandomRuntimeSnapshot: step => ({
         runtimeExtensionMultiplier: 1,
         appliesIgniteDamageMultiplier: step.parameters.tags.includes('fireAbnormal'),
-        appliesPhysicalInflictionDamageMultiplier:
-          step.parameters.features?.includes('physicalInfliction') ?? false,
+        appliesPhysicalInflictionDamageMultiplier: isPhysicalInflictionDamage(step.parameters.tags),
       }),
-      resolvePoiseMultipliers: () => ({ output: 1, taken: 1 }),
+      ...this.#damagePoisePorts(sourceId, panel, operatorBuffs),
       emitHealthSourceEvent: (event, payload) => this.#emit(sourceId, event, payload),
-      emitHealthTargetEvent: (event, payload) => this.#emit('enemy', event, payload),
-      absorbHealthDamage: (type, value) => this.#enemyBuffs.absorbDamage(type, value),
+      emitHealthTargetEvent: (event, payload) => this.#emit(this.#primaryEnemyId, event, payload),
+      absorbHealthDamage: (type, value) => this.#primaryEnemy.buffs.absorbDamage(type, value),
       emitPoiseSourceEvent: (event, payload) => this.#emit(sourceId, event, payload),
-      emitPoiseTargetEvent: (event, payload) => this.#emit('enemy', event, payload),
+      emitPoiseTargetEvent: (event, payload) => this.#emit(this.#primaryEnemyId, event, payload),
       beforePoiseZero: payload => this.#beginPoiseBreak(payload.sourceId),
-      consumeFinisherEligibility: () => this.#poiseBreakBuffs.consumeFinisher(),
+      consumeFinisherEligibility: () => this.#primaryEnemy.poiseBreakBuffs.consumeFinisher(),
       delegate: strictTerminal,
     };
   }
 
-  #beginPoiseBreak(sourceId: string): void {
+  #bindDamageTarget(
+    targetId: string,
+    current: PlayerDamageOperationDependencies,
+    step: ResolvedCombatStepForKind<'dealDamage' | 'dealStagger'>,
+  ): PlayerDamageOperationDependencies {
+    // 切换接收者时不能沿用主敌人的失衡与处决端口；未绑定的路径明确拒绝。
+    const receiver = this.#enemies.get(targetId);
+    if (
+      receiver === undefined &&
+      (step.kind === 'dealStagger' ||
+        step.parameters.stagger !== undefined ||
+        step.parameters.calculation === 'breakingAttack')
+    )
+      throw new Error(`unsupported damage route for '${targetId}'`);
+    const enemyDefender =
+      this.options.additionalEnemies?.get(targetId)?.program.defenderAttributes ??
+      (targetId === this.#primaryEnemyId ? this.#enemyIdentity?.defenderAttributes : undefined);
+    const sourceBuffs = this.#entityBuffContainer(current.sourceOperatorId);
+    const targetBuffs = this.#entityBuffContainer(targetId);
+    const attributes = targetBuffs.attributes;
+    return {
+      ...current,
+      targetId,
+      targetVitals: this.#resolveHealEntity(targetId).vitals,
+      consumeFinisherEligibility:
+        receiver === undefined ? undefined : () => receiver.poiseBreakBuffs.consumeFinisher(),
+      beforePoiseZero:
+        receiver === undefined
+          ? undefined
+          : payload => this.#beginPoiseBreak(payload.sourceId, receiver),
+      emitPoiseTargetEvent: (event, payload) => this.#emit(targetId, event, payload),
+      resolvePoiseMultipliers: step => ({
+        ...current.resolvePoiseMultipliers(step),
+        attributes: { output: sourceBuffs.attributes, taken: attributes },
+      }),
+      applyPoiseModifiers: (timing, side, context) =>
+        (side === 'attacker' ? sourceBuffs : targetBuffs).applyPoiseModifiers(
+          timing,
+          side,
+          context,
+        ),
+      ...this.#damagePreparationPorts(current.sourceOperatorId, sourceBuffs, targetBuffs),
+      captureAttributeSnapshots: damageStep => {
+        const defender: PlayerDamageAttributeSnapshots['defender'] = {
+          ...captureDamageScales(attributes),
+          defense: enemyDefender?.defense ?? attributes.get('Def'),
+          shelterDamageMultiplier: attributes.get('shelterDamageMultiplier'),
+          breakingAttackDamageTakenMultiplier:
+            enemyDefender?.breakingAttackDamageTakenMultiplier ?? 1,
+          resistances: {
+            physical: {
+              percent: attributes.get('PhysicalResistance'),
+              damageTakenMultiplier: attributes.get('PhysicalDamageTakenScalar'),
+            },
+            heat: {
+              percent: attributes.get('FireResistance'),
+              damageTakenMultiplier: attributes.get('FireDamageTakenScalar'),
+            },
+            electric: {
+              percent: attributes.get('PulseResistance'),
+              damageTakenMultiplier: attributes.get('PulseDamageTakenScalar'),
+            },
+            cryo: {
+              percent: attributes.get('CrystResistance'),
+              damageTakenMultiplier: attributes.get('CrystDamageTakenScalar'),
+            },
+            nature: {
+              percent: attributes.get('NaturalResistance'),
+              damageTakenMultiplier: attributes.get('NaturalDamageTakenScalar'),
+            },
+            ether: {
+              percent: attributes.get('EtherResistance'),
+              damageTakenMultiplier: attributes.get('EtherDamageTakenScalar'),
+            },
+          },
+          ...(damageStep.parameters.calculation === 'attribute' &&
+          damageStep.parameters.attributeSource === 'target'
+            ? {
+                calculationAttributeValue: attributes.get(
+                  damageStep.parameters.calculationAttribute!,
+                ),
+              }
+            : {}),
+          modifierDetails: targetBuffs.captureAttributeModifierDetails('defender'),
+        };
+        return current.captureAttributeSnapshots(damageStep, defender);
+      },
+      emitHealthTargetEvent: (event, payload) => this.#emit(targetId, event, payload),
+      absorbHealthDamage: (type, value) => targetBuffs.absorbDamage(type, value),
+    };
+  }
+
+  #damagePoisePorts(
+    sourceId: string,
+    panel: ResolvedOperatorPanel | undefined,
+    sourceBuffs: CombatBuffContainer<string>,
+  ): Pick<
+    PlayerDamageOperationDependencies,
+    'resolvePoiseMultipliers' | 'applyPoiseModifiers' | 'isSourceControlled'
+  > {
+    return {
+      // PoiseDamageOutputScalar 基值为 1，构筑面板保存 BaseAddition 增量。
+      resolvePoiseMultipliers: () => ({
+        output: 1 + (panel?.staggerDamagePercent ?? 0),
+        taken: 1,
+        attributes: { output: sourceBuffs.attributes, taken: this.#primaryEnemy.attributes },
+      }),
+      applyPoiseModifiers: (timing, side, context) =>
+        this.#buffContainer(side, sourceBuffs).applyPoiseModifiers(timing, side, context),
+      isSourceControlled: () =>
+        this.#clock !== null &&
+        (this.#isOperatorControlled?.(sourceId, this.#clock.frame) ?? false),
+    };
+  }
+
+  #beginPoiseBreak(sourceId: string, enemy: EnemyCombatRuntime = this.#primaryEnemy): void {
     const definitions = this.#poiseBreakDefinitions.get(sourceId);
-    this.#poiseBreakBuffs.begin(sourceId, definitions?.[POISE_BREAK_BUFF_ID]);
-    this.#poiseBreakBuffs.begin(
+    enemy.poiseBreakBuffs.begin(sourceId, definitions?.[POISE_BREAK_BUFF_ID]);
+    enemy.poiseBreakBuffs.begin(
       sourceId,
       definitions?.[FINISHER_ELIGIBILITY_BUFF_ID],
       FINISHER_ELIGIBILITY_BUFF_ID,
     );
+  }
+
+  #lifeDrainPorts(): NonNullable<PlayerDamageOperationDependencies['lifeDrain']> {
+    return {
+      resolveVitals: entityId => this.#resolveHealEntity(entityId).vitals,
+      readAttribute: (entityId, attribute) => {
+        const attributes = this.#entityBuffContainer(entityId).attributes;
+        if (!attributes.has(attribute))
+          throw new Error(`life-drain source '${entityId}' has no attribute '${attribute}'`);
+        return attributes.get(attribute);
+      },
+      emitPreparationEvent: (event, payload) => this.#emit(payload.sourceId, event, payload),
+      emitSourceEvent: (event, payload) => this.#emit(payload.sourceId, event, payload),
+      emitTargetEvent: (event, payload) => this.#emit(payload.targetId, event, payload),
+      absorbDamage: (entityId, value) =>
+        this.#entityBuffContainer(entityId).absorbDamage('lifeDrain', value),
+    };
   }
 
   /** 执行法术异常等 Buff 生命周期中的原生 DamageAction。 */
@@ -1681,10 +2026,16 @@ export class StandardPlayerDamageEnvironment {
     // 仅补充本次 Buff 身份；结算数值与事件仍由公共执行器产生。
     const damage = new PlayerDamageOperationExecutor({
       ...dependencies,
+      resolveDefaultDamageTarget: () => runtimeTargetFromEntityId(payload.buffOwnerId),
       sourceActionId: payload.sourceActionId,
       canCritical: payload.canCritical,
-      resolveReactionCriticalOverride: identity =>
-        this.#resolveReactionCriticalOverride({ ...identity, actionId: payload.buffId }),
+      resolveHitMarks: (_producer, ownerId, targetId, supportsWeakness) =>
+        this.#resolveHitMarks(
+          { kind: 'buff', ownerId: payload.buffOwnerId, instanceId: payload.buffInstanceId },
+          ownerId,
+          targetId,
+          supportsWeakness,
+        ),
       receipt: {
         record: entry => {
           if (entry.event === 'DamageApplied') {
@@ -1701,8 +2052,8 @@ export class StandardPlayerDamageEnvironment {
           } else receipt.record(entry);
         },
       },
-      captureAttributeSnapshots: step => {
-        const snapshots = dependencies.captureAttributeSnapshots(step);
+      captureAttributeSnapshots: (step, defender) => {
+        const snapshots = dependencies.captureAttributeSnapshots(step, defender);
         // 目录中的 canCritical=false 来自原生 unit 即时暴击率覆盖；不推进随机流。
         return payload.canCritical
           ? snapshots
@@ -1717,17 +2068,16 @@ export class StandardPlayerDamageEnvironment {
       parameters: {
         damageType: payload.damageType,
         attackScale: payload.attackScale,
-        tags: payload.tags,
-        features: payload.features,
+        tags: payload.tags ?? [],
       },
     });
-    if (applied === undefined) throw new Error('Buff damage executor produced no damage receipt');
+    if (applied === undefined) return;
     receipt.record({
       frame: this.#requireClock().frame,
       time: this.#requireClock().time,
       event: 'BuffDamageApplied',
       sourceId: payload.sourceId,
-      targetId: 'enemy',
+      targetId: payload.buffOwnerId,
       data: {
         ...buffIdentity,
         damageType: payload.damageType,
@@ -1765,6 +2115,46 @@ export class StandardPlayerDamageEnvironment {
     }
     return clock;
   }
+
+  readonly #resolveHitMarks: NonNullable<PlayerDamageOperationDependencies['resolveHitMarks']> = (
+    producer,
+    sourceId,
+    targetId,
+    supportsWeakness,
+  ) => {
+    const hitIdentity = this.#requireReceipt().nextHitIdentity?.(producer, sourceId, targetId);
+    if (hitIdentity === undefined) return undefined;
+    const critical = this.options.hitCriticalOverrides?.[hitIdentity];
+    const stagger = this.options.weaknessBreakStagger?.get(hitIdentity);
+    return {
+      hitIdentity,
+      ...(critical === undefined ? {} : { hitCriticalOverride: critical }),
+      ...(supportsWeakness && this.#enemies.has(targetId)
+        ? {
+            canBreakWeakness: true,
+            breaksWeakness: stagger !== undefined,
+            ...(stagger === undefined ? {} : { weaknessBreakStagger: stagger }),
+          }
+        : {}),
+    };
+  };
+
+  readonly #emitWeaknessBreak = (sourceId: string, targetId: string, stagger: number) => {
+    // 手动标注的招式失衡归于击破者，独立于命中技能的标签和倍率。
+    if (stagger > 0) {
+      const step: ResolvedCombatStepForKind<'dealStagger'> = {
+        kind: 'dealStagger',
+        parameters: { value: stagger },
+      };
+      const ports = this.#bindDamageTarget(
+        targetId,
+        this.#auxiliaryDamageDependencies(sourceId),
+        step,
+      );
+      new PlayerDamageOperationExecutor(ports).execute(step);
+    }
+    this.#emit(sourceId, 'afterOutputWeaknessTriggered', { sourceId, targetId });
+  };
 
   #requireReceipt(): CombatReceiptSink {
     const receipt = this.#receipt;
@@ -2116,7 +2506,7 @@ export class StandardPlayerDamageEnvironment {
     side: DamageModifierSide,
     operatorBuffs: CombatBuffContainer<string>,
   ): CombatBuffContainer<string> {
-    return side === 'attacker' ? operatorBuffs : this.#enemyBuffs;
+    return side === 'attacker' ? operatorBuffs : this.#primaryEnemy.buffs;
   }
 
   #healBuffContainer(
@@ -2125,14 +2515,23 @@ export class StandardPlayerDamageEnvironment {
     receiverId: string,
   ): CombatBuffContainer<string> {
     const operatorId = side === 'healer' ? healerId : receiverId;
-    if (operatorId === 'enemy') return this.#enemyBuffs;
+    return this.#entityBuffContainer(operatorId);
+  }
+
+  #entityBuffContainer(operatorId: string): CombatBuffContainer<string> {
+    const enemy = this.#enemies.get(operatorId);
+    if (enemy !== undefined) return enemy.buffs;
     return this.#operatorBuffRuntime(operatorId, this.#operatorPanels.get(operatorId)).container;
   }
 
-  #readHealAttributeValue(entityId: string, attribute: HealCalculationAttribute): number {
-    if (entityId === 'enemy') {
-      if (attribute === 'maxHealth') return this.#enemyVitals.maxHealth;
-      return this.#enemyAttributes.get(attribute);
+  #readHealAttributeValue(
+    entityId: string,
+    attribute: MultiplyAttributeCalculationAttribute,
+  ): number {
+    const enemy = this.#enemies.get(entityId);
+    if (enemy !== undefined) {
+      if (attribute === 'maxHealth') return enemy.vitals.maxHealth;
+      return enemy.attributes.get(attribute);
     }
     return this.#readSourceAttributeValue(entityId, {
       attribute: { kind: 'specific', key: attribute },
@@ -2197,7 +2596,7 @@ export class StandardPlayerDamageEnvironment {
         const { layers, buff, ...payload } = published.payload;
         const key = JSON.stringify([
           event,
-          buff.instanceId,
+          buff?.instanceId ?? [payload.targetId, payload.buffId],
           payload.skillCastInfo?.skillCastId ?? 0,
           this.#requireClock().frame,
         ]);
@@ -2205,7 +2604,11 @@ export class StandardPlayerDamageEnvironment {
         state.pending.set(
           key,
           previous === undefined
-            ? { event, buff: buff.runtimeState, payload: { ...payload, layerCount: layers } }
+            ? {
+                event,
+                buff: buff?.runtimeState ?? null,
+                payload: { ...payload, layerCount: layers },
+              }
             : {
                 ...previous,
                 payload: { ...previous.payload, layerCount: previous.payload.layerCount + layers },
@@ -2279,14 +2682,17 @@ export class StandardPlayerDamageEnvironment {
             event: event.event,
             payload: {
               ...event.payload,
-              buff: {
-                runtimeState: state,
-                instanceId: state.identity.instanceId,
-                blackboard: ActionBlackboard.bindRuntimeState(state.blackboard),
-                get isFinished() {
-                  return state.lifecycle.finished;
-                },
-              },
+              buff:
+                state === null
+                  ? null
+                  : {
+                      runtimeState: state,
+                      instanceId: state.identity.instanceId,
+                      blackboard: ActionBlackboard.bindRuntimeState(state.blackboard),
+                      get isFinished() {
+                        return state.lifecycle.finished;
+                      },
+                    },
             },
           });
         }

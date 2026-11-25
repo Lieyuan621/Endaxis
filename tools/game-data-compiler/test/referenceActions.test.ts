@@ -65,6 +65,9 @@ describe('引用闭包动作来源载荷', () => {
               castSkillOnLaunch: true,
               skillIdOnLaunch: 'launch_skill',
               hitBoneProjectileOffsetDirectionMode: 'FixedAtLaunch',
+              useWeaponHitMp: true,
+              hitWeaponIndex: 1,
+              hitWeaponMp: 'Root',
             }
           : {}),
       },
@@ -88,6 +91,9 @@ describe('引用闭包动作来源载荷', () => {
       ],
       presetPoints: [{ key: 'first', point: { targetSource: 'Context' } }],
     });
+    expect(source.hitWeaponMount).toEqual(
+      withLaunch ? { enabled: true, weaponIndex: 1, mountPoint: 'Root' } : undefined,
+    );
   });
 
   it.each([undefined, false, true, 0, null, 'false'])(

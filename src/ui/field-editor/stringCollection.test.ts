@@ -47,7 +47,6 @@ it('keeps asset references strict and classifies formal GlobalBuff IDs as an ope
   for (const [kind, name, family] of [
     ['applyBuff', 'inheritToNextSkillIds', 'skill'],
     ['finishBuffsById', 'buffIds', 'buff'],
-    ['findOwnerSpawnedAbilityEntities', 'abilityEntityIds', 'abilityEntity'],
   ] as const)
     expect(
       stringCollectionDescriptor(actionNodeSchemas[kind].fields.find(f => f.path.at(-1) === name)!),

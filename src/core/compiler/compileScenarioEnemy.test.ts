@@ -1,3 +1,4 @@
+import { firstScenarioEnemy } from '../project/level';
 import { describe, expect, it } from 'vitest';
 import { createEmptyScenario } from '../project/createProject';
 import { compileScenarioEnemy } from './compileScenarioEnemy';
@@ -5,9 +6,13 @@ import { compileScenarioEnemy } from './compileScenarioEnemy';
 describe('compileScenarioEnemy', () => {
   it('只从项目实例编译敌人运行时输入', () => {
     const scenario = createEmptyScenario('scenario:enemy', '敌人编译样本');
-    scenario.enemy.source = { kind: 'prefab', enemyId: 'enemy:sample', level: 80 };
-    scenario.enemy.rank = 'elite';
-    scenario.enemy.editable = {
+    firstScenarioEnemy(scenario).enemy.source = {
+      kind: 'prefab',
+      enemyId: 'enemy:sample',
+      level: 80,
+    };
+    firstScenarioEnemy(scenario).enemy.rank = 'elite';
+    firstScenarioEnemy(scenario).enemy.editable = {
       hp: 123456,
       defense: 245,
       superArmor: 3,
@@ -22,7 +27,7 @@ describe('compileScenarioEnemy', () => {
       },
     };
 
-    const result = compileScenarioEnemy(scenario.enemy);
+    const result = compileScenarioEnemy(firstScenarioEnemy(scenario).enemy);
 
     expect(result).toMatchObject({
       source: { kind: 'prefab', enemyId: 'enemy:sample', level: 80 },
@@ -51,18 +56,18 @@ describe('compileScenarioEnemy', () => {
 
   it('拒绝运行时无法解释的抗性身份', () => {
     const scenario = createEmptyScenario('scenario:enemy', '敌人编译样本');
-    scenario.enemy.editable.resistances.unknown = 10;
+    firstScenarioEnemy(scenario).enemy.editable.resistances.unknown = 10;
 
-    expect(() => compileScenarioEnemy(scenario.enemy)).toThrow(
+    expect(() => compileScenarioEnemy(firstScenarioEnemy(scenario).enemy)).toThrow(
       "enemy resistance 'unknown' is not supported",
     );
   });
 
   it('拒绝无序或越界的失衡节点阈值', () => {
     const scenario = createEmptyScenario('scenario:enemy', '敌人编译样本');
-    scenario.enemy.editable.stagger.knotThresholds = [0.5, 0.5];
+    firstScenarioEnemy(scenario).enemy.editable.stagger.knotThresholds = [0.5, 0.5];
 
-    expect(() => compileScenarioEnemy(scenario.enemy)).toThrow(
+    expect(() => compileScenarioEnemy(firstScenarioEnemy(scenario).enemy)).toThrow(
       'enemy stagger knot thresholds must increase and stay between 0 and 1',
     );
   });

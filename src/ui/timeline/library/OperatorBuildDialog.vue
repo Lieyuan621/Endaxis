@@ -6,10 +6,10 @@ import { EaTooltip, EaMinusIcon, EaPlusIcon } from '@/design-system';
  * 组件沿用旧版干员编辑器的布局与节点交互，但只读取 Next 的 Build 投影；所有修改都通过
  * `change` 事件交给父层持久化。这里不访问旧 Store，也不会为定义尚未提供的详情补造文本。
  */
-import { EaButton, EaDialog, EaDialogActions } from '../../../design-system/index';
+import { EaButton, EaDialogActions, EaFilterChip } from '../../../design-system/index';
 import { computed } from 'vue';
 import type { Modifier } from '@popperjs/core/index.d.ts';
-import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
+import BuildDialogSurface from './BuildDialogSurface.vue';
 import OperatorAvatar from '../../components/OperatorAvatar.vue';
 import { useI18n } from 'vue-i18n';
 import './armoryDialog.css';
@@ -105,6 +105,7 @@ const SKILL_ORDER = PLAYER_SKILL_INPUTS;
 
 const props = defineProps<{
   visible: boolean;
+  embedded?: boolean;
   operator: OperatorInstanceViewModel | null;
   customDefinition?: OperatorDefinition;
   buildAttributes?: OperatorPanelAttributes | null;
@@ -338,315 +339,302 @@ function maxOut(): void {
 </script>
 
 <template>
-  <InputRegionBoundary label="operator-build" :active="visible" modal>
-    <EaDialog
-      :model-value="visible"
-      width="760px"
-      append-to-body
-      align-center
-      class="armory-dialog next-armory-dialog"
-      @update:model-value="emit('update:visible', $event)"
-    >
-      <template v-if="operator && definition">
-        <div class="layout">
-          <div class="header">
-            <div
-              class="portrait-frame"
-              :class="`rarity-${definition.rarity}-style`"
-              :style="definition.rarity === 6 ? {} : { borderColor: rarityColor }"
-            >
-              <OperatorAvatar
-                :src="getOperatorAvatarPath(operator.definition.assetSlug ?? operator.operatorSlug)"
-                class="portrait"
-              />
-            </div>
-            <div class="header-info">
-              <div class="name-row">
-                <span class="name">{{
-                  operator.definition.displayName ??
-                  getOperatorGameName(
-                    operator.definition.assetSlug ?? operator.operatorSlug,
-                    locale,
-                  )
-                }}</span>
-                <span
-                  class="stars"
-                  :class="`header-rarity-${definition.rarity}`"
-                  :style="{ color: rarityColor }"
-                  >{{ '★'.repeat(definition.rarity) }}</span
-                >
-              </div>
-              <div class="tags">
-                <span class="tag" :style="{ color: elementColor, borderColor: elementColor }">{{
-                  getGameElementName(definition.element, locale)
-                }}</span>
-                <span class="tag">{{ getGameClassName(definition.role, locale) }}</span>
-                <span class="tag">{{ getGameWeaponTypeName(definition.weaponType, locale) }}</span>
-              </div>
-              <div class="level-display">
-                <span class="level-num">{{ operator.level }}</span>
-                <span class="level-text">{{ t('armory.common.level') }}</span>
-              </div>
-              <div class="row row-actions">
-                <EaButton
-                  size="sm"
-                  type="button"
-                  :disabled="!canPromote"
-                  :style="operator.promoted ? { borderColor: rarityColor, color: rarityColor } : {}"
-                  @click="togglePromotion"
-                >
-                  {{ promotionLabel() }}
-                </EaButton>
-              </div>
-              <div v-if="potentialCount > 0" class="row">
-                <span class="section-label">{{ t('armory.common.potential') }}</span>
-                <div class="diamonds">
-                  <EaTooltip
-                    v-for="level in potentialCount"
-                    :key="level"
-                    effect="dark"
-                    placement="top"
-                    :show-after="120"
-                    popper-class="operator-edit-tooltip-popper"
-                  >
-                    <template #content>
-                      <div class="operator-edit-tooltip">
-                        <div class="operator-edit-tooltip-title">{{ potentialName(level) }}</div>
-                        <GameRichTextRenderer
-                          v-if="potentialDescription(level)"
-                          class="operator-edit-tooltip-desc"
-                          :text="potentialDescription(level)"
-                          :locale="locale"
-                        />
-                      </div>
-                    </template>
-                    <EaButton
-                      type="button"
-                      class="diamond"
-                      :style="operator.potential >= level ? { background: potentialColor } : {}"
-                      @click="togglePotential(level)"
-                      :pressed="operator.potential >= level"
-                    />
-                  </EaTooltip>
-                </div>
-              </div>
-            </div>
+  <BuildDialogSurface
+    :visible="visible"
+    :embedded="embedded"
+    width="760px"
+    panel-class="armory-dialog next-armory-dialog operator-build-dialog"
+    @update:visible="emit('update:visible', $event)"
+  >
+    <template v-if="operator && definition">
+      <div class="layout">
+        <div class="header">
+          <div
+            class="portrait-frame"
+            :class="`rarity-${definition.rarity}-style`"
+            :style="definition.rarity === 6 ? {} : { borderColor: rarityColor }"
+          >
+            <OperatorAvatar
+              :src="getOperatorAvatarPath(operator.definition.assetSlug ?? operator.operatorSlug)"
+              class="portrait"
+            />
           </div>
-
-          <div class="level-selector">
-            <EaButton
-              size="sm"
-              v-for="level in LEVELS"
-              :key="level"
-              type="button"
-              class="level-btn"
-              :style="
-                operator.level === level
-                  ? {
-                      borderColor: rarityColor,
-                      color: rarityColor,
-                      background: `color-mix(in srgb, ${rarityColor} 18%, var(--ea-dialog-bg, #fff))`,
-                    }
-                  : {}
-              "
-              @click="handleLevelChange(level)"
-            >
-              Lv{{ level }}
-            </EaButton>
-          </div>
-
-          <div class="section">
-            <div class="section-title">{{ t('armory.common.skills') }}</div>
-            <div class="skills-row">
-              <div v-for="source in availableSkillSources" :key="source" class="skill-card">
+          <div class="header-info">
+            <div class="name-row">
+              <span class="name">{{
+                operator.definition.displayName ??
+                getOperatorGameName(
+                  operator.definition.assetSlug ?? operator.operatorSlug,
+                  locale,
+                )
+              }}</span>
+              <span
+                class="stars"
+                :class="`header-rarity-${definition.rarity}`"
+                :style="{ color: rarityColor }"
+                >{{ '★'.repeat(definition.rarity) }}</span
+              >
+            </div>
+            <div class="tags">
+              <span class="tag" :style="{ color: elementColor, borderColor: elementColor }">{{
+                getGameElementName(definition.element, locale)
+              }}</span>
+              <span class="tag">{{ getGameClassName(definition.role, locale) }}</span>
+              <span class="tag">{{ getGameWeaponTypeName(definition.weaponType, locale) }}</span>
+            </div>
+            <div v-if="potentialCount > 0" class="row potential-row">
+              <span class="section-label">{{ t('armory.common.potential') }}</span>
+              <div class="diamonds">
                 <EaTooltip
-                  placement="top"
+                  v-for="level in potentialCount"
+                  :key="level"
                   effect="dark"
+                  placement="top"
                   :show-after="120"
-                  :enterable="true"
-                  :popper-options="skillTooltipPopperOptions"
                   popper-class="operator-edit-tooltip-popper"
                 >
                   <template #content>
-                    <OperatorSkillTooltip
-                      :operator="definition"
-                      :operator-slug="operator.definition.assetSlug ?? operator.operatorSlug"
-                      :skill-key="source"
-                      :skill-level="operator.skillLevels[source] ?? 1"
-                      :skill-type-name="skillTypeName(source)"
-                      :active-form-key="activeFormKey"
-                      :talent-states="operator.talentStates"
-                    />
+                    <div class="operator-edit-tooltip">
+                      <div class="operator-edit-tooltip-title">{{ potentialName(level) }}</div>
+                      <GameRichTextRenderer
+                        v-if="potentialDescription(level)"
+                        class="operator-edit-tooltip-desc"
+                        :text="potentialDescription(level)"
+                        :locale="locale"
+                      />
+                    </div>
                   </template>
-                  <div class="skill-icon-frame" :style="{ borderColor: skillBorderColor(source) }">
-                    <img :src="skillIcon(source)" alt="" class="skill-icon" />
-                  </div>
+                  <EaButton
+                    type="button"
+                    class="diamond"
+                    :style="operator.potential >= level ? { background: potentialColor } : {}"
+                    @click="togglePotential(level)"
+                    :pressed="operator.potential >= level"
+                  />
                 </EaTooltip>
-                <div class="skill-name">{{ skillTypeName(source) }}</div>
-                <div class="skill-controls">
-                  <EaButton
-                    size="sm"
-                    type="button"
-                    :disabled="(operator.skillLevels[source] ?? 1) <= 1"
-                    icon-only
-                    :title="t('common.decrease')"
-                    :aria-label="t('common.decrease')"
-                    @click="setSkillLevel(source, (operator.skillLevels[source] ?? 1) - 1)"
-                  >
-                    <EaMinusIcon />
-                  </EaButton>
-                  <span class="skill-rank">{{
-                    formatOperatorSkillLevel(operator.skillLevels[source] ?? 1)
-                  }}</span>
-                  <EaButton
-                    size="sm"
-                    type="button"
-                    :disabled="(operator.skillLevels[source] ?? 1) >= skillMax"
-                    icon-only
-                    :title="t('common.increase')"
-                    :aria-label="t('common.increase')"
-                    @click="setSkillLevel(source, (operator.skillLevels[source] ?? 1) + 1)"
-                  >
-                    <EaPlusIcon />
-                  </EaButton>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">{{ t('armory.common.talents') }}</div>
-            <div class="talent-row">
-              <div class="talent-info">
-                <span class="talent-name">{{ t('armory.common.trust') }}</span>
-                <span v-if="trustAttributeLabel" class="talent-sub">{{ trustAttributeLabel }}</span>
-              </div>
-              <div class="talent-nodes">
-                <template v-for="level in 4" :key="level">
-                  <div
-                    v-if="level > 1"
-                    class="talent-chain"
-                    :class="{ active: operator.trustLevel >= level }"
-                  />
-                  <EaTooltip
-                    effect="dark"
-                    placement="top"
-                    :show-after="120"
-                    popper-class="operator-edit-tooltip-popper"
-                  >
-                    <template #content>
-                      <div class="operator-edit-tooltip">
-                        <div class="operator-edit-tooltip-desc">{{ trustDescription(level) }}</div>
-                      </div>
-                    </template>
-                    <span class="talent-node-tooltip-anchor">
-                      <EaButton
-                        type="button"
-                        class="talent-node"
-                        :class="{
-                          disabled: level > maxTrust,
-                          'is-multi-attr': trustAttributeKeys.length > 1,
-                        }"
-                        :style="operator.trustLevel >= level ? { borderColor: elementColor } : {}"
-                        :disabled="level > maxTrust"
-                        @click="setTrustLevel(level)"
-                        :pressed="operator.trustLevel >= level"
-                      >
-                        <img
-                          v-for="attribute in trustAttributeKeys"
-                          :key="attribute"
-                          :src="getAttributeIconPath(attribute)"
-                          alt=""
-                          class="talent-icon"
-                        />
-                      </EaButton>
-                    </span>
-                  </EaTooltip>
-                </template>
-              </div>
-            </div>
-
-            <div
-              v-for="(talent, groupIndex) in definition.talents"
-              :key="groupIndex"
-              class="talent-row"
-            >
-              <div class="talent-info">
-                <span class="talent-name">{{ talentName(groupIndex) }}</span>
-              </div>
-              <div class="talent-nodes">
-                <template v-for="level in talent.levels" :key="level">
-                  <div
-                    v-if="level > 1"
-                    class="talent-chain"
-                    :class="{ active: (operator.talentStates[String(groupIndex)] ?? 0) >= level }"
-                  />
-                  <EaTooltip
-                    effect="dark"
-                    placement="top"
-                    :show-after="120"
-                    :disabled="!talentDescription(groupIndex, level)"
-                    popper-class="operator-edit-tooltip-popper"
-                  >
-                    <template #content>
-                      <div class="operator-edit-tooltip">
-                        <GameRichTextRenderer
-                          class="operator-edit-tooltip-desc"
-                          :text="talentDescription(groupIndex, level)"
-                          :locale="locale"
-                        />
-                      </div>
-                    </template>
-                    <span class="talent-node-tooltip-anchor">
-                      <EaButton
-                        type="button"
-                        class="talent-node"
-                        :style="
-                          (operator.talentStates[String(groupIndex)] ?? 0) >= level
-                            ? { borderColor: elementColor }
-                            : {}
-                        "
-                        @click="setTalentState(groupIndex, level)"
-                        :pressed="(operator.talentStates[String(groupIndex)] ?? 0) >= level"
-                      >
-                        <img
-                          :src="
-                            getOperatorTalentIconPath(
-                              operator.definition.assetSlug ?? operator.operatorSlug,
-                              groupIndex + 1,
-                            )
-                          "
-                          alt=""
-                          class="talent-icon"
-                        />
-                      </EaButton>
-                    </span>
-                  </EaTooltip>
-                </template>
               </div>
             </div>
           </div>
         </div>
-      </template>
 
-      <template #footer>
-        <EaDialogActions>
+        <div class="build-progression-bar">
+          <div class="level-display">
+            <span class="level-num">{{ operator.level }}</span>
+            <span class="level-text">{{ t('armory.common.level') }}</span>
+          </div>
+          <div class="level-selector">
+            <EaFilterChip
+              size="sm"
+              v-for="level in LEVELS"
+              :key="level"
+              class="level-btn"
+              :accent="rarityColor"
+              :selected="operator.level === level"
+              @click="handleLevelChange(level)"
+            >
+              Lv{{ level }}
+            </EaFilterChip>
+          </div>
           <EaButton
-            variant="primary"
             size="sm"
             type="button"
-            :disabled="operator === null"
-            @click="maxOut"
+            class="build-progression-bar__action"
+            :disabled="!canPromote"
+            :style="operator.promoted ? { borderColor: rarityColor, color: rarityColor } : {}"
+            @click="togglePromotion"
           >
-            {{ t('common.max') }}
+            {{ promotionLabel() }}
           </EaButton>
-          <EaButton size="sm" type="button" @click="emit('update:visible', false)">
-            {{ t('common.close') }}
-          </EaButton>
-        </EaDialogActions>
-      </template>
-    </EaDialog>
-  </InputRegionBoundary>
+        </div>
+
+        <div class="section operator-skills-section">
+          <div class="section-title">{{ t('armory.common.skills') }}</div>
+          <div class="skills-row">
+            <div v-for="source in availableSkillSources" :key="source" class="skill-card">
+              <EaTooltip
+                placement="top"
+                effect="dark"
+                :show-after="120"
+                :enterable="true"
+                :popper-options="skillTooltipPopperOptions"
+                popper-class="operator-edit-tooltip-popper"
+              >
+                <template #content>
+                  <OperatorSkillTooltip
+                    :operator="definition"
+                    :operator-slug="operator.definition.assetSlug ?? operator.operatorSlug"
+                    :skill-key="source"
+                    :skill-level="operator.skillLevels[source] ?? 1"
+                    :skill-type-name="skillTypeName(source)"
+                    :active-form-key="activeFormKey"
+                    :talent-states="operator.talentStates"
+                  />
+                </template>
+                <div class="skill-icon-frame" :style="{ borderColor: skillBorderColor(source) }">
+                  <img :src="skillIcon(source)" alt="" class="skill-icon" />
+                </div>
+              </EaTooltip>
+              <div class="skill-name">{{ skillTypeName(source) }}</div>
+              <div class="skill-controls">
+                <EaButton
+                  size="sm"
+                  type="button"
+                  :disabled="(operator.skillLevels[source] ?? 1) <= 1"
+                  icon-only
+                  :title="t('common.decrease')"
+                  :aria-label="t('common.decrease')"
+                  @click="setSkillLevel(source, (operator.skillLevels[source] ?? 1) - 1)"
+                >
+                  <EaMinusIcon />
+                </EaButton>
+                <span class="skill-rank">{{
+                  formatOperatorSkillLevel(operator.skillLevels[source] ?? 1)
+                }}</span>
+                <EaButton
+                  size="sm"
+                  type="button"
+                  :disabled="(operator.skillLevels[source] ?? 1) >= skillMax"
+                  icon-only
+                  :title="t('common.increase')"
+                  :aria-label="t('common.increase')"
+                  @click="setSkillLevel(source, (operator.skillLevels[source] ?? 1) + 1)"
+                >
+                  <EaPlusIcon />
+                </EaButton>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section operator-talents-section">
+          <div class="section-title">{{ t('armory.common.talents') }}</div>
+          <div class="talent-row">
+            <div class="talent-info">
+              <span class="talent-name">{{ t('armory.common.trust') }}</span>
+              <span v-if="trustAttributeLabel" class="talent-sub">{{ trustAttributeLabel }}</span>
+            </div>
+            <div class="talent-nodes">
+              <template v-for="level in 4" :key="level">
+                <div
+                  v-if="level > 1"
+                  class="talent-chain"
+                  :class="{ active: operator.trustLevel >= level }"
+                />
+                <EaTooltip
+                  effect="dark"
+                  placement="top"
+                  :show-after="120"
+                  popper-class="operator-edit-tooltip-popper"
+                >
+                  <template #content>
+                    <div class="operator-edit-tooltip">
+                      <div class="operator-edit-tooltip-desc">{{ trustDescription(level) }}</div>
+                    </div>
+                  </template>
+                  <span class="talent-node-tooltip-anchor">
+                    <EaButton
+                      type="button"
+                      class="talent-node"
+                      :class="{
+                        disabled: level > maxTrust,
+                        'is-multi-attr': trustAttributeKeys.length > 1,
+                      }"
+                      :style="operator.trustLevel >= level ? { borderColor: elementColor } : {}"
+                      :disabled="level > maxTrust"
+                      @click="setTrustLevel(level)"
+                      :pressed="operator.trustLevel >= level"
+                    >
+                      <img
+                        v-for="attribute in trustAttributeKeys"
+                        :key="attribute"
+                        :src="getAttributeIconPath(attribute)"
+                        alt=""
+                        class="talent-icon"
+                      />
+                    </EaButton>
+                  </span>
+                </EaTooltip>
+              </template>
+            </div>
+          </div>
+
+          <div
+            v-for="(talent, groupIndex) in definition.talents"
+            :key="groupIndex"
+            class="talent-row"
+          >
+            <div class="talent-info">
+              <span class="talent-name">{{ talentName(groupIndex) }}</span>
+            </div>
+            <div class="talent-nodes">
+              <template v-for="level in talent.levels" :key="level">
+                <div
+                  v-if="level > 1"
+                  class="talent-chain"
+                  :class="{ active: (operator.talentStates[String(groupIndex)] ?? 0) >= level }"
+                />
+                <EaTooltip
+                  effect="dark"
+                  placement="top"
+                  :show-after="120"
+                  :disabled="!talentDescription(groupIndex, level)"
+                  popper-class="operator-edit-tooltip-popper"
+                >
+                  <template #content>
+                    <div class="operator-edit-tooltip">
+                      <GameRichTextRenderer
+                        class="operator-edit-tooltip-desc"
+                        :text="talentDescription(groupIndex, level)"
+                        :locale="locale"
+                      />
+                    </div>
+                  </template>
+                  <span class="talent-node-tooltip-anchor">
+                    <EaButton
+                      type="button"
+                      class="talent-node"
+                      :style="
+                        (operator.talentStates[String(groupIndex)] ?? 0) >= level
+                          ? { borderColor: elementColor }
+                          : {}
+                      "
+                      @click="setTalentState(groupIndex, level)"
+                      :pressed="(operator.talentStates[String(groupIndex)] ?? 0) >= level"
+                    >
+                      <img
+                        :src="
+                          getOperatorTalentIconPath(
+                            operator.definition.assetSlug ?? operator.operatorSlug,
+                            groupIndex + 1,
+                          )
+                        "
+                        alt=""
+                        class="talent-icon"
+                      />
+                    </EaButton>
+                  </span>
+                </EaTooltip>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template #footer>
+      <EaDialogActions>
+        <EaButton
+          variant="primary"
+          size="sm"
+          type="button"
+          :disabled="operator === null"
+          @click="maxOut"
+        >
+          {{ t('common.max') }}
+        </EaButton>
+      </EaDialogActions>
+    </template>
+  </BuildDialogSurface>
 </template>
 
 <style scoped>
@@ -659,9 +647,6 @@ function maxOut(): void {
   display: flex;
   gap: 20px;
   align-items: flex-start;
-}
-.row-actions {
-  flex-wrap: wrap;
 }
 .portrait-frame {
   --armory-pad: var(--ea-keycap-bg, #1a1a1e);
@@ -931,14 +916,6 @@ function maxOut(): void {
 }
 :global(.operator-edit-tooltip-popper.el-popper.is-dark) {
   padding: 0 !important;
-  background: #202126;
-  color: #f1f1f1;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
-}
-:global(.operator-edit-tooltip-popper.el-popper.is-dark .el-popper__arrow::before) {
-  background: #202126;
-  border-color: rgba(255, 255, 255, 0.16);
 }
 :global(.operator-edit-tooltip) {
   box-sizing: border-box;

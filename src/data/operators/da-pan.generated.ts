@@ -8,6 +8,24 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const daPanChr_0018_dapan_attack1ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_4: {
         action: {
           kind: 'changeResource',
@@ -28,13 +46,13 @@ export const daPanChr_0018_dapan_attack1ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.08 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_4',
@@ -63,6 +81,8 @@ export const daPanChr_0018_dapan_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -76,7 +96,7 @@ export const daPanChr_0018_dapan_attack1ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -87,7 +107,14 @@ export const daPanChr_0018_dapan_attack1ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_11: {
+      overrideBasicAttackMapping_11: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0018_dapan_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0018_dapan_attack2'] },
@@ -105,7 +132,7 @@ export const daPanChr_0018_dapan_attack1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -119,6 +146,7 @@ export const daPanChr_0018_dapan_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_attack1: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_attack1ActionGraph,
   key: 'chr_0018_dapan_attack1',
   element: 'physical',
   blackboard: {
@@ -129,34 +157,42 @@ export const daPanChr_0018_dapan_attack1: SkillDefinition = {
   naturalDurationFrames: 176,
   exclusiveFrame: 20,
   offsetRecordFrame: 13,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 30,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0018_dapan_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 15, endFrame: 30, skillIds: ['chr_0018_dapan_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 13, endFrame: 15, sequence: { $sequence: 'repeatEachTick_10' } },
-    { startFrame: 15, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
+    { startFrame: 15, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0018_dapan_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: daPanChr_0018_dapan_attack1ActionGraph,
 };
 
 export const daPanChr_0018_dapan_attack2ActionGraph = {
   main: {
     nodes: {
-      changeResource_2: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
+      changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -171,53 +207,62 @@ export const daPanChr_0018_dapan_attack2ActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_3: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.08 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'changeResource_2',
-      },
-      ifElse_5: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
+        next: 'changeResource_3',
       },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'ifElse_5' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_7: {
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'ifElse_6' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_8: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
           },
         },
-        next: 'ifElse_6',
+        next: 'ifElse_7',
       },
-      reachSkillOperableBoundary_8: {
+      overrideBasicAttackMapping_9: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0018_dapan_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_10: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0018_dapan_attack3'] },
@@ -229,7 +274,14 @@ export const daPanChr_0018_dapan_attack2ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_3: {
         type: 'boolean',
@@ -242,6 +294,7 @@ export const daPanChr_0018_dapan_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_attack2: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_attack2ActionGraph,
   key: 'chr_0018_dapan_attack2',
   element: 'physical',
   blackboard: {
@@ -252,33 +305,59 @@ export const daPanChr_0018_dapan_attack2: SkillDefinition = {
   naturalDurationFrames: 171,
   exclusiveFrame: 30,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 25,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0018_dapan_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 20, endFrame: 25, skillIds: ['chr_0018_dapan_attack3'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 20, endFrame: 25, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_8' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'overrideBasicAttackMapping_9' } },
+    { startFrame: 20, endFrame: 25, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0018_dapan_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: daPanChr_0018_dapan_attack2ActionGraph,
 };
 
 export const daPanChr_0018_dapan_attack3ActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.0333333351,
+          },
+        },
+        next: null,
+      },
+      findTargets_2: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_4: {
         action: {
           kind: 'changeResource',
@@ -299,13 +378,13 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_4',
@@ -334,6 +413,8 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -347,7 +428,7 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
@@ -358,53 +439,62 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_12: {
+      startTimeDilation_13: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_zero' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'changeResource_4',
-      },
-      ifElse_14: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'startTimeDilation_12' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
       },
       ifElse_15: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'ifElse_14' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
+          whenTrue: { $sequence: 'startTimeDilation_13' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_16: {
+      ifElse_16: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'ifElse_15' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_17: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['normalAttack'],
           },
         },
-        next: 'ifElse_15',
+        next: 'ifElse_16',
       },
-      reachSkillOperableBoundary_17: {
+      overrideBasicAttackMapping_18: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0018_dapan_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_19: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0018_dapan_attack4'] },
@@ -418,7 +508,7 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -432,7 +522,14 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_5: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_6: {
         type: 'boolean',
@@ -445,6 +542,7 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_attack3: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_attack3ActionGraph,
   key: 'chr_0018_dapan_attack3',
   element: 'physical',
   blackboard: {
@@ -456,35 +554,43 @@ export const daPanChr_0018_dapan_attack3: SkillDefinition = {
   naturalDurationFrames: 193,
   exclusiveFrame: 38,
   offsetRecordFrame: 10,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 40,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0018_dapan_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 25, endFrame: 40, skillIds: ['chr_0018_dapan_attack4'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 10, endFrame: 13, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'findTargets_2' } },
     { startFrame: 10, endFrame: 13, sequence: { $sequence: 'repeatEachTick_10' } },
-    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'dealDamage_16' } },
-    { startFrame: 25, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_17' } },
+    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'dealDamage_17' } },
+    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_18' } },
+    { startFrame: 25, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0018_dapan_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: daPanChr_0018_dapan_attack3ActionGraph,
 };
 
 export const daPanChr_0018_dapan_attack4ActionGraph = {
   main: {
     nodes: {
-      changeResource_2: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
+      changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -499,45 +605,47 @@ export const daPanChr_0018_dapan_attack4ActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_3: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'changeResource_2',
-      },
-      ifElse_5: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
+        next: 'changeResource_3',
       },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'ifElse_5' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_7: {
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'ifElse_6' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_8: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -545,9 +653,16 @@ export const daPanChr_0018_dapan_attack4ActionGraph = {
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'ifElse_6',
+        next: 'ifElse_7',
       },
-      reachSkillOperableBoundary_8: {
+      overrideBasicAttackMapping_9: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0018_dapan_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_10: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0018_dapan_attack1'] },
@@ -559,7 +674,14 @@ export const daPanChr_0018_dapan_attack4ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_3: {
         type: 'boolean',
@@ -573,6 +695,7 @@ export const daPanChr_0018_dapan_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_attack4: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_attack4ActionGraph,
   key: 'chr_0018_dapan_attack4',
   element: 'physical',
   blackboard: {
@@ -584,28 +707,17 @@ export const daPanChr_0018_dapan_attack4: SkillDefinition = {
   naturalDurationFrames: 236,
   exclusiveFrame: 60,
   offsetRecordFrame: 32,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 70,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0018_dapan_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 45, endFrame: 70, skillIds: ['chr_0018_dapan_attack1'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 32, endFrame: 33, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 45, endFrame: 70, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
+    { startFrame: 32, endFrame: 33, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 32, endFrame: 33, sequence: { $sequence: 'dealDamage_8' } },
+    { startFrame: 0, endFrame: 70, sequence: { $sequence: 'overrideBasicAttackMapping_9' } },
+    { startFrame: 45, endFrame: 70, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0018_dapan_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: daPanChr_0018_dapan_attack4ActionGraph,
 };
 
 export const daPanChr_0018_dapan_power_attackActionGraph = {
@@ -615,13 +727,13 @@ export const daPanChr_0018_dapan_power_attackActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -630,30 +742,39 @@ export const daPanChr_0018_dapan_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.4,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'startTimeDilation_1',
       },
       gainFinisherSp_3: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'inputTarget' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'gainFinisherSp_3',
@@ -662,11 +783,13 @@ export const daPanChr_0018_dapan_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.6,
-            tags: ['normalAttack', 'powerAttack'],
+            tags: ['powerAttack', 'normalAttack'],
           },
         },
         next: 'startTimeDilation_4',
@@ -697,6 +820,13 @@ export const daPanChr_0018_dapan_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_8: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0018_dapan_normal_skill', 'chr_0018_dapan_combo_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
   },
@@ -705,6 +835,7 @@ export const daPanChr_0018_dapan_power_attackActionGraph = {
 
 export const daPanChr_0018_dapan_power_attack: SkillDefinition = {
   actionGraph: daPanChr_0018_dapan_power_attackActionGraph,
+  skillTags: ['Skill/Character/char_0018_dapan/PowerAttack'],
   key: 'chr_0018_dapan_power_attack',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -713,21 +844,13 @@ export const daPanChr_0018_dapan_power_attack: SkillDefinition = {
   exclusiveFrame: 46,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 35,
-        endFrame: 56,
-        skillIds: ['chr_0018_dapan_normal_skill', 'chr_0018_dapan_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 16, endFrame: 19, sequence: { $sequence: 'dealDamage_2' } },
     { startFrame: 35, endFrame: 38, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 0, endFrame: 46, sequence: { $sequence: 'applyBuff_6' } },
     { startFrame: 0, endFrame: 35, sequence: { $sequence: 'applyBuff_7' } },
+    { startFrame: 35, endFrame: 56, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -738,6 +861,24 @@ export const daPanChr_0018_dapan_power_attack: SkillDefinition = {
 export const daPanChr_0018_dapan_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -768,6 +909,8 @@ export const daPanChr_0018_dapan_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -789,6 +932,7 @@ export const daPanChr_0018_dapan_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_plunging_attack_end: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_plunging_attack_endActionGraph,
   key: 'chr_0018_dapan_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -800,28 +944,48 @@ export const daPanChr_0018_dapan_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 15,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: daPanChr_0018_dapan_plunging_attack_endActionGraph,
 };
 
 export const daPanChr_0018_dapan_normal_skillActionGraph = {
   main: {
     nodes: {
+      findTargets_6: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
       startTimeDilation_8: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
@@ -830,10 +994,11 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['normalSkill', 'canBreakWeakness'],
           },
         },
         next: 'startTimeDilation_8',
@@ -856,7 +1021,7 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
           kind: 'applyBuff',
           parameters: {
             buffs: [{ buffId: 'buff_physical_no_guard' }],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'tar' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -893,13 +1058,13 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: 'applyBuff_15',
@@ -908,10 +1073,11 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
-            tags: ['normalSkill'],
-            features: ['canBreakWeakness'],
+            tags: ['normalSkill', 'canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_6' },
           },
         },
@@ -932,7 +1098,8 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'tar' },
             isExtra: false,
             duration: { kind: 'valueNode', nodeId: 'data_9' },
             height: { kind: 'constant', value: 2.1 },
@@ -944,6 +1111,13 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
         },
         next: 'ifElse_18',
       },
+      reachSkillOperableBoundary_20: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0018_dapan_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_pre' } },
@@ -952,7 +1126,7 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'equal',
@@ -990,6 +1164,7 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_normal_skill: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_normal_skillActionGraph,
   key: 'chr_0018_dapan_normal_skill',
   element: 'physical',
   blackboard: {
@@ -1004,33 +1179,76 @@ export const daPanChr_0018_dapan_normal_skill: SkillDefinition = {
   exclusiveFrame: 65,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 65, endFrame: 89, skillIds: ['chr_0018_dapan_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 8, endFrame: 11, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 43, endFrame: 46, sequence: { $sequence: 'findTargets_6' } },
     { startFrame: 8, endFrame: 11, sequence: { $sequence: 'dealDamage_9' } },
     { startFrame: 43, endFrame: 46, sequence: { $sequence: 'applyPhysicalInfliction_19' } },
+    { startFrame: 65, endFrame: 89, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: daPanChr_0018_dapan_normal_skillActionGraph,
 };
 
 export const daPanChr_0018_dapan_combo_skillActionGraph = {
   main: {
     nodes: {
-      changeResource_2: {
+      findTargets_2: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'mainTar',
+          },
+        },
+        next: null,
+      },
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'findTargets_2' },
+        },
+        next: null,
+      },
+      checkCondition_4: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'ifElse_3',
+      },
+      findTargets_5: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
+      changeResource_6: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_3' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1038,55 +1256,57 @@ export const daPanChr_0018_dapan_combo_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_3: {
+      startTimeDilation_7: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 50,
             curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
-        next: 'changeResource_2',
+        next: 'changeResource_6',
       },
-      dealDamage_4: {
+      dealDamage_8: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            tags: ['canBreakWeakness', 'comboSkill'],
+            stagger: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
-        next: 'startTimeDilation_3',
+        next: 'startTimeDilation_7',
       },
-      applyPhysicalInfliction_5: {
+      applyPhysicalInfliction_9: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'crush',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'tar' },
             isExtra: false,
-            damageMultiplier: { kind: 'valueNode', nodeId: 'data_4' },
+            damageMultiplier: { kind: 'valueNode', nodeId: 'data_6' },
             ignoreHitEffect: false,
           },
         },
-        next: 'dealDamage_4',
+        next: 'dealDamage_8',
       },
-      checkCondition_6: {
+      checkCondition_10: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
-        next: 'applyPhysicalInfliction_5',
+        next: 'applyPhysicalInfliction_9',
       },
-      startTimeDilation_7: {
+      startTimeDilation_11: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1096,23 +1316,53 @@ export const daPanChr_0018_dapan_combo_skillActionGraph = {
             priority: 30,
             curve: { kind: 'named', key: 'ComboSkill' },
             finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+            ignoredTargets: [
+              { kind: 'owner' },
+              {
+                kind: 'ownerSpawned',
+                owner: { kind: 'owner' },
+                objectType: 'abilityEntity',
+                sameSourceSkillCast: false,
+              },
+            ],
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_12: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0018_dapan_normal_skill'] },
         },
         next: null,
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'crush_multi' } },
-      data_5: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'context', key: 'smart_target' },
+          distance: 10,
+          lessThan: true,
+          includeTargetRadius: true,
+          containsHittableObject: false,
+        },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'crush_multi' } },
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1125,6 +1375,7 @@ export const daPanChr_0018_dapan_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_combo_skill: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_combo_skillActionGraph,
   key: 'chr_0018_dapan_combo_skill',
   element: 'physical',
   blackboard: {
@@ -1138,22 +1389,20 @@ export const daPanChr_0018_dapan_combo_skill: SkillDefinition = {
   exclusiveFrame: 52,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 24, endFrame: 59, skillIds: ['chr_0018_dapan_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'checkCondition_6' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_7' } },
+    { startFrame: 0, endFrame: 26, sequence: { $sequence: 'checkCondition_4' } },
+    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'findTargets_5' } },
+    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'checkCondition_10' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_11' } },
+    { startFrame: 24, endFrame: 59, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: daPanChr_0018_dapan_combo_skillActionGraph,
 };
 
 export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
@@ -1174,12 +1423,101 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyPhysicalInfliction_5: {
+      applyBuff_2: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0018_dapan_potential_1',
+                copiedBlackboardAssignments: {
+                  dmg_up: 'potential_1_dmg_up',
+                  duration: 'potential_1_duration',
+                },
+              },
+            ],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_3: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'applyBuff_2',
+      },
+      checkCondition_4: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'checkCondition_3',
+      },
+      listenForCombatEvents_5: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
+            responses: [
+              {
+                key: 'SkillData.chr_0018_dapan_ultimate_skill.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'abilityEvent', event: 'afterKillEntity' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_4' },
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      findTargets_6: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
+      findTargets_7: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'factionHitBox',
+              factionTarget: 'anti',
+              owner: { kind: 'owner' },
+              checkAlive: true,
+              containsUnmarkable: false,
+              replacePartsWithMainBodies: false,
+            },
+            saveToContextKey: 'tar',
+            continuousIntervalSeconds: 0.13,
+          },
+        },
+        next: null,
+      },
+      applyPhysicalInfliction_9: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'tar' },
             isExtra: false,
             duration: { kind: 'constant', value: 2 },
             height: { kind: 'constant', value: 2 },
@@ -1191,7 +1529,7 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_6: {
+      startTimeDilation_10: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1206,36 +1544,37 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      dealDamage_7: {
+      dealDamage_11: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            tags: ['ultimateSkill', 'canBreakWeakness'],
           },
         },
-        next: 'startTimeDilation_6',
+        next: 'startTimeDilation_10',
       },
-      repeatEachTick_8: {
+      repeatEachTick_12: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
               catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
+              target: { kind: 'context', key: 'tar' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 8,
               targetTriggerIntervalSeconds: 0.13,
             },
           },
-          body: { $sequence: 'dealDamage_7' },
+          body: { $sequence: 'dealDamage_11' },
         },
         next: null,
       },
-      applyBuff_9: {
+      applyBuff_13: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1256,47 +1595,50 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      forEachContextTarget_11: {
+      forEachContextTarget_15: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'applyBuff_9' },
+          parameters: { targets: { kind: 'context', key: 'tar' } },
+          body: { $sequence: 'applyBuff_13' },
         },
         next: null,
       },
-      startTimeDilation_12: {
+      startTimeDilation_16: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
-            scope: 'entity',
+            scope: 'hitStop',
+            attacker: { kind: 'source' },
+            targets: { kind: 'context', key: 'tar' },
+            affectType: 'Both',
             durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
             priority: 10,
             curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
           },
         },
         next: null,
       },
-      dealDamage_13: {
+      dealDamage_17: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            alwaysNext: false,
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            tags: ['ultimateSkill', 'canBreakWeakness'],
           },
         },
-        next: 'startTimeDilation_12',
+        next: 'startTimeDilation_16',
       },
-      applyPhysicalInfliction_14: {
+      applyPhysicalInfliction_18: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'knockDown',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'tar' },
             duration: { kind: 'constant', value: 2 },
             force: true,
             isExtra: false,
@@ -1304,19 +1646,19 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
             returnWhen: 'always',
           },
         },
-        next: 'dealDamage_13',
+        next: 'dealDamage_17',
       },
-      ifElse_15: {
+      ifElse_19: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'forEachContextTarget_11' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'forEachContextTarget_15' },
           whenFalse: { $sequence: null },
         },
-        next: 'applyPhysicalInfliction_14',
+        next: 'applyPhysicalInfliction_18',
       },
-      startTimeDilation_16: {
+      startTimeDilation_20: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1348,13 +1690,20 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
               ],
             },
             finishByAction: true,
-            ignoredTargets: ['caster'],
+            ignoredTargets: [{ kind: 'source' }],
           },
         },
         next: null,
       },
-      hideUi_17: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      applyBuff_18: {
+      hideUi_21: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      reachSkillOperableBoundary_22: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0018_dapan_normal_skill', 'chr_0018_dapan_combo_skill'] },
+        },
+        next: null,
+      },
+      applyBuff_23: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1369,14 +1718,35 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_loop' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_end' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'talent_1', fallback: 0 } },
-      data_4: {
+      data_1: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_1_dmg_up', fallback: 0 },
+      },
+      data_2: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_3' },
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventDamageTagsMatch',
+          match: 'hasAny',
+          tags: ['ultimateSkill', 'airborne'],
+        },
+      },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_loop' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_end' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'talent_1', fallback: 0 } },
+      data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_6' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
@@ -1387,6 +1757,7 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_ultimate_skill: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_ultimate_skillActionGraph,
   key: 'chr_0018_dapan_ultimate_skill',
   element: 'physical',
   blackboard: {
@@ -1403,24 +1774,20 @@ export const daPanChr_0018_dapan_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 235,
   exclusiveFrame: 100,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 86,
-        endFrame: 120,
-        skillIds: ['chr_0018_dapan_normal_skill', 'chr_0018_dapan_combo_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'applyPhysicalInfliction_5' } },
-    { startFrame: 42, endFrame: 64, sequence: { $sequence: 'repeatEachTick_8' } },
-    { startFrame: 80, endFrame: 81, sequence: { $sequence: 'ifElse_15' } },
-    { startFrame: 0, endFrame: 36, sequence: { $sequence: 'startTimeDilation_16' } },
-    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'hideUi_17' } },
-    { startFrame: 0, endFrame: 100, sequence: { $sequence: 'applyBuff_18' } },
+    { startFrame: 0, endFrame: 89, sequence: { $sequence: 'listenForCombatEvents_5' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 42, endFrame: 64, sequence: { $sequence: 'findTargets_7' } },
+    { startFrame: 80, endFrame: 81, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'applyPhysicalInfliction_9' } },
+    { startFrame: 42, endFrame: 64, sequence: { $sequence: 'repeatEachTick_12' } },
+    { startFrame: 80, endFrame: 81, sequence: { $sequence: 'ifElse_19' } },
+    { startFrame: 0, endFrame: 36, sequence: { $sequence: 'startTimeDilation_20' } },
+    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'hideUi_21' } },
+    { startFrame: 86, endFrame: 120, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
+    { startFrame: 0, endFrame: 100, sequence: { $sequence: 'applyBuff_23' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 450,
@@ -1428,7 +1795,6 @@ export const daPanChr_0018_dapan_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: daPanChr_0018_dapan_ultimate_skillActionGraph,
 };
 
 export const daPanCommon_character_perfect_dodgeActionGraph = {
@@ -1542,6 +1908,35 @@ const daPanComboCondition1: ComboSkillConditionDefinition = {
 };
 
 const daPanBuff1ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const daPanBuff1: SkillBuffDefinition = {
+  stackingType: 'refresh',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: { blackboardKey: 'duration' },
+  presentation: {
+    icon: 'endaxis:icons/icon_battle_buff_atk_up',
+    showInHeadBarCommon: false,
+    showInHeadBarAttached: false,
+    showInSquadIcon: true,
+  },
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_up: 0.15, duration: 15 },
+  attributeModifiers: [
+    {
+      attribute: 'physicalDamageIncrease',
+      slot: 'baseAddition',
+      value: { blackboardKey: 'dmg_up' },
+    },
+  ],
+  actionGraph: daPanBuff1ActionGraph,
+};
+
+const daPanBuff2ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -1601,7 +1996,7 @@ const daPanBuff1ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const daPanBuff1: SkillBuffDefinition = {
+const daPanBuff2: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -1612,15 +2007,15 @@ const daPanBuff1: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'buffConsumed', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
   ],
-  actionGraph: daPanBuff1ActionGraph,
+  actionGraph: daPanBuff2ActionGraph,
 };
 
-const daPanBuff2ActionGraph = {
+const daPanBuff3ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const daPanBuff2: SkillBuffDefinition = {
+const daPanBuff3: SkillBuffDefinition = {
   stackingType: 'enhanceAndRefresh',
   priority: 0,
   maxStackCount: { blackboardKey: 'stack' },
@@ -1641,10 +2036,10 @@ const daPanBuff2: SkillBuffDefinition = {
       value: { blackboardKey: 'dmg_up' },
     },
   ],
-  actionGraph: daPanBuff2ActionGraph,
+  actionGraph: daPanBuff3ActionGraph,
 };
 
-const daPanBuff3ActionGraph = {
+const daPanBuff4ActionGraph = {
   main: {
     nodes: {
       skillAffix_1: { action: { kind: 'skillAffix', parameters: {} }, next: null },
@@ -1677,7 +2072,7 @@ const daPanBuff3ActionGraph = {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             skill: { kind: 'type', skillType: 'comboSkill' },
             operation: 'reduce',
             basis: 'baseDurationRatio',
@@ -1692,22 +2087,22 @@ const daPanBuff3ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const daPanBuff3: SkillBuffDefinition = {
+const daPanBuff4: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 2,
   applyTags: [],
   extendTags: [],
-  blackboard: { cd_reduce: 0.5 },
+  blackboard: { cd_reduce: 0.5, duration: 15 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'skillAffix_1' }] },
   abilityEventResponses: [
     { event: 'outputDamage', priority: 0, sequence: { $sequence: 'adjustSkillCooldown_4' } },
   ],
-  actionGraph: daPanBuff3ActionGraph,
+  actionGraph: daPanBuff4ActionGraph,
 };
 
-const daPanBuff4ActionGraph = {
+const daPanBuff5ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -1745,7 +2140,7 @@ const daPanBuff4ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const daPanBuff4: SkillBuffDefinition = {
+const daPanBuff5: SkillBuffDefinition = {
   stackingType: 'enhanceAndRefresh',
   priority: 0,
   maxStackCount: { blackboardKey: 'max_stack' },
@@ -1764,7 +2159,7 @@ const daPanBuff4: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
   ],
-  actionGraph: daPanBuff4ActionGraph,
+  actionGraph: daPanBuff5ActionGraph,
 };
 
 export const daPan: OperatorDefinition = {
@@ -1986,10 +2381,11 @@ export const daPan: OperatorDefinition = {
     },
   ],
   buffDefinitions: {
-    buff_chr_0018_dapan_talent_0: daPanBuff1,
-    buff_chr_0018_dapan_talent_0_dmg_up: daPanBuff2,
-    buff_chr_0018_dapan_talent_1_cd_reduce: daPanBuff3,
-    buff_chr_0018_dapan_talent_1_preparation: daPanBuff4,
+    buff_chr_0018_dapan_potential_1: daPanBuff1,
+    buff_chr_0018_dapan_talent_0: daPanBuff2,
+    buff_chr_0018_dapan_talent_0_dmg_up: daPanBuff3,
+    buff_chr_0018_dapan_talent_1_cd_reduce: daPanBuff4,
+    buff_chr_0018_dapan_talent_1_preparation: daPanBuff5,
   },
   abilityEntityDefinitions: {},
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

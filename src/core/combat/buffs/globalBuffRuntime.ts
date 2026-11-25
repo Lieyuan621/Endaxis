@@ -4,8 +4,12 @@ import type {
   ResolvedSkillBuffDefinition,
 } from '../../compiler/combatProgram';
 import type { CompiledGlobalBuffDefinition } from '../../compiler/combatProgram.ts';
+import { compareCombatNumbers } from '../../math/combatNumbers';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
-import { logicalAbilityEntityRuntimeId } from '../../game-data/logicalAbilityEntity';
+import {
+  logicalAbilityEntityRuntimeId,
+  runtimeTargetEntityId,
+} from '../../game-data/logicalAbilityEntity';
 import type { BuffApplicationSource } from '../../game-data/operatorDefinition';
 import { ActionBlackboard, resolveActionValueOperand } from '../actions/actionBlackboard';
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
@@ -203,7 +207,10 @@ export class GlobalBuffRuntime {
           throw new Error(`global buff child target '${target.ownerId}' is not scoped`);
         }
         for (const child of definition.children) {
-          const childDefinition = this.resolveBuffDefinition(sourceId, child.buffId);
+          const childDefinition = this.resolveBuffDefinition(
+            sourceActionOwnerId ?? sourceId,
+            child.buffId,
+          );
           if (childDefinition === undefined) {
             throw new Error(`global buff '${id}' child definition '${child.buffId}' is missing`);
           }
@@ -315,6 +322,14 @@ export class GlobalBuffRuntime {
     }
   }
 
+  /** 当前模型的父实例同步启用；统计父实例，不把各队员的镜像重复计数。 */
+  getCount(id: string): number {
+    let count = 0;
+    for (const group of this.runtimeState.groups.values())
+      for (const instance of group) if (instance.id === id && !instance.finished) count++;
+    return count;
+  }
+
   /** 原生 FinishGlobalBuff(finishAll=true) 按稳定 ID 清理全部同名父实例。 */
   finishAllByIds(ids: readonly string[], reason: 'early' | 'other'): boolean {
     let finished = false;
@@ -343,6 +358,7 @@ function resolveGlobalDuration(
 }
 
 export interface GlobalBuffOperationDependencies {
+  readonly queryTargets?: CombatOperationExecutor['queryTargets'];
   readonly sourceId: string;
   readonly sourceActionId?: string;
   readonly runtime: GlobalBuffRuntime;
@@ -392,12 +408,22 @@ export class GlobalBuffOperationExecutor implements CombatOperationExecutor {
         ? 1
         : resolveActionValueOperand(step.parameters.count, context.blackboard);
     if (!Number.isFinite(count)) throw new RangeError('createGlobalBuff count must be finite');
-    const sourceId =
-      step.parameters.source === 'battle'
-        ? 'battle'
-        : step.parameters.source === undefined
-          ? this.dependencies.sourceId
-          : resolveGlobalBuffSource(step.parameters.source, this.dependencies.sourceId, context);
+    let sourceId: string;
+    if (step.parameters.source === 'enemy') {
+      const query = this.dependencies.queryTargets;
+      if (!query) throw new Error('enemy GlobalBuff source requires an action target query');
+      const target = query({ kind: 'fixed', target: 'enemy' }, context)[0];
+      if (target === undefined) return false;
+      const id = runtimeTargetEntityId(target);
+      if (id === undefined) throw new Error('GlobalBuff source must be an entity');
+      sourceId = id;
+    } else
+      sourceId =
+        step.parameters.source === 'battle'
+          ? 'battle'
+          : step.parameters.source === undefined
+            ? this.dependencies.sourceId
+            : resolveGlobalBuffSource(step.parameters.source, this.dependencies.sourceId, context);
     const created: GlobalBuffInstance[] = [];
     for (let index = 0; index < count; index += 1) {
       created.push(
@@ -440,6 +466,14 @@ export class GlobalBuffOperationExecutor implements CombatOperationExecutor {
   }
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
+    if (condition.kind === 'globalBuffCountCompare') {
+      if (!context) throw new Error('globalBuffCountCompare requires an action context');
+      return compareCombatNumbers(
+        this.dependencies.runtime.getCount(condition.globalBuffId),
+        resolveActionValueOperand(condition.value, context.blackboard),
+        condition.operator,
+      );
+    }
     return this.dependencies.delegate.evaluate(condition, context);
   }
 }
@@ -479,7 +513,6 @@ function resolveGlobalBuffSource(
   context?: CombatOperationContext,
 ): string {
   if (source === 'caster') return operatorId;
-  if (source === 'enemy') return 'enemy';
   if (source === 'buffOwner') {
     if (context?.buffOwnerId === undefined)
       throw new Error('buffOwner GlobalBuff source requires a Buff lifecycle context');

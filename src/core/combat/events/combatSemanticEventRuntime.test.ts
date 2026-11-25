@@ -1,3 +1,4 @@
+import { singleTargetList } from '../../game-data/logicalAbilityEntity';
 import { describe, expect, it } from 'vitest';
 import { CombatSemanticEventRuntime } from './combatSemanticEventRuntime';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
@@ -10,6 +11,25 @@ import { createNativeEventFixture } from './nativeEventTestFixture';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 
 describe('CombatSemanticEventRuntime', () => {
+  it('受伤前直接订阅保留来源身份，受伤后事件不能提前触发它', () => {
+    const { semanticEvents, dispatcher } = createNativeEventFixture();
+    const payload = { ...createKillEvent().payload, sourceId: 'operator', targetId: 'operator' };
+    const received: unknown[] = [];
+    const registration = semanticEvents.register({
+      ownerOperatorId: 'operator',
+      trigger: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
+      phase: 'dataAction',
+      handle: ({ event }) => received.push(event),
+    });
+    dispatcher.dispatch({ event: 'takeDamage', payload }, []);
+    expect(received).toHaveLength(0);
+    const before = { event: 'beforeTakeDamage' as const, payload };
+    dispatcher.dispatch(before, []);
+    expect(received).toEqual([before]);
+    registration.dispose();
+    dispatcher.dispatch(before, []);
+    expect(received).toHaveLength(1);
+  });
   it.each(['addedBuff', 'outputBuff'] as const)(
     '直接订阅 %s 保留载荷、条件和原生实体归属',
     event => {
@@ -65,7 +85,7 @@ describe('CombatSemanticEventRuntime', () => {
       AbilityEventPayloadMap
     >();
     const targets = {
-      inputTarget: { kind: 'enemy' as const },
+      inputTarget: { kind: 'enemy' as const, enemyId: 'enemy' },
       triggerTarget: { kind: 'operator' as const, operatorId: 'operator' },
     };
     const runtime = new CombatSemanticEventRuntime(
@@ -79,7 +99,7 @@ describe('CombatSemanticEventRuntime', () => {
       blackboard: new ActionBlackboard(),
       event: outer,
       targetContext,
-      actionInputTarget: { kind: 'enemy' as const },
+      actionInputTargets: singleTargetList({ kind: 'enemy' as const, enemyId: 'enemy' }),
     };
     const published = createKillEvent();
     const operations: CombatOperationExecutor = {
@@ -87,7 +107,7 @@ describe('CombatSemanticEventRuntime', () => {
       evaluate: (_condition, current) => {
         expect(current?.event).toBe(published);
         expect(current?.eventSkillCastInfo).toBeNull();
-        expect(current?.actionInputTarget).toBe(targets.inputTarget);
+        expect(current?.actionInputTargets?.[0]).toBe(targets.inputTarget);
         expect(current?.targetContext?.getOptional('trigger')).toEqual([targets.triggerTarget]);
         throw new Error('condition failed');
       },
@@ -385,8 +405,7 @@ describe('CombatSemanticEventRuntime', () => {
           external: true,
           sourceId: 'enemy',
           targetId: 'operator:b',
-          tags: ['normalAttack'],
-          features: ['crush'],
+          tags: ['normalAttack', 'crush'],
         },
       },
       [],
@@ -631,7 +650,7 @@ describe('CombatSemanticEventRuntime', () => {
     const registrations = (['callback', 'dataAction', 'skill', 'combo'] as const).map(phase =>
       runtime.register({
         ownerOperatorId: 'operator',
-        trigger: { kind: 'enemyDefeated', scope: 'operator' },
+        trigger: { kind: 'abilityEvent', event: 'afterKillEntity' },
         phase,
         handle: context => {
           expect(context.event).toBe(event);
@@ -962,7 +981,6 @@ it('外部受击只在 takeDamage 响应一次，保留原对象且没有伪造�
     sourceId: 'enemy' as const,
     targetId: 'operator',
     tags: [],
-    features: [],
   };
   const published = { event: 'takeDamage' as const, payload };
   const received: unknown[] = [];

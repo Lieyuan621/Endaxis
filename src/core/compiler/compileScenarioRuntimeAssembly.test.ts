@@ -1,4 +1,9 @@
+import { firstScenarioEnemy } from '../project/level';
+import { GAMEPLAY_TAG_PREDEFINE } from '../../data/combat/gameplayTagPredefine.generated';
+import { GameplayTagPredefine } from '../combat/tags/gameplayTagPredefine';
 import { actionSteps } from '../../test/actionProgramMatchers';
+import { compileScenarioEnemy } from './compileScenarioEnemy';
+import { createEnemyCombatVitals } from '../combat/resources/combatVitalsFactory';
 import { createTestBuffReference } from '../combat/buffs/buffTestFixtures';
 
 import { createActionGraphCompilation } from './compileActionGraph';
@@ -91,6 +96,7 @@ function enemyBuffRuntime(): EnemyBuffRuntime {
   return {
     ownerId: 'enemy',
     advanceFrame: () => undefined,
+    releaseAll: () => {},
     getCountByIds: () => 0,
     findFirstByIds: () => undefined,
     finishByIds: () => 0,
@@ -110,6 +116,9 @@ function operationExecutor(): CombatOperationExecutor {
 }
 
 function options(): CompileScenarioRuntimeAssemblyOptions {
+  const enemyVitals = createEnemyCombatVitals(
+    compileScenarioEnemy(firstScenarioEnemy(createScenario()).enemy),
+  );
   return {
     index: {
       getOperator: slug => (slug === perlica.slug ? perlica : null),
@@ -127,6 +136,9 @@ function options(): CompileScenarioRuntimeAssemblyOptions {
       normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
     },
     environment: {
+      skillAvailabilityTags: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
+      resolveVitals: () => enemyVitals,
+      bindEnemyHealthChanged: (_id, listener) => enemyVitals.bindHealthChangeObserver(listener),
       comboSkillPendingInterval: 5,
       enemyBuffRuntime: enemyBuffRuntime(),
       createOperationExecutor: () => operationExecutor(),
@@ -175,6 +187,8 @@ describe('compileScenarioRuntimeAssembly', () => {
       ...settings,
       environment: { ...settings.environment, createOperationExecutor },
     });
+    expect(compiled.squadSlotCount).toBe(4);
+    expect(compiled.operators).toHaveLength(1);
     const operator = compiled.operators[0]!;
     expect(operator.skills).toEqual([]);
     expect(compiled.inputs).toEqual([]);
@@ -942,8 +956,8 @@ it('无干员总图时，完整运行时使用独立技能和声明式附着 Buf
     },
     environment: {
       ...base.environment,
-      createOperatorBuffRuntime: ownerId =>
-        ({
+      createOperatorBuffRuntime: ownerId => {
+        return {
           ownerId,
           advanceFrame: () => undefined,
           apply: buff => {
@@ -966,7 +980,8 @@ it('无干员总图时，完整运行时使用独立技能和声明式附着 Buf
           matchesEntityTags: () => false,
           findFirstByTags: () => undefined,
           finishByTags: () => 0,
-        }) satisfies OperatorBuffRuntime,
+        } satisfies OperatorBuffRuntime;
+      },
     },
   });
   const sequence = compiled.operators[0]!.skillCasts![0]!.program.timelineActions[0]!.sequence;

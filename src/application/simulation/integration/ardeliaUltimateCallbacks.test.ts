@@ -1,6 +1,8 @@
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { createEditorSimulationService } from '../testSupport/editorSimulationService';
+import { gameDataRepository } from '../../../data/gameDataRepository';
+import { createScenarioSimulationService } from '../createScenarioSimulationService';
 
 it.each([0, 3])(
   '艾尔黛拉潜能%i终结技独立伤害不被治疗概率阻止，双路弹体共享敌方标记',
@@ -57,5 +59,13 @@ it.each([0, 3])(
     expect(
       hits.every(e => e.data?.skillMultiplierPercent === 165 && Number(e.data?.expectedDamage) > 0),
     ).toBe(true);
+    // 投射物阵营由实例保存；恢复后范围回调仍应找到相同敌人并保留共享标记限频。
+    const session =
+      createScenarioSimulationService(gameDataRepository).createCombatSession(scenario);
+    session.advanceToFrame(60);
+    const restored = session.fork(session.runtime.save());
+    session.advanceToFrame(400);
+    restored.advanceToFrame(400);
+    expect(restored.collectResult().receiptEntries).toEqual(session.collectResult().receiptEntries);
   },
 );

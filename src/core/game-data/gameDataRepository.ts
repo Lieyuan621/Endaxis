@@ -1,3 +1,4 @@
+import type { EnemyStageDefinition } from '../../../packages/game-data-contract/src/enemies';
 import type { ActionGraphDefinitionRepository } from '../compiler/actionGraphDefinitionRepository';
 
 /**
@@ -62,6 +63,7 @@ export interface GameDataRepository {
   getWeapon(slug: string): WeaponDefinition | null;
   getGear(slug: string): GearDefinition | null;
   getGearSet(slug: string): GearSetDefinition | null;
+  getEnemyStage?(id: string): EnemyStageDefinition | null;
   getEnemy(id: string): EnemyDefinition | null;
   getMechanic(id: string): MechanicDefinitionRef | null;
   getConsumable(id: string): ConsumableDefinition | null;

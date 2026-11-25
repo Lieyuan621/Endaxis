@@ -88,7 +88,7 @@ export function finishAbilitySkillSlotReplacement(
   );
 }
 
-/** 新登记排在已有映射之后，查询时保持后登记优先的顺序。 */
+/** 同为原生 Buff 优先级，按登记顺序稳定排列，最早仍有效的映射优先。 */
 export function registerAbilityBasicAttackMapping(
   state: AbilitySystemState,
   skillId: string,
@@ -111,6 +111,8 @@ export function activateAbilityPlayerActionMode(
 ): number {
   const id = state.nextPlayerActionModeActivationId++;
   const previousModeId = state.activePlayerActionModeByLayer.get(layer) ?? null;
+  if (!state.playerActionModeLayerOrder.includes(layer))
+    state.playerActionModeLayerOrder.push(layer);
   state.playerActionModeActivations.set(id, { layer, modeId, previousModeId });
   state.activePlayerActionModeByLayer.set(layer, modeId);
   return id;

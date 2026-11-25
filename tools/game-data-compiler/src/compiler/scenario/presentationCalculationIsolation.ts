@@ -34,14 +34,21 @@ export function assertPresentationCalculationIsolation(
     if (
       !node.metadata.enabled ||
       node.body.kind !== 'leaf' ||
-      node.body.value.family !== 'presentationCalculation'
+      (node.body.value.family !== 'presentationCalculation' &&
+        !(
+          node.body.value.family === 'presentation' &&
+          node.body.value.action.kind === 'voiceTrigger'
+        ))
     )
       continue;
     const keys =
-      node.body.value.action.kind === 'saveCameraAngle'
+      'outputKeys' in node.body.value.action
         ? node.body.value.action.outputKeys
-        : [node.body.value.action.outputKey];
+        : 'outputKey' in node.body.value.action
+          ? [node.body.value.action.outputKey]
+          : [];
     for (const key of keys) {
+      if (!key) continue;
       // 完整字符串匹配是保守引用检查：未知嵌套载荷也不能绕过，不做跨作用域同名消歧。
       const reference = retained.indexOf(JSON.stringify(key));
       if (reference >= 0) {

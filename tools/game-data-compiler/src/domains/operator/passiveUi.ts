@@ -16,6 +16,10 @@ export function compileOperatorPassiveUiDefinition(
   sourcePath: string,
 ): OperatorPassiveUiDefinition | undefined {
   if (prefabName === '') return undefined;
+  // 小刻的 HUD 分别显示三个能量部件和三个回收武器部件，后者读取
+  // buff_chr_0040_sweetpie_weapon_recycle_buff。战斗图保留计数通知和 Buff，
+  // 现有单计数外观无法表示这两个独立读数。
+  if (prefabName === 'OverlayInfoNodeSweetPie') return undefined;
   const evidence = (
     OPERATOR_PASSIVE_UI_COMPONENT_BY_PREFAB as Readonly<
       Record<string, OperatorPassiveUiPrefabComponentEvidence>

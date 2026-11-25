@@ -145,15 +145,15 @@
   },
   "102801": {
     "name": "Team: Weaken",
-    "description": "Operator Attributes <color=#cc9900>-{1-attr:0%}</color>/-{@102802@1-attr:0%}/-{@102803@1-attr:0%}."
+    "description": "Main Attributes <color=#cc9900>-{1-attr:0%}</color>/-{@102802@1-attr:0%}/-{@102803@1-attr:0%}."
   },
   "102802": {
     "name": "Team: Weaken",
-    "description": "Operator Attributes -{@102801@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>/-{@102803@1-attr:0%}."
+    "description": "Main Attributes -{@102801@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>/-{@102803@1-attr:0%}."
   },
   "102803": {
     "name": "Team: Weaken",
-    "description": "Operator Attributes -{@102801@1-attr:0%}/-{@102802@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>."
+    "description": "Main Attributes -{@102801@1-attr:0%}/-{@102802@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>."
   },
   "103102": {
     "name": "Edit: Encasement",
@@ -170,6 +170,162 @@
   "103401": {
     "name": "Team: Encumbered",
     "description": "Natural SP Recovery is temporarily paused when the controlled operator has not dealt a Final Strike to the enemy for 12 seconds."
+  },
+  "110001": {
+    "name": "Edit: Thrill",
+    "description": "DMG Dealt by enemies <color=#cc9900>+{dmg_up:0%}</color>/+{@110002@dmg_up:0%}."
+  },
+  "110002": {
+    "name": "Edit: Thrill",
+    "description": "DMG Dealt by enemies +{@110001@dmg_up:0%}/<color=#cc9900>+{dmg_up:0%}</color>."
+  },
+  "110101": {
+    "name": "Ambient: Withering",
+    "description": "No Healing Masses are generated between waves."
+  },
+  "110302": {
+    "name": "Ambient: Silence",
+    "description": "SP Regen Rate <color=#cc9900>+{recover_ratio:0%}</color>. \nSP Recovery from skills <color=#cc9900>+{skill_ratio:0%}</color>. \nAll operators must cast their battle skills once before any operator can cast their battle skill again. \nOnly applies to the first sequence of a battle skill."
+  },
+  "110403": {
+    "name": "Team: Lethargy",
+    "description": "Enemy HP <color=#cc9900>+{hp_up:0%}</color>. Operator Battle Skill DMG Dealt <color=#cc9900>-{-dmg_scale:0%}</color>."
+  },
+  "110502": {
+    "name": "Ambient: Echombo",
+    "description": "Combo skills cost <color=#cc9900>{atb:0}</color> SP to cast. After casting an operator's combo skill, immediately reset the operator's combo skill cooldown and unconditionally trigger 1 combo skill casting that uses no SP. The combo cooldown only starts after casting the free combo skill."
+  },
+  "110601": {
+    "name": "Team: Decapitate",
+    "description": "DMG Taken by the controlled operator <color=#cc9900>+{dmg_scale:0%}</color>/+{@110602@dmg_scale:0%}."
+  },
+  "110602": {
+    "name": "Team: Decapitate",
+    "description": "DMG Taken by the controlled operator +{@110601@dmg_scale:0%}/<color=#cc9900>+{dmg_scale:0%}</color>."
+  },
+  "110703": {
+    "name": "Ambient: Volatile Gains",
+    "description": "After an operator casts an ultimate, reset Ultimate Energy of the entire team to ZERO."
+  },
+  "110801": {
+    "name": "Team: Myolysis",
+    "description": "At 0.1s after an operator consumes <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color>, DMG Dealt <color=#cc9900>-{-dmg_scale:0%}</color>/-{@110802@-dmg_scale:0%} for <color=#cc9900>{duration:0}</color>s."
+  },
+  "110802": {
+    "name": "Team: Myolysis",
+    "description": "At 0.1s after an operator consumes <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color>, DMG Dealt -{@110801@-dmg_scale:0%}/<color=#cc9900>-{-dmg_scale:0%}</color> for <color=#cc9900>{duration:0}</color>s."
+  },
+  "110901": {
+    "name": "Edit: Blood Rush",
+    "description": "If an enemy has no <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color> stacks on it for <color=#cc9900>{countdown:0}</color>s, the enemy gains HP regen equal to <color=#cc9900>{hp_ratio:0%}</color>/{@110903@hp_ratio:0%} Max HP per second."
+  },
+  "110903": {
+    "name": "Edit: Blood Rush",
+    "description": "If an enemy has no <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color> stacks on it for <color=#cc9900>{countdown:0}</color>s, the enemy gains HP regen equal to {@110901@hp_ratio:0%}/<color=#cc9900>{hp_ratio:0%}</color> Max HP per second."
+  },
+  "111001": {
+    "name": "Ambient: Binding",
+    "description": "The operators' stamina bar is replaced with <color=#cc9900>{dash_count:0}</color> Stamina Points. Each dodge consumes 1 Stamina Point. For every <color=#cc9900>{interval:0}</color>s, regenerate <color=#cc9900>{recover_count:0}</color> Stamina Point(s)."
+  },
+  "111003": {
+    "name": "Ambient: Binding",
+    "description": "Dodging cannot be performed."
+  },
+  "111201": {
+    "name": "Ambient: Partition",
+    "description": "Cannot switch controlled operator once battle begins."
+  },
+  "111301": {
+    "name": "Team: Whittle Down",
+    "description": "DMG dealt by enemies ignores <color=#1da6e0>shields</color>. <color=#cc9900>{hp_down_ratio:0%}</color> of DMG dealt by enemies to the operator is converted to Max HP Reduction. \nAfter the controlled operator takes DMG, their HP Treatment will be reduced by <color=#cc9900>{-heal_scale:0%}</color> for <color=#cc9900>{countdown:0}</color>s."
+  },
+  "111303": {
+    "name": "Team: Whittle Down",
+    "description": "DMG dealt by enemies ignores <color=#1da6e0>shields</color>. <color=#cc9900>{hp_down_ratio:0%}</color> of DMG dealt by enemies to the operator is converted to Max HP Reduction. After the controlled operator takes DMG, their HP Treatment will be reduced by <color=#cc9900>{-heal_scale:0%}</color> for <color=#cc9900>{countdown:0}</color>s."
+  },
+  "111602": {
+    "name": "Edit: Solid Body",
+    "description": "Interrupting an enemy's charging state requires <color=#cc9900>{interrupt_times:0}</color> interrupting hits. A skill cast by an operator counts as only 1 interrupting hit."
+  },
+  "111703": {
+    "name": "Team: Blunted Weapons",
+    "description": "Enemy HP <color=#cc9900>+{hp_up:0%}</color>. Operator Basic Attack DMG Dealt <color=#cc9900>-{-dmg_scale:0%}</color>."
+  },
+  "112302": {
+    "name": "Edit: Team Mangler",
+    "description": "When the Armored Mangler enters battle, and when it is at 50% HP, its next skill will be a channeling skill that can only be interrupted after a while."
+  },
+  "112303": {
+    "name": "Edit: Team Mangler",
+    "description": "When the Armored Mangler enters battle, and when it is at 50% HP, its next skill will be a channeling skill that can only be interrupted after a while. An additional Armored Mangler already down to 50% HP will appear."
+  },
+  "112402": {
+    "name": "Edit: Skyfall",
+    "description": "When the Cloud Obliterator enters battle, and when it is at 50% HP, its next skill will be a special skill."
+  },
+  "112403": {
+    "name": "Edit: Skyfall",
+    "description": "Upon entering battle, the Cloud Obliterator casts a special skill. At 50% HP, it will cast a special skill and dispel all <color=#a68360>Vulnerability</color>, <color=#1da6e0>Arts Inflictions</color>, Physical Statuses, and Arts Reactions from itself. The dispel effect does not trigger again."
+  },
+  "112501": {
+    "name": "Edit: Reactive Formula",
+    "description": "The Cloud Obliterator's missiles will create a corrosion pool when it hits the ground. The pool applies Corrosion on operators in its area of effect."
+  },
+  "112701": {
+    "name": "Ambient: Aggro Focus",
+    "description": "Enemies attack the controlled operator more often."
+  },
+  "112801": {
+    "name": "Edit: Fruity Slippers",
+    "description": "On-looking Rockhowlers (that cannot be attacked) will occasionally throw Banana Peels into the arena. Banana Peel: Up to <color=#cc9900>5</color> can exist, each lasts <color=#cc9900>15</color>s."
+  },
+  "112901": {
+    "name": "Edit: Light Protection",
+    "description": "Enemy resistance to all elements is now <color=#cc9900>{resist:0}</color>/{@112903@resist:0}."
+  },
+  "112903": {
+    "name": "Edit: Light Protection",
+    "description": "Enemy resistance to all elements is now {@112901@resist:0}/<color=#cc9900>{resist:0}</color>."
+  },
+  "113201": {
+    "name": "Edit: Control Shield",
+    "description": "Enemies are immune to crowd control effects of Lift, Knock Down, <color=#009cad>Solidification</color>, and Immobilization."
+  },
+  "113302": {
+    "name": "Team: Apathy",
+    "description": "If the controlled operator does not perform a final strike or finisher within <color=#cc9900>{countdown:0}</color>s, all operators suffer <color=#cc9900>{weak_rate:0%}</color> Weakness (this can reach <color=#cc9900>{max_stack:0}</color> stacks). Use the controlled operator to perform a final strike or finisher to remove all stacks."
+  },
+  "113402": {
+    "name": "Edit: Dueling Circle",
+    "description": "There is a circle around the final set of enemies of each wave. When the controlled operator is outside this circle, all operators deal <color=#cc9900>-{-dmg_taken_down:0%}</color> DMG to enemies."
+  },
+  "113502": {
+    "name": "Ambient: Combo Lock",
+    "description": "Combo Skill DMG Dealt <color=#cc9900>+{dmg_add:0%}</color> \nWhile not affected by a Combo Lock, for every <color=#cc9900>{max_stack:0}</color> combo skill(s) cast, a <color=#cc9900>{duration:0}</color>s Combo Lock that prevents subsequent combo skill casting is applied to the combo skill queue."
+  },
+  "113603": {
+    "name": "Edit: Hard Stacks",
+    "description": "When an enemy is defeated, all other enemies in the arena gain <color=#cc9900>{add_layers:0}</color> <color=#1da6e0>shield stack(s)</color>. These <color=#1da6e0>shield stacks</color> do not protect enemies from <color=#a68360>Vulnerability</color>, <color=#1da6e0>Arts Inflictions</color>, Physical Statuses, and Arts Reactions."
+  },
+  "113701": {
+    "name": "Edit: Encasement",
+    "description": "For each <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color> stack that an enemy has, the said enemy receives DMG Taken (of the corresponding element) <color=#cc9900>-{-dmg_scale:0%}</color>/-{@113702@-dmg_scale:0%} \nThis effect is removed 0.1s after the <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color> ends."
+  },
+  "113702": {
+    "name": "Edit: Encasement",
+    "description": "For each <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color> stack that an enemy has, the said enemy receives DMG Taken (of the corresponding element) -{@113701@-dmg_scale:0%}/<color=#cc9900>-{-dmg_scale:0%}</color> \nThis effect is removed 0.1s after the <color=#a68360>Vulnerability</color> or <color=#1da6e0>Arts Infliction</color> ends."
+  },
+  "113801": {
+    "name": "Ambient: Time Limit",
+    "description": "Timer <color=#cc9900>-{-time:0}</color>s."
+  },
+  "113802": {
+    "name": "Ambient: Time Limit",
+    "description": "Timer <color=#cc9900>-{-time:0}</color>s."
+  },
+  "113803": {
+    "name": "Ambient: Time Limit",
+    "description": "Timer <color=#cc9900>-{-time:0}</color>s."
   },
   "900101": {
     "name": "Edit: Vitality",

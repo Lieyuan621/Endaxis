@@ -2,7 +2,6 @@ import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { PublishedScenarioSimulation } from '../useScenarioSimulation';
 import { projectPublishedHitDetail } from './publishedHitDetail';
-import { deriveHitId } from '../../../core/combat/timeline/deriveHitId';
 import {
   CombatReceiptCollector,
   type CombatReceiptEntry,
@@ -46,7 +45,6 @@ it('resolves receipts through stable cast identity, independently of edited trac
   };
   const detail = projectPublishedHitDetail(published, { castId: 'cast', hitId: 'hit' });
   expect(detail?.track).toBe(scenario.tracks[2]);
-  expect(detail?.forcedCritical).toBe(false);
   expect(detail?.entries).toEqual([entry]);
   const laterEntry = {
     ...entry,
@@ -73,16 +71,4 @@ it('resolves receipts through stable cast identity, independently of edited trac
   expect(
     projectPublishedHitDetail(published, { castId: 'cast', hitId: 'different-hit' })?.entries,
   ).toEqual([]);
-  const forcedScenario = structuredClone(scenario);
-  forcedScenario.tracks[2]!.skillCasts[0]!.simulationInputs = {
-    criticalOverrides: { 'damage:1': true },
-  };
-  const forced = { ...published, scenario: forcedScenario };
-  const target = { castId: 'cast', hitId: deriveHitId('cast', 'damage:1') };
-  expect(projectPublishedHitDetail(published, target)?.forcedCritical).toBe(false);
-  expect(projectPublishedHitDetail(forced, target)?.forcedCritical).toBe(true);
-  expect(
-    projectPublishedHitDetail(forced, { ...target, hitId: deriveHitId('cast', 'damage:2') })
-      ?.forcedCritical,
-  ).toBe(false);
 });

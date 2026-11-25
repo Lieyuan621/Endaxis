@@ -237,12 +237,6 @@ html.dark .ea-select-popper .el-select-dropdown__item.hover {
   line-height: var(--ea-control-height-lg) !important;
 }
 
-.ea-tooltip-popper.el-popper {
-  padding: var(--ea-space-2) 10px;
-  font-size: var(--ea-control-font-size-sm);
-  line-height: 1.4;
-}
-
 .ea-popover-popper.el-popover.el-popper {
   padding: var(--ea-space-3);
 }
@@ -251,6 +245,14 @@ html.dark .ea-select-popper .el-select-dropdown__item.hover {
 html body .el-popper.el-popper.el-popper[data-popper-placement] > .el-popper__arrow {
   overflow: visible;
   background: transparent !important;
+}
+
+/* Keep the arrow above the surface border so the border does not cross its base. */
+html
+  body
+  .el-popper.el-popper.el-popper.ea-floating-surface[data-popper-placement]
+  > .el-popper__arrow {
+  z-index: 1 !important;
 }
 
 /* Keep the fill low-specificity so feature poppers can match their own surface color. */
@@ -265,7 +267,63 @@ html body .el-popper.el-popper.el-popper[data-popper-placement] > .el-popper__ar
 }
 
 .ea-floating-surface.el-popper > .el-popper__arrow::before {
-  background: var(--ea-floating-bg) !important;
+  background: var(--ea-floating-border) !important;
+}
+
+/* A smaller fill over the outer triangle draws the same border as the floating surface. */
+.ea-floating-surface.el-popper > .el-popper__arrow::after {
+  position: absolute;
+  content: '';
+  background: var(--ea-floating-surface-fill, var(--ea-floating-bg));
+}
+
+.ea-floating-surface.el-popper[data-popper-placement^='top'] > .el-popper__arrow::after {
+  inset: 0 1px 1.5px;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.ea-floating-surface.el-popper[data-popper-placement^='bottom'] > .el-popper__arrow::after {
+  inset: 1.5px 1px 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.ea-floating-surface.el-popper[data-popper-placement^='left'] > .el-popper__arrow::after {
+  inset: 1px 1.5px 1px 0;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.ea-floating-surface.el-popper[data-popper-placement^='right'] > .el-popper__arrow::after {
+  inset: 1px 0 1px 1.5px;
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+
+/* Override Element Plus's later high-specificity offsets so the fill covers the body seam. */
+html
+  body
+  .el-popper.el-popper.el-popper.ea-floating-surface[data-popper-placement^='top']
+  > .el-popper__arrow {
+  bottom: -6px !important;
+}
+
+html
+  body
+  .el-popper.el-popper.el-popper.ea-floating-surface[data-popper-placement^='bottom']
+  > .el-popper__arrow {
+  top: -6px !important;
+}
+
+html
+  body
+  .el-popper.el-popper.el-popper.ea-floating-surface[data-popper-placement^='left']
+  > .el-popper__arrow {
+  right: -6px !important;
+}
+
+html
+  body
+  .el-popper.el-popper.el-popper.ea-floating-surface[data-popper-placement^='right']
+  > .el-popper__arrow {
+  left: -6px !important;
 }
 
 html.dark .el-popper.is-dark {
@@ -365,4 +423,136 @@ html
   .el-popper.el-popper.el-popper[data-popper-placement^='right']
   > .el-popper__arrow::before {
   clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+.ea-color-picker-popper.el-popper {
+  --el-color-primary: var(--ea-gold);
+  border-color: var(--ea-floating-border);
+  border-radius: var(--ea-control-radius);
+  background: var(--ea-floating-bg);
+  box-shadow: var(--ea-floating-shadow);
+  color: var(--ea-floating-fg);
+}
+
+.ea-color-picker-popper .el-color-picker-panel {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+}
+
+.ea-color-picker-popper .el-color-svpanel {
+  width: 206px;
+  height: 150px;
+}
+
+.ea-color-picker-popper .el-color-hue-slider.is-vertical {
+  height: 150px;
+}
+
+.ea-color-picker-popper .el-color-picker-panel__footer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ea-color-picker-popper .el-color-picker-panel__footer > .el-input {
+  order: 2;
+  width: 100%;
+}
+
+.ea-color-picker-popper--rgb .el-color-picker-panel__footer > .el-input {
+  display: none;
+}
+
+.ea-color-picker-popper .el-color-picker-panel__footer .el-input__wrapper {
+  background: var(--ea-fill-input);
+  box-shadow: 0 0 0 1px var(--ea-control-border) inset;
+}
+
+.ea-color-picker-popper .el-color-picker-panel__footer .el-input__inner {
+  color: var(--ea-fg);
+}
+
+.ea-color-picker-popper .ea-color-picker__footer {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb label {
+  position: relative;
+  color: var(--ea-floating-fg);
+  font-size: 10px;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb label span {
+  position: absolute;
+  top: 50%;
+  left: 7px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb .ea-number-input {
+  width: 100%;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb .el-input,
+.ea-color-picker-popper .ea-color-picker__rgb .el-input__wrapper,
+.ea-color-picker-popper .ea-color-picker__rgb .el-input__inner {
+  width: 100%;
+  min-width: 0;
+}
+
+.ea-color-picker-popper .ea-color-picker__rgb .el-input__inner {
+  text-align: right;
+}
+
+.ea-color-picker-popper .ea-color-picker__actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ea-color-picker-popper .ea-color-picker__formats {
+  display: flex;
+  border: 1px solid var(--ea-control-border);
+}
+
+.ea-color-picker-popper .ea-color-picker__formats button,
+.ea-color-picker-popper .ea-color-picker__eyedropper {
+  min-height: 24px;
+  padding: 0 5px;
+  border: 0;
+  background: transparent;
+  color: var(--ea-floating-fg);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.ea-color-picker-popper .ea-color-picker__formats button[aria-pressed='true'] {
+  background: var(--ea-control-bg-hover);
+  color: var(--ea-gold);
+}
+
+.ea-color-picker-popper .ea-color-picker__eyedropper {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  padding: 0;
+}
+
+.ea-color-picker-popper .ea-color-picker__eyedropper:hover {
+  color: var(--ea-gold);
 }

@@ -6,7 +6,7 @@ import {
   renderBattleCommandMappingCatalogModule,
 } from '../src/source/battleCommandMappingCatalogSource.ts';
 import { writeAtomicBytes } from './downloadGameDataSources.ts';
-import { formatGeneratedSource } from './formatGeneratedSource.ts';
+import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 
 export async function generateBattleCommandMappingCatalog(args: {
   readonly sourceUrl: string;
