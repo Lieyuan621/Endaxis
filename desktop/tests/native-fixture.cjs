@@ -19,6 +19,7 @@ function fixture(t, { packaged = false, lock = true, unavailableShortcuts = [] }
       paths[key] = value;
     },
     getLocale: () => 'en',
+    getVersion: () => '2026.11.25-T170001',
     getAppPath: () => path.join(directory, 'resources', 'app.asar'),
     requestSingleInstanceLock: () => lock,
     whenReady: () => Promise.resolve(),

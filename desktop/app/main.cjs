@@ -1,3 +1,9 @@
+const {
+  portableRoot,
+  launchSelectedVersion,
+  preparePortableUpdate,
+  prunePortableVersions,
+} = require('./updates.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
@@ -25,7 +31,7 @@ function parseArgs(argv) {
 
 function storagePaths(app, args) {
   if (app.isPackaged) {
-    const dataRoot = path.join(path.dirname(app.getPath('exe')), 'data');
+    const dataRoot = path.join(portableRoot(app.getPath('exe')), 'data');
     return { dataRoot, profile: path.join(dataRoot, 'profile') };
   }
   const { workspaceIdentity } = require('./server.cjs');
@@ -69,6 +75,25 @@ function startDesktop(electron, argv = process.argv.slice(1), services = {}) {
   let initializing = true;
   let pendingEditorFocus = false;
   let shutdown = null;
+  let updateState = { phase: 'idle' };
+  let updating = false;
+  function reportUpdate(state) {
+    updateState = state;
+    if (editor && !editor.isDestroyed()) editor.webContents.send('endaxis:update-progress', state);
+  }
+  async function checkUpdates() {
+    if (updating || quitting || !app.isPackaged || process.platform !== 'win32') return;
+    updating = true;
+    try {
+      reportUpdate({ phase: 'idle' });
+      await prunePortableVersions(app.getPath('exe'));
+      await preparePortableUpdate(app.getPath('exe'), undefined, reportUpdate);
+    } catch (error) {
+      reportUpdate({ phase: 'failed', message: error.message });
+    } finally {
+      updating = false;
+    }
+  }
   let handlersInstalled = false;
 
   function maybeQuit() {
@@ -86,17 +111,22 @@ function startDesktop(electron, argv = process.argv.slice(1), services = {}) {
       editor.focus();
       return;
     }
+    const versionLabel = app.isPackaged ? app.getVersion() : 'dev';
     const window = new BrowserWindow({
       icon: path.join(__dirname, '../assets/icon.ico'),
       width: 1440,
       height: 960,
-      title: 'Endaxis',
+      title: `Endaxis ${versionLabel}`,
       webPreferences: {
         preload: path.join(__dirname, 'editor-preload.cjs'),
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: true,
       },
+    });
+    window.on('page-title-updated', (event, title) => {
+      event.preventDefault();
+      window.setTitle(`${title || 'Endaxis'} ${versionLabel}`);
     });
     editor = window;
     window.setMenuBarVisibility(false);
@@ -136,7 +166,9 @@ function startDesktop(electron, argv = process.argv.slice(1), services = {}) {
     overlay?.destroy();
     overlay = null;
     globalShortcut.unregisterAll();
-    if (handlersInstalled) ipcMain.removeHandler('endaxis:show-overlay');
+    if (handlersInstalled)
+      for (const name of ['show-overlay', 'update-state', 'retry-update', 'restart-update'])
+        ipcMain.removeHandler('endaxis:' + name);
     handlersInstalled = false;
     removeProtocol?.();
     removeProtocol = null;
@@ -178,7 +210,10 @@ function startDesktop(electron, argv = process.argv.slice(1), services = {}) {
       }
       locale = normalizeLocale(app.getLocale?.() ?? locale);
       if (app.isPackaged) {
-        removeProtocol = serveAppProtocol(electron, path.join(app.getAppPath(), 'dist'));
+        removeProtocol = serveAppProtocol(
+          electron,
+          path.join(path.dirname(app.getAppPath()), 'dist'),
+        );
         urls = pageUrls(null, true);
       } else {
         const { ROOT, validateUrl, startServer } = require('./server.cjs');
@@ -203,7 +238,26 @@ function startDesktop(electron, argv = process.argv.slice(1), services = {}) {
         if (quitting || !isWindowSender(event, editor)) return null;
         openOverlay();
       });
+      ipcMain.handle('endaxis:update-state', event =>
+        isWindowSender(event, editor) ? updateState : null,
+      );
+      ipcMain.handle('endaxis:restart-update', event => {
+        if (
+          quitting ||
+          !app.isPackaged ||
+          updateState.phase !== 'ready' ||
+          !isWindowSender(event, editor)
+        )
+          return;
+        const exe = app.getPath('exe');
+        app.relaunch({ execPath: path.join(portableRoot(exe), path.basename(exe)), args: argv });
+        app.quit();
+      });
+      ipcMain.handle('endaxis:retry-update', event => {
+        if (isWindowSender(event, editor) && updateState.phase === 'failed') void checkUpdates();
+      });
       handlersInstalled = true;
+      void checkUpdates();
       if (!args.has('no-editor') || pendingEditorFocus) openEditor();
       if (args.has('overlay') || args.has('capture') || args.has('no-editor')) openOverlay();
       initializing = false;
@@ -225,7 +279,13 @@ function startDesktop(electron, argv = process.argv.slice(1), services = {}) {
 module.exports = { parseArgs, storagePaths, startDesktop };
 if (process.type === 'browser') {
   try {
-    startDesktop(require('electron'));
+    const electron = require('electron');
+    if (
+      electron.app.isPackaged &&
+      launchSelectedVersion(electron.app.getPath('exe'), process.argv.slice(1))
+    )
+      electron.app.exit(0);
+    else startDesktop(electron);
   } catch (error) {
     console.error('[endaxis] Startup failed:', error);
     require('electron').app.exit(1);

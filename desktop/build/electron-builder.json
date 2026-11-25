@@ -3,7 +3,10 @@
   "productName": "Endaxis",
   "asar": true,
   "electronDist": "node_modules/electron/dist",
-  "electronLanguages": ["zh-CN", "en-US"],
+  "electronLanguages": [
+    "zh-CN",
+    "en-US"
+  ],
   "directories": {
     "output": "release"
   },
@@ -16,7 +19,6 @@
     "features/overlay/picker/**/*",
     "i18n/**/*.json",
     "i18n/**/*.cjs",
-    "dist/**/*",
     "package.json",
     "!**/*.test.cjs",
     "!app/launch.cjs",
@@ -34,5 +36,18 @@
     "icon": "assets/icon.ico"
   },
   "artifactName": "Endaxis-${version}-windows-${arch}.zip",
-  "npmRebuild": false
+  "npmRebuild": false,
+  "extraResources": [
+    {
+      "from": "dist",
+      "to": "dist"
+    }
+  ],
+  "artifactBuildStarted": "build/portable-manifest.cjs",
+  "extraFiles": [
+    {
+      "from": "build/update-source.json",
+      "to": "update-source.json"
+    }
+  ]
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import TimelineEditor from '@/ui/timeline/TimelineEditor.vue';
 import type { TimelineEditorProps, TimelineEditorEvents } from '@/ui/timeline/timelineEditorHost';
+import PortableUpdatePanel from './PortableUpdatePanel.vue';
 import OverlayButton from './OverlayButton.vue';
 
 const props = defineProps<TimelineEditorProps>();
@@ -17,4 +18,5 @@ const emit = defineEmits<TimelineEditorEvents>();
       <OverlayButton :context="context" />
     </template>
   </TimelineEditor>
+  <PortableUpdatePanel />
 </template>

@@ -4,7 +4,7 @@ import type { PublishedScenarioSimulation } from '@/ui/timeline/useScenarioSimul
 import type { SupportedLocale } from '@/i18n/elementPlusLocale';
 import { buildOverlayPlanFromProject } from './projectPlan';
 import { saveOverlaySnapshot } from './snapshot';
-import type {} from './desktopApi';
+import type {} from '../../../renderer/editor/editorApi';
 
 interface ExportState {
   readonly project: EndaxisProjectDocument;

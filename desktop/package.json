@@ -13,8 +13,8 @@
     "install:runtime": "install-electron",
     "prepackage": "npm run install:runtime",
     "prepackage:dir": "npm run install:runtime",
-    "package": "electron-builder --config build/electron-builder.json --win zip --x64 --publish never",
-    "package:dir": "electron-builder --config build/electron-builder.json --win --x64 --dir --publish never"
+    "package": "electron-builder --config build/package-config.cjs --win zip --x64 --publish never",
+    "package:dir": "electron-builder --config build/package-config.cjs --win --x64 --dir --publish never"
   },
   "devDependencies": {
     "electron": "44.9.0",

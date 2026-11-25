@@ -107,7 +107,6 @@ declare global {
   interface Window {
     endaxisDesktop?: OverlayDesktopApi;
     endaxisOverlaySettings?: OverlaySettingsApi;
-    endaxisDesktopEditor?: { showOverlay(): Promise<void> };
   }
 }
 

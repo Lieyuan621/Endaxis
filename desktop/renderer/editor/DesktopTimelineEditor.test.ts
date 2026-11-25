@@ -3,6 +3,7 @@ import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import type { TimelineEditorProps, TimelineExportContext } from '@/ui/timeline/timelineEditorHost';
 import { createEmptyProject } from '@/core/project/createProject';
+import { desktopI18n } from '../../i18n';
 import DesktopTimelineEditor from './DesktopTimelineEditor.vue';
 
 const fixture = vi.hoisted(() => ({
@@ -62,6 +63,7 @@ it('桌面包装保留编辑器 props、项目更新和首轮就绪事件，并�
     render: () => h(DesktopTimelineEditor, { ...props, onProjectChange, onInitialReady }),
   });
 
+  app.use(desktopI18n);
   expect(await renderToString(app)).toContain('Desktop action');
   expect(fixture.editorProps).toMatchObject(props);
   expect(fixture.receivedContext).toBe(fixture.context);

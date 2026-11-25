@@ -58,7 +58,7 @@ test('packaged application uses stable protocol and portable profile without sta
     method: 'GET',
   });
   assert.equal(response.status, 200);
-  assert.match(f.electron.fetched[0], /app.asar\/dist\/icons\/default_icon.webp$/);
+  assert.match(f.electron.fetched[0], /resources\/dist\/icons\/default_icon.webp$/);
   f.call('endaxis:show-overlay', undefined, f.windows[0]);
   assert.equal(f.windows[1].url, 'app://endaxis/overlay');
   assert.equal(storagePaths(f.app, new Map()).profile, f.paths.userData);

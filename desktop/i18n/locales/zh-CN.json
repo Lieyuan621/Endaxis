@@ -217,5 +217,16 @@
     "pickerDrag": "请拖动框选",
     "pickerLoadFailed": "画面加载失败，请取消后重试",
     "pickerExpired": "画面已失效，请取消后重试"
+  },
+  "update": {
+    "title": "桌面版更新",
+    "checking": "正在检查更新",
+    "preparing": "正在准备更新",
+    "downloaded": "已下载 {size} MiB",
+    "ready": "更新已就绪",
+    "restart": "立即重启",
+    "failed": "更新失败",
+    "retry": "重试",
+    "close": "关闭"
   }
 }

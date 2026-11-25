@@ -217,5 +217,16 @@
     "pickerDrag": "Drag to select",
     "pickerLoadFailed": "The image could not load. Cancel and try again.",
     "pickerExpired": "The image is no longer available. Cancel and try again."
+  },
+  "update": {
+    "title": "Desktop update",
+    "checking": "Checking for updates",
+    "preparing": "Preparing update",
+    "downloaded": "{size} MiB downloaded",
+    "ready": "Update ready",
+    "restart": "Restart now",
+    "failed": "Update failed",
+    "retry": "Retry",
+    "close": "Close"
   }
 }
