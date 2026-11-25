@@ -3,7 +3,7 @@
  * 把已保存的连线画到时间轴上。
  *
  * 只负责技能块连线的投影和交互事件，文档修改由编辑器统一提交。
- * 位置采用技能块实际开始帧和显示时长，与块边缘保持对齐。
+ * 位置直接复用技能块的显示布局，包含截断、最小宽度和拖动预览。
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -14,7 +14,6 @@ import type {
 } from '../../../core/project/schema';
 import type { TimelineConnectionPort } from './timelineConnections';
 import type { TimelineTrackViewModel } from '../timelineEditorViewModel';
-import { frameToTimelinePx } from '../timelineGeometry';
 import type { TimelineTrackEffectLayout } from '../results/timelineTrackEffectLayout';
 import TimelineConnectorStroke from '../components/TimelineConnectorStroke.vue';
 import { useAppearance } from '../../appearance/useAppearance';
@@ -39,12 +38,11 @@ interface ConnectionPreview {
 const props = withDefaults(
   defineProps<{
     scenario: ScenarioDocument;
-    /** 已投影的时间轴轨道视图模型，提供技能块宽度与颜色。 */
+    /** 已投影的轨道视图模型，提供技能块归属与颜色。 */
     tracks: readonly TimelineTrackViewModel[];
-    pxPerFrame: number;
     trackHeaderWidth: number;
-    castActualStartFrames: ReadonlyMap<string, number>;
-    castActualDurationFrames: ReadonlyMap<string, number>;
+    /** 与 TimelineActionBlock 共用的轨道内像素布局。 */
+    castLayouts: ReadonlyMap<string, { readonly left: number; readonly width: number }>;
     skillAccentColor: (operationType: string | null, operatorSlug: string | null) => string;
     selectedConnectionId?: string | null;
     hoveredSkillCastId?: string | null;
@@ -55,8 +53,6 @@ const props = withDefaults(
     trackLayouts: readonly TimelineTrackEffectLayout[];
     actionHeight?: number;
     preview?: ConnectionPreview | null;
-    prepEndFrame?: number;
-
     prepExpanded: boolean;
   }>(),
   {
@@ -132,42 +128,19 @@ function resolveEndpoint(
 ): ResolvedEndpoint | null {
   const found = findSkillCast(endpoint.skillCastId);
   if (found === null) return null;
+  const layout = props.castLayouts.get(endpoint.skillCastId);
+  if (layout === undefined) return null;
   const port =
     endpoint.port !== undefined && endpoint.port in ports
       ? (endpoint.port as TimelineConnectionPort)
       : fallbackPort;
-  const left =
-    props.trackHeaderWidth +
-    frameToTimelinePx(
-      resolveCastActualStartFrame(found.skillCast.id, found.skillCast.startFrame),
-      props.scenario.battle.prepFrames,
-      props.pxPerFrame,
-      props.prepExpanded,
-      props.prepEndFrame,
-    );
-  const startFrame = resolveCastActualStartFrame(found.skillCast.id, found.skillCast.startFrame);
-  const endFrame =
-    startFrame +
-    (props.castActualDurationFrames.get(found.skillCast.id) ?? found.skillCast.durationFrames);
-  const width =
-    frameToTimelinePx(
-      endFrame,
-      props.scenario.battle.prepFrames,
-      props.pxPerFrame,
-      props.prepExpanded,
-      props.prepEndFrame,
-    ) -
-    (left - props.trackHeaderWidth);
+  const left = props.trackHeaderWidth + layout.left;
   const top = actionTop(found.trackIndex);
   const ratio = ports[port];
   return {
-    point: { x: left + width * ratio.x, y: top + props.actionHeight * ratio.y },
+    point: { x: left + layout.width * ratio.x, y: top + props.actionHeight * ratio.y },
     port,
   };
-}
-
-function resolveCastActualStartFrame(castId: string, placementFrame: number): number {
-  return props.castActualStartFrames.get(castId) ?? placementFrame;
 }
 
 function pathData(
