@@ -2,10 +2,9 @@
 import TimelineMenuActionIcon from './TimelineMenuActionIcon.vue';
 import TimelineMarkerMenuIcon from './TimelineMarkerMenuIcon.vue';
 import TimelineContextMenuPortal from './TimelineContextMenuPortal.vue';
-import OperatorAvatar from '../../components/OperatorAvatar.vue';
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton, EaChevronIcon } from '../../../design-system/index';
+import { EaButton } from '../../../design-system/index';
 import { useInteractionSession } from '../../interaction/interactionSessionContext';
 import { usePopoverInteractionBoundary } from '../../interaction/usePopoverInteractionBoundary';
 const { t } = useI18n({ useScope: 'global' });
@@ -22,9 +21,6 @@ const props = defineProps<{
   visible: boolean;
   x: number;
   y: number;
-  frame: number;
-  canTargetTrack: boolean;
-  switchTargets: readonly { trackIndex: number; name: string; avatar?: string }[];
   hasSimulationStart: boolean;
   hasSimulationEnd: boolean;
   existingLabel?: string;
@@ -38,12 +34,8 @@ const props = defineProps<{
     removeSimulationStart: string;
     addSimulationEnd: string;
     removeSimulationEnd: string;
-    switchOperator: string;
-    dodge: string;
-    perfectDodge: string;
     switchToDodge: string;
     switchToPerfectDodge: string;
-    useConsumable: string;
   };
 }>();
 const emit = defineEmits<{
@@ -51,13 +43,10 @@ const emit = defineEmits<{
   addCycle: [];
   toggleSimulationStart: [];
   toggleSimulationEnd: [];
-  addSwitch: [trackIndex: number];
-  addDodge: [mode: 'dodge' | 'perfectDodge'];
   setDodgeMode: [mode: 'dodge' | 'perfectDodge'];
   copyMarker: [];
   cut: [];
   paste: [];
-  useConsumable: [];
   controlComboCooldown: [mode: 'cooldown' | 'ready'];
   delete: [];
   inherit: [];
@@ -190,62 +179,7 @@ onBeforeUnmount(() => {
           </EaButton>
         </template>
         <template v-else>
-          <div class="menu-group" role="group" :aria-label="t('contextMenu.trackActions')">
-            <small class="menu-label">{{ t('contextMenu.trackActions') }}</small>
-            <div class="menu-item has-submenu" role="menuitem" aria-haspopup="menu" tabindex="0">
-              <TimelineMarkerMenuIcon kind="switchOperator" />
-              <span>{{ labels.switchOperator }}</span>
-              <EaChevronIcon class="arrow" :size="12" :stroke-width="3" />
-              <div class="submenu-list timeline-context-submenu" role="menu">
-                <EaButton
-                  v-for="target in switchTargets"
-                  :key="target.trackIndex"
-                  type="button"
-                  class="submenu-list-item"
-                  role="menuitem"
-                  @click="$emit('addSwitch', target.trackIndex)"
-                >
-                  <OperatorAvatar
-                    v-if="target.avatar"
-                    class="submenu-avatar"
-                    :src="target.avatar"
-                    alt=""
-                  />
-                  <span>{{ target.name }}</span>
-                </EaButton>
-              </div>
-            </div>
-            <EaButton
-              type="button"
-              class="menu-item"
-              role="menuitem"
-              :disabled="!canTargetTrack"
-              @click="$emit('useConsumable')"
-            >
-              <TimelineMarkerMenuIcon kind="consumable" />
-              <span>{{ labels.useConsumable }}</span>
-            </EaButton>
-            <EaButton
-              type="button"
-              class="menu-item"
-              role="menuitem"
-              :disabled="!canTargetTrack"
-              @click="$emit('addDodge', 'dodge')"
-            >
-              <TimelineMarkerMenuIcon kind="dodge" />
-              <span>{{ labels.dodge }}</span>
-            </EaButton>
-            <EaButton
-              type="button"
-              class="menu-item"
-              role="menuitem"
-              :disabled="!canTargetTrack"
-              @click="$emit('addDodge', 'perfectDodge')"
-            >
-              <TimelineMarkerMenuIcon kind="perfectDodge" />
-              <span>{{ labels.perfectDodge }}</span>
-            </EaButton>
-          </div>
+          <slot name="track-placement" />
           <div class="menu-group" role="group" :aria-label="t('contextMenu.timelineMarkers')">
             <small class="menu-label">{{ t('contextMenu.timelineMarkers') }}</small>
             <EaButton type="button" class="menu-item" role="menuitem" @click="$emit('addCycle')">
@@ -281,21 +215,21 @@ onBeforeUnmount(() => {
               type="button"
               class="menu-item"
               role="menuitem"
-              :title="t('comboControl.ready')"
+              :title="t('timeline.markerLabels.ready')"
               @click="$emit('controlComboCooldown', 'ready')"
             >
               <TimelineMarkerMenuIcon kind="comboReady" />
-              <span>{{ t('comboControl.readyMenu') }}</span>
+              <span>{{ t('timeline.markerContext.readyMenu') }}</span>
             </EaButton>
             <EaButton
               type="button"
               class="menu-item"
               role="menuitem"
-              :title="t('comboControl.cooldown')"
+              :title="t('timeline.markerLabels.cooldown')"
               @click="$emit('controlComboCooldown', 'cooldown')"
             >
               <TimelineMarkerMenuIcon kind="comboCooldown" />
-              <span>{{ t('comboControl.cooldownMenu') }}</span>
+              <span>{{ t('timeline.markerContext.cooldownMenu') }}</span>
             </EaButton>
           </div>
         </template>
@@ -322,59 +256,5 @@ onBeforeUnmount(() => {
   margin-top: 6px;
   padding-top: 6px;
   border-top: 1px solid var(--ea-border-soft);
-}
-.submenu-list {
-  position: absolute;
-  z-index: 100;
-  top: -5px;
-  left: calc(100% - 1px);
-  min-width: 140px;
-  padding: 4px 0;
-  display: flex;
-  flex-direction: column;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateX(-4px);
-  transition:
-    opacity 120ms ease,
-    transform 120ms ease,
-    visibility 0s linear 120ms;
-}
-.menu-item.has-submenu:hover .submenu-list,
-.menu-item.has-submenu:focus-within .submenu-list {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateX(0);
-  transition-delay: 0s;
-}
-.submenu-list-item {
-  width: 100%;
-  height: 33px;
-  padding: 0 12px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--ea-fg-secondary);
-  font: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.submenu-list-item:hover {
-  background: var(--ea-menu-hover-bg);
-  color: var(--ea-fg);
-}
-.submenu-avatar {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  border: 1px solid var(--ea-border-strong);
-  border-radius: 50%;
 }
 </style>

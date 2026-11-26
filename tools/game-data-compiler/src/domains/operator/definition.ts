@@ -1,3 +1,4 @@
+import { operatorTimelineInteractions } from '../../../config/operatorTimelineInteractions.ts';
 import { abilityEntityPresentations } from '../../../config/abilityEntityPresentations.ts';
 import { parseReferenceAwareSkillActionGraphSource } from '../../source/referenceGraph.ts';
 import type { CompiledAbilityEntityTemplateCatalogSource } from '../../compiler/abilities/abilityEntityCatalog.ts';
@@ -460,7 +461,11 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
           item => item.contextKey,
         );
         for (const node of nodes) {
-          if (node.metadata.enabled && node.body.kind === 'leaf' && node.body.value.family === 'projectile')
+          if (
+            node.metadata.enabled &&
+            node.body.kind === 'leaf' &&
+            node.body.value.family === 'projectile'
+          )
             for (const callback of node.body.value.action.callbacks)
               if (callback.enabled && callback.skillId)
                 changed = bindProjectileCallbackEntities(callback.skillId) || changed;
@@ -831,6 +836,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       nativeSkillType,
     });
   }
+  const timelineInteractions = operatorTimelineInteractions[foundation.identity.slug];
   const abilityEntityDefinitions = Object.fromEntries(
     Object.entries(compiledAbilityEntityDefinitions).map(([id, definition]) => [
       id,
@@ -961,7 +967,8 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
         : { ...definition, skillSlotReplacements: replacements },
       id,
     );
-    if (id.startsWith('buff_chr_') || id.startsWith('buff_delay_trigger_chr_')) privateBuffs[id] = keyedDefinition;
+    if (id.startsWith('buff_chr_') || id.startsWith('buff_delay_trigger_chr_'))
+      privateBuffs[id] = keyedDefinition;
     else {
       // 物理/元素反应等系统 Buff 不使用 buff_common_ 前缀，但与角色私有 Buff 一样
       // 由稳定身份决定归属；旧统一链接器也把所有非 buff_chr_* 定义放入共享目录。
@@ -1050,6 +1057,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
           ),
         }),
     buffDefinitions: privateBuffs,
+    ...(timelineInteractions ? { timelineInteractions } : {}),
     abilityEntityDefinitions,
   };
   return {

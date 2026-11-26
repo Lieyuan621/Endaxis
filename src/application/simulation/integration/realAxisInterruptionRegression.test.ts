@@ -1,3 +1,4 @@
+import { operatorOwner } from '../../../core/project/scenarioMarkers';
 import { firstScenarioEnemy } from '../../../core/project/level';
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
@@ -196,8 +197,14 @@ it.each([true, false])('守墓人之赠重击增伤要求受益者为主控（�
     ]);
     owner.operator!.potential = potential;
     scenario.tracks[1] = owner;
-    scenario.battle.controlSwitches = [
-      { id: 'diagnostic-control', frame: 0, trackIndex: controlled ? 1 : 0 },
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'controlSwitch'),
+      {
+        kind: 'controlSwitch' as const,
+        id: 'diagnostic-control',
+        frame: 0,
+        owner: operatorOwner(scenario, controlled ? 1 : 0),
+      },
     ];
     const before = JSON.stringify(scenario);
     const result = await createEditorSimulationService().simulate(scenario, 200);
@@ -338,8 +345,14 @@ it.each([true, false])('赛希晶体仅被主控重击消费且正确保留来�
   };
   scenario.tracks[0] = track('arcane', [['basicAttack', 'basicAttack5', 120]]);
   scenario.tracks[1] = healer;
-  scenario.battle.controlSwitches = [
-    { id: 'control:actor', frame: 0, trackIndex: controlled ? 0 : 1 },
+  scenario.markers = [
+    ...scenario.markers.filter(marker => marker.kind !== 'controlSwitch'),
+    {
+      kind: 'controlSwitch' as const,
+      id: 'control:actor',
+      frame: 0,
+      owner: operatorOwner(scenario, controlled ? 0 : 1),
+    },
   ];
   const before = JSON.stringify(scenario);
   const result = await new ScenarioSimulationService({
@@ -842,8 +855,14 @@ it.each([true, false])('诀集束攻击仅由主控重击触发（主控=%s）',
   scenario.battle.automaticControlSwitches = false;
   scenario.tracks[0] = track('arcane', [['ultimate', 'ultimate', 1]]);
   scenario.tracks[1] = track('last-rite', [['basicAttack', 'basicAttack4', 100]]);
-  scenario.battle.controlSwitches = [
-    { id: 'diagnostic-control', frame: 0, trackIndex: controlled ? 1 : 0 },
+  scenario.markers = [
+    ...scenario.markers.filter(marker => marker.kind !== 'controlSwitch'),
+    {
+      kind: 'controlSwitch' as const,
+      id: 'diagnostic-control',
+      frame: 0,
+      owner: operatorOwner(scenario, controlled ? 1 : 0),
+    },
   ];
   const before = JSON.stringify(scenario);
   const result = await createEditorSimulationService().simulate(scenario, 300);

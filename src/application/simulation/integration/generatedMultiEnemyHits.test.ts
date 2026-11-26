@@ -305,7 +305,10 @@ it.each([false, true])(
       scenario.level.enemies[2]!,
       scenario.level.enemies[0]!,
     ];
-    scenario.battle.enemyTargetSwitches = [{ id: 'switch', frame: 60, targetId: 'enemy:third' }];
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'enemyTargetSwitch'),
+      { kind: 'enemyTargetSwitch' as const, id: 'switch', frame: 60, enemyId: 'enemy:third' },
+    ];
     if (withoutInitialEnemy)
       scenario.level.enemies = scenario.level.enemies.filter(enemy => enemy.id !== 'enemy');
     const session =
@@ -368,7 +371,10 @@ it.each([
         ].map(item => ({ ...item, id: 'enemy:' + item.id })),
       ],
     };
-    scenario.battle.enemyTargetSwitches = [{ id: 'switch', frame: 22, targetId: 'enemy:second' }];
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'enemyTargetSwitch'),
+      { kind: 'enemyTargetSwitch' as const, id: 'switch', frame: 22, enemyId: 'enemy:second' },
+    ];
     const session =
       createScenarioSimulationService(gameDataRepository).createCombatSession(scenario);
     session.advanceToFrame(40);

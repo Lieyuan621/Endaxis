@@ -1,3 +1,4 @@
+import { operatorOwner } from '../../../core/project/scenarioMarkers';
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { gameDataRepository } from '../../../data/gameDataRepository';
@@ -132,7 +133,15 @@ it.each(['manual', 'automatic', 'skill'] as const)(
 
 it('切面恢复后仍诊断卡缪终结技禁止切入，保持事件和主控一致', () => {
   const scenario = createControlSwitchScenario('camille');
-  scenario.battle.controlSwitches = [{ id: 'switch:camille', frame: 2, trackIndex: 1 }];
+  scenario.markers = [
+    ...scenario.markers.filter(marker => marker.kind !== 'controlSwitch'),
+    {
+      kind: 'controlSwitch' as const,
+      id: 'switch:camille',
+      frame: 2,
+      owner: operatorOwner(scenario, 1),
+    },
+  ];
   scenario.tracks[1]!.skillCasts = [
     {
       id: 'camille:ultimate',

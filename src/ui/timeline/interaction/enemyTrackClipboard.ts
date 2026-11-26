@@ -1,9 +1,9 @@
-import type { EnemyInstanceDocument, ScenarioDocument } from '../../../core/project/schema';
+import type { EnemyInstanceDocument } from '../../../core/project/schema';
 import type { TimelineDocumentIdAllocator } from './placeSkillGroup';
 
 export interface EnemyTrackClipboard {
   enemy: EnemyInstanceDocument;
-  switches: NonNullable<ScenarioDocument['battle']['enemyTargetSwitches']>;
+  switches: {id:string; frame:number; targetId:string}[];
 }
 
 /** 输入为文档快照；剪贴板不保存运行时对象。 */

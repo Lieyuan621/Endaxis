@@ -430,8 +430,27 @@ function compileResolvedTimelineTracks(
         .compile(owner.actionGraph, level, undefined, imports(level))
         .compileEntry(entry, path);
     };
+    const pickups = new Map<string, { group: string; skillId: string; sequenceIndex: number }>();
+    for (const [group, rule] of Object.entries(operator.timelineInteractions ?? {})) {
+      for (const id of rule.entityIds) {
+        const child = operator.abilityEntityDefinitions?.[id]?.childSkill;
+        if (
+          !child ||
+          !('scheduledSequences' in child) ||
+          child.actionGraph?.main.nodes[rule.auraNode]?.action.kind !== 'aura'
+        )
+          throw new Error(`Invalid pickup Aura '${rule.auraNode}' for entity '${id}'`);
+        const sequenceIndex = child.scheduledSequences.findIndex(
+          item => item.sequence.$sequence === rule.auraNode,
+        );
+        if (sequenceIndex < 0 || pickups.has(id))
+          throw new Error(`Invalid pickup binding for '${id}'`);
+        pickups.set(id, { group, skillId: child.skillId, sequenceIndex });
+      }
+    }
     operators.push({
       operatorId: track.id,
+      ...(pickups.size ? { pickups } : {}),
       operatorRole: operator.role,
       buffDefinitions: { ...common.buffDefinitions, ...ownedBuffs },
       abilityEntityDefinitions: {

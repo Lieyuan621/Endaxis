@@ -295,6 +295,7 @@ export type OperatorBuffRuntime = FrameRuntime &
 
 /** 一个干员按原生技能定义顺序进入运行时的完整程序。 */
 export interface CombatOperatorProgram {
+  readonly pickups?: ReadonlyMap<string, { group: string; skillId: string; sequenceIndex: number }>;
   readonly plungingAttack?: {
     readonly startSkillId: string;
     readonly endSkillId: string;
@@ -838,6 +839,7 @@ export class CombatRuntimeAssembly {
   readonly #dodgeInputState: DodgeInputRuntimeState;
   #inputExecution: CombatInputExecution | undefined;
   #groupTiming: SkillInputGroupTiming | undefined;
+  #framePickupInputs: CombatFrameInput['externalEvents'];
   readonly #externalEventRuntime: ExternalCombatEventRuntime;
   readonly #options: CombatRuntimeAssemblyOptions;
   readonly #enemyLives = new Map<string, EnemyLifeRuntime>();
@@ -1441,12 +1443,13 @@ export class CombatRuntimeAssembly {
           }
           return register(entityId, event, priority, handle, subscriptions);
         },
-        createChildSkillBindings: ({ ownerId, state }) => {
+        createChildSkillBindings: ({ ownerId, entity, state }) => {
           const fixed = this.abilityEntityChildSkillPrograms.resolve(state.programId);
           const origin = state.inheritedSkillCastInfo;
           return {
             operations: this.#createAbilityEntityChildOperations(
               ownerId,
+              this.abilityEntities.snapshot(entity).abilityEntityId,
               fixed.program,
               state.host.skill.operations,
               origin,
@@ -2901,6 +2904,16 @@ export class CombatRuntimeAssembly {
     return new ExternalCombatEventRuntime({
       clock: this.clock,
       events: options.externalEvents ?? [],
+      receiveHit: operatorId => {
+        const source = this.#defaultEnemyTarget();
+        if (source)
+          options.emitAbilityEvent?.(operatorId, 'beforeTakeDamage', {
+            external: true,
+            sourceId: runtimeTargetEntityId(source)!,
+            targetId: operatorId,
+            tags: [],
+          });
+      },
       controlComboCooldown: (operatorId, mode) => {
         const visited = new Set<SkillCooldown>();
         for (const ledger of this.#skillCooldowns.values()) {
@@ -3101,7 +3114,12 @@ export class CombatRuntimeAssembly {
   /** 逐帧驱动只用于没有预置人工排程的装配，避免混用游标和即时输入。 */
   advanceInputFrame(input: CombatFrameInput): void {
     this.#requireInitialInputApplied();
-    this.simulation.advanceFrame(this.#liveFrameInputs(input));
+    this.#framePickupInputs = input.externalEvents;
+    try {
+      this.simulation.advanceFrame(this.#liveFrameInputs(input));
+    } finally {
+      this.#framePickupInputs = undefined;
+    }
   }
 
   /** 起始帧只处理输入，不 Tick、不推进时钟；顺序与旧装配的起始输入一致。 */
@@ -4656,6 +4674,7 @@ export class CombatRuntimeAssembly {
   /** 首次启动与切面恢复使用同一来源解析，独立子技能不继承创建动作的回执身份。 */
   #createAbilityEntityChildOperations(
     ownerId: string,
+    entityId: string,
     program: CompiledAbilityEntityChildSkillProgram,
     state: CombatOperationHostState,
     origin: CombatSkillCastInfo | null | undefined,
@@ -4666,7 +4685,17 @@ export class CombatRuntimeAssembly {
         : (this.#skillPrograms.get(
             `${ownerId}\u0000${origin.originSkillId}\u0000${origin.originCastId ?? ''}`,
           ) ?? this.#skillPrograms.get(`${ownerId}\u0000${origin.originSkillId}\u0000`));
+    const binding = this.#operators.get(ownerId)?.pickups?.get(entityId);
+    const sequence =
+      binding?.skillId === program.skillId
+        ? program.timelineActions[binding.sequenceIndex]?.sequence
+        : undefined;
+    const action =
+      sequence?.entry == null ? undefined : sequence.graph.nodes.get(sequence.entry)?.action;
     return this.#createOperationChain({
+      ...(binding && action?.kind === 'aura'
+        ? { pickup: { group: binding.group, parameters: action.parameters } }
+        : {}),
       operator: this.#operators.get(ownerId)!,
       sourceActionId: origin?.originCastId ?? origin?.originSkillId ?? program.skillId,
       ...(origin?.originCastId === undefined ? {} : { castId: origin.originCastId }),
@@ -4744,6 +4773,7 @@ export class CombatRuntimeAssembly {
   }
 
   #createOperationChain(options: {
+    readonly pickup?: { group: string; parameters: ResolvedCombatStepParameters['aura'] };
     readonly operator: CombatOperatorProgram;
     /** 当前时间轴施放身份；定义程序本身始终与单次施放无关。 */
     readonly castId?: string;
@@ -4847,8 +4877,14 @@ export class CombatRuntimeAssembly {
       this.abilityEntities,
       targetContextOperations,
       {
-        resolveOperations: (state, childProgram, origin) =>
-          this.#createAbilityEntityChildOperations(operatorId, childProgram, state, origin),
+        resolveOperations: (state, childProgram, origin, entityId) =>
+          this.#createAbilityEntityChildOperations(
+            operatorId,
+            entityId,
+            childProgram,
+            state,
+            origin,
+          ),
         semanticEvents: this.semanticEvents,
         installPassiveSkills: (entity, definition) =>
           this.#installAbilityEntityPassiveSkills(entity, definition),
@@ -4873,6 +4909,63 @@ export class CombatRuntimeAssembly {
     const buffOperations = new BuffOperationExecutor({
       physicalTagPredefine: this.#options.skillAvailabilityTags,
       resolveInflictionTarget: target => this.#resolveInflictionTarget(target),
+      ...(options.pickup
+        ? {
+            areaInteraction: {
+              parameters: options.pickup.parameters,
+              activeChanged: (context, active) => {
+                if (!context.actionOwnerId) return;
+                this.receipt.record({
+                  frame: this.clock.frame,
+                  time: this.clock.time,
+                  event: active ? 'PickupOpened' : 'PickupClosed',
+                  sourceId: operatorId,
+                  targetId: context.actionOwnerId,
+                  data: { group: options.pickup!.group },
+                });
+              },
+              targets: (context): readonly RuntimeTargetRef[] => {
+                const frame = this.clock.frame;
+                const inputs =
+                  this.#framePickupInputs ??
+                  this.#options.externalEvents?.filter(input => input.frame === frame) ??
+                  [];
+                const group = options.pickup!.group;
+                const count = inputs.filter(
+                  input =>
+                    input.kind === 'pickup' &&
+                    input.group === group &&
+                    input.operatorId === operatorId,
+                ).length;
+                if (!count || !context.actionOwnerId) return [];
+                let used = 0;
+                for (const entry of this.receipt.history.snapshot().entries()) {
+                  if (
+                    entry.frame === frame &&
+                    entry.event === 'PickupEntered' &&
+                    entry.data?.owner === operatorId &&
+                    entry.data.group === group
+                  )
+                    used++;
+                }
+                if (used >= count) return [];
+                const controlled = this.#operatorOrder.find(id =>
+                  this.#operatorControl.runtimeState.get(id),
+                );
+                if (!controlled) return [];
+                this.receipt.record({
+                  frame,
+                  time: this.clock.time,
+                  event: 'PickupEntered',
+                  sourceId: controlled,
+                  targetId: context.actionOwnerId,
+                  data: { owner: operatorId, group },
+                });
+                return [{ kind: 'operator', operatorId: controlled }];
+              },
+            },
+          }
+        : {}),
       queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
       isEntityAvailable: target => this.#queryEntityLifeState(target) !== undefined,
       publishBuffConsumeEvent: event => this.#publishBuffConsumption('BuffConsumed', event),
@@ -5221,8 +5314,14 @@ export class CombatRuntimeAssembly {
       this.abilityEntities,
       targetContextOperations,
       {
-        resolveOperations: (state, childProgram, origin) =>
-          this.#createAbilityEntityChildOperations(operatorId, childProgram, state, origin),
+        resolveOperations: (state, childProgram, origin, entityId) =>
+          this.#createAbilityEntityChildOperations(
+            operatorId,
+            entityId,
+            childProgram,
+            state,
+            origin,
+          ),
         semanticEvents: this.semanticEvents,
         installPassiveSkills: (entity, definition) =>
           this.#installAbilityEntityPassiveSkills(entity, definition),

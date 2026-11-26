@@ -4,7 +4,7 @@ import { perlica } from '../../../data/operators/perlica.generated';
 import { rossi } from '../../../data/operators/rossi.generated';
 import { commonBuffDefinitions } from '../../../data/buffs/commonDefinitions';
 import { createEmptyScenario } from '../../../core/project/createProject';
-import type { DodgeMarkerDocument, ScenarioDocument } from '../../../core/project/schema';
+import type { ScenarioDocument } from '../../../core/project/schema';
 import { prepareStandardPlayerDamageScenarioRuntime } from '../runStandardPlayerDamageScenarioSimulation';
 import { createStandardPlayerDamageCombatSession } from '../standardPlayerDamageCombatSession';
 import { CombatRuntimeAssembly } from '../../../core/combat/runtime/combatRuntimeAssembly';
@@ -41,14 +41,17 @@ function scenario(): ScenarioDocument {
   return result;
 }
 
-function marker(id: string, frame: number, delay?: number): DodgeMarkerDocument {
+function marker(id: string, frame: number, delay?: number) {
   return {
     id,
     frame,
-    trackIndex: 0,
-    direction: 'forward',
+    kind: 'dodge' as const,
+    owner: { scope: 'operator' as const, trackId: 'op' },
+    direction: 'forward' as const,
     mode:
-      delay === undefined ? { kind: 'dodge' } : { kind: 'perfectDodge', successDelayFrames: delay },
+      delay === undefined
+        ? { kind: 'dodge' as const }
+        : { kind: 'perfectDodge' as const, successDelayFrames: delay },
   };
 }
 
@@ -91,7 +94,10 @@ describe('闪避输入、恢复与连续组集成', () => {
     '禁锢词条启用=%s：闪避仍执行，只有启用时通过角标诊断提示禁止闪避',
     enabled => {
       const value = scenario();
-      value.battle.dodgeMarkers = [marker('contract-dash', 1)];
+      value.markers = [
+        ...value.markers.filter(marker => marker.kind !== 'dodge'),
+        marker('contract-dash', 1),
+      ];
       value.mechanics.selections = [
         {
           id: 'mute-evade',
@@ -192,7 +198,10 @@ describe('闪避输入、恢复与连续组集成', () => {
 
   it('极限闪避原生收益保留输入动作的来源路径', () => {
     const value = scenario();
-    value.battle.dodgeMarkers = [marker('origin', 1, 0)];
+    value.markers = [
+      ...value.markers.filter(marker => marker.kind !== 'dodge'),
+      marker('origin', 1, 0),
+    ];
     const runtime = new CombatRuntimeAssembly(prepare(value).compiled);
     runtime.advanceFrames(3);
     const origins = new CombatObjectOrigins(runtime.receipt.entries);
@@ -257,7 +266,11 @@ describe('闪避输入、恢复与连续组集成', () => {
   it('同帧先执行全部 Dash，旧标签的零延迟声明也不能借用新监听器', () => {
     const value = scenario();
     value.battle.resourceRules.initialSp = 0;
-    value.battle.dodgeMarkers = [marker('old', 1, 0), marker('new', 1)];
+    value.markers = [
+      ...value.markers.filter(marker => marker.kind !== 'dodge'),
+      marker('old', 1, 0),
+      marker('new', 1),
+    ];
     const fixed = new CombatRuntimeAssembly(prepare(value).compiled);
     fixed.advanceFrames(2);
     const live = new CombatRuntimeAssembly(prepare(scenario(), true).compiled);
@@ -305,7 +318,10 @@ describe('闪避输入、恢复与连续组集成', () => {
     for (const delay of [undefined, 0]) {
       const value = scenario();
       value.battle.resourceRules.initialSp = 0;
-      value.battle.dodgeMarkers = [marker('baseline', 1, delay)];
+      value.markers = [
+        ...value.markers.filter(marker => marker.kind !== 'dodge'),
+        marker('baseline', 1, delay),
+      ];
       const p = prepare(value);
       const assembly = new CombatRuntimeAssembly(p.compiled);
       assembly.advanceFrames(3);
@@ -315,7 +331,7 @@ describe('闪避输入、恢复与连续组集成', () => {
 
   it('固定闪避已发生后，应用会话仍能恢复', () => {
     const value = scenario();
-    value.battle.dodgeMarkers = [marker('d1', 1)];
+    value.markers = [...value.markers.filter(marker => marker.kind !== 'dodge'), marker('d1', 1)];
     const p = prepare(value);
     const session = createStandardPlayerDamageCombatSession(p.compiled, p.restoredEnvironment);
     session.advanceToFrame(2);
@@ -423,7 +439,11 @@ describe('闪避输入、恢复与连续组集成', () => {
   it('旧闪避延迟成功不能触发新一轮普通闪避', () => {
     const value = scenario();
     value.battle.resourceRules.initialSp = 0;
-    value.battle.dodgeMarkers = [marker('old', 1, 10), marker('new', 10)];
+    value.markers = [
+      ...value.markers.filter(marker => marker.kind !== 'dodge'),
+      marker('old', 1, 10),
+      marker('new', 10),
+    ];
     const p = prepare(value);
     const assembly = new CombatRuntimeAssembly(p.compiled);
     assembly.advanceFrames(12);
@@ -436,7 +456,10 @@ describe('闪避输入、恢复与连续组集成', () => {
 
   it('免疫监听窗口过期后，延迟成功必须有未成功的明确事实', () => {
     const value = scenario();
-    value.battle.dodgeMarkers = [marker('expired', 1, 40)];
+    value.markers = [
+      ...value.markers.filter(marker => marker.kind !== 'dodge'),
+      marker('expired', 1, 40),
+    ];
     const p = prepare(value);
     const assembly = new CombatRuntimeAssembly(p.compiled);
     assembly.advanceFrames(45);
@@ -452,7 +475,7 @@ describe('闪避输入、恢复与连续组集成', () => {
 
   it('闪避执行回执可按 UI 所用的 dodgeId 找到', () => {
     const value = scenario();
-    value.battle.dodgeMarkers = [marker('ui', 1)];
+    value.markers = [...value.markers.filter(marker => marker.kind !== 'dodge'), marker('ui', 1)];
     const p = prepare(value);
     const assembly = new CombatRuntimeAssembly(p.compiled);
     assembly.advanceFrames(2);
@@ -463,7 +486,7 @@ describe('闪避输入、恢复与连续组集成', () => {
 
   it('交换轨道后闪避仍绑定原干员', () => {
     const value = scenario();
-    value.battle.dodgeMarkers = [marker('swap', 1)];
+    value.markers = [...value.markers.filter(marker => marker.kind !== 'dodge'), marker('swap', 1)];
     value.tracks[1] = { ...structuredClone(value.tracks[0]!), id: 'other' };
     const swapped = swapTimelineTracks(value, 0, 1);
     expect(compileScenarioDodgeInputs(swapped)[0]!.operatorId).toBe('op');
@@ -471,7 +494,10 @@ describe('闪避输入、恢复与连续组集成', () => {
 
   it('Dash 已发生且成功事实尚未到达时允许建立继承分支', () => {
     const value = scenario();
-    value.battle.dodgeMarkers = [marker('split', 1, 5)];
+    value.markers = [
+      ...value.markers.filter(marker => marker.kind !== 'dodge'),
+      marker('split', 1, 5),
+    ];
     expect(() =>
       createInheritedScenario(value, {
         id: 'child',
@@ -580,7 +606,10 @@ describe('闪避输入、恢复与连续组集成', () => {
     const nextStart = baseline.receipt.entries.find(
       e => e.event === 'SkillStarted' && e.data?.castId === 'a2',
     )!.frame;
-    value.battle.dodgeMarkers = [marker('boundary-dash', nextStart)];
+    value.markers = [
+      ...value.markers.filter(marker => marker.kind !== 'dodge'),
+      marker('boundary-dash', nextStart),
+    ];
     const withDash = new CombatRuntimeAssembly(prepare(value).compiled);
     withDash.advanceFrames(45);
     const actual = withDash.receipt.entries.find(

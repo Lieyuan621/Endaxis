@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TimelineInspectorHeader from './TimelineInspectorHeader.vue';
 /** 循环线、切入标记与模拟区间端点的实例级 Inspector。 */
 import { useI18n } from 'vue-i18n';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
@@ -110,10 +111,11 @@ function effectDetail(entry: CombatReceiptEntry): string {
 
 <template>
   <section class="marker-inspector">
-    <header class="panel-header">
-      <div class="header-icon-bar"></div>
-      <h3>{{ t('timeline.documentMarkerInspector.title') }}</h3>
-    </header>
+    <TimelineInspectorHeader class="marker-header">{{
+      t(
+        `timeline.markerLabels.${kind === 'dodge' && dodgeMode === 'perfectDodge' ? 'perfectDodge' : kind}`,
+      )
+    }}</TimelineInspectorHeader>
 
     <div class="scrollable-content">
       <section class="section-container">
@@ -264,6 +266,10 @@ function effectDetail(entry: CombatReceiptEntry): string {
 </template>
 
 <style scoped>
+.marker-header {
+  margin: var(--ea-space-3) var(--ea-space-3) 0;
+}
+
 .marker-inspector {
   height: 100%;
   min-width: 0;
@@ -273,30 +279,6 @@ function effectDetail(entry: CombatReceiptEntry): string {
   color: var(--ea-fg);
 }
 
-.panel-header {
-  position: relative;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid var(--ea-border, #353a40);
-}
-
-.header-icon-bar {
-  width: 4px;
-  align-self: stretch;
-  background: #cfb73a;
-}
-
-.panel-header h3 {
-  min-width: 0;
-  margin: 0;
-  padding: 0 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-}
-
 .scrollable-content {
   min-height: 0;
   overflow: auto;
@@ -304,16 +286,11 @@ function effectDetail(entry: CombatReceiptEntry): string {
 }
 
 .section-container {
+  position: relative;
+  margin-top: var(--ea-space-3);
   min-width: 0;
   padding: 12px;
   border-bottom: 1px solid var(--ea-border, #353a40);
-}
-
-.panel-tag-mini {
-  margin-bottom: 10px;
-  color: var(--ea-fg-secondary);
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .attribute-grid {

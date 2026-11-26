@@ -175,6 +175,7 @@ const schema_2f77e5f400ca = {
   semantics: schema_a4c41ed6f378,
 } as const;
 const schema_47b614ea0470 = { kind: 'string', semantics: { aliases: ['GameplayTag'] } } as const;
+const schema_ab49bbac493c = { kind: 'string', semantics: { aliases: ['ImageRef'] } } as const;
 const schema_caf8bad50862 = {
   kind: 'string',
   semantics: { aliases: ['ImageRef'] },
@@ -1405,7 +1406,7 @@ const schema_20a7058c1007 = {
   presentation: {
     kind: 'object',
     fields: {
-      icon: { kind: 'string', semantics: { aliases: ['ImageRef'] } },
+      icon: schema_ab49bbac493c,
       nameKey: { kind: 'string' },
       placement: schema_5831620b69a4,
       damageDisplayBuffId: {
@@ -2447,6 +2448,26 @@ export const definitionSchemas = {
         optional: true,
         description: 'CharacterTable 明确挂载的角色专属战斗 HUD；不存在时不得从遗留 prefab 猜测。',
       },
+      timelineInteractions: {
+        kind: 'record',
+        value: {
+          kind: 'object',
+          fields: {
+            kind: { kind: 'enum', options: ['pickup'] },
+            nameKey: { kind: 'string' },
+            icon: schema_ab49bbac493c,
+            entityIds: {
+              kind: 'array',
+              element: { kind: 'string' },
+              semantics: { arrayElement: {} },
+            },
+            auraNode: { kind: 'string' },
+          },
+        },
+        semantics: { recordValue: {} },
+        optional: true,
+        description: '时间轴可以声明的干员交互，以交互 ID 为键。',
+      },
       entityBlackboardInitializers: {
         kind: 'array',
         element: {
@@ -2684,7 +2705,7 @@ export const definitionSchemas = {
     kind: 'object',
     fields: {
       id: { kind: 'string' },
-      icon: { kind: 'string', semantics: { aliases: ['ImageRef'] } },
+      icon: schema_ab49bbac493c,
       rarity: { kind: 'number' },
       kind: { kind: 'enum', options: ['operatorBuff'] },
       durationSeconds: { kind: 'number' },
@@ -2843,7 +2864,7 @@ export const definitionSchemas = {
       keyId: { kind: 'string' },
       lockIds: { kind: 'array', element: { kind: 'string' }, semantics: { arrayElement: {} } },
       romanNumSuffix: { kind: 'string' },
-      icon: { kind: 'string', semantics: { aliases: ['ImageRef'] } },
+      icon: schema_ab49bbac493c,
       blackboard: { kind: 'record', value: { kind: 'number' }, semantics: { recordValue: {} } },
     },
   },

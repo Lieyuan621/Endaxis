@@ -1,3 +1,4 @@
+import { operatorOwner } from '../../../core/project/scenarioMarkers';
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { ScenarioDocument } from '../../../core/project/schema';
@@ -152,7 +153,15 @@ it.each([false, true])(
     }
     scenario.battle.durationFrames = 800;
     scenario.battle.automaticControlSwitches = false;
-    scenario.battle.controlSwitches = [{ id: 'control', frame: 0, trackIndex: 2 }];
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'controlSwitch'),
+      {
+        kind: 'controlSwitch' as const,
+        id: 'control',
+        frame: 0,
+        owner: operatorOwner(scenario, 2),
+      },
+    ];
     const run = await createEditorSimulationService().simulate(scenario, 800);
     if (withSoul) {
       expect(

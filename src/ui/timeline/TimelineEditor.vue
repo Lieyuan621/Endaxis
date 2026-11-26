@@ -1,4 +1,20 @@
 <script setup lang="ts">
+import {
+  operatorOwner,
+  controlSwitchInputs,
+  hasOperatorOwner,
+  type ScenarioMarkerDocument,
+  resolveScenarioMarkerTrack,
+  dodgeInputs,
+  enemyTargetInputs,
+  markersOfKind,
+  appendScenarioMarker,
+} from '../../core/project/scenarioMarkers';
+
+import TimelineTrackMarkerPlacement from './interaction/TimelineTrackMarkerPlacement.vue';
+import TimelineReceiveHitIcon from './interaction/TimelineReceiveHitIcon.vue';
+import TimelinePickupIcon from './interaction/TimelinePickupIcon.vue';
+import { interactionMarkerLabel } from './interaction/interactionMarkerLabel';
 import { publicAssetUrl } from '../../utils/publicAssetUrl';
 import {
   copyEnemyTrack,
@@ -134,11 +150,12 @@ import {
 } from './contingencyContractBuffPresentation';
 import TimelineActionBlock from './interaction/TimelineActionBlock.vue';
 import TimelineActionContextMenu from './interaction/TimelineActionContextMenu.vue';
+import TimelineInspectorHeader from './interaction/TimelineInspectorHeader.vue';
 import TimelineActionInspector from './interaction/TimelineActionInspector.vue';
 import TimelineConnectionContextMenu from './interaction/TimelineConnectionContextMenu.vue';
 import TimelineConnectionLayer from './interaction/TimelineConnectionLayer.vue';
 import { isInsideTimelineDropRegion } from './interaction/timelineDropRegion';
-import TimelineExternalEventInspector from './interaction/TimelineExternalEventInspector.vue';
+import TimelineInteractionInspector from './interaction/TimelineInteractionInspector.vue';
 import TimelineGroupInsertPrompt from './interaction/TimelineGroupInsertPrompt.vue';
 import { resolveTimelineMarkerPointerFrame } from './interaction/timelineMarkerMoveGeometry';
 import {
@@ -219,7 +236,6 @@ import { getProjectDefinitionLibrary } from '../../core/project/projectDefinitio
 import {
   PROJECT_FPS,
   type EndaxisProjectDocument,
-  type ExternalCombatEventDocument,
   type ProjectDefinitionLibraryDocument,
   type ScenarioDocument,
   type TrackIndex,
@@ -331,7 +347,7 @@ import {
   addControlSwitch,
   addCycleBoundary,
   addDodgeMarker,
-  addExternalEventMarker,
+  placeInteractionMarker,
   applyInitialUltimateEnergyPreset,
   clearSimulationRangeBoundary,
   createSkillCastGroup,
@@ -1355,8 +1371,7 @@ async function openProjectContent(content: string): Promise<boolean> {
       if (!confirmed) return false;
     }
     await ensureAllGameData();
-    let projectInput: unknown = parsedInput;
-    let convertedLegacyProject = false;
+    let convertedProject: EndaxisProjectDocument | undefined;
     let legacyConversionReport: Parameters<typeof formatLegacyConversionReport>[0] | null = null;
     if (legacy) {
       const loading = ElLoading.service({
@@ -1379,15 +1394,12 @@ async function openProjectContent(content: string): Promise<boolean> {
           await showLegacyConversionReport(conversion.report, true);
           return false;
         }
-        projectInput = conversion.project;
-        convertedLegacyProject = true;
+        convertedProject = conversion.project;
       } finally {
         loading.close();
       }
     }
-    const result = openProject(projectInput, {
-      gameDataRepository: gameDataRepository,
-    });
+    const result = openProject(convertedProject ?? parsedInput, { gameDataRepository });
     if (!result.ok) {
       ElMessage.error(projectOpenFailureMessage(result));
       return false;
@@ -1403,7 +1415,7 @@ async function openProjectContent(content: string): Promise<boolean> {
     if (selection === null) return false;
     if (projectSession.snapshot.revision !== revision)
       throw new Error(t('projectTransfer.changed'));
-    await acceptOpenedProject(result.project, convertedLegacyProject, selection);
+    await acceptOpenedProject(result.project, convertedProject !== undefined, selection);
     if (
       legacyConversionReport !== null &&
       (legacyConversionReport.issues.length > 0 || legacyConversionReport.fatalIssues.length > 0)
@@ -2130,12 +2142,8 @@ const mobileLibrary = computed<MobileLibraryEntry[]>(() =>
 const selectedConsumableUse = computed(() => {
   const id = selectedConsumableUseId.value;
   if (id === null) return null;
-  for (let trackIndex = 0; trackIndex < scenario.value.tracks.length; trackIndex += 1) {
-    const track = scenario.value.tracks[trackIndex];
-    const use = track?.consumableUses?.find(candidate => candidate.id === id);
-    if (use !== undefined) return { trackIndex: trackIndex as TrackIndex, use };
-  }
-  return null;
+  const use = scenario.value.markers.find(marker => marker.kind === 'consumableUse' && marker.id === id);
+  return use?.kind === 'consumableUse' ? { trackIndex: resolveScenarioMarkerTrack(scenario.value.tracks, use.owner), use } : null;
 });
 const selectedLibraryEntry = computed(() => {
   const selection = selectedLibrarySkill.value;
@@ -2694,40 +2702,67 @@ function saveSkillGraphDefinition(
   );
   if (changed && definition !== target.definition) refreshSimulationAfterDefinitionChange();
 }
-const selectedExternalEventMarker = computed(() => {
-  if (selectedMarker.value?.kind !== 'externalEvent') return null;
-  return (
-    (scenario.value.battle.externalEventMarkers ?? []).find(
-      marker => marker.id === selectedMarker.value?.id,
-    ) ?? null
-  );
+type MarkerOfKind<K extends ScenarioMarkerDocument['kind']> = Extract<ScenarioMarkerDocument, { kind: K }>;
+const markersByTrack = computed(() => {
+  const groups = scenario.value.tracks.map(() => ({
+    controlSwitch: [] as MarkerOfKind<'controlSwitch'>[],
+    dodge: [] as MarkerOfKind<'dodge'>[],
+    consumableUse: [] as MarkerOfKind<'consumableUse'>[],
+    interactions: [] as MarkerOfKind<'pickup' | 'operatorHit'>[],
+  }));
+  for (const marker of scenario.value.markers) {
+    if (!hasOperatorOwner(marker)) continue;
+    const group = groups[resolveScenarioMarkerTrack(scenario.value.tracks, marker.owner)]!;
+    switch (marker.kind) {
+      case 'controlSwitch': group.controlSwitch.push(marker); break;
+      case 'dodge': group.dodge.push(marker); break;
+      case 'consumableUse': group.consumableUse.push(marker); break;
+      default:
+        if (marker.owner.scope === 'operator') group.interactions.push(marker);
+    }
+  }
+  return groups;
 });
-const selectedExternalEventTargetLabel = computed(() => {
-  const marker = selectedExternalEventMarker.value;
+const selectedStoredMarker = computed(() => {
+  const selected = selectedMarker.value;
+  return selected && scenario.value.markers.find(marker => marker.kind === selected.kind && marker.id === selected.id);
+});
+const selectedInteractionMarker = computed(() => {
+  const marker = selectedStoredMarker.value;
+  return marker?.kind === 'pickup' || marker?.kind === 'operatorHit' || marker?.kind === 'comboCooldownControl' ? marker : null;
+});
+function interactionMarkerTitle(marker: NonNullable<typeof selectedInteractionMarker.value>) {
+  if (marker.kind === 'pickup' && marker.owner.scope === 'operator') {
+    const slug =
+      scenario.value.tracks[resolveScenarioMarkerTrack(scenario.value.tracks, marker.owner)]
+        ?.operator?.operatorSlug;
+    const rule =
+      slug && editorGameDataRepository.getOperator(slug)?.timelineInteractions?.[marker.group];
+    if (rule) return pickupLabel(rule.nameKey);
+  }
+  if (marker.kind === 'operatorHit') return t('timeline.markerLabels.operatorHitShort');
+  return t(`timeline.markerLabels.${interactionMarkerLabel(marker)}`);
+}
+function pickupLabel(nameKey: string) {
+  return t('timeline.markerContext.pickupChoice', { skill: t(nameKey) });
+}
+const selectedInteractionTargetLabel = computed(() => {
+  const marker = selectedInteractionMarker.value;
   if (marker === null) return '';
-  if (marker.target.scope === 'team') return t('timeline.markerInspector.teamTarget');
-  const track = scenario.value.tracks[marker.target.trackIndex];
+  if (marker.owner.scope === 'team') return t('timeline.markerInspector.teamTarget');
+  const track =
+    scenario.value.tracks[resolveScenarioMarkerTrack(scenario.value.tracks, marker.owner)];
   return track === null || track.operator === null
     ? t('timeline.emptyTrack')
     : operatorName(track.operator.operatorSlug);
 });
 const selectedDocumentMarker = computed(() => {
   const selection = selectedMarker.value;
-  if (selection === null || selection.kind === 'externalEvent') return null;
-  if (selection.kind === 'cycleBoundary') {
-    const marker = scenario.value.battle.cycleBoundaries.find(item => item.id === selection.id);
-    return marker === undefined ? null : { ...marker, kind: selection.kind };
-  }
-  if (selection.kind === 'controlSwitch') {
-    const marker = scenario.value.battle.controlSwitches.find(item => item.id === selection.id);
-    return marker === undefined ? null : { ...marker, kind: selection.kind };
-  }
-  if (selection.kind === 'dodge') {
-    const marker = (scenario.value.battle.dodgeMarkers ?? []).find(
-      item => item.id === selection.id,
-    );
-    return marker === undefined ? null : { ...marker, kind: selection.kind };
-  }
+  const marker = selectedStoredMarker.value;
+  if (marker?.kind === 'cycleBoundary') return marker;
+  if (marker?.kind === 'controlSwitch' || marker?.kind === 'dodge')
+    return { ...marker, trackIndex: resolveScenarioMarkerTrack(scenario.value.tracks, marker.owner) };
+  if (selection?.kind !== 'simulationStart' && selection?.kind !== 'simulationEnd') return null;
   const frame =
     selection.kind === 'simulationStart'
       ? scenario.value.battle.simulationRange?.startFrame
@@ -2973,7 +3008,7 @@ const rulerOperations = computed<TimelineOperationMarkerInput[]>(() => {
       });
     }
   }
-  for (const marker of scenario.value.battle.controlSwitches) {
+  for (const marker of controlSwitchInputs(scenario.value)) {
     operations.push({
       id: `switch:${marker.id}`,
       kind: 'switch',
@@ -3506,7 +3541,7 @@ const publishedEnemyTargetSelection = computed(() => {
   const published = publishedSimulation.value;
   return {
     order: published ? levelEnemies(published.scenario.level).map(enemy => enemy.id) : [],
-    switches: published?.scenario.battle.enemyTargetSwitches ?? [],
+    switches: published ? enemyTargetInputs(published.scenario) : [],
   };
 });
 const publishedMonitoredEnemy = computed(() => {
@@ -3614,22 +3649,33 @@ const operatorStatusTimelineSources = computed(() =>
   publishedOperatorTracks.value.flatMap(track => {
     const operator = editorGameDataRepository.getOperator(track.slug);
     const definition = operator?.passiveUi;
+    const entities = Object.entries(operator?.abilityEntityDefinitions ?? {});
     return [
       ...(definition === undefined ? [] : [{ operatorId: track.id, definition }]),
-      ...Object.entries(operator?.abilityEntityDefinitions ?? {}).flatMap(
-        ([abilityEntityId, entity]) =>
-          entity.presentation && !entity.presentation.damageDisplayBuffId
-            ? [
-                {
-                  operatorId: track.id,
-                  definition: {
-                    kind: 'abilityEntityCount' as const,
-                    abilityEntityId,
-                    ...entity.presentation,
-                  },
+      ...Object.values(operator?.timelineInteractions ?? {}).map(rule => ({
+        operatorId: track.id,
+        groupedEntityIds: [...rule.entityIds],
+        definition: {
+          kind: 'abilityEntityCount' as const,
+          placement: 'operator' as const,
+          abilityEntityId: rule.entityIds[0]!,
+          icon: rule.icon,
+          nameKey: rule.nameKey,
+        },
+      })),
+      ...entities.flatMap(([abilityEntityId, entity]) =>
+        entity.presentation && !entity.presentation.damageDisplayBuffId
+          ? [
+              {
+                operatorId: track.id,
+                definition: {
+                  kind: 'abilityEntityCount' as const,
+                  abilityEntityId,
+                  ...entity.presentation,
                 },
-              ]
-            : [],
+              },
+            ]
+          : [],
       ),
     ];
   }),
@@ -5264,32 +5310,12 @@ function handleTimelineLanePointerDown(event: PointerEvent): void {
   if (event.ctrlKey || event.metaKey) beginMarqueeGesture(event, true);
 }
 
-function openConsumableSelectionFromContext(): void {
-  const target = markerContextTarget.value;
-  if (target === null || target.existing !== undefined) return;
-  const track = scenario.value.tracks[target.trackIndex];
-  if (track === null || track.operator === null) return;
-  consumableDialogTarget.value = { trackIndex: target.trackIndex, frame: target.frame };
-  markerContextTarget.value = null;
-}
-
 function addConsumableFromDialog(consumableId: string): void {
   const target = consumableDialogTarget.value;
   if (target === null) return;
   const id = ids.allocate('consumableUse');
-  commitScenario('placeConsumableUse', current => ({
-    ...current,
-    tracks: current.tracks.map((track, index) =>
-      index !== target.trackIndex || track === null
-        ? track
-        : {
-            ...track,
-            consumableUses: [
-              ...(track.consumableUses ?? []),
-              { id, frame: target.frame, consumableId },
-            ],
-          },
-    ) as typeof current.tracks,
+  commitScenario('placeConsumableUse', current => appendScenarioMarker(current, {
+    kind: 'consumableUse', id, frame: target.frame, consumableId, owner: operatorOwner(current, target.trackIndex),
   }));
   consumableDialogTarget.value = null;
   selectedTrack.value = target.trackIndex;
@@ -5301,16 +5327,11 @@ function updateSelectedConsumableUse(patch: { frame?: number; consumableId?: str
   if (selected === null) return;
   commitScenario('updateConsumableUse', current => ({
     ...current,
-    tracks: current.tracks.map((track, index) =>
-      index !== selected.trackIndex || track === null
-        ? track
-        : {
-            ...track,
-            consumableUses: (track.consumableUses ?? []).map(use =>
-              use.id === selected.use.id ? { ...use, ...patch } : use,
-            ),
-          },
-    ) as typeof current.tracks,
+    markers: current.markers.map(marker =>
+      marker.kind === 'consumableUse' && marker.id === selected.use.id
+        ? { ...marker, ...patch }
+        : marker,
+    ),
   }));
 }
 
@@ -5443,7 +5464,7 @@ const creatingInheritedScenario = ref(false);
 async function inheritFromContext(): Promise<void> {
   const target = markerContextTarget.value;
   if (target?.existing?.kind !== 'cycleBoundary' || creatingInheritedScenario.value) return;
-  const boundary = scenario.value.battle.cycleBoundaries.find(
+  const boundary = markersOfKind(scenario.value, 'cycleBoundary').find(
     item => item.id === target.existing?.id,
   );
   if (boundary === undefined) return;
@@ -5509,35 +5530,16 @@ function addMarkerFromContext(
           : setSimulationRangeBoundary(current, boundary, battleFrame),
     );
   } else {
-    const event: ExternalCombatEventDocument = {
-      kind: 'comboCooldownControl',
-      mode: kind === 'comboReady' ? 'ready' : 'cooldown',
-    };
-    const eventTarget = { scope: 'team' } as const;
-    commitScenario('addExternalEventMarker', current =>
-      addExternalEventMarker(
-        current,
-        ids.allocate('externalEvent'),
-        battleFrame,
-        eventTarget,
-        event,
-      ),
+    commitScenario('placeInteractionMarker', current =>
+      placeInteractionMarker(current, {
+        id: ids.allocate('comboCooldownControl'),
+        frame: battleFrame,
+        kind: 'comboCooldownControl',
+        mode: kind === 'comboReady' ? 'ready' : 'cooldown',
+        owner: { scope: 'team' },
+      }),
     );
   }
-  markerContextTarget.value = null;
-}
-
-function addSwitchMarkerFromContext(trackIndex: number): void {
-  const target = markerContextTarget.value;
-  if (target === null || target.existing !== undefined) return;
-  commitScenario('addControlSwitch', current =>
-    addControlSwitch(
-      current,
-      ids.allocate('controlSwitch'),
-      Math.max(0, target.frame),
-      trackIndex as TrackIndex,
-    ),
-  );
   markerContextTarget.value = null;
 }
 
@@ -5545,26 +5547,139 @@ function skillLibraryCardName(entry: TimelineSkillLibraryEntryViewModel): string
   return skillLibraryEntryName(skillLibraryNameEntry(entry, selectedTrackModel.value.skillLibrary));
 }
 
-function addDodgeMarkerFromContext(mode: 'dodge' | 'perfectDodge'): void {
-  const target = markerContextTarget.value;
-  if (target === null || target.existing !== undefined) return;
-  commitScenario('addDodgeMarker', current =>
-    addDodgeMarker(current, {
-      id: ids.allocate('dodge'),
-      frame: target.frame,
-      trackIndex: target.trackIndex,
-      direction: 'forward',
-      mode:
-        mode === 'perfectDodge'
-          ? { kind: 'perfectDodge', successDelayFrames: 0 }
-          : { kind: 'dodge' },
-    }),
-  );
+const trackPlacementTarget = computed(() => {
+  const marker = markerContextTarget.value;
+  const cast = contextMenuTarget.value;
+  const target = marker
+    ? marker.existing
+      ? null
+      : marker
+    : cast && selectedItems.value.length === 1 && !isHistoricalSkillInput(cast.skillCastId)
+      ? {
+          trackIndex: cast.trackIndex,
+          frame: pointerMarkerFrame(cast.x, 0, -scenario.value.battle.prepFrames),
+        }
+      : null;
+  return target && !isHistoricalInputFrame(target.frame) ? target : null;
+});
+function closeTrackPlacementMenu() {
   markerContextTarget.value = null;
+  contextMenuTarget.value = null;
 }
+function pickupGroupIcon(slug: string, group: string) {
+  return resolveImage(
+    editorGameDataRepository.getOperator(slug)?.timelineInteractions?.[group]?.icon,
+  );
+}
+const pickupChoices = computed(() => {
+  const target = trackPlacementTarget.value;
+  if (!target || target.frame < 0) return [];
+  const operator = scenario.value.tracks[target.trackIndex]?.operator;
+  if (!operator) return [];
+  const rules = editorGameDataRepository.getOperator(operator.operatorSlug)?.timelineInteractions;
+  return Object.entries(rules ?? {}).flatMap(([group, rule]) => {
+    if (rule.kind !== 'pickup') return [];
+    const icon = resolveImage(rule.icon);
+    return [
+      {
+        group,
+        label: pickupLabel(rule.nameKey),
+        ...(icon ? { icon } : {}),
+      },
+    ];
+  });
+});
+
+const pickupWarnings = computed(() => {
+  const entries = publishedReceiptEntries.value;
+  const warnings = new Set<string>();
+  for (const marker of markersOfKind(scenario.value, 'pickup')) {
+    if (
+      marker.owner.scope !== 'operator' ||
+      marker.frame > (simulationRun.value?.frame ?? -1)
+    )
+      continue;
+    const { group } = marker;
+    const owner =
+      scenario.value.tracks[resolveScenarioMarkerTrack(scenario.value.tracks, marker.owner)]?.id;
+    if (
+      !entries.some(
+        entry =>
+          entry.frame === marker.frame &&
+          entry.event === 'PickupEntered' &&
+          entry.data?.group === group &&
+          entry.data.owner === owner,
+      )
+    )
+      warnings.add(marker.id);
+  }
+  return warnings;
+});
+const trackPlacementMenu = computed(() => {
+  const target = trackPlacementTarget.value;
+  if (!target) return null;
+  const { frame, trackIndex } = target;
+  const canTargetTrack = !!scenario.value.tracks[trackIndex]?.operator;
+  function commit(name: string, command: (current: ScenarioDocument) => ScenarioDocument) {
+    commitScenario(name, command);
+    closeTrackPlacementMenu();
+  }
+  return {
+    canTargetTrack,
+    canReceiveHit: canTargetTrack && frame >= 0,
+    pickups: pickupChoices.value,
+    switchTargets: viewModel.value.tracks
+      .filter(track => track.operatorSlug !== null)
+      .map(track => ({
+        trackIndex: track.trackIndex,
+        name: operatorName(track.operatorSlug),
+        avatar:
+          track.operatorAssetSlug === null
+            ? undefined
+            : getOperatorAvatarPath(track.operatorAssetSlug),
+      })),
+    onReceiveHit: () =>
+      commit('placeInteractionMarker', current =>
+        placeInteractionMarker(current, {
+          kind: 'operatorHit',
+          id: ids.allocate('operatorHit'),
+          frame,
+          owner: operatorOwner(current, trackIndex),
+        }),
+      ),
+    onPickup: (group: string) =>
+      commit('placeInteractionMarker', current =>
+        placeInteractionMarker(current, {
+          kind: 'pickup',
+          id: ids.allocate('pickup'),
+          frame,
+          group,
+          owner: operatorOwner(current, trackIndex),
+        }),
+      ),
+    onAddSwitch: (destination: TrackIndex) =>
+      commit('addControlSwitch', current =>
+        addControlSwitch(current, ids.allocate('controlSwitch'), frame, destination),
+      ),
+    onAddDodge: (mode: 'dodge' | 'perfectDodge') =>
+      commit('addDodgeMarker', current =>
+        addDodgeMarker(current, {
+          id: ids.allocate('dodge'),
+          frame,
+          trackIndex,
+          direction: 'forward',
+          mode: mode === 'perfectDodge' ? { kind: mode, successDelayFrames: 0 } : { kind: mode },
+        }),
+      ),
+    onUseConsumable: () => {
+      consumableDialogTarget.value = { trackIndex, frame };
+      closeTrackPlacementMenu();
+    },
+  };
+});
 
 function setDodgeMarkerMode(id: string, mode: 'dodge' | 'perfectDodge'): void {
-  const marker = (scenario.value.battle.dodgeMarkers ?? []).find(item => item.id === id);
+  const marker = dodgeInputs(scenario.value).find(item => item.id === id);
   if (marker === undefined || marker.mode.kind === mode) return;
   const successDelayFrames = Math.max(
     0,
@@ -5598,13 +5713,13 @@ function removeMarkerFromContext(): void {
   markerContextTarget.value = null;
 }
 
-function setSelectedExternalEventFrame(frame: number): void {
-  const marker = selectedExternalEventMarker.value;
-  if (marker !== null) setItemFrame('externalEvent', marker.id, frame);
+function setSelectedInteractionFrame(frame: number): void {
+  const marker = selectedInteractionMarker.value;
+  if (marker !== null) setItemFrame(marker.kind, marker.id, frame);
 }
-function removeSelectedExternalEvent(): void {
-  const marker = selectedExternalEventMarker.value;
-  if (marker !== null) removeItem('externalEvent', marker.id);
+function removeSelectedInteraction(): void {
+  const marker = selectedInteractionMarker.value;
+  if (marker !== null) removeItem(marker.kind, marker.id);
 }
 function setSelectedDocumentMarkerFrame(frame: number): void {
   const marker = selectedDocumentMarker.value;
@@ -7008,24 +7123,23 @@ function reorderEnemyInstance(id: string, beforeId?: string): void {
 function setEnemyTarget(targetId: string, frame: number, id?: string): void {
   commitScenario('setEnemyTarget', current => ({
     ...current,
-    battle: {
-      ...current.battle,
-      enemyTargetSwitches: [
-        ...(current.battle.enemyTargetSwitches ?? []).filter(
-          marker => marker.id !== id && marker.frame !== frame,
-        ),
-        { id: id ?? ids.allocate('enemyTarget'), frame, targetId },
-      ].sort((a, b) => a.frame - b.frame),
-    },
+    markers: [
+      ...current.markers.filter(
+        m => m.kind !== 'enemyTargetSwitch' || (m.id !== id && m.frame !== frame),
+      ),
+      {
+        kind: 'enemyTargetSwitch',
+        id: id ?? ids.allocate('enemyTarget'),
+        frame,
+        enemyId: targetId,
+      },
+    ],
   }));
 }
 function removeEnemyTarget(id: string): void {
   commitScenario('removeEnemyTarget', current => ({
     ...current,
-    battle: {
-      ...current.battle,
-      enemyTargetSwitches: current.battle.enemyTargetSwitches?.filter(marker => marker.id !== id),
-    },
+    markers: current.markers.filter(m => m.kind !== 'enemyTargetSwitch' || m.id !== id),
   }));
 }
 function applyStageEnemies(entries: StageEnemySelection[]): void {
@@ -7039,7 +7153,7 @@ function copyEnemyInstance(id: string): void {
   if (!enemy) return;
   enemyTrackClipboard.value = copyEnemyTrack(
     toRaw(enemy),
-    toRaw(scenario.value.battle.enemyTargetSwitches ?? []),
+    toRaw(enemyTargetInputs(scenario.value)),
   );
   timelineClipboard.value = null;
   ElMessage.success({ message: t('timeline.shortcut.copied'), duration: 800 });
@@ -7056,13 +7170,15 @@ function pasteEnemyInstance(beforeId?: string): void {
     return {
       ...current,
       level: { kind: 'multiEnemies', enemies },
-      battle: {
-        ...current.battle,
-        enemyTargetSwitches: [
-          ...(current.battle.enemyTargetSwitches ?? []),
-          ...copied.switches,
-        ].sort((a, b) => a.frame - b.frame),
-      },
+      markers: [
+        ...current.markers,
+        ...copied.switches.map(({ id, frame, targetId }) => ({
+          kind: 'enemyTargetSwitch' as const,
+          id,
+          frame,
+          enemyId: targetId,
+        })),
+      ],
     };
   });
   monitoredEnemyId.value = copied.enemy.id;
@@ -7920,7 +8036,7 @@ function setMobileGuideFrame(frame: number | null): void {
             <b>{{ t('timeline.markerLabels.simulationEnd') }}</b>
           </div>
           <div
-            v-for="boundary in scenario.battle.cycleBoundaries"
+            v-for="boundary in markersOfKind(scenario, 'cycleBoundary')"
             :key="boundary.id"
             class="timeline-marker cycle-boundary-marker"
             :class="{
@@ -7949,37 +8065,35 @@ function setMobileGuideFrame(frame: number | null): void {
             <b>{{ t('timeline.markerLabels.cycleBoundary') }}</b>
           </div>
           <div
-            v-for="marker in (scenario.battle.externalEventMarkers ?? []).filter(
-              item => item.target.scope === 'team',
-            )"
-            :key="marker.id"
+            v-for="marker in markersOfKind(scenario, 'comboCooldownControl')"
+            :key="timelineItemKey(marker)"
             class="timeline-marker team-event-marker"
             :class="{
-              'is-ready': marker.event.mode === 'ready',
-              selected: isItemSelected('externalEvent', marker.id),
+              'is-ready': interactionMarkerLabel(marker) === 'ready',
+              selected: isItemSelected(marker.kind, marker.id),
             }"
-            :title="t(`comboControl.${marker.event.mode}`)"
+            :title="interactionMarkerTitle(marker)"
             :style="{
               left: `${TIMELINE_TRACK_HEADER_WIDTH + timelineFramePx(marker.frame)}px`,
             }"
-            :data-timeline-item-key="timelineItemKey({ kind: 'externalEvent', id: marker.id })"
-            @click.stop="handleItemSelection($event, 'externalEvent', marker.id)"
+            :data-timeline-item-key="timelineItemKey({ kind: marker.kind, id: marker.id })"
+            @click.stop="handleItemSelection($event, marker.kind, marker.id)"
             @pointerdown="
-              beginItemMove($event, timelineItemKey({ kind: 'externalEvent', id: marker.id }))
+              beginItemMove($event, timelineItemKey({ kind: marker.kind, id: marker.id }))
             "
             @contextmenu="
               openExistingMarkerContextMenu(
                 $event,
-                'externalEvent',
+                marker.kind,
                 marker.id,
                 marker.frame,
                 selectedTrack,
-                t(`comboControl.${marker.event.mode}`),
+                interactionMarkerTitle(marker),
               )
             "
           >
             <span>{{ formatGuideFrame(marker.frame) }}</span>
-            <b>{{ t(`comboControl.${marker.event.mode}Short`) }}</b>
+            <b>{{ t(`timeline.markerLabels.${interactionMarkerLabel(marker)}Short`) }}</b>
           </div>
 
           <div class="track-stack">
@@ -8227,12 +8341,12 @@ function setMobileGuideFrame(frame: number | null): void {
                   }"
                 ></div>
                 <EaButton
-                  v-for="use in scenario.tracks[track.trackIndex]?.consumableUses ?? []"
+                  v-for="use in markersByTrack[track.trackIndex]!.consumableUse"
                   :key="use.id"
                   type="button"
                   variant="ghost"
                   icon-only
-                  class="timeline-marker consumable-use-marker"
+                  class="timeline-marker framed-action-marker consumable-use-marker"
                   :class="{
                     dragging: itemDragging('consumableUse', use.id),
                     selected: isItemSelected('consumableUse', use.id),
@@ -8262,14 +8376,13 @@ function setMobileGuideFrame(frame: number | null): void {
                     alt=""
                     aria-hidden="true"
                   />
+                  <i class="framed-action-marker__pointer" aria-hidden="true"></i>
                 </EaButton>
                 <TimelineControlSwitchMarker
                   v-if="
                     timelineViewLayers.switchMarkers && isOperatorEffectsVisible(track.trackIndex)
                   "
-                  v-for="marker in scenario.battle.controlSwitches.filter(
-                    item => item.trackIndex === track.trackIndex,
-                  )"
+                  v-for="marker in markersByTrack[track.trackIndex]!.controlSwitch"
                   :key="marker.id"
                   :data-timeline-item-key="
                     timelineItemKey({ kind: 'controlSwitch', id: marker.id })
@@ -8338,12 +8451,60 @@ function setMobileGuideFrame(frame: number | null): void {
                   "
                 />
                 <div
+                  v-for="marker in markersByTrack[track.trackIndex]!.interactions"
+                  :key="timelineItemKey(marker)"
+                  class="timeline-marker framed-action-marker"
+                  :class="{
+                    'pickup-marker': marker.kind === 'pickup',
+                    'receive-hit-marker': marker.kind === 'operatorHit',
+                    selected: isItemSelected(marker.kind, marker.id),
+                  }"
+                  :style="{ left: `${timelineFramePx(marker.frame)}px` }"
+                  :title="
+                    pickupWarnings.has(marker.id)
+                      ? t('timeline.markerInspector.pickupMissed')
+                      : interactionMarkerTitle(marker)
+                  "
+                  :data-timeline-item-key="timelineItemKey({ kind: marker.kind, id: marker.id })"
+                  @pointerdown="
+                    beginItemMove($event, timelineItemKey({ kind: marker.kind, id: marker.id }))
+                  "
+                  @click.stop="handleItemSelection($event, marker.kind, marker.id)"
+                  @contextmenu="
+                    openExistingMarkerContextMenu(
+                      $event,
+                      marker.kind,
+                      marker.id,
+                      marker.frame,
+                      track.trackIndex,
+                      interactionMarkerTitle(marker),
+                    )
+                  "
+                >
+                  <TimelinePickupIcon
+                    v-if="marker.kind === 'pickup'"
+                    :icon="
+                      track.operatorSlug
+                        ? pickupGroupIcon(track.operatorSlug, marker.group)
+                        : undefined
+                    "
+                  />
+                  <TimelineReceiveHitIcon v-else-if="marker.kind === 'operatorHit'" />
+                  <span v-else>{{
+                    t(`timeline.markerLabels.${interactionMarkerLabel(marker)}Short`)
+                  }}</span>
+                  <i
+                    v-if="marker.kind === 'pickup' || marker.kind === 'operatorHit'"
+                    class="framed-action-marker__pointer"
+                    aria-hidden="true"
+                  ></i>
+                  <span v-if="pickupWarnings.has(marker.id)" class="dodge-marker__warning">!</span>
+                </div>
+                <div
                   v-if="timelineViewLayers.dodgeMarkers"
-                  v-for="marker in (scenario.battle.dodgeMarkers ?? []).filter(
-                    item => item.trackIndex === track.trackIndex,
-                  )"
+                  v-for="marker in markersByTrack[track.trackIndex]!.dodge"
                   :key="marker.id"
-                  class="timeline-marker dodge-marker"
+                  class="timeline-marker framed-action-marker"
                   :data-timeline-item-key="timelineItemKey({ kind: 'dodge', id: marker.id })"
                   :class="{
                     'dodge-marker--perfect': marker.mode.kind === 'perfectDodge',
@@ -8390,7 +8551,7 @@ function setMobileGuideFrame(frame: number | null): void {
                     }"
                     aria-hidden="true"
                   ></span>
-                  <i class="dodge-marker__pointer"></i>
+                  <i class="framed-action-marker__pointer"></i>
                 </div>
                 <TimelineSkillCastGroupMarker
                   v-for="group in skillCastGroupsByTrack[track.trackIndex]"
@@ -8581,7 +8742,7 @@ function setMobileGuideFrame(frame: number | null): void {
                   :key="activeProjectScenarioId"
                   :selected-id="monitoredEnemyId"
                   :health-curve="monitoredHealthCurve"
-                  :target-switches="scenario.battle.enemyTargetSwitches"
+                  :target-switches="enemyTargetInputs(scenario)"
                   :published-target-selection="publishedEnemyTargetSelection"
                   :published-initial-frame="-(publishedSimulation?.scenario.battle.prepFrames ?? 0)"
                   :published-end-frame="publishedSimulation?.run.frame ?? 0"
@@ -8820,14 +8981,15 @@ function setMobileGuideFrame(frame: number | null): void {
       <div v-else class="empty-panel">{{ t('timeline.activityBar.contractUnavailable') }}</div>
     </template>
     <template #right="{ tool }">
-      <TimelineExternalEventInspector
-        v-if="tool === 'inspector' && selectedExternalEventMarker !== null"
-        :marker="selectedExternalEventMarker"
-        :read-only="isHistoricalInputFrame(selectedExternalEventMarker.frame)"
+      <TimelineInteractionInspector
+        v-if="tool === 'inspector' && selectedInteractionMarker !== null"
+        :marker="selectedInteractionMarker"
+        :read-only="isHistoricalInputFrame(selectedInteractionMarker.frame)"
         :maximum-frame="scenario.battle.durationFrames"
-        :target-label="selectedExternalEventTargetLabel"
-        @set-frame="setSelectedExternalEventFrame"
-        @remove="removeSelectedExternalEvent"
+        :target-label="selectedInteractionTargetLabel"
+        :title="interactionMarkerTitle(selectedInteractionMarker)"
+        @set-frame="setSelectedInteractionFrame"
+        @remove="removeSelectedInteraction"
       />
       <TimelineDocumentMarkerInspector
         v-else-if="tool === 'inspector' && selectedDocumentMarker !== null"
@@ -8953,7 +9115,9 @@ function setMobileGuideFrame(frame: number | null): void {
         v-else-if="tool === 'inspector' && selectedConsumableUse !== null"
         class="consumable-inspector"
       >
-        <h3>{{ t('consumable.inspectorTitle') }}</h3>
+        <TimelineInspectorHeader>{{
+          getConsumableGameName(selectedConsumableUse.use.consumableId)
+        }}</TimelineInspectorHeader>
         <label>
           <span>{{ t('consumable.item') }}</span>
           <EaSelect
@@ -9082,7 +9246,11 @@ function setMobileGuideFrame(frame: number | null): void {
     @toggle-lock="toggleContextCastField('locked')"
     @toggle-disabled="toggleContextCastField('disabled')"
     @set-color="setContextCastColor"
-  />
+  >
+    <template #track-placement>
+      <TimelineTrackMarkerPlacement v-if="trackPlacementMenu" v-bind="trackPlacementMenu" />
+    </template>
+  </TimelineActionContextMenu>
   <TimelineMarkerContextMenu
     :can-paste="timelineClipboard !== null"
     @cut="cutContextSelection"
@@ -9115,22 +9283,6 @@ function setMobileGuideFrame(frame: number | null): void {
     :visible="markerContextTarget !== null"
     :x="markerContextTarget?.x ?? 0"
     :y="markerContextTarget?.y ?? 0"
-    :frame="markerContextTarget?.frame ?? 0"
-    :can-target-track="
-      scenario.tracks[markerContextTarget?.trackIndex ?? selectedTrack]?.operator != null
-    "
-    :switch-targets="
-      viewModel.tracks
-        .filter(track => track.operatorSlug !== null)
-        .map(track => ({
-          trackIndex: track.trackIndex,
-          name: operatorName(track.operatorSlug),
-          avatar:
-            track.operatorAssetSlug === null
-              ? undefined
-              : getOperatorAvatarPath(track.operatorAssetSlug),
-        }))
-    "
     :has-simulation-start="scenario.battle.simulationRange?.startFrame !== undefined"
     :has-simulation-end="scenario.battle.simulationRange?.endFrame !== undefined"
     :existing-label="
@@ -9142,9 +9294,8 @@ function setMobileGuideFrame(frame: number | null): void {
     "
     :existing-dodge-mode="
       selectedItems.length === 1 && markerContextTarget?.existing?.kind === 'dodge'
-        ? scenario.battle.dodgeMarkers?.find(
-            marker => marker.id === markerContextTarget?.existing?.id,
-          )?.mode.kind
+        ? dodgeInputs(scenario)?.find(marker => marker.id === markerContextTarget?.existing?.id)
+            ?.mode.kind
         : undefined
     "
     :labels="{
@@ -9156,28 +9307,25 @@ function setMobileGuideFrame(frame: number | null): void {
       removeSimulationStart: t('timeline.markerContext.removeSimulationStart'),
       addSimulationEnd: t('timeline.markerContext.addSimulationEnd'),
       removeSimulationEnd: t('timeline.markerContext.removeSimulationEnd'),
-      switchOperator: t('timeline.markerContext.switchOperator'),
-      dodge: t('timeline.markerContext.dodge'),
-      perfectDodge: t('timeline.markerContext.perfectDodge'),
       switchToDodge: t('timeline.markerContext.switchToDodge'),
       switchToPerfectDodge: t('timeline.markerContext.switchToPerfectDodge'),
-      useConsumable: t('consumable.useFromContext'),
     }"
     @close="markerContextTarget = null"
     @inherit="inheritFromContext"
     @add-cycle="addMarkerFromContext('cycle')"
     @toggle-simulation-start="addMarkerFromContext('simulationStart')"
     @toggle-simulation-end="addMarkerFromContext('simulationEnd')"
-    @add-switch="addSwitchMarkerFromContext"
-    @add-dodge="addDodgeMarkerFromContext"
     @set-dodge-mode="setDodgeMarkerModeFromContext"
     @copy-marker="copyMarkerFromContext"
-    @use-consumable="openConsumableSelectionFromContext"
     @control-combo-cooldown="
       addMarkerFromContext($event === 'ready' ? 'comboReady' : 'comboCooldown')
     "
     @delete="removeMarkerFromContext"
-  />
+  >
+    <template #track-placement>
+      <TimelineTrackMarkerPlacement v-if="trackPlacementMenu" v-bind="trackPlacementMenu" />
+    </template>
+  </TimelineMarkerContextMenu>
   <ConsumableSelectionDialog
     :visible="consumableDialogTarget !== null"
     :consumables="consumables"
@@ -9809,8 +9957,8 @@ button:disabled {
 }
 
 .consumable-use-marker img {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
 }
 
@@ -10105,38 +10253,6 @@ button:disabled {
   cursor: ew-resize;
 }
 
-.consumable-use-marker {
-  top: calc(var(--timeline-action-top, 55px) - 36px);
-  z-index: 31;
-  width: 28px;
-  height: 28px;
-  padding: 2px;
-  transform: translateX(-14px);
-  border: 1px solid rgb(255 255 255 / 55%);
-  border-radius: 50%;
-  background: rgb(25 28 34 / 92%);
-  cursor: pointer;
-}
-
-.consumable-use-marker.dragging {
-  cursor: grabbing;
-}
-
-.consumable-use-marker::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  width: 1px;
-  height: 8px;
-  background: rgb(255 255 255 / 65%);
-}
-
-.consumable-use-marker[aria-pressed='true'] {
-  border-color: var(--ea-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ea-accent) 45%, transparent);
-}
-
 .consumable-inspector {
   display: grid;
   gap: 12px;
@@ -10368,13 +10484,15 @@ button:disabled {
   text-shadow: 0 0 2px color-mix(in srgb, var(--combo-control-color) 50%, transparent);
 }
 
-.dodge-marker {
+.framed-action-marker {
   top: calc(var(--timeline-action-top, 55px) - 34px);
   width: 24px;
   height: 24px;
   z-index: 31;
   display: grid;
   place-items: center;
+  box-sizing: border-box;
+  padding: 0;
   border: 1px solid #67e8f9;
   border-radius: 3px;
   background: rgb(9 35 43 / 94%);
@@ -10383,7 +10501,25 @@ button:disabled {
   cursor: grab;
 }
 
-.dodge-marker.dragging {
+.framed-action-marker.receive-hit-marker {
+  border-color: #df8585;
+  background: rgb(50 28 31 / 95%);
+  color: #efaaaa;
+}
+
+.framed-action-marker.pickup-marker {
+  border-color: #b99be8;
+  background: rgb(41 29 55 / 95%);
+  color: #d7bdf7;
+}
+
+.framed-action-marker.consumable-use-marker {
+  border-color: #83c6a2;
+  background: rgb(24 43 34 / 95%);
+  color: #abe4c2;
+}
+
+.framed-action-marker.dragging {
   cursor: grabbing;
 }
 
@@ -10400,9 +10536,11 @@ button:disabled {
   pointer-events: none;
 }
 
-.dodge-marker__pointer {
+.framed-action-marker__pointer {
   position: absolute;
-  top: 23px;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
   width: 0;
   height: 0;
   border-top: 6px solid currentColor;
@@ -10439,7 +10577,7 @@ button:disabled {
   line-height: 1;
 }
 
-.dodge-marker.selected {
+.framed-action-marker.selected {
   border-color: #fff;
   box-shadow: 0 0 7px currentColor;
 }

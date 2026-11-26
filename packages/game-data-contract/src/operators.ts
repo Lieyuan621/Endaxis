@@ -552,6 +552,19 @@ export interface OperatorDefinition {
   entityBlackboard?: Readonly<Record<string, number | string>>;
   /** CharacterTable 明确挂载的角色专属战斗 HUD；不存在时不得从遗留 prefab 猜测。 */
   passiveUi?: OperatorPassiveUiDefinition;
+  /** 时间轴可以声明的干员交互，以交互 ID 为键。 */
+  timelineInteractions?: Readonly<
+    Record<
+      string,
+      {
+        readonly kind: 'pickup';
+        readonly nameKey: string;
+        readonly icon: ImageRef;
+        readonly entityIds: readonly string[];
+        readonly auraNode: string;
+      }
+    >
+  >;
   /** 技能间共享的实体黑板初值；条件只读取已解析的静态构筑。 */
   entityBlackboardInitializers?: readonly OperatorEntityBlackboardInitializerDefinition[];
   /** 角色自身始终安装的隐藏基础被动；与受构筑开关控制的天赋/潜能被动分开。 */

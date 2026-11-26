@@ -1,8 +1,6 @@
 import { createEmptyScenario } from '../../core/project/createProject';
-import {
-  getDodgeMarkerHistory,
-  getSkillCastPlacementChains,
-} from '../../core/project/skillCastPlacement';
+import { getSkillCastPlacementChains } from '../../core/project/skillCastPlacement';
+import { markerHistory } from '../../core/project/scenarioMarkers';
 import type { EndaxisProjectDocument, ScenarioDocument } from '../../core/project/schema';
 
 export const MAX_PROJECT_SCENARIOS = 14;
@@ -28,7 +26,6 @@ function resetInheritedFuture(current: ScenarioDocument, boundary: number): Scen
         : {
             ...track,
             skillCasts: track.skillCasts.filter(cast => historicalCastIds.has(cast.id)),
-            consumableUses: track.consumableUses?.filter(use => use.frame < boundary),
           },
     ) as ScenarioDocument['tracks'],
     connections: current.connections.filter(
@@ -36,18 +33,7 @@ function resetInheritedFuture(current: ScenarioDocument, boundary: number): Scen
         historicalCastIds.has(connection.from.skillCastId) &&
         historicalCastIds.has(connection.to.skillCastId),
     ),
-    battle: {
-      ...current.battle,
-      cycleBoundaries: current.battle.cycleBoundaries.filter(marker => marker.frame < boundary),
-      controlSwitches: current.battle.controlSwitches.filter(marker => marker.frame < boundary),
-      externalEventMarkers: current.battle.externalEventMarkers?.filter(
-        marker => marker.frame < boundary,
-      ),
-      dodgeMarkers:
-        current.battle.dodgeMarkers === undefined
-          ? undefined
-          : getDodgeMarkerHistory(current.battle.dodgeMarkers, boundary),
-    },
+    markers: markerHistory(current, boundary),
   };
 }
 

@@ -17,7 +17,13 @@ import {
   pasteHitOverrides,
   type ClipboardSource,
 } from './hitOverrideClipboard';
-import { type TimelineItem, type TimelineItemRef, type TimelinePointCopy } from './timelineItems';
+import {
+  cloneTimelineDocument,
+  pasteTimelinePoint,
+  type TimelineItem,
+  type TimelineItemRef,
+  type TimelinePointCopy,
+} from './timelineItems';
 
 interface ClipboardCast {
   readonly trackIndex: TrackIndex;
@@ -60,18 +66,11 @@ export function copyTimelineItems(
     hitOverrides: skills?.hitOverrides,
     connections: skills?.connections ?? [],
     points,
-    originFrame: Math.min(skills?.originFrame ?? Infinity, ...points.map(point => point.frame)),
+    originFrame: Math.min(
+      skills?.originFrame ?? Infinity,
+      ...points.map(point => point.marker.frame),
+    ),
   };
-}
-
-function cloneValue<T>(value: T): T {
-  if (Array.isArray(value)) return value.map(cloneValue) as T;
-  if (value !== null && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, entry]) => [key, cloneValue(entry)]),
-    ) as T;
-  }
-  return value;
 }
 
 export function copyTimelineActions(
@@ -84,7 +83,10 @@ export function copyTimelineActions(
       ? []
       : track.skillCasts
           .filter(cast => selectedIds.has(cast.id))
-          .map(cast => ({ trackIndex: trackIndex as TrackIndex, cast: cloneValue(cast) })),
+          .map(cast => ({
+            trackIndex: trackIndex as TrackIndex,
+            cast: cloneTimelineDocument(cast),
+          })),
   );
   if (casts.length === 0) return null;
 
@@ -115,7 +117,7 @@ export function copyTimelineActions(
         connection =>
           copiedIds.has(connection.from.skillCastId) && copiedIds.has(connection.to.skillCastId),
       )
-      .map(cloneValue),
+      .map(cloneTimelineDocument),
   };
 }
 
@@ -151,7 +153,7 @@ export function pasteTimelineActions(
   const minimum = Math.max(
     scenario.inheritance?.frame ?? -scenario.battle.prepFrames,
     ...(clipboard.points ?? []).map(
-      point => point.minimumFrame - (point.frame - clipboard.originFrame),
+      point => point.minimumFrame - (point.marker.frame - clipboard.originFrame),
     ),
   );
   const maximumOffset = Math.max(
@@ -161,7 +163,7 @@ export function pasteTimelineActions(
         ? []
         : [entry.cast.placement.startFrame - clipboard.originFrame],
     ),
-    ...(clipboard.points ?? []).map(point => point.frame - clipboard.originFrame),
+    ...(clipboard.points ?? []).map(point => point.marker.frame - clipboard.originFrame),
   );
   const maximum = scenario.battle.durationFrames - maximumOffset;
   if (maximum < minimum) throw new RangeError('Clipboard selection does not fit the timeline');
@@ -191,7 +193,7 @@ export function pasteTimelineActions(
       placement = { afterCastId: previous };
     }
     const cast: SkillCastDocument = {
-      ...cloneValue(entry.cast),
+      ...cloneTimelineDocument(entry.cast),
       id: skillCastId,
       placement,
     };
@@ -209,14 +211,15 @@ export function pasteTimelineActions(
   let next = { ...scenario, tracks, connections };
   const itemRefs: TimelineItemRef[] = createdIds.map(id => ({ kind: 'skill', id }));
   for (const point of clipboard.points ?? []) {
-    const id = ids.allocate(point.kind);
-    next = point.paste(
+    const id = ids.allocate(point.marker.kind);
+    next = pasteTimelinePoint(
       next,
+      point,
       id,
-      startFrame + point.frame - clipboard.originFrame,
+      startFrame + point.marker.frame - clipboard.originFrame,
       point.trackIndex === undefined ? undefined : destinations.get(point.trackIndex),
     );
-    itemRefs.push({ kind: point.kind, id });
+    itemRefs.push({ kind: point.marker.kind, id });
   }
   const mapped =
     clipboard.hitOverrides &&

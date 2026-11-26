@@ -38,15 +38,11 @@ function prefixKey(scenario: ScenarioDocument, plan: InputIdentity, frame: numbe
           track && {
             ...track,
             skillCasts: track.skillCasts.filter(cast => ids.has(cast.id)),
-            consumableUses: [],
           },
       ),
-      battle: {
-        ...scenario.battle,
-        controlSwitches: [],
-        dodgeMarkers: [],
-        externalEventMarkers: [],
-      },
+      markers: scenario.markers.filter(
+        m => m.kind === 'enemyTargetSwitch' || m.kind === 'cycleBoundary',
+      ),
     },
     initialFrame: resolveScenarioInitialFrame(scenario),
     inputs,

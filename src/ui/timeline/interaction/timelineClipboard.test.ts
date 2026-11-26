@@ -1,3 +1,9 @@
+import {
+  operatorOwner,
+  dodgeInputs,
+  interactionMarkers,
+  consumableInputs,
+} from '../../../core/project/scenarioMarkers';
 import { skillFixture } from '../../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
@@ -84,11 +90,13 @@ function scenario(): ScenarioDocument {
 describe('timelineClipboard', () => {
   it('复制极限闪避时保留方向、目标和成功延迟，粘贴只重建标签 ID 与起点', () => {
     const original = scenario();
-    original.battle.dodgeMarkers = [
+    original.markers = [
+      ...original.markers.filter(marker => marker.kind !== 'dodge'),
       {
+        kind: 'dodge' as const,
         id: 'dodge:source',
         frame: 30,
-        trackIndex: 0,
+        owner: operatorOwner(original, 0),
         direction: 'backward',
         mode: { kind: 'perfectDodge', successDelayFrames: 8 },
       },
@@ -100,8 +108,8 @@ describe('timelineClipboard', () => {
     const pasted = pasteTimelineActions(original, clipboard, 80, ids());
     expect(pasted.itemRefs).toEqual([{ kind: 'dodge', id: 'dodge:new:1' }]);
     expect(pasted.skillCastIds).toEqual([]);
-    expect(pasted.scenario.battle.dodgeMarkers).toEqual([
-      original.battle.dodgeMarkers[0],
+    expect(dodgeInputs(pasted.scenario)).toEqual([
+      dodgeInputs(original)[0],
       {
         id: 'dodge:new:1',
         frame: 80,
@@ -110,15 +118,69 @@ describe('timelineClipboard', () => {
         mode: { kind: 'perfectDodge', successDelayFrames: 8 },
       },
     ]);
-    expect(original.battle.dodgeMarkers).toHaveLength(1);
+    expect(dodgeInputs(original)).toHaveLength(1);
     expect(
-      pasteTimelineActions(
-        original,
-        clipboard,
-        original.battle.durationFrames + 1,
-        ids(),
-      ).scenario.battle.dodgeMarkers?.at(-1)?.frame,
+      dodgeInputs(
+        pasteTimelineActions(original, clipboard, original.battle.durationFrames + 1, ids())
+          .scenario,
+      )?.at(-1)?.frame,
     ).toBe(original.battle.durationFrames);
+  });
+
+  it('跨方案粘贴拾取和物品时只重映射所属轨道，保留共享定义引用', () => {
+    const source = scenario();
+    const track = source.tracks[0]!;
+    track.operator = {
+      operatorSlug: 'kay',
+      level: 90,
+      promoted: true,
+      potential: 0,
+      trustLevel: 0,
+      skillLevels: {},
+      talentStates: {},
+    };
+    source.markers.push({
+      kind: 'consumableUse',
+      owner: operatorOwner(source, 0),
+      id: 'use',
+      frame: 15,
+      consumableId: 'food',
+    });
+    source.markers = [
+      ...source.markers.filter(marker => marker.kind !== 'pickup'),
+      {
+        kind: 'pickup' as const,
+        id: 'pickup',
+        frame: 10,
+        owner: operatorOwner(source, 0),
+        group: 'kayComboDrop',
+      },
+    ];
+    const items = [...collectTimelineItems(source).values()].filter(item =>
+      ['use', 'pickup'].includes(item.ref.id),
+    );
+    const clipboard = structuredClone(copyTimelineItems(source, items, new Map())!);
+    const target = createEmptyScenario('destination', '目标');
+    target.tracks[2] = { ...track, id: 'destination-track', skillCasts: [] };
+    const result = pasteTimelineActions(target, clipboard, 70, ids()).scenario;
+    expect(interactionMarkers(result)).toEqual([
+      {
+        id: 'pickup:new:1',
+        frame: 70,
+        owner: { scope: 'operator', trackId: 'destination-track' },
+        kind: 'pickup',
+        group: 'kayComboDrop',
+      },
+    ]);
+    expect(consumableInputs(result, result.tracks[2]?.id)).toEqual([
+      {
+        kind: 'consumableUse',
+        owner: { scope: 'operator', trackId: 'destination-track' },
+        id: 'consumableUse:new:1',
+        frame: 75,
+        consumableId: 'food',
+      },
+    ]);
   });
 
   it('完整组仅平移组首，并重映射内部前驱及技能块连线', () => {

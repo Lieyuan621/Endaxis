@@ -1,3 +1,4 @@
+import { enemyTargetInputs } from './scenarioMarkers';
 import { firstScenarioEnemy } from './level';
 import { expect, it } from 'vitest';
 import { createEmptyScenario, createEmptyProject } from './createProject';
@@ -21,17 +22,16 @@ it('重排保留身份，删除敌人不改变其余实例身份和切换引用�
     scenario.level.enemies[0]!,
     scenario.level.enemies[1]!,
   ];
-  scenario.battle.enemyTargetSwitches = [
-    { id: 'target', frame: 30, targetId: 'enemy:b' },
-    { id: 'removed', frame: 60, targetId: 'enemy' },
+  scenario.markers = [
+    ...scenario.markers.filter(marker => marker.kind !== 'enemyTargetSwitch'),
+    { kind: 'enemyTargetSwitch' as const, id: 'target', frame: 30, enemyId: 'enemy:b' },
+    { kind: 'enemyTargetSwitch' as const, id: 'removed', frame: 60, enemyId: 'enemy' },
   ];
   expect(scenarioEnemyOrder(scenario)).toEqual(['enemy:b', 'enemy', 'enemy:a']);
   const result = removeScenarioEnemy(scenario, 'enemy');
   expect(firstScenarioEnemy(result).name).toBe('B');
   expect(scenarioEnemyOrder(result)).toEqual(['enemy:b', 'enemy:a']);
-  expect(result.battle.enemyTargetSwitches).toEqual([
-    { id: 'target', frame: 30, targetId: 'enemy:b' },
-  ]);
+  expect(enemyTargetInputs(result)).toEqual([{ id: 'target', frame: 30, targetId: 'enemy:b' }]);
   const project = createEmptyProject({ createdWith: 'test' });
   project.scenarios = [result];
   project.activeScenarioId = result.id;

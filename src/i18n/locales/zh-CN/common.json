@@ -88,15 +88,6 @@
       "spatialPoint": "空间点"
     }
   },
-  "comboControl": {
-    "cooldown": "所有连携强制进入冷却",
-    "cooldownMenu": "强制进入冷却",
-    "cooldownShort": "冷却",
-    "ready": "所有连携冷却立即回转",
-    "readyMenu": "立即回转",
-    "readyShort": "回转",
-    "hint": "设置全队连携冷却；不会创建连携窗口或触发技能释放。同帧先执行技能，再执行此标记。"
-  },
   "display": {
     "title": "显示",
     "cursorGuide": "辅助线",
@@ -877,6 +868,10 @@
       "undo": "已撤销"
     },
     "markerContext": {
+      "operatorHit": "在此时受击",
+      "pickupChoice": "拾取{skill}",
+      "readyMenu": "立即回转",
+      "cooldownMenu": "强制进入冷却",
       "title": "时间轴标记",
       "deleteMarker": "删除标记",
       "copyMarker": "复制闪避标记",
@@ -892,6 +887,8 @@
       "switchToPerfectDodge": "切换为极限闪避"
     },
     "markerInspector": {
+      "comboCooldownHint": "设置全队连携冷却；不会创建连携窗口或触发技能释放。同帧先执行技能，再执行此标记。",
+      "pickupMissed": "此帧未拾取到指定掉落物。",
       "title": "连携冷却",
       "event": "事件类型",
       "target": "作用对象",
@@ -957,6 +954,14 @@
       }
     },
     "markerLabels": {
+      "operatorHit": "受击",
+      "operatorHitShort": "受击",
+      "pickup": "拾取掉落物",
+      "pickupShort": "拾取",
+      "cooldown": "所有连携强制进入冷却",
+      "cooldownShort": "冷却",
+      "ready": "所有连携冷却立即回转",
+      "readyShort": "回转",
       "cycleBoundary": "循环分界线",
       "simulationStart": "模拟起始线",
       "simulationEnd": "模拟终止线",
@@ -2627,6 +2632,8 @@
       "vocalistStance": "演唱姿态",
       "cosmovoiceStance": "高歌姿态",
       "whirlpools": "涡流",
+      "kayComboDrop": "掉落武器",
+      "kayUltimateDrop": "野餐点心",
       "waterspouts": "水龙卷",
       "oldenStare": "古老图形",
       "perfectTiming": "精准衔接",

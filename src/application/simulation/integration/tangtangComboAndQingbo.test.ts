@@ -1,3 +1,4 @@
+import { operatorOwner } from '../../../core/project/scenarioMarkers';
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { perlica } from '../../../data/operators/perlica.generated';
@@ -40,7 +41,12 @@ it.each([
       };
     }
     if (!controlled)
-      scenario.battle.controlSwitches.push({ id: 'control', frame: 0, trackIndex: 1 });
+      scenario.markers.push({
+        kind: 'controlSwitch' as const,
+        id: 'control',
+        frame: 0,
+        owner: operatorOwner(scenario, 1),
+      });
     scenario.tracks[0]!.skillCasts = [
       {
         id: 'a1',

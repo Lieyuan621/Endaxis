@@ -1,3 +1,4 @@
+import { operatorOwner } from './scenarioMarkers';
 import { firstScenarioEnemy, levelEnemies } from './level';
 import { skillFixture } from '../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
@@ -248,9 +249,11 @@ describe('current project document', () => {
     const project = createEmptyProject({
       createdWith: 'test',
     });
-    const battle = project.scenarios[0]!.battle;
-    battle.cycleBoundaries.push({ id: 'boundary:1', frame: 900 });
-    battle.controlSwitches.push({ id: 'switch:1', frame: -120, trackIndex: 2 });
+    const scenario = project.scenarios[0]!;
+    scenario.markers.push(
+      { kind: 'cycleBoundary', id: 'boundary:1', frame: 900 },
+      { kind: 'controlSwitch', id: 'switch:1', frame: -120, owner: operatorOwner(scenario, 2) },
+    );
 
     const parsed = parseProjectDocument(serializeProjectDocument(project));
 
@@ -316,7 +319,7 @@ describe('current project document', () => {
       createdWith: 'test',
     });
     const source = project.scenarios[0]!;
-    source.battle.cycleBoundaries.push({ id: 'boundary:1', frame: 900 });
+    source.markers.push({ kind: 'cycleBoundary' as const, id: 'boundary:1', frame: 900 });
     const inherited = createEmptyScenario('scenario:2', 'Inherited');
     inherited.inheritance = {
       sourceScenarioId: source.id,
@@ -334,9 +337,9 @@ describe('current project document', () => {
       createdWith: 'test',
     });
     const first = project.scenarios[0]!;
-    first.battle.cycleBoundaries.push({ id: 'boundary:1', frame: 300 });
+    first.markers.push({ kind: 'cycleBoundary' as const, id: 'boundary:1', frame: 300 });
     const second = createEmptyScenario('scenario:2', 'Second');
-    second.battle.cycleBoundaries.push({ id: 'boundary:2', frame: 600 });
+    second.markers.push({ kind: 'cycleBoundary' as const, id: 'boundary:2', frame: 600 });
     first.inheritance = { sourceScenarioId: second.id, frame: 600 };
     second.inheritance = { sourceScenarioId: first.id, frame: 900 };
     project.scenarios.push(second);
@@ -367,20 +370,23 @@ describe('current project document', () => {
     const scenario = project.scenarios[0]!;
     scenario.tracks[0] = createTrack();
 
-    const malformed = JSON.parse(serializeProjectDocument(project));
+    const malformed = JSON.parse(JSON.stringify(project));
     malformed.scenarios[0].tracks[0].operator.promoted = 'yes';
     malformed.scenarios[0].level.enemy.enemy.rank = 'advanced';
     malformed.scenarios[0].level.enemy.enemy.editable.finisherMultiplier = 'one';
-    malformed.scenarios[0].battle.controlSwitches.push({
+    malformed.scenarios[0].markers.push({
+      kind: 'controlSwitch' as const,
       id: 'switch:invalid',
       frame: 30,
-      trackIndex: 4,
+      owner: { scope: 'emptySlot', trackIndex: 4 },
     });
-    malformed.scenarios[0].battle.dodgeMarkers = [
+    malformed.scenarios[0].markers = [
+      ...malformed.scenarios[0].markers,
       {
+        kind: 'dodge' as const,
         id: 'dodge:invalid',
         frame: -181,
-        trackIndex: 4,
+        owner: { scope: 'emptySlot', trackIndex: 4 },
         direction: 'sideways',
         mode: { kind: 'perfectDodge', successDelayFrames: -1 },
       },
@@ -407,24 +413,24 @@ describe('current project document', () => {
             message: 'expected a finite number',
           },
           {
-            path: '$.scenarios[0].battle.controlSwitches[0].trackIndex',
-            message: 'expected a track index from 0 to 3',
+            path: '$.scenarios[0].markers[0]',
+            message: 'unknown marker owner',
           },
           {
-            path: '$.scenarios[0].battle.dodgeMarkers[0].frame',
-            message: 'expected an integer no earlier than -150',
+            path: '$.scenarios[0].markers[1]',
+            message: 'invalid marker frame',
           },
           {
-            path: '$.scenarios[0].battle.dodgeMarkers[0].trackIndex',
-            message: 'expected a track index from 0 to 3',
+            path: '$.scenarios[0].markers[1]',
+            message: 'unknown marker owner',
           },
           {
-            path: '$.scenarios[0].battle.dodgeMarkers[0].direction',
-            message: 'unknown dodge direction',
+            path: '$.scenarios[0].markers[1]',
+            message: 'invalid dodge direction',
           },
           {
-            path: '$.scenarios[0].battle.dodgeMarkers[0].mode.successDelayFrames',
-            message: 'expected a non-negative integer',
+            path: '$.scenarios[0].markers[1]',
+            message: 'invalid dodge mode',
           },
           {
             path: '$.scenarios[0].editor.trackHeightWeights',
@@ -594,7 +600,7 @@ describe('current project document', () => {
     expect(parseProjectDocument(serialized)).toEqual({ ok: true, value: project });
     expect(serialized).not.toContain('"steps"');
     const changeAction = (id: string, action: unknown, macro = false) => {
-      const copy = JSON.parse(serialized);
+      const copy = JSON.parse(JSON.stringify(project));
       const resource = copy.scenarios[0].tracks[0].skillCasts[0].customDefinition.actionGraph;
       (macro ? resource.macros.flag.graph : resource.main).nodes[id].action = action;
       return copy;

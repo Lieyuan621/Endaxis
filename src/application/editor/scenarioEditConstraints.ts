@@ -21,7 +21,15 @@ export interface ScenarioEditPolicy {
 }
 
 type ScenarioInputKind =
-  'skill' | 'consumable' | 'controlSwitch' | 'externalEvent' | 'dodge' | 'dodgeSuccess';
+  | 'enemyTargetSwitch'
+  | 'skill'
+  | 'consumable'
+  | 'controlSwitch'
+  | 'pickup'
+  | 'operatorHit'
+  | 'comboCooldownControl'
+  | 'dodge'
+  | 'dodgeSuccess';
 interface EditableInput {
   kind: ScenarioInputKind;
   id: string;
@@ -64,28 +72,28 @@ function inputs(scenario: ScenarioDocument, policy: ScenarioEditPolicy): Editabl
         },
       });
     }
-    for (const use of track.consumableUses ?? [])
-      result.push({
-        kind: 'consumable',
-        id: use.id,
-        frame: use.frame,
-        value: { trackIndex, trackId: track.id, ...use },
-      });
   }
-  for (const marker of scenario.battle.controlSwitches)
-    result.push({ kind: 'controlSwitch', id: marker.id, frame: marker.frame, value: marker });
-  for (const marker of scenario.battle.externalEventMarkers ?? [])
-    result.push({ kind: 'externalEvent', id: marker.id, frame: marker.frame, value: marker });
-  for (const marker of scenario.battle.dodgeMarkers ?? []) {
+  for (const marker of scenario.markers) {
+    if (marker.kind === 'cycleBoundary') continue;
+    const { kind, id, frame } = marker;
+    if (marker.kind !== 'dodge') {
+      result.push({
+        kind: kind === 'consumableUse' ? 'consumable' : kind,
+        id,
+        frame,
+        value: marker,
+      });
+      continue;
+    }
     const { mode, ...dash } = marker;
-    result.push({ kind: 'dodge', id: marker.id, frame: marker.frame, value: dash });
+    result.push({ kind: 'dodge', id, frame, value: dash });
     if (mode.kind === 'perfectDodge') {
-      const frame = marker.frame + mode.successDelayFrames;
+      const successFrame = frame + mode.successDelayFrames;
       result.push({
         kind: 'dodgeSuccess',
-        id: marker.id,
-        frame,
-        value: { id: marker.id, trackIndex: marker.trackIndex, frame },
+        id,
+        frame: successFrame,
+        value: { owner: marker.owner, frame: successFrame },
       });
     }
   }
@@ -96,7 +104,7 @@ function configuration(scenario: ScenarioDocument) {
   return {
     tracks: scenario.tracks.map(track => {
       if (track === null) return null;
-      const { skillCasts: _skills, consumableUses: _items, ...config } = track;
+      const { skillCasts: _skills, ...config } = track;
       return config;
     }),
     level: scenario.level,

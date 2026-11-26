@@ -1,3 +1,4 @@
+import { operatorOwner } from '../../../core/project/scenarioMarkers';
 import { projectBuffIconTimelineMetadata } from '../../../core/projection/buffTimelineViz';
 import { projectBuffDamageDisplayOwners } from '../../../core/projection/enemyEffectViz';
 import { projectEnemyEffectViz } from '../../../core/projection/enemyEffectViz';
@@ -1960,7 +1961,15 @@ describe('registered generated operators', () => {
           })),
         };
         track.skillCasts = track.skillCasts.slice(-1);
-        placed.battle.controlSwitches = [{ id: 'switch:ally', frame: 0, trackIndex: 1 }];
+        placed.markers = [
+          ...placed.markers.filter(marker => marker.kind !== 'controlSwitch'),
+          {
+            kind: 'controlSwitch' as const,
+            id: 'switch:ally',
+            frame: 0,
+            owner: operatorOwner(placed, 1),
+          },
+        ];
       }
       const result = runStandardPlayerDamageScenarioSimulation({
         scenario: placed,
@@ -2449,7 +2458,12 @@ describe('registered generated operators', () => {
         skillCasts: [],
       };
       // 用最小治疗动作隔离验证武器的“治疗他人”监听；不让卡米拉技能自身的蝙蝠条件和命停干扰武器门禁。
-      scenario.battle.controlSwitches.push({ id: 'switch:perlica', frame: 0, trackIndex: 1 });
+      scenario.markers.push({
+        kind: 'controlSwitch' as const,
+        id: 'switch:perlica',
+        frame: 0,
+        owner: operatorOwner(scenario, 1),
+      });
       let placed = placeSkillGroup({
         scenario,
         trackIndex: 0,
@@ -3426,7 +3440,15 @@ describe('registered generated operators', () => {
     });
     scenario.tracks[0] = createTrack('track:perlica:zhuang-combo', perlica.slug);
     scenario.tracks[1] = createTrack('track:zhuang-fangyi:combo', zhuangFangyi.slug);
-    scenario.battle.controlSwitches = [{ id: 'switch:zhuang-fangyi', frame: 30, trackIndex: 1 }];
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'controlSwitch'),
+      {
+        kind: 'controlSwitch' as const,
+        id: 'switch:zhuang-fangyi',
+        frame: 30,
+        owner: operatorOwner(scenario, 1),
+      },
+    ];
     let nextId = 0;
     const ids = { allocate: (kind: string) => `${kind}:zhuang-combo:${++nextId}` };
     let placed = placeSkillGroup({

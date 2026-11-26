@@ -481,13 +481,15 @@ function migrateScenario(
         initialSp: number(constants.initialSp) ?? 300,
         spRecoveryPerSecond: number(constants.spRegenRate) ?? 0,
       },
-      cycleBoundaries: records(source.cycleBoundaries).flatMap((boundary, index) => {
+    },
+    markers: [
+      ...records(source.cycleBoundaries).flatMap((boundary, index) => {
         const frame = integer(boundary.time);
         return frame === null
           ? []
-          : [{ id: string(boundary.id) ?? `legacy-cycle-${index}`, frame }];
+          : [{ kind: 'cycleBoundary' as const, id: string(boundary.id) ?? `legacy-cycle-${index}`, frame }];
       }),
-      controlSwitches: records(source.switchEvents).flatMap((event, index) => {
+      ...records(source.switchEvents).flatMap((event, index) => {
         const frame = integer(event.time);
         const trackIndex = integer(event.trackIndex);
         return frame === null || trackIndex === null || trackIndex < 0 || trackIndex > 3
@@ -496,11 +498,11 @@ function migrateScenario(
               {
                 id: string(event.id) ?? `legacy-switch-${index}`,
                 frame,
-                trackIndex: trackIndex as 0 | 1 | 2 | 3,
+                kind: 'controlSwitch' as const, owner: tracks[trackIndex] ? { scope:'operator' as const, trackId:tracks[trackIndex]!.id } : {scope:'emptySlot' as const, trackIndex:trackIndex as 0|1|2|3},
               },
             ];
       }),
-      dodgeMarkers: records(source.tracks).flatMap((track, trackIndex) =>
+      ...records(source.tracks).flatMap((track, trackIndex) =>
         records(track.actions).flatMap((action, actionIndex) => {
           const converted = record(action.convertedDodge);
           const frame = integer(action.startTime) ?? integer(action.logicalStartTime);
@@ -518,15 +520,14 @@ function migrateScenario(
             {
               id: `legacy:${scenarioId}:track:${trackIndex}:dodge:${actionIndex}`,
               frame,
-              trackIndex: trackIndex as 0 | 1 | 2 | 3,
+              kind:'dodge' as const, owner: {scope:'operator' as const,trackId:tracks[trackIndex]!.id},
               direction: 'forward' as const,
               mode: { kind: 'dodge' as const },
             },
           ];
         }),
       ),
-      externalEventMarkers: [],
-    },
+    ],
     mechanics: { selections: [] },
     globalConfig: convertLegacyGlobalConfig(source.globalConfig, message =>
       warnings.push(`${scenarioId}: ${message}`),

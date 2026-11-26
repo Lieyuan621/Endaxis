@@ -322,6 +322,11 @@ export interface BuffApplicationRequest {
 
 export interface BuffOperationDependencies {
   readonly physicalTagPredefine?: GameplayTagPredefine;
+  readonly areaInteraction?: {
+    parameters: ResolvedCombatStepParameters['aura'];
+    activeChanged(context: CombatOperationContext, active: boolean): void;
+    targets(context: CombatOperationContext): readonly RuntimeTargetRef[];
+  };
   readonly queryTargets?: (
     query: CompiledTargetQuery,
     context: CombatOperationContext,
@@ -372,6 +377,11 @@ export interface BuffOperationDependencies {
 }
 
 export interface AuraInfluenceOperations {
+  activeChanged?: (
+    parameters: ResolvedCombatStepParameters['aura'],
+    context: CombatOperationContext,
+    active: boolean,
+  ) => void;
   targets(
     parameters: ResolvedCombatStepParameters['aura'],
     context: CombatOperationContext,
@@ -400,7 +410,13 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
   };
 
   readonly aura: AuraInfluenceOperations = {
+    activeChanged: (parameters, context, active) => {
+      const interaction = this.dependencies.areaInteraction;
+      if (interaction?.parameters === parameters) interaction.activeChanged(context, active);
+    },
     targets: (parameters, context) => {
+      const interaction = this.dependencies.areaInteraction;
+      if (interaction?.parameters === parameters) return interaction.targets(context);
       if (this.dependencies.queryTargets === undefined)
         throw new Error('Aura requires an action target query context');
       return this.dependencies

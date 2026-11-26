@@ -1,3 +1,11 @@
+import {
+  consumableInputs,
+  controlSwitchInputs,
+  interactionMarkers,
+  resolveScenarioMarkerTrack,
+  dodgeInputs,
+  enemyTargetInputs,
+} from '../project/scenarioMarkers';
 import { firstScenarioEnemy } from '../project/level';
 import { scenarioEnemyOrder } from '../project/enemyTargeting';
 /**
@@ -224,32 +232,23 @@ export function compileScenarioExternalEventInputs(
   scenario: ScenarioDocument,
 ): readonly ScheduledExternalCombatEventInput[] {
   const activeOperatorIds = scenario.tracks.flatMap(track => (track === null ? [] : [track.id]));
-  return (scenario.battle.externalEventMarkers ?? [])
-    .map((marker, order) => {
-      let targetOperatorIds: readonly string[];
-      if (marker.target.scope === 'team') {
-        targetOperatorIds = activeOperatorIds;
-      } else {
-        const track = scenario.tracks[marker.target.trackIndex];
-        if (track == null) {
-          throw new Error(
-            `external event marker '${marker.id}' references empty track ${marker.target.trackIndex}`,
-          );
-        }
-        targetOperatorIds = [track.id];
+  return interactionMarkers(scenario)
+    .map((marker): ScheduledExternalCombatEventInput => {
+      const { frame, kind } = marker;
+      if (kind === 'comboCooldownControl') {
+        if (!activeOperatorIds.length)
+          throw new Error(`interaction marker '${marker.id}' has no active operator target`);
+        return { frame, kind, mode: marker.mode, operatorIds: activeOperatorIds };
       }
-      if (targetOperatorIds.length === 0) {
-        throw new Error(`external event marker '${marker.id}' has no active operator target`);
-      }
-      return {
-        frame: marker.frame,
-        targetOperatorIds,
-        event: { kind: marker.event.kind, mode: marker.event.mode },
-        order,
-      };
+      const trackIndex = resolveScenarioMarkerTrack(scenario.tracks, marker.owner);
+      const track = scenario.tracks[trackIndex];
+      if (!track)
+        throw new Error(`interaction marker '${marker.id}' references empty track ${trackIndex}`);
+      return kind === 'pickup'
+        ? { frame, kind, operatorId: track.id, group: marker.group }
+        : { frame, kind, operatorId: track.id };
     })
-    .sort((left, right) => left.frame - right.frame || left.order - right.order)
-    .map(({ order: _order, ...input }) => input);
+    .sort((left, right) => left.frame - right.frame);
 }
 
 /**
@@ -259,7 +258,7 @@ export function compileScenarioExternalEventInputs(
 export function compileScenarioDodgeInputs(
   scenario: ScenarioDocument,
 ): readonly ScheduledDodgeInput[] {
-  return (scenario.battle.dodgeMarkers ?? [])
+  return dodgeInputs(scenario)
     .flatMap((marker, declarationOrder) => {
       const track = scenario.tracks[marker.trackIndex];
       if (track === null) {
@@ -525,7 +524,7 @@ export function compileScenarioRuntimeAssembly(
   const initialFrame = options.liveInputInitialFrame ?? resolveScenarioInitialFrame(scenario);
   const controlTimeline = resolveControlTimeline(
     scenario.tracks,
-    options.liveInputInitialFrame === undefined ? scenario.battle.controlSwitches : [],
+    options.liveInputInitialFrame === undefined ? controlSwitchInputs(scenario) : [],
     initialFrame,
   );
   const initialControlledOperatorId =
@@ -538,7 +537,7 @@ export function compileScenarioRuntimeAssembly(
     initialFrame,
     enemyTargeting: {
       order: scenarioEnemyOrder(scenario),
-      switches: scenario.battle.enemyTargetSwitches ?? [],
+      switches: enemyTargetInputs(scenario),
     },
     squadSlotCount: scenario.tracks.length,
     operatorControl: {
@@ -546,7 +545,7 @@ export function compileScenarioRuntimeAssembly(
       automaticSwitches: scenario.battle.automaticControlSwitches !== false,
       scheduledSwitches:
         options.liveInputInitialFrame === undefined
-          ? scenario.battle.controlSwitches.map(marker => ({
+          ? controlSwitchInputs(scenario).map(marker => ({
               frame: marker.frame,
               operatorId: scenario.tracks[marker.trackIndex]?.id ?? null,
             }))
@@ -581,7 +580,7 @@ export function compileScenarioRuntimeAssembly(
         ? scenario.tracks.flatMap(track =>
             track === null
               ? []
-              : (track.consumableUses ?? []).map(use => ({
+              : consumableInputs(scenario, track.id).map(use => ({
                   frame: use.frame,
                   useId: use.id,
                   operatorId: track.id,

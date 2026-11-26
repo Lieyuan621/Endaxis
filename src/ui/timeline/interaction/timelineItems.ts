@@ -1,4 +1,12 @@
 import type { ScenarioDocument, TrackIndex } from '../../../core/project/schema';
+import {
+  type ScenarioMarkerDocument,
+  operatorOwner,
+  appendScenarioMarker,
+  markerSupportsPreparation,
+  hasOperatorOwner,
+  resolveScenarioMarkerTrack,
+} from '../../../core/project/scenarioMarkers';
 import { getSkillCastPlacementChains } from '../../../core/project/skillCastPlacement';
 import { assertScenarioEditAllowed } from '../../../application/editor/scenarioEditConstraints';
 import {
@@ -10,7 +18,9 @@ import {
 export type TimelineMarkerKind =
   | 'cycleBoundary'
   | 'controlSwitch'
-  | 'externalEvent'
+  | 'pickup'
+  | 'operatorHit'
+  | 'comboCooldownControl'
   | 'dodge'
   | 'simulationStart'
   | 'simulationEnd';
@@ -50,212 +60,88 @@ export interface TimelineItem {
   readonly copy?: () => TimelinePointCopy;
 }
 
-/** 剪贴板保留独立的数据副本；恢复函数只捕获该副本，不捕获源方案。 */
+type TimelinePoint = Extract<ScenarioMarkerDocument, { kind: TimelinePointKind }>;
+
 export interface TimelinePointCopy {
+  readonly marker: TimelinePoint;
   readonly trackIndex?: TrackIndex;
-  readonly kind: TimelinePointKind;
-  readonly frame: number;
   readonly minimumFrame: number;
-  readonly paste: (
-    scenario: ScenarioDocument,
-    id: string,
-    frame: number,
-    destination?: TrackIndex,
-  ) => ScenarioDocument;
 }
 
-interface Timed {
-  id: string;
-  frame: number;
+export function cloneTimelineDocument<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(cloneTimelineDocument) as T;
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, cloneTimelineDocument(entry)]),
+    ) as T;
+  }
+  return value;
 }
-interface Located<T> {
-  readonly value: T;
-  readonly trackIndex?: TrackIndex;
-}
-interface PointAdapter<T extends Timed> {
-  readonly kind: TimelinePointKind;
-  readonly preparation?: boolean;
-  readonly input?: boolean;
-  readonly list: (scenario: ScenarioDocument) => readonly Located<T>[];
-  readonly write: (
-    scenario: ScenarioDocument,
-    id: string,
-    value: T | null,
-    trackIndex?: TrackIndex,
-  ) => ScenarioDocument;
-}
-function replaceEntry<T extends Timed>(entries: readonly T[], id: string, value: T | null): T[] {
-  if (value === null) return entries.filter(entry => entry.id !== id);
-  return entries.some(entry => entry.id === id)
-    ? entries.map(entry => (entry.id === id ? value : entry))
-    : [...entries, value];
-}
-function pointItems<T extends Timed>(
-  adapter: PointAdapter<T>,
-  scenario: ScenarioDocument,
-): TimelineItem[] {
-  return adapter.list(scenario).map(({ value, trackIndex }) => {
-    const ref = { kind: adapter.kind, id: value.id };
-    const key = timelineItemKey(ref);
-    const minimumFrame = Math.max(
-      adapter.preparation ? -scenario.battle.prepFrames : 0,
-      adapter.input ? minimumEditableTimelineInputFrame(scenario) : -Infinity,
-    );
-    return {
-      ref,
-      key,
+
+function pointItem(scenario: ScenarioDocument, marker: TimelinePoint): TimelineItem {
+  const { kind, id, frame } = marker;
+  const ref = { kind, id };
+  const key = timelineItemKey(ref);
+  const trackIndex = hasOperatorOwner(marker)
+    ? resolveScenarioMarkerTrack(scenario.tracks, marker.owner)
+    : undefined;
+  const preparation = markerSupportsPreparation(kind);
+  const input = kind !== 'cycleBoundary';
+  const matches = (candidate: ScenarioMarkerDocument) =>
+    candidate.kind === kind && candidate.id === id;
+  return {
+    ref,
+    key,
+    trackIndex,
+    frame,
+    multiple: true,
+    minimumFrame: Math.max(
+      preparation ? -scenario.battle.prepFrames : 0,
+      input ? minimumEditableTimelineInputFrame(scenario) : -Infinity,
+    ),
+    maximumFrame: scenario.battle.durationFrames,
+    blocked: input && frame < (scenario.inheritance?.frame ?? -Infinity),
+    moveAnchor: key,
+    move: (current, nextFrame) => ({
+      ...current,
+      markers: current.markers.map(candidate =>
+        matches(candidate) ? { ...candidate, frame: nextFrame } : candidate,
+      ),
+    }),
+    remove: current => ({
+      ...current,
+      markers: current.markers.filter(candidate => !matches(candidate)),
+    }),
+    copy: () => ({
+      marker: cloneTimelineDocument(marker),
       trackIndex,
-      frame: value.frame,
-      multiple: true,
-      minimumFrame,
-      maximumFrame: scenario.battle.durationFrames,
-      blocked: !!adapter.input && value.frame < (scenario.inheritance?.frame ?? -Infinity),
-      moveAnchor: key,
-      move: (current, frame) => adapter.write(current, value.id, { ...value, frame }, trackIndex),
-      remove: current => adapter.write(current, value.id, null, trackIndex),
-      copy: () => {
-        const snapshot = structuredClone(value);
-        return {
-          kind: adapter.kind,
-          trackIndex,
-          frame: value.frame,
-          minimumFrame: adapter.preparation ? -Infinity : 0,
-          paste: (current, id, frame, destination = trackIndex) => {
-            if (destination !== undefined && current.tracks[destination] === null)
-              throw new Error('Cannot paste input onto an empty track');
-            return adapter.write(
-              current,
-              id,
-              { ...structuredClone(snapshot), id, frame },
-              destination,
-            );
-          },
-        };
-      },
-    };
-  });
+      minimumFrame: preparation ? -Infinity : 0,
+    }),
+  };
 }
 
-/** 每种文档对象只在这里声明存储位置与特有约束，手势和菜单不遍历类型分支。 */
-const pointSources = [
-  (s: ScenarioDocument) =>
-    pointItems(
-      {
-        kind: 'controlSwitch',
-        preparation: true,
-        input: true,
-        list: s => s.battle.controlSwitches.map(value => ({ value, trackIndex: value.trackIndex })),
-        write: (s, id, value, trackIndex) => ({
-          ...s,
-          battle: {
-            ...s.battle,
-            controlSwitches: replaceEntry(
-              s.battle.controlSwitches,
-              id,
-              value ? { ...value, trackIndex: trackIndex! } : null,
-            ),
-          },
-        }),
-      },
-      s,
-    ),
-  (s: ScenarioDocument) =>
-    pointItems(
-      {
-        kind: 'dodge',
-        preparation: true,
-        input: true,
-        list: s =>
-          (s.battle.dodgeMarkers ?? []).map(value => ({ value, trackIndex: value.trackIndex })),
-        write: (s, id, value, trackIndex) => ({
-          ...s,
-          battle: {
-            ...s.battle,
-            dodgeMarkers: replaceEntry(
-              s.battle.dodgeMarkers ?? [],
-              id,
-              value ? { ...value, trackIndex: trackIndex! } : null,
-            ),
-          },
-        }),
-      },
-      s,
-    ),
-  (s: ScenarioDocument) =>
-    pointItems(
-      {
-        kind: 'externalEvent',
-        input: true,
-        list: s =>
-          (s.battle.externalEventMarkers ?? []).map(value => ({
-            value,
-            trackIndex: value.target.scope === 'operator' ? value.target.trackIndex : undefined,
-          })),
-        write: (s, id, value, trackIndex) => ({
-          ...s,
-          battle: {
-            ...s.battle,
-            externalEventMarkers: replaceEntry(
-              s.battle.externalEventMarkers ?? [],
-              id,
-              value?.target.scope === 'operator'
-                ? { ...value, target: { ...value.target, trackIndex: trackIndex! } }
-                : value,
-            ),
-          },
-        }),
-      },
-      s,
-    ),
-  (s: ScenarioDocument) =>
-    pointItems(
-      {
-        kind: 'cycleBoundary',
-        list: s => s.battle.cycleBoundaries.map(value => ({ value })),
-        write: (s, id, value) => ({
-          ...s,
-          battle: {
-            ...s.battle,
-            cycleBoundaries: replaceEntry(s.battle.cycleBoundaries, id, value),
-          },
-        }),
-      },
-      s,
-    ),
-  (s: ScenarioDocument) =>
-    pointItems(
-      {
-        kind: 'consumableUse',
-        preparation: true,
-        input: true,
-        list: s =>
-          s.tracks.flatMap((track, index) =>
-            (track?.consumableUses ?? []).map(value => ({
-              value,
-              trackIndex: index as TrackIndex,
-            })),
-          ),
-        write: (s, id, value, trackIndex) => {
-          if (trackIndex === undefined || s.tracks[trackIndex] === null)
-            throw new Error('Missing consumable track');
-          const tracks = [...s.tracks] as ScenarioDocument['tracks'];
-          const track = tracks[trackIndex]!;
-          tracks[trackIndex] = {
-            ...track,
-            consumableUses: replaceEntry(track.consumableUses ?? [], id, value),
-          };
-          return { ...s, tracks };
-        },
-      },
-      s,
-    ),
-];
+export function pasteTimelinePoint(
+  scenario: ScenarioDocument,
+  point: TimelinePointCopy,
+  id: string,
+  frame: number,
+  destination?: TrackIndex,
+): ScenarioDocument {
+  let marker = { ...cloneTimelineDocument(point.marker), id, frame };
+  if (hasOperatorOwner(marker)) {
+    if (destination === undefined) throw new Error('missing destination track');
+    marker = { ...marker, owner: operatorOwner(scenario, destination) };
+  }
+  return appendScenarioMarker(scenario, marker);
+}
 
 export function collectTimelineItems(
   scenario: ScenarioDocument,
   starts: ReadonlyMap<string, number> = new Map(),
 ): ReadonlyMap<string, TimelineItem> {
-  const items: TimelineItem[] = pointSources.flatMap(source => source(scenario));
+  const items: TimelineItem[] = scenario.markers.flatMap(marker =>
+    marker.kind === 'enemyTargetSwitch' ? [] : [pointItem(scenario, marker)],
+  );
   scenario.tracks.forEach((track, index) => {
     if (track === null) return;
     for (const chain of getSkillCastPlacementChains(track.skillCasts)) {

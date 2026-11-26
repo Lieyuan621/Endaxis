@@ -3,14 +3,15 @@
  * 初始主控为从上到下第一个已设置干员的轨道；切换事件从其所在帧起生效。
  */
 import type { OperatorControlTimeline } from '../combat/skills/operatorControlTimeline';
-import type { ControlSwitchDocument, TrackListDocument } from './schema';
+import type { TrackListDocument } from './schema';
+import type { ControlSwitchInput } from './scenarioMarkers';
 
 /**
  * 解析主控时间线。同帧有多个切换事件时，存档数组中最后一项生效；切到空轨道表示无人主控。
  */
 export function resolveControlTimeline(
   tracks: TrackListDocument,
-  switches: readonly ControlSwitchDocument[],
+  switches: readonly ControlSwitchInput[],
   initialFrame = 0,
 ): OperatorControlTimeline {
   if (!Number.isInteger(initialFrame) || initialFrame > 0) {

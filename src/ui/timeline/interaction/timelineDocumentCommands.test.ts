@@ -1,3 +1,9 @@
+import {
+  operatorOwner,
+  controlSwitchInputs,
+  dodgeInputs,
+  interactionMarkers,
+} from '../../../core/project/scenarioMarkers';
 import { describe, expect, it } from 'vitest';
 
 import { createEmptyScenario } from '../../../core/project/createProject';
@@ -86,13 +92,14 @@ describe('battle axis commands', () => {
   it('shortens the battle axis only as far as its latest stable timeline object', () => {
     const original = scenario();
     original.tracks[0]!.skillCasts[0]!.placement.startFrame = 80;
-    original.battle.cycleBoundaries.push({ id: 'cycle:latest', frame: 120 });
-    original.battle.externalEventMarkers = [
+    original.markers.push({ kind: 'cycleBoundary' as const, id: 'cycle:latest', frame: 120 });
+    original.markers = [
+      ...original.markers.filter(marker => marker.kind !== 'operatorHit'),
       {
+        kind: 'operatorHit' as const,
         id: 'external:latest',
         frame: 150,
-        target: { scope: 'operator', trackIndex: 0 },
-        event: { kind: 'comboCooldownControl', mode: 'cooldown' },
+        owner: operatorOwner(original, 0),
       },
     ];
     original.battle.simulationRange = { endFrame: 180 };
@@ -199,17 +206,33 @@ describe('swapTimelineTracks', () => {
       id: 'operator:b',
       operator: perlicaBuild,
     };
-    original.battle.controlSwitches = [
-      { id: 'switch:a', frame: 0, trackIndex: 0 },
-      { id: 'switch:b', frame: 30, trackIndex: 1 },
-      { id: 'switch:c', frame: 60, trackIndex: 2 },
+    original.markers = [
+      ...original.markers.filter(marker => marker.kind !== 'controlSwitch'),
+      {
+        kind: 'controlSwitch' as const,
+        id: 'switch:a',
+        frame: 0,
+        owner: operatorOwner(original, 0),
+      },
+      {
+        kind: 'controlSwitch' as const,
+        id: 'switch:b',
+        frame: 30,
+        owner: operatorOwner(original, 1),
+      },
+      {
+        kind: 'controlSwitch' as const,
+        id: 'switch:c',
+        frame: 60,
+        owner: operatorOwner(original, 2),
+      },
     ];
 
     const swapped = swapTimelineTracks(original, 0, 1);
 
     expect(swapped.tracks[0]?.id).toBe('operator:b');
     expect(swapped.tracks[1]?.id).toBe('operator:a');
-    expect(swapped.battle.controlSwitches.map(value => value.trackIndex)).toEqual([1, 0, 2]);
+    expect(controlSwitchInputs(swapped).map(value => value.trackIndex)).toEqual([1, 0, 2]);
     expect(original.tracks[0]?.id).toBe('operator:a');
   });
 });
@@ -443,44 +466,60 @@ describe('skill document editing', () => {
     const original = scenario();
     original.tracks[0] = { ...original.tracks[0]!, operator: perlicaBuild };
     original.tracks[1] = { ...original.tracks[0]!, id: 'track:1', skillCasts: [] };
-    original.battle.dodgeMarkers = [
+    original.markers = [
+      ...original.markers.filter(marker => marker.kind !== 'dodge'),
       {
+        kind: 'dodge' as const,
         id: 'dodge:sample:1',
         frame: 10,
-        trackIndex: 0,
+        owner: operatorOwner(original, 0),
         direction: 'forward',
         mode: { kind: 'dodge' },
       },
       {
+        kind: 'dodge' as const,
         id: 'dodge:other',
         frame: 20,
-        trackIndex: 1,
+        owner: operatorOwner(original, 1),
         direction: 'backward',
         mode: { kind: 'perfectDodge', successDelayFrames: 2 },
       },
     ];
-    original.battle.controlSwitches = [
-      { id: 'switch:0', frame: 5, trackIndex: 0 },
-      { id: 'switch:1', frame: 15, trackIndex: 1 },
-    ];
-    original.battle.externalEventMarkers = [
+    original.markers = [
+      ...original.markers.filter(marker => marker.kind !== 'controlSwitch'),
       {
+        kind: 'controlSwitch' as const,
+        id: 'switch:0',
+        frame: 5,
+        owner: operatorOwner(original, 0),
+      },
+      {
+        kind: 'controlSwitch' as const,
+        id: 'switch:1',
+        frame: 15,
+        owner: operatorOwner(original, 1),
+      },
+    ];
+    original.markers = [
+      ...original.markers.filter(marker => marker.kind !== 'operatorHit'),
+      {
+        kind: 'operatorHit' as const,
         id: 'event:0',
         frame: 5,
-        target: { scope: 'operator', trackIndex: 0 },
-        event: { kind: 'comboCooldownControl', mode: 'ready' },
+        owner: operatorOwner(original, 0),
       },
       {
+        kind: 'operatorHit' as const,
         id: 'event:1',
         frame: 5,
-        target: { scope: 'operator', trackIndex: 1 },
-        event: { kind: 'comboCooldownControl', mode: 'ready' },
+        owner: operatorOwner(original, 1),
       },
       {
+        kind: 'comboCooldownControl' as const,
         id: 'event:team',
         frame: 5,
-        target: { scope: 'team' },
-        event: { kind: 'comboCooldownControl', mode: 'ready' },
+        owner: { scope: 'team' as const },
+        mode: 'ready',
       },
     ];
     const changed = setTrackOperator(
@@ -492,12 +531,10 @@ describe('skill document editing', () => {
     expect(changed.battle).toBe(original.battle);
     const cleared = setTrackOperator(original, 0, null, 'unused');
     expect(cleared.tracks[0]).toBeNull();
-    expect(cleared.battle.dodgeMarkers).toEqual([original.battle.dodgeMarkers[1]]);
-    expect(cleared.battle.controlSwitches).toEqual([original.battle.controlSwitches[1]]);
-    expect(cleared.battle.externalEventMarkers).toEqual(
-      original.battle.externalEventMarkers.slice(1),
-    );
-    expect(original.battle.dodgeMarkers).toHaveLength(2);
+    expect(dodgeInputs(cleared)).toEqual([dodgeInputs(original)[1]]);
+    expect(controlSwitchInputs(cleared)).toEqual([controlSwitchInputs(original)[1]]);
+    expect(interactionMarkers(cleared)).toEqual(interactionMarkers(original).slice(1));
+    expect(dodgeInputs(original)).toHaveLength(2);
   });
 
   it('rejects equipping a weapon on an empty track', () => {
@@ -620,8 +657,7 @@ describe('timeline marker commands', () => {
       tracks: [added.tracks[0], { ...added.tracks[0]!, id: 'track:2' }, null, null],
     } as ScenarioDocument;
     expect(
-      setControlSwitchTrack(occupiedSecondTrack, 'switch:1', 1).battle.controlSwitches[0]
-        ?.trackIndex,
+      controlSwitchInputs(setControlSwitchTrack(occupiedSecondTrack, 'switch:1', 1))[0]?.trackIndex,
     ).toBe(1);
     expect(setControlSwitchTrack(added, 'missing', 0)).toBe(added);
     expect(() => setControlSwitchTrack(added, 'switch:1', 1)).toThrow('track 1 is empty');
@@ -632,7 +668,7 @@ describe('timeline marker commands', () => {
     const original = scenario();
     original.battle.prepFrames = 150;
     const added = addControlSwitch(original, 'switch:prep', -120, 0);
-    expect(added.battle.controlSwitches[0]?.frame).toBe(-120);
+    expect(controlSwitchInputs(added)[0]?.frame).toBe(-120);
   });
 
   it('adds and configures dodge markers on occupied tracks', () => {
@@ -650,7 +686,7 @@ describe('timeline marker commands', () => {
       mode: { kind: 'perfectDodge', successDelayFrames: 5 },
     });
 
-    expect(configured.battle.dodgeMarkers?.[0]).toEqual({
+    expect(dodgeInputs(configured)?.[0]).toEqual({
       id: 'dodge:1',
       frame: -10,
       trackIndex: 0,

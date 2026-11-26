@@ -1,3 +1,4 @@
+import { operatorOwner } from '../../../core/project/scenarioMarkers';
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { TrackDocument } from '../../../core/project/schema';
@@ -58,7 +59,12 @@ it.each([null, 0])('别礼开场普攻夹战技：切入帧 %s 决定旁路，�
     skillCasts: [],
   };
   if (switchFrame !== null)
-    scenario.battle.controlSwitches.push({ id: 'control', frame: switchFrame, trackIndex: 3 });
+    scenario.markers.push({
+      kind: 'controlSwitch' as const,
+      id: 'control',
+      frame: switchFrame,
+      owner: operatorOwner(scenario, 3),
+    });
   const before = structuredClone(scenario);
   const run = await createEditorSimulationService().simulate(scenario, 60);
   const controlled = switchFrame !== null;

@@ -1,14 +1,17 @@
 <script setup lang="ts">
+import TimelineInspectorHeader from './TimelineInspectorHeader.vue';
 /** 连携冷却控制标记的实例级 Inspector。 */
+import { interactionMarkerLabel } from './interactionMarkerLabel';
 import { useI18n } from 'vue-i18n';
 import { EaButton, EaNumberInput } from '../../../design-system/index';
-import type { ExternalEventMarkerDocument } from '../../../core/project/schema';
+import type { InteractionMarker } from '../../../core/project/scenarioMarkers';
 
 const props = defineProps<{
-  marker: ExternalEventMarkerDocument;
+  marker: InteractionMarker;
   maximumFrame: number;
   readOnly?: boolean;
   targetLabel: string;
+  title: string;
 }>();
 
 const emit = defineEmits<{
@@ -28,10 +31,7 @@ function commitFrame(value: number | undefined): void {
 
 <template>
   <section class="marker-inspector">
-    <header class="panel-header">
-      <div class="header-icon-bar"></div>
-      <h3>{{ t('timeline.markerInspector.title') }}</h3>
-    </header>
+    <TimelineInspectorHeader class="marker-header">{{ title }}</TimelineInspectorHeader>
 
     <div class="scrollable-content">
       <section class="section-container">
@@ -40,7 +40,7 @@ function commitFrame(value: number | undefined): void {
           <div class="form-group attribute-grid__wide">
             <span>{{ t('timeline.markerInspector.event') }}</span>
             <div class="ea-readonly-value">
-              {{ t(`comboControl.${marker.event.mode}`) }}
+              {{ t(`timeline.markerLabels.${interactionMarkerLabel(marker)}`) }}
             </div>
           </div>
           <div class="form-group attribute-grid__wide">
@@ -65,7 +65,9 @@ function commitFrame(value: number | undefined): void {
             <div class="ea-readonly-value">{{ marker.id }}</div>
           </div>
         </div>
-        <small class="field-help">{{ t('comboControl.hint') }}</small>
+        <small v-if="marker.kind === 'comboCooldownControl'" class="field-help">{{
+          t('timeline.markerInspector.comboCooldownHint')
+        }}</small>
       </section>
 
       <section class="section-container danger-section">
@@ -85,6 +87,10 @@ function commitFrame(value: number | undefined): void {
 </template>
 
 <style scoped>
+.marker-header {
+  margin: var(--ea-space-3) var(--ea-space-3) 0;
+}
+
 .marker-inspector {
   height: 100%;
   min-width: 0;
@@ -94,30 +100,6 @@ function commitFrame(value: number | undefined): void {
   color: var(--ea-fg);
 }
 
-.panel-header {
-  position: relative;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid var(--ea-border, #353a40);
-}
-
-.header-icon-bar {
-  width: 4px;
-  align-self: stretch;
-  background: #cfb73a;
-}
-
-.panel-header h3 {
-  min-width: 0;
-  margin: 0;
-  padding: 0 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-}
-
 .scrollable-content {
   min-height: 0;
   overflow: auto;
@@ -125,16 +107,11 @@ function commitFrame(value: number | undefined): void {
 }
 
 .section-container {
+  position: relative;
+  margin-top: var(--ea-space-3);
   min-width: 0;
   padding: 12px;
   border-bottom: 1px solid var(--ea-border, #353a40);
-}
-
-.panel-tag-mini {
-  margin-bottom: 10px;
-  color: var(--ea-fg-secondary);
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .attribute-grid {

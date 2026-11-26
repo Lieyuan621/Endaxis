@@ -1,3 +1,4 @@
+import { operatorOwner } from '../../core/project/scenarioMarkers';
 import { firstScenarioEnemy } from '../../core/project/level';
 import { describe, expect, it } from 'vitest';
 import type {
@@ -806,7 +807,12 @@ function createGeneratedLastRitePartyBuffScenario() {
     initialState: { ultimateEnergy: 0 },
     skillCasts: [],
   };
-  scenario.battle.controlSwitches.push({ id: 'switch:last-rite-ally', frame: 35, trackIndex: 1 });
+  scenario.markers.push({
+    kind: 'controlSwitch' as const,
+    id: 'switch:last-rite-ally',
+    frame: 35,
+    owner: operatorOwner(scenario, 1),
+  });
   let nextId = 0;
   const ids = { allocate: (kind: string) => `${kind}:${++nextId}` };
   const withBuff = placeSkillGroup({
@@ -934,10 +940,11 @@ function createGeneratedTangtangUltimateResponseScenario(includeAllyPlungingAtta
   if (!includeAllyPlungingAttack) return withUltimate;
 
   // 提前起跳，计入完整下落过程后，使落地命中进入水体末段的响应窗口。
-  withUltimate.battle.controlSwitches.push({
+  withUltimate.markers.push({
+    kind: 'controlSwitch' as const,
     id: 'switch:tangtang-ultimate:perlica',
     frame: 170,
-    trackIndex: 1,
+    owner: operatorOwner(withUltimate, 1),
   });
   return placeSkillGroup({
     scenario: withUltimate,
@@ -1143,11 +1150,13 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       initialSp: 0,
       spRecoveryPerSecond: 0,
     };
-    scenario.battle.dodgeMarkers = [
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'dodge'),
       {
+        kind: 'dodge' as const,
         id: 'dodge:generated-perfect',
         frame: 1,
-        trackIndex: 0,
+        owner: operatorOwner(scenario, 0),
         direction: 'forward',
         mode: { kind: 'perfectDodge', successDelayFrames: 0 },
       },

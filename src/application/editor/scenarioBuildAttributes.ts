@@ -38,11 +38,10 @@ export function resolveScenarioBuildAttributes(
       ...instance,
       enemy: { ...instance.enemy, lifecycle: { spawnFrame: 0, presenceChanges: [] } },
     })),
+    markers: [],
     battle: {
       ...scenario.battle,
       enemyAutomaticDeath: false,
-      controlSwitches: [],
-      enemyTargetSwitches: [],
     },
   };
   const runtime = createScenarioSimulationService(repository).createBuildAttributeRuntime(build);

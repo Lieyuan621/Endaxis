@@ -1,3 +1,9 @@
+import {
+  operatorOwner,
+  controlSwitchInputs,
+  dodgeInputs,
+  consumableInputs,
+} from '../../../core/project/scenarioMarkers';
 import { describe, expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { createScenarioEditorSession } from '../../../test/scenarioEditorSession';
@@ -39,14 +45,25 @@ function fixture() {
         placement: { afterCastId: 'head' },
       },
     ],
-    consumableUses: [{ id: 'item', frame: 25, consumableId: 'medicine' }],
   };
-  s.battle.controlSwitches = [{ id: 'same-id', frame: 20, trackIndex: 0 }];
-  s.battle.dodgeMarkers = [
+  s.markers.push({
+    kind: 'consumableUse',
+    owner: { scope: 'operator', trackId: 'track' },
+    id: 'item',
+    frame: 25,
+    consumableId: 'medicine',
+  });
+  s.markers = [
+    ...s.markers.filter(marker => marker.kind !== 'controlSwitch'),
+    { kind: 'controlSwitch' as const, id: 'same-id', frame: 20, owner: operatorOwner(s, 0) },
+  ];
+  s.markers = [
+    ...s.markers.filter(marker => marker.kind !== 'dodge'),
     {
+      kind: 'dodge' as const,
       id: 'same-id',
       frame: 40,
-      trackIndex: 0,
+      owner: operatorOwner(s, 0),
       direction: 'forward',
       mode: { kind: 'perfectDodge', successDelayFrames: 8 },
     },
@@ -57,6 +74,19 @@ const key = (kind: Parameters<typeof timelineItemKey>[0]['kind'], id: string) =>
   timelineItemKey({ kind, id });
 
 describe('mixed timeline objects', () => {
+  it('同 ID 的受击与拾取独立移动和删除', () => {
+    const scenario = fixture();
+    const owner = operatorOwner(scenario, 0);
+    scenario.markers = [
+      { kind: 'operatorHit', id: 'same', frame: 20, owner },
+      { kind: 'pickup', id: 'same', frame: 20, owner, group: 'food' },
+    ];
+    const items = collectTimelineItems(scenario);
+    const pickup = items.get(key('pickup', 'same'))!;
+    const moved = pickup.move(scenario, 30);
+    expect(moved.markers.map(marker => marker.frame)).toEqual([20, 30]);
+    expect(pickup.remove(moved).markers).toEqual([scenario.markers[0]]);
+  });
   it('keeps dragged inputs out of a collapsed preparation area and allows them when expanded', () => {
     const scenario = fixture();
     const inputs = [
@@ -87,7 +117,6 @@ describe('mixed timeline objects', () => {
       ...scenario.tracks[0]!,
       id: 'other',
       skillCasts: [{ ...scenario.tracks[0]!.skillCasts[0]!, id: 'other-skill' }],
-      consumableUses: [],
     };
     const items = collectTimelineItems(scenario);
     const anchor = items.get(key('skill', 'tail'))!;
@@ -133,12 +162,12 @@ describe('mixed timeline objects', () => {
       { startFrame: -20 },
       { afterCastId: 'head' },
     ]);
-    expect(next.battle.controlSwitches[0]!.frame).toBe(-30);
-    expect(next.battle.dodgeMarkers![0]).toMatchObject({
+    expect(controlSwitchInputs(next)[0]!.frame).toBe(-30);
+    expect(dodgeInputs(next)![0]).toMatchObject({
       frame: -10,
       mode: { successDelayFrames: 8 },
     });
-    expect(next.tracks[0]!.consumableUses![0]!.frame).toBe(-25);
+    expect(consumableInputs(next, next.tracks[0]?.id)![0]!.frame).toBe(-25);
     expect(session.snapshot.revision).toBe(1);
     session.undo();
     expect(session.snapshot.scenario).toBe(s);
@@ -149,7 +178,7 @@ describe('mixed timeline objects', () => {
     let items = collectTimelineItems(s);
     const keys = new Set([key('skill', 'tail'), key('controlSwitch', 'same-id')]);
     const next = moveTimelineItems(s, planTimelineItemMove(items, keys)!, -100).scenario;
-    expect(next.battle.controlSwitches[0]!.frame).toBe(15);
+    expect(controlSwitchInputs(next)[0]!.frame).toBe(15);
     expect(next.tracks[0]!.skillCasts[0]!.placement).toEqual({ startFrame: 25 });
     s.tracks[0]!.skillCasts[1]!.presentation = { locked: true };
     items = collectTimelineItems(s);
@@ -161,23 +190,25 @@ describe('mixed timeline objects', () => {
       items = [...collectTimelineItems(s).values()];
     const clipboard = copyTimelineItems(s, items, new Map([['tail', 60]]))!;
     let counter = 0;
-    const pasted = pasteTimelineActions(s, clipboard, 100, {
+    const pasted = pasteTimelineActions(s, structuredClone(clipboard), 100, {
       allocate: kind => `${kind}:${++counter}`,
     });
     const skillRefs = pasted.itemRefs.filter(ref => ref.kind === 'skill');
     expect(pasted.scenario.tracks[0]!.skillCasts.at(-1)!.placement).toEqual({
       afterCastId: skillRefs[0]!.id,
     });
-    expect(pasted.scenario.battle.dodgeMarkers!.at(-1)).toMatchObject({
+    expect(dodgeInputs(pasted.scenario)!.at(-1)).toMatchObject({
       frame: 120,
       mode: { kind: 'perfectDodge', successDelayFrames: 8 },
     });
     const session = createScenarioEditorSession(s);
     session.commit('removeTimelineItems', current => removeTimelineItems(current, items));
     expect(session.snapshot.scenario.tracks[0]!.skillCasts).toHaveLength(0);
-    expect(session.snapshot.scenario.battle.dodgeMarkers).toHaveLength(0);
-    expect(session.snapshot.scenario.battle.controlSwitches).toHaveLength(0);
-    expect(session.snapshot.scenario.tracks[0]!.consumableUses).toHaveLength(0);
+    expect(dodgeInputs(session.snapshot.scenario)).toHaveLength(0);
+    expect(controlSwitchInputs(session.snapshot.scenario)).toHaveLength(0);
+    expect(
+      consumableInputs(session.snapshot.scenario, session.snapshot.scenario.tracks[0]?.id),
+    ).toHaveLength(0);
     session.undo();
     expect(session.snapshot.scenario).toBe(s);
   });

@@ -18,6 +18,7 @@ import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/c
 export interface OperatorPassiveUiTimelineSource {
   readonly operatorId: string;
   readonly definition: OperatorPassiveUiDefinition;
+  readonly groupedEntityIds?: readonly string[];
 }
 
 export type OperatorPassiveUiTimelineSegment =
@@ -257,7 +258,7 @@ export function projectOperatorPassiveUiTimelineViz(
           entries,
           endFrame,
           source.operatorId,
-          definition.abilityEntityId,
+          source.groupedEntityIds ?? definition.abilityEntityId,
         ).segments.map(segment => ({
           ...definition,
           ...segment,

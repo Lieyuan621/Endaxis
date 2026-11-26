@@ -1,3 +1,4 @@
+import { operatorOwner, markersOfKind, consumableInputs } from '../../core/project/scenarioMarkers';
 import { firstScenarioEnemy } from '../../core/project/level';
 import { expect, it, vi } from 'vitest';
 import { createEmptyProject } from '../../core/project/createProject';
@@ -41,14 +42,33 @@ function frozenFixture() {
   const scenario = fixture().scenarios[0]!;
   scenario.tracks[0]!.skillCasts[1]!.placement = { startFrame: 30 };
   scenario.tracks[0]!.skillCasts[1]!.presentation = {};
-  scenario.tracks[0]!.consumableUses = [{ id: 'item', frame: 12, consumableId: 'medicine' }];
-  scenario.battle.controlSwitches = [{ id: 'switch', frame: 15, trackIndex: 0 }];
-  scenario.battle.externalEventMarkers = [
+  scenario.markers = [
+    ...scenario.markers.filter(
+      marker =>
+        marker.kind !== 'consumableUse' ||
+        marker.owner.scope !== 'operator' ||
+        marker.owner.trackId !== scenario.tracks[0]?.id,
+    ),
     {
+      kind: 'consumableUse' as const,
+      id: 'item',
+      frame: 12,
+      consumableId: 'medicine',
+      owner: operatorOwner(scenario, 0),
+    },
+  ];
+  scenario.markers = [
+    ...scenario.markers.filter(marker => marker.kind !== 'controlSwitch'),
+    { kind: 'controlSwitch' as const, id: 'switch', frame: 15, owner: operatorOwner(scenario, 0) },
+  ];
+  scenario.markers = [
+    ...scenario.markers.filter(marker => marker.kind !== 'comboCooldownControl'),
+    {
+      kind: 'comboCooldownControl' as const,
       id: 'event',
       frame: 18,
-      target: { scope: 'team' },
-      event: { kind: 'comboCooldownControl', mode: 'cooldown' },
+      owner: { scope: 'team' as const },
+      mode: 'cooldown',
     },
   ];
   return scenario;
@@ -60,16 +80,28 @@ it('历史保护涵盖技能、切人、物品与人工事件，并保护空白�
       s.tracks[0]!.skillCasts[0]!.simulationInputs = { randomSeed: 9 };
     },
     s => {
-      s.battle.controlSwitches[0]!.frame++;
+      markersOfKind(s, 'controlSwitch')[0]!.frame++;
     },
     s => {
-      s.tracks[0]!.consumableUses = [];
+      s.markers = [
+        ...s.markers.filter(
+          marker =>
+            marker.kind !== 'consumableUse' ||
+            marker.owner.scope !== 'operator' ||
+            marker.owner.trackId !== s.tracks[0]?.id,
+        ),
+      ];
     },
     s => {
-      s.battle.externalEventMarkers![0]!.event = { kind: 'comboCooldownControl', mode: 'ready' };
+      markersOfKind(s, 'comboCooldownControl')[0]!.mode = 'ready';
     },
     s => {
-      s.battle.controlSwitches.push({ id: 'new', frame: 19, trackIndex: 0 });
+      s.markers.push({
+        kind: 'controlSwitch' as const,
+        id: 'new',
+        frame: 19,
+        owner: operatorOwner(s, 0),
+      });
     },
     s => {
       s.tracks[0]!.skillCasts[1]!.placement = { startFrame: 19 };
@@ -141,7 +173,7 @@ it('完整输入锁可锁标记；未解析连续组不能按未来放行，解�
   expect(() =>
     locked.commit('item', before => {
       const next = structuredClone(before);
-      next.tracks[0]!.consumableUses![0]!.consumableId = 'other';
+      consumableInputs(next, next.tracks[0]?.id)![0]!.consumableId = 'other';
       return next;
     }),
   ).toThrow(ScenarioEditConstraintError);

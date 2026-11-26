@@ -705,6 +705,7 @@ describe('AbilityEntityOperationExecutor', () => {
       expect.anything(),
       expect.objectContaining({ skillId: 'independent-child' }),
       undefined,
+      'dead-arrow',
     );
     expect(entities.snapshot(entity!).sourceSkillCastId).toBeUndefined();
     expect(entities.snapshot(entity!).skillCastInfo).toBeNull();

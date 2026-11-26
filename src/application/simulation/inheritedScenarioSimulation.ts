@@ -2,10 +2,12 @@ import type { ScenarioDocument } from '../../core/project/schema';
 
 import {
   getSkillCastPlacementChains,
-  getDodgeMarkerHistory,
-  resolveDodgeMarkerLastInputFrame,
   resolveScenarioInitialFrame,
 } from '../../core/project/skillCastPlacement';
+import {
+  markerHistory,
+  resolveDodgeMarkerLastInputFrame,
+} from '../../core/project/scenarioMarkers';
 import { CombatInputSchedule, type CombatInputScheduleCheckpoint } from './combatInputSchedule';
 import type { ScenarioSimulationService } from './scenarioSimulationService';
 
@@ -52,20 +54,17 @@ export class InheritedScenarioSimulation {
         delete cast.presentation;
         if (disabled) cast.presentation = { disabled: true };
       }
-      track.consumableUses = track.consumableUses?.filter(use => use.frame < boundary);
     }
-    prefix.battle.controlSwitches = prefix.battle.controlSwitches.filter(
-      marker => marker.frame < boundary,
-    );
-    prefix.battle.externalEventMarkers = prefix.battle.externalEventMarkers?.filter(
-      marker => marker.frame < boundary,
-    );
-    if (prefix.battle.dodgeMarkers !== undefined)
-      prefix.battle.dodgeMarkers = getDodgeMarkerHistory(prefix.battle.dodgeMarkers, boundary);
+    // 敌方主目标切换随战斗环境注册，检查点派生的后续模拟仍使用这份完整时间表。
+    prefix.markers = [
+      ...markerHistory(prefix, boundary).filter(
+        marker => marker.kind !== 'cycleBoundary' && marker.kind !== 'enemyTargetSwitch',
+      ),
+      ...prefix.markers.filter(marker => marker.kind === 'enemyTargetSwitch'),
+    ];
     // 编辑范围和展示内容不参与历史运行环境，也不使前缀失效。
     delete prefix.battle.simulationRange;
     prefix.battle.durationFrames = Math.max(0, boundary);
-    prefix.battle.cycleBoundaries = [];
     prefix.connections = [];
     prefix.name = '';
     prefix.editor = { trackHeightWeights: [1, 1, 1, 1], prepExpanded: false };
@@ -101,16 +100,9 @@ export class InheritedScenarioSimulation {
     for (const track of suffix.tracks) {
       if (track === null) continue;
       track.skillCasts = track.skillCasts.filter(cast => !historicalIds.has(cast.id));
-      track.consumableUses = track.consumableUses?.filter(use => use.frame >= boundary);
     }
-    suffix.battle.controlSwitches = suffix.battle.controlSwitches.filter(
-      marker => marker.frame >= boundary,
-    );
-    suffix.battle.externalEventMarkers = suffix.battle.externalEventMarkers?.filter(
-      marker => marker.frame >= boundary,
-    );
-    suffix.battle.dodgeMarkers = suffix.battle.dodgeMarkers?.filter(
-      marker => resolveDodgeMarkerLastInputFrame(marker) >= boundary,
+    suffix.markers = suffix.markers.filter(
+      m => (m.kind === 'dodge' ? resolveDodgeMarkerLastInputFrame(m) : m.frame) >= boundary,
     );
     const plan = service.compileInputSchedule(suffix);
     if (continuationPlan?.castIds.some(id => historicalIds.has(id)))

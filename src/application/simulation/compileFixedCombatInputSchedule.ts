@@ -1,3 +1,4 @@
+import { consumableInputs, controlSwitchInputs } from '../../core/project/scenarioMarkers';
 import type { SkillInputGroup } from '../../core/combat/runtime/combatInputRuntime';
 import type {
   CombatSkillInput,
@@ -69,10 +70,11 @@ export function compileCombatInputSchedule(
   };
   for (const track of scenario.tracks) {
     if (track === null) continue;
-    if ((track.consumableUses?.length ?? 0) > 0 && track.operator === null) {
+    const consumables = consumableInputs(scenario, track.id);
+    if (consumables.length > 0 && track.operator === null) {
       throw new Error(`track '${track.id}' cannot use a consumable without an operator`);
     }
-    for (const use of track.consumableUses ?? []) {
+    for (const use of consumables) {
       if (index.getConsumable === undefined) {
         throw new Error('consumable game data is required by the input schedule');
       }
@@ -109,7 +111,7 @@ export function compileCombatInputSchedule(
     }
   }
   // 与 resolveControlTimeline 一致：同帧只采用存档数组的最后一次切换。
-  for (const control of scenario.battle.controlSwitches) {
+  for (const control of controlSwitchInputs(scenario)) {
     at(control.frame).controlledOperatorId = scenario.tracks[control.trackIndex]?.id ?? null;
   }
   for (const { frame, ...event } of compileScenarioExternalEventInputs(scenario)) {

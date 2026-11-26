@@ -48,6 +48,7 @@ interface AbilityEntityRuntimeDependencies {
     state: CombatOperationHostState,
     program: CompiledAbilityEntityChildSkillProgram,
     origin: CombatSkillCastInfo | undefined,
+    entityId: string,
   ) => CombatOperationExecutor;
   readonly semanticEvents?: CombatSemanticEventRuntime;
   readonly launchProjectile?: LaunchProjectile;
@@ -582,6 +583,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
           operationState,
           instanceProgram,
           inheritSourceSkillCastInfo ? context.skillCastInfo : undefined,
+          this.#entities.snapshot(entity).abilityEntityId,
         ),
         source: this.#entities.snapshot(entity).source,
         target: this.#entities.snapshot(entity).target,

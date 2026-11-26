@@ -12,11 +12,6 @@ export function removeScenarioEnemy(scenario: ScenarioDocument, id: string): Sce
   return {
     ...scenario,
     level: { kind: 'multiEnemies', enemies },
-    battle: {
-      ...scenario.battle,
-      enemyTargetSwitches: scenario.battle.enemyTargetSwitches?.filter(
-        marker => marker.targetId !== id,
-      ),
-    },
+    markers: scenario.markers.filter(m => m.kind !== 'enemyTargetSwitch' || m.enemyId !== id),
   };
 }

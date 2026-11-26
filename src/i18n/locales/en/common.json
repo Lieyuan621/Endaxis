@@ -88,15 +88,6 @@
       "spatialPoint": "Spatial point"
     }
   },
-  "comboControl": {
-    "cooldown": "Start all combo cooldowns",
-    "cooldownMenu": "Force cooldown",
-    "cooldownShort": "CD",
-    "ready": "Reset all combo cooldowns",
-    "readyMenu": "Ready now",
-    "readyShort": "Ready",
-    "hint": "Set team combo cooldowns without creating a combo window or casting a skill. Skills run before markers on the same frame."
-  },
   "display": {
     "title": "Display",
     "cursorGuide": "Cursor guide",
@@ -877,6 +868,10 @@
       "undo": "Undo"
     },
     "markerContext": {
+      "operatorHit": "Receive hit here",
+      "pickupChoice": "Pick up {skill}",
+      "readyMenu": "Ready now",
+      "cooldownMenu": "Force cooldown",
       "title": "Timeline marker",
       "deleteMarker": "Delete marker",
       "copyMarker": "Copy dodge marker",
@@ -892,6 +887,8 @@
       "switchToPerfectDodge": "Switch to perfect dodge"
     },
     "markerInspector": {
+      "comboCooldownHint": "Set team combo cooldowns without creating a combo window or casting a skill. Skills run before markers on the same frame.",
+      "pickupMissed": "The selected drop was not collected at this frame.",
       "title": "Combo cooldown",
       "event": "Event type",
       "target": "Target",
@@ -957,6 +954,14 @@
       }
     },
     "markerLabels": {
+      "operatorHit": "Hit",
+      "operatorHitShort": "Hit",
+      "pickup": "Pick up item",
+      "pickupShort": "Pickup",
+      "cooldown": "Start all combo cooldowns",
+      "cooldownShort": "CD",
+      "ready": "Reset all combo cooldowns",
+      "readyShort": "Ready",
       "cycleBoundary": "Cycle boundary",
       "simulationStart": "Simulation start",
       "simulationEnd": "Simulation end",
@@ -2627,6 +2632,8 @@
       "vocalistStance": "Vocalist Stance",
       "cosmovoiceStance": "Cosmovoice Stance",
       "whirlpools": "Whirlpools",
+      "kayComboDrop": "Dropped weapon",
+      "kayUltimateDrop": "Picnic snack",
       "waterspouts": "Waterspouts",
       "oldenStare": "Olden Stare",
       "perfectTiming": "Perfect Timing",

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TimelineInspectorHeader from './TimelineInspectorHeader.vue';
 import { computed } from 'vue';
 import type { OperatorDefinition } from '../../../../packages/game-data-contract/src/operators';
 import { useI18n } from 'vue-i18n';
@@ -146,13 +147,7 @@ function setInitialValue(key: string, value: number | undefined) {
 
 <template>
   <section class="properties-panel">
-    <header class="panel-header">
-      <div class="header-main-row">
-        <div class="header-icon-bar"></div>
-        <h3>{{ cast === null ? t('propertiesPanel.noSelection') : label }}</h3>
-      </div>
-      <div class="header-divider"></div>
-    </header>
+    <TimelineInspectorHeader>{{ cast === null ? t('propertiesPanel.noSelection') : label }}</TimelineInspectorHeader>
 
     <div v-if="cast !== null" class="scrollable-content">
       <section class="section-container">
@@ -445,44 +440,6 @@ function setInitialValue(key: string, value: number | undefined) {
   background: var(--ea-workbench-panel);
   color: var(--ea-fg);
   font-size: 13px;
-}
-
-.panel-header {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--ea-space-1);
-}
-
-.header-main-row {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--ea-space-2);
-}
-
-.header-divider {
-  height: 2px;
-  margin-top: 3px;
-  background: linear-gradient(90deg, var(--ea-gold), transparent);
-  opacity: 0.3;
-}
-
-.header-icon-bar {
-  width: 4px;
-  height: 18px;
-  flex: 0 0 auto;
-  background: var(--ea-gold);
-}
-
-.panel-header h3 {
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  color: var(--ea-fg);
-  font-size: 18px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .scrollable-content {

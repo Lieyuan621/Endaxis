@@ -1,3 +1,4 @@
+import { controlSwitchInputs } from '../../core/project/scenarioMarkers';
 import { firstScenarioEnemy, levelEnemies } from '../../core/project/level';
 import { compileScenarioEnemyInstances } from '../../core/compiler/compileScenarioEnemyInstances';
 import type { RangeSampleSource } from '../../core/combat/random/simulationRandom';
@@ -138,7 +139,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
   const enemyVitals = createEnemyCombatVitals(enemy);
   const controlTimeline = resolveControlTimeline(
     input.scenario.tracks,
-    input.options.liveInputInitialFrame === undefined ? input.scenario.battle.controlSwitches : [],
+    input.options.liveInputInitialFrame === undefined ? controlSwitchInputs(input.scenario) : [],
     input.options.liveInputInitialFrame ?? -input.scenario.battle.prepFrames,
   );
   const additionalEnemies = new Map(

@@ -493,7 +493,7 @@ test('技能、闪避和切人共用选区，整体移动、右键删除和撤�
   await page.locator('.submenu-list').getByRole('menuitem', { name: '佩丽卡' }).click();
 
   const skill = page.locator('.timeline-action-block').first();
-  const dodge = page.locator('.dodge-marker').first();
+  const dodge = page.locator('.timeline-marker:has(.dodge-marker__icon)').first();
   const control = page.locator('.track-switch-marker:not(.track-switch-marker--automatic)').first();
   await skill.dblclick();
   await expect(page.locator('.timeline-action-block[data-selected="true"]')).toHaveCount(4);
@@ -550,7 +550,7 @@ test('技能、闪避和切人共用选区，整体移动、右键删除和撤�
   await page.mouse.move(lane.x + 680, lane.y + lane.height - 8);
   await page.keyboard.press('ControlOrMeta+v');
   await expect(page.locator('.timeline-action-block')).toHaveCount(5);
-  await expect(page.locator('.dodge-marker')).toHaveCount(2);
+  await expect(page.locator('.timeline-marker:has(.dodge-marker__icon)')).toHaveCount(2);
   await expect(
     page.locator('.track-switch-marker:not(.track-switch-marker--automatic)'),
   ).toHaveCount(2);
@@ -692,3 +692,23 @@ for (const menuName of ['更多', '显示']) {
     await expect.poll(async () => (await box(block)).x).toBeCloseTo(dropped.x, 0);
   });
 }
+
+test('技能块和轨道空白处共用标记放置菜单，已有标记仅显示编辑操作', async ({ page }) => {
+  await openPerlica(page);
+  await placeBasicGroup(page);
+  const lane = await box(page.locator('.track-lane').first());
+  await page.mouse.click(lane.x + 430, lane.y + lane.height - 8, { button: 'right' });
+  const group = page.getByRole('group', { name: '轨道操作' });
+  const labels = await group.getByRole('menuitem').allTextContents();
+  await expect(group.getByRole('menuitem', { name: '在此时受击', exact: true })).toBeVisible();
+  await page.locator('.timeline-action-block').first().click({ button: 'right' });
+  await expect(group.getByRole('menuitem', { name: '在此时受击', exact: true })).toBeVisible();
+  expect(await group.getByRole('menuitem').allTextContents()).toEqual(labels);
+  await group.getByRole('menuitem', { name: '在此时受击', exact: true }).click();
+  const marker = page.locator('.track-lane .receive-hit-marker').first();
+  await expect(marker).toBeVisible();
+  await marker.click({ button: 'right' });
+  await expect(group).toHaveCount(0);
+  await page.getByRole('menuitem', { name: /删除/ }).click();
+  await expect(marker).toHaveCount(0);
+});

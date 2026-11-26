@@ -1,9 +1,10 @@
+import { controlSwitchInputs, dodgeInputs } from '../../core/project/scenarioMarkers';
 import { firstScenarioEnemy } from '../../core/project/level';
 import { expect, it, vi } from 'vitest';
 import { CombatRuntimeSession } from '../../core/combat/runtime/combatRuntimeSession';
 import { convertLegacyTimeline, resolveLegacyRuntimeReplacementSource } from './convert';
 import { gameDataRepository } from '../../data/gameDataRepository';
-import { parseProjectDocument } from '../../core/project/serialization';
+import { parseProjectDocument, serializeProjectDocument } from '../../core/project/serialization';
 import realAxisMappings from './mappings.json';
 import type { ConversionMappings } from './sourcePreparation';
 
@@ -37,7 +38,7 @@ it('保留时间允许同轴重叠，不保存切面且不改变原始输入', (
   }
   expect(preserved.report.issues).toEqual([]);
   expect(preserved.project?.scenarios[0]?.battle.automaticControlSwitches).toBe(true);
-  expect(preserved.project?.scenarios[0]?.battle.controlSwitches).toEqual([]);
+  expect(controlSwitchInputs(preserved.project!.scenarios[0]!)).toEqual([]);
   expect(
     preserved.project!.scenarios[0]!.tracks[0]!.skillCasts.map(c => c.placement.startFrame),
   ).toEqual([162, 163]);
@@ -112,7 +113,7 @@ it('把旧版空闪避块转换为同轨普通闪避标签，不生成技能块�
 
   expect(result.report.issues).toEqual([]);
   expect(result.project!.scenarios[0]!.tracks[0]!.skillCasts).toEqual([]);
-  expect(result.project!.scenarios[0]!.battle.dodgeMarkers).toEqual([
+  expect(dodgeInputs(result.project!.scenarios[0]!)).toEqual([
     {
       id: 'legacy:test-axis:track:0:dodge:0',
       frame: 180,
@@ -463,9 +464,9 @@ it('produces a current reloadable document only after explicit skill mapping and
   expect(result.report.issues).toEqual([]);
   expect(result.status).toBe('converted');
   expect(result.project?.scenarios[0]?.tracks[0]?.skillCasts[0]?.placement.startFrame).toBe(162);
-  expect(parseProjectDocument(JSON.stringify(result.project), { gameDataRepository }).ok).toBe(
-    true,
-  );
+  expect(
+    parseProjectDocument(serializeProjectDocument(result.project!), { gameDataRepository }).ok,
+  ).toBe(true);
 });
 it('clamps an excessive stored gauge to the current native maximum before simulation', () => {
   const input = fixture();
@@ -729,7 +730,7 @@ it('converts old characterId switch markers to the original track index before s
     operators: { 'old-perlica': 'perlica' },
   });
   expect(result.report.issues).toEqual([]);
-  expect(result.project?.scenarios[0]?.battle.controlSwitches).toEqual([
+  expect(controlSwitchInputs(result.project!.scenarios[0]!)).toEqual([
     { id: 'switch', frame: 30, trackIndex: 0 },
   ]);
   expect(result.project?.scenarios[0]?.battle.automaticControlSwitches).toBe(true);
@@ -745,7 +746,7 @@ it('reports and omits unresolved control targets without discarding the project'
     operators: { 'old-perlica': 'perlica' },
   });
   expect(result.status).toBe('converted-with-issues');
-  expect(result.project?.scenarios[0]?.battle.controlSwitches).toEqual([]);
+  expect(controlSwitchInputs(result.project!.scenarios[0]!)).toEqual([]);
   expect(result.report.issues.length).toBeGreaterThan(0);
 });
 
@@ -759,7 +760,7 @@ it('reports and omits a switch whose explicit track conflicts with its character
     operators: { 'old-perlica': 'perlica' },
   });
   expect(result.status).toBe('converted-with-issues');
-  expect(result.project?.scenarios[0]?.battle.controlSwitches).toEqual([]);
+  expect(controlSwitchInputs(result.project!.scenarios[0]!)).toEqual([]);
   expect(result.report.issues.length).toBeGreaterThan(0);
 });
 

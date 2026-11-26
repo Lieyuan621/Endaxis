@@ -1,3 +1,10 @@
+import {
+  markersOfKind,
+  operatorOwner,
+  consumableInputs,
+  controlSwitchInputs,
+  dodgeInputs,
+} from '../../core/project/scenarioMarkers';
 import { describe, expect, it } from 'vitest';
 import { createEmptyProject, createEmptyScenario } from '../../core/project/createProject';
 import { ProjectEditorSession } from '../../application/editor/projectEditorSession';
@@ -7,7 +14,10 @@ describe('scenario reset', () => {
   it('clears battle state without changing inherited copies and supports undo', () => {
     const project = createEmptyProject({ createdWith: 'test' });
     const current = project.scenarios[0]!;
-    current.battle.cycleBoundaries = [{ id: 'boundary', frame: 30 }];
+    current.markers = [
+      ...current.markers.filter(marker => marker.kind !== 'cycleBoundary'),
+      { kind: 'cycleBoundary' as const, id: 'boundary', frame: 30 },
+    ];
     current.tracks[0] = {
       id: 'track',
       operator: null,
@@ -24,11 +34,11 @@ describe('scenario reset', () => {
     const reset = session.snapshot.project;
     expect(reset.scenarios[0]!.tracks[0]!.id).toBe('track');
     expect(reset.scenarios[0]!.tracks[0]!.initialState.ultimateEnergy).toBe(0);
-    expect(reset.scenarios[0]!.battle.cycleBoundaries).toEqual([]);
+    expect(markersOfKind(reset.scenarios[0]!, 'cycleBoundary')).toEqual([]);
     expect(reset.scenarios[0]!.editor.prepExpanded).toBe(false);
     expect(reset.scenarios[1]).toBe(dependent);
     expect(reset.scenarios[1]!.inheritance).toEqual({ sourceScenarioId: current.id, frame: 30 });
-    expect(current.battle.cycleBoundaries).toHaveLength(1);
+    expect(markersOfKind(current, 'cycleBoundary')).toHaveLength(1);
     session.undo();
     expect(session.snapshot.project).toBe(project);
     session.redo();
@@ -58,27 +68,53 @@ describe('scenario reset', () => {
           placement: { startFrame: 40 },
         },
       ],
-      consumableUses: [
-        { id: 'history-item', frame: 12, consumableId: 'drug' },
-        { id: 'future-item', frame: 42, consumableId: 'drug' },
-      ],
     };
-    inherited.battle.controlSwitches = [
-      { id: 'history-switch', frame: 10, trackIndex: 0 },
-      { id: 'future-switch', frame: 40, trackIndex: 0 },
-    ];
-    inherited.battle.dodgeMarkers = [
+    inherited.markers.push(
       {
+        kind: 'consumableUse',
+        owner: { scope: 'operator', trackId: 'track' },
+        id: 'history-item',
+        frame: 12,
+        consumableId: 'drug',
+      },
+      {
+        kind: 'consumableUse',
+        owner: { scope: 'operator', trackId: 'track' },
+        id: 'future-item',
+        frame: 42,
+        consumableId: 'drug',
+      },
+    );
+    inherited.markers = [
+      ...inherited.markers.filter(marker => marker.kind !== 'controlSwitch'),
+      {
+        kind: 'controlSwitch' as const,
+        id: 'history-switch',
+        frame: 10,
+        owner: operatorOwner(inherited, 0),
+      },
+      {
+        kind: 'controlSwitch' as const,
+        id: 'future-switch',
+        frame: 40,
+        owner: operatorOwner(inherited, 0),
+      },
+    ];
+    inherited.markers = [
+      ...inherited.markers.filter(marker => marker.kind !== 'dodge'),
+      {
+        kind: 'dodge' as const,
         id: 'crossing-dodge',
         frame: 20,
-        trackIndex: 0,
+        owner: operatorOwner(inherited, 0),
         direction: 'forward',
         mode: { kind: 'perfectDodge', successDelayFrames: 20 },
       },
       {
+        kind: 'dodge' as const,
         id: 'future-dodge',
         frame: 40,
-        trackIndex: 0,
+        owner: operatorOwner(inherited, 0),
         direction: 'forward',
         mode: { kind: 'dodge' },
       },
@@ -95,9 +131,11 @@ describe('scenario reset', () => {
     expect(reset.battle.simulationRange).toEqual(inherited.battle.simulationRange);
     expect(reset.tracks[0]!.initialState).toEqual({ ultimateEnergy: 50 });
     expect(reset.tracks[0]!.skillCasts.map(cast => cast.id)).toEqual(['history']);
-    expect(reset.tracks[0]!.consumableUses?.map(use => use.id)).toEqual(['history-item']);
-    expect(reset.battle.controlSwitches.map(marker => marker.id)).toEqual(['history-switch']);
-    expect(reset.battle.dodgeMarkers).toEqual([
+    expect(consumableInputs(reset, reset.tracks[0]?.id)?.map(use => use.id)).toEqual([
+      'history-item',
+    ]);
+    expect(controlSwitchInputs(reset).map(marker => marker.id)).toEqual(['history-switch']);
+    expect(dodgeInputs(reset)).toEqual([
       {
         id: 'crossing-dodge',
         frame: 20,

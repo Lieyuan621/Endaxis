@@ -33,11 +33,23 @@ describe('active consumable input', () => {
       gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
       initialState: { ultimateEnergy: 0 },
       skillCasts: [],
-      consumableUses: [
-        { id: 'use:first', frame: 0, consumableId: first!.id },
-        { id: 'use:second', frame: 10, consumableId: second!.id },
-      ],
     };
+    scenario.markers.push(
+      {
+        kind: 'consumableUse',
+        owner: { scope: 'operator', trackId: 'track:perlica' },
+        id: 'use:first',
+        frame: 0,
+        consumableId: first!.id,
+      },
+      {
+        kind: 'consumableUse',
+        owner: { scope: 'operator', trackId: 'track:perlica' },
+        id: 'use:second',
+        frame: 10,
+        consumableId: second!.id,
+      },
+    );
 
     const result = runStandardPlayerDamageScenarioSimulation({
       scenario,

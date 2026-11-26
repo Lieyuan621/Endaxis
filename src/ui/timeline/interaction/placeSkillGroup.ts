@@ -30,7 +30,9 @@ export type TimelineDocumentIdKind =
   | 'connection'
   | 'cycleBoundary'
   | 'controlSwitch'
-  | 'externalEvent'
+  | 'pickup'
+  | 'operatorHit'
+  | 'comboCooldownControl'
   | 'dodge'
   | 'consumableUse';
 

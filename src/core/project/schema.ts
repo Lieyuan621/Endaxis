@@ -1,3 +1,4 @@
+import type { ScenarioMarkerDocument } from './scenarioMarkers';
 import type { StageEnemyIdentity } from '../../../packages/game-data-contract/src/enemies';
 export type { StageEnemyIdentity } from '../../../packages/game-data-contract/src/enemies';
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
@@ -24,7 +25,7 @@ import type {
 } from '../game-data/equipmentDefinition';
 
 export const PROJECT_KIND = 'EndaxisProject' as const;
-export const PROJECT_SCHEMA_VERSION = 3 as const;
+export const PROJECT_SCHEMA_VERSION = 4 as const;
 export const PROJECT_FPS = 30 as const;
 
 /** 存档 JSON 相关结构定义 */
@@ -175,13 +176,6 @@ export interface SkillCastDocument {
   customDefinition?: SkillDefinition;
 }
 
-/** 玩家在指定帧对这条干员轨道主动使用一次物品。 */
-export interface ConsumableUseDocument {
-  id: string;
-  frame: number;
-  consumableId: string;
-}
-
 /**
  * 一条干员轨道持有自己的养成与配装实例。
  * 实例属于轨道本身，不与其他轨道共享；空轨道整体为 `null`。
@@ -205,8 +199,6 @@ export interface TrackDocument {
     maxUltimateEnergyOverride?: number;
   };
   skillCasts: SkillCastDocument[];
-  /** 旧项目省略时等价于空数组。 */
-  consumableUses?: ConsumableUseDocument[];
 }
 
 /** 四条时间轴轨道使用的稳定零基序号。 */
@@ -286,54 +278,11 @@ export interface EnemyLifecycleDocument {
   deathFrame?: number;
 }
 
-/** 循环分界线 */
-export interface CycleBoundaryDocument {
-  id: string;
-  frame: number;
-}
-
-/** 切入干员标记 */
-export interface ControlSwitchDocument {
-  id: string;
-  frame: number;
-  trackIndex: TrackIndex;
-}
-
-/** 外部事件的作用域同时决定时间轴表现：单干员为轨道标记，全队为全局竖线。 */
-export type ExternalEventTargetDocument =
-  { scope: 'operator'; trackIndex: TrackIndex } | { scope: 'team' };
-
-/** 用户排轴控制，不发布受击或技能释放事件，也不创建连携候选。 */
-export type ExternalCombatEventDocument = {
-  kind: 'comboCooldownControl';
-  mode: 'cooldown' | 'ready';
-};
-
-/**
- * 用户显式声明的外部事件标记。它不代表敌方技能，也不会自行扣减生命。
- */
-export interface ExternalEventMarkerDocument {
-  id: string;
-  frame: number;
-  target: ExternalEventTargetDocument;
-  event: ExternalCombatEventDocument;
-}
-
-/** 时间轴上一次普通闪避或人工声明成功的极限闪避输入。 */
-export interface DodgeMarkerDocument {
-  id: string;
-  frame: number;
-  trackIndex: 0 | 1 | 2 | 3;
-  direction: 'forward' | 'backward';
-  mode: { kind: 'dodge' } | { kind: 'perfectDodge'; successDelayFrames: number };
-}
-
 /** true 只触发击破事件；stagger 是被打断的招式额外产生的失衡值。 */
 export type HitWeaknessBreak = boolean | { readonly stagger: number };
 
 /** 一次模拟的时间范围、共享资源规则与控制事件。敌人失衡规则归敌人实例所有。 */
 export interface BattleDocument {
-  enemyTargetSwitches?: { id: string; frame: number; targetId: string }[];
   /** 省略/关闭时维持木桩规则，死亡只能由敌人的手动死亡时间触发。 */
   enemyAutomaticDeath?: boolean;
   /** 按用户可见的创建链及局部次数定位实际命中，不引用内部图节点。 */
@@ -360,12 +309,6 @@ export interface BattleDocument {
   automaticControlSwitches?: boolean;
   /** 仅仲裁同帧触发的连携；身份为方案轨道 ID，关闭时保留编辑顺序。 */
   comboSkillPriority?: { enabled: boolean; operatorOrder: string[] };
-  cycleBoundaries: CycleBoundaryDocument[];
-  controlSwitches: ControlSwitchDocument[];
-  /** 旧 schema-1 文档可以省略；省略与空数组语义相同。 */
-  externalEventMarkers?: ExternalEventMarkerDocument[];
-  /** 旧 schema-1 文档可以省略；省略与空数组语义相同。 */
-  dodgeMarkers?: DodgeMarkerDocument[];
 }
 
 /**
@@ -420,6 +363,7 @@ export interface ScenarioEditorDocument {
 
 /** 一个可独立编辑、模拟或从其他场景边界继承的完整场景。 */
 export interface ScenarioDocument {
+  markers: ScenarioMarkerDocument[];
   id: string;
   name: string;
   inheritance?: ScenarioInheritanceDocument;

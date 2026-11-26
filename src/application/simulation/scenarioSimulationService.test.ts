@@ -1,3 +1,8 @@
+import {
+  controlSwitchInputs,
+  operatorOwner,
+  markersOfKind,
+} from '../../core/project/scenarioMarkers';
 import { firstScenarioEnemy } from '../../core/project/level';
 import { skillFixture } from '../../test/skillFixture';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
@@ -179,7 +184,7 @@ describe('ScenarioSimulationService', () => {
       ).toEqual(
         enabled === false ? [] : [expect.objectContaining({ frame: 30, sourceId: 'track:1' })],
       );
-      expect(placed.battle.controlSwitches).toEqual([]);
+      expect(controlSwitchInputs(placed)).toEqual([]);
     },
   );
   it('实际操作而非技能库分组决定自动切人', async () => {
@@ -218,7 +223,15 @@ describe('ScenarioSimulationService', () => {
         ids: { allocate: kind => `${kind}:${frame}` },
       }).scenario;
     }
-    scenario.battle.controlSwitches = [{ id: 'manual', frame: 190, trackIndex: 0 }];
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'controlSwitch'),
+      {
+        kind: 'controlSwitch' as const,
+        id: 'manual',
+        frame: 190,
+        owner: operatorOwner(scenario, 0),
+      },
+    ];
     const samples: ScenarioSimulationPerformanceSample[] = [];
     service.subscribePerformance(sample => samples.push(sample));
     await service.simulate(scenario, 300);
@@ -336,11 +349,13 @@ describe('ScenarioSimulationService', () => {
     casts.forEach((cast, index) => {
       if (index > 0) cast.placement = { afterCastId: casts[index - 1]!.id };
     });
-    scenario.battle.dodgeMarkers = [
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'dodge'),
       {
+        kind: 'dodge' as const,
         id: 'dodge',
         frame: 148,
-        trackIndex: 0,
+        owner: operatorOwner(scenario, 0),
         direction: 'forward',
         mode: { kind: 'perfectDodge', successDelayFrames: 5 },
       },
@@ -355,7 +370,7 @@ describe('ScenarioSimulationService', () => {
     try {
       await check(null);
       scenario = structuredClone(scenario);
-      scenario.battle.dodgeMarkers![0]!.mode = { kind: 'perfectDodge', successDelayFrames: 6 };
+      markersOfKind(scenario, 'dodge')![0]!.mode = { kind: 'perfectDodge', successDelayFrames: 6 };
       await check(150);
       scenario.tracks[0]!.skillCasts.at(-1)!.simulationInputs = { randomSeed: 42 };
       await check(null);
@@ -371,7 +386,15 @@ describe('ScenarioSimulationService', () => {
   it('负帧输入与初始切人保持完整重算语义，快轴不保留切面', async () => {
     const scenario = createPerlicaScenario();
     scenario.battle.prepFrames = 60;
-    scenario.battle.controlSwitches = [{ id: 'initial-switch', frame: -20, trackIndex: 0 }];
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'controlSwitch'),
+      {
+        kind: 'controlSwitch' as const,
+        id: 'initial-switch',
+        frame: -20,
+        owner: operatorOwner(scenario, 0),
+      },
+    ];
     const service = createService(() => 0, true);
     const samples: ScenarioSimulationPerformanceSample[] = [];
     service.subscribePerformance(sample => samples.push(sample));
@@ -592,11 +615,13 @@ describe('ScenarioSimulationService', () => {
     const base = createPerlicaScenario();
     base.battle.resourceRules.initialSp = 0;
     base.battle.resourceRules.spRecoveryPerSecond = 0;
-    base.battle.dodgeMarkers = [
+    base.markers = [
+      ...base.markers.filter(marker => marker.kind !== 'dodge'),
       {
+        kind: 'dodge' as const,
         id: 'split',
         frame: 1,
-        trackIndex: 0,
+        owner: operatorOwner(base, 0),
         direction: 'forward',
         mode: { kind: 'perfectDodge', successDelayFrames: 5 },
       },
@@ -606,7 +631,7 @@ describe('ScenarioSimulationService', () => {
     const service = createService();
     const create = vi.spyOn(service, 'createInputCombatSession');
     for (const delay of [5, 6, undefined]) {
-      inherited.battle.dodgeMarkers![0]!.mode =
+      markersOfKind(inherited, 'dodge')![0]!.mode =
         delay === undefined
           ? { kind: 'dodge' }
           : { kind: 'perfectDodge', successDelayFrames: delay };
@@ -1056,13 +1081,23 @@ describe('ScenarioSimulationService', () => {
       const saved = driver.save();
       const before = driver.session.runtime.readState();
       const candidate = place(prefix, 180);
-      candidate.battle.controlSwitches = [{ id: 'switch', frame: 180, trackIndex: 0 }];
-      candidate.battle.externalEventMarkers = [
+      candidate.markers = [
+        ...candidate.markers.filter(marker => marker.kind !== 'controlSwitch'),
         {
+          kind: 'controlSwitch' as const,
+          id: 'switch',
+          frame: 180,
+          owner: operatorOwner(candidate, 0),
+        },
+      ];
+      candidate.markers = [
+        ...candidate.markers.filter(marker => marker.kind !== 'comboCooldownControl'),
+        {
+          kind: 'comboCooldownControl' as const,
           id: 'weakness',
           frame: 180,
-          target: { scope: 'team' },
-          event: { kind: 'comboCooldownControl', mode: 'cooldown' },
+          owner: { scope: 'team' as const },
+          mode: 'cooldown',
         },
       ];
       const planned = compileCombatInputSchedule(candidate, testIndex);
@@ -1419,16 +1454,19 @@ describe('ScenarioSimulationService', () => {
       startFrame: 1,
       ids: { allocate: kind => `${kind}:live` },
     }).scenario;
-    scenario.battle.controlSwitches = [
-      { id: 'off', frame: 0, trackIndex: 1 },
-      { id: 'on', frame: 1, trackIndex: 0 },
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'controlSwitch'),
+      { kind: 'controlSwitch' as const, id: 'off', frame: 0, owner: operatorOwner(scenario, 1) },
+      { kind: 'controlSwitch' as const, id: 'on', frame: 1, owner: operatorOwner(scenario, 0) },
     ];
-    scenario.battle.externalEventMarkers = [
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'comboCooldownControl'),
       {
+        kind: 'comboCooldownControl' as const,
         id: 'weakness',
         frame: 1,
-        target: { scope: 'team' },
-        event: { kind: 'comboCooldownControl', mode: 'cooldown' },
+        owner: { scope: 'team' as const },
+        mode: 'cooldown',
       },
     ];
     const service = createService();

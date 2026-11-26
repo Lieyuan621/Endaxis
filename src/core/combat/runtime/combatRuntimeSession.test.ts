@@ -272,13 +272,15 @@ function createFixture(
   const externalEvents = [
     {
       frame: 0,
-      targetOperatorIds: ['operator'],
-      event: { kind: 'comboCooldownControl' as const, mode: 'cooldown' as const },
+      operatorIds: ['operator'],
+      kind: 'comboCooldownControl' as const,
+      mode: 'cooldown' as const,
     },
     {
       frame: 4,
-      targetOperatorIds: ['operator'],
-      event: { kind: 'comboCooldownControl' as const, mode: 'cooldown' as const },
+      operatorIds: ['operator'],
+      kind: 'comboCooldownControl' as const,
+      mode: 'cooldown' as const,
     },
   ];
   const original = new CombatRuntimeAssembly({
@@ -666,8 +668,9 @@ it('本帧技能与人工标记随分支回退，空输入帧不读取原切人�
     skills: [{ operatorId: 'operator', skillId: 'skill', castId: 'cast:a' }],
     externalEvents: [
       {
-        targetOperatorIds: ['operator'],
-        event: { kind: 'comboCooldownControl', mode: 'cooldown' },
+        operatorIds: ['operator'],
+        kind: 'comboCooldownControl',
+        mode: 'cooldown',
       },
     ],
   });
@@ -715,8 +718,9 @@ it('开场输入前保存，原帧试放、回退换技能，不额外推进时�
     skills: [{ operatorId: 'operator', skillId: 'skill', castId: 'cast:a' }],
     externalEvents: [
       {
-        targetOperatorIds: ['operator'],
-        event: { kind: 'comboCooldownControl' as const, mode: 'cooldown' as const },
+        operatorIds: ['operator'],
+        kind: 'comboCooldownControl' as const,
+        mode: 'cooldown' as const,
       },
     ],
   };

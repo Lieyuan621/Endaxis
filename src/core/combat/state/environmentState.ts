@@ -537,14 +537,12 @@ export type DodgeInput =
 
 export type ScheduledDodgeInput = DodgeInput & { readonly frame: number };
 
-export interface ExternalCombatEventInput {
-  readonly targetOperatorIds: readonly string[];
-  readonly event: { readonly kind: 'comboCooldownControl'; readonly mode: 'cooldown' | 'ready' };
-}
+export type ExternalCombatEventInput =
+  | { readonly kind: 'comboCooldownControl'; readonly operatorIds: readonly string[]; readonly mode: 'cooldown' | 'ready' }
+  | { readonly kind: 'operatorHit'; readonly operatorId: string }
+  | { readonly kind: 'pickup'; readonly operatorId: string; readonly group: string };
 
-export interface ScheduledExternalCombatEventInput extends ExternalCombatEventInput {
-  readonly frame: number;
-}
+export type ScheduledExternalCombatEventInput = ExternalCombatEventInput & { readonly frame: number };
 
 /**
  * 场景随机流的全部可变数据。取样表只保存整数，不保存随机函数或闭包。

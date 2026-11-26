@@ -6,8 +6,9 @@ export function projectAbilityEntityCountStatus(
   entries: readonly CombatReceiptEntry[],
   endFrame: number,
   operatorId: string,
-  abilityEntityId: string,
+  abilityEntityId: string | readonly string[],
 ) {
+  const definitions = new Set(typeof abilityEntityId === 'string' ? [abilityEntityId] : abilityEntityId);
   const entities = new Map<string, AbilityEntityTargetRef>();
   const segments: {
     startFrame: number;
@@ -28,7 +29,7 @@ export function projectAbilityEntityCountStatus(
       entry.event === 'AbilityEntitySpawned' &&
       ref?.kind === 'abilityEntity' &&
       entry.sourceId === operatorId &&
-      entry.data?.abilityEntityId === abilityEntityId &&
+      typeof entry.data?.abilityEntityId === 'string' && definitions.has(entry.data.abilityEntityId) &&
       !entities.has(targetId)
     ) {
       close(entry.frame);

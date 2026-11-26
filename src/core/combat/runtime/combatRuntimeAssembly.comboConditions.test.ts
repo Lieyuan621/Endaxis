@@ -196,13 +196,15 @@ describe('assembly 原生常驻连携条件', () => {
       externalEvents: [
         {
           frame: 0,
-          targetOperatorIds: ['owner'],
-          event: { kind: 'comboCooldownControl', mode: 'cooldown' },
+          operatorIds: ['owner'],
+          kind: 'comboCooldownControl',
+          mode: 'cooldown',
         },
         {
           frame: 10,
-          targetOperatorIds: ['owner'],
-          event: { kind: 'comboCooldownControl', mode: 'ready' },
+          operatorIds: ['owner'],
+          kind: 'comboCooldownControl',
+          mode: 'ready',
         },
       ],
     });

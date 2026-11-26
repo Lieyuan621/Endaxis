@@ -1,3 +1,4 @@
+import { operatorOwner, dodgeInputs } from '../../../core/project/scenarioMarkers';
 import {
   ActiveScenarioEditorSession,
   ProjectEditorSession,
@@ -201,8 +202,16 @@ it('跨方案按干员匹配实际目标轨，重建两类标记及同轨闪避'
   const key = identity('operator', 'enemy:source');
   source.battle.hitWeaknessBreaks = { [key]: { stagger: 22.5 } };
   source.battle.hitCriticalOverrides = { [key]: false };
-  source.battle.dodgeMarkers = [
-    { id: 'dodge', trackIndex: 0, frame: 16, direction: 'forward', mode: { kind: 'dodge' } },
+  source.markers = [
+    ...source.markers.filter(marker => marker.kind !== 'dodge'),
+    {
+      kind: 'dodge' as const,
+      id: 'dodge',
+      owner: operatorOwner(source, 0),
+      frame: 16,
+      direction: 'forward',
+      mode: { kind: 'dodge' },
+    },
   ];
   const target = fixture('target', 'target-track', 'enemy:target');
   target.tracks[2] = target.tracks[0];
@@ -214,7 +223,7 @@ it('跨方案按干员匹配实际目标轨，重建两类标记及同轨闪避'
   const result = pasteTimelineActions(target, clipboard, 100, ids());
   const newKey = identity('target-track', 'enemy:target', result.skillCastIds[0]);
   expect(result.scenario.tracks[2]!.skillCasts.at(-1)?.id).toBe(result.skillCastIds[0]);
-  expect(result.scenario.battle.dodgeMarkers?.at(-1)).toMatchObject({ trackIndex: 2, frame: 106 });
+  expect(dodgeInputs(result.scenario)?.at(-1)).toMatchObject({ trackIndex: 2, frame: 106 });
   expect(result.scenario.battle.hitWeaknessBreaks).toEqual({ [newKey]: { stagger: 22.5 } });
   expect(result.scenario.battle.hitCriticalOverrides).toEqual({ [newKey]: false });
   target.tracks[0] = { ...target.tracks[2]!, id: 'also-perlica' };

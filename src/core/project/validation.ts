@@ -1,3 +1,4 @@
+import { markerSupportsPreparation } from './scenarioMarkers';
 import { validateActionGraphReferenceDefinition } from '../game-data/validation/actionPrograms';
 import { validateGlobalEffectDefinition } from '../game-data/validateGlobalEffectDefinition';
 /**
@@ -9,6 +10,7 @@ import {
   PROJECT_KIND,
   PROJECT_SCHEMA_VERSION,
   type EndaxisProjectDocument,
+  type JsonObject,
 } from './schema';
 import {
   COMBO_SKILL_PRIORITIES,
@@ -537,7 +539,6 @@ export function validateProjectDocument(value: unknown): ValidationResult {
       }
 
       const skillCastIds = new Set<string>();
-      const consumableUseIds = new Set<string>();
       const trackIds = new Set<string>();
       scenario.tracks.forEach((track, trackIndex) => {
         if (track === null) return;
@@ -622,26 +623,6 @@ export function validateProjectDocument(value: unknown): ValidationResult {
           ),
         );
         validateTrackSkillCastPlacements(track.skillCasts, `${trackPath}.skillCasts`, issues);
-        if (track.consumableUses !== undefined) {
-          if (!Array.isArray(track.consumableUses)) {
-            issues.push({ path: `${trackPath}.consumableUses`, message: 'expected an array' });
-          } else {
-            track.consumableUses.forEach((use, useIndex) => {
-              const usePath = `${trackPath}.consumableUses[${useIndex}]`;
-              if (!isObject(use)) {
-                issues.push({ path: usePath, message: 'expected an object' });
-                return;
-              }
-              const useId = requireString(use, 'id', usePath, issues);
-              if (useId !== null && consumableUseIds.has(useId)) {
-                issues.push({ path: `${usePath}.id`, message: 'duplicate consumable use id' });
-              }
-              if (useId !== null) consumableUseIds.add(useId);
-              requireInteger(use.frame, `${usePath}.frame`, issues);
-              requireString(use, 'consumableId', usePath, issues);
-            });
-          }
-        }
       });
 
       if (!Array.isArray(scenario.connections)) {
@@ -691,36 +672,7 @@ export function validateProjectDocument(value: unknown): ValidationResult {
       );
       validateBattle(scenario.battle, `${path}.battle`, issues);
       const enemyIds = new Set(instances.filter(isObject).map(enemy => enemy.id));
-      if (isObject(scenario.battle) && scenario.battle.enemyTargetSwitches !== undefined) {
-        const markers = scenario.battle.enemyTargetSwitches;
-        if (!Array.isArray(markers))
-          issues.push({ path: `${path}.battle.enemyTargetSwitches`, message: 'expected array' });
-        else {
-          const ids = new Set<string>();
-          const frames = new Set<number>();
-          markers.forEach((marker, index) => {
-            const at = `${path}.battle.enemyTargetSwitches[${index}]`;
-            if (!isObject(marker)) {
-              issues.push({ path: at, message: 'expected object' });
-              return;
-            }
-            const id = requireString(marker, 'id', at, issues);
-            if (id !== null) {
-              if (ids.has(id)) issues.push({ path: at, message: 'duplicate marker id' });
-              ids.add(id);
-            }
-            if (typeof marker.targetId !== 'string' || !enemyIds.has(marker.targetId))
-              issues.push({ path: at, message: 'unknown enemy target' });
-            if (
-              typeof marker.frame !== 'number' ||
-              !Number.isSafeInteger(marker.frame) ||
-              frames.has(marker.frame)
-            )
-              issues.push({ path: at, message: 'expected unique safe integer frame' });
-            else frames.add(marker.frame);
-          });
-        }
-      }
+      validateScenarioMarkers(scenario, enemyIds, path, issues);
       const prepFrames =
         isObject(scenario.battle) &&
         typeof scenario.battle.prepFrames === 'number' &&
@@ -741,17 +693,6 @@ export function validateProjectDocument(value: unknown): ValidationResult {
               });
             }
           });
-          if (Array.isArray(track.consumableUses)) {
-            track.consumableUses.forEach((use, useIndex) => {
-              if (!isObject(use)) return;
-              if (typeof use.frame === 'number' && use.frame < -prepFrames) {
-                issues.push({
-                  path: `${path}.tracks[${trackIndex}].consumableUses[${useIndex}].frame`,
-                  message: 'must not precede the preparation range',
-                });
-              }
-            });
-          }
         });
       }
       validateMechanics(scenario.mechanics, `${path}.mechanics`, issues);
@@ -766,4 +707,105 @@ export function validateProjectDocument(value: unknown): ValidationResult {
 
   if (issues.length > 0) return { ok: false, issues };
   return { ok: true, value: value as unknown as EndaxisProjectDocument };
+}
+
+function validateScenarioMarkers(
+  scenario: JsonObject,
+  enemyIds: Set<unknown>,
+  path: string,
+  issues: ValidationIssue[],
+) {
+  if (!Array.isArray(scenario.markers)) {
+    issues.push({ path: path + '.markers', message: 'expected marker array' });
+    return;
+  }
+  const tracks = Array.isArray(scenario.tracks) ? scenario.tracks : [];
+  const ids = new Set<string>();
+  const targetFrames = new Set<number>();
+  scenario.markers.forEach((marker, index) => {
+    const at = path + '.markers[' + index + ']';
+    const issue = (message: string) => issues.push({ path: at, message });
+    if (!isObject(marker)) {
+      issue('expected marker');
+      return;
+    }
+    const id = requireString(marker, 'id', at, issues);
+    if (id !== null) {
+      const key = JSON.stringify([marker.kind, id]);
+      if (ids.has(key)) issue('duplicate marker id');
+      ids.add(key);
+    }
+    const minimum =
+      markerSupportsPreparation(marker.kind) && isObject(scenario.battle) && typeof scenario.battle.prepFrames === 'number'
+        ? -scenario.battle.prepFrames
+        : 0;
+    if (
+      typeof marker.frame !== 'number' ||
+      !Number.isSafeInteger(marker.frame) ||
+      marker.frame < minimum
+    )
+      issue('invalid marker frame');
+    if (marker.kind === 'cycleBoundary') return;
+    if (marker.kind === 'enemyTargetSwitch') {
+      if (!enemyIds.has(marker.enemyId)) issue('unknown enemy target');
+      if (typeof marker.frame === 'number') {
+        if (targetFrames.has(marker.frame)) issue('duplicate target frame');
+        targetFrames.add(marker.frame);
+      }
+      return;
+    }
+    const owner = marker.owner;
+    if (marker.kind === 'comboCooldownControl') {
+      if (
+        !isObject(owner) ||
+        owner.scope !== 'team' ||
+        (marker.mode !== 'cooldown' && marker.mode !== 'ready')
+      )
+        issue('invalid team cooldown control');
+      return;
+    }
+    if (
+      !isObject(owner) ||
+      !(
+        (owner.scope === 'operator' &&
+          typeof owner.trackId === 'string' &&
+          tracks.some(t => isObject(t) && t.id === owner.trackId)) ||
+        (owner.scope === 'emptySlot' &&
+          marker.kind !== 'consumableUse' &&
+          typeof owner.trackIndex === 'number' &&
+          Number.isInteger(owner.trackIndex) &&
+          tracks[owner.trackIndex] === null)
+      )
+    )
+      issue('unknown marker owner');
+    switch (marker.kind) {
+      case 'controlSwitch':
+        break;
+      case 'consumableUse':
+        requireString(marker, 'consumableId', at, issues);
+        break;
+      case 'operatorHit':
+        break;
+      case 'pickup':
+        if(typeof marker.group!=='string'||!marker.group.trim()) issue('invalid pickup group');
+        break;
+      case 'dodge':
+        if (marker.direction !== 'forward' && marker.direction !== 'backward')
+          issue('invalid dodge direction');
+        if (
+          !isObject(marker.mode) ||
+          !(
+            marker.mode.kind === 'dodge' ||
+            (marker.mode.kind === 'perfectDodge' &&
+              typeof marker.mode.successDelayFrames === 'number' &&
+              Number.isSafeInteger(marker.mode.successDelayFrames) &&
+              marker.mode.successDelayFrames >= 0)
+          )
+        )
+          issue('invalid dodge mode');
+        break;
+      default:
+        issue('unknown marker kind');
+    }
+  });
 }

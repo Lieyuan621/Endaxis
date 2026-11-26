@@ -112,6 +112,7 @@ export interface ActionGraphExecutionHost {
   withTarget(target: RuntimeTargetRef, asInput?: boolean): ActionGraphExecutionHost;
   withSavedInput(target: RuntimeTargetRef | null): ActionGraphExecutionHost;
   aura?(parameters: ResolvedCombatStepParameters['aura']): {
+    activeChanged?(active: boolean): void;
     targets(): readonly RuntimeTargetRef[];
     apply(target: RuntimeTargetRef): BuffReference[];
     finish(references: readonly BuffReference[]): void;
@@ -910,12 +911,14 @@ export class ActionGraphExecution
         data,
         execute: context => {
           influenceCounts.length = 0;
+          if (!data.active) influence.activeChanged?.(true);
           data.active = true;
           synchronize(context);
           return true;
         },
         tick: (_delta, context) => synchronize(context),
         end: context => {
+          if (data.active) influence.activeChanged?.(false);
           data.active = false;
           for (let index = data.influences.length - 1; index >= 0; index--) leave(index, context);
           for (const pair of callbacks.values()) {
@@ -924,6 +927,7 @@ export class ActionGraphExecution
           }
         },
         reset: context => {
+          if (data.active) influence.activeChanged?.(false);
           data.active = false;
           for (const pair of callbacks.values()) {
             pair.enter?.reset(context);

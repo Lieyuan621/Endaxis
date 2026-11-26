@@ -106,7 +106,7 @@ export function useTimelineEnemyEditor(options: TimelineEnemyEditorOptions) {
     options.session.commit('setStageEnemies', scenario => ({
       ...scenario,
       level: { kind: 'multiEnemies', enemies },
-      battle: { ...scenario.battle, enemyTargetSwitches: [] },
+      markers: scenario.markers.filter(m => m.kind !== 'enemyTargetSwitch'),
     }));
   }
 

@@ -1,3 +1,4 @@
+import { upgradeVersionThreeScenario } from './upgrades/versionThreeScenario';
 import { PROJECT_SCHEMA_VERSION, type JsonObject } from './schema';
 
 function isObject(value: unknown): value is JsonObject {
@@ -6,6 +7,17 @@ function isObject(value: unknown): value is JsonObject {
 
 /** 每个步骤只转换相邻版本，输入与输出均由读取边界管理。 */
 const upgrades = new Map<number, (input: JsonObject) => JsonObject>([
+  [
+    3,
+    input => {
+      if (!Array.isArray(input.scenarios)) throw new Error('expected scenarios array');
+      return {
+        ...input,
+        schemaVersion: 4,
+        scenarios: input.scenarios.map(upgradeVersionThreeScenario),
+      };
+    },
+  ],
   [
     2,
     input => {

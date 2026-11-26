@@ -1,3 +1,12 @@
+import {
+  operatorOwner,
+  hasOperatorOwner,
+  resolveScenarioMarkerTrack,
+  appendScenarioMarker,
+  markerSupportsPreparation,
+  dodgeInputs,
+  type ScenarioMarkerDocument,
+} from '../../../core/project/scenarioMarkers';
 import type { CombatBuffDefinitionAttributeModifier } from '../../../../packages/game-data-contract/src/buffs';
 import { validateGlobalConfig } from '../../../core/project/scenarioValidation';
 import type { GlobalConfigDocument } from '../../../core/project/schema';
@@ -15,15 +24,11 @@ import type {
   TrackIndex,
   WeaponInstanceDocument,
   GearInstanceDocument,
-  ExternalCombatEventDocument,
-  ExternalEventTargetDocument,
-  DodgeMarkerDocument,
   SkillCastDocument,
 } from '../../../core/project/schema';
-import {
-  getSkillCastPlacementChains,
-  resolveDodgeMarkerLastInputFrame,
-} from '../../../core/project/skillCastPlacement';
+import type { InteractionMarker, TrackDodgeInput } from '../../../core/project/scenarioMarkers';
+import { getSkillCastPlacementChains } from '../../../core/project/skillCastPlacement';
+import { resolveDodgeMarkerLastInputFrame } from '../../../core/project/scenarioMarkers';
 import { MIN_COLLAPSIBLE_PREP_FRAMES } from '../timelineGeometry';
 
 export type EditableBattleResourceRule = keyof Pick<
@@ -77,10 +82,9 @@ function battleDurationContentFloor(scenario: ScenarioDocument): number {
             cast.placement.startFrame === undefined ? [] : [cast.placement.startFrame],
           ),
     ),
-    ...scenario.battle.cycleBoundaries.map(marker => marker.frame),
-    ...scenario.battle.controlSwitches.map(marker => marker.frame),
-    ...(scenario.battle.externalEventMarkers ?? []).map(marker => marker.frame),
-    ...(scenario.battle.dodgeMarkers ?? []).map(resolveDodgeMarkerLastInputFrame),
+    ...scenario.markers.map(marker =>
+      marker.kind === 'dodge' ? resolveDodgeMarkerLastInputFrame(marker) : marker.frame,
+    ),
     scenario.battle.simulationRange?.startFrame ?? 0,
     scenario.battle.simulationRange?.endFrame ?? 0,
   ];
@@ -185,22 +189,11 @@ export function swapTimelineTracks(
   return {
     ...scenario,
     tracks,
-    battle: {
-      ...scenario.battle,
-      controlSwitches: scenario.battle.controlSwitches.map(remap),
-      ...(scenario.battle.dodgeMarkers === undefined
-        ? {}
-        : { dodgeMarkers: scenario.battle.dodgeMarkers.map(remap) }),
-      ...(scenario.battle.externalEventMarkers === undefined
-        ? {}
-        : {
-            externalEventMarkers: scenario.battle.externalEventMarkers.map(marker =>
-              marker.target.scope === 'operator'
-                ? { ...marker, target: remap(marker.target) }
-                : marker,
-            ),
-          }),
-    },
+    markers: scenario.markers.map(marker =>
+      hasOperatorOwner(marker) && marker.owner.scope === 'emptySlot'
+        ? { ...marker, owner: remap(marker.owner) }
+        : marker,
+    ),
   };
 }
 
@@ -356,30 +349,15 @@ export function setTrackOperator(
   if (previousSlug === nextSlug) return scenario;
 
   const removedCastIds = new Set(previousTrack?.skillCasts.map(cast => cast.id) ?? []);
-  const battle =
-    operatorInstance === null
-      ? {
-          ...scenario.battle,
-          controlSwitches: scenario.battle.controlSwitches.filter(
-            marker => marker.trackIndex !== trackIndex,
-          ),
-          ...(scenario.battle.dodgeMarkers === undefined
-            ? {}
-            : {
-                dodgeMarkers: scenario.battle.dodgeMarkers.filter(
-                  marker => marker.trackIndex !== trackIndex,
-                ),
-              }),
-          ...(scenario.battle.externalEventMarkers === undefined
-            ? {}
-            : {
-                externalEventMarkers: scenario.battle.externalEventMarkers.filter(
-                  marker =>
-                    marker.target.scope !== 'operator' || marker.target.trackIndex !== trackIndex,
-                ),
-              }),
-        }
-      : scenario.battle;
+  const markers = scenario.markers.flatMap(marker => {
+    if (
+      !hasOperatorOwner(marker) ||
+      resolveScenarioMarkerTrack(scenario.tracks, marker.owner) !== trackIndex
+    )
+      return [marker];
+    if (operatorInstance === null || marker.kind === 'consumableUse') return [];
+    return [{ ...marker, owner: { scope: 'operator' as const, trackId } }];
+  });
   const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
   tracks[trackIndex] =
     operatorInstance === null
@@ -401,7 +379,7 @@ export function setTrackOperator(
         !removedCastIds.has(connection.from.skillCastId) &&
         !removedCastIds.has(connection.to.skillCastId),
     ),
-    battle,
+    markers,
   };
 }
 
@@ -793,22 +771,21 @@ export function clearSimulationRangeBoundary(
   return { ...scenario, battle: { ...scenario.battle, simulationRange } };
 }
 
+function placeScenarioMarker(scenario: ScenarioDocument, marker: ScenarioMarkerDocument) {
+  requireTimelineMarkerFrame(
+    scenario,
+    marker.frame,
+    markerSupportsPreparation(marker.kind) ? -scenario.battle.prepFrames : 0,
+  );
+  return appendScenarioMarker(scenario, marker);
+}
+
 export function addCycleBoundary(
   scenario: ScenarioDocument,
   id: string,
   frame: number,
 ): ScenarioDocument {
-  requireTimelineMarkerFrame(scenario, frame);
-  if (id.length === 0 || scenario.battle.cycleBoundaries.some(item => item.id === id)) {
-    throw new Error(`invalid or duplicate cycle boundary id '${id}'`);
-  }
-  return {
-    ...scenario,
-    battle: {
-      ...scenario.battle,
-      cycleBoundaries: [...scenario.battle.cycleBoundaries, { id, frame }],
-    },
-  };
+  return placeScenarioMarker(scenario, { kind: 'cycleBoundary', id, frame });
 }
 
 export function addControlSwitch(
@@ -817,18 +794,13 @@ export function addControlSwitch(
   frame: number,
   trackIndex: TrackIndex,
 ): ScenarioDocument {
-  requireTimelineMarkerFrame(scenario, frame, -scenario.battle.prepFrames);
   if (scenario.tracks[trackIndex] === null) throw new Error(`track ${trackIndex} is empty`);
-  if (id.length === 0 || scenario.battle.controlSwitches.some(item => item.id === id)) {
-    throw new Error(`invalid or duplicate control switch id '${id}'`);
-  }
-  return {
-    ...scenario,
-    battle: {
-      ...scenario.battle,
-      controlSwitches: [...scenario.battle.controlSwitches, { id, frame, trackIndex }],
-    },
-  };
+  return placeScenarioMarker(scenario, {
+    kind: 'controlSwitch',
+    id,
+    frame,
+    owner: operatorOwner(scenario, trackIndex),
+  });
 }
 
 export function setControlSwitchTrack(
@@ -837,19 +809,28 @@ export function setControlSwitchTrack(
   trackIndex: TrackIndex,
 ): ScenarioDocument {
   if (scenario.tracks[trackIndex] === null) throw new Error(`track ${trackIndex} is empty`);
-  const index = scenario.battle.controlSwitches.findIndex(item => item.id === id);
-  if (index < 0 || scenario.battle.controlSwitches[index]!.trackIndex === trackIndex)
+  const previous = scenario.markers.find(
+    marker => marker.kind === 'controlSwitch' && marker.id === id,
+  );
+  if (
+    previous?.kind !== 'controlSwitch' ||
+    resolveScenarioMarkerTrack(scenario.tracks, previous.owner) === trackIndex
+  )
     return scenario;
-  const controlSwitches = [...scenario.battle.controlSwitches];
-  controlSwitches[index] = { ...controlSwitches[index]!, trackIndex };
-  return { ...scenario, battle: { ...scenario.battle, controlSwitches } };
+  return {
+    ...scenario,
+    markers: scenario.markers.map(marker =>
+      marker.kind === 'controlSwitch' && marker.id === id
+        ? { ...marker, owner: operatorOwner(scenario, trackIndex) }
+        : marker,
+    ),
+  };
 }
 
 export function addDodgeMarker(
   scenario: ScenarioDocument,
-  marker: DodgeMarkerDocument,
+  marker: TrackDodgeInput,
 ): ScenarioDocument {
-  requireTimelineMarkerFrame(scenario, marker.frame, -scenario.battle.prepFrames);
   if (scenario.tracks[marker.trackIndex] === null) {
     throw new Error(`track ${marker.trackIndex} is empty`);
   }
@@ -857,23 +838,23 @@ export function addDodgeMarker(
   if (marker.mode.kind === 'perfectDodge' && marker.mode.successDelayFrames < 0) {
     throw new RangeError('perfect dodge success delay must be non-negative');
   }
-  const current = scenario.battle.dodgeMarkers ?? [];
-  if (marker.id.length === 0 || current.some(item => item.id === marker.id)) {
-    throw new Error(`invalid or duplicate dodge marker id '${marker.id}'`);
-  }
-  return {
-    ...scenario,
-    battle: { ...scenario.battle, dodgeMarkers: [...current, marker] },
-  };
+  return placeScenarioMarker(scenario, {
+    kind: 'dodge',
+    id: marker.id,
+    frame: marker.frame,
+    direction: marker.direction,
+    mode: marker.mode,
+    owner: operatorOwner(scenario, marker.trackIndex),
+  });
 }
 
 /** 更新闪避方向、目标轨道或极限闪避声明；时间由移动命令单独维护。 */
 export function updateDodgeMarker(
   scenario: ScenarioDocument,
   id: string,
-  patch: Partial<Pick<DodgeMarkerDocument, 'trackIndex' | 'direction' | 'mode'>>,
+  patch: Partial<Pick<TrackDodgeInput, 'trackIndex' | 'direction' | 'mode'>>,
 ): ScenarioDocument {
-  const current = scenario.battle.dodgeMarkers ?? [];
+  const current = dodgeInputs(scenario);
   const index = current.findIndex(item => item.id === id);
   if (index < 0) return scenario;
   const updated = { ...current[index]!, ...patch };
@@ -884,33 +865,28 @@ export function updateDodgeMarker(
     throw new RangeError('perfect dodge success delay must be non-negative');
   }
   resolveDodgeMarkerLastInputFrame(updated);
-  const dodgeMarkers = [...current];
-  dodgeMarkers[index] = updated;
-  return { ...scenario, battle: { ...scenario.battle, dodgeMarkers } };
-}
-
-export function addExternalEventMarker(
-  scenario: ScenarioDocument,
-  id: string,
-  frame: number,
-  target: ExternalEventTargetDocument,
-  event: ExternalCombatEventDocument,
-): ScenarioDocument {
-  requireTimelineMarkerFrame(scenario, frame);
-  if (target.scope === 'operator' && scenario.tracks[target.trackIndex] === null) {
-    throw new Error(`track ${target.trackIndex} is empty`);
-  }
-  const current = scenario.battle.externalEventMarkers ?? [];
-  if (id.length === 0 || current.some(item => item.id === id)) {
-    throw new Error(`invalid or duplicate external event id '${id}'`);
-  }
   return {
     ...scenario,
-    battle: {
-      ...scenario.battle,
-      externalEventMarkers: [...current, { id, frame, target, event }],
-    },
+    markers: scenario.markers.map(marker =>
+      marker.kind === 'dodge' && marker.id === id
+        ? {
+            ...marker,
+            direction: updated.direction,
+            mode: updated.mode,
+            owner: operatorOwner(scenario, updated.trackIndex),
+          }
+        : marker,
+    ),
   };
+}
+
+export function placeInteractionMarker(
+  scenario: ScenarioDocument,
+  marker: InteractionMarker,
+): ScenarioDocument {
+  if (marker.kind !== 'comboCooldownControl' && marker.owner.scope === 'emptySlot')
+    throw new Error('interaction requires an operator');
+  return placeScenarioMarker(scenario, marker);
 }
 
 export function setSkillCastInitialBlackboard(

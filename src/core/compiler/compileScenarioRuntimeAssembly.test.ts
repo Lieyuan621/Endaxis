@@ -1,3 +1,4 @@
+import { operatorOwner } from '../project/scenarioMarkers';
 import { firstScenarioEnemy } from '../project/level';
 import { GAMEPLAY_TAG_PREDEFINE } from '../../data/combat/gameplayTagPredefine.generated';
 import { GameplayTagPredefine } from '../combat/tags/gameplayTagPredefine';
@@ -573,7 +574,12 @@ describe('compileScenarioRuntimeAssembly', () => {
       initialState: { ultimateEnergy: 0 },
       skillCasts: [],
     };
-    scenario.battle.controlSwitches.push({ id: 'switch:1', frame: 30, trackIndex: 1 });
+    scenario.markers.push({
+      kind: 'controlSwitch' as const,
+      id: 'switch:1',
+      frame: 30,
+      owner: operatorOwner(scenario, 1),
+    });
 
     const compiled = compileScenarioRuntimeAssembly(scenario, options());
 
@@ -591,7 +597,12 @@ describe('compileScenarioRuntimeAssembly', () => {
       initialState: { ultimateEnergy: 0 },
       skillCasts: [],
     };
-    scenario.battle.controlSwitches.push({ id: 'switch:prep', frame: -90, trackIndex: 1 });
+    scenario.markers.push({
+      kind: 'controlSwitch' as const,
+      id: 'switch:prep',
+      frame: -90,
+      owner: operatorOwner(scenario, 1),
+    });
 
     const compiled = compileScenarioRuntimeAssembly(scenario, options());
 
@@ -602,77 +613,88 @@ describe('compileScenarioRuntimeAssembly', () => {
 
   it('compiles combo cooldown markers to stable operator instances in timeline order', () => {
     const scenario = createScenario();
-    scenario.battle.externalEventMarkers = [
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'comboCooldownControl'),
       {
+        kind: 'comboCooldownControl' as const,
         id: 'combo:late',
         frame: 60,
-        target: { scope: 'team' },
-        event: { kind: 'comboCooldownControl', mode: 'ready' },
+        owner: { scope: 'team' as const },
+        mode: 'ready',
       },
       {
+        kind: 'comboCooldownControl' as const,
         id: 'combo:early',
         frame: 30,
-        target: { scope: 'team' },
-        event: { kind: 'comboCooldownControl', mode: 'cooldown' },
+        owner: { scope: 'team' as const },
+        mode: 'cooldown',
       },
       {
+        kind: 'comboCooldownControl' as const,
         id: 'combo:middle',
         frame: 45,
-        target: { scope: 'team' },
-        event: { kind: 'comboCooldownControl', mode: 'ready' },
+        owner: { scope: 'team' as const },
+        mode: 'ready',
       },
     ];
 
     expect(compileScenarioRuntimeAssembly(scenario, options()).externalEvents).toEqual([
       {
         frame: 30,
-        targetOperatorIds: ['track:0'],
-        event: { kind: 'comboCooldownControl', mode: 'cooldown' },
+        operatorIds: ['track:0'],
+        kind: 'comboCooldownControl',
+        mode: 'cooldown',
       },
       {
         frame: 45,
-        targetOperatorIds: ['track:0'],
-        event: { kind: 'comboCooldownControl', mode: 'ready' },
+        operatorIds: ['track:0'],
+        kind: 'comboCooldownControl',
+        mode: 'ready',
       },
       {
         frame: 60,
-        targetOperatorIds: ['track:0'],
-        event: { kind: 'comboCooldownControl', mode: 'ready' },
+        operatorIds: ['track:0'],
+        kind: 'comboCooldownControl',
+        mode: 'ready',
       },
     ]);
   });
 
-  it('rejects combo cooldown markers on empty operator tracks', () => {
+  it('rejects hit markers on empty operator tracks', () => {
     const scenario = createScenario();
-    scenario.battle.externalEventMarkers = [
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'operatorHit'),
       {
+        kind: 'operatorHit' as const,
         id: 'combo:empty',
         frame: 0,
-        target: { scope: 'operator', trackIndex: 1 },
-        event: { kind: 'comboCooldownControl', mode: 'ready' },
+        owner: operatorOwner(scenario, 1),
       },
     ];
 
     expect(() => compileScenarioRuntimeAssembly(scenario, options())).toThrow(
-      "external event marker 'combo:empty' references empty track 1",
+      "interaction marker 'combo:empty' references empty track 1",
     );
   });
 
   it('compiles dodge markers in frame, phase and declaration order', () => {
     const scenario = createScenario();
     scenario.battle.prepFrames = 30;
-    scenario.battle.dodgeMarkers = [
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'dodge'),
       {
+        kind: 'dodge' as const,
         id: 'perfect',
         frame: -10,
-        trackIndex: 0,
+        owner: operatorOwner(scenario, 0),
         direction: 'backward',
         mode: { kind: 'perfectDodge', successDelayFrames: 5 },
       },
       {
+        kind: 'dodge' as const,
         id: 'same-frame',
         frame: -5,
-        trackIndex: 0,
+        owner: operatorOwner(scenario, 0),
         direction: 'forward',
         mode: { kind: 'dodge' },
       },
@@ -707,11 +729,13 @@ describe('compileScenarioRuntimeAssembly', () => {
 
   it('rejects dodge markers on empty tracks', () => {
     const scenario = createScenario();
-    scenario.battle.dodgeMarkers = [
+    scenario.markers = [
+      ...scenario.markers.filter(marker => marker.kind !== 'dodge'),
       {
+        kind: 'dodge' as const,
         id: 'empty',
         frame: 0,
-        trackIndex: 1,
+        owner: operatorOwner(scenario, 1),
         direction: 'forward',
         mode: { kind: 'dodge' },
       },

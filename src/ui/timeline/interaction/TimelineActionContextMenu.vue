@@ -108,6 +108,7 @@ onBeforeUnmount(() => {
       @wheel.stop
     >
       <div class="menu-header" :title="label">{{ label }}</div>
+      <slot name="track-placement" />
       <EaButton class="menu-item" variant="ghost" size="sm" role="menuitem" @click="$emit('copy')">
         <TimelineMenuActionIcon action="copy" />
         <span>{{ t('common.copy') }}</span>

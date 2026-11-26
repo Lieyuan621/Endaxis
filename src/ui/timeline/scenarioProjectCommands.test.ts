@@ -1,3 +1,4 @@
+import { operatorOwner, markersOfKind } from '../../core/project/scenarioMarkers';
 import { describe, expect, it } from 'vitest';
 import { createEmptyProject, createEmptyScenario } from '../../core/project/createProject';
 import type { EndaxisProjectDocument } from '../../core/project/schema';
@@ -60,8 +61,13 @@ describe('scenario project commands', () => {
       from: { kind: 'skillCast', skillCastId: 'cast:old' },
       to: { kind: 'skillCast', skillCastId: 'cast:old' },
     });
-    source.battle.cycleBoundaries.push({ id: 'cycle:old', frame: 30 });
-    source.battle.controlSwitches.push({ id: 'switch:old', frame: 10, trackIndex: 0 });
+    source.markers.push({ kind: 'cycleBoundary' as const, id: 'cycle:old', frame: 30 });
+    source.markers.push({
+      kind: 'controlSwitch' as const,
+      id: 'switch:old',
+      frame: 10,
+      owner: operatorOwner(source, 0),
+    });
     const before = structuredClone(original);
 
     const result = duplicateActiveScenario(original, '副本');
@@ -75,8 +81,8 @@ describe('scenario project commands', () => {
     copiedCast.placement = { startFrame: 20 };
     copy.connections[0]!.to.skillCastId = 'edited';
     copy.tracks[0]!.initialState.ultimateEnergy = 50;
-    copy.battle.cycleBoundaries[0]!.frame = 60;
-    copy.battle.controlSwitches[0]!.frame = 20;
+    markersOfKind(copy, 'cycleBoundary')[0]!.frame = 60;
+    markersOfKind(copy, 'controlSwitch')[0]!.frame = 20;
     expect(result.scenarios[0]).toBe(source);
     expect(original).toEqual(before);
   });
@@ -144,7 +150,7 @@ describe('scenario project commands', () => {
   it('deleting an inheritance source leaves its independent copy unchanged', () => {
     const original = project();
     const source = original.scenarios[0]!;
-    source.battle.cycleBoundaries.push({ id: 'cycle:1', frame: 30 });
+    source.markers.push({ kind: 'cycleBoundary' as const, id: 'cycle:1', frame: 30 });
     const child = createEmptyScenario('test:scenario:2', '继承方案');
     child.inheritance = { sourceScenarioId: source.id, frame: 30 };
     const withChild = { ...original, scenarios: [source, child] };

@@ -12,18 +12,20 @@ test('team cooldown markers can be dragged from their visible badges and labels'
   const download = await downloadPromise;
   const exported = JSON.parse(await readFile((await download.path())!, 'utf8'));
   exported.scenarios[0].battle.prepFrames = 0;
-  exported.scenarios[0].battle.externalEventMarkers = [
+  exported.scenarios[0].markers = [
     {
+      kind: 'comboCooldownControl' as const,
       id: 'ready',
       frame: 30,
-      target: { scope: 'team' },
-      event: { kind: 'comboCooldownControl', mode: 'ready' },
+      owner: { scope: 'team' as const },
+      mode: 'ready',
     },
     {
+      kind: 'comboCooldownControl' as const,
       id: 'cooldown',
       frame: 60,
-      target: { scope: 'team' },
-      event: { kind: 'comboCooldownControl', mode: 'cooldown' },
+      owner: { scope: 'team' as const },
+      mode: 'cooldown',
     },
   ];
   await page.keyboard.press('Escape');

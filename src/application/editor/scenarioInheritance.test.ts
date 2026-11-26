@@ -1,3 +1,10 @@
+import {
+  operatorOwner,
+  consumableInputs,
+  controlSwitchInputs,
+  dodgeInputs,
+  markersOfKind,
+} from '../../core/project/scenarioMarkers';
 import { firstScenarioEnemy } from '../../core/project/level';
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../core/project/createProject';
@@ -29,14 +36,27 @@ function source() {
         placement: { afterCastId: 'b' },
       },
     ],
-    consumableUses: [
-      { id: 'old', frame: 1, consumableId: 'drug' },
-      { id: 'future', frame: 20, consumableId: 'drug' },
-    ],
   };
-  scenario.battle.controlSwitches = [
-    { id: 'old', frame: 2, trackIndex: 0 },
-    { id: 'future', frame: 20, trackIndex: 0 },
+  scenario.markers.push(
+    {
+      kind: 'consumableUse',
+      owner: { scope: 'operator', trackId: 'track' },
+      id: 'old',
+      frame: 1,
+      consumableId: 'drug',
+    },
+    {
+      kind: 'consumableUse',
+      owner: { scope: 'operator', trackId: 'track' },
+      id: 'future',
+      frame: 20,
+      consumableId: 'drug',
+    },
+  );
+  scenario.markers = [
+    ...scenario.markers.filter(marker => marker.kind !== 'controlSwitch'),
+    { kind: 'controlSwitch' as const, id: 'old', frame: 2, owner: operatorOwner(scenario, 0) },
+    { kind: 'controlSwitch' as const, id: 'future', frame: 20, owner: operatorOwner(scenario, 0) },
   ];
   return scenario;
 }
@@ -54,8 +74,8 @@ it('复制完整构筑及历史，边界输入不继承，连续组保持历史�
   });
   expect(inherited.tracks[0]!.skillCasts.map(cast => cast.id)).toEqual(['a', 'b']);
   expect(inherited.tracks[0]!.skillCasts[1]!.placement).toEqual({ afterCastId: 'a' });
-  expect(inherited.tracks[0]!.consumableUses).toHaveLength(1);
-  expect(inherited.battle.controlSwitches).toHaveLength(1);
+  expect(consumableInputs(inherited, inherited.tracks[0]?.id)).toHaveLength(1);
+  expect(controlSwitchInputs(inherited)).toHaveLength(1);
   expect(inherited.battle.prepFrames).toBe(original.battle.prepFrames);
   expect(inherited.battle.simulationRange?.startFrame).toBe(20);
   original.tracks[0]!.initialState.ultimateEnergy = 0;
@@ -105,16 +125,18 @@ it('未来组无需后续成员回执即可移除，不会阻止历史继承', (
     },
   });
   expect(inherited.tracks[0]!.skillCasts).toEqual([]);
-  expect(inherited.battle.controlSwitches.map(marker => marker.id)).toEqual(['old']);
+  expect(controlSwitchInputs(inherited).map(marker => marker.id)).toEqual(['old']);
 });
 
 it('继承只保留历史 Dash，未来成功可以独立添加、修改和移除', () => {
   const original = source();
-  original.battle.dodgeMarkers = [
+  original.markers = [
+    ...original.markers.filter(marker => marker.kind !== 'dodge'),
     {
+      kind: 'dodge' as const,
       id: 'perfect',
       frame: 10,
-      trackIndex: 0,
+      owner: operatorOwner(original, 0),
       direction: 'forward',
       mode: { kind: 'perfectDodge', successDelayFrames: 5 },
     },
@@ -126,33 +148,33 @@ it('继承只保留历史 Dash，未来成功可以独立添加、修改和移�
     frame: 12,
     resolveSkillFrame: (_, id) => (id === 'b' ? 10 : 20),
   });
-  expect(split.battle.dodgeMarkers?.[0]?.mode).toEqual({ kind: 'dodge' });
+  expect(dodgeInputs(split)?.[0]?.mode).toEqual({ kind: 'dodge' });
   const session = createScenarioEditorSession(split);
   expect(
     session.commit('success', before => {
       const next = structuredClone(before);
-      next.battle.dodgeMarkers![0]!.mode = { kind: 'perfectDodge', successDelayFrames: 5 };
+      markersOfKind(next, 'dodge')![0]!.mode = { kind: 'perfectDodge', successDelayFrames: 5 };
       return next;
     }),
   ).toBe(true);
   expect(() =>
     session.commit('past-success', before => {
       const next = structuredClone(before);
-      next.battle.dodgeMarkers![0]!.mode = { kind: 'perfectDodge', successDelayFrames: 1 };
+      markersOfKind(next, 'dodge')![0]!.mode = { kind: 'perfectDodge', successDelayFrames: 1 };
       return next;
     }),
   ).toThrow('frozen-input-history');
   expect(() =>
     session.commit('past-dash', before => {
       const next = structuredClone(before);
-      next.battle.dodgeMarkers![0]!.direction = 'backward';
+      markersOfKind(next, 'dodge')![0]!.direction = 'backward';
       return next;
     }),
   ).toThrow('frozen-input-history');
   expect(
     session.commit('remove-success', before => {
       const next = structuredClone(before);
-      next.battle.dodgeMarkers![0]!.mode = { kind: 'dodge' };
+      markersOfKind(next, 'dodge')![0]!.mode = { kind: 'dodge' };
       return next;
     }),
   ).toBe(true);
@@ -163,7 +185,7 @@ it('继承只保留历史 Dash，未来成功可以独立添加、修改和移�
     frame: 16,
     resolveSkillFrame: (_, id) => (id === 'b' ? 10 : 20),
   });
-  expect(inherited.battle.dodgeMarkers?.map(marker => marker.id)).toEqual(['perfect']);
+  expect(dodgeInputs(inherited)?.map(marker => marker.id)).toEqual(['perfect']);
 });
 
 it('继承后的历史连续组可查看和改外观，不能改输入，未来连续组无需历史位置重算', () => {
@@ -224,13 +246,27 @@ it('继承文档自动启用通用配置与历史约束，不能清除元数据�
   expect(() =>
     session.commit('past', before => ({
       ...before,
-      battle: { ...before.battle, controlSwitches: [{ id: 'switch', frame: 19, trackIndex: 0 }] },
+      markers: [
+        {
+          kind: 'controlSwitch' as const,
+          id: 'switch',
+          frame: 19,
+          owner: operatorOwner(before, 0),
+        },
+      ],
     })),
   ).toThrow('frozen-input-history');
   expect(
     session.commit('future', before => ({
       ...before,
-      battle: { ...before.battle, controlSwitches: [{ id: 'switch', frame: 20, trackIndex: 0 }] },
+      markers: [
+        {
+          kind: 'controlSwitch' as const,
+          id: 'switch',
+          frame: 20,
+          owner: operatorOwner(before, 0),
+        },
+      ],
     })),
   ).toBe(true);
 });

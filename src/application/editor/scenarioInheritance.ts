@@ -1,9 +1,9 @@
 import type { ScenarioDocument } from '../../core/project/schema';
 import {
   getSkillCastPlacementChains,
-  getDodgeMarkerHistory,
   resolveScenarioInitialFrame,
 } from '../../core/project/skillCastPlacement';
+import { markerHistory } from '../../core/project/scenarioMarkers';
 
 /**
  * 复制已确认的历史前缀，不持有来源方案引用或运行时切面。
@@ -56,19 +56,8 @@ export function createInheritedScenario(
       if (cast.placement.afterCastId !== undefined && !ids.has(cast.placement.afterCastId))
         throw new Error(`inheritance input '${cast.id}' has no historical predecessor`);
     }
-    track.consumableUses = track.consumableUses?.filter(use => use.frame < frame);
   }
-  result.battle.controlSwitches = result.battle.controlSwitches.filter(
-    marker => marker.frame < frame,
-  );
-  result.battle.externalEventMarkers = result.battle.externalEventMarkers?.filter(
-    marker => marker.frame < frame,
-  );
-  if (result.battle.dodgeMarkers !== undefined)
-    result.battle.dodgeMarkers = getDodgeMarkerHistory(result.battle.dodgeMarkers, frame);
-  result.battle.cycleBoundaries = result.battle.cycleBoundaries.filter(
-    marker => marker.frame < frame,
-  );
+  result.markers = markerHistory(result, frame);
   result.battle.simulationRange = {
     startFrame: frame,
     endFrame:
