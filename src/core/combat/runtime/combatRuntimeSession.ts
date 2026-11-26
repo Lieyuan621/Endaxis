@@ -1,3 +1,7 @@
+import { sameScheduledPrefix } from './scheduledInputBoundary';
+import { sameScheduledSkillInput } from './combatInputRuntime';
+import { sameDodgeInput } from '../skills/dodgeInputRuntime';
+import { sameExternalEventInput } from '../events/externalCombatEventRuntime';
 /**
  * 完整战斗装配的检查点会话。
  *
@@ -25,6 +29,7 @@ export type RestoreCombatRuntimeAssembly = (
 ) => CombatRuntimeAssembly;
 
 interface SavedCombatRuntime {
+  readonly fixedInputs: CombatRuntimeAssembly['fixedInputPrograms'];
   readonly graph: CombatStateGraph;
   readonly skillPrograms: CombatSkillPrograms;
   readonly history: CombatReceiptView;
@@ -132,6 +137,7 @@ export class CombatRuntimeSession {
         [combatCheckpointIdentity]: true as const,
       });
       this.#checkpoints.set(checkpoint, {
+        fixedInputs: this.#current.fixedInputPrograms,
         graph: structuredClone(this.#current.stateGraph),
         skillPrograms: this.#current.combatSkillPrograms.fork(),
         history: this.#current.receipt.history.snapshot(),
@@ -198,6 +204,16 @@ export class CombatRuntimeSession {
   ): CombatRuntimeAssembly {
     const programs = saved.skillPrograms.fork();
     const candidate = restore(structuredClone(saved.graph), programs, saved.history);
+    const boundary =
+      saved.graph.shared.clock.frame + (saved.graph.inputs.initialInputPending ? 0 : 1);
+    const original = saved.fixedInputs;
+    const next = candidate.fixedInputPrograms;
+    if (!sameScheduledPrefix(original.skills, next.skills, boundary, sameScheduledSkillInput))
+      throw new Error('restored fixed input prefix does not match program');
+    if (!sameScheduledPrefix(original.dodges, next.dodges, boundary, sameDodgeInput))
+      throw new Error('restored dodge input prefix does not match program');
+    if (!sameScheduledPrefix(original.events, next.events, boundary, sameExternalEventInput))
+      throw new Error('restored external event prefix does not match program');
     if (candidate.combatSkillPrograms !== programs) {
       throw new Error('restored combat must use the checkpoint skill program bindings');
     }

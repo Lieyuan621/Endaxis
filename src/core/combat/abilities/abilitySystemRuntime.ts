@@ -280,12 +280,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
     this.runtimeState.currentSkillKey = skill === null ? null : abilitySkillKey(skill);
     if (skill === null && previousKey !== null) this.#onCurrentSkillChanged?.(null);
   }
-  get #processingSkill(): AbilitySkillRuntime | null {
-    return this.#resolveStoredSkill(this.runtimeState.processingSkillKey);
-  }
-  set #processingSkill(skill: AbilitySkillRuntime | null) {
-    this.runtimeState.processingSkillKey = skill === null ? null : abilitySkillKey(skill);
-  }
+  #processingSkill: AbilitySkillRuntime | null = null;
   #resolveStoredSkill(key: string | null): AbilitySkillRuntime | null {
     if (key === null) return null;
     const skill = this.#skillsById.get(key);
@@ -532,7 +527,6 @@ export class AbilitySystemRuntime implements FrameRuntime {
           throw new Error('restored player-action mode activation does not match program');
       }
       this.#resolveStoredSkill(restored.currentSkillKey);
-      this.#resolveStoredSkill(restored.processingSkillKey);
       if (
         restored.comboOffsetTargetSkillKey !== null &&
         !this.#skills.some(skill => skill.skillId === restored.comboOffsetTargetSkillKey)

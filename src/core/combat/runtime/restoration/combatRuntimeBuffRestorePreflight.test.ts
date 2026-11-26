@@ -108,18 +108,13 @@ function createGraph(heldInstanceId: number, viaEvaluation = false): CombatState
       castParameters: new Map(),
       control: new Map([['operator', false]]),
       skills: {
-        nextInputIndex: 0,
-        previousFixedInput: null,
         continuation: { nextIndex: 1, previous: null, stopped: false },
         groups: [],
       },
       dodges: {
-        nextInputIndex: 0,
-        previousInput: null,
         executedDashIds: new Set(),
         declaredSuccessIds: new Set(),
       },
-      externalEvents: { nextEventIndex: 0, previousEvent: null },
     },
     environment: null,
     events: {
@@ -144,7 +139,8 @@ function createGraph(heldInstanceId: number, viaEvaluation = false): CombatState
         },
       ],
     ]),
-    enemy: { id: 'enemy', timedMarkers: createTimedMarkerState(), buffs: null },
+    primaryEnemyId: 'enemy',
+    enemies: new Map([['enemy', { timedMarkers: createTimedMarkerState(), buffs: null }]]),
     instances: {
       projectiles: createProjectileLifecycleState(),
       abilityEntities: { instances: new Map(), deadSources: [], soulParts: new Map() },

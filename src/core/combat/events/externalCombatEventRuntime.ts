@@ -1,23 +1,23 @@
+import { firstInputAtOrAfter } from '../runtime/scheduledInputBoundary';
 import {
   type ExternalCombatEventInput,
   type ScheduledExternalCombatEventInput,
 } from '../state/environmentState';
 import type { FrameRuntime } from '../runtime/combatSimulation';
-import type { ExternalCombatEventRuntimeState } from '../state/environmentState';
 import type { CombatClock } from '../time/combatClock';
 
 export interface ExternalCombatEventRuntimeOptions {
+  readonly inputBoundary?: number;
   readonly receiveHit?: (operatorId: string) => void;
   readonly controlComboCooldown?: (operatorId: string, mode: 'cooldown' | 'ready') => void;
   readonly clock: CombatClock;
   readonly events: readonly ScheduledExternalCombatEventInput[];
-  readonly restoredState?: ExternalCombatEventRuntimeState;
 }
 
 export class ExternalCombatEventRuntime implements FrameRuntime {
-  readonly runtimeState: ExternalCombatEventRuntimeState;
   readonly #controlComboCooldown: ExternalCombatEventRuntimeOptions['controlComboCooldown'];
   readonly #receiveHit: ExternalCombatEventRuntimeOptions['receiveHit'];
+  #nextIndex: number;
   readonly #clock: CombatClock;
   readonly #events: readonly ScheduledExternalCombatEventInput[];
 
@@ -37,21 +37,7 @@ export class ExternalCombatEventRuntime implements FrameRuntime {
       }
       previousFrame = input.frame;
     }
-    this.runtimeState = options.restoredState ?? { nextEventIndex: 0, previousEvent: null };
-    if (
-      !Number.isSafeInteger(this.runtimeState.nextEventIndex) ||
-      this.runtimeState.nextEventIndex < 0 ||
-      this.runtimeState.nextEventIndex > this.#events.length
-    ) {
-      throw new Error('restored external event cursor is out of range');
-    }
-    const expectedPreviousEvent =
-      this.runtimeState.nextEventIndex === 0
-        ? null
-        : this.#events[this.runtimeState.nextEventIndex - 1]!;
-    if (!sameExternalEventInput(this.runtimeState.previousEvent, expectedPreviousEvent)) {
-      throw new Error('restored external event prefix does not match program');
-    }
+    this.#nextIndex = firstInputAtOrAfter(this.#events, options.inputBoundary ?? -Infinity);
   }
 
   advanceFrame(): void {
@@ -61,10 +47,9 @@ export class ExternalCombatEventRuntime implements FrameRuntime {
   applyCurrentFrame(): void {
     const actualFrame = this.#clock.frame;
     while (true) {
-      const input = this.#events[this.runtimeState.nextEventIndex];
+      const input = this.#events[this.#nextIndex];
       if (input === undefined || input.frame > actualFrame) break;
-      this.runtimeState.nextEventIndex += 1;
-      this.runtimeState.previousEvent = input;
+      this.#nextIndex += 1;
       this.#processInput(input);
     }
   }
@@ -89,7 +74,7 @@ export class ExternalCombatEventRuntime implements FrameRuntime {
   }
 }
 
-function sameExternalEventInput(
+export function sameExternalEventInput(
   left: ScheduledExternalCombatEventInput | null,
   right: ScheduledExternalCombatEventInput | null,
 ): boolean {

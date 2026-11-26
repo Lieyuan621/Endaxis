@@ -621,14 +621,21 @@ it('从同一完整帧按 A、B、A 回退，失败候选不替换当前装配',
 
   session.advanceFrames(2);
   const branchA = session.readState();
-  expect(branchA.inputs.externalEvents.nextEventIndex).toBe(2);
-  expect(branchA.inputs.skills.nextInputIndex).toBe(2);
   expect(
     session
       .readHistory()
       .toArray()
       .filter(entry => entry.event === 'SkillInputProcessed'),
   ).toHaveLength(2);
+  expect(() =>
+    session.restore(
+      checkpoint,
+      createRestore(inputs, [
+        { ...externalEvents[0]!, operatorIds: ['different-operator'] },
+        ...externalEvents.slice(1),
+      ]),
+    ),
+  ).toThrow('external event prefix does not match program');
   expect(() =>
     session.restore(
       checkpoint,
@@ -640,8 +647,6 @@ it('从同一完整帧按 A、B、A 回退，失败候选不替换当前装配',
   session.advanceFrames(2);
   const branchB = session.readState();
   expect(branchB.shared.clock.frame).toBe(5);
-  expect(branchB.inputs.skills.nextInputIndex).toBe(1);
-  expect(branchB.inputs.externalEvents.nextEventIndex).toBe(1);
   expect(branchB).not.toEqual(branchA);
 
   session.restore(checkpoint);
@@ -908,7 +913,12 @@ it('拒绝在完整排程里混入逐帧输入，回退后原排程仍可推进'
   expect(session.frame).toBe(frame);
   session.restore(checkpoint);
   session.advanceFrames(4);
-  expect(session.readState().inputs.skills.nextInputIndex).toBe(2);
+  expect(
+    session
+      .readHistory()
+      .toArray()
+      .filter(entry => entry.event === 'SkillInputProcessed'),
+  ).toHaveLength(2);
 });
 
 it('保存切人前后的身份，恢复不通知，续跑按原阶段发布切后台和切回事件', () => {
@@ -956,7 +966,12 @@ it('试探分支独立推进，显式丢弃检查点后不再保留历史入口'
   );
   trial.advanceFrames(2);
   expect(trial.frame).toBe(5);
-  expect(trial.readState().inputs.skills.nextInputIndex).toBe(1);
+  expect(
+    trial
+      .readHistory()
+      .toArray()
+      .filter(entry => entry.event === 'SkillInputProcessed'),
+  ).toHaveLength(1);
   expect(session.readState()).toEqual(parent);
   expect(session.frame).toBe(3);
 

@@ -1,3 +1,4 @@
+import { firstInputAtOrAfter } from '../runtime/scheduledInputBoundary';
 import type { DodgeInputRuntimeState, ScheduledDodgeInput } from '../state/environmentState';
 import type { CombatClock } from '../time/combatClock';
 import type { CombatReceiptSink } from '../receipt/combatReceipt';
@@ -65,6 +66,7 @@ export function recordDodgeReceipt(
 }
 
 export interface DodgeInputRuntimeOptions {
+  readonly inputBoundary?: number;
   readonly clock: Pick<CombatClock, 'frame'>;
   readonly inputs: readonly ScheduledDodgeInput[];
   readonly executeDash: (input: Extract<ScheduledDodgeInput, { readonly kind: 'dash' }>) => void;
@@ -75,12 +77,13 @@ export interface DodgeInputRuntimeOptions {
 
 /** 按固定帧消费 Dash 输入和人工成功事实；未来输入仍保存在程序侧。 */
 export class DodgeInputRuntime {
+  #nextIndex: number;
   readonly #clock: DodgeInputRuntimeOptions['clock'];
   readonly #inputs: readonly ScheduledDodgeInput[];
   readonly #executeDash: DodgeInputRuntimeOptions['executeDash'];
   readonly #declarePerfectDodgeSuccess: DodgeInputRuntimeOptions['declarePerfectDodgeSuccess'];
 
-  constructor(options: DodgeInputRuntimeOptions, state: DodgeInputRuntimeState) {
+  constructor(options: DodgeInputRuntimeOptions) {
     this.#clock = options.clock;
     this.#inputs = [...options.inputs];
     this.#executeDash = options.executeDash;
@@ -95,24 +98,15 @@ export class DodgeInputRuntime {
         throw new TypeError(`dodgeInputs[${index}] requires stable dodge and operator identities`);
       previousFrame = input.frame;
     }
-    if (
-      !Number.isSafeInteger(state.nextInputIndex) ||
-      state.nextInputIndex < 0 ||
-      state.nextInputIndex > this.#inputs.length
-    )
-      throw new Error('restored dodge input cursor is out of range');
-    const previous = state.nextInputIndex === 0 ? null : this.#inputs[state.nextInputIndex - 1]!;
-    if (!sameDodgeInput(state.previousInput, previous))
-      throw new Error('restored dodge input prefix does not match program');
+    this.#nextIndex = firstInputAtOrAfter(this.#inputs, options.inputBoundary ?? -Infinity);
   }
 
   applyCurrentFrame(state: DodgeInputRuntimeState): void {
     while (true) {
-      const input = this.#inputs[state.nextInputIndex];
+      const input = this.#inputs[this.#nextIndex];
       if (input === undefined || input.frame > this.#clock.frame) return;
       this.applyInput(state, input);
-      state.nextInputIndex += 1;
-      state.previousInput = input;
+      this.#nextIndex += 1;
     }
   }
 
@@ -126,7 +120,7 @@ export class DodgeInputRuntime {
   }
 }
 
-function sameDodgeInput(
+export function sameDodgeInput(
   left: ScheduledDodgeInput | null,
   right: ScheduledDodgeInput | null,
 ): boolean {

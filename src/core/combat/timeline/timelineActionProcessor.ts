@@ -54,8 +54,6 @@ export class TimelineActionProcessor<State = ActionSequenceState> {
     this.#program = compileTimelineActionIntervals(actions);
     this.#actions = this.#program.map(interval => actions[interval.sourceIndex]!);
     if (state !== undefined) {
-      if (state.scheduling.starting !== null)
-        throw new Error('cannot bind timeline while an action is starting');
       if (
         state.sequences.length !== this.#actions.length ||
         this.#actions.some(
@@ -106,6 +104,8 @@ export class TimelineActionProcessor<State = ActionSequenceState> {
   }
 
   readonly #host: TimelineActionExecutionHost = {
+    starting: null,
+    startingJumpDestination: null,
     reset: (index, context) => this.#actions[index]!.sequence.reset(context),
     execute: (index, context) => this.#actions[index]!.sequence.execute(context),
     tick: (index, deltaTime, context) => this.#actions[index]!.sequence.tick(deltaTime, context),

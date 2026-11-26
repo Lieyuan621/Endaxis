@@ -3,7 +3,7 @@ import { CombatClock } from '../time/combatClock';
 import { ExternalCombatEventRuntime } from './externalCombatEventRuntime';
 
 describe('ExternalCombatEventRuntime', () => {
-  it('恢复游标后只处理尚未发生的连携冷却控制', () => {
+  it('从完整帧恢复后只处理尚未发生的连携冷却控制', () => {
     const events = [0, 2].map(frame => ({
       frame,
       operatorIds: ['operator'],
@@ -15,14 +15,14 @@ describe('ExternalCombatEventRuntime', () => {
     const original = new ExternalCombatEventRuntime({ clock, events, controlComboCooldown });
     original.applyCurrentFrame();
     clock.advanceFrame();
-    const saved = structuredClone({ clock: clock.runtimeState, events: original.runtimeState });
+    const saved = structuredClone(clock.runtimeState);
 
-    const restoredClock = new CombatClock(saved.clock);
+    const restoredClock = new CombatClock(saved);
     const restoredControl = vi.fn();
     const restored = new ExternalCombatEventRuntime({
       clock: restoredClock,
       events,
-      restoredState: saved.events,
+      inputBoundary: restoredClock.frame + 1,
       controlComboCooldown: restoredControl,
     });
     restored.applyCurrentFrame();
@@ -32,41 +32,7 @@ describe('ExternalCombatEventRuntime', () => {
     expect(restoredControl).toHaveBeenCalledExactlyOnceWith('operator', 'ready');
     clock.advanceFrame();
     original.applyCurrentFrame();
-    expect(restored.runtimeState).toEqual(original.runtimeState);
-  });
-
-  it('允许替换未来输入，但拒绝把不同的已消费前缀绑定到保存游标', () => {
-    const clock = new CombatClock();
-    const consumed = {
-      frame: 0,
-      operatorIds: ['operator'],
-      kind: 'comboCooldownControl' as const,
-      mode: 'cooldown' as const,
-    };
-    const original = new ExternalCombatEventRuntime({
-      clock,
-      events: [consumed, { ...consumed, frame: 4 }],
-      controlComboCooldown: vi.fn(),
-    });
-    original.applyCurrentFrame();
-    const saved = structuredClone(original.runtimeState);
-
-    expect(
-      () =>
-        new ExternalCombatEventRuntime({
-          clock,
-          events: [consumed],
-          restoredState: structuredClone(saved),
-        }),
-    ).not.toThrow();
-    expect(
-      () =>
-        new ExternalCombatEventRuntime({
-          clock,
-          events: [{ ...consumed, mode: 'ready' }],
-          restoredState: structuredClone(saved),
-        }),
-    ).toThrow('external event prefix does not match program');
+    expect(controlComboCooldown).toHaveBeenCalledTimes(2);
   });
 
   it('按逻辑帧顺序处理输入', () => {

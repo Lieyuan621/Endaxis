@@ -1,3 +1,5 @@
+import { requireEnemyEnvironment } from '../../../core/combat/state/environmentState';
+import type { CombatStateGraph } from '../../../core/combat/state/combatState';
 import { firstScenarioEnemy, levelEnemies } from '../../../core/project/level';
 import { projectBuffTimelineViz } from '../../../core/projection/buffTimelineViz';
 import { perlicaChr_0004_pelica_attack1 } from '../../../data/operators/perlica.generated';
@@ -55,8 +57,7 @@ describe('正式模拟中的敌人生命周期', () => {
       createScenarioSimulationService(gameDataRepository).createCombatSession(scenario);
     session.advanceToFrame(60);
     expect(
-      session.runtime.readState().environment!.enemyInstances!.get('enemy:second')!.buffs.instances
-        .size,
+      session.runtime.readState().enemies.get('enemy:second')!.buffs!.instances.size,
     ).toBeGreaterThan(0);
     const restored = session.fork(session.runtime.save());
     session.advanceToFrame(240);
@@ -299,14 +300,12 @@ describe('正式模拟中的敌人生命周期', () => {
       expect(branch.collectResult().enemyVitalsById).toEqual(
         session.collectResult().enemyVitalsById,
       );
-      expect(branch.runtime.readState().enemy.additionalTimedMarkers).toEqual(
-        session.runtime.readState().enemy.additionalTimedMarkers,
-      );
+      expect(branch.runtime.readState().enemies).toEqual(session.runtime.readState().enemies);
       if (mode === 'single' || mode === 'implicit') {
-        const markers = session.runtime.readState().enemy.additionalTimedMarkers!;
-        expect([...markers.keys()]).toEqual(['enemy:a', 'enemy:b']);
-        expect(markers.get('enemy:a')!.entries[0]!.ownerId).toBe('enemy:a');
-        expect(markers.get('enemy:b')!.entries[0]!.ownerId).toBe('enemy:b');
+        const markers = session.runtime.readState().enemies;
+        expect(markers.size).toBe(3);
+        expect(markers.get('enemy:a')!.timedMarkers.entries[0]!.ownerId).toBe('enemy:a');
+        expect(markers.get('enemy:b')!.timedMarkers.entries[0]!.ownerId).toBe('enemy:b');
       }
       const health = projectEnemyHealthCurveFromReceipt(
         {
@@ -386,18 +385,18 @@ describe('正式模拟中的敌人生命周期', () => {
     const session =
       createScenarioSimulationService(gameDataRepository).createCombatSession(scenario);
     session.advanceToFrame(0);
-    const state = session.runtime.readState().environment!.enemyInstances!;
-    expect(state.get('enemy:a')!.vitals.health).toBe(100000);
-    expect(state.get('enemy:b')!.vitals.health).toBe(200000);
+    const state = session.runtime.readState().enemies;
+    expect(requireEnemyEnvironment(state, 'enemy:a').vitals.health).toBe(100000);
+    expect(requireEnemyEnvironment(state, 'enemy:b').vitals.health).toBe(200000);
     const restored = session.fork(session.runtime.save());
     session.advanceToFrame(30);
     restored.advanceToFrame(30);
     expect(restored.runtime.readState()).toEqual(session.runtime.readState());
-    const enemies = restored.runtime.readState().environment!.enemyInstances!;
-    expect(enemies.get('enemy:a')!.lifecycle?.phase).toBe('dead');
-    expect(enemies.get('enemy:a')!.vitals.health).toBe(0);
-    expect(enemies.get('enemy:b')!.lifecycle?.phase).toBe('present');
-    expect(enemies.get('enemy:b')!.vitals.health).toBe(200000);
+    const enemies = restored.runtime.readState().enemies;
+    expect(requireEnemyEnvironment(enemies, 'enemy:a').lifecycle?.phase).toBe('dead');
+    expect(requireEnemyEnvironment(enemies, 'enemy:a').vitals.health).toBe(0);
+    expect(requireEnemyEnvironment(enemies, 'enemy:b').lifecycle?.phase).toBe('present');
+    expect(requireEnemyEnvironment(enemies, 'enemy:b').vitals.health).toBe(200000);
     expect(
       restored
         .collectResult()
@@ -424,20 +423,14 @@ describe('正式模拟中的敌人生命周期', () => {
     const session =
       createScenarioSimulationService(gameDataRepository).createCombatSession(scenario);
     session.advanceToFrame(6);
-    expect(
-      session.runtime.readState().environment?.enemyInstances?.get(firstScenarioEnemy(scenario).id)
-        ?.lifecycle?.phase,
-    ).toBe('absent');
-    expect(session.runtime.readState().environment?.enemyVitals.health).toBe(100000);
+    expect(primaryEnemy(session.runtime.readState()).lifecycle?.phase).toBe('absent');
+    expect(primaryEnemy(session.runtime.readState()).vitals.health).toBe(100000);
     const restored = session.fork(session.runtime.save());
     session.advanceToFrame(15);
     restored.advanceToFrame(15);
     expect(restored.collectResult()).toEqual(session.collectResult());
-    expect(
-      session.runtime.readState().environment?.enemyInstances?.get(firstScenarioEnemy(scenario).id)
-        ?.lifecycle?.phase,
-    ).toBe('dead');
-    expect(session.runtime.readState().environment?.enemyVitals.health).toBe(0);
+    expect(primaryEnemy(session.runtime.readState()).lifecycle?.phase).toBe('dead');
+    expect(primaryEnemy(session.runtime.readState()).vitals.health).toBe(0);
     const deadBranch = session.fork(session.runtime.save());
     deadBranch.advanceToFrame(20);
     expect(
@@ -480,10 +473,8 @@ describe('正式模拟中的敌人生命周期', () => {
     restored.advanceToFrame(180);
     expect(restored.collectResult()).toEqual(session.collectResult());
     const state = session.runtime.readState();
-    expect(state.environment?.enemyVitals.health).toBe(0);
-    expect(
-      state.environment?.enemyInstances?.get(firstScenarioEnemy(scenario).id)?.lifecycle?.phase,
-    ).toBe(automaticDeath ? 'dead' : 'present');
+    expect(primaryEnemy(state).vitals.health).toBe(0);
+    expect(primaryEnemy(state).lifecycle?.phase).toBe(automaticDeath ? 'dead' : 'present');
     const laterDamage = session
       .collectResult()
       .receiptEntries.filter(entry => entry.event === 'DamageApplied' && entry.frame >= 100);
@@ -769,3 +760,7 @@ it('异元素反应只读取各自目标的附着，不从主敌人复制', () =
     ),
   ).toEqual([]);
 });
+
+function primaryEnemy(state: CombatStateGraph) {
+  return requireEnemyEnvironment(state.enemies, state.primaryEnemyId);
+}

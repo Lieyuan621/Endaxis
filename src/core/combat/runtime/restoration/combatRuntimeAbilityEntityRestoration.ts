@@ -90,17 +90,12 @@ export function bindRestoredCombatAbilityEntityDirectory(
     ]),
   );
   for (const [ownerId, target] of collectRestoredCombatBuffTargets({
-    enemyState: options.preparation.graph.enemy.buffs,
-    enemyTarget: options.foundation.enemyBuffTarget,
-    additionalEnemyStates: new Map(
-      [...(options.preparation.graph.environment?.enemyInstances ?? [])]
-        .filter(([id]) => id !== options.preparation.graph.enemy.id)
-        .map(([id, state]) => [id, state.buffs]),
-    ),
-    additionalEnemyTargets: new Map(
-      [...(options.foundation.environment.runtimeOptions.enemyInstances ?? [])]
-        .filter(([id]) => id !== options.preparation.graph.enemy.id)
-        .map(([id, enemy]) => [id, enemy.buffRuntime]),
+    enemyStates: options.preparation.graph.enemies,
+    enemyTargets: new Map(
+      [...options.foundation.environment.runtimeOptions.enemyInstances!].map(([id, enemy]) => [
+        id,
+        enemy.buffRuntime,
+      ]),
     ),
     operatorStates,
     operatorTargets: options.foundation.operatorBuffTargets,

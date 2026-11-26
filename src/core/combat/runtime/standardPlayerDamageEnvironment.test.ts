@@ -128,7 +128,7 @@ it('帧末队列恢复使用复制后的 Buff 黑板，清理宿主中止当前�
   buff.blackboard.assignDynamic('value', 20);
   const restored = new StandardPlayerDamageEnvironment({
     ...original.options,
-    enemyVitals: CombatVitals.bindRuntimeState(saved.enemyVitals),
+    enemyVitals: CombatVitals.bindRuntimeState(saved.enemies.get('enemy')!.vitals),
     restoredState: saved,
   });
   const bound = bindBattleWithoutProjectiles(restored, createContext());
@@ -140,7 +140,7 @@ it('帧末队列恢复使用复制后的 Buff 黑板，清理宿主中止当前�
   expect(values).toEqual([]);
   bound.frameEndEvents!.advanceFrame();
   expect(values).toEqual([9]);
-  expect(original.runtimeState.buffFrameEndEvents.get('enemy')!.pending.size).toBe(2);
+  expect(original.runtimeState.shared.buffFrameEndEvents.get('enemy')!.pending.size).toBe(2);
 });
 
 it.each(['expected', 'sampled'] as const)('环境保存 %s 模式实际消费的随机位置', mode => {
@@ -155,27 +155,29 @@ it.each(['expected', 'sampled'] as const)('环境保存 %s 模式实际消费的
   });
   source.nextCriticalSample();
   source.nextProbabilitySample();
-  expect(environment.runtimeState.random).toBe(state);
+  expect(environment.runtimeState.shared.random).toBe(state);
   const saved = structuredClone(environment.runtimeState);
-  const restored = new SimulationRandomSource(settings, () => saved.random!);
+  const restored = new SimulationRandomSource(settings, () => saved.shared.random!);
   expect(restored.nextCriticalSample()).toBe(source.nextCriticalSample());
   expect(restored.nextProbabilitySample()).toBe(source.nextProbabilitySample());
-  const before = structuredClone(saved.random);
+  const before = structuredClone(saved.shared.random);
   source.nextCriticalSample();
-  expect(saved.random).toEqual(before);
-  expect(createEnvironment().runtimeState.random).toBeNull();
+  expect(saved.shared.random).toEqual(before);
+  expect(createEnvironment().runtimeState.shared.random).toBeNull();
 });
 
 it('环境数据端口引用实际生命账本，保存后原分支受伤不改变切面', () => {
   const environment = createEnvironment();
   const bound = bindBattleWithoutProjectiles(environment, createContext());
-  expect(bound.environmentState).toBe(environment.runtimeState);
-  expect(environment.runtimeState.enemyVitals).toBe(environment.enemyVitals.runtimeState);
+  expect(bound.environmentState).toBe(environment.runtimeState.shared);
+  expect(environment.runtimeState.enemies.get('enemy')!.vitals).toBe(
+    environment.enemyVitals.runtimeState,
+  );
   const saved = structuredClone(environment.runtimeState);
-  const before = saved.enemyVitals.health;
+  const before = saved.enemies.get('enemy')!.vitals.health;
   environment.enemyVitals.takeDamage(10);
-  expect(environment.runtimeState.enemyVitals.health).toBe(before - 10);
-  expect(saved.enemyVitals.health).toBe(before);
+  expect(environment.runtimeState.enemies.get('enemy')!.vitals.health).toBe(before - 10);
+  expect(saved.enemies.get('enemy')!.vitals.health).toBe(before);
 });
 
 it('生命变化事件在写入生命后送给对应实体，零伤害不触发', () => {
@@ -200,7 +202,9 @@ it('恢复环境直接绑定账本和事件目录，不重新登记监听或改�
     events: new Map([['enemy', original.eventsFor('enemy').runtimeState]]),
     subscription: registration.subscriptions[0]!,
   });
-  const restoredEnemyVitals = CombatVitals.bindRuntimeState(saved.environment.enemyVitals);
+  const restoredEnemyVitals = CombatVitals.bindRuntimeState(
+    saved.environment.enemies.get('enemy')!.vitals,
+  );
   const restored = new StandardPlayerDamageEnvironment({
     ...original.options,
     enemyVitals: restoredEnemyVitals,
@@ -210,8 +214,8 @@ it('恢复环境直接绑定账本和事件目录，不重新登记监听或改�
 
   expect(restored.runtimeState).toBe(saved.environment);
   expect(restored.eventsFor('enemy').runtimeState).toBe(saved.events.get('enemy'));
-  expect(restored.runtimeState.postSkillRequestListeners).toBe(
-    saved.environment.postSkillRequestListeners,
+  expect(restored.runtimeState.shared.postSkillRequestListeners).toBe(
+    saved.environment.shared.postSkillRequestListeners,
   );
   const restoredReceived = vi.fn();
   restored
@@ -245,7 +249,7 @@ it('环境按保存的状态目录接回原生事件订阅，不重新分配编�
   });
   const restored = new StandardPlayerDamageEnvironment({
     ...original.options,
-    enemyVitals: CombatVitals.bindRuntimeState(saved.environment.enemyVitals),
+    enemyVitals: CombatVitals.bindRuntimeState(saved.environment.enemies.get('enemy')!.vitals),
     restoredState: saved.environment,
     restoredEventStates: saved.events,
   });
@@ -278,22 +282,20 @@ it('恢复环境直接绑定敌人与干员 Buff 数据，不重建属性和实�
   const saved = structuredClone({
     environment: original.runtimeState,
     events: new Map([['enemy', original.eventsFor('enemy').runtimeState]]),
-    enemyBuffs: original.runtimeOptions.enemyBuffRuntime.runtimeState!,
     operatorBuffs: originalOperator.runtimeState!,
   });
   const restored = new StandardPlayerDamageEnvironment({
     ...original.options,
-    enemyVitals: CombatVitals.bindRuntimeState(saved.environment.enemyVitals),
+    enemyVitals: CombatVitals.bindRuntimeState(saved.environment.enemies.get('enemy')!.vitals),
     restoredState: saved.environment,
     restoredEventStates: saved.events,
-    restoredBuffStates: {
-      enemy: saved.enemyBuffs,
-      operators: new Map([['operator', saved.operatorBuffs]]),
-    },
+    restoredOperatorBuffs: new Map([['operator', saved.operatorBuffs]]),
   });
   const restoredOperator = restored.runtimeOptions.createOperatorBuffRuntime!('operator');
 
-  expect(restored.runtimeOptions.enemyBuffRuntime.runtimeState).toBe(saved.enemyBuffs);
+  expect(restored.runtimeOptions.enemyBuffRuntime.runtimeState).toBe(
+    saved.environment.enemies.get('enemy')!.buffs,
+  );
   expect(restoredOperator.runtimeState).toBe(saved.operatorBuffs);
   expect(restoredOperator.entityBlackboard!.runtimeState).toBe(
     saved.operatorBuffs.entityBlackboard,
@@ -384,7 +386,7 @@ it('延迟请求对象通知接到对应 Buff 宿主，注销不影响之后的�
   const first = register(info => received.push(info));
   expect(first.registrationId).toBe(0);
   expect(
-    environment.runtimeState.postSkillRequestListeners.registrationsByOwner.get('enemy'),
+    environment.runtimeState.shared.postSkillRequestListeners.registrationsByOwner.get('enemy'),
   ).toEqual([0]);
   environment.runtimeOptions.onPostSkillCastRequest?.('operator', null);
   expect(received).toEqual([]);
@@ -426,7 +428,7 @@ it('恢复后的 Buff 目标按保存编号接回延迟请求监听，不消费�
   const saved = structuredClone(original.runtimeState);
   const restored = new StandardPlayerDamageEnvironment({
     ...original.options,
-    enemyVitals: CombatVitals.bindRuntimeState(saved.enemyVitals),
+    enemyVitals: CombatVitals.bindRuntimeState(saved.enemies.get('enemy')!.vitals),
     restoredState: saved,
   });
   const restoredTarget = restored.runtimeOptions.enemyBuffRuntime;
@@ -434,8 +436,8 @@ it('恢复后的 Buff 目标按保存编号接回延迟请求监听，不消费�
   const restoredRegistration = restoredTarget.registerPostSkillCastRequest!(() => {}, 0);
 
   expect(restoredRegistration.registrationId).toBe(0);
-  expect(saved.postSkillRequestListeners.nextRegistrationId).toBe(1);
-  expect(saved.postSkillRequestListeners.registrationsByOwner.get('enemy')).toEqual([0]);
+  expect(saved.shared.postSkillRequestListeners.nextRegistrationId).toBe(1);
+  expect(saved.shared.postSkillRequestListeners.registrationsByOwner.get('enemy')).toEqual([0]);
 });
 
 it.each([
@@ -1129,7 +1131,7 @@ it('敌人实例独立持有生命和同名 Buff，切面恢复保留各自账�
   const saved = structuredClone(environment.runtimeState);
   const restored = new StandardPlayerDamageEnvironment({
     ...environment.options,
-    enemyVitals: CombatVitals.bindRuntimeState(saved.enemyVitals),
+    enemyVitals: CombatVitals.bindRuntimeState(saved.enemies.get('enemy')!.vitals),
     restoredState: saved,
   });
   bindBattleWithoutProjectiles(restored, createContext());
@@ -1140,9 +1142,7 @@ it('敌人实例独立持有生命和同名 Buff，切面恢复保留各自账�
   expect(restoredA.vitals.health).toBe(a.vitals.health - 50);
   expect(restored.enemyInstance('enemy:b')!.vitals.health).toBe(b.vitals.health);
   expect(restored.enemyVitals.health).toBe(environment.enemyVitals.health);
-  expect(restored.runtimeState.enemyInstances!.get('enemy:a')!.buffs).toBe(
-    restoredA.buffs.runtimeState,
-  );
+  expect(restored.runtimeState.enemies.get('enemy:a')!.buffs).toBe(restoredA.buffs.runtimeState);
 });
 
 it('显式攻击者使用所选干员的面板和事件端口，保留原技能身份', () => {
@@ -3579,18 +3579,14 @@ describe('StandardPlayerDamageEnvironment', () => {
           environment.eventsFor(id).runtimeState,
         ]),
       ),
-      enemyBuffs: environment.runtimeOptions.enemyBuffRuntime.runtimeState!,
       operatorBuffs: runtime.runtimeState,
     });
     const restored = new StandardPlayerDamageEnvironment({
       ...environment.options,
-      enemyVitals: CombatVitals.bindRuntimeState(saved.environment.enemyVitals),
+      enemyVitals: CombatVitals.bindRuntimeState(saved.environment.enemies.get('enemy')!.vitals),
       restoredState: saved.environment,
       restoredEventStates: saved.events,
-      restoredBuffStates: {
-        enemy: saved.enemyBuffs,
-        operators: new Map([['operator', saved.operatorBuffs]]),
-      },
+      restoredOperatorBuffs: new Map([['operator', saved.operatorBuffs]]),
     });
     const restoredReceipt = new CombatReceiptCollector(savedHistory);
     const restoredContext = { ...createContext(), receipt: restoredReceipt };
@@ -3838,19 +3834,15 @@ describe('StandardPlayerDamageEnvironment', () => {
         ['enemy', environment.eventsFor('enemy').runtimeState],
         ['operator', environment.eventsFor('operator').runtimeState],
       ]),
-      enemyBuffs: environment.runtimeOptions.enemyBuffRuntime.runtimeState!,
       operatorBuffs: runtime.runtimeState,
     });
     const originalPrefix = savedHistory.toArray();
     const restored = new StandardPlayerDamageEnvironment({
       ...environment.options,
-      enemyVitals: CombatVitals.bindRuntimeState(saved.environment.enemyVitals),
+      enemyVitals: CombatVitals.bindRuntimeState(saved.environment.enemies.get('enemy')!.vitals),
       restoredState: saved.environment,
       restoredEventStates: saved.events,
-      restoredBuffStates: {
-        enemy: saved.enemyBuffs,
-        operators: new Map([['operator', saved.operatorBuffs]]),
-      },
+      restoredOperatorBuffs: new Map([['operator', saved.operatorBuffs]]),
     });
     const restoredReceipt = new CombatReceiptCollector(savedHistory);
     const restoredContext = { ...createContext(), receipt: restoredReceipt };

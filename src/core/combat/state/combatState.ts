@@ -19,8 +19,9 @@ import {
   type CombatInputRuntimeState,
   type DodgeInputRuntimeState,
   type CombatSharedState,
-  type ExternalCombatEventRuntimeState,
-  type StandardCombatEnvironmentState,
+  type SharedCombatEnvironmentState,
+  type CombatEnemyState,
+  type EnemyEnvironmentState,
   type TimedMarkerState,
 } from './environmentState';
 import {
@@ -60,19 +61,14 @@ export interface CombatStateGraph {
     readonly control: Map<string, boolean>;
     readonly skills: CombatInputRuntimeState;
     readonly dodges: DodgeInputRuntimeState;
-    readonly externalEvents: ExternalCombatEventRuntimeState;
   };
-  readonly environment: StandardCombatEnvironmentState | null;
+  readonly environment: SharedCombatEnvironmentState | null;
   readonly events: {
     readonly native: Map<string, AbilityEventState<string>> | null;
   };
   readonly operators: Map<string, CombatOperatorState>;
-  readonly enemy: {
-    readonly id: string;
-    readonly additionalTimedMarkers?: Map<string, TimedMarkerState>;
-    readonly timedMarkers: TimedMarkerState;
-    readonly buffs: BuffContainerState | null;
-  };
+  readonly primaryEnemyId: string;
+  readonly enemies: Map<string, CombatEnemyState | EnemyEnvironmentState>;
   readonly instances: {
     readonly abilityEntities: LogicalAbilityEntityDirectoryState;
     readonly projectiles: ProjectileLifecycleState;

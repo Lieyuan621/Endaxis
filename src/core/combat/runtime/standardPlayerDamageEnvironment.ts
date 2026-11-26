@@ -28,6 +28,8 @@ import type { CombatStateGraph } from '../state/combatState';
 import type { SimulationRandomState } from '../state/environmentState';
 import {
   createPostSkillRequestListenerState,
+  createTimedMarkerState,
+  type EnemyEnvironmentState,
   type StandardCombatEnvironmentState,
 } from '../state/environmentState';
 import type {
@@ -327,10 +329,7 @@ export interface StandardPlayerDamageEnvironmentOptions {
   /** 与 restoredState 同一切面中的原生事件目录；处理函数由各来源宿主随后按编号重绑。 */
   readonly restoredEventStates?: NonNullable<CombatStateGraph['events']['native']>;
   /** 与整场候选图共享的实体 Buff 数据；实例对象和生命周期关系由装配层随后统一绑定。 */
-  readonly restoredBuffStates?: {
-    readonly enemy: BuffContainerState<string>;
-    readonly operators: ReadonlyMap<string, BuffContainerState<string>>;
-  };
+  readonly restoredOperatorBuffs?: ReadonlyMap<string, BuffContainerState<string>>;
   readonly resolveNonRandomRuntimeSnapshot: (
     context: CombatDamageExecutorContext,
     step: DamageStep,
@@ -467,7 +466,7 @@ export class StandardPlayerDamageEnvironment {
     ownerId: string,
     vitals: CombatVitals,
     restoredEnemyBuffs?: BuffContainerState<string>,
-    restored?: Pick<StandardCombatEnvironmentState, 'knockDown' | 'poiseBreakBuffs'>,
+    restored?: Pick<EnemyEnvironmentState, 'knockDown' | 'poiseBreakBuffs'>,
   ): EnemyCombatRuntime {
     this.#bindHealthChangeEvent(ownerId, vitals);
     const options = this.options;
@@ -600,50 +599,46 @@ export class StandardPlayerDamageEnvironment {
 
   constructor(readonly options: StandardPlayerDamageEnvironmentOptions) {
     const restored = options.restoredState;
-    if (restored !== undefined && options.enemyVitals.runtimeState !== restored.enemyVitals) {
+    const primary = restored?.enemies.get(this.#primaryEnemyId);
+    if (restored && !primary)
+      throw new Error(`restored enemy '${this.#primaryEnemyId}' is missing its state`);
+    if (primary && options.enemyVitals.runtimeState !== primary.vitals) {
       throw new Error('restored enemy vitals must use the environment state ledger');
     }
-    if (restored?.random != null && restored.random !== options.randomState) {
+    if (restored?.shared.random != null && restored.shared.random !== options.randomState) {
       throw new Error('restored random source must use the environment state ledger');
     }
     if (
       restored !== undefined &&
-      (restored.knockDown === null) !== (options.knockDown === undefined)
+      (primary?.knockDown === null) !== (options.knockDown === undefined)
     ) {
       throw new Error('restored knock-down state does not match the environment program');
     }
     this.#eventStates = options.restoredEventStates ?? new Map();
     this.#postSkillRequestListenerState =
-      restored?.postSkillRequestListeners ?? createPostSkillRequestListenerState();
-    for (const [operatorId, state] of restored?.operatorVitals ?? []) {
+      restored?.shared.postSkillRequestListeners ?? createPostSkillRequestListenerState();
+    for (const [operatorId, state] of restored?.shared.operatorVitals ?? []) {
       const vitals = CombatVitals.bindRuntimeState(state);
       this.#bindHealthChangeEvent(operatorId, vitals);
       this.#operatorVitals.set(operatorId, vitals);
     }
     this.#enemies.set(
       this.#primaryEnemyId,
-      this.#createEnemyRuntime(
-        this.#primaryEnemyId,
-        options.enemyVitals,
-        options.restoredBuffStates?.enemy ??
-          restored?.enemyInstances?.get(this.#primaryEnemyId)?.buffs,
-        restored,
-      ),
+      this.#createEnemyRuntime(this.#primaryEnemyId, options.enemyVitals, primary?.buffs, primary),
     );
     this.runtimeState = restored ?? {
-      enemyInstances: new Map(),
-      buffFrameEndEvents: new Map(),
-      random: options.randomState ?? null,
-      enemyVitals: this.#primaryEnemy.vitals.runtimeState,
-      operatorVitals: new Map(),
-      knockDown: this.#primaryEnemy.knockDown?.runtimeState ?? null,
-      poiseBreakBuffs: this.#primaryEnemy.poiseBreakBuffs.runtimeState,
-      postSkillRequestListeners: this.#postSkillRequestListenerState,
+      enemies: new Map(),
+      shared: {
+        buffFrameEndEvents: new Map(),
+        random: options.randomState ?? null,
+        operatorVitals: new Map(),
+        postSkillRequestListeners: this.#postSkillRequestListenerState,
+      },
     };
     for (const [id, input] of options.additionalEnemies ?? []) {
       if (id !== 'enemy' && (!id.startsWith('enemy:') || id.length === 'enemy:'.length))
         throw new Error(`invalid enemy instance identity '${id}'`);
-      const state = restored?.enemyInstances?.get(id);
+      const state = restored?.enemies.get(id);
       if (
         restored === undefined &&
         [...this.#enemies.values()].some(
@@ -663,12 +658,13 @@ export class StandardPlayerDamageEnvironment {
         initializeEnemyCombatAttributes(runtime.attributes, input.program.defenderAttributes);
       this.#enemies.set(id, runtime);
     }
-    for (const id of restored?.enemyInstances?.keys() ?? []) {
+    for (const id of restored?.enemies.keys() ?? []) {
       if (!this.#enemies.has(id)) throw new Error(`restored enemy '${id}' is missing its program`);
     }
     if (restored === undefined) {
       for (const [id, enemy] of this.#enemies)
-        this.runtimeState.enemyInstances!.set(id, {
+        this.runtimeState.enemies.set(id, {
+          timedMarkers: createTimedMarkerState(),
           initialVitals: {
             health: enemy.vitals.health,
             poise: enemy.vitals.poise,
@@ -687,21 +683,21 @@ export class StandardPlayerDamageEnvironment {
     this.runtimeOptions = {
       enemyInstances: this.#enemies,
       readEnemyProgram: id => options.additionalEnemies?.get(id)?.program,
-      readEnemyLifecycleState: id => this.runtimeState.enemyInstances?.get(id)?.lifecycle,
+      readEnemyLifecycleState: id => this.runtimeState.enemies.get(id)?.lifecycle,
       bindEnemyHealthChanged: (id, listener, lifecycle) => {
         const enemy = this.#enemies.get(id);
-        const saved = this.runtimeState.enemyInstances?.get(id);
+        const saved = this.runtimeState.enemies.get(id);
         if (!enemy || !saved) throw new Error(`enemy '${id}' has no environment state`);
         enemy.lifecycle = lifecycle;
         enemy.healthChanged = listener;
-        this.runtimeState.enemyInstances!.set(id, { ...saved, lifecycle: lifecycle.runtimeState });
+        saved.lifecycle = lifecycle.runtimeState;
       },
       ...(options.probabilitySamples === undefined
         ? {}
         : { probabilitySamples: options.probabilitySamples }),
       enemyBuffRuntime: this.#primaryEnemy.buffRuntime,
       submitCastRandomSeed: (castId, seed) => {
-        const state = this.runtimeState.random;
+        const state = this.runtimeState.shared.random;
         if (state !== null) submitSimulationCastSeed(state, castId, seed);
         else if (seed !== undefined)
           throw new Error('cast seed requires stateful simulation random');
@@ -723,6 +719,7 @@ export class StandardPlayerDamageEnvironment {
       },
       bindBattleRuntime: context => {
         this.#bindBattleRuntime(context, true);
+        const { enemies, shared: environmentState } = this.runtimeState;
         return {
           additionalEnemies: [...this.#enemies.values()]
             .filter(enemy => enemy.ownerId !== this.#primaryEnemyId)
@@ -733,7 +730,8 @@ export class StandardPlayerDamageEnvironment {
               vitals: enemy.vitalsRuntime,
             })),
           eventStates: this.#eventStates,
-          environmentState: this.runtimeState,
+          environmentState,
+          enemyStates: enemies,
           frameEndEvents: { advanceFrame: () => this.#flushBuffFrameEndEvents() },
           bindNativeEventSubscription: (reference, receive) => {
             const owner = [...this.#eventStates].find(([, state]) => state === reference.state);
@@ -863,7 +861,7 @@ export class StandardPlayerDamageEnvironment {
       emitBuffLifecycleAbilityEvent: (event, payload) =>
         this.#emit(payload.sourceId, event, payload),
       clearPendingAbilityEvents: entityId => {
-        this.runtimeState.buffFrameEndEvents.delete(entityId);
+        this.runtimeState.shared.buffFrameEndEvents.delete(entityId);
       },
       createEquipmentEventOperationExecutor: context => this.#createOperationExecutor(context),
       registerEquipmentAbilityEventAction: (operatorId, event, priority, handle, subscriptions) => {
@@ -1350,7 +1348,7 @@ export class StandardPlayerDamageEnvironment {
     });
     this.#operatorVitals.set(operatorId, vitals);
     this.#bindHealthChangeEvent(operatorId, vitals);
-    this.runtimeState.operatorVitals.set(operatorId, vitals.runtimeState);
+    this.runtimeState.shared.operatorVitals.set(operatorId, vitals.runtimeState);
     return vitals;
   }
 
@@ -1409,8 +1407,7 @@ export class StandardPlayerDamageEnvironment {
       throw new Error(`restored operator Buff container '${operatorId}' is already bound`);
     }
     if (runtime === undefined) {
-      const configuredState =
-        restoredState ?? this.options.restoredBuffStates?.operators.get(operatorId);
+      const configuredState = restoredState ?? this.options.restoredOperatorBuffs?.get(operatorId);
       const attributes =
         configuredState === undefined
           ? panel === undefined
@@ -2587,7 +2584,7 @@ export class StandardPlayerDamageEnvironment {
       const event =
         published.event === 'buffConsumed' ? 'buffConsumedFrameEnd' : 'buffAbsorbedFrameEnd';
       if (this.#needsBuffFrameEndEvent(entityId, event)) {
-        const states = this.runtimeState.buffFrameEndEvents;
+        const states = this.runtimeState.shared.buffFrameEndEvents;
         let state = states.get(entityId);
         if (state === undefined) {
           state = { pending: new Map() };
@@ -2670,12 +2667,12 @@ export class StandardPlayerDamageEnvironment {
 
   #flushBuffFrameEndEvents(): void {
     // 取走当前批次后再调用监听器；同步回调入队不能扩展正在遍历的批次。
-    for (const [ownerId, state] of [...this.runtimeState.buffFrameEndEvents]) {
-      if (this.runtimeState.buffFrameEndEvents.get(ownerId) !== state) continue;
+    for (const [ownerId, state] of [...this.runtimeState.shared.buffFrameEndEvents]) {
+      if (this.runtimeState.shared.buffFrameEndEvents.get(ownerId) !== state) continue;
       const pending = state.pending;
       state.pending = new Map();
       for (const event of pending.values()) {
-        if (this.runtimeState.buffFrameEndEvents.get(ownerId) !== state) break;
+        if (this.runtimeState.shared.buffFrameEndEvents.get(ownerId) !== state) break;
         if (this.#needsBuffFrameEndEvent(ownerId, event.event)) {
           const state = event.buff;
           this.#publish(ownerId, {

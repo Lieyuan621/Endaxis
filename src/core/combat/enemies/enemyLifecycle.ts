@@ -1,3 +1,4 @@
+import { firstInputAtOrAfter } from '../runtime/scheduledInputBoundary';
 import {
   createEnemyLifecycleState,
   type EnemyLifecycleState,
@@ -29,11 +30,18 @@ export interface EnemyLifecycleTransition {
  * 死亡输入交给调用方完成生命归零及原生 HP-zero 流程，确认死亡后调用 die。
  */
 export class EnemyLifecycle {
+  #nextPresenceChange: number;
   constructor(
     readonly program: EnemyLifecycleProgram,
     readonly automaticDeath: boolean,
     readonly runtimeState: EnemyLifecycleState = createEnemyLifecycleState(),
-  ) {}
+  ) {
+    const boundary =
+      runtimeState.phase === 'unspawned' || runtimeState.lastFrame === null
+        ? -Infinity
+        : runtimeState.lastFrame + 1;
+    this.#nextPresenceChange = firstInputAtOrAfter(program.presenceChanges, boundary);
+  }
 
   get alive(): boolean {
     return this.runtimeState.phase === 'present' || this.runtimeState.phase === 'absent';
@@ -66,15 +74,15 @@ export class EnemyLifecycle {
     if (state.phase === 'dead' || frame < this.program.spawnFrame) return;
     if (state.phase === 'unspawned')
       this.#change('spawn', 'present', this.program.spawnFrame, transition);
-    while (this.alive && state.nextPresenceChange < this.program.presenceChanges.length) {
-      const change = this.program.presenceChanges[state.nextPresenceChange]!;
+    while (this.alive && this.#nextPresenceChange < this.program.presenceChanges.length) {
+      const change = this.program.presenceChanges[this.#nextPresenceChange]!;
       if (change.frame > frame) break;
       // 同帧死亡优先于切入/切出；死者不能因同帧切入重新变为存活。
       if (this.#manualDeathDue(change.frame)) {
         requestDeath(this.program.deathFrame!);
         return;
       }
-      state.nextPresenceChange++;
+      this.#nextPresenceChange++;
       const phase = change.present ? 'present' : 'absent';
       if (state.phase !== phase)
         this.#change(change.present ? 'enter' : 'leave', phase, change.frame, transition);

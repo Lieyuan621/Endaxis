@@ -1,3 +1,4 @@
+import { firstInputAtOrAfter } from '../../core/combat/runtime/scheduledInputBoundary';
 import type {
   CombatFrameInput,
   CombatSkillInputPhase,
@@ -29,11 +30,10 @@ export interface CombatInputScheduleCheckpoint {
 interface SavedSchedule {
   readonly combat: CombatRuntimeCheckpoint;
   readonly inputBoundary: number;
-  readonly nextIndex: number;
   readonly skills: CombatInputRuntimeState | undefined;
 }
 interface ScheduleRestoration {
-  readonly [scheduleRestoration]: Pick<SavedSchedule, 'nextIndex' | 'skills'>;
+  readonly [scheduleRestoration]: Pick<SavedSchedule, 'skills'>;
 }
 
 interface ContinuationPlan {
@@ -114,7 +114,7 @@ export class CombatInputSchedule {
       programsByCastId.set(binding.castId, binding);
     }
     this.#customSkillProgramsByCastId = programsByCastId;
-    this.#nextIndex = restored?.nextIndex ?? 0;
+    this.#nextIndex = firstInputAtOrAfter(this.#inputs, boundary);
     this.#generation = session.runtime.generation;
     this.#expectedFrame = session.runtime.frame;
     this.#expectedInitialInputPending = session.runtime.initialInputPending;
@@ -125,6 +125,7 @@ export class CombatInputSchedule {
         return this.#phase;
       };
       this.#skills = new CombatInputRuntime({
+        inputBoundary: boundary,
         clock: {
           get frame() {
             return session.runtime.frame;
@@ -165,7 +166,6 @@ export class CombatInputSchedule {
       combat: this.session.runtime.save(),
       inputBoundary:
         this.session.runtime.frame + (this.session.runtime.initialInputPending ? 0 : 1),
-      nextIndex: this.#nextIndex,
       skills: this.#skills === undefined ? undefined : structuredClone(this.#skills.runtimeState),
     });
     return handle;
@@ -240,12 +240,7 @@ export class CombatInputSchedule {
     let skills = saved.skills === undefined ? undefined : structuredClone(saved.skills);
     if (groups.length > 0) {
       if (skills === undefined) {
-        const consumed = this.#inputs
-          .slice(0, saved.nextIndex)
-          .flatMap(input => (input.skills ?? []).map(skill => ({ ...skill, frame: input.frame })));
         skills = {
-          nextInputIndex: consumed.length,
-          previousFixedInput: consumed.at(-1) ?? null,
           continuation: { nextIndex: 1, previous: null, stopped: false },
           groups: [],
         };
@@ -265,7 +260,7 @@ export class CombatInputSchedule {
       groups,
       [...this.#customSkillProgramsByCastId.values(), ...addedCustomSkillPrograms],
       {
-        [scheduleRestoration]: { nextIndex: saved.nextIndex, skills },
+        [scheduleRestoration]: { skills },
       },
     );
   }
@@ -294,7 +289,7 @@ export class CombatInputSchedule {
       previousFrame = input.frame;
     }
 
-    const prefix = this.#inputs.slice(0, saved.nextIndex);
+    const prefix = this.#inputs.slice(0, firstInputAtOrAfter(this.#inputs, saved.inputBoundary));
     const historicalCastIds = new Set(
       prefix.flatMap(input =>
         (input.skills ?? []).flatMap(skill => (skill.castId === undefined ? [] : [skill.castId])),
@@ -354,19 +349,10 @@ export class CombatInputSchedule {
     ];
     let skills: CombatInputRuntimeState | undefined;
     if (groups.length > 0 || continuationPlan !== undefined) {
-      const base =
-        saved.skills ??
-        (() => {
-          const consumed = prefix.flatMap(input =>
-            (input.skills ?? []).map(skill => ({ ...skill, frame: input.frame })),
-          );
-          return {
-            nextInputIndex: consumed.length,
-            previousFixedInput: consumed.at(-1) ?? null,
-            continuation: { nextIndex: 1, previous: null, stopped: false },
-            groups: [],
-          } satisfies CombatInputRuntimeState;
-        })();
+      const base = saved.skills ?? {
+        continuation: { nextIndex: 1, previous: null, stopped: false },
+        groups: [],
+      };
       skills = {
         ...structuredClone(base),
         continuation: { nextIndex: 1, previous: null, stopped: false },
@@ -387,7 +373,7 @@ export class CombatInputSchedule {
       groups,
       customSkillPrograms,
       {
-        [scheduleRestoration]: { nextIndex: saved.nextIndex, skills },
+        [scheduleRestoration]: { skills },
       },
       continuationPlan,
     );

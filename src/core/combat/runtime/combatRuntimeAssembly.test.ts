@@ -2918,7 +2918,6 @@ describe('CombatRuntimeAssembly', () => {
                 false,
                 {
                   phase,
-                  nextPresenceChange: 0,
                   deathFrame: phase === 'dead' ? 0 : null,
                   lastFrame: 0,
                 },
@@ -3033,7 +3032,7 @@ describe('CombatRuntimeAssembly', () => {
                 lifecycle: new EnemyLifecycle(
                   { spawnFrame: 0, presenceChanges: [], deathFrame: null },
                   false,
-                  { phase: 'present', nextPresenceChange: 0, deathFrame: null, lastFrame: 0 },
+                  { phase: 'present', deathFrame: null, lastFrame: 0 },
                 ),
               },
             ],
@@ -6349,7 +6348,7 @@ it('正式装配按瞄准列表施加标记，技能动作结束只清理自身�
       lifecycle: new EnemyLifecycle(
         { spawnFrame: 0, presenceChanges: [], deathFrame: null },
         false,
-        { phase: 'present', nextPresenceChange: 0, deathFrame: null, lastFrame: 0 },
+        { phase: 'present', deathFrame: null, lastFrame: 0 },
       ),
       vitals: new CombatVitals({
         health: 1000,

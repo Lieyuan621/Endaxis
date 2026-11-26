@@ -1,3 +1,4 @@
+import { firstInputAtOrAfter } from './scheduledInputBoundary';
 import { type ScheduledSkillInput } from '../state/environmentState';
 /**
  * 在原生 PlayerController 所在的 Frame 阶段消费已编译施放输入。
@@ -39,6 +40,7 @@ export interface CombatInputRuntimeOptions {
     readonly ignoreInputFailures?: boolean;
   };
   /** 恢复时绑定已经复制的输入游标；固定输入与组程序仍由当前编译结果提供。 */
+  readonly inputBoundary?: number;
   readonly restoredState?: CombatInputRuntimeState;
 }
 
@@ -46,6 +48,10 @@ export interface CombatInputRuntimeOptions {
 export class CombatInputRuntime implements FrameRuntime {
   readonly runtimeState: CombatInputRuntimeState;
   readonly #clock: Pick<CombatClock, 'frame'>;
+  #nextInputIndex: number;
+  get fixedInputs() {
+    return this.#inputs;
+  }
   readonly #inputs: readonly ScheduledSkillInput[];
   readonly #execution: CombatInputExecution;
   readonly #continuationInputs: readonly ScheduledSkillInput[];
@@ -146,27 +152,10 @@ export class CombatInputRuntime implements FrameRuntime {
       input => input.castId === undefined || !deferredCastIds.has(input.castId),
     );
     this.runtimeState = options.restoredState ?? {
-      nextInputIndex: 0,
-      previousFixedInput: null,
       continuation: { nextIndex: 1, previous: null, stopped: false },
       groups: this.#groups.map(group => group.state),
     };
-    if (
-      !Number.isSafeInteger(this.runtimeState.nextInputIndex) ||
-      this.runtimeState.nextInputIndex < 0 ||
-      this.runtimeState.nextInputIndex > this.#inputs.length
-    ) {
-      throw new Error('restored fixed input cursor is out of range');
-    }
-    const expectedPreviousFixedInput =
-      this.runtimeState.nextInputIndex === 0
-        ? null
-        : this.#inputs[this.runtimeState.nextInputIndex - 1]!;
-    if (
-      !sameScheduledSkillInput(this.runtimeState.previousFixedInput, expectedPreviousFixedInput)
-    ) {
-      throw new Error('restored fixed input prefix does not match program');
-    }
+    this.#nextInputIndex = firstInputAtOrAfter(this.#inputs, options.inputBoundary ?? -Infinity);
     validateContinuationState(
       this.runtimeState.continuation,
       this.#continuationInputs,
@@ -187,10 +176,9 @@ export class CombatInputRuntime implements FrameRuntime {
       readonly order: number;
     }[] = [];
     while (true) {
-      const input = this.#inputs[this.runtimeState.nextInputIndex];
+      const input = this.#inputs[this.#nextInputIndex];
       if (input === undefined || input.frame > actualFrame) break;
-      this.runtimeState.nextInputIndex += 1;
-      this.runtimeState.previousFixedInput = input;
+      this.#nextInputIndex += 1;
       ready.push({ input, order: this.#declarationOrder.get(input)! });
     }
     // 就绪状态在输入阶段开始时读取；本帧刚启动的组不能在同帧再推进一段。
@@ -303,7 +291,7 @@ export class CombatInputRuntime implements FrameRuntime {
   }
 }
 
-function sameScheduledSkillInput(
+export function sameScheduledSkillInput(
   left: ScheduledSkillInput | null,
   right: ScheduledSkillInput | null,
 ): boolean {

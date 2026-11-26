@@ -106,9 +106,9 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
   const saved = structuredClone({
     shared: originalShared.runtimeState,
     environment: originalEnvironment.runtimeState,
-    enemyBuffs: originalEnvironment.runtimeOptions.enemyBuffRuntime.runtimeState!,
     operatorBuffs: originalOperatorBuffs.runtimeState!,
   });
+  const { enemies, shared: environment } = saved.environment;
   const graph: CombatStateGraph = {
     shared: saved.shared,
     inputs: {
@@ -116,20 +116,15 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
       castParameters: new Map(),
       control: new Map([['operator', false]]),
       skills: {
-        nextInputIndex: 0,
-        previousFixedInput: null,
         continuation: { nextIndex: 1, previous: null, stopped: false },
         groups: [],
       },
       dodges: {
-        nextInputIndex: 0,
-        previousInput: null,
         executedDashIds: new Set(),
         declaredSuccessIds: new Set(),
       },
-      externalEvents: { nextEventIndex: 0, previousEvent: null },
     },
-    environment: saved.environment,
+    environment,
     events: { native: new Map() },
     operators: new Map([
       [
@@ -150,7 +145,8 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
         },
       ],
     ]),
-    enemy: { id: 'enemy', timedMarkers: createTimedMarkerState(), buffs: saved.enemyBuffs },
+    primaryEnemyId: 'enemy',
+    enemies,
     instances: {
       projectiles: createProjectileLifecycleState(),
       abilityEntities: { instances: new Map(), deadSources: [], soulParts: new Map() },
@@ -171,7 +167,7 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
   entityState.buffs = createBuffContainerState(undefined, entityState.blackboard);
   graph.instances.abilityEntities.instances.set(entityTarget.instanceId, entityState);
   for (const [ownerId, state] of [
-    ['enemy', graph.enemy.timedMarkers],
+    ['enemy', graph.enemies.get('enemy')!.timedMarkers],
     ['operator', graph.operators.get('operator')!.timedMarkers],
   ] as const) {
     const markers = new TimedMarkerContainer(ownerId, originalShared.clock, {}, state);

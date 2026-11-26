@@ -1,3 +1,7 @@
+import {
+  assertStandardEnemyDirectory,
+  requireEnemyEnvironment,
+} from '../../state/environmentState';
 /**
  * 建立整场恢复候选的共享账本、标准环境和基础 Buff 目标外壳。
  *
@@ -38,7 +42,7 @@ type RestoredCombatEnvironmentBase = Omit<
   | 'randomState'
   | 'restoredState'
   | 'restoredEventStates'
-  | 'restoredBuffStates'
+  | 'restoredOperatorBuffs'
   | 'criticalSamples'
   | 'probabilitySamples'
   | 'rangeSamples'
@@ -90,7 +94,9 @@ export function bindRestoredCombatRuntimeFoundation(
   if (graph.environment === null) throw new Error('restored combat has no standard environment');
   if (graph.events.native === null)
     throw new Error('restored combat has no native event directory');
-  if (graph.enemy.buffs === null) throw new Error('restored enemy has no Buff container data');
+  const enemies = graph.enemies;
+  assertStandardEnemyDirectory(enemies);
+  const primary = requireEnemyEnvironment(enemies, graph.primaryEnemyId);
   const operatorBuffStates = new Map();
   for (const [operatorId, state] of graph.operators) {
     if (state.buffs === null) {
@@ -124,20 +130,17 @@ export function bindRestoredCombatRuntimeFoundation(
       ? undefined
       : new SimulationRandomSource(simulationRandomSettings, () => randomState);
   const restorationOptions = {
-    enemyVitals: CombatVitals.bindRuntimeState(graph.environment.enemyVitals),
-    restoredState: graph.environment,
+    enemyVitals: CombatVitals.bindRuntimeState(primary.vitals),
+    restoredState: { shared: graph.environment, enemies },
     restoredEventStates: graph.events.native,
-    restoredBuffStates: {
-      enemy: graph.enemy.buffs,
-      operators: operatorBuffStates,
-    },
+    restoredOperatorBuffs: operatorBuffStates,
   };
   const environment =
     randomState === null
       ? new StandardPlayerDamageEnvironment({
           ...(environmentInput as DirectRestoredCombatEnvironmentInput),
           ...restorationOptions,
-          primaryEnemyId: graph.enemy.id,
+          primaryEnemyId: graph.primaryEnemyId,
         })
       : new StandardPlayerDamageEnvironment({
           ...environmentInput,
@@ -147,7 +150,7 @@ export function bindRestoredCombatRuntimeFoundation(
           randomMode: simulationRandomSettings!.mode,
           randomState,
           ...restorationOptions,
-          primaryEnemyId: graph.enemy.id,
+          primaryEnemyId: graph.primaryEnemyId,
         });
   const boundEnvironment =
     environment.runtimeOptions.bindBattleRuntime?.({
@@ -190,7 +193,7 @@ export function bindRestoredCombatRuntimeFoundation(
     operatorBuffTargets.set(operatorId, target);
   }
   const enemyBuffTarget = environment.runtimeOptions.enemyBuffRuntime;
-  if (enemyBuffTarget.runtimeState !== graph.enemy.buffs) {
+  if (enemyBuffTarget.runtimeState !== primary.buffs) {
     throw new Error('restored enemy Buff target uses another state');
   }
   return {

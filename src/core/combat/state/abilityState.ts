@@ -211,7 +211,6 @@ export interface AbilitySystemState {
   /** 已执行 offsetRecordFrame 提交的当前施放身份，防止每帧重复刷新。 */
   comboOffsetRecordedSkillKey: string | null;
   currentSkillKey: string | null;
-  processingSkillKey: string | null;
   postSkillCastRequest: PostSkillCastRequest | null;
 }
 
@@ -238,7 +237,6 @@ export function createAbilitySystemState(): AbilitySystemState {
     comboOffsetModifier: null,
     comboOffsetRecordedSkillKey: null,
     currentSkillKey: null,
-    processingSkillKey: null,
     postSkillCastRequest: null,
   };
 }

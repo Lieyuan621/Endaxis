@@ -14,6 +14,8 @@ export interface TimelineActionInterval {
 
 /** 当前调用期间可用的动作端口；index 是排序后的程序下标。 */
 export interface TimelineActionExecutionHost {
+  starting: number | null;
+  startingJumpDestination: number | null;
   reset(index: number, context: CombatExecutionContext): void;
   execute(index: number, context: CombatExecutionContext): void;
   tick(index: number, deltaTime: number, context: CombatExecutionContext): void;
@@ -55,9 +57,8 @@ export function resetTimelineActions(
   state.ended = false;
   state.nextPendingIndex = 0;
   state.active.length = 0;
-  state.starting = null;
-  state.startingCrossedByJump = false;
-  state.startingJumpDestination = null;
+  host.starting = null;
+  host.startingJumpDestination = null;
   for (let index = 0; index < program.length; index += 1) host.reset(index, context);
 }
 
@@ -108,22 +109,20 @@ export function tickTimelineActions(
     started ??= new Set<number>();
     started.add(indexedAction);
     while (started.has(state.nextPendingIndex)) state.nextPendingIndex += 1;
-    state.starting = indexedAction;
-    state.startingCrossedByJump = false;
-    state.startingJumpDestination = null;
+    host.starting = indexedAction;
+    host.startingJumpDestination = null;
     host.started(indexedAction, currentFrame);
     host.execute(indexedAction, context);
     // 同步 JumpTo / CastEnd 保留原有当前序列收尾协议。
-    if (state.startingCrossedByJump) {
-      endInterval(indexedAction, state.startingJumpDestination!, host, context);
+    if (host.startingJumpDestination !== null) {
+      endInterval(indexedAction, host.startingJumpDestination!, host, context);
     } else {
       // 原生 Pending 分支直接进入下一节点，首次普通 Tick/End 留到后续访问。
       // 瞬时区间也进入活动集合，复用既有切面状态保存 Execute 后的寿命。
       state.active.push(indexedAction);
     }
-    state.starting = null;
-    state.startingJumpDestination = null;
-    state.startingCrossedByJump = false;
+    host.starting = null;
+    host.startingJumpDestination = null;
     while (started.has(state.nextPendingIndex)) state.nextPendingIndex += 1;
   }
 }
@@ -146,14 +145,13 @@ export function jumpToTimelineActions(
     throw new RangeError('backward timeline jumps are not supported');
   }
 
-  const startingEndFrame = state.starting === null ? undefined : program[state.starting]!.endFrame;
+  const startingEndFrame = host.starting === null ? undefined : program[host.starting]!.endFrame;
   if (
-    state.starting !== null &&
+    host.starting !== null &&
     (startingEndFrame === undefined || startingEndFrame <= destinationFrame)
   ) {
     // 当前序列仍位于 execute 调用栈中；返回后再 End，避免重入其步骤生命周期。
-    state.startingCrossedByJump = true;
-    state.startingJumpDestination = destinationFrame;
+    host.startingJumpDestination = destinationFrame;
   }
 
   for (let index = state.active.length - 1; index >= 0; index -= 1) {
@@ -180,9 +178,8 @@ export function finishTimelineActions(
   host: TimelineActionExecutionHost,
   context: CombatExecutionContext,
 ): void {
-  if (state.starting !== null) {
-    state.startingCrossedByJump = true;
-    state.startingJumpDestination = currentFrame;
+  if (host.starting !== null) {
+    host.startingJumpDestination = currentFrame;
   }
   for (let index = state.active.length - 1; index >= 0; index -= 1) {
     const indexedAction = state.active[index]!;
@@ -204,11 +201,10 @@ export function endTimelineActions(
   // 先封闭调度入口，避免 End 的同步回调重入，Reset 才允许再次启动。
   state.ended = true;
   state.nextPendingIndex = program.length;
-  if (state.starting !== null) {
-    state.startingCrossedByJump = true;
-    state.startingJumpDestination = currentFrame;
+  if (host.starting !== null) {
+    host.startingJumpDestination = currentFrame;
     // CastEnd 与 JumpTo 不同：原生同步 End 所有序列，包括当前进入中的序列。
-    host.end(state.starting, context);
+    host.end(host.starting, context);
   }
   for (const indexedAction of state.active.splice(0)) {
     endInterval(indexedAction, currentFrame, host, context);

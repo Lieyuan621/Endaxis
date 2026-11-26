@@ -131,10 +131,7 @@ function collectTimelineReferences(
 /** 返回的目录仍引用候选图，只供后续对象阶段解析当前分支句柄。 */
 export function prepareCombatBuffRestore(graph: CombatStateGraph): PreparedCombatBuffRestore {
   const containers = new Map<string, BuffContainerState<string>>();
-  addContainer(containers, graph.enemy.id, graph.enemy.buffs);
-  for (const [enemyId, enemy] of graph.environment?.enemyInstances ?? []) {
-    if (enemyId !== graph.enemy.id) addContainer(containers, enemyId, enemy.buffs);
-  }
+  for (const [id, enemy] of graph.enemies) addContainer(containers, id, enemy.buffs);
   for (const [operatorId, operator] of graph.operators) {
     addContainer(containers, operatorId, operator.buffs);
   }

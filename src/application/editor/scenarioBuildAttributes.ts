@@ -77,10 +77,11 @@ export function resolveScenarioBuildAttributes(
       ]),
     ),
     enemies: new Map(
-      [...(graph.environment?.enemyInstances ?? [])].map(([id, enemy]) => [
-        id,
-        capture(new CombatAttributeSet(enemy.buffs.attributes)),
-      ]),
+      [...graph.enemies].flatMap(([id, enemy]) =>
+        enemy.buffs
+          ? ([[id, capture(new CombatAttributeSet(enemy.buffs.attributes))]] as const)
+          : [],
+      ),
     ),
     operators: new Map(
       resolveScenarioBuilds(build, repository).flatMap(resolved => {

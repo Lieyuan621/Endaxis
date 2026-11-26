@@ -329,8 +329,7 @@ export interface BuffFrameEndPayloadState extends AbilityOriginPayload {
 }
 
 /** 标准敌我战斗环境使用的可变数据。 */
-export interface StandardCombatEnvironmentState {
-  readonly enemyInstances?: Map<string, EnemyEnvironmentState>;
+export interface SharedCombatEnvironmentState {
   /** 每个发布宿主的帧末聚合；保留实际 Buff 引用，由整场切面复制维护别名。 */
   readonly buffFrameEndEvents: Map<
     string,
@@ -346,15 +345,38 @@ export interface StandardCombatEnvironmentState {
     }
   >;
   readonly random: SimulationRandomState | null;
-  readonly enemyVitals: CombatVitalsState;
   readonly operatorVitals: Map<string, CombatVitalsState>;
-  readonly knockDown: OrdinaryKnockDownState | null;
-  readonly poiseBreakBuffs: Set<number>;
   readonly postSkillRequestListeners: PostSkillRequestListenerState;
 }
 
 /** 一个敌人独占的可变状态；队伍资源和随机流不属于此处。 */
-export interface EnemyEnvironmentState {
+export interface CombatEnemyState {
+  readonly buffs: BuffContainerState<string> | null;
+  readonly timedMarkers: TimedMarkerState;
+}
+
+export interface StandardCombatEnvironmentState {
+  readonly shared: SharedCombatEnvironmentState;
+  readonly enemies: Map<string, EnemyEnvironmentState>;
+}
+
+export function requireEnemyEnvironment(
+  enemies: ReadonlyMap<string, CombatEnemyState | EnemyEnvironmentState>,
+  id: string,
+): EnemyEnvironmentState {
+  const state = enemies.get(id);
+  if (!state || !('vitals' in state))
+    throw new Error(`enemy '${id}' has no standard environment state`);
+  return state;
+}
+
+export function assertStandardEnemyDirectory(
+  enemies: Map<string, CombatEnemyState | EnemyEnvironmentState>,
+): asserts enemies is Map<string, EnemyEnvironmentState> {
+  for (const id of enemies.keys()) requireEnemyEnvironment(enemies, id);
+}
+
+export interface EnemyEnvironmentState extends CombatEnemyState {
   /** 出生前初始化账本；切面恢复保留原值，曲线不得以恢复时的当前值重新起算。 */
   readonly initialVitals: {
     readonly health: number;
@@ -362,7 +384,7 @@ export interface EnemyEnvironmentState {
     readonly maxHealth: number;
     readonly maxPoise: number;
   };
-  readonly lifecycle?: EnemyLifecycleState;
+  lifecycle?: EnemyLifecycleState;
   readonly vitals: CombatVitalsState;
   readonly buffs: BuffContainerState<string>;
   readonly knockDown: OrdinaryKnockDownState | null;
@@ -379,8 +401,6 @@ export interface SkillInputGroupRuntimeState {
 
 /** 固定技能输入、自动顺延输入和连续组的消费游标。 */
 export interface CombatInputRuntimeState {
-  nextInputIndex: number;
-  previousFixedInput: ScheduledSkillInput | null;
   readonly continuation: {
     nextIndex: number;
     previous: ScheduledSkillInput | null;
@@ -389,16 +409,8 @@ export interface CombatInputRuntimeState {
   readonly groups: SkillInputGroupRuntimeState[];
 }
 
-/** 外部战斗事件当前消费到的位置。 */
-export interface ExternalCombatEventRuntimeState {
-  nextEventIndex: number;
-  previousEvent: ScheduledExternalCombatEventInput | null;
-}
-
 /** 闪避输入及人工极限闪避成功事实当前消费到的位置。 */
 export interface DodgeInputRuntimeState {
-  nextInputIndex: number;
-  previousInput: ScheduledDodgeInput | null;
   /** 只包含已经提交的身份，供逐帧调用与恢复分支检查重复输入。 */
   readonly executedDashIds: Set<string>;
   readonly declaredSuccessIds: Set<string>;
@@ -406,8 +418,6 @@ export interface DodgeInputRuntimeState {
 
 export function createDodgeInputState(): DodgeInputRuntimeState {
   return {
-    nextInputIndex: 0,
-    previousInput: null,
     executedDashIds: new Set(),
     declaredSuccessIds: new Set(),
   };
@@ -538,11 +548,17 @@ export type DodgeInput =
 export type ScheduledDodgeInput = DodgeInput & { readonly frame: number };
 
 export type ExternalCombatEventInput =
-  | { readonly kind: 'comboCooldownControl'; readonly operatorIds: readonly string[]; readonly mode: 'cooldown' | 'ready' }
+  | {
+      readonly kind: 'comboCooldownControl';
+      readonly operatorIds: readonly string[];
+      readonly mode: 'cooldown' | 'ready';
+    }
   | { readonly kind: 'operatorHit'; readonly operatorId: string }
   | { readonly kind: 'pickup'; readonly operatorId: string; readonly group: string };
 
-export type ScheduledExternalCombatEventInput = ExternalCombatEventInput & { readonly frame: number };
+export type ScheduledExternalCombatEventInput = ExternalCombatEventInput & {
+  readonly frame: number;
+};
 
 /**
  * 场景随机流的全部可变数据。取样表只保存整数，不保存随机函数或闭包。

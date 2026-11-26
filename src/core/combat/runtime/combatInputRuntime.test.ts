@@ -53,7 +53,7 @@ describe('CombatInputRuntime', () => {
           castIds: ['x', 'y', 'z'],
           canContinue: (_input, previous) => clock.frame >= previous.frame + 3,
         },
-        ...(restoredState === undefined ? {} : { restoredState }),
+        ...(restoredState === undefined ? {} : { restoredState, inputBoundary: clock.frame + 1 }),
       });
     const originalClock = new CombatClock();
     const originalReceipt = new CombatReceiptCollector();

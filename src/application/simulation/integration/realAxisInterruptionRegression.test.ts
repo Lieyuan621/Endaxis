@@ -83,9 +83,12 @@ it('腐蚀重复施加在正式切面恢复后仍继承累计减抗', async () =
   }
   const session = createEditorSimulationService().createCombatSession(scenario);
   session.advanceToFrame(700);
-  const corrosion = [...session.runtime.readState().enemy.buffs!.instances.values()].find(
-    item => item.identity.definitionId === 'buff_common_natural_cryst_triggered_wrapper',
-  );
+  const corrosion = [
+    ...session.runtime
+      .readState()
+      .enemies.get(firstScenarioEnemy(scenario).id)!
+      .buffs!.instances.values(),
+  ].find(item => item.identity.definitionId === 'buff_common_natural_cryst_triggered_wrapper');
   expect(corrosion?.blackboard.values.get('duration')).toBe(25);
   const restored = session.fork(session.runtime.save());
   session.advanceToFrame(1400);
@@ -433,9 +436,12 @@ it('诀腐蚀天赋按等级与潜能修改时长和减抗上限，切面恢复�
     scenario.tracks[0] = operator;
     const session = createEditorSimulationService().createCombatSession(scenario);
     session.advanceToFrame(150);
-    const buff = [...session.runtime.readState().enemy.buffs!.instances.values()].find(
-      item => item.identity.definitionId === 'buff_common_natural_natural_corrupt_do',
-    )!;
+    const buff = [
+      ...session.runtime
+        .readState()
+        .enemies.get(firstScenarioEnemy(scenario).id)!
+        .buffs!.instances.values(),
+    ].find(item => item.identity.definitionId === 'buff_common_natural_natural_corrupt_do')!;
     expect(buff).toBeDefined();
     const maximum = buff.blackboard.values.get('max_def_decrease');
     expect(typeof maximum).toBe('number');

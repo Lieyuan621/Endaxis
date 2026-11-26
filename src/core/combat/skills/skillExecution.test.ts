@@ -68,6 +68,8 @@ function createSession() {
         },
       };
       const timeline: TimelineActionExecutionHost = {
+        starting: null,
+        startingJumpDestination: null,
         execute: () => {
           executeActionSequence(state.sequence.entries.entries(), {}, actions);
         },

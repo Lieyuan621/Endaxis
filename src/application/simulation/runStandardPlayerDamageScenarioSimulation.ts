@@ -1,3 +1,4 @@
+import { requireEnemyEnvironment } from '../../core/combat/state/environmentState';
 import { controlSwitchInputs } from '../../core/project/scenarioMarkers';
 import { firstScenarioEnemy, levelEnemies } from '../../core/project/level';
 import { compileScenarioEnemyInstances } from '../../core/compiler/compileScenarioEnemyInstances';
@@ -278,22 +279,25 @@ export function collectStandardPlayerDamageStateGraphResult(
   const environmentState = graph.environment;
   if (environmentState === null)
     throw new Error('standard combat result requires environment state');
-  const vitals = environmentState.enemyVitals;
+  const vitals = requireEnemyEnvironment(graph.enemies, graph.primaryEnemyId).vitals;
   return Object.freeze({
     ...result,
     finalEnemyHealth: vitals.health,
     enemyVitalsById: Object.freeze(
       Object.fromEntries(
-        [...(environmentState.enemyInstances ?? [])].map(([id, enemy]) => [
-          id,
-          Object.freeze({
-            initialHealth: enemy.initialVitals.health,
-            maxHealth: enemy.initialVitals.maxHealth,
-            initialPoise: enemy.initialVitals.poise,
-            maxPoise: enemy.initialVitals.maxPoise,
-            finalPoise: enemy.vitals.poise,
-          }),
-        ]),
+        [...graph.enemies.keys()].map(id => {
+          const enemy = requireEnemyEnvironment(graph.enemies, id);
+          return [
+            id,
+            Object.freeze({
+              initialHealth: enemy.initialVitals.health,
+              maxHealth: enemy.initialVitals.maxHealth,
+              initialPoise: enemy.initialVitals.poise,
+              maxPoise: enemy.initialVitals.maxPoise,
+              finalPoise: enemy.vitals.poise,
+            }),
+          ];
+        }),
       ),
     ),
     enemyVitals: Object.freeze({

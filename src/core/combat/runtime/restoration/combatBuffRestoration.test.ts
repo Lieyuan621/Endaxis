@@ -291,8 +291,8 @@ it('完整目标目录只接受直接绑定候选数据的敌人、干员和能�
     restoreTarget(entityId, state);
 
   const targets = collectRestoredCombatBuffTargets({
-    enemyState,
-    enemyTarget: enemy,
+    enemyStates: new Map([['enemy', { buffs: enemyState }]]),
+    enemyTargets: new Map([['enemy', enemy]]),
     operatorStates: new Map([['operator', operatorState]]),
     operatorTargets: new Map([['operator', operator]]),
     abilityEntities: entities,
@@ -306,8 +306,8 @@ it('完整目标目录只接受直接绑定候选数据的敌人、干员和能�
   ]);
   expect(() =>
     collectRestoredCombatBuffTargets({
-      enemyState,
-      enemyTarget: enemy,
+      enemyStates: new Map([['enemy', { buffs: enemyState }]]),
+      enemyTargets: new Map([['enemy', enemy]]),
       operatorStates: new Map([['operator', operatorState]]),
       operatorTargets: new Map([
         ['operator', restoreTarget('operator', structuredClone(operatorState))],
@@ -318,8 +318,8 @@ it('完整目标目录只接受直接绑定候选数据的敌人、干员和能�
   ).toThrow("restored Buff target 'operator' does not bind its saved state");
   expect(() =>
     collectRestoredCombatBuffTargets({
-      enemyState,
-      enemyTarget: enemy,
+      enemyStates: new Map([['enemy', { buffs: enemyState }]]),
+      enemyTargets: new Map([['enemy', enemy]]),
       operatorStates: new Map(),
       operatorTargets: new Map([['operator', operator]]),
       abilityEntities: entities,

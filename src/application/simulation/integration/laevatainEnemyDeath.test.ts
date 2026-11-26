@@ -75,9 +75,9 @@ it.each([
     restored.advanceToFrame(40);
     expect(restored.collectResult()).toEqual(session.collectResult());
     const entries = session.collectResult().receiptEntries;
-    const enemyStates = session.runtime.readState().environment!.enemyInstances!;
-    expect(enemyStates.get('enemy:second')!.buffs.instances.size).toBe(0);
-    expect(enemyStates.get(firstScenarioEnemy(scenario).id)!.buffs.instances.size).toBeGreaterThan(
+    const enemyStates = session.runtime.readState().enemies;
+    expect(enemyStates.get('enemy:second')!.buffs!.instances.size).toBe(0);
+    expect(enemyStates.get(firstScenarioEnemy(scenario).id)!.buffs!.instances.size).toBeGreaterThan(
       0,
     );
     const released = entries.filter(
@@ -92,10 +92,7 @@ it.each([
     session.advanceToFrame(60);
     afterDeath.advanceToFrame(60);
     expect(afterDeath.collectResult()).toEqual(session.collectResult());
-    expect(
-      session.runtime.readState().environment!.enemyInstances!.get('enemy:second')!.buffs.instances
-        .size,
-    ).toBe(0);
+    expect(session.runtime.readState().enemies.get('enemy:second')!.buffs!.instances.size).toBe(0);
     expect(entries.filter(e => e.event === 'BuffAbsorbed')).toMatchObject([
       {
         frame: 30,
