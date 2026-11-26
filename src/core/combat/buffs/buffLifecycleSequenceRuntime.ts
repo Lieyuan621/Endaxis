@@ -676,10 +676,10 @@ export function attachBuffLifecycleSequences<Key extends string>(
           return operations.ownerTagQuery(callback);
         },
         aura: {
-          targets: (parameters, callback) => {
+          targets: (parameters, callback, opening) => {
             const aura = operationsFor(callback).aura;
             if (!aura) throw new Error('Buff Aura target operations are not configured');
-            return aura.targets(parameters, callback);
+            return aura.targets(parameters, callback, opening);
           },
           apply: (parameters, target, callback) => {
             const aura = operationsFor(callback).aura;

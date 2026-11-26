@@ -233,6 +233,7 @@ export function compileScenarioExternalEventInputs(
 ): readonly ScheduledExternalCombatEventInput[] {
   const activeOperatorIds = scenario.tracks.flatMap(track => (track === null ? [] : [track.id]));
   return interactionMarkers(scenario)
+    .filter(marker => marker.kind !== 'pickup' || scenario.battle.automaticPickup === false)
     .map((marker): ScheduledExternalCombatEventInput => {
       const { frame, kind } = marker;
       if (kind === 'comboCooldownControl') {
@@ -535,6 +536,7 @@ export function compileScenarioRuntimeAssembly(
   return {
     ...options.environment,
     initialFrame,
+    automaticPickup: scenario.battle.automaticPickup !== false,
     enemyTargeting: {
       order: scenarioEnemyOrder(scenario),
       switches: enemyTargetInputs(scenario),

@@ -96,6 +96,7 @@ function createRestoreAssembly(
       graph,
       resources: compiled.resources,
       enemy: compiled.enemy,
+      automaticPickup: compiled.automaticPickup !== false,
       ...(compiled.enemyAutomaticDeath === undefined
         ? {}
         : { enemyAutomaticDeath: compiled.enemyAutomaticDeath }),

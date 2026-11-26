@@ -325,7 +325,7 @@ export interface BuffOperationDependencies {
   readonly areaInteraction?: {
     parameters: ResolvedCombatStepParameters['aura'];
     activeChanged(context: CombatOperationContext, active: boolean): void;
-    targets(context: CombatOperationContext): readonly RuntimeTargetRef[];
+    targets(context: CombatOperationContext, opening: boolean): readonly RuntimeTargetRef[];
   };
   readonly queryTargets?: (
     query: CompiledTargetQuery,
@@ -385,6 +385,7 @@ export interface AuraInfluenceOperations {
   targets(
     parameters: ResolvedCombatStepParameters['aura'],
     context: CombatOperationContext,
+    opening: boolean,
   ): readonly RuntimeTargetRef[];
   apply(
     parameters: ResolvedCombatStepParameters['aura'],
@@ -414,9 +415,9 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       const interaction = this.dependencies.areaInteraction;
       if (interaction?.parameters === parameters) interaction.activeChanged(context, active);
     },
-    targets: (parameters, context) => {
+    targets: (parameters, context, opening) => {
       const interaction = this.dependencies.areaInteraction;
-      if (interaction?.parameters === parameters) return interaction.targets(context);
+      if (interaction?.parameters === parameters) return interaction.targets(context, opening);
       if (this.dependencies.queryTargets === undefined)
         throw new Error('Aura requires an action target query context');
       return this.dependencies

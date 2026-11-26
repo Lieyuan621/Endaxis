@@ -3,6 +3,15 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const operatorTimelineInteractions: Readonly<
   Record<string, NonNullable<OperatorDefinition['timelineInteractions']>>
 > = {
+  ardelia: {
+    ardeliaDollyShadow: {
+      kind: 'pickup',
+      nameKey: 'effects.name.ardeliaDollyShadow',
+      icon: 'endaxis:operators/ardelia/talent_1',
+      entityIds: ['abilityentity_chr_0025_ardelia_remain_loop'],
+      auraNode: 'aura_44',
+    },
+  },
   kay: {
     kayComboDrop: {
       kind: 'pickup',

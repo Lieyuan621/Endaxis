@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TimelinePickupIcon from '../interaction/TimelinePickupIcon.vue';
 import { EaPopover } from '@/design-system';
 /** 时间轴顶部方案栏。DOM 分区与视觉契约以旧版 TimelineEditor 为准。 */
 import {
@@ -47,6 +48,7 @@ const props = defineProps<{
   appearance: 'light' | 'dark';
   randomMode: 'expected' | 'sampled';
   automaticControlSwitches: boolean;
+  automaticPickup: boolean;
   multiEnemyEnabled: boolean;
   multiEnemyRequired: boolean;
   enemyAutomaticDeath: boolean;
@@ -110,6 +112,7 @@ const emit = defineEmits<{
   setAppearance: [appearance: 'light' | 'dark'];
   setRandomMode: [mode: 'expected' | 'sampled'];
   toggleAutomaticControlSwitches: [];
+  toggleAutomaticPickup: [];
   toggleMultiEnemy: [];
   toggleEnemyAutomaticDeath: [];
   toggleComboSkillPriority: [];
@@ -328,6 +331,34 @@ onBeforeUnmount(() => {
                   >
                     <rect x="1" y="1" width="14" height="14" rx="2" />
                     <polyline v-if="automaticControlSwitches" points="3,8 6.5,11.5 13,4.5" />
+                  </svg>
+                </EaButton>
+              </div>
+              <div class="header-more-checklist">
+                <EaButton
+                  type="button"
+                  class="header-more-check-row header-more-tool-row"
+                  :title="t('timeline.header.automaticPickupHelp')"
+                  :aria-pressed="automaticPickup"
+                  :disabled="configurationReadOnly"
+                  @click="$emit('toggleAutomaticPickup')"
+                >
+                  <TimelinePickupIcon hand-only class="header-more-tool-row__icon" />
+                  <span class="header-more-tool-row__label">{{
+                    t('timeline.header.automaticPickup')
+                  }}</span>
+                  <svg
+                    class="header-more-tool-row__check"
+                    viewBox="0 0 16 16"
+                    width="13"
+                    height="13"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline v-if="automaticPickup" points="3,8 6.5,11.5 13,4.5" />
                   </svg>
                 </EaButton>
               </div>

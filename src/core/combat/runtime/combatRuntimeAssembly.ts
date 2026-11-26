@@ -511,6 +511,7 @@ export type CombatDamageExecutorContext =
 export interface CombatRuntimeScenarioOptions {
   readonly enemyTargeting?: EnemyTargetSelection;
   readonly enemyAutomaticDeath?: boolean;
+  readonly automaticPickup?: boolean;
   readonly resources: CombatResourceSnapshot;
   /** 由场景敌人实例编译得到，操作执行器不得另行读取定义默认值。 */
   readonly enemy: CombatEnemyProgram;
@@ -728,6 +729,7 @@ export interface CombatRuntimeEnvironmentOptions extends CombatRuntimeInputRules
 export interface CombatRuntimeAssemblyRestoreOptions extends CombatRuntimeInputRules {
   readonly enemyTargeting?: EnemyTargetSelection;
   readonly enemyAutomaticDeath?: boolean;
+  readonly automaticPickup?: boolean;
   readonly operatorControl?: OperatorControlConfiguration;
   readonly receiptHistory: CombatReceiptView;
   readonly graph: CombatStateGraph;
@@ -1035,6 +1037,7 @@ export class CombatRuntimeAssembly {
       });
       options = {
         enemyTargeting: restoreOptions.enemyTargeting,
+        automaticPickup: restoreOptions.automaticPickup !== false,
         ...(restoreOptions.enemyAutomaticDeath === undefined
           ? {}
           : { enemyAutomaticDeath: restoreOptions.enemyAutomaticDeath }),
@@ -4929,31 +4932,36 @@ export class CombatRuntimeAssembly {
                   data: { group: options.pickup!.group },
                 });
               },
-              targets: (context): readonly RuntimeTargetRef[] => {
+              targets: (context, opening): readonly RuntimeTargetRef[] => {
+                if (!context.actionOwnerId) return [];
                 const frame = this.clock.frame;
-                const inputs =
-                  this.#framePickupInputs ??
-                  this.#options.externalEvents?.filter(input => input.frame === frame) ??
-                  [];
                 const group = options.pickup!.group;
-                const count = inputs.filter(
-                  input =>
-                    input.kind === 'pickup' &&
-                    input.group === group &&
-                    input.operatorId === operatorId,
-                ).length;
-                if (!count || !context.actionOwnerId) return [];
-                let used = 0;
-                for (const entry of this.receipt.history.snapshot().entries()) {
-                  if (
-                    entry.frame === frame &&
-                    entry.event === 'PickupEntered' &&
-                    entry.data?.owner === operatorId &&
-                    entry.data.group === group
-                  )
-                    used++;
+                if (this.#options.automaticPickup !== false) {
+                  if (!opening) return [];
+                } else {
+                  const inputs =
+                    this.#framePickupInputs ??
+                    this.#options.externalEvents?.filter(input => input.frame === frame) ??
+                    [];
+                  const count = inputs.filter(
+                    input =>
+                      input.kind === 'pickup' &&
+                      input.group === group &&
+                      input.operatorId === operatorId,
+                  ).length;
+                  if (!count) return [];
+                  let used = 0;
+                  for (const entry of this.receipt.history.snapshot().entries()) {
+                    if (
+                      entry.frame === frame &&
+                      entry.event === 'PickupEntered' &&
+                      entry.data?.owner === operatorId &&
+                      entry.data.group === group
+                    )
+                      used++;
+                  }
+                  if (used >= count) return [];
                 }
-                if (used >= count) return [];
                 const controlled = this.#operatorOrder.find(id =>
                   this.#operatorControl.runtimeState.get(id),
                 );

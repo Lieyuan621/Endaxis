@@ -241,14 +241,9 @@ export function validateBattle(value: unknown, path: string, issues: ValidationI
     }
   }
 
-  if (
-    value.automaticControlSwitches !== undefined &&
-    typeof value.automaticControlSwitches !== 'boolean'
-  ) {
-    issues.push({
-      path: `${path}.automaticControlSwitches`,
-      message: 'expected a boolean',
-    });
+  for (const key of ['automaticControlSwitches', 'automaticPickup'] as const) {
+    if (value[key] !== undefined && typeof value[key] !== 'boolean')
+      issues.push({ path: `${path}.${key}`, message: 'expected a boolean' });
   }
 
   if (value.comboSkillPriority !== undefined) {

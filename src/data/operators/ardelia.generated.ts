@@ -3082,6 +3082,15 @@ export const ardelia: OperatorDefinition = {
     buff_chr_0025_ardelia_normal_skill_kill_sheep: ardeliaBuff6,
     buff_chr_0025_ardelia_normal_skill_vulnerable: ardeliaBuff7,
   },
+  timelineInteractions: {
+    ardeliaDollyShadow: {
+      kind: 'pickup',
+      nameKey: 'effects.name.ardeliaDollyShadow',
+      icon: 'endaxis:operators/ardelia/talent_1',
+      entityIds: ['abilityentity_chr_0025_ardelia_remain_loop'],
+      auraNode: 'aura_44',
+    },
+  },
   abilityEntityDefinitions: {
     abilityentity_chr_0025_ardelia_attack4: {
       faction: 'good',

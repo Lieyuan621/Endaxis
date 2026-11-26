@@ -5572,6 +5572,7 @@ function pickupGroupIcon(slug: string, group: string) {
   );
 }
 const pickupChoices = computed(() => {
+  if (scenario.value.battle.automaticPickup !== false) return [];
   const target = trackPlacementTarget.value;
   if (!target || target.frame < 0) return [];
   const operator = scenario.value.tracks[target.trackIndex]?.operator;
@@ -5593,6 +5594,7 @@ const pickupChoices = computed(() => {
 const pickupWarnings = computed(() => {
   const entries = publishedReceiptEntries.value;
   const warnings = new Set<string>();
+  if (scenario.value.battle.automaticPickup !== false) return warnings;
   for (const marker of markersOfKind(scenario.value, 'pickup')) {
     if (
       marker.owner.scope !== 'operator' ||
@@ -7228,6 +7230,13 @@ function setComboSkillPriorityOrder(operatorOrder: string[]): void {
   }));
 }
 
+function toggleAutomaticPickup(): void {
+  commitScenario('toggleAutomaticPickup', current => ({
+    ...current,
+    battle: { ...current.battle, automaticPickup: current.battle.automaticPickup === false },
+  }));
+}
+
 function toggleAutomaticControlSwitches(): void {
   commitScenario('toggleAutomaticControlSwitches', current => ({
     ...current,
@@ -7684,6 +7693,7 @@ function setMobileGuideFrame(frame: number | null): void {
         :locale="locale"
         :appearance="appearance"
         :random-mode="scenario.battle.random?.mode ?? 'expected'"
+        :automatic-pickup="scenario.battle.automaticPickup !== false"
         :automatic-control-switches="scenario.battle.automaticControlSwitches !== false"
         :multi-enemy-enabled="multiEnemyEnabled"
         :multi-enemy-required="multiEnemyRequired"
@@ -7749,6 +7759,7 @@ function setMobileGuideFrame(frame: number | null): void {
         @set-appearance="setAppearance"
         @set-keycap-mode="keycapMode = $event"
         @set-random-mode="setScenarioRandomMode"
+        @toggle-automatic-pickup="toggleAutomaticPickup"
         @toggle-automatic-control-switches="toggleAutomaticControlSwitches"
         @toggle-multi-enemy="toggleMultiEnemy"
         @toggle-enemy-automatic-death="toggleEnemyAutomaticDeath"

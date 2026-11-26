@@ -59,6 +59,7 @@ export function createEmptyScenario(id: string, name: string): ScenarioDocument 
         spRecoveryPerSecond: 8,
       },
       automaticControlSwitches: true,
+      automaticPickup: true,
     },
     mechanics: { selections: [] },
     globalConfig: {},

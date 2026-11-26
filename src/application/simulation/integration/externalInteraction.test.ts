@@ -1,3 +1,4 @@
+import { projectAbilityEntityCountStatus } from '../../../core/projection/abilityEntityCountStatus';
 import { operatorOwner, markersOfKind } from '../../../core/project/scenarioMarkers';
 import { expect, it } from 'vitest';
 import { availablePickups } from '../../../core/projection/availablePickups';
@@ -58,6 +59,14 @@ it.each([
   ['comboSkill', 'chr_0040_sweetpie_combo_skill'],
 ] as const)('一个标记只拾取一个同组的小刻 %s 掉落物', (group, key) => {
   const scenario = scenarioFor('kay', group, key);
+  const automatic = simulate(scenario, 400);
+  const opened = automatic.filter(e => e.event === 'PickupOpened').map(e => [e.frame, e.targetId]);
+  expect(opened.length).toBeGreaterThan(0);
+  expect(
+    automatic.filter(e => e.event === 'PickupEntered').map(e => [e.frame, e.targetId]),
+  ).toEqual(opened);
+  expect(availablePickups(automatic, 400).size).toBe(0);
+  scenario.battle.automaticPickup = false;
   const entries = simulate(scenario, 400);
   const drops = availablePickups(entries, 400);
   const chosen = [...drops.entries()][0];
@@ -99,4 +108,36 @@ it.each([
   expect(result.filter(e => e.event === 'AbilityEntityFinished')).toContainEqual(
     expect.objectContaining({ event: 'AbilityEntityFinished', targetId: id, frame: 401 }),
   );
+});
+
+it('艾尔黛拉的影子按实体计数，手动拾取一个或在可拾取首帧自动拾取', () => {
+  const scenario = scenarioFor('ardelia', 'battleSkill', 'chr_0025_ardelia_normal_skill');
+  const rule = gameDataRepository.getOperator('ardelia')!.timelineInteractions!.ardeliaDollyShadow!;
+  const track = scenario.tracks[0]!;
+  track.operator!.talentStates = { 0: 1 };
+  scenario.battle.automaticPickup = false;
+  const before = simulate(scenario, 120);
+  const drops = availablePickups(before, 120);
+  expect(drops.size).toBe(3);
+  const count = (entries: typeof before, frame: number) =>
+    projectAbilityEntityCountStatus(entries, frame, track.id, rule.entityIds).entities.length;
+  expect(count(before, 120)).toBe(3);
+  scenario.markers.push({
+    kind: 'pickup',
+    group: 'ardeliaDollyShadow',
+    id: 'pick-one',
+    frame: 120,
+    owner: operatorOwner(scenario, 0),
+  });
+  const manual = simulate(scenario, 150);
+  expect(manual.filter(entry => entry.event === 'PickupEntered')).toHaveLength(1);
+  expect(count(manual, 150)).toBe(2);
+
+  scenario.battle.automaticPickup = true;
+  const automatic = simulate(scenario, 150);
+  const frames = (event: string) =>
+    automatic.filter(e => e.event === event).map(e => [e.frame, e.targetId]);
+  expect(frames('PickupEntered')).toHaveLength(3);
+  expect(frames('PickupEntered')).toEqual(frames('PickupOpened'));
+  expect(count(automatic, 150)).toBe(0);
 });
