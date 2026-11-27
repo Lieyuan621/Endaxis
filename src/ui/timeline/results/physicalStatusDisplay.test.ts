@@ -377,3 +377,23 @@ it.each([
     expect(positions[0]!.group).toEqual([damage]);
   },
 );
+
+it('shows guard directly reapplied by a skill without a physical infliction type', () => {
+  const entries = [
+    applied(1, 10, guardId, 37, 3),
+    applied(
+      2,
+      20,
+      guardId,
+      37,
+      4,
+      {},
+      {
+        producedBy: { kind: 'action', ownerId: 'operator', actionId: 'cast:enhanced' },
+      },
+    ),
+  ];
+  expect(projectPhysicalStatusDisplay(entries, 100, { enemySuperArmor: 0 })).toEqual([
+    expect.objectContaining({ buffId: guardId, startFrame: 20, durationEndFrame: 20, layers: 4 }),
+  ]);
+});

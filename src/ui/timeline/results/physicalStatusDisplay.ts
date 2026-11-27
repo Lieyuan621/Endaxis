@@ -217,22 +217,24 @@ export function projectPhysicalStatusDisplay(
     }
     const inputType = receiptString(inputEntry, 'physicalInflictionType') as
       PhysicalInflictionType | undefined;
-    if (entry.event !== 'BuffApplied' || inputType === undefined) continue;
+    const directGuard = buffId === NO_GUARD && entry.producedBy?.kind === 'action';
+    if (entry.event !== 'BuffApplied' || (inputType === undefined && !directGuard)) continue;
 
     const primary = segmentsByStartSequence.get(entry.sequence);
     if (primary === undefined) continue;
     const actualAction = physicalActions[buffId];
     const isGuardOnly = buffId === NO_GUARD;
-    const consumed = consumingActions.has(inputType)
-      ? pendingConsumedGuards.filter(candidate => belongsToPhysicalInput(candidate, inputEntry))
-      : [];
+    const consumed =
+      inputType !== undefined && consumingActions.has(inputType)
+        ? pendingConsumedGuards.filter(candidate => belongsToPhysicalInput(candidate, inputEntry))
+        : [];
     for (const candidate of consumed) {
       pendingConsumedGuards.splice(pendingConsumedGuards.indexOf(candidate), 1);
     }
 
     const rawLayers = isGuardOnly
       ? (receiptNumber(entry, 'layers') ?? currentGuardLayers(targetId))
-      : consumingActions.has(inputType)
+      : inputType !== undefined && consumingActions.has(inputType)
         ? consumed.reduce((sum, candidate) => sum + candidate.layers, 0)
         : currentGuardLayers(targetId);
     const layers = Math.min(4, Math.max(1, rawLayers || primary.layers || 1));
